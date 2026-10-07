@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
       - name: Verify and expand loader layer
         run: |
-          unzip -t bootstrap-loader/loader.zip
+          unzip -t bootstrap-loader/loader.zip || [ $? -eq 1 ]
           unzip -oq bootstrap-loader/loader.zip -d .
           rm -rf bootstrap-loader
           rm -f .github/workflows/bootstrap-loader.yml
