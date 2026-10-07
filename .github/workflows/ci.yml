@@ -1,0 +1,58 @@
+name: Thaumcraft Port CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Core parity test
+        shell: bash
+        run: |
+          OUT=build/core-test-classes
+          rm -rf "$OUT"
+          mkdir -p "$OUT"
+          mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
+          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CoreParityTest | tee /tmp/core.txt
+          grep -F "Core parity tests: OK (4667 assertions)" /tmp/core.txt
+
+      - name: Check FIRSTSTEPS loader sources
+        shell: bash
+        run: |
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/ThaumcraftPort.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/item/CrystalEssenceItem.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/network/FirstStepsProgressPayload.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/player/FirstStepsPlayerEvents.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftBlocks.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftItems.java
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/world/SalisMundusTransformQueue.java
+
+      - name: Set up Gradle 9.2.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+
+      - name: NeoForge build
+        run: gradle build --stacktrace --no-daemon
+
+      - name: Upload built jars
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thaumcraft-port-jars
+          path: build/libs/*.jar
+          if-no-files-found: error
