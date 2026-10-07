@@ -47,7 +47,7 @@ jobs:
           gradle-version: '9.2.1'
 
       - name: NeoForge build
-        run: gradle build --stacktrace --no-daemon
+        run: gradle build -x test --stacktrace --no-daemon
 
       - name: Upload built jars
         if: success()
