@@ -1,0 +1,360 @@
+[
+  {
+    "field": "AIR",
+    "tag": "aer",
+    "color": 16777086,
+    "components": [],
+    "chatcolor": "e",
+    "ctor": "52: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "EARTH",
+    "tag": "terra",
+    "color": 5685248,
+    "components": [],
+    "chatcolor": "2",
+    "ctor": "72: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "FIRE",
+    "tag": "ignis",
+    "color": 16734721,
+    "components": [],
+    "chatcolor": "c",
+    "ctor": "92: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "WATER",
+    "tag": "aqua",
+    "color": 3986684,
+    "components": [],
+    "chatcolor": "3",
+    "ctor": "112: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "ORDER",
+    "tag": "ordo",
+    "color": 14013676,
+    "components": [],
+    "chatcolor": "7",
+    "ctor": "132: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "ENTROPY",
+    "tag": "perditio",
+    "color": 4210752,
+    "components": [],
+    "chatcolor": "8",
+    "ctor": "154: invokespecial #258                // Method \"<init>\":(Ljava/lang/String;ILjava/lang/String;I)V"
+  },
+  {
+    "field": "VOID",
+    "tag": "vacuos",
+    "color": 8947848,
+    "components": [
+      "AIR",
+      "ENTROPY"
+    ],
+    "ctor": "189: invokespecial #165                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;I)V"
+  },
+  {
+    "field": "LIGHT",
+    "tag": "lux",
+    "color": 16777152,
+    "components": [
+      "AIR",
+      "FIRE"
+    ],
+    "ctor": "221: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "MOTION",
+    "tag": "motus",
+    "color": 13487348,
+    "components": [
+      "AIR",
+      "ORDER"
+    ],
+    "ctor": "253: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "COLD",
+    "tag": "gelum",
+    "color": 14811135,
+    "components": [
+      "FIRE",
+      "ENTROPY"
+    ],
+    "ctor": "285: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "CRYSTAL",
+    "tag": "vitreus",
+    "color": 8454143,
+    "components": [
+      "EARTH",
+      "AIR"
+    ],
+    "ctor": "317: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "METAL",
+    "tag": "metallum",
+    "color": 11908557,
+    "components": [
+      "EARTH",
+      "ORDER"
+    ],
+    "ctor": "349: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "LIFE",
+    "tag": "victus",
+    "color": 14548997,
+    "components": [
+      "EARTH",
+      "WATER"
+    ],
+    "ctor": "381: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "DEATH",
+    "tag": "mortuus",
+    "color": 6946821,
+    "components": [
+      "WATER",
+      "ENTROPY"
+    ],
+    "ctor": "413: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "ENERGY",
+    "tag": "potentia",
+    "color": 12648447,
+    "components": [
+      "ORDER",
+      "FIRE"
+    ],
+    "ctor": "445: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "EXCHANGE",
+    "tag": "permutatio",
+    "color": 5735255,
+    "components": [
+      "ENTROPY",
+      "ORDER"
+    ],
+    "ctor": "477: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "MAGIC",
+    "tag": "praecantatio",
+    "color": 13566207,
+    "components": [
+      "ENERGY",
+      "AIR"
+    ],
+    "ctor": "509: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "AURA",
+    "tag": "auram",
+    "color": 16761087,
+    "components": [
+      "MAGIC",
+      "AIR"
+    ],
+    "ctor": "541: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "ALCHEMY",
+    "tag": "alkimia",
+    "color": 2337949,
+    "components": [
+      "MAGIC",
+      "WATER"
+    ],
+    "ctor": "573: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "FLUX",
+    "tag": "vitium",
+    "color": 8388736,
+    "components": [
+      "ENTROPY",
+      "MAGIC"
+    ],
+    "ctor": "605: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "DARKNESS",
+    "tag": "tenebrae",
+    "color": 2236962,
+    "components": [
+      "VOID",
+      "LIGHT"
+    ],
+    "ctor": "637: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "ELDRITCH",
+    "tag": "alienis",
+    "color": 8409216,
+    "components": [
+      "VOID",
+      "DARKNESS"
+    ],
+    "ctor": "669: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "FLIGHT",
+    "tag": "volatus",
+    "color": 15198167,
+    "components": [
+      "AIR",
+      "MOTION"
+    ],
+    "ctor": "701: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "PLANT",
+    "tag": "herba",
+    "color": 109568,
+    "components": [
+      "LIFE",
+      "EARTH"
+    ],
+    "ctor": "733: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "TOOL",
+    "tag": "instrumentum",
+    "color": 4210926,
+    "components": [
+      "METAL",
+      "ENERGY"
+    ],
+    "ctor": "765: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "CRAFT",
+    "tag": "fabrico",
+    "color": 8428928,
+    "components": [
+      "EXCHANGE",
+      "TOOL"
+    ],
+    "ctor": "797: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "MECHANISM",
+    "tag": "machina",
+    "color": 8421536,
+    "components": [
+      "MOTION",
+      "TOOL"
+    ],
+    "ctor": "829: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "TRAP",
+    "tag": "vinculum",
+    "color": 10125440,
+    "components": [
+      "MOTION",
+      "ENTROPY"
+    ],
+    "ctor": "861: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "SOUL",
+    "tag": "spiritus",
+    "color": 15461371,
+    "components": [
+      "LIFE",
+      "DEATH"
+    ],
+    "ctor": "893: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "MIND",
+    "tag": "cognitio",
+    "color": 16356991,
+    "components": [
+      "FIRE",
+      "SOUL"
+    ],
+    "ctor": "925: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "SENSES",
+    "tag": "sensus",
+    "color": 12648384,
+    "components": [
+      "AIR",
+      "SOUL"
+    ],
+    "ctor": "957: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "AVERSION",
+    "tag": "aversio",
+    "color": 12603472,
+    "components": [
+      "SOUL",
+      "ENTROPY"
+    ],
+    "ctor": "989: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "PROTECT",
+    "tag": "praemunio",
+    "color": 49344,
+    "components": [
+      "SOUL",
+      "EARTH"
+    ],
+    "ctor": "1021: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "DESIRE",
+    "tag": "desiderium",
+    "color": 15121988,
+    "components": [
+      "SOUL",
+      "VOID"
+    ],
+    "ctor": "1053: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "UNDEAD",
+    "tag": "exanimis",
+    "color": 3817472,
+    "components": [
+      "MOTION",
+      "DEATH"
+    ],
+    "ctor": "1085: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "BEAST",
+    "tag": "bestia",
+    "color": 10445833,
+    "components": [
+      "MOTION",
+      "LIFE"
+    ],
+    "ctor": "1117: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  },
+  {
+    "field": "MAN",
+    "tag": "humanus",
+    "color": 16766912,
+    "components": [
+      "SOUL",
+      "LIFE"
+    ],
+    "ctor": "1149: invokespecial #305                // Method \"<init>\":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V"
+  }
+]

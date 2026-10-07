@@ -1,0 +1,190 @@
+Compiled from "ScanOreDictionary.java"
+public class thaumcraft.api.research.ScanOreDictionary implements thaumcraft.api.research.IScanThing {
+  java.lang.String research;
+
+  java.lang.String[] entries;
+
+  public java.util.concurrent.ConcurrentHashMap<java.lang.Integer, java.lang.Boolean> cache;
+
+  public thaumcraft.api.research.ScanOreDictionary(java.lang.String, java.lang.String...);
+    Code:
+       0: aload_0
+       1: invokespecial #19                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #21                 // class java/util/concurrent/ConcurrentHashMap
+       8: dup
+       9: invokespecial #22                 // Method java/util/concurrent/ConcurrentHashMap."<init>":()V
+      12: putfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+      15: aload_0
+      16: aload_1
+      17: putfield      #26                 // Field research:Ljava/lang/String;
+      20: aload_0
+      21: aload_2
+      22: putfield      #28                 // Field entries:[Ljava/lang/String;
+      25: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aconst_null
+       1: astore_3
+       2: aload_2
+       3: ifnull        90
+       6: aload_2
+       7: instanceof    #34                 // class net/minecraft/util/math/BlockPos
+      10: ifeq          50
+      13: aload_1
+      14: getfield      #40                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      17: aload_2
+      18: checkcast     #34                 // class net/minecraft/util/math/BlockPos
+      21: invokevirtual #46                 // Method net/minecraft/world/World.func_180495_p:(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;
+      24: astore        4
+      26: aload         4
+      28: invokeinterface #52,  1           // InterfaceMethod net/minecraft/block/state/IBlockState.func_177230_c:()Lnet/minecraft/block/Block;
+      33: aload_1
+      34: getfield      #40                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      37: aload_2
+      38: checkcast     #34                 // class net/minecraft/util/math/BlockPos
+      41: aload         4
+      43: invokevirtual #58                 // Method net/minecraft/block/Block.func_185473_a:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/item/ItemStack;
+      46: astore_3
+      47: goto          90
+      50: aload_2
+      51: instanceof    #60                 // class net/minecraft/item/ItemStack
+      54: ifeq          65
+      57: aload_2
+      58: checkcast     #60                 // class net/minecraft/item/ItemStack
+      61: astore_3
+      62: goto          90
+      65: aload_2
+      66: instanceof    #62                 // class net/minecraft/entity/item/EntityItem
+      69: ifeq          90
+      72: aload_2
+      73: checkcast     #62                 // class net/minecraft/entity/item/EntityItem
+      76: invokevirtual #66                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      79: ifnull        90
+      82: aload_2
+      83: checkcast     #62                 // class net/minecraft/entity/item/EntityItem
+      86: invokevirtual #66                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      89: astore_3
+      90: aload_3
+      91: ifnull        306
+      94: aload_3
+      95: invokevirtual #70                 // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      98: ifne          306
+     101: aload_3
+     102: invokestatic  #76                 // Method thaumcraft/api/internal/CommonInternals.generateUniqueItemstackId:(Lnet/minecraft/item/ItemStack;)I
+     105: istore        4
+     107: aload_0
+     108: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     111: iload         4
+     113: invokestatic  #82                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     116: invokevirtual #86                 // Method java/util/concurrent/ConcurrentHashMap.containsKey:(Ljava/lang/Object;)Z
+     119: ifeq          141
+     122: aload_0
+     123: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     126: iload         4
+     128: invokestatic  #82                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     131: invokevirtual #90                 // Method java/util/concurrent/ConcurrentHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     134: checkcast     #92                 // class java/lang/Boolean
+     137: invokevirtual #95                 // Method java/lang/Boolean.booleanValue:()Z
+     140: ireturn
+     141: aload_3
+     142: invokestatic  #101                // Method net/minecraftforge/oredict/OreDictionary.getOreIDs:(Lnet/minecraft/item/ItemStack;)[I
+     145: astore        5
+     147: aload_0
+     148: getfield      #28                 // Field entries:[Ljava/lang/String;
+     151: astore        6
+     153: aload         6
+     155: arraylength
+     156: istore        7
+     158: iconst_0
+     159: istore        8
+     161: iload         8
+     163: iload         7
+     165: if_icmpge     267
+     168: aload         6
+     170: iload         8
+     172: aaload
+     173: astore        9
+     175: aload         5
+     177: astore        10
+     179: aload         10
+     181: arraylength
+     182: istore        11
+     184: iconst_0
+     185: istore        12
+     187: iload         12
+     189: iload         11
+     191: if_icmpge     261
+     194: aload         10
+     196: iload         12
+     198: iaload
+     199: istore        13
+     201: iload         13
+     203: invokestatic  #110                // Method net/minecraftforge/oredict/OreDictionary.getOreName:(I)Ljava/lang/String;
+     206: aload         9
+     208: invokevirtual #113                // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+     211: ifeq          255
+     214: aload_0
+     215: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     218: dup
+     219: astore        14
+     221: monitorenter
+     222: aload_0
+     223: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     226: iload         4
+     228: invokestatic  #82                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     231: iconst_1
+     232: invokestatic  #116                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     235: invokevirtual #120                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     238: pop
+     239: aload         14
+     241: monitorexit
+     242: goto          253
+     245: astore        15
+     247: aload         14
+     249: monitorexit
+     250: aload         15
+     252: athrow
+     253: iconst_1
+     254: ireturn
+     255: iinc          12, 1
+     258: goto          187
+     261: iinc          8, 1
+     264: goto          161
+     267: aload_0
+     268: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     271: dup
+     272: astore        6
+     274: monitorenter
+     275: aload_0
+     276: getfield      #24                 // Field cache:Ljava/util/concurrent/ConcurrentHashMap;
+     279: iload         4
+     281: invokestatic  #82                 // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     284: iconst_0
+     285: invokestatic  #116                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     288: invokevirtual #120                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     291: pop
+     292: aload         6
+     294: monitorexit
+     295: goto          306
+     298: astore        16
+     300: aload         6
+     302: monitorexit
+     303: aload         16
+     305: athrow
+     306: iconst_0
+     307: ireturn
+    Exception table:
+       from    to  target type
+         222   242   245   any
+         245   250   245   any
+         275   295   298   any
+         298   303   298   any
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: getfield      #26                 // Field research:Ljava/lang/String;
+       4: areturn
+}

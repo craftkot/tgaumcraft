@@ -1,0 +1,130 @@
+Compiled from "ResearchCategories.java"
+public class thaumcraft.api.research.ResearchCategories {
+  public static java.util.LinkedHashMap<java.lang.String, thaumcraft.api.research.ResearchCategory> researchCategories;
+
+  public thaumcraft.api.research.ResearchCategories();
+    Code:
+       0: aload_0
+       1: invokespecial #12                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static thaumcraft.api.research.ResearchCategory getResearchCategory(java.lang.String);
+    Code:
+       0: getstatic     #18                 // Field researchCategories:Ljava/util/LinkedHashMap;
+       3: aload_0
+       4: invokevirtual #24                 // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       7: checkcast     #26                 // class thaumcraft/api/research/ResearchCategory
+      10: areturn
+
+  public static java.lang.String getCategoryName(java.lang.String);
+    Code:
+       0: new           #32                 // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #33                 // Method java/lang/StringBuilder."<init>":()V
+       7: ldc           #35                 // String tc.research_category.
+       9: invokevirtual #39                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: aload_0
+      13: invokevirtual #39                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      16: invokevirtual #43                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      19: invokestatic  #48                 // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+      22: areturn
+
+  public static thaumcraft.api.research.ResearchEntry getResearch(java.lang.String);
+    Code:
+       0: getstatic     #18                 // Field researchCategories:Ljava/util/LinkedHashMap;
+       3: invokevirtual #54                 // Method java/util/LinkedHashMap.values:()Ljava/util/Collection;
+       6: astore_1
+       7: aload_1
+       8: invokeinterface #60,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      13: astore_2
+      14: aload_2
+      15: invokeinterface #66,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      20: ifeq          99
+      23: aload_2
+      24: invokeinterface #70,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      29: astore_3
+      30: aload_3
+      31: checkcast     #26                 // class thaumcraft/api/research/ResearchCategory
+      34: getfield      #74                 // Field thaumcraft/api/research/ResearchCategory.research:Ljava/util/Map;
+      37: invokeinterface #77,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      42: astore        4
+      44: aload         4
+      46: invokeinterface #60,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      51: astore        5
+      53: aload         5
+      55: invokeinterface #66,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      60: ifeq          96
+      63: aload         5
+      65: invokeinterface #70,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      70: astore        6
+      72: aload         6
+      74: checkcast     #79                 // class thaumcraft/api/research/ResearchEntry
+      77: getfield      #81                 // Field thaumcraft/api/research/ResearchEntry.key:Ljava/lang/String;
+      80: aload_0
+      81: invokevirtual #87                 // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      84: ifeq          93
+      87: aload         6
+      89: checkcast     #79                 // class thaumcraft/api/research/ResearchEntry
+      92: areturn
+      93: goto          53
+      96: goto          14
+      99: aconst_null
+     100: areturn
+
+  public static thaumcraft.api.research.ResearchCategory registerCategory(java.lang.String, java.lang.String, thaumcraft.api.aspects.AspectList, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation);
+    Code:
+       0: aload_0
+       1: invokestatic  #97                 // Method getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+       4: ifnonnull     35
+       7: new           #26                 // class thaumcraft/api/research/ResearchCategory
+      10: dup
+      11: aload_0
+      12: aload_1
+      13: aload_2
+      14: aload_3
+      15: aload         4
+      17: invokespecial #100                // Method thaumcraft/api/research/ResearchCategory."<init>":(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)V
+      20: astore        5
+      22: getstatic     #18                 // Field researchCategories:Ljava/util/LinkedHashMap;
+      25: aload_0
+      26: aload         5
+      28: invokevirtual #104                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      31: pop
+      32: aload         5
+      34: areturn
+      35: aconst_null
+      36: areturn
+
+  public static thaumcraft.api.research.ResearchCategory registerCategory(java.lang.String, java.lang.String, thaumcraft.api.aspects.AspectList, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation);
+    Code:
+       0: aload_0
+       1: invokestatic  #97                 // Method getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+       4: ifnonnull     37
+       7: new           #26                 // class thaumcraft/api/research/ResearchCategory
+      10: dup
+      11: aload_0
+      12: aload_1
+      13: aload_2
+      14: aload_3
+      15: aload         4
+      17: aload         5
+      19: invokespecial #115                // Method thaumcraft/api/research/ResearchCategory."<init>":(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)V
+      22: astore        6
+      24: getstatic     #18                 // Field researchCategories:Ljava/util/LinkedHashMap;
+      27: aload_0
+      28: aload         6
+      30: invokevirtual #104                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      33: pop
+      34: aload         6
+      36: areturn
+      37: aconst_null
+      38: areturn
+
+  static {};
+    Code:
+       0: new           #20                 // class java/util/LinkedHashMap
+       3: dup
+       4: invokespecial #118                // Method java/util/LinkedHashMap."<init>":()V
+       7: putstatic     #18                 // Field researchCategories:Ljava/util/LinkedHashMap;
+      10: return
+}

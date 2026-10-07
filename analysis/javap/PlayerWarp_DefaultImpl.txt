@@ -1,0 +1,222 @@
+Compiled from "PlayerWarp.java"
+class thaumcraft.common.lib.capabilities.PlayerWarp$DefaultImpl implements thaumcraft.api.capabilities.IPlayerWarp {
+  private int[] warp;
+    descriptor: [I
+
+  private int counter;
+    descriptor: I
+
+  private thaumcraft.common.lib.capabilities.PlayerWarp$DefaultImpl();
+    descriptor: ()V
+    Code:
+       0: aload_0
+       1: invokespecial #23                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: invokestatic  #27                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.values:()[Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+       8: arraylength
+       9: newarray       int
+      11: putfield      #29                 // Field warp:[I
+      14: return
+
+  public void clear();
+    descriptor: ()V
+    Code:
+       0: aload_0
+       1: invokestatic  #27                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.values:()[Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+       4: arraylength
+       5: newarray       int
+       7: putfield      #29                 // Field warp:[I
+      10: aload_0
+      11: iconst_0
+      12: putfield      #34                 // Field counter:I
+      15: return
+
+  public int get(thaumcraft.api.capabilities.IPlayerWarp$EnumWarpType);
+    descriptor: (Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field warp:[I
+       4: aload_1
+       5: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+       8: iaload
+       9: ireturn
+
+  public void set(thaumcraft.api.capabilities.IPlayerWarp$EnumWarpType, int);
+    descriptor: (Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;I)V
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field warp:[I
+       4: aload_1
+       5: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+       8: iload_2
+       9: iconst_0
+      10: sipush        500
+      13: invokestatic  #51                 // Method net/minecraft/util/math/MathHelper.func_76125_a:(III)I
+      16: iastore
+      17: return
+
+  public int add(thaumcraft.api.capabilities.IPlayerWarp$EnumWarpType, int);
+    descriptor: (Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;I)I
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field warp:[I
+       4: aload_1
+       5: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+       8: aload_0
+       9: getfield      #29                 // Field warp:[I
+      12: aload_1
+      13: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+      16: iaload
+      17: iload_2
+      18: iadd
+      19: iconst_0
+      20: sipush        500
+      23: invokestatic  #51                 // Method net/minecraft/util/math/MathHelper.func_76125_a:(III)I
+      26: iastore
+      27: aload_0
+      28: getfield      #29                 // Field warp:[I
+      31: aload_1
+      32: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+      35: iaload
+      36: ireturn
+
+  public int reduce(thaumcraft.api.capabilities.IPlayerWarp$EnumWarpType, int);
+    descriptor: (Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;I)I
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field warp:[I
+       4: aload_1
+       5: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+       8: aload_0
+       9: getfield      #29                 // Field warp:[I
+      12: aload_1
+      13: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+      16: iaload
+      17: iload_2
+      18: isub
+      19: iconst_0
+      20: sipush        500
+      23: invokestatic  #51                 // Method net/minecraft/util/math/MathHelper.func_76125_a:(III)I
+      26: iastore
+      27: aload_0
+      28: getfield      #29                 // Field warp:[I
+      31: aload_1
+      32: invokevirtual #41                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.ordinal:()I
+      35: iaload
+      36: ireturn
+
+  public void sync(net.minecraft.entity.player.EntityPlayerMP);
+    descriptor: (Lnet/minecraft/entity/player/EntityPlayerMP;)V
+    Code:
+       0: getstatic     #63                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+       3: new           #65                 // class thaumcraft/common/lib/network/playerdata/PacketSyncWarp
+       6: dup
+       7: aload_1
+       8: invokespecial #68                 // Method thaumcraft/common/lib/network/playerdata/PacketSyncWarp."<init>":(Lnet/minecraft/entity/player/EntityPlayer;)V
+      11: aload_1
+      12: invokevirtual #74                 // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendTo:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+      15: return
+
+  public net.minecraft.nbt.NBTTagCompound serializeNBT();
+    descriptor: ()Lnet/minecraft/nbt/NBTTagCompound;
+    Code:
+       0: new           #80                 // class net/minecraft/nbt/NBTTagCompound
+       3: dup
+       4: invokespecial #81                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #82                 // String warp
+      11: aload_0
+      12: getfield      #29                 // Field warp:[I
+      15: invokevirtual #86                 // Method net/minecraft/nbt/NBTTagCompound.func_74783_a:(Ljava/lang/String;[I)V
+      18: aload_1
+      19: ldc           #87                 // String counter
+      21: aload_0
+      22: invokevirtual #90                 // Method getCounter:()I
+      25: invokevirtual #94                 // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+      28: aload_1
+      29: areturn
+
+  public void deserializeNBT(net.minecraft.nbt.NBTTagCompound);
+    descriptor: (Lnet/minecraft/nbt/NBTTagCompound;)V
+    Code:
+       0: aload_1
+       1: ifnonnull     5
+       4: return
+       5: aload_0
+       6: invokevirtual #100                // Method clear:()V
+       9: aload_1
+      10: ldc           #82                 // String warp
+      12: invokevirtual #104                // Method net/minecraft/nbt/NBTTagCompound.func_74759_k:(Ljava/lang/String;)[I
+      15: astore_2
+      16: aload_2
+      17: ifnull        60
+      20: invokestatic  #27                 // Method thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.values:()[Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+      23: arraylength
+      24: istore_3
+      25: aload_2
+      26: arraylength
+      27: iload_3
+      28: if_icmpge     34
+      31: aload_2
+      32: arraylength
+      33: istore_3
+      34: iconst_0
+      35: istore        4
+      37: iload         4
+      39: iload_3
+      40: if_icmpge     60
+      43: aload_0
+      44: getfield      #29                 // Field warp:[I
+      47: iload         4
+      49: aload_2
+      50: iload         4
+      52: iaload
+      53: iastore
+      54: iinc          4, 1
+      57: goto          37
+      60: aload_0
+      61: aload_1
+      62: ldc           #87                 // String counter
+      64: invokevirtual #109                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+      67: invokevirtual #113                // Method setCounter:(I)V
+      70: return
+
+  public int getCounter();
+    descriptor: ()I
+    Code:
+       0: aload_0
+       1: getfield      #34                 // Field counter:I
+       4: ireturn
+
+  public void setCounter(int);
+    descriptor: (I)V
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #34                 // Field counter:I
+       5: return
+
+  public void deserializeNBT(net.minecraft.nbt.NBTBase);
+    descriptor: (Lnet/minecraft/nbt/NBTBase;)V
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #80                 // class net/minecraft/nbt/NBTTagCompound
+       5: invokevirtual #119                // Method deserializeNBT:(Lnet/minecraft/nbt/NBTTagCompound;)V
+       8: return
+
+  public net.minecraft.nbt.NBTBase serializeNBT();
+    descriptor: ()Lnet/minecraft/nbt/NBTBase;
+    Code:
+       0: aload_0
+       1: invokevirtual #122                // Method serializeNBT:()Lnet/minecraft/nbt/NBTTagCompound;
+       4: areturn
+
+  thaumcraft.common.lib.capabilities.PlayerWarp$DefaultImpl(thaumcraft.common.lib.capabilities.PlayerWarp$1);
+    descriptor: (Lthaumcraft/common/lib/capabilities/PlayerWarp$1;)V
+    Code:
+       0: aload_0
+       1: invokespecial #124                // Method "<init>":()V
+       4: return
+}

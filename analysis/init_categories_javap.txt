@@ -1,0 +1,316 @@
+      34: ldc           #51                 // String thaumcraft
+      36: new           #53                 // class java/lang/StringBuilder
+      39: dup
+      40: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+      43: ldc           #56                 // String research/
+      45: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      48: aload_3
+      49: invokevirtual #66                 // Method java/lang/String.toLowerCase:()Ljava/lang/String;
+      52: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      55: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      58: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      61: invokestatic  #78                 // Method thaumcraft/api/ThaumcraftApi.registerResearchLocation:(Lnet/minecraft/util/ResourceLocation;)V
+      64: iinc          2, 1
+      67: goto          21
+      70: new           #49                 // class net/minecraft/util/ResourceLocation
+      73: dup
+      74: ldc           #51                 // String thaumcraft
+      76: ldc           #80                 // String research/scans
+      78: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      81: invokestatic  #78                 // Method thaumcraft/api/ThaumcraftApi.registerResearchLocation:(Lnet/minecraft/util/ResourceLocation;)V
+      84: return
+
+  public static void postInit();
+    Code:
+       0: invokestatic  #88                 // Method thaumcraft/common/lib/research/ResearchManager.parseAllResearch:()V
+       3: return
+
+  private static void initCategories();
+    Code:
+       0: ldc           #90                 // String BASICS
+       2: aconst_null
+       3: new           #92                 // class thaumcraft/api/aspects/AspectList
+       6: dup
+       7: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+      10: getstatic     #99                 // Field thaumcraft/api/aspects/Aspect.PLANT:Lthaumcraft/api/aspects/Aspect;
+      13: iconst_5
+      14: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      17: getstatic     #106                // Field thaumcraft/api/aspects/Aspect.ORDER:Lthaumcraft/api/aspects/Aspect;
+      20: iconst_5
+      21: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      24: getstatic     #109                // Field thaumcraft/api/aspects/Aspect.ENTROPY:Lthaumcraft/api/aspects/Aspect;
+      27: iconst_5
+      28: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      31: getstatic     #112                // Field thaumcraft/api/aspects/Aspect.AIR:Lthaumcraft/api/aspects/Aspect;
+      34: iconst_5
+      35: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      38: getstatic     #115                // Field thaumcraft/api/aspects/Aspect.FIRE:Lthaumcraft/api/aspects/Aspect;
+      41: iconst_5
+      42: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      45: getstatic     #118                // Field thaumcraft/api/aspects/Aspect.EARTH:Lthaumcraft/api/aspects/Aspect;
+      48: iconst_3
+      49: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      52: getstatic     #121                // Field thaumcraft/api/aspects/Aspect.WATER:Lthaumcraft/api/aspects/Aspect;
+      55: iconst_5
+      56: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      59: new           #49                 // class net/minecraft/util/ResourceLocation
+      62: dup
+      63: ldc           #51                 // String thaumcraft
+      65: ldc           #123                // String textures/items/thaumonomicon_cheat.png
+      67: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      70: new           #49                 // class net/minecraft/util/ResourceLocation
+      73: dup
+      74: ldc           #51                 // String thaumcraft
+      76: ldc           #125                // String textures/gui/gui_research_back_1.jpg
+      78: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      81: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+      84: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+      87: pop
+      88: ldc           #135                // String AUROMANCY
+      90: ldc           #137                // String UNLOCKAUROMANCY
+      92: new           #92                 // class thaumcraft/api/aspects/AspectList
+      95: dup
+      96: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+      99: getstatic     #140                // Field thaumcraft/api/aspects/Aspect.AURA:Lthaumcraft/api/aspects/Aspect;
+     102: bipush        20
+     104: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     107: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     110: bipush        20
+     112: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     115: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     118: bipush        15
+     120: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     123: getstatic     #149                // Field thaumcraft/api/aspects/Aspect.CRYSTAL:Lthaumcraft/api/aspects/Aspect;
+     126: iconst_5
+     127: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     130: getstatic     #152                // Field thaumcraft/api/aspects/Aspect.COLD:Lthaumcraft/api/aspects/Aspect;
+     133: iconst_5
+     134: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     137: getstatic     #112                // Field thaumcraft/api/aspects/Aspect.AIR:Lthaumcraft/api/aspects/Aspect;
+     140: iconst_5
+     141: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     144: new           #49                 // class net/minecraft/util/ResourceLocation
+     147: dup
+     148: ldc           #51                 // String thaumcraft
+     150: ldc           #154                // String textures/research/cat_auromancy.png
+     152: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     155: new           #49                 // class net/minecraft/util/ResourceLocation
+     158: dup
+     159: ldc           #51                 // String thaumcraft
+     161: ldc           #156                // String textures/gui/gui_research_back_2.jpg
+     163: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     166: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     169: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     172: pop
+     173: ldc           #158                // String ALCHEMY
+     175: ldc           #160                // String UNLOCKALCHEMY
+     177: new           #92                 // class thaumcraft/api/aspects/AspectList
+     180: dup
+     181: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     184: getstatic     #162                // Field thaumcraft/api/aspects/Aspect.ALCHEMY:Lthaumcraft/api/aspects/Aspect;
+     187: bipush        30
+     189: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     192: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     195: bipush        10
+     197: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     200: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     203: bipush        10
+     205: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     208: getstatic     #165                // Field thaumcraft/api/aspects/Aspect.LIFE:Lthaumcraft/api/aspects/Aspect;
+     211: iconst_5
+     212: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     215: getstatic     #168                // Field thaumcraft/api/aspects/Aspect.AVERSION:Lthaumcraft/api/aspects/Aspect;
+     218: iconst_5
+     219: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     222: getstatic     #171                // Field thaumcraft/api/aspects/Aspect.DESIRE:Lthaumcraft/api/aspects/Aspect;
+     225: iconst_5
+     226: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     229: getstatic     #121                // Field thaumcraft/api/aspects/Aspect.WATER:Lthaumcraft/api/aspects/Aspect;
+     232: iconst_5
+     233: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     236: new           #49                 // class net/minecraft/util/ResourceLocation
+     239: dup
+     240: ldc           #51                 // String thaumcraft
+     242: ldc           #173                // String textures/research/cat_alchemy.png
+     244: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     247: new           #49                 // class net/minecraft/util/ResourceLocation
+     250: dup
+     251: ldc           #51                 // String thaumcraft
+     253: ldc           #175                // String textures/gui/gui_research_back_3.jpg
+     255: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     258: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     261: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     264: pop
+     265: ldc           #177                // String ARTIFICE
+     267: ldc           #179                // String UNLOCKARTIFICE
+     269: new           #92                 // class thaumcraft/api/aspects/AspectList
+     272: dup
+     273: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     276: getstatic     #182                // Field thaumcraft/api/aspects/Aspect.MECHANISM:Lthaumcraft/api/aspects/Aspect;
+     279: bipush        10
+     281: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     284: getstatic     #185                // Field thaumcraft/api/aspects/Aspect.CRAFT:Lthaumcraft/api/aspects/Aspect;
+     287: bipush        10
+     289: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     292: getstatic     #188                // Field thaumcraft/api/aspects/Aspect.METAL:Lthaumcraft/api/aspects/Aspect;
+     295: bipush        10
+     297: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     300: getstatic     #191                // Field thaumcraft/api/aspects/Aspect.TOOL:Lthaumcraft/api/aspects/Aspect;
+     303: bipush        10
+     305: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     308: getstatic     #194                // Field thaumcraft/api/aspects/Aspect.ENERGY:Lthaumcraft/api/aspects/Aspect;
+     311: bipush        10
+     313: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     316: getstatic     #197                // Field thaumcraft/api/aspects/Aspect.LIGHT:Lthaumcraft/api/aspects/Aspect;
+     319: iconst_5
+     320: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     323: getstatic     #200                // Field thaumcraft/api/aspects/Aspect.FLIGHT:Lthaumcraft/api/aspects/Aspect;
+     326: iconst_5
+     327: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     330: getstatic     #203                // Field thaumcraft/api/aspects/Aspect.TRAP:Lthaumcraft/api/aspects/Aspect;
+     333: iconst_5
+     334: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     337: getstatic     #115                // Field thaumcraft/api/aspects/Aspect.FIRE:Lthaumcraft/api/aspects/Aspect;
+     340: iconst_5
+     341: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     344: new           #49                 // class net/minecraft/util/ResourceLocation
+     347: dup
+     348: ldc           #51                 // String thaumcraft
+     350: ldc           #205                // String textures/research/cat_artifice.png
+     352: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     355: new           #49                 // class net/minecraft/util/ResourceLocation
+     358: dup
+     359: ldc           #51                 // String thaumcraft
+     361: ldc           #207                // String textures/gui/gui_research_back_4.jpg
+     363: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     366: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     369: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     372: pop
+     373: ldc           #209                // String INFUSION
+     375: ldc           #211                // String UNLOCKINFUSION
+     377: new           #92                 // class thaumcraft/api/aspects/AspectList
+     380: dup
+     381: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     384: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     387: bipush        30
+     389: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     392: getstatic     #214                // Field thaumcraft/api/aspects/Aspect.PROTECT:Lthaumcraft/api/aspects/Aspect;
+     395: bipush        10
+     397: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     400: getstatic     #191                // Field thaumcraft/api/aspects/Aspect.TOOL:Lthaumcraft/api/aspects/Aspect;
+     403: bipush        10
+     405: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     408: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     411: iconst_5
+     412: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     415: getstatic     #185                // Field thaumcraft/api/aspects/Aspect.CRAFT:Lthaumcraft/api/aspects/Aspect;
+     418: iconst_5
+     419: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     422: getstatic     #217                // Field thaumcraft/api/aspects/Aspect.SOUL:Lthaumcraft/api/aspects/Aspect;
+     425: iconst_5
+     426: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     429: getstatic     #118                // Field thaumcraft/api/aspects/Aspect.EARTH:Lthaumcraft/api/aspects/Aspect;
+     432: iconst_3
+     433: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     436: new           #49                 // class net/minecraft/util/ResourceLocation
+     439: dup
+     440: ldc           #51                 // String thaumcraft
+     442: ldc           #219                // String textures/research/cat_infusion.png
+     444: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     447: new           #49                 // class net/minecraft/util/ResourceLocation
+     450: dup
+     451: ldc           #51                 // String thaumcraft
+     453: ldc           #221                // String textures/gui/gui_research_back_7.jpg
+     455: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     458: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     461: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     464: pop
+     465: ldc           #223                // String GOLEMANCY
+     467: ldc           #225                // String UNLOCKGOLEMANCY
+     469: new           #92                 // class thaumcraft/api/aspects/AspectList
+     472: dup
+     473: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     476: getstatic     #228                // Field thaumcraft/api/aspects/Aspect.MAN:Lthaumcraft/api/aspects/Aspect;
+     479: bipush        20
+     481: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     484: getstatic     #231                // Field thaumcraft/api/aspects/Aspect.MOTION:Lthaumcraft/api/aspects/Aspect;
+     487: bipush        10
+     489: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     492: getstatic     #234                // Field thaumcraft/api/aspects/Aspect.MIND:Lthaumcraft/api/aspects/Aspect;
+     495: bipush        10
+     497: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     500: getstatic     #182                // Field thaumcraft/api/aspects/Aspect.MECHANISM:Lthaumcraft/api/aspects/Aspect;
+     503: bipush        10
+     505: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     508: getstatic     #237                // Field thaumcraft/api/aspects/Aspect.EXCHANGE:Lthaumcraft/api/aspects/Aspect;
+     511: iconst_5
+     512: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     515: getstatic     #240                // Field thaumcraft/api/aspects/Aspect.SENSES:Lthaumcraft/api/aspects/Aspect;
+     518: iconst_5
+     519: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     522: getstatic     #243                // Field thaumcraft/api/aspects/Aspect.BEAST:Lthaumcraft/api/aspects/Aspect;
+     525: iconst_5
+     526: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     529: getstatic     #106                // Field thaumcraft/api/aspects/Aspect.ORDER:Lthaumcraft/api/aspects/Aspect;
+     532: iconst_5
+     533: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     536: new           #49                 // class net/minecraft/util/ResourceLocation
+     539: dup
+     540: ldc           #51                 // String thaumcraft
+     542: ldc           #245                // String textures/research/cat_golemancy.png
+     544: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     547: new           #49                 // class net/minecraft/util/ResourceLocation
+     550: dup
+     551: ldc           #51                 // String thaumcraft
+     553: ldc           #247                // String textures/gui/gui_research_back_5.jpg
+     555: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     558: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     561: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     564: pop
+     565: ldc           #249                // String ELDRITCH
+     567: ldc           #251                // String UNLOCKELDRITCH
+     569: new           #92                 // class thaumcraft/api/aspects/AspectList
+     572: dup
+     573: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     576: getstatic     #253                // Field thaumcraft/api/aspects/Aspect.ELDRITCH:Lthaumcraft/api/aspects/Aspect;
+     579: bipush        20
+     581: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     584: getstatic     #256                // Field thaumcraft/api/aspects/Aspect.DARKNESS:Lthaumcraft/api/aspects/Aspect;
+     587: bipush        10
+     589: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     592: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     595: iconst_5
+     596: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     599: getstatic     #234                // Field thaumcraft/api/aspects/Aspect.MIND:Lthaumcraft/api/aspects/Aspect;
+     602: iconst_5
+     603: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     606: getstatic     #259                // Field thaumcraft/api/aspects/Aspect.VOID:Lthaumcraft/api/aspects/Aspect;
+     609: iconst_5
+     610: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     613: getstatic     #262                // Field thaumcraft/api/aspects/Aspect.DEATH:Lthaumcraft/api/aspects/Aspect;
+     616: iconst_5
+     617: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     620: getstatic     #265                // Field thaumcraft/api/aspects/Aspect.UNDEAD:Lthaumcraft/api/aspects/Aspect;
+     623: iconst_5
+     624: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     627: getstatic     #109                // Field thaumcraft/api/aspects/Aspect.ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     630: iconst_5
+     631: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     634: new           #49                 // class net/minecraft/util/ResourceLocation
+     637: dup
+     638: ldc           #51                 // String thaumcraft
+     640: ldc_w         #267                // String textures/research/cat_eldritch.png
+     643: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     646: new           #49                 // class net/minecraft/util/ResourceLocation
+     649: dup
+     650: ldc           #51                 // String thaumcraft
+     652: ldc_w         #269                // String textures/gui/gui_research_back_6.jpg
+     655: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     658: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     661: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     664: pop
+     665: return
+
+  private static void initScannables();
+    Code:
+       0: new           #271                // class thaumcraft/common/lib/research/ScanGeneric

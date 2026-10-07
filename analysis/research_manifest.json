@@ -1,0 +1,5391 @@
+{
+  "entry_count": 148,
+  "stage_count": 271,
+  "addenda_count": 16,
+  "categories": {
+    "ALCHEMY": 22,
+    "ARTIFICE": 20,
+    "AUROMANCY": 23,
+    "BASICS": 32,
+    "ELDRITCH": 5,
+    "GOLEMANCY": 29,
+    "INFUSION": 17
+  },
+  "meta_counts": {
+    "HEX": 12,
+    "HIDDEN": 43,
+    "REVERSE": 18,
+    "ROUND": 34,
+    "SPIKY": 10
+  },
+  "required_field_stage_counts": {
+    "required_craft": 21,
+    "required_item": 33,
+    "required_knowledge": 114,
+    "required_knowledgeauram": 1,
+    "required_research": 56
+  },
+  "files": {
+    "alchemy.json": 22,
+    "artifice.json": 20,
+    "auromancy.json": 23,
+    "basics.json": 20,
+    "eldritch.json": 5,
+    "golemancy.json": 29,
+    "infusion.json": 17,
+    "scans.json": 12
+  },
+  "keys": [
+    "BASEALCHEMY",
+    "ALUMENTUM",
+    "METALLURGY",
+    "METALPURIFICATION",
+    "HEDGEALCHEMY",
+    "LIQUIDDEATH",
+    "BOTTLETAINT",
+    "BATHSALTS",
+    "SANESOAP",
+    "ARCANESPA",
+    "ESSENTIASMELTER",
+    "WARDEDJARS",
+    "TUBES",
+    "ESSENTIASMELTERTHAUMIUM",
+    "ESSENTIASMELTERVOID",
+    "IMPROVEDSMELTING",
+    "IMPROVEDSMELTING2",
+    "CENTRIFUGE",
+    "THAUMATORIUM",
+    "ESSENTIATRANSPORT",
+    "EVERFULLURN",
+    "POTIONSPRAYER",
+    "BASEARTIFICE",
+    "HUNGRYCHEST",
+    "LEVITATOR",
+    "INFERNALFURNACE",
+    "BELLOWS",
+    "REDSTONERELAY",
+    "ARCANEEAR",
+    "DIOPTRA",
+    "MIRROR",
+    "MIRRORHAND",
+    "MIRRORESSENTIA",
+    "ARCANELAMP",
+    "LAMPGROWTH",
+    "LAMPFERTILITY",
+    "ARCANEPATTERNCRAFTER",
+    "BASICTURRET",
+    "ADVANCEDTURRET",
+    "ARCANEBORE",
+    "GRAPPLEGUN",
+    "VISGENERATOR",
+    "BASEAUROMANCY",
+    "FOCUSADVANCED",
+    "FOCUSGREATER",
+    "FOCUSELEMENTAL",
+    "FOCUSFLUX",
+    "FOCUSHEAL",
+    "FOCUSCURSE",
+    "FOCUSBREAK",
+    "FOCUSEXCHANGE",
+    "FOCUSPLAN",
+    "FOCUSRIFT",
+    "FOCUSPROJECTILE",
+    "FOCUSBOLT",
+    "FOCUSSCATTER",
+    "FOCUSMINE",
+    "FOCUSSPELLBAT",
+    "FOCUSCLOUD",
+    "FOCUSSPLIT",
+    "RECHARGEPEDESTAL",
+    "VISAMULET",
+    "WORKBENCHCHARGER",
+    "FOCUSPOUCH",
+    "VISBATTERY",
+    "FIRSTSTEPS",
+    "KNOWLEDGETYPES",
+    "THEORYRESEARCH",
+    "FLUX",
+    "WARP",
+    "ORE",
+    "PLANTS",
+    "CRYSTALFARMER",
+    "PRIMPEARL",
+    "UNLOCKALCHEMY",
+    "UNLOCKAUROMANCY",
+    "UNLOCKARTIFICE",
+    "UNLOCKINFUSION",
+    "UNLOCKGOLEMANCY",
+    "CrimsonRites",
+    "UNLOCKELDRITCH",
+    "CELESTIALSCANNING",
+    "FLUXCLEANUP",
+    "FLUXRIFT",
+    "RIFTCLOSER",
+    "BASEELDRITCH",
+    "VOIDSIPHON",
+    "VOIDSEERPEARL",
+    "VOIDROBEARMOR",
+    "PRIMALCRUSHER",
+    "BASEGOLEMANCY",
+    "JARBRAIN",
+    "MATSTUDWOOD",
+    "MATSTUDIRON",
+    "MATSTUDCLAY",
+    "MATSTUDBRASS",
+    "MATSTUDTHAUMIUM",
+    "MATSTUDVOID",
+    "MINDCLOCKWORK",
+    "CONTROLSEALS",
+    "GOLEMDIRECT",
+    "GOLEMLOGISTICS",
+    "MINDBIOTHAUMIC",
+    "SEALCOLLECT",
+    "SEALSTORE",
+    "SEALEMPTY",
+    "SEALPROVIDE",
+    "SEALSTOCK",
+    "SEALGUARD",
+    "SEALBUTCHER",
+    "SEALUSE",
+    "SEALHARVEST",
+    "SEALBREAK",
+    "SEALLUMBER",
+    "GOLEMVISION",
+    "GOLEMCLIMBER",
+    "GOLEMFLYER",
+    "GOLEMBREAKER",
+    "GOLEMCOMBATADV",
+    "BASEINFUSION",
+    "INFUSION",
+    "INFUSIONSTABLE",
+    "INFUSIONBOOST",
+    "INFUSIONANCIENT",
+    "INFUSIONELDRITCH",
+    "PAVINGSTONES",
+    "BOOTSTRAVELLER",
+    "ELEMENTALTOOLS",
+    "INFUSIONENCHANTMENT",
+    "RUNICSHIELDING",
+    "ARMORFORTRESS",
+    "FORTRESSMASK",
+    "CLOUDRING",
+    "CURIOSITYBAND",
+    "VERDANTCHARMS",
+    "CHARMUNDYING",
+    "!Wisp",
+    "!Pech",
+    "!ThaumSlime",
+    "!Firebat",
+    "!TaintSeed",
+    "!TaintCrawler",
+    "!Taintacle",
+    "!TaintSwarm",
+    "!CrimsonCultist",
+    "!BrainyZombie",
+    "!EldritchGuardian",
+    "!EldritchCrab"
+  ],
+  "entries": [
+    {
+      "key": "BASEALCHEMY",
+      "name": "research.BASEALCHEMY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_alchemy.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "UNLOCKALCHEMY"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEALCHEMY.stage.1",
+          "recipes": [
+            "thaumcraft:nitor",
+            "thaumcraft:nitorgroup",
+            "thaumcraft:viscrystalgroup",
+            "thaumcraft:phial",
+            "thaumcraft:Filter",
+            "thaumcraft:MorphicResonator"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ALUMENTUM",
+      "name": "research.ALUMENTUM.title",
+      "icons": [
+        "thaumcraft:textures/items/alumentum.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        2,
+        -1
+      ],
+      "parents": [
+        "BASEALCHEMY"
+      ],
+      "stages": [
+        {
+          "text": "research.ALUMENTUM.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1"
+          ]
+        },
+        {
+          "text": "research.ALUMENTUM.stage.2",
+          "recipes": [
+            "thaumcraft:alumentum"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "METALLURGY",
+      "name": "research.METALLURGY.title",
+      "icons": [
+        "thaumcraft:textures/items/ingot_brass.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        2,
+        2
+      ],
+      "parents": [
+        "BASEALCHEMY"
+      ],
+      "stages": [
+        {
+          "text": "research.METALLURGY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1"
+          ],
+          "recipes": [
+            "thaumcraft:brassingot"
+          ],
+          "required_craft": [
+            "thaumcraft:ingot;1;2"
+          ]
+        },
+        {
+          "text": "research.METALLURGY.stage.2",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1"
+          ],
+          "recipes": [
+            "thaumcraft:brassingot",
+            "thaumcraft:brass_stuff",
+            "thaumcraft:thaumiumingot"
+          ],
+          "required_craft": [
+            "thaumcraft:ingot;1;0"
+          ]
+        },
+        {
+          "text": "research.METALLURGY.stage.3",
+          "recipes": [
+            "thaumcraft:brassingot",
+            "thaumcraft:brass_stuff",
+            "thaumcraft:thaumiumingot",
+            "thaumcraft:thaumium_stuff"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "METALPURIFICATION",
+      "name": "research.METALPURIFICATION.title",
+      "icons": [
+        "thaumcraft:textures/items/cluster_iron.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        2,
+        4
+      ],
+      "parents": [
+        "METALLURGY@3"
+      ],
+      "stages": [
+        {
+          "text": "research.METALPURIFICATION.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;2"
+          ],
+          "recipes": [
+            "thaumcraft:metal_purification_iron",
+            "thaumcraft:metal_purification_gold",
+            "thaumcraft:metal_purification_cinnabar",
+            "thaumcraft:metal_purification_copper",
+            "thaumcraft:metal_purification_tin",
+            "thaumcraft:metal_purification_silver",
+            "thaumcraft:metal_purification_lead"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "HEDGEALCHEMY",
+      "name": "research.HEDGEALCHEMY.title",
+      "icons": [
+        "thaumcraft:textures/items/tallow.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -2,
+        0
+      ],
+      "parents": [
+        "BASEALCHEMY"
+      ],
+      "stages": [
+        {
+          "text": "research.HEDGEALCHEMY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1"
+          ],
+          "required_craft": [
+            "thaumcraft:tallow",
+            "thaumcraft:leather"
+          ],
+          "recipes": [
+            "thaumcraft:hedge_tallow",
+            "thaumcraft:hedge_leather"
+          ]
+        },
+        {
+          "text": "research.HEDGEALCHEMY.stage.2",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1"
+          ],
+          "required_craft": [
+            "minecraft:gunpowder",
+            "minecraft:slime_ball",
+            "minecraft:dye",
+            "minecraft:glowstone_dust"
+          ],
+          "recipes": [
+            "thaumcraft:hedge_tallow",
+            "thaumcraft:tallowcandles",
+            "thaumcraft:hedge_leather",
+            "thaumcraft:hedge_gunpowder",
+            "thaumcraft:hedge_slime",
+            "thaumcraft:hedge_dye",
+            "thaumcraft:hedge_glowstone"
+          ]
+        },
+        {
+          "text": "research.HEDGEALCHEMY.stage.3",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1"
+          ],
+          "required_craft": [
+            "minecraft:clay_ball",
+            "minecraft:string",
+            "minecraft:web",
+            "minecraft:lava_bucket"
+          ],
+          "recipes": [
+            "thaumcraft:hedge_tallow",
+            "thaumcraft:tallowcandles",
+            "thaumcraft:hedge_leather",
+            "thaumcraft:hedge_gunpowder",
+            "thaumcraft:hedge_slime",
+            "thaumcraft:hedge_dye",
+            "thaumcraft:hedge_glowstone",
+            "thaumcraft:hedge_clay",
+            "thaumcraft:hedge_string",
+            "thaumcraft:hedge_web",
+            "thaumcraft:hedge_lava"
+          ]
+        },
+        {
+          "text": "research.HEDGEALCHEMY.stage.4",
+          "recipes": [
+            "thaumcraft:hedge_tallow",
+            "thaumcraft:tallowcandles",
+            "thaumcraft:hedge_leather",
+            "thaumcraft:hedge_gunpowder",
+            "thaumcraft:hedge_slime",
+            "thaumcraft:hedge_dye",
+            "thaumcraft:hedge_glowstone",
+            "thaumcraft:hedge_clay",
+            "thaumcraft:hedge_string",
+            "thaumcraft:hedge_web",
+            "thaumcraft:hedge_lava"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "LIQUIDDEATH",
+      "name": "research.LIQUIDDEATH.title",
+      "icons": [
+        "thaumcraft:textures/items/bucket_death.png"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -4,
+        2
+      ],
+      "parents": [
+        "HEDGEALCHEMY"
+      ],
+      "stages": [
+        {
+          "text": "research.LIQUIDDEATH.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1"
+          ],
+          "warp": 3
+        },
+        {
+          "text": "research.LIQUIDDEATH.stage.2",
+          "recipes": [
+            "thaumcraft:LiquidDeath"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "BOTTLETAINT",
+      "name": "research.BOTTLETAINT.title",
+      "icons": [
+        "thaumcraft:bottle_taint"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -6,
+        0
+      ],
+      "parents": [
+        "HEDGEALCHEMY",
+        "f_toomuchflux"
+      ],
+      "stages": [
+        {
+          "text": "research.BOTTLETAINT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "THEORY;ALCHEMY;1"
+          ],
+          "recipes": [
+            "thaumcraft:BottleTaint"
+          ],
+          "warp": 2
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "BATHSALTS",
+      "name": "research.BATHSALTS.title",
+      "icons": [
+        "thaumcraft:bath_salts"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -4,
+        -2
+      ],
+      "parents": [
+        "HEDGEALCHEMY",
+        "!BATHSALTS"
+      ],
+      "meta": [
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BATHSALTS.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ALCHEMY;1"
+          ]
+        },
+        {
+          "text": "research.BATHSALTS.stage.2",
+          "recipes": [
+            "thaumcraft:BathSalts"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "SANESOAP",
+      "name": "research.SANESOAP.title",
+      "icons": [
+        "thaumcraft:sanity_soap"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -3,
+        -4
+      ],
+      "parents": [
+        "BATHSALTS"
+      ],
+      "stages": [
+        {
+          "text": "research.SANESOAP.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ALCHEMY;1"
+          ]
+        },
+        {
+          "text": "research.SANESOAP.stage.2",
+          "recipes": [
+            "thaumcraft:SaneSoap"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ARCANESPA",
+      "name": "research.ARCANESPA.title",
+      "icons": [
+        "thaumcraft:spa"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -5,
+        -4
+      ],
+      "parents": [
+        "BATHSALTS"
+      ],
+      "stages": [
+        {
+          "text": "research.ARCANESPA.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.ARCANESPA.stage.2",
+          "recipes": [
+            "thaumcraft:ArcaneSpa"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ESSENTIASMELTER",
+      "name": "research.ESSENTIASMELTER.title",
+      "icons": [
+        "thaumcraft:smelter_basic"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        4,
+        0
+      ],
+      "parents": [
+        "ALUMENTUM",
+        "METALLURGY@2"
+      ],
+      "siblings": [
+        "WARDEDJARS"
+      ],
+      "meta": [
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.ESSENTIASMELTER.stage.1",
+          "required_item": [
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aer'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'terra'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ignis'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aqua'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ordo'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'perditio'}]}"
+          ]
+        },
+        {
+          "text": "research.ESSENTIASMELTER.stage.2",
+          "required_item": [
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'vacuos'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'lux'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'motus'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'gelum'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'vitreus'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'metallum'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'victus'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'mortuus'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'potentia'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'permutatio'}]}"
+          ]
+        },
+        {
+          "text": "research.ESSENTIASMELTER.stage.3",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "THEORY;ALCHEMY;1"
+          ],
+          "recipes": [
+            "thaumcraft:EssentiaSmelter"
+          ],
+          "required_craft": [
+            "thaumcraft:smelter_basic"
+          ]
+        },
+        {
+          "text": "research.ESSENTIASMELTER.stage.4",
+          "recipes": [
+            "thaumcraft:EssentiaSmelter",
+            "thaumcraft:Alembic"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.ESSENTIASMELTER.bellows",
+          "required_research": [
+            "BELLOWS"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "WARDEDJARS",
+      "name": "research.WARDEDJARS.title",
+      "icons": [
+        "thaumcraft:jar_normal"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        4,
+        -2
+      ],
+      "parents": [
+        "ESSENTIASMELTER"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.WARDEDJARS.stage.1",
+          "recipes": [
+            "thaumcraft:WardedJar",
+            "thaumcraft:JarVoid",
+            "thaumcraft:BrassBrace",
+            "thaumcraft:JarLabel",
+            "thaumcraft:JarLabelEssence"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "TUBES",
+      "name": "research.TUBES.title",
+      "icons": [
+        "thaumcraft:tube"
+      ],
+      "parents": [
+        "WARDEDJARS"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        6,
+        -2
+      ],
+      "stages": [
+        {
+          "text": "research.TUBES.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_item": [
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'vitium'}]}",
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'vinculum'}]}",
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'alienis'}]}",
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'alkimia'}]}"
+          ]
+        },
+        {
+          "text": "research.TUBES.stage.2",
+          "recipes": [
+            "thaumcraft:Resonator",
+            "thaumcraft:Tube",
+            "thaumcraft:TubeValve",
+            "thaumcraft:TubeFilter",
+            "thaumcraft:TubeRestrict",
+            "thaumcraft:TubeOneway",
+            "thaumcraft:TubeBuffer",
+            "thaumcraft:AlchemicalConstruct"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ESSENTIASMELTERTHAUMIUM",
+      "name": "research.ESSENTIASMELTERTHAUMIUM.title",
+      "icons": [
+        "thaumcraft:smelter_thaumium"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        8,
+        0
+      ],
+      "parents": [
+        "TUBES",
+        "METALLURGY@3"
+      ],
+      "stages": [
+        {
+          "text": "research.ESSENTIASMELTERTHAUMIUM.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1"
+          ],
+          "required_item": [
+            "thaumcraft:plate;1;2"
+          ],
+          "required_craft": [
+            "thaumcraft:metal;1;2"
+          ]
+        },
+        {
+          "text": "research.ESSENTIASMELTERTHAUMIUM.stage.2",
+          "recipes": [
+            "thaumcraft:EssentiaSmelterThaumium"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ESSENTIASMELTERVOID",
+      "name": "research.ESSENTIASMELTERVOID.title",
+      "icons": [
+        "thaumcraft:smelter_void"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        12,
+        0
+      ],
+      "parents": [
+        "ESSENTIASMELTERTHAUMIUM",
+        "BASEELDRITCH"
+      ],
+      "stages": [
+        {
+          "text": "research.ESSENTIASMELTERVOID.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "required_item": [
+            "thaumcraft:plate;1;3"
+          ],
+          "required_craft": [
+            "thaumcraft:metal;1;3"
+          ],
+          "recipes": [
+            "thaumcraft:AdvAlchemyConstruct"
+          ]
+        },
+        {
+          "text": "research.ESSENTIASMELTERVOID.stage.2",
+          "recipes": [
+            "thaumcraft:AdvAlchemyConstruct",
+            "thaumcraft:EssentiaSmelterVoid"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "IMPROVEDSMELTING",
+      "name": "research.IMPROVEDSMELTING.title",
+      "icons": [
+        "thaumcraft:smelter_aux"
+      ],
+      "parents": [
+        "TUBES",
+        "BELLOWS"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        5,
+        -4
+      ],
+      "stages": [
+        {
+          "text": "research.IMPROVEDSMELTING.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.IMPROVEDSMELTING.stage.2",
+          "recipes": [
+            "thaumcraft:SmelterAux"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "IMPROVEDSMELTING2",
+      "name": "research.IMPROVEDSMELTING2.title",
+      "icons": [
+        "thaumcraft:smelter_vent"
+      ],
+      "parents": [
+        "IMPROVEDSMELTING"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        3,
+        -4
+      ],
+      "stages": [
+        {
+          "text": "research.IMPROVEDSMELTING2.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.IMPROVEDSMELTING2.stage.2",
+          "recipes": [
+            "thaumcraft:SmelterVent"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "CENTRIFUGE",
+      "name": "research.CENTRIFUGE.title",
+      "icons": [
+        "thaumcraft:centrifuge"
+      ],
+      "parents": [
+        "TUBES"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        7,
+        -4
+      ],
+      "stages": [
+        {
+          "text": "research.CENTRIFUGE.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1"
+          ]
+        },
+        {
+          "text": "research.CENTRIFUGE.stage.2",
+          "recipes": [
+            "thaumcraft:Centrifuge"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "THAUMATORIUM",
+      "name": "research.THAUMATORIUM.title",
+      "icons": [
+        "thaumcraft:thaumatorium"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        10,
+        -2
+      ],
+      "parents": [
+        "CENTRIFUGE",
+        "ESSENTIASMELTERTHAUMIUM"
+      ],
+      "meta": [
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.THAUMATORIUM.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.THAUMATORIUM.stage.2",
+          "recipes": [
+            "thaumcraft:Thaumatorium",
+            "thaumcraft:MnemonicMatrix"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "ESSENTIATRANSPORT",
+      "name": "research.ESSENTIATRANSPORT.title",
+      "icons": [
+        "thaumcraft:essentia_input"
+      ],
+      "parents": [
+        "THAUMATORIUM",
+        "INFUSION"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        12,
+        -2
+      ],
+      "stages": [
+        {
+          "text": "research.ESSENTIATRANSPORT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.ESSENTIATRANSPORT.stage.2",
+          "recipes": [
+            "thaumcraft:EssentiaTransportIn",
+            "thaumcraft:EssentiaTransportOut"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "EVERFULLURN",
+      "name": "research.EVERFULLURN.title",
+      "icons": [
+        "thaumcraft:everfull_urn"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -2,
+        2
+      ],
+      "parents": [
+        "HEDGEALCHEMY"
+      ],
+      "stages": [
+        {
+          "text": "research.EVERFULLURN.stage.1",
+          "required_knowledge": [
+            "THEORY;BASICS;1",
+            "OBSERVATION;ALCHEMY;1"
+          ]
+        },
+        {
+          "text": "research.EVERFULLURN.stage.2",
+          "recipes": [
+            "thaumcraft:EverfullUrn"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "POTIONSPRAYER",
+      "name": "research.POTIONSPRAYER.title",
+      "icons": [
+        "thaumcraft:potion_sprayer"
+      ],
+      "category": "ALCHEMY",
+      "location": [
+        -1,
+        -2
+      ],
+      "parents": [
+        "HEDGEALCHEMY",
+        "~TUBES"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.POTIONSPRAYER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "THEORY;ALCHEMY;1"
+          ]
+        },
+        {
+          "text": "research.POTIONSPRAYER.stage.2",
+          "recipes": [
+            "thaumcraft:PotionSprayer"
+          ]
+        }
+      ],
+      "_file": "alchemy.json"
+    },
+    {
+      "key": "BASEARTIFICE",
+      "name": "research.BASEARTIFICE.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_artifice.png"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "UNLOCKARTIFICE"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEARTIFICE.stage.1",
+          "recipes": [
+            "thaumcraft:Goggles",
+            "thaumcraft:mechanism_simple",
+            "thaumcraft:mechanism_complex",
+            "thaumcraft:mirrorglass",
+            "thaumcraft:ironplate"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "HUNGRYCHEST",
+      "name": "research.HUNGRYCHEST.title",
+      "icons": [
+        "thaumcraft:hungry_chest"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        3,
+        1
+      ],
+      "parents": [
+        "BASEARTIFICE"
+      ],
+      "stages": [
+        {
+          "text": "research.HUNGRYCHEST.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1"
+          ],
+          "required_item": [
+            "oredict:chest",
+            "minecraft:hopper"
+          ]
+        },
+        {
+          "text": "research.HUNGRYCHEST.stage.2",
+          "recipes": [
+            "thaumcraft:HungryChest"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "LEVITATOR",
+      "name": "research.LEVITATOR.title",
+      "icons": [
+        "thaumcraft:levitator"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        5,
+        3
+      ],
+      "parents": [
+        "HUNGRYCHEST",
+        "METALLURGY@3"
+      ],
+      "stages": [
+        {
+          "text": "research.LEVITATOR.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!volatus"
+          ]
+        },
+        {
+          "text": "research.LEVITATOR.stage.2",
+          "recipes": [
+            "thaumcraft:Levitator"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "INFERNALFURNACE",
+      "name": "research.INFERNALFURNACE.title",
+      "icons": [
+        "thaumcraft:infernal_furnace"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        3,
+        -1
+      ],
+      "parents": [
+        "BASEARTIFICE"
+      ],
+      "stages": [
+        {
+          "text": "research.INFERNALFURNACE.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!ignis",
+            "m_hellandback"
+          ],
+          "required_item": [
+            "minecraft:obsidian",
+            "minecraft:nether_brick",
+            "minecraft:blaze_rod"
+          ]
+        },
+        {
+          "text": "research.INFERNALFURNACE.stage.2",
+          "recipes": [
+            "thaumcraft:infernalfurnace",
+            "thaumcraft:triplemeattreatfake"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.INFERNALFURNACE.bellows",
+          "required_research": [
+            "BELLOWS"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "BELLOWS",
+      "name": "research.BELLOWS.title",
+      "icons": [
+        "thaumcraft:bellows"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        5,
+        -3
+      ],
+      "parents": [
+        "INFERNALFURNACE"
+      ],
+      "stages": [
+        {
+          "text": "research.BELLOWS.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1"
+          ],
+          "required_item": [
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aer'}]}"
+          ]
+        },
+        {
+          "text": "research.BELLOWS.stage.2",
+          "recipes": [
+            "thaumcraft:Bellows"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "REDSTONERELAY",
+      "name": "research.REDSTONERELAY.title",
+      "icons": [
+        "thaumcraft:redstone_relay"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        0,
+        -2
+      ],
+      "parents": [
+        "BASEARTIFICE"
+      ],
+      "stages": [
+        {
+          "text": "research.REDSTONERELAY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!potentia",
+            "!machina"
+          ],
+          "required_item": [
+            "minecraft:redstone_torch"
+          ]
+        },
+        {
+          "text": "research.REDSTONERELAY.stage.2",
+          "recipes": [
+            "thaumcraft:RedstoneRelay"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "ARCANEEAR",
+      "name": "research.ARCANEEAR.title",
+      "icons": [
+        "thaumcraft:arcane_ear"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        0,
+        -4
+      ],
+      "parents": [
+        "REDSTONERELAY"
+      ],
+      "stages": [
+        {
+          "text": "research.ARCANEEAR.stage.1",
+          "required_knowledgeauram": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!sensus"
+          ],
+          "required_item": [
+            "minecraft:noteblock"
+          ]
+        },
+        {
+          "text": "research.ARCANEEAR.stage.2",
+          "recipes": [
+            "thaumcraft:ArcaneEar",
+            "thaumcraft:ArcaneEarToggle"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "DIOPTRA",
+      "name": "research.DIOPTRA.title",
+      "icons": [
+        "thaumcraft:dioptra"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -2,
+        3
+      ],
+      "parents": [
+        "BASEARTIFICE"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.DIOPTRA.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!sensus",
+            "!auram"
+          ]
+        },
+        {
+          "text": "research.DIOPTRA.stage.2",
+          "recipes": [
+            "thaumcraft:dioptra"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "MIRROR",
+      "name": "research.MIRROR.title",
+      "icons": [
+        "thaumcraft:mirror"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -6,
+        0
+      ],
+      "parents": [
+        "ARCANELAMP",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.MIRROR.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1",
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_item": [
+            "minecraft:ender_pearl",
+            "thaumcraft:mirrored_glass"
+          ],
+          "required_research": [
+            "f_TELEPORT"
+          ]
+        },
+        {
+          "text": "research.MIRROR.stage.2",
+          "recipes": [
+            "thaumcraft:Mirror"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "MIRRORHAND",
+      "name": "research.MIRRORHAND.title",
+      "icons": [
+        "thaumcraft:hand_mirror"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -7,
+        1
+      ],
+      "parents": [
+        "MIRROR"
+      ],
+      "stages": [
+        {
+          "text": "research.MIRRORHAND.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.MIRRORHAND.stage.2",
+          "recipes": [
+            "thaumcraft:MirrorHand"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "MIRRORESSENTIA",
+      "name": "research.MIRRORESSENTIA.title",
+      "icons": [
+        "thaumcraft:mirror_essentia"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -7,
+        -1
+      ],
+      "parents": [
+        "MIRROR"
+      ],
+      "stages": [
+        {
+          "text": "research.MIRRORESSENTIA.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.MIRRORESSENTIA.stage.2",
+          "recipes": [
+            "thaumcraft:MirrorEssentia"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "ARCANELAMP",
+      "name": "research.ARCANELAMP.title",
+      "icons": [
+        "thaumcraft:lamp_arcane"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -3,
+        0
+      ],
+      "parents": [
+        "BASEARTIFICE"
+      ],
+      "stages": [
+        {
+          "text": "research.ARCANELAMP.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!lux"
+          ]
+        },
+        {
+          "text": "research.ARCANELAMP.stage.2",
+          "recipes": [
+            "thaumcraft:ArcaneLamp"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "LAMPGROWTH",
+      "name": "research.LAMPGROWTH.title",
+      "icons": [
+        "thaumcraft:lamp_growth"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -4,
+        1
+      ],
+      "parents": [
+        "ARCANELAMP",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.LAMPGROWTH.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!herba"
+          ],
+          "required_item": [
+            "minecraft:dye;1;15"
+          ]
+        },
+        {
+          "text": "research.LAMPGROWTH.stage.2",
+          "recipes": [
+            "thaumcraft:LampGrowth"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "LAMPFERTILITY",
+      "name": "research.LAMPFERTILITY.title",
+      "icons": [
+        "thaumcraft:lamp_fertility"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -4,
+        -1
+      ],
+      "parents": [
+        "ARCANELAMP",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.LAMPFERTILITY.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!desiderium"
+          ],
+          "required_item": [
+            "minecraft:wheat",
+            "minecraft:carrot"
+          ]
+        },
+        {
+          "text": "research.LAMPFERTILITY.stage.2",
+          "recipes": [
+            "thaumcraft:LampFertility"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "ARCANEPATTERNCRAFTER",
+      "name": "research.ARCANEPATTERNCRAFTER.title",
+      "icons": [
+        "thaumcraft:pattern_crafter"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -2,
+        5
+      ],
+      "parents": [
+        "DIOPTRA"
+      ],
+      "stages": [
+        {
+          "text": "research.ARCANEPATTERNCRAFTER.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1",
+            "THEORY;ARTIFICE;1",
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!fabrico"
+          ]
+        },
+        {
+          "text": "research.ARCANEPATTERNCRAFTER.stage.2",
+          "recipes": [
+            "thaumcraft:patterncrafter"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "BASICTURRET",
+      "name": "research.BASICTURRET.title",
+      "icons": [
+        "thaumcraft:turret;1;0"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -2,
+        -4
+      ],
+      "parents": [
+        "MINDCLOCKWORK",
+        "ARCANEEAR"
+      ],
+      "stages": [
+        {
+          "text": "research.BASICTURRET.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "f_DISPENSER"
+          ]
+        },
+        {
+          "text": "research.BASICTURRET.stage.2",
+          "recipes": [
+            "thaumcraft:AutomatedCrossbow",
+            "thaumcraft:activatorrail"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "ADVANCEDTURRET",
+      "name": "research.ADVANCEDTURRET.title",
+      "icons": [
+        "thaumcraft:turret;1;1"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -4,
+        -4
+      ],
+      "parents": [
+        "MINDBIOTHAUMIC",
+        "BASICTURRET"
+      ],
+      "stages": [
+        {
+          "text": "research.ADVANCEDTURRET.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.ADVANCEDTURRET.stage.2",
+          "recipes": [
+            "thaumcraft:AdvancedCrossbow"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "ARCANEBORE",
+      "name": "research.ARCANEBORE.title",
+      "icons": [
+        "thaumcraft:turret;1;2"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        -3,
+        -6
+      ],
+      "parents": [
+        "INFUSION",
+        "BASICTURRET",
+        "FOCUSBREAK"
+      ],
+      "stages": [
+        {
+          "text": "research.ARCANEBORE.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1",
+            "OBSERVATION;ARTIFICE;1",
+            "OBSERVATION;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.ARCANEBORE.stage.2",
+          "recipes": [
+            "thaumcraft:ArcaneBore"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "GRAPPLEGUN",
+      "name": "research.GRAPPLEGUN.title",
+      "icons": [
+        "thaumcraft:grapple_gun"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        2,
+        3
+      ],
+      "parents": [
+        "BASEARTIFICE",
+        "RECHARGEPEDESTAL"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.GRAPPLEGUN.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1",
+            "THEORY;BASICS;1"
+          ],
+          "required_item": [
+            "thaumcraft:nugget;1;10"
+          ]
+        },
+        {
+          "text": "research.GRAPPLEGUN.stage.2",
+          "recipes": [
+            "thaumcraft:GrappleGunTip",
+            "thaumcraft:GrappleGunSpool",
+            "thaumcraft:GrappleGun"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "VISGENERATOR",
+      "name": "research.VISGENERATOR.title",
+      "icons": [
+        "thaumcraft:vis_generator"
+      ],
+      "category": "ARTIFICE",
+      "location": [
+        2,
+        -3
+      ],
+      "parents": [
+        "REDSTONERELAY"
+      ],
+      "stages": [
+        {
+          "text": "research.VISGENERATOR.stage.1",
+          "required_knowledge": [
+            "THEORY;BASICS;1",
+            "THEORY;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!potentia"
+          ],
+          "required_item": [
+            "minecraft:redstone_block",
+            "minecraft:piston"
+          ]
+        },
+        {
+          "text": "research.VISGENERATOR.stage.2",
+          "recipes": [
+            "thaumcraft:VisGenerator"
+          ]
+        }
+      ],
+      "_file": "artifice.json"
+    },
+    {
+      "key": "BASEAUROMANCY",
+      "name": "research.BASEAUROMANCY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_auromancy.png"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "UNLOCKAUROMANCY"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEAUROMANCY.stage.1",
+          "recipes": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic",
+            "thaumcraft:focus_1"
+          ],
+          "required_craft": [
+            "thaumcraft:focus_1"
+          ]
+        },
+        {
+          "text": "research.BASEAUROMANCY.stage.2",
+          "recipes": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic",
+            "thaumcraft:focus_1",
+            "thaumcraft:tablestone",
+            "thaumcraft:wand_workbench"
+          ],
+          "required_research": [
+            "f_onfire"
+          ],
+          "required_craft": [
+            "thaumcraft:wand_workbench"
+          ]
+        },
+        {
+          "text": "research.BASEAUROMANCY.stage.3",
+          "recipes": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic",
+            "thaumcraft:focus_1",
+            "thaumcraft:tablestone",
+            "thaumcraft:wand_workbench"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSADVANCED",
+      "name": "research.FOCUSADVANCED.title",
+      "icons": [
+        "thaumcraft:focus_2"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        -2
+      ],
+      "parents": [
+        "BASEAUROMANCY",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSADVANCED.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "recipes": [
+            "thaumcraft:focus_2"
+          ],
+          "required_craft": [
+            "thaumcraft:focus_2"
+          ]
+        },
+        {
+          "text": "research.FOCUSADVANCED.stage.2",
+          "recipes": [
+            "thaumcraft:focus_2"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSGREATER",
+      "name": "research.FOCUSGREATER.title",
+      "icons": [
+        "thaumcraft:focus_3"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        -4
+      ],
+      "parents": [
+        "FOCUSADVANCED",
+        "PRIMPEARL"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSGREATER.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "f_onfire"
+          ],
+          "recipes": [
+            "thaumcraft:focus_3"
+          ],
+          "required_craft": [
+            "thaumcraft:focus_3"
+          ]
+        },
+        {
+          "text": "research.FOCUSGREATER.stage.2",
+          "recipes": [
+            "thaumcraft:focus_3"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSELEMENTAL",
+      "name": "research.FOCUSELEMENTAL.title",
+      "icons": [
+        "focus:thaumcraft.AIR",
+        "focus:thaumcraft.FROST",
+        "focus:thaumcraft.EARTH"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        2
+      ],
+      "parents": [
+        "BASEAUROMANCY"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSELEMENTAL.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!aer",
+            "!gelum",
+            "!terra"
+          ]
+        },
+        {
+          "text": "research.FOCUSELEMENTAL.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSFLUX",
+      "name": "research.FOCUSFLUX.title",
+      "icons": [
+        "focus:thaumcraft.FLUX"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        4
+      ],
+      "parents": [
+        "FOCUSELEMENTAL"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSFLUX.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!vitium"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSHEAL",
+      "name": "research.FOCUSHEAL.title",
+      "icons": [
+        "focus:thaumcraft.HEAL"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        0,
+        7
+      ],
+      "parents": [
+        "FOCUSFLUX"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSHEAL.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!victus"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSCURSE",
+      "name": "research.FOCUSCURSE.title",
+      "icons": [
+        "focus:thaumcraft.CURSE"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -2,
+        6
+      ],
+      "parents": [
+        "FOCUSFLUX",
+        "!Pechwand"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSCURSE.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!mortuus"
+          ]
+        },
+        {
+          "text": "research.FOCUSCURSE.stage.2",
+          "warp": 2
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSBREAK",
+      "name": "research.FOCUSBREAK.title",
+      "icons": [
+        "focus:thaumcraft.BREAK"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        2,
+        6
+      ],
+      "parents": [
+        "FOCUSFLUX"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSBREAK.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!perditio"
+          ],
+          "required_item": [
+            "thaumcraft:enchanted_placeholder;1;0;{ench:[{id:33s,lvl:1s}]}",
+            "thaumcraft:enchanted_placeholder;1;0;{ench:[{id:35s,lvl:1s}]}"
+          ]
+        },
+        {
+          "text": "research.FOCUSBREAK.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSEXCHANGE",
+      "name": "research.FOCUSEXCHANGE.title",
+      "icons": [
+        "focus:thaumcraft.EXCHANGE"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        2,
+        4
+      ],
+      "parents": [
+        "FOCUSFLUX"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSEXCHANGE.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!permutatio"
+          ]
+        },
+        {
+          "text": "research.FOCUSEXCHANGE.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSPLAN",
+      "name": "research.FOCUSPLAN.title",
+      "icons": [
+        "focus:thaumcraft.PLAN"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        3,
+        2
+      ],
+      "parents": [
+        "FOCUSEXCHANGE",
+        "FOCUSPROJECTILE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSPLAN.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!fabrico"
+          ]
+        },
+        {
+          "text": "research.FOCUSPLAN.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSRIFT",
+      "name": "research.FOCUSRIFT.title",
+      "icons": [
+        "focus:thaumcraft.RIFT"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        4,
+        5
+      ],
+      "parents": [
+        "FOCUSBREAK",
+        "FOCUSEXCHANGE"
+      ],
+      "meta": [
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSRIFT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!vacuos"
+          ],
+          "warp": 2
+        },
+        {
+          "text": "research.FOCUSRIFT.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSPROJECTILE",
+      "name": "research.FOCUSPROJECTILE.title",
+      "icons": [
+        "focus:thaumcraft.PROJECTILE"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        3,
+        0
+      ],
+      "parents": [
+        "BASEAUROMANCY"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSPROJECTILE.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!motus"
+          ]
+        },
+        {
+          "text": "research.FOCUSPROJECTILE.stage.2",
+          "required_research": [
+            "f_arrow",
+            "f_fireball",
+            "f_spit"
+          ]
+        },
+        {
+          "text": "research.FOCUSPROJECTILE.stage.3"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSBOLT",
+      "name": "research.FOCUSBOLT.title",
+      "icons": [
+        "focus:thaumcraft.BOLT"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        7,
+        0
+      ],
+      "parents": [
+        "FOCUSPROJECTILE@2"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSBOLT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_research": [
+            "!potentia"
+          ]
+        },
+        {
+          "text": "research.FOCUSBOLT.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSSCATTER",
+      "name": "research.FOCUSSCATTER.title",
+      "icons": [
+        "focus:thaumcraft.SCATTER"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        5,
+        -1
+      ],
+      "parents": [
+        "FOCUSBOLT",
+        "FOCUSPROJECTILE"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSSCATTER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "THEORY;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.FOCUSSCATTER.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSMINE",
+      "name": "research.FOCUSMINE.title",
+      "icons": [
+        "focus:thaumcraft.MINE"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        5,
+        2
+      ],
+      "parents": [
+        "FOCUSPROJECTILE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSMINE.stage.1",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1",
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_item": [
+            "minecraft:tripwire_hook"
+          ],
+          "required_research": [
+            "!vinculum"
+          ]
+        },
+        {
+          "text": "research.FOCUSMINE.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSSPELLBAT",
+      "name": "research.FOCUSSPELLBAT.title",
+      "icons": [
+        "focus:thaumcraft.SPELLBAT"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        7,
+        4
+      ],
+      "parents": [
+        "FOCUSMINE",
+        "f_BAT",
+        "!Firebat"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSSPELLBAT.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "required_research": [
+            "!bestia"
+          ]
+        },
+        {
+          "text": "research.FOCUSSPELLBAT.stage.2",
+          "warp": 2
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSCLOUD",
+      "name": "research.FOCUSCLOUD.title",
+      "icons": [
+        "focus:thaumcraft.CLOUD"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        7,
+        2
+      ],
+      "parents": [
+        "FOCUSMINE",
+        "!DRAGONBREATH"
+      ],
+      "meta": [
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSCLOUD.stage.1",
+          "required_knowledge": [
+            "THEORY;ALCHEMY;1",
+            "THEORY;AUROMANCY;1"
+          ],
+          "required_item": [
+            "minecraft:dragon_breath"
+          ],
+          "required_research": [
+            "!alkimia"
+          ]
+        },
+        {
+          "text": "research.FOCUSCLOUD.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSSPLIT",
+      "name": "research.FOCUSSPLIT.title",
+      "icons": [
+        "focus:thaumcraft.SPLITTARGET",
+        "focus:thaumcraft.SPLITTRAJECTORY"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        5,
+        -3
+      ],
+      "parents": [
+        "FOCUSSCATTER"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSSPLIT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "THEORY;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.FOCUSSPLIT.stage.2"
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "RECHARGEPEDESTAL",
+      "name": "research.RECHARGEPEDESTAL.title",
+      "icons": [
+        "thaumcraft:recharge_pedestal"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -3,
+        2
+      ],
+      "parents": [
+        "BASEAUROMANCY"
+      ],
+      "stages": [
+        {
+          "text": "research.RECHARGEPEDESTAL.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.RECHARGEPEDESTAL.stage.2",
+          "recipes": [
+            "thaumcraft:rechargepedestal"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "VISAMULET",
+      "name": "research.VISAMULET.title",
+      "icons": [
+        "thaumcraft:amulet_vis;1;1"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -5,
+        4
+      ],
+      "parents": [
+        "RECHARGEPEDESTAL",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.VISAMULET.stage.1",
+          "required_knowledge": [
+            "THEORY;AUROMANCY;2"
+          ]
+        },
+        {
+          "text": "research.VISAMULET.stage.2",
+          "recipes": [
+            "thaumcraft:VisAmulet"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "WORKBENCHCHARGER",
+      "name": "research.WORKBENCHCHARGER.title",
+      "icons": [
+        "thaumcraft:arcane_workbench_charger"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -3,
+        4
+      ],
+      "parents": [
+        "RECHARGEPEDESTAL"
+      ],
+      "stages": [
+        {
+          "text": "research.WORKBENCHCHARGER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "THEORY;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.WORKBENCHCHARGER.stage.2",
+          "recipes": [
+            "thaumcraft:workbenchcharger"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FOCUSPOUCH",
+      "name": "research.FOCUSPOUCH.title",
+      "icons": [
+        "thaumcraft:focus_pouch"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -2,
+        -1
+      ],
+      "parents": [
+        "BASEAUROMANCY"
+      ],
+      "stages": [
+        {
+          "text": "research.FOCUSPOUCH.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.FOCUSPOUCH.stage.2",
+          "recipes": [
+            "thaumcraft:FocusPouch"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "VISBATTERY",
+      "name": "research.VISBATTERY.title",
+      "icons": [
+        "thaumcraft:vis_battery"
+      ],
+      "category": "AUROMANCY",
+      "location": [
+        -5,
+        0
+      ],
+      "parents": [
+        "RECHARGEPEDESTAL",
+        "CRYSTALFARMER"
+      ],
+      "stages": [
+        {
+          "text": "research.VISBATTERY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ]
+        },
+        {
+          "text": "research.VISBATTERY.stage.2",
+          "recipes": [
+            "thaumcraft:VisBattery"
+          ]
+        }
+      ],
+      "_file": "auromancy.json"
+    },
+    {
+      "key": "FIRSTSTEPS",
+      "name": "research.FIRSTSTEPS.title",
+      "icons": [
+        "thaumcraft:textures/items/thaumonomicon.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "!gotthaumonomicon"
+      ],
+      "siblings": [
+        "KNOWLEDGETYPES",
+        "!gotdream"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.FIRSTSTEPS.stage.1",
+          "required_craft": [
+            "thaumcraft:arcane_workbench"
+          ],
+          "recipes": [
+            "thaumcraft:salismundusfake"
+          ]
+        },
+        {
+          "text": "research.FIRSTSTEPS.stage.2",
+          "required_craft": [
+            "thaumcraft:thaumometer"
+          ],
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1"
+          ],
+          "recipes": [
+            "thaumcraft:thaumometer",
+            "thaumcraft:salismundusfake"
+          ]
+        },
+        {
+          "text": "research.FIRSTSTEPS.stage.3",
+          "recipes": [
+            "thaumcraft:thaumometer",
+            "thaumcraft:salismundusfake",
+            "thaumcraft:StoneArcane",
+            "thaumcraft:BrickArcane"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "KNOWLEDGETYPES",
+      "name": "research.KNOWLEDGETYPES.title",
+      "icons": [
+        "thaumcraft:textures/research/knowledge_theory.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        2,
+        -1
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.KNOWLEDGETYPES.stage.1"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "THEORYRESEARCH",
+      "name": "research.THEORYRESEARCH.title",
+      "icons": [
+        "thaumcraft:textures/research/knowledge_theory.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        4,
+        -1
+      ],
+      "parents": [
+        "KNOWLEDGETYPES"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.THEORYRESEARCH.stage.1",
+          "required_craft": [
+            "thaumcraft:scribing_tools",
+            "thaumcraft:research_table"
+          ],
+          "recipes": [
+            "thaumcraft:tablewood",
+            "thaumcraft:inkwell"
+          ]
+        },
+        {
+          "text": "research.THEORYRESEARCH.stage.2",
+          "recipes": [
+            "thaumcraft:tablewood",
+            "thaumcraft:inkwell"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "FLUX",
+      "name": "research.FLUX.title",
+      "icons": [
+        "thaumcraft:textures/research/r_flux.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -2,
+        -2
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.FLUX.stage.1",
+          "required_research": [
+            "f_toomuchflux"
+          ]
+        },
+        {
+          "text": "research.FLUX.stage.1"
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.FLUX.stage.2",
+          "required_research": [
+            "f_toomuchflux"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "WARP",
+      "name": "research.WARP.title",
+      "icons": [
+        "thaumcraft:textures/research/r_warp.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -4,
+        -2
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.WARP.stage.1",
+          "recipes": [
+            "thaumcraft:sanitychecker"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "ORE",
+      "name": "research.ORE.title",
+      "icons": [
+        "minecraft:iron_pickaxe"
+      ],
+      "category": "BASICS",
+      "location": [
+        -4,
+        0
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.ORE.stage.1"
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.ORE.amber",
+          "required_research": [
+            "!OREAMBER"
+          ]
+        },
+        {
+          "text": "research.ORE.cinnabar",
+          "required_research": [
+            "!ORECINNABAR"
+          ]
+        },
+        {
+          "text": "research.ORE.crystal",
+          "required_research": [
+            "!ORECRYSTAL"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "PLANTS",
+      "name": "research.PLANTS.title",
+      "icons": [
+        "thaumcraft:sapling_greatwood",
+        "thaumcraft:sapling_silverwood"
+      ],
+      "category": "BASICS",
+      "location": [
+        -3,
+        0
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.PLANTS.stage.1"
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.PLANTS.greatwood",
+          "required_research": [
+            "!PLANTWOOD"
+          ]
+        },
+        {
+          "text": "research.PLANTS.silverwood",
+          "required_research": [
+            "!PLANTWOOD"
+          ]
+        },
+        {
+          "text": "research.PLANTS.cinderpearl",
+          "required_research": [
+            "!PLANTCINDERPEARL"
+          ]
+        },
+        {
+          "text": "research.PLANTS.shimmerleaf",
+          "required_research": [
+            "!PLANTSHIMMERLEAF"
+          ]
+        },
+        {
+          "text": "research.PLANTS.vishroom",
+          "required_research": [
+            "!PLANTVISHROOM"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "CRYSTALFARMER",
+      "name": "research.CRYSTALFARMER.title",
+      "icons": [
+        "thaumcraft:crystal_aer",
+        "thaumcraft:crystal_ignis",
+        "thaumcraft:crystal_aqua",
+        "thaumcraft:crystal_terra",
+        "thaumcraft:crystal_ordo",
+        "thaumcraft:crystal_perditio"
+      ],
+      "category": "BASICS",
+      "location": [
+        -5,
+        1
+      ],
+      "parents": [
+        "ORE",
+        "INFUSION",
+        "!ORECRYSTAL"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.CRYSTALFARMER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "OBSERVATION;BASICS;1"
+          ],
+          "required_item": [
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aer'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'terra'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ignis'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aqua'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ordo'}]}",
+            "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'perditio'}]}"
+          ]
+        },
+        {
+          "text": "research.CRYSTALFARMER.stage.2",
+          "recipes": [
+            "thaumcraft:CrystalClusterAir",
+            "thaumcraft:CrystalClusterFire",
+            "thaumcraft:CrystalClusterWater",
+            "thaumcraft:CrystalClusterEarth",
+            "thaumcraft:CrystalClusterOrder",
+            "thaumcraft:CrystalClusterEntropy",
+            "thaumcraft:CrystalClusterFlux"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "PRIMPEARL",
+      "name": "research.PRIMPEARL.title",
+      "icons": [
+        "thaumcraft:primordial_pearl"
+      ],
+      "category": "BASICS",
+      "location": [
+        -8,
+        4
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.PRIMPEARL.stage.1"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKALCHEMY",
+      "name": "research.UNLOCKALCHEMY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_alchemy.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        2
+      ],
+      "parents": [
+        "FIRSTSTEPS"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKALCHEMY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ALCHEMY;1",
+            "OBSERVATION;BASICS;1"
+          ]
+        },
+        {
+          "text": "research.UNLOCKALCHEMY.stage.2",
+          "required_craft": [
+            "thaumcraft:crucible"
+          ]
+        },
+        {
+          "text": "research.UNLOCKALCHEMY.stage.3",
+          "required_craft": [
+            "thaumcraft:nitor;1;4"
+          ],
+          "recipes": [
+            "thaumcraft:nitor",
+            "thaumcraft:nitorcolor"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKAUROMANCY",
+      "name": "research.UNLOCKAUROMANCY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_auromancy.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -2,
+        4
+      ],
+      "parents": [
+        "UNLOCKALCHEMY"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKAUROMANCY.stage.1",
+          "required_research": [
+            "m_deepdown",
+            "m_uphigh"
+          ]
+        },
+        {
+          "text": "research.UNLOCKAUROMANCY.stage.2",
+          "required_craft": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic"
+          ],
+          "recipes": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic"
+          ]
+        },
+        {
+          "text": "research.UNLOCKAUROMANCY.stage.3",
+          "recipes": [
+            "thaumcraft:vis_resonator",
+            "thaumcraft:caster_basic"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKARTIFICE",
+      "name": "research.UNLOCKARTIFICE.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_artifice.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        2,
+        4
+      ],
+      "parents": [
+        "UNLOCKALCHEMY",
+        "METALLURGY@2"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKARTIFICE.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "!sensus",
+            "!machina"
+          ]
+        },
+        {
+          "text": "research.UNLOCKARTIFICE.stage.2",
+          "recipes": [
+            "thaumcraft:Goggles"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKINFUSION",
+      "name": "research.UNLOCKINFUSION.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_infusion.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        4
+      ],
+      "parents": [
+        "UNLOCKALCHEMY"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKINFUSION.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;INFUSION;1"
+          ],
+          "required_research": [
+            "!auram",
+            "!praecantatio"
+          ]
+        },
+        {
+          "text": "research.UNLOCKINFUSION.stage.2",
+          "recipes": [
+            "thaumcraft:EnchantedFabric",
+            "thaumcraft:RobeChest",
+            "thaumcraft:RobeLegs",
+            "thaumcraft:RobeBoots"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKGOLEMANCY",
+      "name": "research.UNLOCKGOLEMANCY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_golemancy.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        6
+      ],
+      "parents": [
+        "UNLOCKARTIFICE",
+        "UNLOCKAUROMANCY",
+        "UNLOCKINFUSION"
+      ],
+      "siblings": [
+        "BASEGOLEMANCY"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKGOLEMANCY.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1",
+            "OBSERVATION;BASICS;1"
+          ],
+          "required_research": [
+            "f_golem"
+          ]
+        },
+        {
+          "text": "research.UNLOCKGOLEMANCY.stage.2"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "CrimsonRites",
+      "name": "research.CrimsonRites.title",
+      "icons": [
+        "thaumcraft:curio;1;6"
+      ],
+      "category": "BASICS",
+      "location": [
+        -6,
+        4
+      ],
+      "parents": [
+        "!CrimsonCultist"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.CrimsonRites.stage.1",
+          "required_item": [
+            "thaumcraft:curio;1;6"
+          ]
+        },
+        {
+          "text": "research.CrimsonRites.stage.2"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "UNLOCKELDRITCH",
+      "name": "research.UNLOCKELDRITCH.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_eldritch.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -4,
+        6
+      ],
+      "parents": [
+        "CrimsonRites",
+        "UNLOCKAUROMANCY"
+      ],
+      "meta": [
+        "ROUND",
+        "SPIKY",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.UNLOCKELDRITCH.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1",
+            "OBSERVATION;ELDRITCH;1"
+          ],
+          "required_research": [
+            "f_VOIDSEED"
+          ],
+          "warp": 5
+        },
+        {
+          "text": "research.UNLOCKELDRITCH.stage.2"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "CELESTIALSCANNING",
+      "name": "research.CELESTIALSCANNING.title",
+      "icons": [
+        "thaumcraft:textures/research/r_celestial.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        4,
+        1
+      ],
+      "parents": [
+        "THEORYRESEARCH"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.CELESTIALSCANNING.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1",
+            "OBSERVATION;ARTIFICE;1",
+            "OBSERVATION;AUROMANCY;1"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "FLUXCLEANUP",
+      "name": "research.FLUXCLEANUP.title",
+      "icons": [
+        "thaumcraft:condenser"
+      ],
+      "category": "BASICS",
+      "location": [
+        -2,
+        -4
+      ],
+      "parents": [
+        "FLUX",
+        "f_toomuchflux",
+        "VISBATTERY"
+      ],
+      "stages": [
+        {
+          "text": "research.FLUXCLEANUP.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;2",
+            "OBSERVATION;ARTIFICE;1",
+            "OBSERVATION;BASICS;1",
+            "THEORY;AUROMANCY;2"
+          ],
+          "required_item": [
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'vitium'}]}"
+          ]
+        },
+        {
+          "text": "research.FLUXCLEANUP.stage.2",
+          "recipes": [
+            "thaumcraft:Condenser",
+            "thaumcraft:CondenserLattice"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "FLUXRIFT",
+      "name": "research.FLUXRIFT.title",
+      "icons": [
+        "thaumcraft:textures/research/r_fluxrift.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        -3
+      ],
+      "parents": [
+        "FLUX",
+        "!FluxRift"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.FLUXRIFT.stage.1"
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "RIFTCLOSER",
+      "name": "research.RIFTCLOSER.title",
+      "icons": [
+        "thaumcraft:causality_collapser"
+      ],
+      "category": "BASICS",
+      "location": [
+        0,
+        -5
+      ],
+      "parents": [
+        "FLUXRIFT",
+        "INFUSION",
+        "VISBATTERY"
+      ],
+      "stages": [
+        {
+          "text": "research.RIFTCLOSER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;AUROMANCY;1",
+            "THEORY;ALCHEMY;2",
+            "THEORY;AUROMANCY;1"
+          ]
+        },
+        {
+          "text": "research.RIFTCLOSER.stage.2",
+          "recipes": [
+            "thaumcraft:CausalityCollapser"
+          ]
+        }
+      ],
+      "_file": "basics.json"
+    },
+    {
+      "key": "BASEELDRITCH",
+      "name": "research.BASEELDRITCH.title",
+      "icons": [
+        "thaumcraft:void_seed"
+      ],
+      "category": "ELDRITCH",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "METALLURGY",
+        "UNLOCKELDRITCH"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEELDRITCH.stage.1",
+          "required_knowledge": [
+            "THEORY;BASICS;1",
+            "THEORY;ALCHEMY;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "warp": 2
+        },
+        {
+          "text": "research.BASEELDRITCH.stage.2",
+          "recipes": [
+            "thaumcraft:voidingot",
+            "thaumcraft:void_stuff"
+          ]
+        }
+      ],
+      "_file": "eldritch.json"
+    },
+    {
+      "key": "VOIDSIPHON",
+      "name": "research.VOIDSIPHON.title",
+      "icons": [
+        "thaumcraft:void_siphon"
+      ],
+      "category": "ELDRITCH",
+      "location": [
+        3,
+        0
+      ],
+      "parents": [
+        "BASEELDRITCH",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.VOIDSIPHON.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "warp": 1
+        },
+        {
+          "text": "research.VOIDSIPHON.stage.2",
+          "recipes": [
+            "thaumcraft:VoidSiphon"
+          ]
+        }
+      ],
+      "_file": "eldritch.json"
+    },
+    {
+      "key": "VOIDSEERPEARL",
+      "name": "research.VOIDSEERPEARL.title",
+      "icons": [
+        "thaumcraft:voidseer_charm"
+      ],
+      "category": "ELDRITCH",
+      "location": [
+        -3,
+        0
+      ],
+      "parents": [
+        "BASEELDRITCH",
+        "CURIOSITYBAND"
+      ],
+      "stages": [
+        {
+          "text": "research.VOIDSEERPEARL.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "warp": 3
+        },
+        {
+          "text": "research.VOIDSEERPEARL.stage.2",
+          "recipes": [
+            "thaumcraft:VoidseerPearl"
+          ]
+        }
+      ],
+      "_file": "eldritch.json"
+    },
+    {
+      "key": "VOIDROBEARMOR",
+      "name": "research.VOIDROBEARMOR.title",
+      "icons": [
+        "thaumcraft:void_robe_helm"
+      ],
+      "category": "ELDRITCH",
+      "location": [
+        0,
+        3
+      ],
+      "parents": [
+        "BASEELDRITCH",
+        "ARMORFORTRESS"
+      ],
+      "stages": [
+        {
+          "text": "research.VOIDROBEARMOR.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "warp": 1
+        },
+        {
+          "text": "research.VOIDROBEARMOR.stage.2",
+          "recipes": [
+            "thaumcraft:VoidRobeHelm",
+            "thaumcraft:VoidRobeChest",
+            "thaumcraft:VoidRobeLegs"
+          ]
+        }
+      ],
+      "_file": "eldritch.json"
+    },
+    {
+      "key": "PRIMALCRUSHER",
+      "name": "research.PRIMALCRUSHER.title",
+      "icons": [
+        "thaumcraft:primal_crusher"
+      ],
+      "category": "ELDRITCH",
+      "location": [
+        0,
+        -3
+      ],
+      "parents": [
+        "BASEELDRITCH",
+        "ELEMENTALTOOLS"
+      ],
+      "stages": [
+        {
+          "text": "research.PRIMALCRUSHER.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1",
+            "THEORY;ELDRITCH;1"
+          ],
+          "warp": 1
+        },
+        {
+          "text": "research.PRIMALCRUSHER.stage.2",
+          "recipes": [
+            "thaumcraft:PrimalCrusher"
+          ]
+        }
+      ],
+      "_file": "eldritch.json"
+    },
+    {
+      "key": "BASEGOLEMANCY",
+      "name": "research.BASEGOLEMANCY.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_golemancy.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        0,
+        -1
+      ],
+      "parents": [
+        "UNLOCKGOLEMANCY"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEGOLEMANCY.stage.1"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "JARBRAIN",
+      "name": "research.JARBRAIN.title",
+      "icons": [
+        "thaumcraft:jar_brain"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        2,
+        1
+      ],
+      "parents": [
+        "BASEGOLEMANCY",
+        "WARDEDJARS",
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.JARBRAIN.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1",
+            "THEORY;GOLEMANCY;1"
+          ],
+          "required_research": [
+            "f_BRAIN"
+          ],
+          "required_item": [
+            "thaumcraft:brain"
+          ]
+        },
+        {
+          "text": "research.JARBRAIN.stage.2",
+          "recipes": [
+            "thaumcraft:JarBrain"
+          ],
+          "warp": 3
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDWOOD",
+      "name": "research.MATSTUDWOOD.title",
+      "icons": [
+        "thaumcraft:log_greatwood"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -2,
+        0
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE",
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDWOOD.stage.1"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDIRON",
+      "name": "research.MATSTUDIRON.title",
+      "icons": [
+        "thaumcraft:plate;1;1"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -3,
+        -1
+      ],
+      "parents": [
+        "MATSTUDWOOD"
+      ],
+      "meta": [
+        "REVERSE",
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDIRON.stage.1",
+          "required_research": [
+            "f_MATIRON"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDCLAY",
+      "name": "research.MATSTUDCLAY.title",
+      "icons": [
+        "minecraft:hardened_clay"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -4,
+        0
+      ],
+      "parents": [
+        "MATSTUDIRON"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDCLAY.stage.1",
+          "required_research": [
+            "f_MATCLAY"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDBRASS",
+      "name": "research.MATSTUDBRASS.title",
+      "icons": [
+        "thaumcraft:plate"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -4,
+        -2
+      ],
+      "parents": [
+        "MATSTUDIRON",
+        "METALLURGY@2"
+      ],
+      "meta": [
+        "REVERSE",
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDBRASS.stage.1",
+          "required_research": [
+            "f_MATBRASS"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDTHAUMIUM",
+      "name": "research.MATSTUDTHAUMIUM.title",
+      "icons": [
+        "thaumcraft:plate;1;2"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -5,
+        -1
+      ],
+      "parents": [
+        "MATSTUDBRASS",
+        "METALLURGY@3"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDTHAUMIUM.stage.1",
+          "required_research": [
+            "f_MATTHAUMIUM"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MATSTUDVOID",
+      "name": "research.MATSTUDVOID.title",
+      "icons": [
+        "thaumcraft:plate;1;3"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -6,
+        0
+      ],
+      "parents": [
+        "MATSTUDTHAUMIUM",
+        "BASEELDRITCH"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.MATSTUDVOID.stage.1",
+          "required_research": [
+            "f_MATVOID"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MINDCLOCKWORK",
+      "name": "research.MINDCLOCKWORK.title",
+      "icons": [
+        "thaumcraft:mind"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        0,
+        3
+      ],
+      "parents": [
+        "BASEGOLEMANCY",
+        "ESSENTIASMELTER",
+        "HEDGEALCHEMY"
+      ],
+      "siblings": [
+        "CONTROLSEALS",
+        "MATSTUDWOOD"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.MINDCLOCKWORK.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;GOLEMANCY;1"
+          ],
+          "required_research": [
+            "!cognitio",
+            "!victus"
+          ]
+        },
+        {
+          "text": "research.MINDCLOCKWORK.stage.2",
+          "required_knowledge": [
+            "THEORY;ARTIFICE;1",
+            "THEORY;GOLEMANCY;1"
+          ],
+          "recipes": [
+            "thaumcraft:MindClockwork"
+          ]
+        },
+        {
+          "text": "research.MINDCLOCKWORK.stage.3",
+          "recipes": [
+            "thaumcraft:MindClockwork",
+            "thaumcraft:GolemPress"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "CONTROLSEALS",
+      "name": "research.CONTROLSEALS.title",
+      "icons": [
+        "thaumcraft:seal"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -2,
+        5
+      ],
+      "parents": [
+        "MINDCLOCKWORK"
+      ],
+      "siblings": [
+        "SEALCOLLECT"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.CONTROLSEALS.stage.1",
+          "recipes": [
+            "thaumcraft:GolemBell",
+            "thaumcraft:SealBlank"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMDIRECT",
+      "name": "research.GOLEMDIRECT.title",
+      "icons": [
+        "thaumcraft:textures/misc/golem/head_basic.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        1,
+        4
+      ],
+      "parents": [
+        "MINDCLOCKWORK"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMDIRECT.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMDIRECT.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMLOGISTICS",
+      "name": "research.GOLEMLOGISTICS.title",
+      "icons": [
+        "thaumcraft:textures/research/golem_logistics.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        3,
+        4
+      ],
+      "parents": [
+        "~SEALPROVIDE",
+        "GOLEMDIRECT"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMLOGISTICS.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1",
+            "OBSERVATION;GOLEMANCY;1"
+          ],
+          "required_item": [
+            "minecraft:map",
+            "minecraft:ender_eye"
+          ]
+        },
+        {
+          "text": "research.GOLEMLOGISTICS.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "MINDBIOTHAUMIC",
+      "name": "research.MINDBIOTHAUMIC.title",
+      "icons": [
+        "thaumcraft:mind;1;1"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        0,
+        7
+      ],
+      "parents": [
+        "MINDCLOCKWORK",
+        "INFUSION"
+      ],
+      "meta": [
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.MINDBIOTHAUMIC.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1",
+            "OBSERVATION;ARTIFICE;1"
+          ],
+          "required_research": [
+            "f_BRAIN"
+          ]
+        },
+        {
+          "text": "research.MINDBIOTHAUMIC.stage.2",
+          "recipes": [
+            "thaumcraft:MindBiothaumic"
+          ],
+          "warp": 3
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALCOLLECT",
+      "name": "research.SEALCOLLECT.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_pickup.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -4,
+        4
+      ],
+      "parents": [
+        "CONTROLSEALS"
+      ],
+      "meta": [
+        "ROUND"
+      ],
+      "siblings": [
+        "SEALSTORE"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALCOLLECT.stage.1",
+          "recipes": [
+            "thaumcraft:SealCollect"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.SEALCOLLECT.stage.ADV",
+          "recipes": [
+            "thaumcraft:SealCollectAdv"
+          ],
+          "required_research": [
+            "MINDBIOTHAUMIC"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALSTORE",
+      "name": "research.SEALSTORE.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_fill.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -6,
+        4
+      ],
+      "parents": [
+        "SEALCOLLECT"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALSTORE.stage.1",
+          "recipes": [
+            "thaumcraft:SealStore"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.SEALSTORE.stage.ADV",
+          "recipes": [
+            "thaumcraft:SealStoreAdv"
+          ],
+          "required_research": [
+            "MINDBIOTHAUMIC"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALEMPTY",
+      "name": "research.SEALEMPTY.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_empty.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -8,
+        4
+      ],
+      "parents": [
+        "SEALSTORE"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALEMPTY.stage.1",
+          "required_research": [
+            "!vacuos"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALEMPTY.stage.2",
+          "recipes": [
+            "thaumcraft:SealEmpty"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.SEALEMPTY.stage.ADV",
+          "recipes": [
+            "thaumcraft:SealEmptyAdv"
+          ],
+          "required_research": [
+            "MINDBIOTHAUMIC"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALPROVIDE",
+      "name": "research.SEALPROVIDE.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_provider.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -7,
+        6
+      ],
+      "parents": [
+        "SEALEMPTY",
+        "MINDBIOTHAUMIC"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALPROVIDE.stage.1",
+          "required_research": [
+            "!desiderium"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALPROVIDE.stage.2",
+          "recipes": [
+            "thaumcraft:SealProvide"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALSTOCK",
+      "name": "research.SEALSTOCK.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_stock.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -6,
+        8
+      ],
+      "parents": [
+        "SEALPROVIDE"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALSTOCK.stage.1",
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALSTOCK.stage.2",
+          "recipes": [
+            "thaumcraft:SealStock"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALGUARD",
+      "name": "research.SEALGUARD.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_guard.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -12,
+        4
+      ],
+      "parents": [
+        "CONTROLSEALS"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALGUARD.stage.1",
+          "required_research": [
+            "!mortuus"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALGUARD.stage.2",
+          "recipes": [
+            "thaumcraft:SealGuard",
+            "thaumcraft:modaggression"
+          ],
+          "warp": 1
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.SEALGUARD.stage.ADV",
+          "recipes": [
+            "thaumcraft:SealGuardAdv"
+          ],
+          "required_research": [
+            "MINDBIOTHAUMIC"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALBUTCHER",
+      "name": "research.SEALBUTCHER.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_butcher.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -11,
+        6
+      ],
+      "parents": [
+        "SEALGUARD",
+        "INFUSION",
+        "MINDBIOTHAUMIC"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALBUTCHER.stage.1",
+          "required_research": [
+            "!bestia"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALBUTCHER.stage.2",
+          "recipes": [
+            "thaumcraft:SealButcher"
+          ],
+          "warp": 1
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALUSE",
+      "name": "research.SEALUSE.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_use.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -3,
+        6
+      ],
+      "parents": [
+        "CONTROLSEALS",
+        "INFUSION",
+        "MINDBIOTHAUMIC"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALUSE.stage.1",
+          "required_research": [
+            "!instrumentum"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALUSE.stage.2",
+          "recipes": [
+            "thaumcraft:SealUse"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALHARVEST",
+      "name": "research.SEALHARVEST.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_harvest.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -5,
+        6
+      ],
+      "parents": [
+        "SEALUSE"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALHARVEST.stage.1",
+          "required_research": [
+            "!herba"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALHARVEST.stage.2",
+          "recipes": [
+            "thaumcraft:SealHarvest"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALBREAK",
+      "name": "research.SEALBREAK.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_breaker.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -10,
+        4
+      ],
+      "parents": [
+        "CONTROLSEALS",
+        "INFUSION",
+        "GOLEMBREAKER"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALBREAK.stage.1",
+          "required_research": [
+            "!perditio"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALBREAK.stage.2",
+          "recipes": [
+            "thaumcraft:SealBreak"
+          ]
+        }
+      ],
+      "addenda": [
+        {
+          "text": "research.SEALBREAK.stage.ADV",
+          "recipes": [
+            "thaumcraft:SealBreakAdv"
+          ],
+          "required_research": [
+            "MINDBIOTHAUMIC"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "SEALLUMBER",
+      "name": "research.SEALLUMBER.title",
+      "icons": [
+        "thaumcraft:textures/items/seals/seal_lumber.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -9,
+        6
+      ],
+      "parents": [
+        "SEALBREAK",
+        "MINDBIOTHAUMIC"
+      ],
+      "stages": [
+        {
+          "text": "research.SEALLUMBER.stage.1",
+          "required_research": [
+            "!herba"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.SEALLUMBER.stage.2",
+          "recipes": [
+            "thaumcraft:SealLumber"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMVISION",
+      "name": "research.GOLEMVISION.title",
+      "icons": [
+        "thaumcraft:module"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -2,
+        2
+      ],
+      "parents": [
+        "MINDCLOCKWORK"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMVISION.stage.1",
+          "required_research": [
+            "!sensus"
+          ],
+          "required_item": [
+            "minecraft:fermented_spider_eye"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMVISION.stage.2",
+          "recipes": [
+            "thaumcraft:modvision"
+          ]
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMCLIMBER",
+      "name": "research.GOLEMCLIMBER.title",
+      "icons": [
+        "thaumcraft:textures/misc/golem/legs_climber.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -4,
+        2
+      ],
+      "parents": [
+        "MINDCLOCKWORK"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMCLIMBER.stage.1",
+          "required_research": [
+            "f_SPIDER"
+          ],
+          "required_item": [
+            "minecraft:flint"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMCLIMBER.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMFLYER",
+      "name": "research.GOLEMFLYER.title",
+      "icons": [
+        "thaumcraft:textures/misc/golem/legs_flyer.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -6,
+        2
+      ],
+      "parents": [
+        "GOLEMCLIMBER",
+        "LEVITATOR"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMFLYER.stage.1",
+          "required_research": [
+            "f_FLY"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMFLYER.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMBREAKER",
+      "name": "research.GOLEMBREAKER.title",
+      "icons": [
+        "thaumcraft:textures/misc/golem/arms_breakers.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -8,
+        2
+      ],
+      "parents": [
+        "MINDCLOCKWORK"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMBREAKER.stage.1",
+          "required_item": [
+            "minecraft:diamond",
+            "minecraft:piston"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMBREAKER.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "GOLEMCOMBATADV",
+      "name": "research.GOLEMCOMBATADV.title",
+      "icons": [
+        "thaumcraft:textures/misc/golem/addon_fighter.png"
+      ],
+      "category": "GOLEMANCY",
+      "location": [
+        -12,
+        2
+      ],
+      "parents": [
+        "SEALGUARD"
+      ],
+      "stages": [
+        {
+          "text": "research.GOLEMCOMBATADV.stage.1",
+          "required_item": [
+            "minecraft:arrow",
+            "minecraft:shears"
+          ],
+          "required_research": [
+            "!aversio",
+            "f_DISPENSER"
+          ],
+          "required_knowledge": [
+            "THEORY;GOLEMANCY;1"
+          ]
+        },
+        {
+          "text": "research.GOLEMCOMBATADV.stage.2"
+        }
+      ],
+      "_file": "golemancy.json"
+    },
+    {
+      "key": "BASEINFUSION",
+      "name": "research.BASEINFUSION.title",
+      "icons": [
+        "thaumcraft:textures/research/cat_infusion.png"
+      ],
+      "category": "INFUSION",
+      "location": [
+        0,
+        0
+      ],
+      "parents": [
+        "UNLOCKINFUSION"
+      ],
+      "meta": [
+        "ROUND",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BASEINFUSION.stage.1",
+          "recipes": [
+            "thaumcraft:Banners",
+            "thaumcraft:baubles_stuff"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSION",
+      "name": "research.INFUSION.title",
+      "icons": [
+        "thaumcraft:infusion_matrix"
+      ],
+      "category": "INFUSION",
+      "location": [
+        0,
+        2
+      ],
+      "parents": [
+        "BASEINFUSION"
+      ],
+      "meta": [
+        "SPIKY"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSION.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;INFUSION;1",
+            "THEORY;INFUSION;1"
+          ],
+          "required_item": [
+            "minecraft:stone",
+            "minecraft:feather",
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'aer'}]}"
+          ]
+        },
+        {
+          "text": "research.INFUSION.stage.2",
+          "required_craft": [
+            "thaumcraft:infusion_matrix"
+          ],
+          "recipes": [
+            "thaumcraft:InfusionMatrix"
+          ]
+        },
+        {
+          "text": "research.INFUSION.stage.3",
+          "recipes": [
+            "thaumcraft:InfusionMatrix",
+            "thaumcraft:ArcanePedestal",
+            "thaumcraft:infusionaltar"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSIONSTABLE",
+      "name": "research.INFUSIONSTABLE.title",
+      "icons": [
+        "thaumcraft:stabilizer"
+      ],
+      "category": "INFUSION",
+      "location": [
+        1,
+        4
+      ],
+      "parents": [
+        "INFUSION",
+        "METALLURGY@3",
+        "!INSTABILITY"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSIONSTABLE.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;INFUSION;1",
+            "THEORY;INFUSION;1"
+          ],
+          "required_item": [
+            "minecraft:redstone",
+            "thaumcraft:phial;1;1;{Aspects:[{amount:10,key:'vitium'}]}"
+          ]
+        },
+        {
+          "text": "research.INFUSIONSTABLE.stage.2",
+          "recipes": [
+            "thaumcraft:RedstoneInlay",
+            "thaumcraft:Stabilizer"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSIONBOOST",
+      "name": "research.INFUSIONBOOST.title",
+      "icons": [
+        "thaumcraft:matrix_cost",
+        "thaumcraft:matrix_speed"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -1,
+        4
+      ],
+      "parents": [
+        "INFUSION"
+      ],
+      "meta": [
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSIONBOOST.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;2"
+          ]
+        },
+        {
+          "text": "research.INFUSIONBOOST.stage.2",
+          "recipes": [
+            "thaumcraft:MatrixMotion",
+            "thaumcraft:MatrixCost"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSIONANCIENT",
+      "name": "research.INFUSIONANCIENT.title",
+      "icons": [
+        "thaumcraft:stone_ancient"
+      ],
+      "category": "INFUSION",
+      "location": [
+        0,
+        6
+      ],
+      "parents": [
+        "INFUSIONBOOST",
+        "!ORBLOCK1"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSIONANCIENT.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1"
+          ],
+          "required_item": [
+            "thaumcraft:stone_ancient"
+          ]
+        },
+        {
+          "text": "research.INFUSIONANCIENT.stage.2",
+          "recipes": [
+            "thaumcraft:AncientPedestal",
+            "thaumcraft:infusionaltarancient"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSIONELDRITCH",
+      "name": "research.INFUSIONELDRITCH.title",
+      "icons": [
+        "thaumcraft:stone_eldritch_tile"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -2,
+        6
+      ],
+      "parents": [
+        "INFUSIONBOOST",
+        "!ORBLOCK2"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSIONELDRITCH.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;ELDRITCH;1"
+          ],
+          "required_item": [
+            "thaumcraft:stone_eldritch_tile"
+          ]
+        },
+        {
+          "text": "research.INFUSIONELDRITCH.stage.2",
+          "recipes": [
+            "thaumcraft:EldritchPedestal",
+            "thaumcraft:infusionaltareldritch"
+          ],
+          "warp": 2
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "PAVINGSTONES",
+      "name": "research.PAVINGSTONES.title",
+      "icons": [
+        "thaumcraft:paving_stone_barrier",
+        "thaumcraft:paving_stone_travel"
+      ],
+      "category": "INFUSION",
+      "location": [
+        0,
+        -2
+      ],
+      "parents": [
+        "BASEINFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.PAVINGSTONES.stage.1",
+          "recipes": [
+            "thaumcraft:arcane_stone"
+          ],
+          "required_knowledge": [
+            "OBSERVATION;INFUSION;1"
+          ],
+          "required_craft": [
+            "thaumcraft:arcane_stone"
+          ]
+        },
+        {
+          "text": "research.PAVINGSTONES.stage.2",
+          "recipes": [
+            "thaumcraft:PaveBarrier",
+            "thaumcraft:PaveTravel",
+            "thaumcraft:arcane_stone",
+            "thaumcraft:arcane_brick"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "BOOTSTRAVELLER",
+      "name": "research.BOOTSTRAVELLER.title",
+      "icons": [
+        "thaumcraft:traveller_boots"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -2,
+        2
+      ],
+      "parents": [
+        "INFUSION",
+        "RECHARGEPEDESTAL"
+      ],
+      "stages": [
+        {
+          "text": "research.BOOTSTRAVELLER.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1"
+          ],
+          "required_research": [
+            "!motus",
+            "m_walker",
+            "m_runner",
+            "m_swimmer",
+            "m_jumper"
+          ]
+        },
+        {
+          "text": "research.BOOTSTRAVELLER.stage.2",
+          "recipes": [
+            "thaumcraft:BootsTraveller"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "ELEMENTALTOOLS",
+      "name": "research.ELEMENTALTOOLS.title",
+      "icons": [
+        "thaumcraft:elemental_axe",
+        "thaumcraft:elemental_sword",
+        "thaumcraft:elemental_pick",
+        "thaumcraft:elemental_shovel",
+        "thaumcraft:elemental_hoe"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -4,
+        3
+      ],
+      "parents": [
+        "BOOTSTRAVELLER",
+        "METALLURGY@3"
+      ],
+      "stages": [
+        {
+          "text": "research.ELEMENTALTOOLS.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1",
+            "THEORY;BASICS;1"
+          ],
+          "required_craft": [
+            "thaumcraft:thaumium_axe",
+            "thaumcraft:thaumium_sword",
+            "thaumcraft:thaumium_pick",
+            "thaumcraft:thaumium_shovel",
+            "thaumcraft:thaumium_hoe"
+          ]
+        },
+        {
+          "text": "research.ELEMENTALTOOLS.stage.2",
+          "recipes": [
+            "thaumcraft:ElementalAxe",
+            "thaumcraft:ElementalSword",
+            "thaumcraft:ElementalPick",
+            "thaumcraft:ElementalShovel",
+            "thaumcraft:ElementalHoe"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "INFUSIONENCHANTMENT",
+      "name": "research.INFUSIONENCHANTMENT.title",
+      "icons": [
+        "thaumcraft:textures/research/r_inf_enchant.png"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -6,
+        4
+      ],
+      "parents": [
+        "ELEMENTALTOOLS"
+      ],
+      "stages": [
+        {
+          "text": "research.INFUSIONENCHANTMENT.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;2"
+          ],
+          "required_item": [
+            "minecraft:thaumcraft:enchanted_placeholder;1;0;{ench:[{id:16s,lvl:1s}]}"
+          ]
+        },
+        {
+          "text": "research.INFUSIONENCHANTMENT.stage.2",
+          "recipes": [
+            "thaumcraft:IEBURROWINGFAKE",
+            "thaumcraft:IECOLLECTORFAKE",
+            "thaumcraft:IEDESTRUCTIVEFAKE",
+            "thaumcraft:IEREFININGFAKE",
+            "thaumcraft:IESOUNDINGFAKE",
+            "thaumcraft:IEARCINGFAKE",
+            "thaumcraft:IEESSENCEFAKE",
+            "thaumcraft:IELAMPLIGHTFAKE"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "RUNICSHIELDING",
+      "name": "research.RUNICSHIELDING.title",
+      "icons": [
+        "thaumcraft:textures/research/r_runicupg.png"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -6,
+        6
+      ],
+      "parents": [
+        "INFUSIONENCHANTMENT"
+      ],
+      "stages": [
+        {
+          "text": "research.RUNICSHIELDING.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1"
+          ],
+          "required_item": [
+            "minecraft:thaumcraft:enchanted_placeholder;1;0;{ench:[{id:0s,lvl:1s}]}",
+            "thaumcraft:amber"
+          ]
+        },
+        {
+          "text": "research.RUNICSHIELDING.stage.2",
+          "recipes": [
+            "thaumcraft:RunicArmorFake0",
+            "thaumcraft:RunicArmorFake1",
+            "thaumcraft:RunicArmorFake2"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "ARMORFORTRESS",
+      "name": "research.ARMORFORTRESS.title",
+      "icons": [
+        "thaumcraft:fortress_helm"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -4,
+        1
+      ],
+      "parents": [
+        "METALLURGY@3",
+        "BOOTSTRAVELLER"
+      ],
+      "stages": [
+        {
+          "text": "research.ARMORFORTRESS.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1"
+          ],
+          "required_research": [
+            "!praemunio"
+          ]
+        },
+        {
+          "text": "research.ARMORFORTRESS.stage.2",
+          "recipes": [
+            "thaumcraft:ThaumiumFortressHelm",
+            "thaumcraft:ThaumiumFortressChest",
+            "thaumcraft:ThaumiumFortressLegs"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "FORTRESSMASK",
+      "name": "research.FORTRESSMASK.title",
+      "icons": [
+        "thaumcraft:textures/research/r_mask0.png",
+        "thaumcraft:textures/research/r_mask1.png",
+        "thaumcraft:textures/research/r_mask2.png"
+      ],
+      "category": "INFUSION",
+      "location": [
+        -5,
+        0
+      ],
+      "parents": [
+        "ARMORFORTRESS"
+      ],
+      "stages": [
+        {
+          "text": "research.FORTRESSMASK.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1"
+          ]
+        },
+        {
+          "text": "research.FORTRESSMASK.stage.2",
+          "recipes": [
+            "thaumcraft:HelmGoggles",
+            "thaumcraft:MaskGrinningDevil",
+            "thaumcraft:MaskAngryGhost",
+            "thaumcraft:MaskSippingFiend"
+          ],
+          "warp": 2
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "CLOUDRING",
+      "name": "research.CLOUDRING.title",
+      "icons": [
+        "thaumcraft:cloud_ring"
+      ],
+      "category": "INFUSION",
+      "location": [
+        2,
+        2
+      ],
+      "parents": [
+        "INFUSION"
+      ],
+      "stages": [
+        {
+          "text": "research.CLOUDRING.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;INFUSION;1"
+          ]
+        },
+        {
+          "text": "research.CLOUDRING.stage.2",
+          "recipes": [
+            "thaumcraft:CLOUDRING"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "CURIOSITYBAND",
+      "name": "research.CURIOSITYBAND.title",
+      "icons": [
+        "thaumcraft:curiosity_band"
+      ],
+      "category": "INFUSION",
+      "location": [
+        4,
+        1
+      ],
+      "parents": [
+        "CLOUDRING"
+      ],
+      "stages": [
+        {
+          "text": "research.CURIOSITYBAND.stage.1",
+          "required_knowledge": [
+            "OBSERVATION;BASICS;1",
+            "THEORY;INFUSION;1"
+          ]
+        },
+        {
+          "text": "research.CURIOSITYBAND.stage.2",
+          "recipes": [
+            "thaumcraft:CuriosityBand"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "VERDANTCHARMS",
+      "name": "research.VERDANTCHARMS.title",
+      "icons": [
+        "thaumcraft:verdant_charm"
+      ],
+      "category": "INFUSION",
+      "location": [
+        4,
+        3
+      ],
+      "parents": [
+        "CLOUDRING"
+      ],
+      "stages": [
+        {
+          "text": "research.VERDANTCHARMS.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;2"
+          ]
+        },
+        {
+          "text": "research.VERDANTCHARMS.stage.2",
+          "recipes": [
+            "thaumcraft:VerdantHeart",
+            "thaumcraft:VerdantHeartLife",
+            "thaumcraft:VerdantHeartSustain"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "CHARMUNDYING",
+      "name": "research.CHARMUNDYING.title",
+      "icons": [
+        "thaumcraft:charm_undying"
+      ],
+      "category": "INFUSION",
+      "location": [
+        3,
+        -1
+      ],
+      "parents": [
+        "CLOUDRING",
+        "!TOTEMUNDYING"
+      ],
+      "meta": [
+        "HIDDEN",
+        "REVERSE"
+      ],
+      "stages": [
+        {
+          "text": "research.CHARMUNDYING.stage.1",
+          "required_knowledge": [
+            "THEORY;INFUSION;1"
+          ]
+        },
+        {
+          "text": "research.CHARMUNDYING.stage.1",
+          "recipes": [
+            "thaumcraft:CHARMUNDYING"
+          ]
+        }
+      ],
+      "_file": "infusion.json"
+    },
+    {
+      "key": "!Wisp",
+      "name": "entity.Wisp.name",
+      "icons": [
+        "thaumcraft:textures/research/r_wisp.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -7,
+        0
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.Wisp.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!Pech",
+      "name": "research.Pech.title",
+      "icons": [
+        "thaumcraft:textures/research/r_pech.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -8,
+        0
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.Pech.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!ThaumSlime",
+      "name": "entity.ThaumSlime.name",
+      "icons": [
+        "thaumcraft:textures/research/r_thaumslime.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -9,
+        0
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.ThaumSlime.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!Firebat",
+      "name": "entity.Firebat.name",
+      "icons": [
+        "thaumcraft:textures/research/r_firebat.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -10,
+        0
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.Firebat.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!TaintSeed",
+      "name": "entity.TaintSeed.name",
+      "icons": [
+        "thaumcraft:textures/research/r_taintseed.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -7,
+        1
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.TaintSeed.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!TaintCrawler",
+      "name": "entity.TaintCrawler.name",
+      "icons": [
+        "thaumcraft:textures/research/r_taintcrawler.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -8,
+        1
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.TaintCrawler.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!Taintacle",
+      "name": "entity.Taintacle.name",
+      "icons": [
+        "thaumcraft:textures/research/r_taintacle.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -9,
+        1
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.Taintacle.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!TaintSwarm",
+      "name": "entity.TaintSwarm.name",
+      "icons": [
+        "thaumcraft:textures/research/r_taintswarm.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -10,
+        1
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.TaintSwarm.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!CrimsonCultist",
+      "name": "research.CrimsonCultist.title",
+      "icons": [
+        "thaumcraft:textures/research/r_cultist.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -7,
+        2
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.CrimsonCultist.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!BrainyZombie",
+      "name": "entity.BrainyZombie.name",
+      "icons": [
+        "thaumcraft:textures/research/r_angryzombie.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -8,
+        2
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.BrainyZombie.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!EldritchGuardian",
+      "name": "entity.EldritchGuardian.name",
+      "icons": [
+        "thaumcraft:textures/research/r_eldritchguardian.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -9,
+        2
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.EldritchGuardian.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    },
+    {
+      "key": "!EldritchCrab",
+      "name": "entity.EldritchCrab.name",
+      "icons": [
+        "thaumcraft:textures/research/r_crab.png"
+      ],
+      "category": "BASICS",
+      "location": [
+        -10,
+        2
+      ],
+      "meta": [
+        "HEX",
+        "HIDDEN"
+      ],
+      "stages": [
+        {
+          "text": "research.EldritchCrab.stage.1"
+        }
+      ],
+      "_file": "scans.json"
+    }
+  ]
+}

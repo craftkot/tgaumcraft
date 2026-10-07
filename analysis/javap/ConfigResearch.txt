@@ -1,0 +1,1531 @@
+Compiled from "ConfigResearch.java"
+public class thaumcraft.common.config.ConfigResearch {
+  public static java.lang.String[] TCCategories;
+
+  private static final net.minecraft.util.ResourceLocation BACK_OVER;
+
+  public thaumcraft.common.config.ConfigResearch();
+    Code:
+       0: aload_0
+       1: invokespecial #29                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void init();
+    Code:
+       0: invokestatic  #35                 // Method initCategories:()V
+       3: invokestatic  #38                 // Method initScannables:()V
+       6: invokestatic  #41                 // Method initTheorycraft:()V
+       9: invokestatic  #44                 // Method initWarp:()V
+      12: getstatic     #46                 // Field TCCategories:[Ljava/lang/String;
+      15: astore_0
+      16: aload_0
+      17: arraylength
+      18: istore_1
+      19: iconst_0
+      20: istore_2
+      21: iload_2
+      22: iload_1
+      23: if_icmpge     70
+      26: aload_0
+      27: iload_2
+      28: aaload
+      29: astore_3
+      30: new           #49                 // class net/minecraft/util/ResourceLocation
+      33: dup
+      34: ldc           #51                 // String thaumcraft
+      36: new           #53                 // class java/lang/StringBuilder
+      39: dup
+      40: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+      43: ldc           #56                 // String research/
+      45: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      48: aload_3
+      49: invokevirtual #66                 // Method java/lang/String.toLowerCase:()Ljava/lang/String;
+      52: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      55: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      58: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      61: invokestatic  #78                 // Method thaumcraft/api/ThaumcraftApi.registerResearchLocation:(Lnet/minecraft/util/ResourceLocation;)V
+      64: iinc          2, 1
+      67: goto          21
+      70: new           #49                 // class net/minecraft/util/ResourceLocation
+      73: dup
+      74: ldc           #51                 // String thaumcraft
+      76: ldc           #80                 // String research/scans
+      78: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      81: invokestatic  #78                 // Method thaumcraft/api/ThaumcraftApi.registerResearchLocation:(Lnet/minecraft/util/ResourceLocation;)V
+      84: return
+
+  public static void postInit();
+    Code:
+       0: invokestatic  #88                 // Method thaumcraft/common/lib/research/ResearchManager.parseAllResearch:()V
+       3: return
+
+  private static void initCategories();
+    Code:
+       0: ldc           #90                 // String BASICS
+       2: aconst_null
+       3: new           #92                 // class thaumcraft/api/aspects/AspectList
+       6: dup
+       7: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+      10: getstatic     #99                 // Field thaumcraft/api/aspects/Aspect.PLANT:Lthaumcraft/api/aspects/Aspect;
+      13: iconst_5
+      14: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      17: getstatic     #106                // Field thaumcraft/api/aspects/Aspect.ORDER:Lthaumcraft/api/aspects/Aspect;
+      20: iconst_5
+      21: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      24: getstatic     #109                // Field thaumcraft/api/aspects/Aspect.ENTROPY:Lthaumcraft/api/aspects/Aspect;
+      27: iconst_5
+      28: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      31: getstatic     #112                // Field thaumcraft/api/aspects/Aspect.AIR:Lthaumcraft/api/aspects/Aspect;
+      34: iconst_5
+      35: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      38: getstatic     #115                // Field thaumcraft/api/aspects/Aspect.FIRE:Lthaumcraft/api/aspects/Aspect;
+      41: iconst_5
+      42: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      45: getstatic     #118                // Field thaumcraft/api/aspects/Aspect.EARTH:Lthaumcraft/api/aspects/Aspect;
+      48: iconst_3
+      49: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      52: getstatic     #121                // Field thaumcraft/api/aspects/Aspect.WATER:Lthaumcraft/api/aspects/Aspect;
+      55: iconst_5
+      56: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      59: new           #49                 // class net/minecraft/util/ResourceLocation
+      62: dup
+      63: ldc           #51                 // String thaumcraft
+      65: ldc           #123                // String textures/items/thaumonomicon_cheat.png
+      67: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      70: new           #49                 // class net/minecraft/util/ResourceLocation
+      73: dup
+      74: ldc           #51                 // String thaumcraft
+      76: ldc           #125                // String textures/gui/gui_research_back_1.jpg
+      78: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      81: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+      84: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+      87: pop
+      88: ldc           #135                // String AUROMANCY
+      90: ldc           #137                // String UNLOCKAUROMANCY
+      92: new           #92                 // class thaumcraft/api/aspects/AspectList
+      95: dup
+      96: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+      99: getstatic     #140                // Field thaumcraft/api/aspects/Aspect.AURA:Lthaumcraft/api/aspects/Aspect;
+     102: bipush        20
+     104: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     107: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     110: bipush        20
+     112: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     115: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     118: bipush        15
+     120: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     123: getstatic     #149                // Field thaumcraft/api/aspects/Aspect.CRYSTAL:Lthaumcraft/api/aspects/Aspect;
+     126: iconst_5
+     127: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     130: getstatic     #152                // Field thaumcraft/api/aspects/Aspect.COLD:Lthaumcraft/api/aspects/Aspect;
+     133: iconst_5
+     134: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     137: getstatic     #112                // Field thaumcraft/api/aspects/Aspect.AIR:Lthaumcraft/api/aspects/Aspect;
+     140: iconst_5
+     141: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     144: new           #49                 // class net/minecraft/util/ResourceLocation
+     147: dup
+     148: ldc           #51                 // String thaumcraft
+     150: ldc           #154                // String textures/research/cat_auromancy.png
+     152: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     155: new           #49                 // class net/minecraft/util/ResourceLocation
+     158: dup
+     159: ldc           #51                 // String thaumcraft
+     161: ldc           #156                // String textures/gui/gui_research_back_2.jpg
+     163: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     166: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     169: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     172: pop
+     173: ldc           #158                // String ALCHEMY
+     175: ldc           #160                // String UNLOCKALCHEMY
+     177: new           #92                 // class thaumcraft/api/aspects/AspectList
+     180: dup
+     181: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     184: getstatic     #162                // Field thaumcraft/api/aspects/Aspect.ALCHEMY:Lthaumcraft/api/aspects/Aspect;
+     187: bipush        30
+     189: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     192: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     195: bipush        10
+     197: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     200: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     203: bipush        10
+     205: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     208: getstatic     #165                // Field thaumcraft/api/aspects/Aspect.LIFE:Lthaumcraft/api/aspects/Aspect;
+     211: iconst_5
+     212: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     215: getstatic     #168                // Field thaumcraft/api/aspects/Aspect.AVERSION:Lthaumcraft/api/aspects/Aspect;
+     218: iconst_5
+     219: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     222: getstatic     #171                // Field thaumcraft/api/aspects/Aspect.DESIRE:Lthaumcraft/api/aspects/Aspect;
+     225: iconst_5
+     226: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     229: getstatic     #121                // Field thaumcraft/api/aspects/Aspect.WATER:Lthaumcraft/api/aspects/Aspect;
+     232: iconst_5
+     233: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     236: new           #49                 // class net/minecraft/util/ResourceLocation
+     239: dup
+     240: ldc           #51                 // String thaumcraft
+     242: ldc           #173                // String textures/research/cat_alchemy.png
+     244: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     247: new           #49                 // class net/minecraft/util/ResourceLocation
+     250: dup
+     251: ldc           #51                 // String thaumcraft
+     253: ldc           #175                // String textures/gui/gui_research_back_3.jpg
+     255: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     258: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     261: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     264: pop
+     265: ldc           #177                // String ARTIFICE
+     267: ldc           #179                // String UNLOCKARTIFICE
+     269: new           #92                 // class thaumcraft/api/aspects/AspectList
+     272: dup
+     273: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     276: getstatic     #182                // Field thaumcraft/api/aspects/Aspect.MECHANISM:Lthaumcraft/api/aspects/Aspect;
+     279: bipush        10
+     281: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     284: getstatic     #185                // Field thaumcraft/api/aspects/Aspect.CRAFT:Lthaumcraft/api/aspects/Aspect;
+     287: bipush        10
+     289: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     292: getstatic     #188                // Field thaumcraft/api/aspects/Aspect.METAL:Lthaumcraft/api/aspects/Aspect;
+     295: bipush        10
+     297: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     300: getstatic     #191                // Field thaumcraft/api/aspects/Aspect.TOOL:Lthaumcraft/api/aspects/Aspect;
+     303: bipush        10
+     305: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     308: getstatic     #194                // Field thaumcraft/api/aspects/Aspect.ENERGY:Lthaumcraft/api/aspects/Aspect;
+     311: bipush        10
+     313: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     316: getstatic     #197                // Field thaumcraft/api/aspects/Aspect.LIGHT:Lthaumcraft/api/aspects/Aspect;
+     319: iconst_5
+     320: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     323: getstatic     #200                // Field thaumcraft/api/aspects/Aspect.FLIGHT:Lthaumcraft/api/aspects/Aspect;
+     326: iconst_5
+     327: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     330: getstatic     #203                // Field thaumcraft/api/aspects/Aspect.TRAP:Lthaumcraft/api/aspects/Aspect;
+     333: iconst_5
+     334: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     337: getstatic     #115                // Field thaumcraft/api/aspects/Aspect.FIRE:Lthaumcraft/api/aspects/Aspect;
+     340: iconst_5
+     341: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     344: new           #49                 // class net/minecraft/util/ResourceLocation
+     347: dup
+     348: ldc           #51                 // String thaumcraft
+     350: ldc           #205                // String textures/research/cat_artifice.png
+     352: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     355: new           #49                 // class net/minecraft/util/ResourceLocation
+     358: dup
+     359: ldc           #51                 // String thaumcraft
+     361: ldc           #207                // String textures/gui/gui_research_back_4.jpg
+     363: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     366: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     369: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     372: pop
+     373: ldc           #209                // String INFUSION
+     375: ldc           #211                // String UNLOCKINFUSION
+     377: new           #92                 // class thaumcraft/api/aspects/AspectList
+     380: dup
+     381: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     384: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     387: bipush        30
+     389: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     392: getstatic     #214                // Field thaumcraft/api/aspects/Aspect.PROTECT:Lthaumcraft/api/aspects/Aspect;
+     395: bipush        10
+     397: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     400: getstatic     #191                // Field thaumcraft/api/aspects/Aspect.TOOL:Lthaumcraft/api/aspects/Aspect;
+     403: bipush        10
+     405: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     408: getstatic     #146                // Field thaumcraft/api/aspects/Aspect.FLUX:Lthaumcraft/api/aspects/Aspect;
+     411: iconst_5
+     412: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     415: getstatic     #185                // Field thaumcraft/api/aspects/Aspect.CRAFT:Lthaumcraft/api/aspects/Aspect;
+     418: iconst_5
+     419: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     422: getstatic     #217                // Field thaumcraft/api/aspects/Aspect.SOUL:Lthaumcraft/api/aspects/Aspect;
+     425: iconst_5
+     426: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     429: getstatic     #118                // Field thaumcraft/api/aspects/Aspect.EARTH:Lthaumcraft/api/aspects/Aspect;
+     432: iconst_3
+     433: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     436: new           #49                 // class net/minecraft/util/ResourceLocation
+     439: dup
+     440: ldc           #51                 // String thaumcraft
+     442: ldc           #219                // String textures/research/cat_infusion.png
+     444: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     447: new           #49                 // class net/minecraft/util/ResourceLocation
+     450: dup
+     451: ldc           #51                 // String thaumcraft
+     453: ldc           #221                // String textures/gui/gui_research_back_7.jpg
+     455: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     458: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     461: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     464: pop
+     465: ldc           #223                // String GOLEMANCY
+     467: ldc           #225                // String UNLOCKGOLEMANCY
+     469: new           #92                 // class thaumcraft/api/aspects/AspectList
+     472: dup
+     473: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     476: getstatic     #228                // Field thaumcraft/api/aspects/Aspect.MAN:Lthaumcraft/api/aspects/Aspect;
+     479: bipush        20
+     481: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     484: getstatic     #231                // Field thaumcraft/api/aspects/Aspect.MOTION:Lthaumcraft/api/aspects/Aspect;
+     487: bipush        10
+     489: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     492: getstatic     #234                // Field thaumcraft/api/aspects/Aspect.MIND:Lthaumcraft/api/aspects/Aspect;
+     495: bipush        10
+     497: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     500: getstatic     #182                // Field thaumcraft/api/aspects/Aspect.MECHANISM:Lthaumcraft/api/aspects/Aspect;
+     503: bipush        10
+     505: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     508: getstatic     #237                // Field thaumcraft/api/aspects/Aspect.EXCHANGE:Lthaumcraft/api/aspects/Aspect;
+     511: iconst_5
+     512: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     515: getstatic     #240                // Field thaumcraft/api/aspects/Aspect.SENSES:Lthaumcraft/api/aspects/Aspect;
+     518: iconst_5
+     519: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     522: getstatic     #243                // Field thaumcraft/api/aspects/Aspect.BEAST:Lthaumcraft/api/aspects/Aspect;
+     525: iconst_5
+     526: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     529: getstatic     #106                // Field thaumcraft/api/aspects/Aspect.ORDER:Lthaumcraft/api/aspects/Aspect;
+     532: iconst_5
+     533: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     536: new           #49                 // class net/minecraft/util/ResourceLocation
+     539: dup
+     540: ldc           #51                 // String thaumcraft
+     542: ldc           #245                // String textures/research/cat_golemancy.png
+     544: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     547: new           #49                 // class net/minecraft/util/ResourceLocation
+     550: dup
+     551: ldc           #51                 // String thaumcraft
+     553: ldc           #247                // String textures/gui/gui_research_back_5.jpg
+     555: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     558: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     561: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     564: pop
+     565: ldc           #249                // String ELDRITCH
+     567: ldc           #251                // String UNLOCKELDRITCH
+     569: new           #92                 // class thaumcraft/api/aspects/AspectList
+     572: dup
+     573: invokespecial #93                 // Method thaumcraft/api/aspects/AspectList."<init>":()V
+     576: getstatic     #253                // Field thaumcraft/api/aspects/Aspect.ELDRITCH:Lthaumcraft/api/aspects/Aspect;
+     579: bipush        20
+     581: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     584: getstatic     #256                // Field thaumcraft/api/aspects/Aspect.DARKNESS:Lthaumcraft/api/aspects/Aspect;
+     587: bipush        10
+     589: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     592: getstatic     #143                // Field thaumcraft/api/aspects/Aspect.MAGIC:Lthaumcraft/api/aspects/Aspect;
+     595: iconst_5
+     596: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     599: getstatic     #234                // Field thaumcraft/api/aspects/Aspect.MIND:Lthaumcraft/api/aspects/Aspect;
+     602: iconst_5
+     603: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     606: getstatic     #259                // Field thaumcraft/api/aspects/Aspect.VOID:Lthaumcraft/api/aspects/Aspect;
+     609: iconst_5
+     610: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     613: getstatic     #262                // Field thaumcraft/api/aspects/Aspect.DEATH:Lthaumcraft/api/aspects/Aspect;
+     616: iconst_5
+     617: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     620: getstatic     #265                // Field thaumcraft/api/aspects/Aspect.UNDEAD:Lthaumcraft/api/aspects/Aspect;
+     623: iconst_5
+     624: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     627: getstatic     #109                // Field thaumcraft/api/aspects/Aspect.ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     630: iconst_5
+     631: invokevirtual #103                // Method thaumcraft/api/aspects/AspectList.add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+     634: new           #49                 // class net/minecraft/util/ResourceLocation
+     637: dup
+     638: ldc           #51                 // String thaumcraft
+     640: ldc_w         #267                // String textures/research/cat_eldritch.png
+     643: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     646: new           #49                 // class net/minecraft/util/ResourceLocation
+     649: dup
+     650: ldc           #51                 // String thaumcraft
+     652: ldc_w         #269                // String textures/gui/gui_research_back_6.jpg
+     655: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+     658: getstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+     661: invokestatic  #133                // Method thaumcraft/api/research/ResearchCategories.registerCategory:(Ljava/lang/String;Ljava/lang/String;Lthaumcraft/api/aspects/AspectList;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/util/ResourceLocation;)Lthaumcraft/api/research/ResearchCategory;
+     664: pop
+     665: return
+
+  private static void initScannables();
+    Code:
+       0: new           #271                // class thaumcraft/common/lib/research/ScanGeneric
+       3: dup
+       4: invokespecial #272                // Method thaumcraft/common/lib/research/ScanGeneric."<init>":()V
+       7: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+      10: getstatic     #284                // Field net/minecraft/enchantment/Enchantment.field_185264_b:Lnet/minecraft/util/registry/RegistryNamespaced;
+      13: invokevirtual #290                // Method net/minecraft/util/registry/RegistryNamespaced.func_148742_b:()Ljava/util/Set;
+      16: invokeinterface #296,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      21: astore_0
+      22: aload_0
+      23: invokeinterface #302,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      28: ifeq          66
+      31: aload_0
+      32: invokeinterface #306,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      37: checkcast     #49                 // class net/minecraft/util/ResourceLocation
+      40: astore_1
+      41: getstatic     #284                // Field net/minecraft/enchantment/Enchantment.field_185264_b:Lnet/minecraft/util/registry/RegistryNamespaced;
+      44: aload_1
+      45: invokevirtual #310                // Method net/minecraft/util/registry/RegistryNamespaced.func_82594_a:(Ljava/lang/Object;)Ljava/lang/Object;
+      48: checkcast     #280                // class net/minecraft/enchantment/Enchantment
+      51: astore_2
+      52: new           #312                // class thaumcraft/common/lib/research/ScanEnchantment
+      55: dup
+      56: aload_2
+      57: invokespecial #315                // Method thaumcraft/common/lib/research/ScanEnchantment."<init>":(Lnet/minecraft/enchantment/Enchantment;)V
+      60: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+      63: goto          22
+      66: getstatic     #320                // Field net/minecraft/potion/Potion.field_188414_b:Lnet/minecraft/util/registry/RegistryNamespaced;
+      69: invokevirtual #290                // Method net/minecraft/util/registry/RegistryNamespaced.func_148742_b:()Ljava/util/Set;
+      72: invokeinterface #296,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      77: astore_0
+      78: aload_0
+      79: invokeinterface #302,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      84: ifeq          122
+      87: aload_0
+      88: invokeinterface #306,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      93: checkcast     #49                 // class net/minecraft/util/ResourceLocation
+      96: astore_1
+      97: getstatic     #320                // Field net/minecraft/potion/Potion.field_188414_b:Lnet/minecraft/util/registry/RegistryNamespaced;
+     100: aload_1
+     101: invokevirtual #310                // Method net/minecraft/util/registry/RegistryNamespaced.func_82594_a:(Ljava/lang/Object;)Ljava/lang/Object;
+     104: checkcast     #317                // class net/minecraft/potion/Potion
+     107: astore_2
+     108: new           #322                // class thaumcraft/common/lib/research/ScanPotion
+     111: dup
+     112: aload_2
+     113: invokespecial #325                // Method thaumcraft/common/lib/research/ScanPotion."<init>":(Lnet/minecraft/potion/Potion;)V
+     116: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     119: goto          78
+     122: new           #327                // class thaumcraft/api/research/ScanEntity
+     125: dup
+     126: ldc_w         #329                // String !Wisp
+     129: ldc_w         #331                // class thaumcraft/common/entities/monster/EntityWisp
+     132: iconst_1
+     133: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     136: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     139: new           #327                // class thaumcraft/api/research/ScanEntity
+     142: dup
+     143: ldc_w         #336                // String !ThaumSlime
+     146: ldc_w         #338                // class thaumcraft/common/entities/monster/EntityThaumicSlime
+     149: iconst_1
+     150: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     153: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     156: new           #327                // class thaumcraft/api/research/ScanEntity
+     159: dup
+     160: ldc_w         #340                // String !Firebat
+     163: ldc_w         #342                // class thaumcraft/common/entities/monster/EntityFireBat
+     166: iconst_1
+     167: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     170: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     173: new           #327                // class thaumcraft/api/research/ScanEntity
+     176: dup
+     177: ldc_w         #344                // String !Pech
+     180: ldc_w         #346                // class thaumcraft/common/entities/monster/EntityPech
+     183: iconst_1
+     184: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     187: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     190: new           #327                // class thaumcraft/api/research/ScanEntity
+     193: dup
+     194: ldc_w         #348                // String !BrainyZombie
+     197: ldc_w         #350                // class thaumcraft/common/entities/monster/EntityBrainyZombie
+     200: iconst_1
+     201: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     204: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     207: new           #327                // class thaumcraft/api/research/ScanEntity
+     210: dup
+     211: ldc_w         #352                // String !EldritchCrab
+     214: ldc_w         #354                // class thaumcraft/common/entities/monster/EntityEldritchCrab
+     217: iconst_1
+     218: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     221: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     224: new           #327                // class thaumcraft/api/research/ScanEntity
+     227: dup
+     228: ldc_w         #352                // String !EldritchCrab
+     231: ldc_w         #356                // class thaumcraft/common/entities/monster/EntityInhabitedZombie
+     234: iconst_1
+     235: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     238: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     241: new           #327                // class thaumcraft/api/research/ScanEntity
+     244: dup
+     245: ldc_w         #358                // String !CrimsonCultist
+     248: ldc_w         #360                // class thaumcraft/common/entities/monster/cult/EntityCultist
+     251: iconst_1
+     252: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     255: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     258: new           #327                // class thaumcraft/api/research/ScanEntity
+     261: dup
+     262: ldc_w         #362                // String !EldritchGuardian
+     265: ldc_w         #364                // class thaumcraft/common/entities/monster/EntityEldritchGuardian
+     268: iconst_1
+     269: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     272: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     275: new           #327                // class thaumcraft/api/research/ScanEntity
+     278: dup
+     279: ldc_w         #366                // String !TaintCrawler
+     282: ldc_w         #368                // class thaumcraft/common/entities/monster/tainted/EntityTaintCrawler
+     285: iconst_1
+     286: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     289: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     292: new           #327                // class thaumcraft/api/research/ScanEntity
+     295: dup
+     296: ldc_w         #370                // String !Taintacle
+     299: ldc_w         #372                // class thaumcraft/common/entities/monster/tainted/EntityTaintacle
+     302: iconst_1
+     303: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     306: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     309: new           #327                // class thaumcraft/api/research/ScanEntity
+     312: dup
+     313: ldc_w         #374                // String !TaintSeed
+     316: ldc_w         #376                // class thaumcraft/common/entities/monster/tainted/EntityTaintSeed
+     319: iconst_1
+     320: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     323: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     326: new           #327                // class thaumcraft/api/research/ScanEntity
+     329: dup
+     330: ldc_w         #378                // String !TaintSwarm
+     333: ldc_w         #380                // class thaumcraft/common/entities/monster/tainted/EntityTaintSwarm
+     336: iconst_1
+     337: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     340: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     343: new           #327                // class thaumcraft/api/research/ScanEntity
+     346: dup
+     347: ldc_w         #382                // String f_toomuchflux
+     350: ldc_w         #384                // class thaumcraft/common/entities/EntityFluxRift
+     353: iconst_1
+     354: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     357: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     360: new           #327                // class thaumcraft/api/research/ScanEntity
+     363: dup
+     364: ldc_w         #386                // String !FluxRift
+     367: ldc_w         #384                // class thaumcraft/common/entities/EntityFluxRift
+     370: iconst_1
+     371: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     374: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     377: new           #327                // class thaumcraft/api/research/ScanEntity
+     380: dup
+     381: ldc_w         #388                // String f_golem
+     384: ldc_w         #390                // class net/minecraft/entity/monster/EntityGolem
+     387: iconst_1
+     388: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     391: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     394: new           #327                // class thaumcraft/api/research/ScanEntity
+     397: dup
+     398: ldc_w         #388                // String f_golem
+     401: ldc_w         #392                // class thaumcraft/common/entities/construct/EntityOwnedConstruct
+     404: iconst_1
+     405: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     408: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     411: new           #327                // class thaumcraft/api/research/ScanEntity
+     414: dup
+     415: ldc_w         #394                // String f_SPIDER
+     418: ldc_w         #396                // class net/minecraft/entity/monster/EntitySpider
+     421: iconst_1
+     422: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     425: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     428: new           #327                // class thaumcraft/api/research/ScanEntity
+     431: dup
+     432: ldc_w         #398                // String f_BAT
+     435: ldc_w         #400                // class net/minecraft/entity/passive/EntityBat
+     438: iconst_1
+     439: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     442: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     445: new           #327                // class thaumcraft/api/research/ScanEntity
+     448: dup
+     449: ldc_w         #398                // String f_BAT
+     452: ldc_w         #342                // class thaumcraft/common/entities/monster/EntityFireBat
+     455: iconst_1
+     456: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     459: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     462: new           #327                // class thaumcraft/api/research/ScanEntity
+     465: dup
+     466: ldc_w         #402                // String f_FLY
+     469: ldc_w         #400                // class net/minecraft/entity/passive/EntityBat
+     472: iconst_1
+     473: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     476: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     479: new           #327                // class thaumcraft/api/research/ScanEntity
+     482: dup
+     483: ldc_w         #402                // String f_FLY
+     486: ldc_w         #404                // class net/minecraft/entity/passive/EntityParrot
+     489: iconst_1
+     490: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     493: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     496: new           #327                // class thaumcraft/api/research/ScanEntity
+     499: dup
+     500: ldc_w         #402                // String f_FLY
+     503: ldc_w         #342                // class thaumcraft/common/entities/monster/EntityFireBat
+     506: iconst_1
+     507: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     510: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     513: new           #327                // class thaumcraft/api/research/ScanEntity
+     516: dup
+     517: ldc_w         #402                // String f_FLY
+     520: ldc_w         #380                // class thaumcraft/common/entities/monster/tainted/EntityTaintSwarm
+     523: iconst_1
+     524: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     527: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     530: new           #327                // class thaumcraft/api/research/ScanEntity
+     533: dup
+     534: ldc_w         #402                // String f_FLY
+     537: ldc_w         #331                // class thaumcraft/common/entities/monster/EntityWisp
+     540: iconst_1
+     541: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     544: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     547: new           #327                // class thaumcraft/api/research/ScanEntity
+     550: dup
+     551: ldc_w         #402                // String f_FLY
+     554: ldc_w         #406                // class net/minecraft/entity/monster/EntityGhast
+     557: iconst_1
+     558: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     561: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     564: new           #327                // class thaumcraft/api/research/ScanEntity
+     567: dup
+     568: ldc_w         #402                // String f_FLY
+     571: ldc_w         #408                // class net/minecraft/entity/monster/EntityBlaze
+     574: iconst_1
+     575: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     578: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     581: new           #327                // class thaumcraft/api/research/ScanEntity
+     584: dup
+     585: ldc_w         #410                // String !ORMOB
+     588: ldc_w         #412                // class thaumcraft/api/entities/IEldritchMob
+     591: iconst_1
+     592: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     595: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     598: new           #327                // class thaumcraft/api/research/ScanEntity
+     601: dup
+     602: ldc_w         #414                // String !ORBOSS
+     605: ldc_w         #416                // class thaumcraft/common/entities/monster/boss/EntityThaumcraftBoss
+     608: iconst_1
+     609: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+     612: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     615: new           #418                // class thaumcraft/api/research/ScanBlock
+     618: dup
+     619: ldc_w         #420                // String !ORBLOCK1
+     622: iconst_2
+     623: anewarray     #422                // class net/minecraft/block/Block
+     626: dup
+     627: iconst_0
+     628: getstatic     #428                // Field thaumcraft/api/blocks/BlocksTC.stoneAncient:Lnet/minecraft/block/Block;
+     631: aastore
+     632: dup
+     633: iconst_1
+     634: getstatic     #431                // Field thaumcraft/api/blocks/BlocksTC.stoneAncientTile:Lnet/minecraft/block/Block;
+     637: aastore
+     638: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     641: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     644: new           #418                // class thaumcraft/api/research/ScanBlock
+     647: dup
+     648: ldc_w         #436                // String !ORBLOCK2
+     651: iconst_1
+     652: anewarray     #422                // class net/minecraft/block/Block
+     655: dup
+     656: iconst_0
+     657: getstatic     #439                // Field thaumcraft/api/blocks/BlocksTC.stoneEldritchTile:Lnet/minecraft/block/Block;
+     660: aastore
+     661: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     664: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     667: new           #418                // class thaumcraft/api/research/ScanBlock
+     670: dup
+     671: ldc_w         #441                // String !ORBLOCK3
+     674: iconst_1
+     675: anewarray     #422                // class net/minecraft/block/Block
+     678: dup
+     679: iconst_0
+     680: getstatic     #444                // Field thaumcraft/api/blocks/BlocksTC.stoneAncientGlyphed:Lnet/minecraft/block/Block;
+     683: aastore
+     684: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     687: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     690: new           #418                // class thaumcraft/api/research/ScanBlock
+     693: dup
+     694: ldc_w         #446                // String ORE
+     697: bipush        9
+     699: anewarray     #422                // class net/minecraft/block/Block
+     702: dup
+     703: iconst_0
+     704: getstatic     #449                // Field thaumcraft/api/blocks/BlocksTC.oreAmber:Lnet/minecraft/block/Block;
+     707: aastore
+     708: dup
+     709: iconst_1
+     710: getstatic     #452                // Field thaumcraft/api/blocks/BlocksTC.oreCinnabar:Lnet/minecraft/block/Block;
+     713: aastore
+     714: dup
+     715: iconst_2
+     716: getstatic     #455                // Field thaumcraft/api/blocks/BlocksTC.crystalAir:Lnet/minecraft/block/Block;
+     719: aastore
+     720: dup
+     721: iconst_3
+     722: getstatic     #458                // Field thaumcraft/api/blocks/BlocksTC.crystalFire:Lnet/minecraft/block/Block;
+     725: aastore
+     726: dup
+     727: iconst_4
+     728: getstatic     #461                // Field thaumcraft/api/blocks/BlocksTC.crystalWater:Lnet/minecraft/block/Block;
+     731: aastore
+     732: dup
+     733: iconst_5
+     734: getstatic     #464                // Field thaumcraft/api/blocks/BlocksTC.crystalEarth:Lnet/minecraft/block/Block;
+     737: aastore
+     738: dup
+     739: bipush        6
+     741: getstatic     #467                // Field thaumcraft/api/blocks/BlocksTC.crystalOrder:Lnet/minecraft/block/Block;
+     744: aastore
+     745: dup
+     746: bipush        7
+     748: getstatic     #470                // Field thaumcraft/api/blocks/BlocksTC.crystalEntropy:Lnet/minecraft/block/Block;
+     751: aastore
+     752: dup
+     753: bipush        8
+     755: getstatic     #473                // Field thaumcraft/api/blocks/BlocksTC.crystalTaint:Lnet/minecraft/block/Block;
+     758: aastore
+     759: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     762: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     765: new           #418                // class thaumcraft/api/research/ScanBlock
+     768: dup
+     769: ldc_w         #475                // String !OREAMBER
+     772: iconst_1
+     773: anewarray     #422                // class net/minecraft/block/Block
+     776: dup
+     777: iconst_0
+     778: getstatic     #449                // Field thaumcraft/api/blocks/BlocksTC.oreAmber:Lnet/minecraft/block/Block;
+     781: aastore
+     782: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     785: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     788: new           #418                // class thaumcraft/api/research/ScanBlock
+     791: dup
+     792: ldc_w         #477                // String !ORECINNABAR
+     795: iconst_1
+     796: anewarray     #422                // class net/minecraft/block/Block
+     799: dup
+     800: iconst_0
+     801: getstatic     #452                // Field thaumcraft/api/blocks/BlocksTC.oreCinnabar:Lnet/minecraft/block/Block;
+     804: aastore
+     805: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     808: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     811: new           #418                // class thaumcraft/api/research/ScanBlock
+     814: dup
+     815: ldc_w         #479                // String !ORECRYSTAL
+     818: bipush        7
+     820: anewarray     #422                // class net/minecraft/block/Block
+     823: dup
+     824: iconst_0
+     825: getstatic     #455                // Field thaumcraft/api/blocks/BlocksTC.crystalAir:Lnet/minecraft/block/Block;
+     828: aastore
+     829: dup
+     830: iconst_1
+     831: getstatic     #458                // Field thaumcraft/api/blocks/BlocksTC.crystalFire:Lnet/minecraft/block/Block;
+     834: aastore
+     835: dup
+     836: iconst_2
+     837: getstatic     #461                // Field thaumcraft/api/blocks/BlocksTC.crystalWater:Lnet/minecraft/block/Block;
+     840: aastore
+     841: dup
+     842: iconst_3
+     843: getstatic     #464                // Field thaumcraft/api/blocks/BlocksTC.crystalEarth:Lnet/minecraft/block/Block;
+     846: aastore
+     847: dup
+     848: iconst_4
+     849: getstatic     #467                // Field thaumcraft/api/blocks/BlocksTC.crystalOrder:Lnet/minecraft/block/Block;
+     852: aastore
+     853: dup
+     854: iconst_5
+     855: getstatic     #470                // Field thaumcraft/api/blocks/BlocksTC.crystalEntropy:Lnet/minecraft/block/Block;
+     858: aastore
+     859: dup
+     860: bipush        6
+     862: getstatic     #473                // Field thaumcraft/api/blocks/BlocksTC.crystalTaint:Lnet/minecraft/block/Block;
+     865: aastore
+     866: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     869: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     872: new           #418                // class thaumcraft/api/research/ScanBlock
+     875: dup
+     876: ldc_w         #481                // String PLANTS
+     879: bipush        7
+     881: anewarray     #422                // class net/minecraft/block/Block
+     884: dup
+     885: iconst_0
+     886: getstatic     #484                // Field thaumcraft/api/blocks/BlocksTC.logGreatwood:Lnet/minecraft/block/Block;
+     889: aastore
+     890: dup
+     891: iconst_1
+     892: getstatic     #487                // Field thaumcraft/api/blocks/BlocksTC.logSilverwood:Lnet/minecraft/block/Block;
+     895: aastore
+     896: dup
+     897: iconst_2
+     898: getstatic     #490                // Field thaumcraft/api/blocks/BlocksTC.saplingGreatwood:Lnet/minecraft/block/Block;
+     901: aastore
+     902: dup
+     903: iconst_3
+     904: getstatic     #493                // Field thaumcraft/api/blocks/BlocksTC.saplingSilverwood:Lnet/minecraft/block/Block;
+     907: aastore
+     908: dup
+     909: iconst_4
+     910: getstatic     #496                // Field thaumcraft/api/blocks/BlocksTC.cinderpearl:Lnet/minecraft/block/Block;
+     913: aastore
+     914: dup
+     915: iconst_5
+     916: getstatic     #499                // Field thaumcraft/api/blocks/BlocksTC.shimmerleaf:Lnet/minecraft/block/Block;
+     919: aastore
+     920: dup
+     921: bipush        6
+     923: getstatic     #502                // Field thaumcraft/api/blocks/BlocksTC.vishroom:Lnet/minecraft/block/Block;
+     926: aastore
+     927: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     930: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     933: new           #418                // class thaumcraft/api/research/ScanBlock
+     936: dup
+     937: ldc_w         #504                // String !PLANTWOOD
+     940: iconst_1
+     941: anewarray     #422                // class net/minecraft/block/Block
+     944: dup
+     945: iconst_0
+     946: getstatic     #484                // Field thaumcraft/api/blocks/BlocksTC.logGreatwood:Lnet/minecraft/block/Block;
+     949: aastore
+     950: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     953: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     956: new           #418                // class thaumcraft/api/research/ScanBlock
+     959: dup
+     960: ldc_w         #504                // String !PLANTWOOD
+     963: iconst_1
+     964: anewarray     #422                // class net/minecraft/block/Block
+     967: dup
+     968: iconst_0
+     969: getstatic     #487                // Field thaumcraft/api/blocks/BlocksTC.logSilverwood:Lnet/minecraft/block/Block;
+     972: aastore
+     973: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     976: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     979: new           #418                // class thaumcraft/api/research/ScanBlock
+     982: dup
+     983: ldc_w         #504                // String !PLANTWOOD
+     986: iconst_1
+     987: anewarray     #422                // class net/minecraft/block/Block
+     990: dup
+     991: iconst_0
+     992: getstatic     #490                // Field thaumcraft/api/blocks/BlocksTC.saplingGreatwood:Lnet/minecraft/block/Block;
+     995: aastore
+     996: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+     999: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1002: new           #418                // class thaumcraft/api/research/ScanBlock
+    1005: dup
+    1006: ldc_w         #504                // String !PLANTWOOD
+    1009: iconst_1
+    1010: anewarray     #422                // class net/minecraft/block/Block
+    1013: dup
+    1014: iconst_0
+    1015: getstatic     #493                // Field thaumcraft/api/blocks/BlocksTC.saplingSilverwood:Lnet/minecraft/block/Block;
+    1018: aastore
+    1019: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1022: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1025: new           #418                // class thaumcraft/api/research/ScanBlock
+    1028: dup
+    1029: ldc_w         #506                // String !PLANTCINDERPEARL
+    1032: iconst_1
+    1033: anewarray     #422                // class net/minecraft/block/Block
+    1036: dup
+    1037: iconst_0
+    1038: getstatic     #496                // Field thaumcraft/api/blocks/BlocksTC.cinderpearl:Lnet/minecraft/block/Block;
+    1041: aastore
+    1042: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1045: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1048: new           #418                // class thaumcraft/api/research/ScanBlock
+    1051: dup
+    1052: ldc_w         #508                // String !PLANTSHIMMERLEAF
+    1055: iconst_1
+    1056: anewarray     #422                // class net/minecraft/block/Block
+    1059: dup
+    1060: iconst_0
+    1061: getstatic     #499                // Field thaumcraft/api/blocks/BlocksTC.shimmerleaf:Lnet/minecraft/block/Block;
+    1064: aastore
+    1065: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1068: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1071: new           #418                // class thaumcraft/api/research/ScanBlock
+    1074: dup
+    1075: ldc_w         #510                // String !PLANTVISHROOM
+    1078: iconst_1
+    1079: anewarray     #422                // class net/minecraft/block/Block
+    1082: dup
+    1083: iconst_0
+    1084: getstatic     #502                // Field thaumcraft/api/blocks/BlocksTC.vishroom:Lnet/minecraft/block/Block;
+    1087: aastore
+    1088: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1091: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1094: new           #512                // class thaumcraft/api/research/ScanItem
+    1097: dup
+    1098: ldc_w         #514                // String PRIMPEARL
+    1101: new           #516                // class net/minecraft/item/ItemStack
+    1104: dup
+    1105: getstatic     #522                // Field thaumcraft/api/items/ItemsTC.primordialPearl:Lnet/minecraft/item/Item;
+    1108: iconst_1
+    1109: sipush        32767
+    1112: invokespecial #525                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+    1115: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1118: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1121: new           #512                // class thaumcraft/api/research/ScanItem
+    1124: dup
+    1125: ldc_w         #530                // String !DRAGONBREATH
+    1128: new           #516                // class net/minecraft/item/ItemStack
+    1131: dup
+    1132: getstatic     #535                // Field net/minecraft/init/Items.field_185157_bK:Lnet/minecraft/item/Item;
+    1135: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1138: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1141: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1144: new           #512                // class thaumcraft/api/research/ScanItem
+    1147: dup
+    1148: ldc_w         #540                // String !TOTEMUNDYING
+    1151: new           #516                // class net/minecraft/item/ItemStack
+    1154: dup
+    1155: getstatic     #543                // Field net/minecraft/init/Items.field_190929_cY:Lnet/minecraft/item/Item;
+    1158: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1161: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1164: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1167: new           #418                // class thaumcraft/api/research/ScanBlock
+    1170: dup
+    1171: ldc_w         #545                // String f_TELEPORT
+    1174: iconst_3
+    1175: anewarray     #422                // class net/minecraft/block/Block
+    1178: dup
+    1179: iconst_0
+    1180: getstatic     #551                // Field net/minecraft/init/Blocks.field_150427_aO:Lnet/minecraft/block/BlockPortal;
+    1183: aastore
+    1184: dup
+    1185: iconst_1
+    1186: getstatic     #554                // Field net/minecraft/init/Blocks.field_150384_bq:Lnet/minecraft/block/Block;
+    1189: aastore
+    1190: dup
+    1191: iconst_2
+    1192: getstatic     #557                // Field net/minecraft/init/Blocks.field_150378_br:Lnet/minecraft/block/Block;
+    1195: aastore
+    1196: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1199: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1202: new           #512                // class thaumcraft/api/research/ScanItem
+    1205: dup
+    1206: ldc_w         #545                // String f_TELEPORT
+    1209: new           #516                // class net/minecraft/item/ItemStack
+    1212: dup
+    1213: getstatic     #560                // Field net/minecraft/init/Items.field_151079_bi:Lnet/minecraft/item/Item;
+    1216: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1219: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1222: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1225: new           #327                // class thaumcraft/api/research/ScanEntity
+    1228: dup
+    1229: ldc_w         #545                // String f_TELEPORT
+    1232: ldc_w         #562                // class net/minecraft/entity/monster/EntityEnderman
+    1235: iconst_1
+    1236: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+    1239: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1242: new           #327                // class thaumcraft/api/research/ScanEntity
+    1245: dup
+    1246: ldc_w         #564                // String f_BRAIN
+    1249: ldc_w         #350                // class thaumcraft/common/entities/monster/EntityBrainyZombie
+    1252: iconst_1
+    1253: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+    1256: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1259: new           #512                // class thaumcraft/api/research/ScanItem
+    1262: dup
+    1263: ldc_w         #564                // String f_BRAIN
+    1266: new           #516                // class net/minecraft/item/ItemStack
+    1269: dup
+    1270: getstatic     #567                // Field thaumcraft/api/items/ItemsTC.brain:Lnet/minecraft/item/Item;
+    1273: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1276: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1279: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1282: new           #418                // class thaumcraft/api/research/ScanBlock
+    1285: dup
+    1286: ldc_w         #569                // String f_DISPENSER
+    1289: iconst_1
+    1290: anewarray     #422                // class net/minecraft/block/Block
+    1293: dup
+    1294: iconst_0
+    1295: getstatic     #572                // Field net/minecraft/init/Blocks.field_150367_z:Lnet/minecraft/block/Block;
+    1298: aastore
+    1299: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1302: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1305: new           #512                // class thaumcraft/api/research/ScanItem
+    1308: dup
+    1309: ldc_w         #569                // String f_DISPENSER
+    1312: new           #516                // class net/minecraft/item/ItemStack
+    1315: dup
+    1316: getstatic     #572                // Field net/minecraft/init/Blocks.field_150367_z:Lnet/minecraft/block/Block;
+    1319: invokespecial #575                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/block/Block;)V
+    1322: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1325: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1328: new           #512                // class thaumcraft/api/research/ScanItem
+    1331: dup
+    1332: ldc_w         #577                // String f_MATCLAY
+    1335: new           #516                // class net/minecraft/item/ItemStack
+    1338: dup
+    1339: getstatic     #580                // Field net/minecraft/init/Items.field_151119_aD:Lnet/minecraft/item/Item;
+    1342: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1345: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1348: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1351: new           #418                // class thaumcraft/api/research/ScanBlock
+    1354: dup
+    1355: ldc_w         #577                // String f_MATCLAY
+    1358: iconst_2
+    1359: anewarray     #422                // class net/minecraft/block/Block
+    1362: dup
+    1363: iconst_0
+    1364: getstatic     #583                // Field net/minecraft/init/Blocks.field_150405_ch:Lnet/minecraft/block/Block;
+    1367: aastore
+    1368: dup
+    1369: iconst_1
+    1370: getstatic     #586                // Field net/minecraft/init/Blocks.field_150406_ce:Lnet/minecraft/block/Block;
+    1373: aastore
+    1374: invokespecial #434                // Method thaumcraft/api/research/ScanBlock."<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+    1377: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1380: new           #588                // class thaumcraft/api/research/ScanMaterial
+    1383: dup
+    1384: ldc_w         #577                // String f_MATCLAY
+    1387: iconst_1
+    1388: anewarray     #590                // class net/minecraft/block/material/Material
+    1391: dup
+    1392: iconst_0
+    1393: getstatic     #594                // Field net/minecraft/block/material/Material.field_151571_B:Lnet/minecraft/block/material/Material;
+    1396: aastore
+    1397: invokespecial #597                // Method thaumcraft/api/research/ScanMaterial."<init>":(Ljava/lang/String;[Lnet/minecraft/block/material/Material;)V
+    1400: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1403: new           #599                // class thaumcraft/api/research/ScanOreDictionary
+    1406: dup
+    1407: ldc_w         #601                // String f_MATIRON
+    1410: iconst_4
+    1411: anewarray     #62                 // class java/lang/String
+    1414: dup
+    1415: iconst_0
+    1416: ldc_w         #603                // String oreIron
+    1419: aastore
+    1420: dup
+    1421: iconst_1
+    1422: ldc_w         #605                // String ingotIron
+    1425: aastore
+    1426: dup
+    1427: iconst_2
+    1428: ldc_w         #607                // String blockIron
+    1431: aastore
+    1432: dup
+    1433: iconst_3
+    1434: ldc_w         #609                // String plateIron
+    1437: aastore
+    1438: invokespecial #612                // Method thaumcraft/api/research/ScanOreDictionary."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+    1441: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1444: new           #599                // class thaumcraft/api/research/ScanOreDictionary
+    1447: dup
+    1448: ldc_w         #614                // String f_MATBRASS
+    1451: iconst_3
+    1452: anewarray     #62                 // class java/lang/String
+    1455: dup
+    1456: iconst_0
+    1457: ldc_w         #616                // String ingotBrass
+    1460: aastore
+    1461: dup
+    1462: iconst_1
+    1463: ldc_w         #618                // String blockBrass
+    1466: aastore
+    1467: dup
+    1468: iconst_2
+    1469: ldc_w         #620                // String plateBrass
+    1472: aastore
+    1473: invokespecial #612                // Method thaumcraft/api/research/ScanOreDictionary."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+    1476: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1479: new           #599                // class thaumcraft/api/research/ScanOreDictionary
+    1482: dup
+    1483: ldc_w         #622                // String f_MATTHAUMIUM
+    1486: iconst_3
+    1487: anewarray     #62                 // class java/lang/String
+    1490: dup
+    1491: iconst_0
+    1492: ldc_w         #624                // String ingotThaumium
+    1495: aastore
+    1496: dup
+    1497: iconst_1
+    1498: ldc_w         #626                // String blockThaumium
+    1501: aastore
+    1502: dup
+    1503: iconst_2
+    1504: ldc_w         #628                // String plateThaumium
+    1507: aastore
+    1508: invokespecial #612                // Method thaumcraft/api/research/ScanOreDictionary."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+    1511: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1514: new           #599                // class thaumcraft/api/research/ScanOreDictionary
+    1517: dup
+    1518: ldc_w         #630                // String f_MATVOID
+    1521: iconst_3
+    1522: anewarray     #62                 // class java/lang/String
+    1525: dup
+    1526: iconst_0
+    1527: ldc_w         #632                // String ingotVoid
+    1530: aastore
+    1531: dup
+    1532: iconst_1
+    1533: ldc_w         #634                // String blockVoid
+    1536: aastore
+    1537: dup
+    1538: iconst_2
+    1539: ldc_w         #636                // String plateVoid
+    1542: aastore
+    1543: invokespecial #612                // Method thaumcraft/api/research/ScanOreDictionary."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+    1546: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1549: new           #327                // class thaumcraft/api/research/ScanEntity
+    1552: dup
+    1553: ldc_w         #638                // String f_arrow
+    1556: ldc_w         #640                // class net/minecraft/entity/projectile/EntityArrow
+    1559: iconst_1
+    1560: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+    1563: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1566: new           #512                // class thaumcraft/api/research/ScanItem
+    1569: dup
+    1570: ldc_w         #638                // String f_arrow
+    1573: new           #516                // class net/minecraft/item/ItemStack
+    1576: dup
+    1577: getstatic     #643                // Field net/minecraft/init/Items.field_151032_g:Lnet/minecraft/item/Item;
+    1580: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1583: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1586: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1589: new           #327                // class thaumcraft/api/research/ScanEntity
+    1592: dup
+    1593: ldc_w         #645                // String f_fireball
+    1596: ldc_w         #647                // class net/minecraft/entity/projectile/EntityFireball
+    1599: iconst_1
+    1600: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+    1603: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1606: new           #327                // class thaumcraft/api/research/ScanEntity
+    1609: dup
+    1610: ldc_w         #649                // String f_spit
+    1613: ldc_w         #651                // class net/minecraft/entity/projectile/EntityLlamaSpit
+    1616: iconst_1
+    1617: invokespecial #334                // Method thaumcraft/api/research/ScanEntity."<init>":(Ljava/lang/String;Ljava/lang/Class;Z)V
+    1620: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1623: new           #512                // class thaumcraft/api/research/ScanItem
+    1626: dup
+    1627: ldc_w         #653                // String !Pechwand
+    1630: new           #516                // class net/minecraft/item/ItemStack
+    1633: dup
+    1634: getstatic     #656                // Field thaumcraft/api/items/ItemsTC.pechWand:Lnet/minecraft/item/Item;
+    1637: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1640: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1643: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1646: new           #512                // class thaumcraft/api/research/ScanItem
+    1649: dup
+    1650: ldc_w         #658                // String f_VOIDSEED
+    1653: new           #516                // class net/minecraft/item/ItemStack
+    1656: dup
+    1657: getstatic     #661                // Field thaumcraft/api/items/ItemsTC.voidSeed:Lnet/minecraft/item/Item;
+    1660: invokespecial #538                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+    1663: invokespecial #528                // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+    1666: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1669: new           #663                // class thaumcraft/common/lib/research/ScanSky
+    1672: dup
+    1673: invokespecial #664                // Method thaumcraft/common/lib/research/ScanSky."<init>":()V
+    1676: invokestatic  #278                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+    1679: return
+
+  private static void initTheorycraft();
+    Code:
+       0: new           #671                // class thaumcraft/api/research/theorycraft/AidBookshelf
+       3: dup
+       4: invokespecial #672                // Method thaumcraft/api/research/theorycraft/AidBookshelf."<init>":()V
+       7: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      10: new           #680                // class thaumcraft/common/lib/research/theorycraft/AidBrainInAJar
+      13: dup
+      14: invokespecial #681                // Method thaumcraft/common/lib/research/theorycraft/AidBrainInAJar."<init>":()V
+      17: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      20: new           #683                // class thaumcraft/common/lib/research/theorycraft/AidGlyphedStone
+      23: dup
+      24: invokespecial #684                // Method thaumcraft/common/lib/research/theorycraft/AidGlyphedStone."<init>":()V
+      27: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      30: new           #7                  // class thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalEnd
+      33: dup
+      34: invokespecial #685                // Method thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalEnd."<init>":()V
+      37: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      40: new           #12                 // class thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalNether
+      43: dup
+      44: invokespecial #686                // Method thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalNether."<init>":()V
+      47: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      50: new           #15                 // class thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalCrimson
+      53: dup
+      54: invokespecial #687                // Method thaumcraft/common/lib/research/theorycraft/AidPortal$AidPortalCrimson."<init>":()V
+      57: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      60: new           #689                // class thaumcraft/common/lib/research/theorycraft/AidBasicAlchemy
+      63: dup
+      64: invokespecial #690                // Method thaumcraft/common/lib/research/theorycraft/AidBasicAlchemy."<init>":()V
+      67: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      70: new           #692                // class thaumcraft/common/lib/research/theorycraft/AidBasicArtifice
+      73: dup
+      74: invokespecial #693                // Method thaumcraft/common/lib/research/theorycraft/AidBasicArtifice."<init>":()V
+      77: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      80: new           #695                // class thaumcraft/common/lib/research/theorycraft/AidBasicInfusion
+      83: dup
+      84: invokespecial #696                // Method thaumcraft/common/lib/research/theorycraft/AidBasicInfusion."<init>":()V
+      87: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+      90: new           #698                // class thaumcraft/common/lib/research/theorycraft/AidBasicAuromancy
+      93: dup
+      94: invokespecial #699                // Method thaumcraft/common/lib/research/theorycraft/AidBasicAuromancy."<init>":()V
+      97: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+     100: new           #701                // class thaumcraft/common/lib/research/theorycraft/AidBasicGolemancy
+     103: dup
+     104: invokespecial #702                // Method thaumcraft/common/lib/research/theorycraft/AidBasicGolemancy."<init>":()V
+     107: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+     110: new           #704                // class thaumcraft/common/lib/research/theorycraft/AidBasicEldritch
+     113: dup
+     114: invokespecial #705                // Method thaumcraft/common/lib/research/theorycraft/AidBasicEldritch."<init>":()V
+     117: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+     120: new           #707                // class thaumcraft/common/lib/research/theorycraft/AidEnchantmentTable
+     123: dup
+     124: invokespecial #708                // Method thaumcraft/common/lib/research/theorycraft/AidEnchantmentTable."<init>":()V
+     127: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+     130: new           #710                // class thaumcraft/common/lib/research/theorycraft/AidBeacon
+     133: dup
+     134: invokespecial #711                // Method thaumcraft/common/lib/research/theorycraft/AidBeacon."<init>":()V
+     137: invokestatic  #678                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerAid:(Lthaumcraft/api/research/theorycraft/ITheorycraftAid;)V
+     140: ldc_w         #713                // class thaumcraft/api/research/theorycraft/CardStudy
+     143: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     146: ldc_w         #719                // class thaumcraft/api/research/theorycraft/CardAnalyze
+     149: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     152: ldc_w         #721                // class thaumcraft/api/research/theorycraft/CardBalance
+     155: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     158: ldc_w         #723                // class thaumcraft/api/research/theorycraft/CardNotation
+     161: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     164: ldc_w         #725                // class thaumcraft/api/research/theorycraft/CardPonder
+     167: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     170: ldc_w         #727                // class thaumcraft/api/research/theorycraft/CardRethink
+     173: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     176: ldc_w         #729                // class thaumcraft/api/research/theorycraft/CardReject
+     179: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     182: ldc_w         #731                // class thaumcraft/api/research/theorycraft/CardExperimentation
+     185: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     188: ldc_w         #733                // class thaumcraft/common/lib/research/theorycraft/CardCurio
+     191: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     194: ldc_w         #735                // class thaumcraft/api/research/theorycraft/CardInspired
+     197: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     200: ldc_w         #737                // class thaumcraft/common/lib/research/theorycraft/CardEnchantment
+     203: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     206: ldc_w         #739                // class thaumcraft/common/lib/research/theorycraft/CardBeacon
+     209: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     212: ldc_w         #741                // class thaumcraft/common/lib/research/theorycraft/CardCelestial
+     215: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     218: ldc_w         #743                // class thaumcraft/common/lib/research/theorycraft/CardConcentrate
+     221: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     224: ldc_w         #745                // class thaumcraft/common/lib/research/theorycraft/CardReactions
+     227: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     230: ldc_w         #747                // class thaumcraft/common/lib/research/theorycraft/CardSynthesis
+     233: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     236: ldc_w         #749                // class thaumcraft/common/lib/research/theorycraft/CardCalibrate
+     239: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     242: ldc_w         #751                // class thaumcraft/common/lib/research/theorycraft/CardMindOverMatter
+     245: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     248: ldc_w         #753                // class thaumcraft/common/lib/research/theorycraft/CardTinker
+     251: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     254: ldc_w         #755                // class thaumcraft/common/lib/research/theorycraft/CardMeasure
+     257: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     260: ldc_w         #757                // class thaumcraft/common/lib/research/theorycraft/CardChannel
+     263: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     266: ldc_w         #759                // class thaumcraft/common/lib/research/theorycraft/CardInfuse
+     269: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     272: ldc_w         #761                // class thaumcraft/common/lib/research/theorycraft/CardFocus
+     275: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     278: ldc_w         #763                // class thaumcraft/common/lib/research/theorycraft/CardAwareness
+     281: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     284: ldc_w         #765                // class thaumcraft/common/lib/research/theorycraft/CardSpellbinding
+     287: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     290: ldc_w         #767                // class thaumcraft/common/lib/research/theorycraft/CardSculpting
+     293: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     296: ldc_w         #769                // class thaumcraft/common/lib/research/theorycraft/CardScripting
+     299: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     302: ldc_w         #771                // class thaumcraft/common/lib/research/theorycraft/CardSynergy
+     305: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     308: ldc_w         #773                // class thaumcraft/common/lib/research/theorycraft/CardDarkWhispers
+     311: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     314: ldc_w         #775                // class thaumcraft/common/lib/research/theorycraft/CardGlyphs
+     317: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     320: ldc_w         #777                // class thaumcraft/common/lib/research/theorycraft/CardPortal
+     323: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     326: ldc_w         #779                // class thaumcraft/common/lib/research/theorycraft/CardRevelation
+     329: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     332: ldc_w         #781                // class thaumcraft/common/lib/research/theorycraft/CardRealization
+     335: invokestatic  #717                // Method thaumcraft/api/research/theorycraft/TheorycraftManager.registerCard:(Ljava/lang/Class;)V
+     338: return
+
+  private static void initWarp();
+    Code:
+       0: new           #516                // class net/minecraft/item/ItemStack
+       3: dup
+       4: getstatic     #784                // Field thaumcraft/api/blocks/BlocksTC.jarBrain:Lnet/minecraft/block/Block;
+       7: invokespecial #575                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/block/Block;)V
+      10: iconst_1
+      11: invokestatic  #788                // Method thaumcraft/api/ThaumcraftApi.addWarpToItem:(Lnet/minecraft/item/ItemStack;I)V
+      14: return
+
+  private static void initGolemancyResearch();
+    Code:
+       0: return
+
+  private static void initEldritchResearch();
+    Code:
+       0: return
+
+  public static void checkPeriodicStuff(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_0
+       1: invokestatic  #798                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+       4: astore_1
+       5: aload_0
+       6: getfield      #804                // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       9: aload_0
+      10: invokevirtual #808                // Method net/minecraft/entity/player/EntityPlayer.func_180425_c:()Lnet/minecraft/util/math/BlockPos;
+      13: invokevirtual #814                // Method net/minecraft/world/World.func_180494_b:(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/biome/Biome;
+      16: astore_2
+      17: aload_1
+      18: ldc_w         #816                // String m_hellandback
+      21: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+      26: ifne          96
+      29: aload_2
+      30: getstatic     #826                // Field net/minecraftforge/common/BiomeDictionary$Type.NETHER:Lnet/minecraftforge/common/BiomeDictionary$Type;
+      33: invokestatic  #830                // Method net/minecraftforge/common/BiomeDictionary.hasType:(Lnet/minecraft/world/biome/Biome;Lnet/minecraftforge/common/BiomeDictionary$Type;)Z
+      36: ifeq          96
+      39: aload_1
+      40: ldc_w         #816                // String m_hellandback
+      43: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+      48: pop
+      49: aload_1
+      50: aload_0
+      51: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+      54: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+      59: aload_0
+      60: new           #841                // class net/minecraft/util/text/TextComponentString
+      63: dup
+      64: new           #53                 // class java/lang/StringBuilder
+      67: dup
+      68: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+      71: getstatic     #847                // Field net/minecraft/util/text/TextFormatting.DARK_PURPLE:Lnet/minecraft/util/text/TextFormatting;
+      74: invokevirtual #850                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      77: ldc_w         #852                // String got.hellandback
+      80: invokestatic  #858                // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+      83: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      86: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      89: invokespecial #861                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+      92: iconst_1
+      93: invokevirtual #865                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+      96: aload_1
+      97: ldc_w         #869                // String m_endoftheworld
+     100: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     105: ifne          175
+     108: aload_2
+     109: getstatic     #872                // Field net/minecraftforge/common/BiomeDictionary$Type.END:Lnet/minecraftforge/common/BiomeDictionary$Type;
+     112: invokestatic  #830                // Method net/minecraftforge/common/BiomeDictionary.hasType:(Lnet/minecraft/world/biome/Biome;Lnet/minecraftforge/common/BiomeDictionary$Type;)Z
+     115: ifeq          175
+     118: aload_1
+     119: ldc_w         #869                // String m_endoftheworld
+     122: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     127: pop
+     128: aload_1
+     129: aload_0
+     130: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     133: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     138: aload_0
+     139: new           #841                // class net/minecraft/util/text/TextComponentString
+     142: dup
+     143: new           #53                 // class java/lang/StringBuilder
+     146: dup
+     147: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+     150: getstatic     #847                // Field net/minecraft/util/text/TextFormatting.DARK_PURPLE:Lnet/minecraft/util/text/TextFormatting;
+     153: invokevirtual #850                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     156: ldc_w         #874                // String got.endoftheworld
+     159: invokestatic  #858                // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+     162: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     165: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     168: invokespecial #861                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+     171: iconst_1
+     172: invokevirtual #865                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     175: aload_1
+     176: ldc_w         #876                // String UNLOCKAUROMANCY@1
+     179: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     184: ifeq          368
+     187: aload_1
+     188: ldc_w         #878                // String UNLOCKAUROMANCY@2
+     191: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     196: ifne          368
+     199: aload_0
+     200: getfield      #882                // Field net/minecraft/entity/player/EntityPlayer.field_70163_u:D
+     203: ldc2_w        #883                // double 10.0d
+     206: dcmpg
+     207: ifge          279
+     210: aload_1
+     211: ldc_w         #886                // String m_deepdown
+     214: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     219: ifne          279
+     222: aload_1
+     223: ldc_w         #886                // String m_deepdown
+     226: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     231: pop
+     232: aload_1
+     233: aload_0
+     234: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     237: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     242: aload_0
+     243: new           #841                // class net/minecraft/util/text/TextComponentString
+     246: dup
+     247: new           #53                 // class java/lang/StringBuilder
+     250: dup
+     251: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+     254: getstatic     #847                // Field net/minecraft/util/text/TextFormatting.DARK_PURPLE:Lnet/minecraft/util/text/TextFormatting;
+     257: invokevirtual #850                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     260: ldc_w         #888                // String got.deepdown
+     263: invokestatic  #858                // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+     266: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     269: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     272: invokespecial #861                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+     275: iconst_1
+     276: invokevirtual #865                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     279: aload_0
+     280: getfield      #882                // Field net/minecraft/entity/player/EntityPlayer.field_70163_u:D
+     283: aload_0
+     284: invokevirtual #892                // Method net/minecraft/entity/player/EntityPlayer.func_130014_f_:()Lnet/minecraft/world/World;
+     287: invokevirtual #896                // Method net/minecraft/world/World.func_72940_L:()I
+     290: i2d
+     291: ldc2_w        #897                // double 0.4d
+     294: dmul
+     295: dcmpl
+     296: ifle          368
+     299: aload_1
+     300: ldc_w         #900                // String m_uphigh
+     303: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     308: ifne          368
+     311: aload_1
+     312: ldc_w         #900                // String m_uphigh
+     315: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     320: pop
+     321: aload_1
+     322: aload_0
+     323: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     326: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     331: aload_0
+     332: new           #841                // class net/minecraft/util/text/TextComponentString
+     335: dup
+     336: new           #53                 // class java/lang/StringBuilder
+     339: dup
+     340: invokespecial #54                 // Method java/lang/StringBuilder."<init>":()V
+     343: getstatic     #847                // Field net/minecraft/util/text/TextFormatting.DARK_PURPLE:Lnet/minecraft/util/text/TextFormatting;
+     346: invokevirtual #850                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     349: ldc_w         #902                // String got.uphigh
+     352: invokestatic  #858                // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+     355: invokevirtual #60                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     358: invokevirtual #69                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     361: invokespecial #861                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+     364: iconst_1
+     365: invokevirtual #865                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     368: aload_0
+     369: invokevirtual #906                // Method net/minecraft/entity/player/EntityPlayer.func_184102_h:()Lnet/minecraft/server/MinecraftServer;
+     372: invokevirtual #912                // Method net/minecraft/server/MinecraftServer.func_184103_al:()Lnet/minecraft/server/management/PlayerList;
+     375: aload_0
+     376: invokevirtual #918                // Method net/minecraft/server/management/PlayerList.func_152602_a:(Lnet/minecraft/entity/player/EntityPlayer;)Lnet/minecraft/stats/StatisticsManagerServer;
+     379: astore_3
+     380: aload_3
+     381: ifnull        564
+     384: aload_1
+     385: ldc_w         #920                // String m_walker
+     388: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     393: ifne          429
+     396: aload_3
+     397: getstatic     #926                // Field net/minecraft/stats/StatList.field_188100_j:Lnet/minecraft/stats/StatBase;
+     400: invokevirtual #932                // Method net/minecraft/stats/StatisticsManagerServer.func_77444_a:(Lnet/minecraft/stats/StatBase;)I
+     403: ldc_w         #933                // int 160000
+     406: if_icmple     429
+     409: aload_1
+     410: ldc_w         #920                // String m_walker
+     413: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     418: pop
+     419: aload_1
+     420: aload_0
+     421: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     424: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     429: aload_1
+     430: ldc_w         #935                // String m_runner
+     433: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     438: ifne          474
+     441: aload_3
+     442: getstatic     #938                // Field net/minecraft/stats/StatList.field_188102_l:Lnet/minecraft/stats/StatBase;
+     445: invokevirtual #932                // Method net/minecraft/stats/StatisticsManagerServer.func_77444_a:(Lnet/minecraft/stats/StatBase;)I
+     448: ldc_w         #939                // int 80000
+     451: if_icmple     474
+     454: aload_1
+     455: ldc_w         #935                // String m_runner
+     458: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     463: pop
+     464: aload_1
+     465: aload_0
+     466: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     469: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     474: aload_1
+     475: ldc_w         #941                // String m_jumper
+     478: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     483: ifne          519
+     486: aload_3
+     487: getstatic     #944                // Field net/minecraft/stats/StatList.field_75953_u:Lnet/minecraft/stats/StatBase;
+     490: invokevirtual #932                // Method net/minecraft/stats/StatisticsManagerServer.func_77444_a:(Lnet/minecraft/stats/StatBase;)I
+     493: sipush        500
+     496: if_icmple     519
+     499: aload_1
+     500: ldc_w         #941                // String m_jumper
+     503: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     508: pop
+     509: aload_1
+     510: aload_0
+     511: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     514: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     519: aload_1
+     520: ldc_w         #946                // String m_swimmer
+     523: invokeinterface #822,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     528: ifne          564
+     531: aload_3
+     532: getstatic     #949                // Field net/minecraft/stats/StatList.field_75946_m:Lnet/minecraft/stats/StatBase;
+     535: invokevirtual #932                // Method net/minecraft/stats/StatisticsManagerServer.func_77444_a:(Lnet/minecraft/stats/StatBase;)I
+     538: sipush        8000
+     541: if_icmple     564
+     544: aload_1
+     545: ldc_w         #946                // String m_swimmer
+     548: invokeinterface #833,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+     553: pop
+     554: aload_1
+     555: aload_0
+     556: checkcast     #835                // class net/minecraft/entity/player/EntityPlayerMP
+     559: invokeinterface #839,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     564: return
+
+  static {};
+    Code:
+       0: bipush        7
+       2: anewarray     #62                 // class java/lang/String
+       5: dup
+       6: iconst_0
+       7: ldc           #90                 // String BASICS
+       9: aastore
+      10: dup
+      11: iconst_1
+      12: ldc           #158                // String ALCHEMY
+      14: aastore
+      15: dup
+      16: iconst_2
+      17: ldc           #135                // String AUROMANCY
+      19: aastore
+      20: dup
+      21: iconst_3
+      22: ldc           #177                // String ARTIFICE
+      24: aastore
+      25: dup
+      26: iconst_4
+      27: ldc           #209                // String INFUSION
+      29: aastore
+      30: dup
+      31: iconst_5
+      32: ldc           #223                // String GOLEMANCY
+      34: aastore
+      35: dup
+      36: bipush        6
+      38: ldc           #249                // String ELDRITCH
+      40: aastore
+      41: putstatic     #46                 // Field TCCategories:[Ljava/lang/String;
+      44: new           #49                 // class net/minecraft/util/ResourceLocation
+      47: dup
+      48: ldc           #51                 // String thaumcraft
+      50: ldc_w         #960                // String textures/gui/gui_research_back_over.png
+      53: invokespecial #72                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      56: putstatic     #127                // Field BACK_OVER:Lnet/minecraft/util/ResourceLocation;
+      59: return
+}

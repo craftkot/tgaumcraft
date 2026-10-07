@@ -1,0 +1,10 @@
+Compiled from "IScanThing.java"
+public interface thaumcraft.api.research.IScanThing {
+  public abstract boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+
+  public abstract java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+
+  public default void onSuccess(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: return
+}

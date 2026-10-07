@@ -1,0 +1,6 @@
+Stage 7 audit
+Research: 148 entries / 271 stages / 16 addenda
+Categories: ALCHEMY=22, ARTIFICE=20, AUROMANCY=23, BASICS=32, ELDRITCH=5, GOLEMANCY=29, INFUSION=17
+Recipe ids: 198 unique / 137 legacy ids need modern mapping / 0 lowercase collisions
+Core Java files: 26
+AUDIT OK

@@ -1,0 +1,134 @@
+Compiled from "ScanEntity.java"
+public class thaumcraft.api.research.ScanEntity implements thaumcraft.api.research.IScanThing {
+  java.lang.String research;
+
+  java.lang.Class entityClass;
+
+  thaumcraft.api.ThaumcraftApi$EntityTagsNBT[] NBTData;
+
+  boolean inheritedClasses;
+
+  public thaumcraft.api.research.ScanEntity(java.lang.String, java.lang.Class, boolean);
+    Code:
+       0: aload_0
+       1: invokespecial #25                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #27                 // Field inheritedClasses:Z
+       9: aload_0
+      10: aload_1
+      11: putfield      #29                 // Field research:Ljava/lang/String;
+      14: aload_0
+      15: aload_2
+      16: putfield      #31                 // Field entityClass:Ljava/lang/Class;
+      19: aload_0
+      20: iload_3
+      21: putfield      #27                 // Field inheritedClasses:Z
+      24: return
+
+  public thaumcraft.api.research.ScanEntity(java.lang.String, java.lang.Class, boolean, thaumcraft.api.ThaumcraftApi$EntityTagsNBT...);
+    Code:
+       0: aload_0
+       1: invokespecial #25                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #27                 // Field inheritedClasses:Z
+       9: aload_0
+      10: aload_1
+      11: putfield      #29                 // Field research:Ljava/lang/String;
+      14: aload_0
+      15: aload_2
+      16: putfield      #31                 // Field entityClass:Ljava/lang/Class;
+      19: aload_0
+      20: iload_3
+      21: putfield      #27                 // Field inheritedClasses:Z
+      24: aload_0
+      25: aload         4
+      27: putfield      #36                 // Field NBTData:[Lthaumcraft/api/ThaumcraftApi$EntityTagsNBT;
+      30: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnull        158
+       4: aload_0
+       5: getfield      #27                 // Field inheritedClasses:Z
+       8: ifne          22
+      11: aload_0
+      12: getfield      #31                 // Field entityClass:Ljava/lang/Class;
+      15: aload_2
+      16: invokevirtual #43                 // Method java/lang/Object.getClass:()Ljava/lang/Class;
+      19: if_acmpeq     40
+      22: aload_0
+      23: getfield      #27                 // Field inheritedClasses:Z
+      26: ifeq          158
+      29: aload_0
+      30: getfield      #31                 // Field entityClass:Ljava/lang/Class;
+      33: aload_2
+      34: invokevirtual #49                 // Method java/lang/Class.isInstance:(Ljava/lang/Object;)Z
+      37: ifeq          158
+      40: aload_0
+      41: getfield      #36                 // Field NBTData:[Lthaumcraft/api/ThaumcraftApi$EntityTagsNBT;
+      44: ifnull        156
+      47: aload_0
+      48: getfield      #36                 // Field NBTData:[Lthaumcraft/api/ThaumcraftApi$EntityTagsNBT;
+      51: arraylength
+      52: ifle          156
+      55: iconst_1
+      56: istore_3
+      57: new           #51                 // class net/minecraft/nbt/NBTTagCompound
+      60: dup
+      61: invokespecial #52                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+      64: astore        4
+      66: aload_2
+      67: checkcast     #54                 // class net/minecraft/entity/Entity
+      70: aload         4
+      72: invokevirtual #58                 // Method net/minecraft/entity/Entity.func_189511_e:(Lnet/minecraft/nbt/NBTTagCompound;)Lnet/minecraft/nbt/NBTTagCompound;
+      75: pop
+      76: aload_0
+      77: getfield      #36                 // Field NBTData:[Lthaumcraft/api/ThaumcraftApi$EntityTagsNBT;
+      80: astore        5
+      82: aload         5
+      84: arraylength
+      85: istore        6
+      87: iconst_0
+      88: istore        7
+      90: iload         7
+      92: iload         6
+      94: if_icmpge     156
+      97: aload         5
+      99: iload         7
+     101: aaload
+     102: astore        8
+     104: aload         4
+     106: aload         8
+     108: getfield      #64                 // Field thaumcraft/api/ThaumcraftApi$EntityTagsNBT.name:Ljava/lang/String;
+     111: invokevirtual #68                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+     114: ifeq          148
+     117: aload         4
+     119: aload         4
+     121: aload         8
+     123: getfield      #64                 // Field thaumcraft/api/ThaumcraftApi$EntityTagsNBT.name:Ljava/lang/String;
+     126: invokevirtual #72                 // Method net/minecraft/nbt/NBTTagCompound.func_150299_b:(Ljava/lang/String;)B
+     129: aload         8
+     131: getfield      #64                 // Field thaumcraft/api/ThaumcraftApi$EntityTagsNBT.name:Ljava/lang/String;
+     134: invokestatic  #78                 // Method thaumcraft/api/ThaumcraftApiHelper.getNBTDataFromId:(Lnet/minecraft/nbt/NBTTagCompound;BLjava/lang/String;)Ljava/lang/Object;
+     137: aload         8
+     139: getfield      #82                 // Field thaumcraft/api/ThaumcraftApi$EntityTagsNBT.value:Ljava/lang/Object;
+     142: invokevirtual #85                 // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+     145: ifne          150
+     148: iconst_0
+     149: ireturn
+     150: iinc          7, 1
+     153: goto          90
+     156: iconst_1
+     157: ireturn
+     158: iconst_0
+     159: ireturn
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field research:Ljava/lang/String;
+       4: areturn
+}

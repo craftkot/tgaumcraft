@@ -1,0 +1,9 @@
+JAR: 1120 classes (1112 thaumcraft), 1531 assets
+Localization: EN 1464 / RU 1464, missing RU 0
+Research: 148 entries / 271 stages / 16 addenda
+Aspects: 37 (6 primal + 31 compound)
+Legacy recipe refs: 198 unique, 137 need modern ID migration
+Core Java files: 21
+Core tests: Core parity tests: OK (4348 assertions)
+NeoForge compile-tested: NO (No Gradle executable/wrapper JAR and runtime dependency download is unavailable in this container.)
+AUDIT OK

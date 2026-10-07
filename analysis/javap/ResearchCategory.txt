@@ -1,0 +1,147 @@
+Compiled from "ResearchCategory.java"
+public class thaumcraft.api.research.ResearchCategory {
+  public int minDisplayColumn;
+
+  public int minDisplayRow;
+
+  public int maxDisplayColumn;
+
+  public int maxDisplayRow;
+
+  public net.minecraft.util.ResourceLocation icon;
+
+  public net.minecraft.util.ResourceLocation background;
+
+  public net.minecraft.util.ResourceLocation background2;
+
+  public java.lang.String researchKey;
+
+  public java.lang.String key;
+
+  public thaumcraft.api.aspects.AspectList formula;
+
+  public java.util.Map<java.lang.String, thaumcraft.api.research.ResearchEntry> research;
+
+  public thaumcraft.api.research.ResearchCategory(java.lang.String, java.lang.String, thaumcraft.api.aspects.AspectList, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation);
+    Code:
+       0: aload_0
+       1: invokespecial #27                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #29                 // class java/util/HashMap
+       8: dup
+       9: invokespecial #30                 // Method java/util/HashMap."<init>":()V
+      12: putfield      #32                 // Field research:Ljava/util/Map;
+      15: aload_0
+      16: aload_1
+      17: putfield      #34                 // Field key:Ljava/lang/String;
+      20: aload_0
+      21: aload_2
+      22: putfield      #36                 // Field researchKey:Ljava/lang/String;
+      25: aload_0
+      26: aload         4
+      28: putfield      #38                 // Field icon:Lnet/minecraft/util/ResourceLocation;
+      31: aload_0
+      32: aload         5
+      34: putfield      #40                 // Field background:Lnet/minecraft/util/ResourceLocation;
+      37: aload_0
+      38: aconst_null
+      39: putfield      #42                 // Field background2:Lnet/minecraft/util/ResourceLocation;
+      42: aload_0
+      43: aload_3
+      44: putfield      #44                 // Field formula:Lthaumcraft/api/aspects/AspectList;
+      47: return
+
+  public thaumcraft.api.research.ResearchCategory(java.lang.String, java.lang.String, thaumcraft.api.aspects.AspectList, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation, net.minecraft.util.ResourceLocation);
+    Code:
+       0: aload_0
+       1: invokespecial #27                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #29                 // class java/util/HashMap
+       8: dup
+       9: invokespecial #30                 // Method java/util/HashMap."<init>":()V
+      12: putfield      #32                 // Field research:Ljava/util/Map;
+      15: aload_0
+      16: aload_1
+      17: putfield      #34                 // Field key:Ljava/lang/String;
+      20: aload_0
+      21: aload_2
+      22: putfield      #36                 // Field researchKey:Ljava/lang/String;
+      25: aload_0
+      26: aload         4
+      28: putfield      #38                 // Field icon:Lnet/minecraft/util/ResourceLocation;
+      31: aload_0
+      32: aload         5
+      34: putfield      #40                 // Field background:Lnet/minecraft/util/ResourceLocation;
+      37: aload_0
+      38: aload         6
+      40: putfield      #42                 // Field background2:Lnet/minecraft/util/ResourceLocation;
+      43: aload_0
+      44: aload_3
+      45: putfield      #44                 // Field formula:Lthaumcraft/api/aspects/AspectList;
+      48: return
+
+  public int applyFormula(thaumcraft.api.aspects.AspectList);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: dconst_1
+       3: invokevirtual #53                 // Method applyFormula:(Lthaumcraft/api/aspects/AspectList;D)I
+       6: ireturn
+
+  public int applyFormula(thaumcraft.api.aspects.AspectList, double);
+    Code:
+       0: aload_0
+       1: getfield      #44                 // Field formula:Lthaumcraft/api/aspects/AspectList;
+       4: ifnonnull     9
+       7: iconst_0
+       8: ireturn
+       9: dconst_0
+      10: dstore        4
+      12: aload_0
+      13: getfield      #44                 // Field formula:Lthaumcraft/api/aspects/AspectList;
+      16: invokevirtual #60                 // Method thaumcraft/api/aspects/AspectList.getAspects:()[Lthaumcraft/api/aspects/Aspect;
+      19: astore        6
+      21: aload         6
+      23: arraylength
+      24: istore        7
+      26: iconst_0
+      27: istore        8
+      29: iload         8
+      31: iload         7
+      33: if_icmpge     80
+      36: aload         6
+      38: iload         8
+      40: aaload
+      41: astore        9
+      43: dload         4
+      45: dload_2
+      46: dload_2
+      47: dmul
+      48: aload_1
+      49: aload         9
+      51: invokevirtual #66                 // Method thaumcraft/api/aspects/AspectList.getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      54: i2d
+      55: dmul
+      56: aload_0
+      57: getfield      #44                 // Field formula:Lthaumcraft/api/aspects/AspectList;
+      60: aload         9
+      62: invokevirtual #66                 // Method thaumcraft/api/aspects/AspectList.getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      65: i2d
+      66: ldc2_w        #67                 // double 10.0d
+      69: ddiv
+      70: dmul
+      71: dadd
+      72: dstore        4
+      74: iinc          8, 1
+      77: goto          29
+      80: dload         4
+      82: dconst_0
+      83: dcmpl
+      84: ifle          94
+      87: dload         4
+      89: invokestatic  #74                 // Method java/lang/Math.sqrt:(D)D
+      92: dstore        4
+      94: dload         4
+      96: invokestatic  #80                 // Method net/minecraft/util/math/MathHelper.func_76143_f:(D)I
+      99: ireturn
+}

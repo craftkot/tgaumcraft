@@ -1,0 +1,64 @@
+Compiled from "ScanItem.java"
+public class thaumcraft.api.research.ScanItem implements thaumcraft.api.research.IScanThing {
+  java.lang.String research;
+
+  net.minecraft.item.ItemStack stack;
+
+  public thaumcraft.api.research.ScanItem(java.lang.String, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: invokespecial #16                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #18                 // Field research:Ljava/lang/String;
+       9: aload_0
+      10: aload_2
+      11: putfield      #20                 // Field stack:Lnet/minecraft/item/ItemStack;
+      14: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     6
+       4: iconst_0
+       5: ireturn
+       6: aconst_null
+       7: astore_3
+       8: aload_2
+       9: instanceof    #26                 // class net/minecraft/item/ItemStack
+      12: ifeq          20
+      15: aload_2
+      16: checkcast     #26                 // class net/minecraft/item/ItemStack
+      19: astore_3
+      20: aload_2
+      21: instanceof    #28                 // class net/minecraft/entity/item/EntityItem
+      24: ifeq          45
+      27: aload_2
+      28: checkcast     #28                 // class net/minecraft/entity/item/EntityItem
+      31: invokevirtual #32                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      34: ifnull        45
+      37: aload_2
+      38: checkcast     #28                 // class net/minecraft/entity/item/EntityItem
+      41: invokevirtual #32                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      44: astore_3
+      45: aload_3
+      46: ifnull        71
+      49: aload_3
+      50: invokevirtual #36                 // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      53: ifne          71
+      56: aload_3
+      57: aload_0
+      58: getfield      #20                 // Field stack:Lnet/minecraft/item/ItemStack;
+      61: invokestatic  #42                 // Method thaumcraft/api/ThaumcraftInvHelper.areItemStacksEqualForCrafting:(Lnet/minecraft/item/ItemStack;Ljava/lang/Object;)Z
+      64: ifeq          71
+      67: iconst_1
+      68: goto          72
+      71: iconst_0
+      72: ireturn
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: getfield      #18                 // Field research:Ljava/lang/String;
+       4: areturn
+}

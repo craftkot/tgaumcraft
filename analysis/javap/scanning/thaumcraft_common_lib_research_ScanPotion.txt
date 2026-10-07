@@ -1,0 +1,102 @@
+Compiled from "ScanPotion.java"
+public class thaumcraft.common.lib.research.ScanPotion implements thaumcraft.api.research.IScanThing {
+  net.minecraft.potion.Potion potion;
+
+  public thaumcraft.common.lib.research.ScanPotion(net.minecraft.potion.Potion);
+    Code:
+       0: aload_0
+       1: invokespecial #14                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #16                 // Field potion:Lnet/minecraft/potion/Potion;
+       9: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokespecial #24                 // Method getPotionEffect:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/Object;)Lnet/minecraft/potion/PotionEffect;
+       6: ifnull        13
+       9: iconst_1
+      10: goto          14
+      13: iconst_0
+      14: ireturn
+
+  private net.minecraft.potion.PotionEffect getPotionEffect(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     6
+       4: aconst_null
+       5: areturn
+       6: aload_2
+       7: instanceof    #30                 // class net/minecraft/entity/EntityLivingBase
+      10: ifeq          72
+      13: aload_2
+      14: checkcast     #30                 // class net/minecraft/entity/EntityLivingBase
+      17: astore_3
+      18: aload_3
+      19: invokevirtual #34                 // Method net/minecraft/entity/EntityLivingBase.func_70651_bq:()Ljava/util/Collection;
+      22: invokeinterface #40,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      27: astore        4
+      29: aload         4
+      31: invokeinterface #46,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      36: ifeq          69
+      39: aload         4
+      41: invokeinterface #50,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      46: checkcast     #52                 // class net/minecraft/potion/PotionEffect
+      49: astore        5
+      51: aload         5
+      53: invokevirtual #56                 // Method net/minecraft/potion/PotionEffect.func_188419_a:()Lnet/minecraft/potion/Potion;
+      56: aload_0
+      57: getfield      #16                 // Field potion:Lnet/minecraft/potion/Potion;
+      60: if_acmpne     66
+      63: aload         5
+      65: areturn
+      66: goto          29
+      69: goto          140
+      72: aload_1
+      73: aload_2
+      74: invokestatic  #62                 // Method thaumcraft/api/research/ScanningManager.getItemFromParms:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/Object;)Lnet/minecraft/item/ItemStack;
+      77: astore_3
+      78: aload_3
+      79: ifnull        140
+      82: aload_3
+      83: invokevirtual #67                 // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      86: ifne          140
+      89: aload_3
+      90: invokestatic  #73                 // Method net/minecraft/potion/PotionUtils.func_185189_a:(Lnet/minecraft/item/ItemStack;)Ljava/util/List;
+      93: invokeinterface #76,  1           // InterfaceMethod java/util/List.iterator:()Ljava/util/Iterator;
+      98: astore        4
+     100: aload         4
+     102: invokeinterface #46,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+     107: ifeq          140
+     110: aload         4
+     112: invokeinterface #50,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     117: checkcast     #52                 // class net/minecraft/potion/PotionEffect
+     120: astore        5
+     122: aload         5
+     124: invokevirtual #56                 // Method net/minecraft/potion/PotionEffect.func_188419_a:()Lnet/minecraft/potion/Potion;
+     127: aload_0
+     128: getfield      #16                 // Field potion:Lnet/minecraft/potion/Potion;
+     131: if_acmpne     137
+     134: aload         5
+     136: areturn
+     137: goto          100
+     140: aconst_null
+     141: areturn
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: new           #86                 // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #87                 // Method java/lang/StringBuilder."<init>":()V
+       7: ldc           #89                 // String !
+       9: invokevirtual #93                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: aload_0
+      13: getfield      #16                 // Field potion:Lnet/minecraft/potion/Potion;
+      16: invokevirtual #99                 // Method net/minecraft/potion/Potion.func_76393_a:()Ljava/lang/String;
+      19: invokevirtual #93                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      22: invokevirtual #102                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      25: areturn
+}

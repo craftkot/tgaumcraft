@@ -1,0 +1,12 @@
+{
+  "jar": "Thaumcraft-1.12.2-6.1.BETA26.jar",
+  "sha256": "9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f",
+  "class_files": 1120,
+  "thaumcraft_class_files": 1112,
+  "asset_files_all_namespaces": 1531,
+  "asset_files_thaumcraft_namespace": 1520,
+  "research_entries": 148,
+  "en_keys": 1464,
+  "ru_keys_original": 1452,
+  "ru_keys_final": 1464
+}

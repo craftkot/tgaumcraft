@@ -1,0 +1,33 @@
+{
+  "source": "BETA26 PlayerKnowledge$DefaultImpl and PlayerWarp$DefaultImpl bytecode",
+  "knowledge_root": {
+    "research": {
+      "tag_type": "list<compound>",
+      "row": {
+        "key": "string (always written)",
+        "stage": "int (written only when stages map contains key; deserializer stores only >0)",
+        "flags": "comma-separated enum names (written when flags map contains key; unknown names ignored on load)"
+      },
+      "load_quirks": [
+        "knowledge state is cleared before load",
+        "duplicate research rows after the first do not update stage/flags because processing is guarded by !isResearchKnown(key)",
+        "addAutoUnlockResearch runs after knowledge rows are loaded"
+      ]
+    },
+    "knowledge": {
+      "tag_type": "list<compound>",
+      "row": {"key": "string", "amount": "int raw knowledge points"},
+      "write_filter": "only amount > 0 and non-null/non-empty key",
+      "load_quirks": ["rows are inserted with raw Map.put semantics", "duplicate keys: later row wins", "no value validation"]
+    }
+  },
+  "warp_root": {
+    "warp": "int[] in enum order PERMANENT,NORMAL,TEMPORARY",
+    "counter": "int",
+    "load_quirks": [
+      "state is cleared first",
+      "array values are copied raw without the public 0..500 clamp",
+      "extra array elements are ignored; missing elements stay zero"
+    ]
+  }
+}

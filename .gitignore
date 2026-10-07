@@ -1,0 +1,24 @@
+# Gradle / NeoForge outputs
+.gradle/
+build/
+run/
+logs/
+src/generated/resources/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Original reference JAR must never be committed
+ORIGINAL/
+original_BETA26.jar
+Thaumcraft-1.12.2-6.1.BETA26.jar

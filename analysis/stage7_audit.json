@@ -1,0 +1,18 @@
+{
+  "research_entries": 148,
+  "research_stages": 271,
+  "research_addenda": 16,
+  "research_categories": {
+    "ALCHEMY": 22,
+    "ARTIFICE": 20,
+    "AUROMANCY": 23,
+    "BASICS": 32,
+    "ELDRITCH": 5,
+    "GOLEMANCY": 29,
+    "INFUSION": 17
+  },
+  "unique_recipe_ids": 198,
+  "legacy_recipe_ids_requiring_mapping": 137,
+  "lowercase_mapping_collisions": {},
+  "core_java_files": 26
+}

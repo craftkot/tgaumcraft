@@ -1,0 +1,138 @@
+Compiled from "ItemPrimordialPearl.java"
+public class thaumcraft.common.items.curios.ItemPrimordialPearl extends thaumcraft.common.items.ItemTCBase {
+  public thaumcraft.common.items.curios.ItemPrimordialPearl();
+    descriptor: ()V
+    Code:
+       0: aload_0
+       1: ldc           #11                 // String primordial_pearl
+       3: iconst_0
+       4: anewarray     #13                 // class java/lang/String
+       7: invokespecial #16                 // Method thaumcraft/common/items/ItemTCBase."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+      10: aload_0
+      11: iconst_1
+      12: putfield      #20                 // Field field_77777_bU:I
+      15: aload_0
+      16: bipush        8
+      18: invokevirtual #24                 // Method func_77656_e:(I)Lnet/minecraft/item/Item;
+      21: pop
+      22: aload_0
+      23: new           #26                 // class net/minecraft/util/ResourceLocation
+      26: dup
+      27: ldc           #28                 // String type
+      29: invokespecial #31                 // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;)V
+      32: new           #7                  // class thaumcraft/common/items/curios/ItemPrimordialPearl$1
+      35: dup
+      36: aload_0
+      37: invokespecial #34                 // Method thaumcraft/common/items/curios/ItemPrimordialPearl$1."<init>":(Lthaumcraft/common/items/curios/ItemPrimordialPearl;)V
+      40: invokevirtual #38                 // Method func_185043_a:(Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/item/IItemPropertyGetter;)V
+      43: aload_0
+      44: invokevirtual #42                 // Method setNoRepair:()Lnet/minecraft/item/Item;
+      47: pop
+      48: return
+
+  public boolean func_82789_a(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean isRepairable();
+    descriptor: ()Z
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public java.lang.String func_77667_c(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Ljava/lang/String;
+    Code:
+       0: aload_1
+       1: invokevirtual #59                 // Method net/minecraft/item/ItemStack.func_77952_i:()I
+       4: iconst_3
+       5: if_icmpge     31
+       8: new           #61                 // class java/lang/StringBuilder
+      11: dup
+      12: invokespecial #63                 // Method java/lang/StringBuilder."<init>":()V
+      15: aload_0
+      16: invokespecial #67                 // Method thaumcraft/common/items/ItemTCBase.func_77658_a:()Ljava/lang/String;
+      19: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      22: ldc           #73                 // String .pearl
+      24: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      27: invokevirtual #76                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      30: areturn
+      31: aload_1
+      32: invokevirtual #59                 // Method net/minecraft/item/ItemStack.func_77952_i:()I
+      35: bipush        6
+      37: if_icmpge     63
+      40: new           #61                 // class java/lang/StringBuilder
+      43: dup
+      44: invokespecial #63                 // Method java/lang/StringBuilder."<init>":()V
+      47: aload_0
+      48: invokespecial #67                 // Method thaumcraft/common/items/ItemTCBase.func_77658_a:()Ljava/lang/String;
+      51: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      54: ldc           #78                 // String .nodule
+      56: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      59: invokevirtual #76                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      62: areturn
+      63: new           #61                 // class java/lang/StringBuilder
+      66: dup
+      67: invokespecial #63                 // Method java/lang/StringBuilder."<init>":()V
+      70: aload_0
+      71: invokespecial #67                 // Method thaumcraft/common/items/ItemTCBase.func_77658_a:()Ljava/lang/String;
+      74: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      77: ldc           #80                 // String .mote
+      79: invokevirtual #71                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      82: invokevirtual #76                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      85: areturn
+
+  public net.minecraft.item.ItemStack getContainerItem(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/ItemStack;
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #87                 // Method hasContainerItem:(Lnet/minecraft/item/ItemStack;)Z
+       5: ifne          12
+       8: getstatic     #90                 // Field net/minecraft/item/ItemStack.field_190927_a:Lnet/minecraft/item/ItemStack;
+      11: areturn
+      12: new           #55                 // class net/minecraft/item/ItemStack
+      15: dup
+      16: aload_1
+      17: invokevirtual #93                 // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      20: aload_1
+      21: invokevirtual #96                 // Method net/minecraft/item/ItemStack.func_190916_E:()I
+      24: aload_1
+      25: invokevirtual #59                 // Method net/minecraft/item/ItemStack.func_77952_i:()I
+      28: iconst_1
+      29: iadd
+      30: invokespecial #99                 // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+      33: areturn
+
+  public boolean hasContainerItem(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Z
+    Code:
+       0: aload_1
+       1: invokevirtual #59                 // Method net/minecraft/item/ItemStack.func_77952_i:()I
+       4: bipush        7
+       6: if_icmpge     13
+       9: iconst_1
+      10: goto          14
+      13: iconst_0
+      14: ireturn
+
+  public net.minecraft.item.EnumRarity func_77613_e(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/EnumRarity;
+    Code:
+       0: getstatic     #108                // Field net/minecraft/item/EnumRarity.UNCOMMON:Lnet/minecraft/item/EnumRarity;
+       3: areturn
+
+  public boolean func_77616_k(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Z
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean canApplyAtEnchantingTable(net.minecraft.item.ItemStack, net.minecraft.enchantment.Enchantment);
+    descriptor: (Lnet/minecraft/item/ItemStack;Lnet/minecraft/enchantment/Enchantment;)Z
+    Code:
+       0: iconst_0
+       1: ireturn
+}

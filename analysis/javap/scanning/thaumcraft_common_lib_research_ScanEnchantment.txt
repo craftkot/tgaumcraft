@@ -1,0 +1,78 @@
+Compiled from "ScanEnchantment.java"
+public class thaumcraft.common.lib.research.ScanEnchantment implements thaumcraft.api.research.IScanThing {
+  net.minecraft.enchantment.Enchantment enchantment;
+
+  public thaumcraft.common.lib.research.ScanEnchantment(net.minecraft.enchantment.Enchantment);
+    Code:
+       0: aload_0
+       1: invokespecial #14                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #16                 // Field enchantment:Lnet/minecraft/enchantment/Enchantment;
+       9: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: aload_2
+       3: invokespecial #25                 // Method getEnchantment:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/Object;)Lnet/minecraft/enchantment/Enchantment;
+       6: ifnull        13
+       9: iconst_1
+      10: goto          14
+      13: iconst_0
+      14: ireturn
+
+  private net.minecraft.enchantment.Enchantment getEnchantment(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     6
+       4: aconst_null
+       5: areturn
+       6: aload_1
+       7: aload_2
+       8: invokestatic  #35                 // Method thaumcraft/api/research/ScanningManager.getItemFromParms:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/Object;)Lnet/minecraft/item/ItemStack;
+      11: astore_3
+      12: aload_3
+      13: ifnull        80
+      16: aload_3
+      17: invokevirtual #41                 // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      20: ifne          80
+      23: aload_3
+      24: invokestatic  #47                 // Method net/minecraft/enchantment/EnchantmentHelper.func_82781_a:(Lnet/minecraft/item/ItemStack;)Ljava/util/Map;
+      27: astore        4
+      29: aload         4
+      31: invokeinterface #53,  1           // InterfaceMethod java/util/Map.keySet:()Ljava/util/Set;
+      36: invokeinterface #59,  1           // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      41: astore        5
+      43: aload         5
+      45: invokeinterface #64,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      50: ifeq          80
+      53: aload         5
+      55: invokeinterface #68,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      60: checkcast     #70                 // class net/minecraft/enchantment/Enchantment
+      63: astore        6
+      65: aload         6
+      67: aload_0
+      68: getfield      #16                 // Field enchantment:Lnet/minecraft/enchantment/Enchantment;
+      71: if_acmpne     77
+      74: aload         6
+      76: areturn
+      77: goto          43
+      80: aconst_null
+      81: areturn
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: new           #79                 // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #80                 // Method java/lang/StringBuilder."<init>":()V
+       7: ldc           #82                 // String !
+       9: invokevirtual #86                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: aload_0
+      13: getfield      #16                 // Field enchantment:Lnet/minecraft/enchantment/Enchantment;
+      16: invokevirtual #90                 // Method net/minecraft/enchantment/Enchantment.func_77320_a:()Ljava/lang/String;
+      19: invokevirtual #86                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      22: invokevirtual #93                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      25: areturn
+}

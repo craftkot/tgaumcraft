@@ -1,0 +1,207 @@
+Compiled from "ThaumcraftCapabilities.java"
+public class thaumcraft.api.capabilities.ThaumcraftCapabilities {
+  public static final net.minecraftforge.common.capabilities.Capability<thaumcraft.api.capabilities.IPlayerKnowledge> KNOWLEDGE;
+
+  public static final net.minecraftforge.common.capabilities.Capability<thaumcraft.api.capabilities.IPlayerWarp> WARP;
+
+  public thaumcraft.api.capabilities.ThaumcraftCapabilities();
+    Code:
+       0: aload_0
+       1: invokespecial #18                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static thaumcraft.api.capabilities.IPlayerKnowledge getKnowledge(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_0
+       1: getstatic     #25                 // Field KNOWLEDGE:Lnet/minecraftforge/common/capabilities/Capability;
+       4: aconst_null
+       5: invokevirtual #31                 // Method net/minecraft/entity/player/EntityPlayer.getCapability:(Lnet/minecraftforge/common/capabilities/Capability;Lnet/minecraft/util/EnumFacing;)Ljava/lang/Object;
+       8: checkcast     #33                 // class thaumcraft/api/capabilities/IPlayerKnowledge
+      11: areturn
+
+  public static boolean knowsResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String...);
+    Code:
+       0: aload_1
+       1: astore_2
+       2: aload_2
+       3: arraylength
+       4: istore_3
+       5: iconst_0
+       6: istore        4
+       8: iload         4
+      10: iload_3
+      11: if_icmpge     147
+      14: aload_2
+      15: iload         4
+      17: aaload
+      18: astore        5
+      20: aload         5
+      22: ldc           #41                 // String &&
+      24: invokevirtual #47                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      27: ifeq          53
+      30: aload         5
+      32: ldc           #41                 // String &&
+      34: invokevirtual #51                 // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      37: astore        6
+      39: aload_0
+      40: aload         6
+      42: invokestatic  #53                 // Method knowsResearch:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+      45: ifne          50
+      48: iconst_0
+      49: ireturn
+      50: goto          141
+      53: aload         5
+      55: ldc           #55                 // String ||
+      57: invokevirtual #47                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      60: ifeq          125
+      63: aload         5
+      65: ldc           #55                 // String ||
+      67: invokevirtual #51                 // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      70: astore        6
+      72: aload         6
+      74: astore        7
+      76: aload         7
+      78: arraylength
+      79: istore        8
+      81: iconst_0
+      82: istore        9
+      84: iload         9
+      86: iload         8
+      88: if_icmpge     122
+      91: aload         7
+      93: iload         9
+      95: aaload
+      96: astore        10
+      98: aload_0
+      99: iconst_1
+     100: anewarray     #43                 // class java/lang/String
+     103: dup
+     104: iconst_0
+     105: aload         10
+     107: aastore
+     108: invokestatic  #53                 // Method knowsResearch:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     111: ifeq          116
+     114: iconst_1
+     115: ireturn
+     116: iinc          9, 1
+     119: goto          84
+     122: goto          141
+     125: aload_0
+     126: invokestatic  #57                 // Method getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+     129: aload         5
+     131: invokeinterface #61,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     136: ifne          141
+     139: iconst_0
+     140: ireturn
+     141: iinc          4, 1
+     144: goto          8
+     147: iconst_1
+     148: ireturn
+
+  public static boolean knowsResearchStrict(net.minecraft.entity.player.EntityPlayer, java.lang.String...);
+    Code:
+       0: aload_1
+       1: astore_2
+       2: aload_2
+       3: arraylength
+       4: istore_3
+       5: iconst_0
+       6: istore        4
+       8: iload         4
+      10: iload_3
+      11: if_icmpge     173
+      14: aload_2
+      15: iload         4
+      17: aaload
+      18: astore        5
+      20: aload         5
+      22: ldc           #41                 // String &&
+      24: invokevirtual #47                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      27: ifeq          53
+      30: aload         5
+      32: ldc           #41                 // String &&
+      34: invokevirtual #51                 // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      37: astore        6
+      39: aload_0
+      40: aload         6
+      42: invokestatic  #69                 // Method knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+      45: ifne          50
+      48: iconst_0
+      49: ireturn
+      50: goto          167
+      53: aload         5
+      55: ldc           #55                 // String ||
+      57: invokevirtual #47                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      60: ifeq          125
+      63: aload         5
+      65: ldc           #55                 // String ||
+      67: invokevirtual #51                 // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      70: astore        6
+      72: aload         6
+      74: astore        7
+      76: aload         7
+      78: arraylength
+      79: istore        8
+      81: iconst_0
+      82: istore        9
+      84: iload         9
+      86: iload         8
+      88: if_icmpge     122
+      91: aload         7
+      93: iload         9
+      95: aaload
+      96: astore        10
+      98: aload_0
+      99: iconst_1
+     100: anewarray     #43                 // class java/lang/String
+     103: dup
+     104: iconst_0
+     105: aload         10
+     107: aastore
+     108: invokestatic  #69                 // Method knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     111: ifeq          116
+     114: iconst_1
+     115: ireturn
+     116: iinc          9, 1
+     119: goto          84
+     122: goto          167
+     125: aload         5
+     127: ldc           #71                 // String @
+     129: invokevirtual #47                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+     132: ifeq          151
+     135: aload_0
+     136: invokestatic  #57                 // Method getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+     139: aload         5
+     141: invokeinterface #61,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     146: ifne          167
+     149: iconst_0
+     150: ireturn
+     151: aload_0
+     152: invokestatic  #57                 // Method getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+     155: aload         5
+     157: invokeinterface #74,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchComplete:(Ljava/lang/String;)Z
+     162: ifne          167
+     165: iconst_0
+     166: ireturn
+     167: iinc          4, 1
+     170: goto          8
+     173: iconst_1
+     174: ireturn
+
+  public static thaumcraft.api.capabilities.IPlayerWarp getWarp(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_0
+       1: getstatic     #78                 // Field WARP:Lnet/minecraftforge/common/capabilities/Capability;
+       4: aconst_null
+       5: invokevirtual #31                 // Method net/minecraft/entity/player/EntityPlayer.getCapability:(Lnet/minecraftforge/common/capabilities/Capability;Lnet/minecraft/util/EnumFacing;)Ljava/lang/Object;
+       8: checkcast     #80                 // class thaumcraft/api/capabilities/IPlayerWarp
+      11: areturn
+
+  static {};
+    Code:
+       0: aconst_null
+       1: putstatic     #25                 // Field KNOWLEDGE:Lnet/minecraftforge/common/capabilities/Capability;
+       4: aconst_null
+       5: putstatic     #78                 // Field WARP:Lnet/minecraftforge/common/capabilities/Capability;
+       8: return
+}

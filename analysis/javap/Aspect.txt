@@ -1,0 +1,970 @@
+Compiled from "Aspect.java"
+public class thaumcraft.api.aspects.Aspect {
+  java.lang.String tag;
+
+  thaumcraft.api.aspects.Aspect[] components;
+
+  int color;
+
+  private java.lang.String chatcolor;
+
+  net.minecraft.util.ResourceLocation image;
+
+  int blend;
+
+  public static java.util.HashMap<java.lang.Integer, thaumcraft.api.aspects.Aspect> mixList;
+
+  private static java.util.ArrayList<thaumcraft.api.aspects.Aspect> primals;
+
+  private static java.util.ArrayList<thaumcraft.api.aspects.Aspect> compounds;
+
+  public static java.util.LinkedHashMap<java.lang.String, thaumcraft.api.aspects.Aspect> aspects;
+
+  public static final thaumcraft.api.aspects.Aspect AIR;
+
+  public static final thaumcraft.api.aspects.Aspect EARTH;
+
+  public static final thaumcraft.api.aspects.Aspect FIRE;
+
+  public static final thaumcraft.api.aspects.Aspect WATER;
+
+  public static final thaumcraft.api.aspects.Aspect ORDER;
+
+  public static final thaumcraft.api.aspects.Aspect ENTROPY;
+
+  public static final thaumcraft.api.aspects.Aspect VOID;
+
+  public static final thaumcraft.api.aspects.Aspect LIGHT;
+
+  public static final thaumcraft.api.aspects.Aspect MOTION;
+
+  public static final thaumcraft.api.aspects.Aspect COLD;
+
+  public static final thaumcraft.api.aspects.Aspect CRYSTAL;
+
+  public static final thaumcraft.api.aspects.Aspect METAL;
+
+  public static final thaumcraft.api.aspects.Aspect LIFE;
+
+  public static final thaumcraft.api.aspects.Aspect DEATH;
+
+  public static final thaumcraft.api.aspects.Aspect ENERGY;
+
+  public static final thaumcraft.api.aspects.Aspect EXCHANGE;
+
+  public static final thaumcraft.api.aspects.Aspect MAGIC;
+
+  public static final thaumcraft.api.aspects.Aspect AURA;
+
+  public static final thaumcraft.api.aspects.Aspect ALCHEMY;
+
+  public static final thaumcraft.api.aspects.Aspect FLUX;
+
+  public static final thaumcraft.api.aspects.Aspect DARKNESS;
+
+  public static final thaumcraft.api.aspects.Aspect ELDRITCH;
+
+  public static final thaumcraft.api.aspects.Aspect FLIGHT;
+
+  public static final thaumcraft.api.aspects.Aspect PLANT;
+
+  public static final thaumcraft.api.aspects.Aspect TOOL;
+
+  public static final thaumcraft.api.aspects.Aspect CRAFT;
+
+  public static final thaumcraft.api.aspects.Aspect MECHANISM;
+
+  public static final thaumcraft.api.aspects.Aspect TRAP;
+
+  public static final thaumcraft.api.aspects.Aspect SOUL;
+
+  public static final thaumcraft.api.aspects.Aspect MIND;
+
+  public static final thaumcraft.api.aspects.Aspect SENSES;
+
+  public static final thaumcraft.api.aspects.Aspect AVERSION;
+
+  public static final thaumcraft.api.aspects.Aspect PROTECT;
+
+  public static final thaumcraft.api.aspects.Aspect DESIRE;
+
+  public static final thaumcraft.api.aspects.Aspect UNDEAD;
+
+  public static final thaumcraft.api.aspects.Aspect BEAST;
+
+  public static final thaumcraft.api.aspects.Aspect MAN;
+
+  public thaumcraft.api.aspects.Aspect(java.lang.String, int, thaumcraft.api.aspects.Aspect[], net.minecraft.util.ResourceLocation, int);
+    Code:
+       0: aload_0
+       1: invokespecial #68                 // Method java/lang/Object."<init>":()V
+       4: getstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+       7: aload_1
+       8: invokevirtual #76                 // Method java/util/LinkedHashMap.containsKey:(Ljava/lang/Object;)Z
+      11: ifeq          41
+      14: new           #78                 // class java/lang/IllegalArgumentException
+      17: dup
+      18: new           #80                 // class java/lang/StringBuilder
+      21: dup
+      22: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+      25: aload_1
+      26: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      29: ldc           #87                 // String  already registered!
+      31: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      34: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      37: invokespecial #94                 // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+      40: athrow
+      41: aload_0
+      42: aload_1
+      43: putfield      #101                // Field tag:Ljava/lang/String;
+      46: aload_0
+      47: aload_3
+      48: putfield      #103                // Field components:[Lthaumcraft/api/aspects/Aspect;
+      51: aload_0
+      52: iload_2
+      53: putfield      #105                // Field color:I
+      56: aload_0
+      57: aload         4
+      59: putfield      #107                // Field image:Lnet/minecraft/util/ResourceLocation;
+      62: aload_0
+      63: iload         5
+      65: putfield      #109                // Field blend:I
+      68: getstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+      71: aload_1
+      72: aload_0
+      73: invokevirtual #113                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      76: pop
+      77: new           #115                // class thaumcraft/api/research/ScanAspect
+      80: dup
+      81: new           #80                 // class java/lang/StringBuilder
+      84: dup
+      85: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+      88: ldc           #117                // String !
+      90: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      93: aload_1
+      94: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      97: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     100: aload_0
+     101: invokespecial #120                // Method thaumcraft/api/research/ScanAspect."<init>":(Ljava/lang/String;Lthaumcraft/api/aspects/Aspect;)V
+     104: invokestatic  #126                // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+     107: aload_3
+     108: ifnull        157
+     111: new           #80                 // class java/lang/StringBuilder
+     114: dup
+     115: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+     118: aload_3
+     119: iconst_0
+     120: aaload
+     121: invokevirtual #129                // Method getTag:()Ljava/lang/String;
+     124: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     127: aload_3
+     128: iconst_1
+     129: aaload
+     130: invokevirtual #129                // Method getTag:()Ljava/lang/String;
+     133: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     136: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     139: invokevirtual #133                // Method java/lang/String.hashCode:()I
+     142: istore        6
+     144: getstatic     #135                // Field mixList:Ljava/util/HashMap;
+     147: iload         6
+     149: invokestatic  #141                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     152: aload_0
+     153: invokevirtual #144                // Method java/util/HashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     156: pop
+     157: return
+
+  public thaumcraft.api.aspects.Aspect(java.lang.String, int, thaumcraft.api.aspects.Aspect[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: aload_3
+       4: new           #99                 // class net/minecraft/util/ResourceLocation
+       7: dup
+       8: ldc           #149                // String thaumcraft
+      10: new           #80                 // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+      17: ldc           #151                // String textures/aspects/
+      19: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      22: aload_1
+      23: invokevirtual #154                // Method java/lang/String.toLowerCase:()Ljava/lang/String;
+      26: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      29: ldc           #156                // String .png
+      31: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      34: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      37: invokespecial #159                // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      40: iconst_1
+      41: invokespecial #161                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;Lnet/minecraft/util/ResourceLocation;I)V
+      44: return
+
+  public thaumcraft.api.aspects.Aspect(java.lang.String, int, thaumcraft.api.aspects.Aspect[], int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: aload_3
+       4: new           #99                 // class net/minecraft/util/ResourceLocation
+       7: dup
+       8: ldc           #149                // String thaumcraft
+      10: new           #80                 // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+      17: ldc           #151                // String textures/aspects/
+      19: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      22: aload_1
+      23: invokevirtual #154                // Method java/lang/String.toLowerCase:()Ljava/lang/String;
+      26: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      29: ldc           #156                // String .png
+      31: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      34: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      37: invokespecial #159                // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;Ljava/lang/String;)V
+      40: iload         4
+      42: invokespecial #161                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;Lnet/minecraft/util/ResourceLocation;I)V
+      45: return
+
+  public thaumcraft.api.aspects.Aspect(java.lang.String, int, java.lang.String, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: aconst_null
+       4: checkcast     #97                 // class "[Lthaumcraft/api/aspects/Aspect;"
+       7: iload         4
+       9: invokespecial #165                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;I)V
+      12: aload_0
+      13: aload_3
+      14: invokevirtual #168                // Method setChatcolor:(Ljava/lang/String;)V
+      17: return
+
+  public int getColor();
+    Code:
+       0: aload_0
+       1: getfield      #105                // Field color:I
+       4: ireturn
+
+  public java.lang.String getName();
+    Code:
+       0: aload_0
+       1: getfield      #101                // Field tag:Ljava/lang/String;
+       4: invokestatic  #176                // Method org/apache/commons/lang3/text/WordUtils.capitalizeFully:(Ljava/lang/String;)Ljava/lang/String;
+       7: areturn
+
+  public java.lang.String getLocalizedDescription();
+    Code:
+       0: new           #80                 // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #81                 // Method java/lang/StringBuilder."<init>":()V
+       7: ldc           #179                // String tc.aspect.
+       9: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      12: aload_0
+      13: getfield      #101                // Field tag:Ljava/lang/String;
+      16: invokevirtual #85                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      19: invokevirtual #91                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      22: invokestatic  #184                // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+      25: areturn
+
+  public java.lang.String getTag();
+    Code:
+       0: aload_0
+       1: getfield      #101                // Field tag:Ljava/lang/String;
+       4: areturn
+
+  public void setTag(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #101                // Field tag:Ljava/lang/String;
+       5: return
+
+  public thaumcraft.api.aspects.Aspect[] getComponents();
+    Code:
+       0: aload_0
+       1: getfield      #103                // Field components:[Lthaumcraft/api/aspects/Aspect;
+       4: areturn
+
+  public void setComponents(thaumcraft.api.aspects.Aspect[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #103                // Field components:[Lthaumcraft/api/aspects/Aspect;
+       5: return
+
+  public net.minecraft.util.ResourceLocation getImage();
+    Code:
+       0: aload_0
+       1: getfield      #107                // Field image:Lnet/minecraft/util/ResourceLocation;
+       4: areturn
+
+  public static thaumcraft.api.aspects.Aspect getAspect(java.lang.String);
+    Code:
+       0: getstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+       3: aload_0
+       4: invokevirtual #197                // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       7: checkcast     #2                  // class thaumcraft/api/aspects/Aspect
+      10: areturn
+
+  public int getBlend();
+    Code:
+       0: aload_0
+       1: getfield      #109                // Field blend:I
+       4: ireturn
+
+  public void setBlend(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #109                // Field blend:I
+       5: return
+
+  public boolean isPrimal();
+    Code:
+       0: aload_0
+       1: invokevirtual #204                // Method getComponents:()[Lthaumcraft/api/aspects/Aspect;
+       4: ifnull        16
+       7: aload_0
+       8: invokevirtual #204                // Method getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      11: arraylength
+      12: iconst_2
+      13: if_icmpeq     20
+      16: iconst_1
+      17: goto          21
+      20: iconst_0
+      21: ireturn
+
+  public static java.util.ArrayList<thaumcraft.api.aspects.Aspect> getPrimalAspects();
+    Code:
+       0: getstatic     #208                // Field primals:Ljava/util/ArrayList;
+       3: invokevirtual #213                // Method java/util/ArrayList.isEmpty:()Z
+       6: ifeq          60
+       9: getstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+      12: invokevirtual #217                // Method java/util/LinkedHashMap.values:()Ljava/util/Collection;
+      15: astore_0
+      16: aload_0
+      17: invokeinterface #223,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      22: astore_1
+      23: aload_1
+      24: invokeinterface #228,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      29: ifeq          60
+      32: aload_1
+      33: invokeinterface #232,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      38: checkcast     #2                  // class thaumcraft/api/aspects/Aspect
+      41: astore_2
+      42: aload_2
+      43: invokevirtual #234                // Method isPrimal:()Z
+      46: ifeq          57
+      49: getstatic     #208                // Field primals:Ljava/util/ArrayList;
+      52: aload_2
+      53: invokevirtual #237                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      56: pop
+      57: goto          23
+      60: getstatic     #208                // Field primals:Ljava/util/ArrayList;
+      63: areturn
+
+  public static java.util.ArrayList<thaumcraft.api.aspects.Aspect> getCompoundAspects();
+    Code:
+       0: getstatic     #244                // Field compounds:Ljava/util/ArrayList;
+       3: invokevirtual #213                // Method java/util/ArrayList.isEmpty:()Z
+       6: ifeq          60
+       9: getstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+      12: invokevirtual #217                // Method java/util/LinkedHashMap.values:()Ljava/util/Collection;
+      15: astore_0
+      16: aload_0
+      17: invokeinterface #223,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      22: astore_1
+      23: aload_1
+      24: invokeinterface #228,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      29: ifeq          60
+      32: aload_1
+      33: invokeinterface #232,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      38: checkcast     #2                  // class thaumcraft/api/aspects/Aspect
+      41: astore_2
+      42: aload_2
+      43: invokevirtual #234                // Method isPrimal:()Z
+      46: ifne          57
+      49: getstatic     #244                // Field compounds:Ljava/util/ArrayList;
+      52: aload_2
+      53: invokevirtual #237                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      56: pop
+      57: goto          23
+      60: getstatic     #244                // Field compounds:Ljava/util/ArrayList;
+      63: areturn
+
+  public java.lang.String getChatcolor();
+    Code:
+       0: aload_0
+       1: getfield      #247                // Field chatcolor:Ljava/lang/String;
+       4: areturn
+
+  public void setChatcolor(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #247                // Field chatcolor:Ljava/lang/String;
+       5: return
+
+  static {};
+    Code:
+       0: new           #143                // class java/util/HashMap
+       3: dup
+       4: invokespecial #249                // Method java/util/HashMap."<init>":()V
+       7: putstatic     #135                // Field mixList:Ljava/util/HashMap;
+      10: new           #210                // class java/util/ArrayList
+      13: dup
+      14: invokespecial #250                // Method java/util/ArrayList."<init>":()V
+      17: putstatic     #208                // Field primals:Ljava/util/ArrayList;
+      20: new           #210                // class java/util/ArrayList
+      23: dup
+      24: invokespecial #250                // Method java/util/ArrayList."<init>":()V
+      27: putstatic     #244                // Field compounds:Ljava/util/ArrayList;
+      30: new           #72                 // class java/util/LinkedHashMap
+      33: dup
+      34: invokespecial #251                // Method java/util/LinkedHashMap."<init>":()V
+      37: putstatic     #70                 // Field aspects:Ljava/util/LinkedHashMap;
+      40: new           #2                  // class thaumcraft/api/aspects/Aspect
+      43: dup
+      44: ldc           #253                // String aer
+      46: ldc           #254                // int 16777086
+      48: ldc_w         #256                // String e
+      51: iconst_1
+      52: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+      55: putstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+      58: new           #2                  // class thaumcraft/api/aspects/Aspect
+      61: dup
+      62: ldc_w         #262                // String terra
+      65: ldc_w         #263                // int 5685248
+      68: ldc_w         #265                // String 2
+      71: iconst_1
+      72: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+      75: putstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+      78: new           #2                  // class thaumcraft/api/aspects/Aspect
+      81: dup
+      82: ldc_w         #269                // String ignis
+      85: ldc_w         #270                // int 16734721
+      88: ldc_w         #272                // String c
+      91: iconst_1
+      92: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+      95: putstatic     #274                // Field FIRE:Lthaumcraft/api/aspects/Aspect;
+      98: new           #2                  // class thaumcraft/api/aspects/Aspect
+     101: dup
+     102: ldc_w         #276                // String aqua
+     105: ldc_w         #277                // int 3986684
+     108: ldc_w         #279                // String 3
+     111: iconst_1
+     112: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+     115: putstatic     #281                // Field WATER:Lthaumcraft/api/aspects/Aspect;
+     118: new           #2                  // class thaumcraft/api/aspects/Aspect
+     121: dup
+     122: ldc_w         #283                // String ordo
+     125: ldc_w         #284                // int 14013676
+     128: ldc_w         #286                // String 7
+     131: iconst_1
+     132: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+     135: putstatic     #288                // Field ORDER:Lthaumcraft/api/aspects/Aspect;
+     138: new           #2                  // class thaumcraft/api/aspects/Aspect
+     141: dup
+     142: ldc_w         #290                // String perditio
+     145: ldc_w         #291                // int 4210752
+     148: ldc_w         #293                // String 8
+     151: sipush        771
+     154: invokespecial #258                // Method "<init>":(Ljava/lang/String;ILjava/lang/String;I)V
+     157: putstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     160: new           #2                  // class thaumcraft/api/aspects/Aspect
+     163: dup
+     164: ldc_w         #297                // String vacuos
+     167: ldc_w         #298                // int 8947848
+     170: iconst_2
+     171: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     174: dup
+     175: iconst_0
+     176: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     179: aastore
+     180: dup
+     181: iconst_1
+     182: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     185: aastore
+     186: sipush        771
+     189: invokespecial #165                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;I)V
+     192: putstatic     #300                // Field VOID:Lthaumcraft/api/aspects/Aspect;
+     195: new           #2                  // class thaumcraft/api/aspects/Aspect
+     198: dup
+     199: ldc_w         #302                // String lux
+     202: ldc_w         #303                // int 16777152
+     205: iconst_2
+     206: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     209: dup
+     210: iconst_0
+     211: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     214: aastore
+     215: dup
+     216: iconst_1
+     217: getstatic     #274                // Field FIRE:Lthaumcraft/api/aspects/Aspect;
+     220: aastore
+     221: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     224: putstatic     #307                // Field LIGHT:Lthaumcraft/api/aspects/Aspect;
+     227: new           #2                  // class thaumcraft/api/aspects/Aspect
+     230: dup
+     231: ldc_w         #309                // String motus
+     234: ldc_w         #310                // int 13487348
+     237: iconst_2
+     238: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     241: dup
+     242: iconst_0
+     243: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     246: aastore
+     247: dup
+     248: iconst_1
+     249: getstatic     #288                // Field ORDER:Lthaumcraft/api/aspects/Aspect;
+     252: aastore
+     253: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     256: putstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+     259: new           #2                  // class thaumcraft/api/aspects/Aspect
+     262: dup
+     263: ldc_w         #314                // String gelum
+     266: ldc_w         #315                // int 14811135
+     269: iconst_2
+     270: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     273: dup
+     274: iconst_0
+     275: getstatic     #274                // Field FIRE:Lthaumcraft/api/aspects/Aspect;
+     278: aastore
+     279: dup
+     280: iconst_1
+     281: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     284: aastore
+     285: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     288: putstatic     #317                // Field COLD:Lthaumcraft/api/aspects/Aspect;
+     291: new           #2                  // class thaumcraft/api/aspects/Aspect
+     294: dup
+     295: ldc_w         #319                // String vitreus
+     298: ldc_w         #320                // int 8454143
+     301: iconst_2
+     302: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     305: dup
+     306: iconst_0
+     307: getstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+     310: aastore
+     311: dup
+     312: iconst_1
+     313: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     316: aastore
+     317: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     320: putstatic     #322                // Field CRYSTAL:Lthaumcraft/api/aspects/Aspect;
+     323: new           #2                  // class thaumcraft/api/aspects/Aspect
+     326: dup
+     327: ldc_w         #324                // String metallum
+     330: ldc_w         #325                // int 11908557
+     333: iconst_2
+     334: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     337: dup
+     338: iconst_0
+     339: getstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+     342: aastore
+     343: dup
+     344: iconst_1
+     345: getstatic     #288                // Field ORDER:Lthaumcraft/api/aspects/Aspect;
+     348: aastore
+     349: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     352: putstatic     #327                // Field METAL:Lthaumcraft/api/aspects/Aspect;
+     355: new           #2                  // class thaumcraft/api/aspects/Aspect
+     358: dup
+     359: ldc_w         #329                // String victus
+     362: ldc_w         #330                // int 14548997
+     365: iconst_2
+     366: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     369: dup
+     370: iconst_0
+     371: getstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+     374: aastore
+     375: dup
+     376: iconst_1
+     377: getstatic     #281                // Field WATER:Lthaumcraft/api/aspects/Aspect;
+     380: aastore
+     381: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     384: putstatic     #332                // Field LIFE:Lthaumcraft/api/aspects/Aspect;
+     387: new           #2                  // class thaumcraft/api/aspects/Aspect
+     390: dup
+     391: ldc_w         #334                // String mortuus
+     394: ldc_w         #335                // int 6946821
+     397: iconst_2
+     398: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     401: dup
+     402: iconst_0
+     403: getstatic     #281                // Field WATER:Lthaumcraft/api/aspects/Aspect;
+     406: aastore
+     407: dup
+     408: iconst_1
+     409: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     412: aastore
+     413: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     416: putstatic     #337                // Field DEATH:Lthaumcraft/api/aspects/Aspect;
+     419: new           #2                  // class thaumcraft/api/aspects/Aspect
+     422: dup
+     423: ldc_w         #339                // String potentia
+     426: ldc_w         #340                // int 12648447
+     429: iconst_2
+     430: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     433: dup
+     434: iconst_0
+     435: getstatic     #288                // Field ORDER:Lthaumcraft/api/aspects/Aspect;
+     438: aastore
+     439: dup
+     440: iconst_1
+     441: getstatic     #274                // Field FIRE:Lthaumcraft/api/aspects/Aspect;
+     444: aastore
+     445: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     448: putstatic     #342                // Field ENERGY:Lthaumcraft/api/aspects/Aspect;
+     451: new           #2                  // class thaumcraft/api/aspects/Aspect
+     454: dup
+     455: ldc_w         #344                // String permutatio
+     458: ldc_w         #345                // int 5735255
+     461: iconst_2
+     462: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     465: dup
+     466: iconst_0
+     467: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     470: aastore
+     471: dup
+     472: iconst_1
+     473: getstatic     #288                // Field ORDER:Lthaumcraft/api/aspects/Aspect;
+     476: aastore
+     477: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     480: putstatic     #347                // Field EXCHANGE:Lthaumcraft/api/aspects/Aspect;
+     483: new           #2                  // class thaumcraft/api/aspects/Aspect
+     486: dup
+     487: ldc_w         #349                // String praecantatio
+     490: ldc_w         #350                // int 13566207
+     493: iconst_2
+     494: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     497: dup
+     498: iconst_0
+     499: getstatic     #342                // Field ENERGY:Lthaumcraft/api/aspects/Aspect;
+     502: aastore
+     503: dup
+     504: iconst_1
+     505: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     508: aastore
+     509: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     512: putstatic     #352                // Field MAGIC:Lthaumcraft/api/aspects/Aspect;
+     515: new           #2                  // class thaumcraft/api/aspects/Aspect
+     518: dup
+     519: ldc_w         #354                // String auram
+     522: ldc_w         #355                // int 16761087
+     525: iconst_2
+     526: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     529: dup
+     530: iconst_0
+     531: getstatic     #352                // Field MAGIC:Lthaumcraft/api/aspects/Aspect;
+     534: aastore
+     535: dup
+     536: iconst_1
+     537: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     540: aastore
+     541: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     544: putstatic     #357                // Field AURA:Lthaumcraft/api/aspects/Aspect;
+     547: new           #2                  // class thaumcraft/api/aspects/Aspect
+     550: dup
+     551: ldc_w         #359                // String alkimia
+     554: ldc_w         #360                // int 2337949
+     557: iconst_2
+     558: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     561: dup
+     562: iconst_0
+     563: getstatic     #352                // Field MAGIC:Lthaumcraft/api/aspects/Aspect;
+     566: aastore
+     567: dup
+     568: iconst_1
+     569: getstatic     #281                // Field WATER:Lthaumcraft/api/aspects/Aspect;
+     572: aastore
+     573: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     576: putstatic     #362                // Field ALCHEMY:Lthaumcraft/api/aspects/Aspect;
+     579: new           #2                  // class thaumcraft/api/aspects/Aspect
+     582: dup
+     583: ldc_w         #364                // String vitium
+     586: ldc_w         #365                // int 8388736
+     589: iconst_2
+     590: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     593: dup
+     594: iconst_0
+     595: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     598: aastore
+     599: dup
+     600: iconst_1
+     601: getstatic     #352                // Field MAGIC:Lthaumcraft/api/aspects/Aspect;
+     604: aastore
+     605: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     608: putstatic     #367                // Field FLUX:Lthaumcraft/api/aspects/Aspect;
+     611: new           #2                  // class thaumcraft/api/aspects/Aspect
+     614: dup
+     615: ldc_w         #369                // String tenebrae
+     618: ldc_w         #370                // int 2236962
+     621: iconst_2
+     622: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     625: dup
+     626: iconst_0
+     627: getstatic     #300                // Field VOID:Lthaumcraft/api/aspects/Aspect;
+     630: aastore
+     631: dup
+     632: iconst_1
+     633: getstatic     #307                // Field LIGHT:Lthaumcraft/api/aspects/Aspect;
+     636: aastore
+     637: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     640: putstatic     #372                // Field DARKNESS:Lthaumcraft/api/aspects/Aspect;
+     643: new           #2                  // class thaumcraft/api/aspects/Aspect
+     646: dup
+     647: ldc_w         #374                // String alienis
+     650: ldc_w         #375                // int 8409216
+     653: iconst_2
+     654: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     657: dup
+     658: iconst_0
+     659: getstatic     #300                // Field VOID:Lthaumcraft/api/aspects/Aspect;
+     662: aastore
+     663: dup
+     664: iconst_1
+     665: getstatic     #372                // Field DARKNESS:Lthaumcraft/api/aspects/Aspect;
+     668: aastore
+     669: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     672: putstatic     #377                // Field ELDRITCH:Lthaumcraft/api/aspects/Aspect;
+     675: new           #2                  // class thaumcraft/api/aspects/Aspect
+     678: dup
+     679: ldc_w         #379                // String volatus
+     682: ldc_w         #380                // int 15198167
+     685: iconst_2
+     686: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     689: dup
+     690: iconst_0
+     691: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     694: aastore
+     695: dup
+     696: iconst_1
+     697: getstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+     700: aastore
+     701: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     704: putstatic     #382                // Field FLIGHT:Lthaumcraft/api/aspects/Aspect;
+     707: new           #2                  // class thaumcraft/api/aspects/Aspect
+     710: dup
+     711: ldc_w         #384                // String herba
+     714: ldc_w         #385                // int 109568
+     717: iconst_2
+     718: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     721: dup
+     722: iconst_0
+     723: getstatic     #332                // Field LIFE:Lthaumcraft/api/aspects/Aspect;
+     726: aastore
+     727: dup
+     728: iconst_1
+     729: getstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+     732: aastore
+     733: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     736: putstatic     #387                // Field PLANT:Lthaumcraft/api/aspects/Aspect;
+     739: new           #2                  // class thaumcraft/api/aspects/Aspect
+     742: dup
+     743: ldc_w         #389                // String instrumentum
+     746: ldc_w         #390                // int 4210926
+     749: iconst_2
+     750: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     753: dup
+     754: iconst_0
+     755: getstatic     #327                // Field METAL:Lthaumcraft/api/aspects/Aspect;
+     758: aastore
+     759: dup
+     760: iconst_1
+     761: getstatic     #342                // Field ENERGY:Lthaumcraft/api/aspects/Aspect;
+     764: aastore
+     765: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     768: putstatic     #392                // Field TOOL:Lthaumcraft/api/aspects/Aspect;
+     771: new           #2                  // class thaumcraft/api/aspects/Aspect
+     774: dup
+     775: ldc_w         #394                // String fabrico
+     778: ldc_w         #395                // int 8428928
+     781: iconst_2
+     782: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     785: dup
+     786: iconst_0
+     787: getstatic     #347                // Field EXCHANGE:Lthaumcraft/api/aspects/Aspect;
+     790: aastore
+     791: dup
+     792: iconst_1
+     793: getstatic     #392                // Field TOOL:Lthaumcraft/api/aspects/Aspect;
+     796: aastore
+     797: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     800: putstatic     #397                // Field CRAFT:Lthaumcraft/api/aspects/Aspect;
+     803: new           #2                  // class thaumcraft/api/aspects/Aspect
+     806: dup
+     807: ldc_w         #399                // String machina
+     810: ldc_w         #400                // int 8421536
+     813: iconst_2
+     814: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     817: dup
+     818: iconst_0
+     819: getstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+     822: aastore
+     823: dup
+     824: iconst_1
+     825: getstatic     #392                // Field TOOL:Lthaumcraft/api/aspects/Aspect;
+     828: aastore
+     829: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     832: putstatic     #402                // Field MECHANISM:Lthaumcraft/api/aspects/Aspect;
+     835: new           #2                  // class thaumcraft/api/aspects/Aspect
+     838: dup
+     839: ldc_w         #404                // String vinculum
+     842: ldc_w         #405                // int 10125440
+     845: iconst_2
+     846: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     849: dup
+     850: iconst_0
+     851: getstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+     854: aastore
+     855: dup
+     856: iconst_1
+     857: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     860: aastore
+     861: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     864: putstatic     #407                // Field TRAP:Lthaumcraft/api/aspects/Aspect;
+     867: new           #2                  // class thaumcraft/api/aspects/Aspect
+     870: dup
+     871: ldc_w         #409                // String spiritus
+     874: ldc_w         #410                // int 15461371
+     877: iconst_2
+     878: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     881: dup
+     882: iconst_0
+     883: getstatic     #332                // Field LIFE:Lthaumcraft/api/aspects/Aspect;
+     886: aastore
+     887: dup
+     888: iconst_1
+     889: getstatic     #337                // Field DEATH:Lthaumcraft/api/aspects/Aspect;
+     892: aastore
+     893: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     896: putstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+     899: new           #2                  // class thaumcraft/api/aspects/Aspect
+     902: dup
+     903: ldc_w         #414                // String cognitio
+     906: ldc_w         #415                // int 16356991
+     909: iconst_2
+     910: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     913: dup
+     914: iconst_0
+     915: getstatic     #274                // Field FIRE:Lthaumcraft/api/aspects/Aspect;
+     918: aastore
+     919: dup
+     920: iconst_1
+     921: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+     924: aastore
+     925: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     928: putstatic     #417                // Field MIND:Lthaumcraft/api/aspects/Aspect;
+     931: new           #2                  // class thaumcraft/api/aspects/Aspect
+     934: dup
+     935: ldc_w         #419                // String sensus
+     938: ldc_w         #420                // int 12648384
+     941: iconst_2
+     942: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     945: dup
+     946: iconst_0
+     947: getstatic     #260                // Field AIR:Lthaumcraft/api/aspects/Aspect;
+     950: aastore
+     951: dup
+     952: iconst_1
+     953: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+     956: aastore
+     957: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     960: putstatic     #422                // Field SENSES:Lthaumcraft/api/aspects/Aspect;
+     963: new           #2                  // class thaumcraft/api/aspects/Aspect
+     966: dup
+     967: ldc_w         #424                // String aversio
+     970: ldc_w         #425                // int 12603472
+     973: iconst_2
+     974: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+     977: dup
+     978: iconst_0
+     979: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+     982: aastore
+     983: dup
+     984: iconst_1
+     985: getstatic     #295                // Field ENTROPY:Lthaumcraft/api/aspects/Aspect;
+     988: aastore
+     989: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+     992: putstatic     #427                // Field AVERSION:Lthaumcraft/api/aspects/Aspect;
+     995: new           #2                  // class thaumcraft/api/aspects/Aspect
+     998: dup
+     999: ldc_w         #429                // String praemunio
+    1002: ldc_w         #430                // int 49344
+    1005: iconst_2
+    1006: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+    1009: dup
+    1010: iconst_0
+    1011: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+    1014: aastore
+    1015: dup
+    1016: iconst_1
+    1017: getstatic     #267                // Field EARTH:Lthaumcraft/api/aspects/Aspect;
+    1020: aastore
+    1021: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+    1024: putstatic     #432                // Field PROTECT:Lthaumcraft/api/aspects/Aspect;
+    1027: new           #2                  // class thaumcraft/api/aspects/Aspect
+    1030: dup
+    1031: ldc_w         #434                // String desiderium
+    1034: ldc_w         #435                // int 15121988
+    1037: iconst_2
+    1038: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+    1041: dup
+    1042: iconst_0
+    1043: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+    1046: aastore
+    1047: dup
+    1048: iconst_1
+    1049: getstatic     #300                // Field VOID:Lthaumcraft/api/aspects/Aspect;
+    1052: aastore
+    1053: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+    1056: putstatic     #437                // Field DESIRE:Lthaumcraft/api/aspects/Aspect;
+    1059: new           #2                  // class thaumcraft/api/aspects/Aspect
+    1062: dup
+    1063: ldc_w         #439                // String exanimis
+    1066: ldc_w         #440                // int 3817472
+    1069: iconst_2
+    1070: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+    1073: dup
+    1074: iconst_0
+    1075: getstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+    1078: aastore
+    1079: dup
+    1080: iconst_1
+    1081: getstatic     #337                // Field DEATH:Lthaumcraft/api/aspects/Aspect;
+    1084: aastore
+    1085: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+    1088: putstatic     #442                // Field UNDEAD:Lthaumcraft/api/aspects/Aspect;
+    1091: new           #2                  // class thaumcraft/api/aspects/Aspect
+    1094: dup
+    1095: ldc_w         #444                // String bestia
+    1098: ldc_w         #445                // int 10445833
+    1101: iconst_2
+    1102: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+    1105: dup
+    1106: iconst_0
+    1107: getstatic     #312                // Field MOTION:Lthaumcraft/api/aspects/Aspect;
+    1110: aastore
+    1111: dup
+    1112: iconst_1
+    1113: getstatic     #332                // Field LIFE:Lthaumcraft/api/aspects/Aspect;
+    1116: aastore
+    1117: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+    1120: putstatic     #447                // Field BEAST:Lthaumcraft/api/aspects/Aspect;
+    1123: new           #2                  // class thaumcraft/api/aspects/Aspect
+    1126: dup
+    1127: ldc_w         #449                // String humanus
+    1130: ldc_w         #450                // int 16766912
+    1133: iconst_2
+    1134: anewarray     #2                  // class thaumcraft/api/aspects/Aspect
+    1137: dup
+    1138: iconst_0
+    1139: getstatic     #412                // Field SOUL:Lthaumcraft/api/aspects/Aspect;
+    1142: aastore
+    1143: dup
+    1144: iconst_1
+    1145: getstatic     #332                // Field LIFE:Lthaumcraft/api/aspects/Aspect;
+    1148: aastore
+    1149: invokespecial #305                // Method "<init>":(Ljava/lang/String;I[Lthaumcraft/api/aspects/Aspect;)V
+    1152: putstatic     #452                // Field MAN:Lthaumcraft/api/aspects/Aspect;
+    1155: return
+}

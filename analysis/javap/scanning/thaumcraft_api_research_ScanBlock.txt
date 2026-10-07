@@ -1,0 +1,108 @@
+Compiled from "ScanBlock.java"
+public class thaumcraft.api.research.ScanBlock implements thaumcraft.api.research.IScanThing {
+  java.lang.String research;
+
+  net.minecraft.block.Block[] blocks;
+
+  public thaumcraft.api.research.ScanBlock(net.minecraft.block.Block);
+    Code:
+       0: aload_0
+       1: new           #15                 // class java/lang/StringBuilder
+       4: dup
+       5: invokespecial #18                 // Method java/lang/StringBuilder."<init>":()V
+       8: ldc           #20                 // String !
+      10: invokevirtual #24                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      13: aload_1
+      14: invokevirtual #30                 // Method net/minecraft/block/Block.getRegistryName:()Lnet/minecraft/util/ResourceLocation;
+      17: invokevirtual #36                 // Method net/minecraft/util/ResourceLocation.toString:()Ljava/lang/String;
+      20: invokevirtual #24                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      23: invokevirtual #37                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      26: iconst_1
+      27: anewarray     #26                 // class net/minecraft/block/Block
+      30: dup
+      31: iconst_0
+      32: aload_1
+      33: aastore
+      34: invokespecial #40                 // Method "<init>":(Ljava/lang/String;[Lnet/minecraft/block/Block;)V
+      37: return
+
+  public thaumcraft.api.research.ScanBlock(java.lang.String, net.minecraft.block.Block...);
+    Code:
+       0: aload_0
+       1: invokespecial #45                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #47                 // Field research:Ljava/lang/String;
+       9: aload_0
+      10: aload_2
+      11: putfield      #49                 // Field blocks:[Lnet/minecraft/block/Block;
+      14: aload_2
+      15: astore_3
+      16: aload_3
+      17: arraylength
+      18: istore        4
+      20: iconst_0
+      21: istore        5
+      23: iload         5
+      25: iload         4
+      27: if_icmpge     62
+      30: aload_3
+      31: iload         5
+      33: aaload
+      34: astore        6
+      36: new           #54                 // class thaumcraft/api/research/ScanItem
+      39: dup
+      40: aload_1
+      41: new           #56                 // class net/minecraft/item/ItemStack
+      44: dup
+      45: aload         6
+      47: invokespecial #58                 // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/block/Block;)V
+      50: invokespecial #61                 // Method thaumcraft/api/research/ScanItem."<init>":(Ljava/lang/String;Lnet/minecraft/item/ItemStack;)V
+      53: invokestatic  #67                 // Method thaumcraft/api/research/ScanningManager.addScannableThing:(Lthaumcraft/api/research/IScanThing;)V
+      56: iinc          5, 1
+      59: goto          23
+      62: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnull        65
+       4: aload_2
+       5: instanceof    #71                 // class net/minecraft/util/math/BlockPos
+       8: ifeq          65
+      11: aload_0
+      12: getfield      #49                 // Field blocks:[Lnet/minecraft/block/Block;
+      15: astore_3
+      16: aload_3
+      17: arraylength
+      18: istore        4
+      20: iconst_0
+      21: istore        5
+      23: iload         5
+      25: iload         4
+      27: if_icmpge     65
+      30: aload_3
+      31: iload         5
+      33: aaload
+      34: astore        6
+      36: aload_1
+      37: getfield      #77                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      40: aload_2
+      41: checkcast     #71                 // class net/minecraft/util/math/BlockPos
+      44: invokevirtual #83                 // Method net/minecraft/world/World.func_180495_p:(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;
+      47: invokeinterface #89,  1           // InterfaceMethod net/minecraft/block/state/IBlockState.func_177230_c:()Lnet/minecraft/block/Block;
+      52: aload         6
+      54: if_acmpne     59
+      57: iconst_1
+      58: ireturn
+      59: iinc          5, 1
+      62: goto          23
+      65: iconst_0
+      66: ireturn
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: getfield      #47                 // Field research:Ljava/lang/String;
+       4: areturn
+}

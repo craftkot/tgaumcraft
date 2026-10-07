@@ -1,0 +1,71 @@
+{
+  "jar_baseline": {
+    "jar": "Thaumcraft-1.12.2-6.1.BETA26.jar",
+    "sha256": "9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f",
+    "class_files": 1120,
+    "thaumcraft_class_files": 1112,
+    "asset_files_all_namespaces": 1531,
+    "asset_files_thaumcraft_namespace": 1520,
+    "research_entries": 148,
+    "en_keys": 1464,
+    "ru_keys_original": 1452,
+    "ru_keys_final": 1464
+  },
+  "localization": {
+    "en": 1464,
+    "ru": 1464,
+    "missing_ru": 0
+  },
+  "aspects": {
+    "total": 37,
+    "primal": 6,
+    "compound": 31
+  },
+  "research": {
+    "entries": 148,
+    "generated_runtime_entries": 148,
+    "stages": 271,
+    "addenda": 16,
+    "categories": {
+      "ALCHEMY": 22,
+      "ARTIFICE": 20,
+      "AUROMANCY": 23,
+      "BASICS": 32,
+      "ELDRITCH": 5,
+      "GOLEMANCY": 29,
+      "INFUSION": 17
+    },
+    "meta_counts": {
+      "HEX": 12,
+      "HIDDEN": 43,
+      "REVERSE": 18,
+      "ROUND": 34,
+      "SPIKY": 10
+    },
+    "unique_recipe_ids": 198,
+    "legacy_recipe_ids_requiring_mapping": 137,
+    "lowercase_mapping_collisions": {}
+  },
+  "scanning": {
+    "explicit_constructor_sites": 71,
+    "explicit_add_calls": 71,
+    "constructor_site_counts": {
+      "ScanBlock": 18,
+      "ScanEnchantment": 1,
+      "ScanEntity": 34,
+      "ScanGeneric": 1,
+      "ScanItem": 10,
+      "ScanMaterial": 1,
+      "ScanOreDictionary": 4,
+      "ScanPotion": 1,
+      "ScanSky": 1
+    },
+    "control_flow_core_implemented": true,
+    "generic_scan_category_formula_implemented": true
+  },
+  "core_java_files": 44,
+  "core_parity_assertions": 4552,
+  "neoforge_gradle_build_tested": false,
+  "player_attachment_sync_sources_present": true,
+  "missing_required_core_files": []
+}

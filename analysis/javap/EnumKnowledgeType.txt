@@ -1,0 +1,98 @@
+Compiled from "IPlayerKnowledge.java"
+public final class thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType extends java.lang.Enum<thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType> {
+  public static final thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType THEORY;
+
+  public static final thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType OBSERVATION;
+
+  private short progression;
+
+  private boolean hasFields;
+
+  private java.lang.String abbr;
+
+  private static final thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType[] $VALUES;
+
+  public static thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType[] values();
+    Code:
+       0: getstatic     #24                 // Field $VALUES:[Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+       3: invokevirtual #29                 // Method "[Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;".clone:()Ljava/lang/Object;
+       6: checkcast     #25                 // class "[Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;"
+       9: areturn
+
+  public static thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType valueOf(java.lang.String);
+    Code:
+       0: ldc           #2                  // class thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType
+       2: aload_0
+       3: invokestatic  #34                 // Method java/lang/Enum.valueOf:(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;
+       6: checkcast     #2                  // class thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType
+       9: areturn
+
+  private thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType(int, boolean, java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: invokespecial #40                 // Method java/lang/Enum."<init>":(Ljava/lang/String;I)V
+       6: aload_0
+       7: iload_3
+       8: i2s
+       9: putfield      #42                 // Field progression:S
+      12: aload_0
+      13: iload         4
+      15: putfield      #44                 // Field hasFields:Z
+      18: aload_0
+      19: aload         5
+      21: putfield      #46                 // Field abbr:Ljava/lang/String;
+      24: return
+
+  public int getProgression();
+    Code:
+       0: aload_0
+       1: getfield      #42                 // Field progression:S
+       4: ireturn
+
+  public boolean hasFields();
+    Code:
+       0: aload_0
+       1: getfield      #44                 // Field hasFields:Z
+       4: ireturn
+
+  public java.lang.String getAbbreviation();
+    Code:
+       0: aload_0
+       1: getfield      #46                 // Field abbr:Ljava/lang/String;
+       4: areturn
+
+  static {};
+    Code:
+       0: new           #2                  // class thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType
+       3: dup
+       4: ldc           #56                 // String THEORY
+       6: iconst_0
+       7: bipush        32
+       9: iconst_1
+      10: ldc           #58                 // String T
+      12: invokespecial #60                 // Method "<init>":(Ljava/lang/String;IIZLjava/lang/String;)V
+      15: putstatic     #62                 // Field THEORY:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      18: new           #2                  // class thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType
+      21: dup
+      22: ldc           #63                 // String OBSERVATION
+      24: iconst_1
+      25: bipush        16
+      27: iconst_1
+      28: ldc           #65                 // String O
+      30: invokespecial #60                 // Method "<init>":(Ljava/lang/String;IIZLjava/lang/String;)V
+      33: putstatic     #67                 // Field OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      36: iconst_2
+      37: anewarray     #2                  // class thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType
+      40: dup
+      41: iconst_0
+      42: getstatic     #62                 // Field THEORY:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      45: aastore
+      46: dup
+      47: iconst_1
+      48: getstatic     #67                 // Field OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      51: aastore
+      52: putstatic     #24                 // Field $VALUES:[Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      55: return
+}

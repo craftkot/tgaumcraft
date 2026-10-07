@@ -1,0 +1,315 @@
+Compiled from "ResearchEntry.java"
+public class thaumcraft.api.research.ResearchEntry {
+  java.lang.String key;
+
+  java.lang.String category;
+
+  java.lang.String name;
+
+  java.lang.String[] parents;
+
+  java.lang.String[] siblings;
+
+  int displayColumn;
+
+  int displayRow;
+
+  java.lang.Object[] icons;
+
+  thaumcraft.api.research.ResearchEntry$EnumResearchMeta[] meta;
+
+  net.minecraft.item.ItemStack[] rewardItem;
+
+  thaumcraft.api.research.ResearchStage$Knowledge[] rewardKnow;
+
+  thaumcraft.api.research.ResearchStage[] stages;
+
+  thaumcraft.api.research.ResearchAddendum[] addenda;
+
+  public thaumcraft.api.research.ResearchEntry();
+    Code:
+       0: aload_0
+       1: invokespecial #39                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public java.lang.String getKey();
+    Code:
+       0: aload_0
+       1: getfield      #45                 // Field key:Ljava/lang/String;
+       4: areturn
+
+  public void setKey(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #45                 // Field key:Ljava/lang/String;
+       5: return
+
+  public java.lang.String getCategory();
+    Code:
+       0: aload_0
+       1: getfield      #50                 // Field category:Ljava/lang/String;
+       4: areturn
+
+  public void setCategory(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #50                 // Field category:Ljava/lang/String;
+       5: return
+
+  public java.lang.String getName();
+    Code:
+       0: aload_0
+       1: getfield      #54                 // Field name:Ljava/lang/String;
+       4: areturn
+
+  public java.lang.String getLocalizedName();
+    Code:
+       0: aload_0
+       1: invokevirtual #57                 // Method getName:()Ljava/lang/String;
+       4: invokestatic  #63                 // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+       7: areturn
+
+  public void setName(java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #54                 // Field name:Ljava/lang/String;
+       5: return
+
+  public java.lang.String[] getParents();
+    Code:
+       0: aload_0
+       1: getfield      #68                 // Field parents:[Ljava/lang/String;
+       4: areturn
+
+  public java.lang.String[] getParentsClean();
+    Code:
+       0: aconst_null
+       1: astore_1
+       2: aload_0
+       3: getfield      #68                 // Field parents:[Ljava/lang/String;
+       6: ifnull        57
+       9: aload_0
+      10: invokevirtual #72                 // Method getParentsStripped:()[Ljava/lang/String;
+      13: astore_1
+      14: iconst_0
+      15: istore_2
+      16: iload_2
+      17: aload_1
+      18: arraylength
+      19: if_icmpge     57
+      22: aload_1
+      23: iload_2
+      24: aaload
+      25: ldc           #75                 // String @
+      27: invokevirtual #81                 // Method java/lang/String.contains:(Ljava/lang/CharSequence;)Z
+      30: ifeq          51
+      33: aload_1
+      34: iload_2
+      35: aload_1
+      36: iload_2
+      37: aaload
+      38: iconst_0
+      39: aload_1
+      40: iload_2
+      41: aaload
+      42: ldc           #75                 // String @
+      44: invokevirtual #85                 // Method java/lang/String.indexOf:(Ljava/lang/String;)I
+      47: invokevirtual #89                 // Method java/lang/String.substring:(II)Ljava/lang/String;
+      50: aastore
+      51: iinc          2, 1
+      54: goto          16
+      57: aload_1
+      58: areturn
+
+  public java.lang.String[] getParentsStripped();
+    Code:
+       0: aconst_null
+       1: astore_1
+       2: aload_0
+       3: getfield      #68                 // Field parents:[Ljava/lang/String;
+       6: ifnull        80
+       9: aload_0
+      10: getfield      #68                 // Field parents:[Ljava/lang/String;
+      13: arraylength
+      14: anewarray     #77                 // class java/lang/String
+      17: astore_1
+      18: iconst_0
+      19: istore_2
+      20: iload_2
+      21: aload_1
+      22: arraylength
+      23: if_icmpge     80
+      26: aload_1
+      27: iload_2
+      28: new           #93                 // class java/lang/StringBuilder
+      31: dup
+      32: invokespecial #94                 // Method java/lang/StringBuilder."<init>":()V
+      35: ldc           #96                 // String
+      37: invokevirtual #100                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      40: aload_0
+      41: getfield      #68                 // Field parents:[Ljava/lang/String;
+      44: iload_2
+      45: aaload
+      46: invokevirtual #100                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      49: invokevirtual #103                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      52: aastore
+      53: aload_1
+      54: iload_2
+      55: aaload
+      56: ldc           #105                // String ~
+      58: invokevirtual #109                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      61: ifeq          74
+      64: aload_1
+      65: iload_2
+      66: aload_1
+      67: iload_2
+      68: aaload
+      69: iconst_1
+      70: invokevirtual #112                // Method java/lang/String.substring:(I)Ljava/lang/String;
+      73: aastore
+      74: iinc          2, 1
+      77: goto          20
+      80: aload_1
+      81: areturn
+
+  public void setParents(java.lang.String[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #68                 // Field parents:[Ljava/lang/String;
+       5: return
+
+  public java.lang.String[] getSiblings();
+    Code:
+       0: aload_0
+       1: getfield      #117                // Field siblings:[Ljava/lang/String;
+       4: areturn
+
+  public void setSiblings(java.lang.String[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #117                // Field siblings:[Ljava/lang/String;
+       5: return
+
+  public int getDisplayColumn();
+    Code:
+       0: aload_0
+       1: getfield      #122                // Field displayColumn:I
+       4: ireturn
+
+  public void setDisplayColumn(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #122                // Field displayColumn:I
+       5: return
+
+  public int getDisplayRow();
+    Code:
+       0: aload_0
+       1: getfield      #127                // Field displayRow:I
+       4: ireturn
+
+  public void setDisplayRow(int);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: putfield      #127                // Field displayRow:I
+       5: return
+
+  public java.lang.Object[] getIcons();
+    Code:
+       0: aload_0
+       1: getfield      #132                // Field icons:[Ljava/lang/Object;
+       4: areturn
+
+  public void setIcons(java.lang.Object[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #132                // Field icons:[Ljava/lang/Object;
+       5: return
+
+  public thaumcraft.api.research.ResearchEntry$EnumResearchMeta[] getMeta();
+    Code:
+       0: aload_0
+       1: getfield      #138                // Field meta:[Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;
+       4: areturn
+
+  public boolean hasMeta(thaumcraft.api.research.ResearchEntry$EnumResearchMeta);
+    Code:
+       0: aload_0
+       1: getfield      #138                // Field meta:[Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;
+       4: ifnonnull     11
+       7: iconst_0
+       8: goto          24
+      11: aload_0
+      12: getfield      #138                // Field meta:[Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;
+      15: invokestatic  #146                // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
+      18: aload_1
+      19: invokeinterface #151,  2          // InterfaceMethod java/util/List.contains:(Ljava/lang/Object;)Z
+      24: ireturn
+
+  public void setMeta(thaumcraft.api.research.ResearchEntry$EnumResearchMeta[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #138                // Field meta:[Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;
+       5: return
+
+  public thaumcraft.api.research.ResearchStage[] getStages();
+    Code:
+       0: aload_0
+       1: getfield      #159                // Field stages:[Lthaumcraft/api/research/ResearchStage;
+       4: areturn
+
+  public void setStages(thaumcraft.api.research.ResearchStage[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #159                // Field stages:[Lthaumcraft/api/research/ResearchStage;
+       5: return
+
+  public net.minecraft.item.ItemStack[] getRewardItem();
+    Code:
+       0: aload_0
+       1: getfield      #165                // Field rewardItem:[Lnet/minecraft/item/ItemStack;
+       4: areturn
+
+  public void setRewardItem(net.minecraft.item.ItemStack[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #165                // Field rewardItem:[Lnet/minecraft/item/ItemStack;
+       5: return
+
+  public thaumcraft.api.research.ResearchStage$Knowledge[] getRewardKnow();
+    Code:
+       0: aload_0
+       1: getfield      #171                // Field rewardKnow:[Lthaumcraft/api/research/ResearchStage$Knowledge;
+       4: areturn
+
+  public void setRewardKnow(thaumcraft.api.research.ResearchStage$Knowledge[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #171                // Field rewardKnow:[Lthaumcraft/api/research/ResearchStage$Knowledge;
+       5: return
+
+  public thaumcraft.api.research.ResearchAddendum[] getAddenda();
+    Code:
+       0: aload_0
+       1: getfield      #177                // Field addenda:[Lthaumcraft/api/research/ResearchAddendum;
+       4: areturn
+
+  public void setAddenda(thaumcraft.api.research.ResearchAddendum[]);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #177                // Field addenda:[Lthaumcraft/api/research/ResearchAddendum;
+       5: return
+}

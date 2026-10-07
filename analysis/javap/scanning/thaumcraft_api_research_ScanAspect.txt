@@ -1,0 +1,130 @@
+Compiled from "ScanAspect.java"
+public class thaumcraft.api.research.ScanAspect implements thaumcraft.api.research.IScanThing {
+  java.lang.String research;
+
+  thaumcraft.api.aspects.Aspect aspect;
+
+  public thaumcraft.api.research.ScanAspect(java.lang.String, thaumcraft.api.aspects.Aspect);
+    Code:
+       0: aload_0
+       1: invokespecial #21                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: aload_1
+       6: putfield      #23                 // Field research:Ljava/lang/String;
+       9: aload_0
+      10: aload_2
+      11: putfield      #25                 // Field aspect:Lthaumcraft/api/aspects/Aspect;
+      14: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     6
+       4: iconst_0
+       5: ireturn
+       6: aconst_null
+       7: astore_3
+       8: aload_2
+       9: instanceof    #31                 // class net/minecraft/entity/Entity
+      12: ifeq          33
+      15: aload_2
+      16: instanceof    #33                 // class net/minecraft/entity/item/EntityItem
+      19: ifne          33
+      22: aload_2
+      23: checkcast     #31                 // class net/minecraft/entity/Entity
+      26: invokestatic  #39                 // Method thaumcraft/api/aspects/AspectHelper.getEntityAspects:(Lnet/minecraft/entity/Entity;)Lthaumcraft/api/aspects/AspectList;
+      29: astore_3
+      30: goto          139
+      33: aconst_null
+      34: astore        4
+      36: aload_2
+      37: instanceof    #43                 // class net/minecraft/item/ItemStack
+      40: ifeq          49
+      43: aload_2
+      44: checkcast     #43                 // class net/minecraft/item/ItemStack
+      47: astore        4
+      49: aload_2
+      50: instanceof    #33                 // class net/minecraft/entity/item/EntityItem
+      53: ifeq          75
+      56: aload_2
+      57: checkcast     #33                 // class net/minecraft/entity/item/EntityItem
+      60: invokevirtual #47                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      63: ifnull        75
+      66: aload_2
+      67: checkcast     #33                 // class net/minecraft/entity/item/EntityItem
+      70: invokevirtual #47                 // Method net/minecraft/entity/item/EntityItem.func_92059_d:()Lnet/minecraft/item/ItemStack;
+      73: astore        4
+      75: aload_2
+      76: instanceof    #49                 // class net/minecraft/util/math/BlockPos
+      79: ifeq          128
+      82: aload_1
+      83: getfield      #55                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      86: aload_2
+      87: checkcast     #49                 // class net/minecraft/util/math/BlockPos
+      90: invokevirtual #61                 // Method net/minecraft/world/World.func_180495_p:(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;
+      93: invokeinterface #67,  1           // InterfaceMethod net/minecraft/block/state/IBlockState.func_177230_c:()Lnet/minecraft/block/Block;
+      98: astore        5
+     100: new           #43                 // class net/minecraft/item/ItemStack
+     103: dup
+     104: aload         5
+     106: iconst_1
+     107: aload         5
+     109: aload_1
+     110: getfield      #55                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     113: aload_2
+     114: checkcast     #49                 // class net/minecraft/util/math/BlockPos
+     117: invokevirtual #61                 // Method net/minecraft/world/World.func_180495_p:(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;
+     120: invokevirtual #73                 // Method net/minecraft/block/Block.func_176201_c:(Lnet/minecraft/block/state/IBlockState;)I
+     123: invokespecial #76                 // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/block/Block;II)V
+     126: astore        4
+     128: aload         4
+     130: ifnull        139
+     133: aload         4
+     135: invokestatic  #80                 // Method thaumcraft/api/aspects/AspectHelper.getObjectAspects:(Lnet/minecraft/item/ItemStack;)Lthaumcraft/api/aspects/AspectList;
+     138: astore_3
+     139: aload_3
+     140: ifnull        158
+     143: aload_3
+     144: aload_0
+     145: getfield      #25                 // Field aspect:Lthaumcraft/api/aspects/Aspect;
+     148: invokevirtual #84                 // Method thaumcraft/api/aspects/AspectList.getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+     151: ifle          158
+     154: iconst_1
+     155: goto          159
+     158: iconst_0
+     159: ireturn
+
+  public void onSuccess(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: getstatic     #102                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+       3: aload_1
+       4: getstatic     #106                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+       7: ldc           #108                // String AUROMANCY
+       9: invokestatic  #114                // Method thaumcraft/api/research/ResearchCategories.getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+      12: iconst_1
+      13: invokeinterface #120,  5          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+      18: pop
+      19: getstatic     #102                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+      22: aload_1
+      23: getstatic     #106                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      26: ldc           #122                // String BASICS
+      28: invokestatic  #114                // Method thaumcraft/api/research/ResearchCategories.getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+      31: iconst_1
+      32: invokeinterface #120,  5          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+      37: pop
+      38: getstatic     #102                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+      41: aload_1
+      42: getstatic     #106                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+      45: ldc           #124                // String ALCHEMY
+      47: invokestatic  #114                // Method thaumcraft/api/research/ResearchCategories.getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+      50: iconst_1
+      51: invokeinterface #120,  5          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+      56: pop
+      57: return
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_0
+       1: getfield      #23                 // Field research:Ljava/lang/String;
+       4: areturn
+}

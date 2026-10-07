@@ -1,0 +1,2001 @@
+Compiled from "ResearchManager.java"
+public class thaumcraft.common.lib.research.ResearchManager {
+  public static java.util.concurrent.ConcurrentHashMap<java.lang.String, java.lang.Boolean> syncList;
+
+  public static boolean noFlags;
+
+  public static java.util.LinkedHashSet<java.lang.Integer> craftingReferences;
+
+  public thaumcraft.common.lib.research.ResearchManager();
+    Code:
+       0: aload_0
+       1: invokespecial #52                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static boolean addKnowledge(net.minecraft.entity.player.EntityPlayer, thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType, thaumcraft.api.research.ResearchCategory, int);
+    Code:
+       0: aload_0
+       1: invokestatic  #62                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+       4: astore        4
+       6: aload_1
+       7: invokevirtual #66                 // Method thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.hasFields:()Z
+      10: ifne          15
+      13: aconst_null
+      14: astore_2
+      15: getstatic     #72                 // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      18: new           #22                 // class thaumcraft/api/research/ResearchEvent$Knowledge
+      21: dup
+      22: aload_0
+      23: aload_1
+      24: aload_2
+      25: iload_3
+      26: invokespecial #75                 // Method thaumcraft/api/research/ResearchEvent$Knowledge."<init>":(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)V
+      29: invokevirtual #81                 // Method net/minecraftforge/fml/common/eventhandler/EventBus.post:(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z
+      32: ifeq          37
+      35: iconst_0
+      36: ireturn
+      37: aload         4
+      39: aload_1
+      40: aload_2
+      41: invokeinterface #84,  3           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.getKnowledge:(Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;)I
+      46: istore        5
+      48: aload         4
+      50: aload_1
+      51: aload_2
+      52: iload_3
+      53: invokeinterface #87,  4           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addKnowledge:(Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+      58: pop
+      59: aload         4
+      61: aload_1
+      62: aload_2
+      63: invokeinterface #84,  3           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.getKnowledge:(Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;)I
+      68: iload         5
+      70: isub
+      71: istore        6
+      73: iload_3
+      74: ifle          127
+      77: iconst_0
+      78: istore        7
+      80: iload         7
+      82: iload         6
+      84: if_icmpge     127
+      87: getstatic     #93                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+      90: new           #95                 // class thaumcraft/common/lib/network/misc/PacketKnowledgeGain
+      93: dup
+      94: aload_1
+      95: invokevirtual #99                 // Method thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.ordinal:()I
+      98: i2b
+      99: aload_2
+     100: ifnonnull     107
+     103: aconst_null
+     104: goto          111
+     107: aload_2
+     108: getfield      #109                // Field thaumcraft/api/research/ResearchCategory.key:Ljava/lang/String;
+     111: invokespecial #114                // Method thaumcraft/common/lib/network/misc/PacketKnowledgeGain."<init>":(BLjava/lang/String;)V
+     114: aload_0
+     115: checkcast     #116                // class net/minecraft/entity/player/EntityPlayerMP
+     118: invokevirtual #120                // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendTo:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     121: iinc          7, 1
+     124: goto          80
+     127: getstatic     #122                // Field syncList:Ljava/util/concurrent/ConcurrentHashMap;
+     130: aload_0
+     131: invokevirtual #126                // Method net/minecraft/entity/player/EntityPlayer.func_70005_c_:()Ljava/lang/String;
+     134: iconst_1
+     135: invokestatic  #132                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     138: invokevirtual #138                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     141: pop
+     142: iconst_1
+     143: ireturn
+
+  public static boolean completeResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String, boolean);
+    Code:
+       0: iconst_0
+       1: istore_3
+       2: aload_0
+       3: aload_1
+       4: iload_2
+       5: invokestatic  #156                // Method progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;Z)Z
+       8: ifeq          16
+      11: iconst_1
+      12: istore_3
+      13: goto          2
+      16: iload_3
+      17: ireturn
+
+  public static boolean completeResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: iconst_0
+       1: istore_2
+       2: aload_0
+       3: aload_1
+       4: iconst_1
+       5: invokestatic  #156                // Method progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;Z)Z
+       8: ifeq          16
+      11: iconst_1
+      12: istore_2
+      13: goto          2
+      16: iload_2
+      17: ireturn
+
+  public static boolean startResearchWithPopup(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iconst_1
+       3: invokestatic  #156                // Method progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;Z)Z
+       6: istore_2
+       7: iload_2
+       8: ifeq          38
+      11: aload_0
+      12: invokestatic  #62                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+      15: astore_3
+      16: aload_3
+      17: aload_1
+      18: getstatic     #165                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag.POPUP:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;
+      21: invokeinterface #169,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchFlag:(Ljava/lang/String;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;)Z
+      26: pop
+      27: aload_3
+      28: aload_1
+      29: getstatic     #172                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag.RESEARCH:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;
+      32: invokeinterface #169,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchFlag:(Ljava/lang/String;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;)Z
+      37: pop
+      38: iload_2
+      39: ireturn
+
+  public static boolean progressResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iconst_1
+       3: invokestatic  #156                // Method progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;Z)Z
+       6: ireturn
+
+  public static boolean progressResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String, boolean);
+    Code:
+       0: aload_0
+       1: invokestatic  #62                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+       4: astore_3
+       5: aload_3
+       6: aload_1
+       7: invokeinterface #176,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchComplete:(Ljava/lang/String;)Z
+      12: ifne          1005
+      15: aload_0
+      16: aload_1
+      17: invokestatic  #179                // Method doesPlayerHaveRequisites:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+      20: ifeq          1005
+      23: getstatic     #72                 // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lnet/minecraftforge/fml/common/eventhandler/EventBus;
+      26: new           #26                 // class thaumcraft/api/research/ResearchEvent$Research
+      29: dup
+      30: aload_0
+      31: aload_1
+      32: invokespecial #182                // Method thaumcraft/api/research/ResearchEvent$Research."<init>":(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)V
+      35: invokevirtual #81                 // Method net/minecraftforge/fml/common/eventhandler/EventBus.post:(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z
+      38: ifeq          43
+      41: iconst_0
+      42: ireturn
+      43: aload_3
+      44: aload_1
+      45: invokeinterface #185,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+      50: ifne          61
+      53: aload_3
+      54: aload_1
+      55: invokeinterface #188,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.addResearch:(Ljava/lang/String;)Z
+      60: pop
+      61: aload_1
+      62: invokestatic  #194                // Method thaumcraft/api/research/ResearchCategories.getResearch:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchEntry;
+      65: astore        4
+      67: aload         4
+      69: ifnull        898
+      72: iconst_1
+      73: istore        5
+      75: aload         4
+      77: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+      80: ifnull        492
+      83: aload_3
+      84: aload_1
+      85: invokeinterface #202,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.getResearchStage:(Ljava/lang/String;)I
+      90: istore        6
+      92: aconst_null
+      93: astore        7
+      95: iload         6
+      97: ifle          125
+     100: iload         6
+     102: aload         4
+     104: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     107: arraylength
+     108: invokestatic  #208                // Method java/lang/Math.min:(II)I
+     111: istore        6
+     113: aload         4
+     115: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     118: iload         6
+     120: iconst_1
+     121: isub
+     122: aaload
+     123: astore        7
+     125: aload         4
+     127: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     130: arraylength
+     131: iconst_1
+     132: if_icmpne     198
+     135: iload         6
+     137: ifne          198
+     140: aload         4
+     142: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     145: iconst_0
+     146: aaload
+     147: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     150: ifnonnull     198
+     153: aload         4
+     155: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     158: iconst_0
+     159: aaload
+     160: invokevirtual #215                // Method thaumcraft/api/research/ResearchStage.getObtain:()[Ljava/lang/Object;
+     163: ifnonnull     198
+     166: aload         4
+     168: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     171: iconst_0
+     172: aaload
+     173: invokevirtual #219                // Method thaumcraft/api/research/ResearchStage.getKnow:()[Lthaumcraft/api/research/ResearchStage$Knowledge;
+     176: ifnonnull     198
+     179: aload         4
+     181: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     184: iconst_0
+     185: aaload
+     186: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+     189: ifnonnull     198
+     192: iinc          6, 1
+     195: goto          291
+     198: aload         4
+     200: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     203: arraylength
+     204: iconst_1
+     205: if_icmple     291
+     208: aload         4
+     210: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     213: arraylength
+     214: iload         6
+     216: iconst_1
+     217: iadd
+     218: if_icmpgt     291
+     221: iload         6
+     223: aload         4
+     225: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     228: arraylength
+     229: if_icmpge     291
+     232: aload         4
+     234: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     237: iload         6
+     239: aaload
+     240: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     243: ifnonnull     291
+     246: aload         4
+     248: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     251: iload         6
+     253: aaload
+     254: invokevirtual #215                // Method thaumcraft/api/research/ResearchStage.getObtain:()[Ljava/lang/Object;
+     257: ifnonnull     291
+     260: aload         4
+     262: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     265: iload         6
+     267: aaload
+     268: invokevirtual #219                // Method thaumcraft/api/research/ResearchStage.getKnow:()[Lthaumcraft/api/research/ResearchStage$Knowledge;
+     271: ifnonnull     291
+     274: aload         4
+     276: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     279: iload         6
+     281: aaload
+     282: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+     285: ifnonnull     291
+     288: iinc          6, 1
+     291: aload_3
+     292: aload_1
+     293: aload         4
+     295: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     298: arraylength
+     299: iconst_1
+     300: iadd
+     301: iload         6
+     303: iconst_1
+     304: iadd
+     305: invokestatic  #208                // Method java/lang/Math.min:(II)I
+     308: invokeinterface #226,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchStage:(Ljava/lang/String;I)Z
+     313: pop
+     314: iload         6
+     316: aload         4
+     318: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     321: arraylength
+     322: if_icmplt     329
+     325: iconst_1
+     326: goto          330
+     329: iconst_0
+     330: istore        5
+     332: iconst_0
+     333: istore        8
+     335: aload         7
+     337: ifnull        347
+     340: aload         7
+     342: invokevirtual #229                // Method thaumcraft/api/research/ResearchStage.getWarp:()I
+     345: istore        8
+     347: iload         5
+     349: ifeq          377
+     352: iload         6
+     354: aload         4
+     356: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     359: arraylength
+     360: invokestatic  #208                // Method java/lang/Math.min:(II)I
+     363: istore        6
+     365: aload         4
+     367: invokevirtual #198                // Method thaumcraft/api/research/ResearchEntry.getStages:()[Lthaumcraft/api/research/ResearchStage;
+     370: iload         6
+     372: iconst_1
+     373: isub
+     374: aaload
+     375: astore        7
+     377: aload         7
+     379: ifnull        492
+     382: iload         8
+     384: aload         7
+     386: invokevirtual #229                // Method thaumcraft/api/research/ResearchStage.getWarp:()I
+     389: iadd
+     390: istore        8
+     392: iload         8
+     394: ifle          492
+     397: getstatic     #232                // Field thaumcraft/common/config/ModConfig$CONFIG_MISC.wussMode:Z
+     400: ifne          492
+     403: aload_0
+     404: getfield      #236                // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     407: getfield      #241                // Field net/minecraft/world/World.field_72995_K:Z
+     410: ifne          492
+     413: iload         8
+     415: iconst_1
+     416: if_icmple     478
+     419: aload_0
+     420: invokestatic  #244                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getWarp:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerWarp;
+     423: astore        9
+     425: iload         8
+     427: iconst_2
+     428: idiv
+     429: istore        10
+     431: iload         8
+     433: iload         10
+     435: isub
+     436: ifle          456
+     439: getstatic     #250                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     442: aload_0
+     443: iload         8
+     445: iload         10
+     447: isub
+     448: getstatic     #254                // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.PERMANENT:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     451: invokeinterface #260,  4          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addWarpToPlayer:(Lnet/minecraft/entity/player/EntityPlayer;ILthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)V
+     456: iload         10
+     458: ifle          475
+     461: getstatic     #250                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     464: aload_0
+     465: iload         10
+     467: getstatic     #263                // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.NORMAL:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     470: invokeinterface #260,  4          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addWarpToPlayer:(Lnet/minecraft/entity/player/EntityPlayer;ILthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)V
+     475: goto          492
+     478: getstatic     #250                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     481: aload_0
+     482: iload         8
+     484: getstatic     #254                // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.PERMANENT:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     487: invokeinterface #260,  4          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addWarpToPlayer:(Lnet/minecraft/entity/player/EntityPlayer;ILthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)V
+     492: iload         5
+     494: ifeq          898
+     497: iload_2
+     498: ifeq          677
+     501: aload_3
+     502: aload_1
+     503: getstatic     #165                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag.POPUP:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;
+     506: invokeinterface #169,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchFlag:(Ljava/lang/String;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;)Z
+     511: pop
+     512: getstatic     #265                // Field noFlags:Z
+     515: ifne          532
+     518: aload_3
+     519: aload_1
+     520: getstatic     #172                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag.RESEARCH:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;
+     523: invokeinterface #169,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchFlag:(Ljava/lang/String;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;)Z
+     528: pop
+     529: goto          536
+     532: iconst_0
+     533: putstatic     #265                // Field noFlags:Z
+     536: aload         4
+     538: invokevirtual #269                // Method thaumcraft/api/research/ResearchEntry.getRewardItem:()[Lnet/minecraft/item/ItemStack;
+     541: ifnull        605
+     544: aload         4
+     546: invokevirtual #269                // Method thaumcraft/api/research/ResearchEntry.getRewardItem:()[Lnet/minecraft/item/ItemStack;
+     549: astore        6
+     551: aload         6
+     553: arraylength
+     554: istore        7
+     556: iconst_0
+     557: istore        8
+     559: iload         8
+     561: iload         7
+     563: if_icmpge     605
+     566: aload         6
+     568: iload         8
+     570: aaload
+     571: astore        9
+     573: aload_0
+     574: getfield      #275                // Field net/minecraft/entity/player/EntityPlayer.field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     577: aload         9
+     579: invokevirtual #281                // Method net/minecraft/item/ItemStack.func_77946_l:()Lnet/minecraft/item/ItemStack;
+     582: invokevirtual #287                // Method net/minecraft/entity/player/InventoryPlayer.func_70441_a:(Lnet/minecraft/item/ItemStack;)Z
+     585: ifne          599
+     588: aload_0
+     589: aload         9
+     591: invokevirtual #281                // Method net/minecraft/item/ItemStack.func_77946_l:()Lnet/minecraft/item/ItemStack;
+     594: fconst_1
+     595: invokevirtual #291                // Method net/minecraft/entity/player/EntityPlayer.func_70099_a:(Lnet/minecraft/item/ItemStack;F)Lnet/minecraft/entity/item/EntityItem;
+     598: pop
+     599: iinc          8, 1
+     602: goto          559
+     605: aload         4
+     607: invokevirtual #294                // Method thaumcraft/api/research/ResearchEntry.getRewardKnow:()[Lthaumcraft/api/research/ResearchStage$Knowledge;
+     610: ifnull        677
+     613: aload         4
+     615: invokevirtual #294                // Method thaumcraft/api/research/ResearchEntry.getRewardKnow:()[Lthaumcraft/api/research/ResearchStage$Knowledge;
+     618: astore        6
+     620: aload         6
+     622: arraylength
+     623: istore        7
+     625: iconst_0
+     626: istore        8
+     628: iload         8
+     630: iload         7
+     632: if_icmpge     677
+     635: aload         6
+     637: iload         8
+     639: aaload
+     640: astore        9
+     642: aload_0
+     643: aload         9
+     645: getfield      #298                // Field thaumcraft/api/research/ResearchStage$Knowledge.type:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     648: aload         9
+     650: getfield      #300                // Field thaumcraft/api/research/ResearchStage$Knowledge.category:Lthaumcraft/api/research/ResearchCategory;
+     653: aload         9
+     655: getfield      #298                // Field thaumcraft/api/research/ResearchStage$Knowledge.type:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     658: invokevirtual #303                // Method thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.getProgression:()I
+     661: aload         9
+     663: getfield      #305                // Field thaumcraft/api/research/ResearchStage$Knowledge.amount:I
+     666: imul
+     667: invokestatic  #307                // Method addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+     670: pop
+     671: iinc          8, 1
+     674: goto          628
+     677: getstatic     #311                // Field thaumcraft/api/research/ResearchCategories.researchCategories:Ljava/util/LinkedHashMap;
+     680: invokevirtual #317                // Method java/util/LinkedHashMap.keySet:()Ljava/util/Set;
+     683: invokeinterface #323,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+     688: astore        6
+     690: aload         6
+     692: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     697: ifeq          898
+     700: aload         6
+     702: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     707: checkcast     #111                // class java/lang/String
+     710: astore        7
+     712: aload         7
+     714: invokestatic  #336                // Method thaumcraft/api/research/ResearchCategories.getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+     717: getfield      #340                // Field thaumcraft/api/research/ResearchCategory.research:Ljava/util/Map;
+     720: invokeinterface #346,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+     725: invokeinterface #349,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+     730: astore        8
+     732: aload         8
+     734: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     739: ifeq          895
+     742: aload         8
+     744: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     749: checkcast     #19                 // class thaumcraft/api/research/ResearchEntry
+     752: astore        9
+     754: aload         9
+     756: ifnull        732
+     759: aload         9
+     761: invokevirtual #353                // Method thaumcraft/api/research/ResearchEntry.getAddenda:()[Lthaumcraft/api/research/ResearchAddendum;
+     764: ifnull        732
+     767: aload_3
+     768: aload         9
+     770: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     773: invokeinterface #176,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchComplete:(Ljava/lang/String;)Z
+     778: ifne          784
+     781: goto          732
+     784: aload         9
+     786: invokevirtual #353                // Method thaumcraft/api/research/ResearchEntry.getAddenda:()[Lthaumcraft/api/research/ResearchAddendum;
+     789: astore        10
+     791: aload         10
+     793: arraylength
+     794: istore        11
+     796: iconst_0
+     797: istore        12
+     799: iload         12
+     801: iload         11
+     803: if_icmpge     892
+     806: aload         10
+     808: iload         12
+     810: aaload
+     811: astore        13
+     813: aload         13
+     815: invokevirtual #361                // Method thaumcraft/api/research/ResearchAddendum.getResearch:()[Ljava/lang/String;
+     818: ifnull        886
+     821: aload         13
+     823: invokevirtual #361                // Method thaumcraft/api/research/ResearchAddendum.getResearch:()[Ljava/lang/String;
+     826: invokestatic  #367                // Method java/util/Arrays.asList:([Ljava/lang/Object;)Ljava/util/List;
+     829: aload_1
+     830: invokeinterface #373,  2          // InterfaceMethod java/util/List.contains:(Ljava/lang/Object;)Z
+     835: ifeq          886
+     838: new           #375                // class net/minecraft/util/text/TextComponentTranslation
+     841: dup
+     842: ldc_w         #377                // String tc.addaddendum
+     845: iconst_1
+     846: anewarray     #4                  // class java/lang/Object
+     849: dup
+     850: iconst_0
+     851: aload         9
+     853: invokevirtual #380                // Method thaumcraft/api/research/ResearchEntry.getLocalizedName:()Ljava/lang/String;
+     856: aastore
+     857: invokespecial #383                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     860: astore        14
+     862: aload_0
+     863: aload         14
+     865: invokevirtual #387                // Method net/minecraft/entity/player/EntityPlayer.func_145747_a:(Lnet/minecraft/util/text/ITextComponent;)V
+     868: aload_3
+     869: aload         9
+     871: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     874: getstatic     #390                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag.PAGE:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;
+     877: invokeinterface #169,  3          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.setResearchFlag:(Ljava/lang/String;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumResearchFlag;)Z
+     882: pop
+     883: goto          892
+     886: iinc          12, 1
+     889: goto          799
+     892: goto          732
+     895: goto          690
+     898: aload         4
+     900: ifnull        974
+     903: aload         4
+     905: invokevirtual #393                // Method thaumcraft/api/research/ResearchEntry.getSiblings:()[Ljava/lang/String;
+     908: ifnull        974
+     911: aload         4
+     913: invokevirtual #393                // Method thaumcraft/api/research/ResearchEntry.getSiblings:()[Ljava/lang/String;
+     916: astore        5
+     918: aload         5
+     920: arraylength
+     921: istore        6
+     923: iconst_0
+     924: istore        7
+     926: iload         7
+     928: iload         6
+     930: if_icmpge     974
+     933: aload         5
+     935: iload         7
+     937: aaload
+     938: astore        8
+     940: aload_3
+     941: aload         8
+     943: invokeinterface #176,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchComplete:(Ljava/lang/String;)Z
+     948: ifne          968
+     951: aload_0
+     952: aload         8
+     954: invokestatic  #179                // Method doesPlayerHaveRequisites:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+     957: ifeq          968
+     960: aload_0
+     961: aload         8
+     963: iload_2
+     964: invokestatic  #397                // Method completeResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;Z)Z
+     967: pop
+     968: iinc          7, 1
+     971: goto          926
+     974: iload_2
+     975: ifeq          1003
+     978: getstatic     #122                // Field syncList:Ljava/util/concurrent/ConcurrentHashMap;
+     981: aload_0
+     982: invokevirtual #126                // Method net/minecraft/entity/player/EntityPlayer.func_70005_c_:()Ljava/lang/String;
+     985: iconst_1
+     986: invokestatic  #132                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     989: invokevirtual #138                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     992: pop
+     993: aload         4
+     995: ifnull        1003
+     998: aload_0
+     999: iconst_5
+    1000: invokevirtual #401                // Method net/minecraft/entity/player/EntityPlayer.func_71023_q:(I)V
+    1003: iconst_1
+    1004: ireturn
+    1005: iconst_0
+    1006: ireturn
+
+  public static boolean doesPlayerHaveRequisites(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_1
+       1: invokestatic  #194                // Method thaumcraft/api/research/ResearchCategories.getResearch:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchEntry;
+       4: astore_2
+       5: aload_2
+       6: ifnonnull     11
+       9: iconst_1
+      10: ireturn
+      11: aload_2
+      12: invokevirtual #425                // Method thaumcraft/api/research/ResearchEntry.getParentsStripped:()[Ljava/lang/String;
+      15: astore_3
+      16: aload_3
+      17: ifnull        28
+      20: aload_0
+      21: aload_3
+      22: invokestatic  #429                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+      25: goto          29
+      28: iconst_1
+      29: ireturn
+
+  public static thaumcraft.api.aspects.Aspect getCombinationResult(thaumcraft.api.aspects.Aspect, thaumcraft.api.aspects.Aspect);
+    Code:
+       0: getstatic     #437                // Field thaumcraft/api/aspects/Aspect.aspects:Ljava/util/LinkedHashMap;
+       3: invokevirtual #438                // Method java/util/LinkedHashMap.values:()Ljava/util/Collection;
+       6: astore_2
+       7: aload_2
+       8: invokeinterface #349,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      13: astore_3
+      14: aload_3
+      15: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      20: ifeq          92
+      23: aload_3
+      24: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      29: checkcast     #434                // class thaumcraft/api/aspects/Aspect
+      32: astore        4
+      34: aload         4
+      36: invokevirtual #442                // Method thaumcraft/api/aspects/Aspect.getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      39: ifnull        89
+      42: aload         4
+      44: invokevirtual #442                // Method thaumcraft/api/aspects/Aspect.getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      47: iconst_0
+      48: aaload
+      49: aload_0
+      50: if_acmpne     64
+      53: aload         4
+      55: invokevirtual #442                // Method thaumcraft/api/aspects/Aspect.getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      58: iconst_1
+      59: aaload
+      60: aload_1
+      61: if_acmpeq     86
+      64: aload         4
+      66: invokevirtual #442                // Method thaumcraft/api/aspects/Aspect.getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      69: iconst_0
+      70: aaload
+      71: aload_1
+      72: if_acmpne     89
+      75: aload         4
+      77: invokevirtual #442                // Method thaumcraft/api/aspects/Aspect.getComponents:()[Lthaumcraft/api/aspects/Aspect;
+      80: iconst_1
+      81: aaload
+      82: aload_0
+      83: if_acmpne     89
+      86: aload         4
+      88: areturn
+      89: goto          14
+      92: aconst_null
+      93: areturn
+
+  public static void parseAllResearch();
+    Code:
+       0: new           #453                // class com/google/gson/JsonParser
+       3: dup
+       4: invokespecial #454                // Method com/google/gson/JsonParser."<init>":()V
+       7: astore_0
+       8: getstatic     #460                // Field thaumcraft/api/internal/CommonInternals.jsonLocs:Ljava/util/HashMap;
+      11: invokevirtual #463                // Method java/util/HashMap.values:()Ljava/util/Collection;
+      14: invokeinterface #349,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      19: astore_1
+      20: aload_1
+      21: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      26: ifeq          382
+      29: aload_1
+      30: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      35: checkcast     #465                // class net/minecraft/util/ResourceLocation
+      38: astore_2
+      39: new           #467                // class java/lang/StringBuilder
+      42: dup
+      43: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+      46: ldc_w         #470                // String /assets/
+      49: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      52: aload_2
+      53: invokevirtual #477                // Method net/minecraft/util/ResourceLocation.func_110624_b:()Ljava/lang/String;
+      56: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      59: ldc_w         #479                // String /
+      62: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      65: aload_2
+      66: invokevirtual #482                // Method net/minecraft/util/ResourceLocation.func_110623_a:()Ljava/lang/String;
+      69: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      72: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      75: astore_3
+      76: aload_3
+      77: ldc_w         #487                // String .json
+      80: invokevirtual #490                // Method java/lang/String.endsWith:(Ljava/lang/String;)Z
+      83: ifne          107
+      86: new           #467                // class java/lang/StringBuilder
+      89: dup
+      90: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+      93: aload_3
+      94: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      97: ldc_w         #487                // String .json
+     100: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     103: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     106: astore_3
+     107: ldc           #2                  // class thaumcraft/common/lib/research/ResearchManager
+     109: aload_3
+     110: invokevirtual #496                // Method java/lang/Class.getResourceAsStream:(Ljava/lang/String;)Ljava/io/InputStream;
+     113: astore        4
+     115: aload         4
+     117: ifnull        348
+     120: new           #498                // class java/io/InputStreamReader
+     123: dup
+     124: aload         4
+     126: invokespecial #501                // Method java/io/InputStreamReader."<init>":(Ljava/io/InputStream;)V
+     129: astore        5
+     131: aload_0
+     132: aload         5
+     134: invokevirtual #505                // Method com/google/gson/JsonParser.parse:(Ljava/io/Reader;)Lcom/google/gson/JsonElement;
+     137: invokevirtual #511                // Method com/google/gson/JsonElement.getAsJsonObject:()Lcom/google/gson/JsonObject;
+     140: astore        6
+     142: aload         6
+     144: ldc_w         #513                // String entries
+     147: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     150: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     153: astore        7
+     155: iconst_0
+     156: istore        8
+     158: aload         7
+     160: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+     163: astore        9
+     165: aload         9
+     167: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     172: ifeq          267
+     175: aload         9
+     177: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     182: checkcast     #507                // class com/google/gson/JsonElement
+     185: astore        10
+     187: iinc          8, 1
+     190: aload         10
+     192: invokevirtual #511                // Method com/google/gson/JsonElement.getAsJsonObject:()Lcom/google/gson/JsonObject;
+     195: astore        11
+     197: aload         11
+     199: invokestatic  #532                // Method parseResearchJson:(Lcom/google/gson/JsonObject;)Lthaumcraft/api/research/ResearchEntry;
+     202: astore        12
+     204: aload         12
+     206: invokestatic  #536                // Method addResearchToCategory:(Lthaumcraft/api/research/ResearchEntry;)V
+     209: goto          264
+     212: astore        11
+     214: aload         11
+     216: invokevirtual #539                // Method java/lang/Exception.printStackTrace:()V
+     219: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+     222: new           #467                // class java/lang/StringBuilder
+     225: dup
+     226: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     229: ldc_w         #547                // String Invalid research entry [
+     232: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     235: iload         8
+     237: invokevirtual #550                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     240: ldc_w         #552                // String ] found in
+     243: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     246: aload_2
+     247: invokevirtual #553                // Method net/minecraft/util/ResourceLocation.toString:()Ljava/lang/String;
+     250: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     253: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     256: invokeinterface #559,  2          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;)V
+     261: iinc          8, -1
+     264: goto          165
+     267: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+     270: new           #467                // class java/lang/StringBuilder
+     273: dup
+     274: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     277: ldc_w         #561                // String Loaded
+     280: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     283: iload         8
+     285: invokevirtual #550                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     288: ldc_w         #563                // String  research entries from
+     291: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     294: aload_2
+     295: invokevirtual #553                // Method net/minecraft/util/ResourceLocation.toString:()Ljava/lang/String;
+     298: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     301: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     304: invokeinterface #566,  2          // InterfaceMethod org/apache/logging/log4j/Logger.info:(Ljava/lang/String;)V
+     309: goto          379
+     312: astore        5
+     314: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+     317: new           #467                // class java/lang/StringBuilder
+     320: dup
+     321: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     324: ldc_w         #568                // String Invalid research file:
+     327: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     330: aload_2
+     331: invokevirtual #553                // Method net/minecraft/util/ResourceLocation.toString:()Ljava/lang/String;
+     334: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     337: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     340: invokeinterface #559,  2          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;)V
+     345: goto          379
+     348: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+     351: new           #467                // class java/lang/StringBuilder
+     354: dup
+     355: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     358: ldc_w         #570                // String Research file not found:
+     361: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     364: aload_2
+     365: invokevirtual #553                // Method net/minecraft/util/ResourceLocation.toString:()Ljava/lang/String;
+     368: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     371: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     374: invokeinterface #559,  2          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;)V
+     379: goto          20
+     382: return
+    Exception table:
+       from    to  target type
+         190   209   212   Class java/lang/Exception
+         120   309   312   Class java/lang/Exception
+
+  private static thaumcraft.api.research.ResearchEntry parseResearchJson(com.google.gson.JsonObject) throws java.lang.Exception;
+    Code:
+       0: new           #19                 // class thaumcraft/api/research/ResearchEntry
+       3: dup
+       4: invokespecial #589                // Method thaumcraft/api/research/ResearchEntry."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: aload_0
+      10: ldc_w         #590                // String key
+      13: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+      16: invokevirtual #599                // Method com/google/gson/JsonPrimitive.getAsString:()Ljava/lang/String;
+      19: invokevirtual #602                // Method thaumcraft/api/research/ResearchEntry.setKey:(Ljava/lang/String;)V
+      22: aload_1
+      23: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+      26: ifnonnull     40
+      29: new           #451                // class java/lang/Exception
+      32: dup
+      33: ldc_w         #604                // String Invalid key in research JSon
+      36: invokespecial #606                // Method java/lang/Exception."<init>":(Ljava/lang/String;)V
+      39: athrow
+      40: aload_1
+      41: aload_0
+      42: ldc_w         #608                // String name
+      45: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+      48: invokevirtual #599                // Method com/google/gson/JsonPrimitive.getAsString:()Ljava/lang/String;
+      51: invokevirtual #611                // Method thaumcraft/api/research/ResearchEntry.setName:(Ljava/lang/String;)V
+      54: aload_1
+      55: aload_0
+      56: ldc_w         #612                // String category
+      59: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+      62: invokevirtual #599                // Method com/google/gson/JsonPrimitive.getAsString:()Ljava/lang/String;
+      65: invokevirtual #615                // Method thaumcraft/api/research/ResearchEntry.setCategory:(Ljava/lang/String;)V
+      68: aload_1
+      69: invokevirtual #618                // Method thaumcraft/api/research/ResearchEntry.getCategory:()Ljava/lang/String;
+      72: ifnonnull     86
+      75: new           #451                // class java/lang/Exception
+      78: dup
+      79: ldc_w         #620                // String Invalid category in research JSon
+      82: invokespecial #606                // Method java/lang/Exception."<init>":(Ljava/lang/String;)V
+      85: athrow
+      86: aload_0
+      87: ldc_w         #622                // String icons
+      90: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+      93: ifeq          216
+      96: aload_0
+      97: ldc_w         #622                // String icons
+     100: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     103: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     106: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     109: astore_2
+     110: aload_2
+     111: ifnull        216
+     114: aload_2
+     115: arraylength
+     116: ifle          216
+     119: aload_2
+     120: arraylength
+     121: anewarray     #4                  // class java/lang/Object
+     124: astore_3
+     125: iconst_0
+     126: istore        4
+     128: iload         4
+     130: aload_2
+     131: arraylength
+     132: if_icmpge     211
+     135: aload_2
+     136: iload         4
+     138: aaload
+     139: invokestatic  #635                // Method parseJSONtoItemStack:(Ljava/lang/String;)Lnet/minecraft/item/ItemStack;
+     142: astore        5
+     144: aload         5
+     146: ifnull        166
+     149: aload         5
+     151: invokevirtual #638                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+     154: ifne          166
+     157: aload_3
+     158: iload         4
+     160: aload         5
+     162: aastore
+     163: goto          205
+     166: aload_2
+     167: iload         4
+     169: aaload
+     170: ldc_w         #640                // String focus
+     173: invokevirtual #643                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+     176: ifeq          190
+     179: aload_3
+     180: iload         4
+     182: aload_2
+     183: iload         4
+     185: aaload
+     186: aastore
+     187: goto          205
+     190: aload_3
+     191: iload         4
+     193: new           #465                // class net/minecraft/util/ResourceLocation
+     196: dup
+     197: aload_2
+     198: iload         4
+     200: aaload
+     201: invokespecial #644                // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;)V
+     204: aastore
+     205: iinc          4, 1
+     208: goto          128
+     211: aload_1
+     212: aload_3
+     213: invokevirtual #648                // Method thaumcraft/api/research/ResearchEntry.setIcons:([Ljava/lang/Object;)V
+     216: aload_0
+     217: ldc_w         #649                // String parents
+     220: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     223: ifeq          243
+     226: aload_1
+     227: aload_0
+     228: ldc_w         #649                // String parents
+     231: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     234: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     237: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     240: invokevirtual #653                // Method thaumcraft/api/research/ResearchEntry.setParents:([Ljava/lang/String;)V
+     243: aload_0
+     244: ldc_w         #655                // String siblings
+     247: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     250: ifeq          270
+     253: aload_1
+     254: aload_0
+     255: ldc_w         #655                // String siblings
+     258: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     261: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     264: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     267: invokevirtual #658                // Method thaumcraft/api/research/ResearchEntry.setSiblings:([Ljava/lang/String;)V
+     270: aload_0
+     271: ldc_w         #660                // String meta
+     274: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     277: ifeq          393
+     280: aload_0
+     281: ldc_w         #660                // String meta
+     284: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     287: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     290: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     293: astore_2
+     294: aload_2
+     295: ifnull        393
+     298: aload_2
+     299: arraylength
+     300: ifle          393
+     303: new           #662                // class java/util/ArrayList
+     306: dup
+     307: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+     310: astore_3
+     311: aload_2
+     312: astore        4
+     314: aload         4
+     316: arraylength
+     317: istore        5
+     319: iconst_0
+     320: istore        6
+     322: iload         6
+     324: iload         5
+     326: if_icmpge     375
+     329: aload         4
+     331: iload         6
+     333: aaload
+     334: astore        7
+     336: aload         7
+     338: invokevirtual #666                // Method java/lang/String.toUpperCase:()Ljava/lang/String;
+     341: invokestatic  #669                // Method thaumcraft/api/research/ResearchEntry$EnumResearchMeta.valueOf:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;
+     344: astore        8
+     346: aload         8
+     348: ifnonnull     362
+     351: new           #451                // class java/lang/Exception
+     354: dup
+     355: ldc_w         #671                // String Illegal metadata in research JSon
+     358: invokespecial #606                // Method java/lang/Exception."<init>":(Ljava/lang/String;)V
+     361: athrow
+     362: aload_3
+     363: aload         8
+     365: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     368: pop
+     369: iinc          6, 1
+     372: goto          322
+     375: aload_1
+     376: aload_3
+     377: aload_3
+     378: invokevirtual #677                // Method java/util/ArrayList.size:()I
+     381: anewarray     #17                 // class thaumcraft/api/research/ResearchEntry$EnumResearchMeta
+     384: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+     387: checkcast     #683                // class "[Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;"
+     390: invokevirtual #687                // Method thaumcraft/api/research/ResearchEntry.setMeta:([Lthaumcraft/api/research/ResearchEntry$EnumResearchMeta;)V
+     393: aload_0
+     394: ldc_w         #689                // String location
+     397: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     400: ifeq          447
+     403: aload_0
+     404: ldc_w         #689                // String location
+     407: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     410: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     413: invokestatic  #693                // Method arrayJsonToInt:(Lcom/google/gson/JsonArray;)[Ljava/lang/Integer;
+     416: astore_2
+     417: aload_2
+     418: ifnull        447
+     421: aload_2
+     422: arraylength
+     423: iconst_2
+     424: if_icmpne     447
+     427: aload_1
+     428: aload_2
+     429: iconst_0
+     430: aaload
+     431: invokevirtual #698                // Method java/lang/Integer.intValue:()I
+     434: invokevirtual #701                // Method thaumcraft/api/research/ResearchEntry.setDisplayColumn:(I)V
+     437: aload_1
+     438: aload_2
+     439: iconst_1
+     440: aaload
+     441: invokevirtual #698                // Method java/lang/Integer.intValue:()I
+     444: invokevirtual #704                // Method thaumcraft/api/research/ResearchEntry.setDisplayRow:(I)V
+     447: aload_0
+     448: ldc_w         #706                // String reward_item
+     451: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     454: ifeq          481
+     457: aload_1
+     458: aload_1
+     459: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     462: aload_0
+     463: ldc_w         #706                // String reward_item
+     466: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     469: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     472: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     475: invokestatic  #710                // Method parseJsonItemList:(Ljava/lang/String;[Ljava/lang/String;)[Lnet/minecraft/item/ItemStack;
+     478: invokevirtual #714                // Method thaumcraft/api/research/ResearchEntry.setRewardItem:([Lnet/minecraft/item/ItemStack;)V
+     481: aload_0
+     482: ldc_w         #716                // String reward_knowledge
+     485: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     488: ifeq          597
+     491: aload_0
+     492: ldc_w         #716                // String reward_knowledge
+     495: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     498: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     501: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     504: astore_2
+     505: aload_2
+     506: ifnull        597
+     509: aload_2
+     510: arraylength
+     511: ifle          597
+     514: new           #662                // class java/util/ArrayList
+     517: dup
+     518: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+     521: astore_3
+     522: aload_2
+     523: astore        4
+     525: aload         4
+     527: arraylength
+     528: istore        5
+     530: iconst_0
+     531: istore        6
+     533: iload         6
+     535: iload         5
+     537: if_icmpge     572
+     540: aload         4
+     542: iload         6
+     544: aaload
+     545: astore        7
+     547: aload         7
+     549: invokestatic  #719                // Method thaumcraft/api/research/ResearchStage$Knowledge.parse:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchStage$Knowledge;
+     552: astore        8
+     554: aload         8
+     556: ifnull        566
+     559: aload_3
+     560: aload         8
+     562: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+     565: pop
+     566: iinc          6, 1
+     569: goto          533
+     572: aload_3
+     573: invokevirtual #677                // Method java/util/ArrayList.size:()I
+     576: ifle          597
+     579: aload_1
+     580: aload_3
+     581: aload_3
+     582: invokevirtual #677                // Method java/util/ArrayList.size:()I
+     585: anewarray     #12                 // class thaumcraft/api/research/ResearchStage$Knowledge
+     588: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+     591: checkcast     #296                // class "[Lthaumcraft/api/research/ResearchStage$Knowledge;"
+     594: invokevirtual #723                // Method thaumcraft/api/research/ResearchEntry.setRewardKnow:([Lthaumcraft/api/research/ResearchStage$Knowledge;)V
+     597: aload_0
+     598: ldc_w         #725                // String stages
+     601: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     604: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     607: astore_2
+     608: new           #662                // class java/util/ArrayList
+     611: dup
+     612: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+     615: astore_3
+     616: aload_2
+     617: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+     620: astore        4
+     622: aload         4
+     624: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+     629: ifeq          1263
+     632: aload         4
+     634: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+     639: checkcast     #507                // class com/google/gson/JsonElement
+     642: astore        5
+     644: aload         5
+     646: invokevirtual #511                // Method com/google/gson/JsonElement.getAsJsonObject:()Lcom/google/gson/JsonObject;
+     649: astore        6
+     651: new           #14                 // class thaumcraft/api/research/ResearchStage
+     654: dup
+     655: invokespecial #726                // Method thaumcraft/api/research/ResearchStage."<init>":()V
+     658: astore        7
+     660: aload         7
+     662: aload         6
+     664: ldc_w         #727                // String text
+     667: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+     670: invokevirtual #599                // Method com/google/gson/JsonPrimitive.getAsString:()Ljava/lang/String;
+     673: invokevirtual #730                // Method thaumcraft/api/research/ResearchStage.setText:(Ljava/lang/String;)V
+     676: aload         7
+     678: invokevirtual #733                // Method thaumcraft/api/research/ResearchStage.getText:()Ljava/lang/String;
+     681: ifnonnull     695
+     684: new           #451                // class java/lang/Exception
+     687: dup
+     688: ldc_w         #735                // String Illegal stage text in research JSon
+     691: invokespecial #606                // Method java/lang/Exception."<init>":(Ljava/lang/String;)V
+     694: athrow
+     695: aload         6
+     697: ldc_w         #737                // String recipes
+     700: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     703: ifeq          725
+     706: aload         7
+     708: aload         6
+     710: ldc_w         #737                // String recipes
+     713: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     716: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     719: invokestatic  #741                // Method arrayJsonToResourceLocations:(Lcom/google/gson/JsonArray;)[Lnet/minecraft/util/ResourceLocation;
+     722: invokevirtual #745                // Method thaumcraft/api/research/ResearchStage.setRecipes:([Lnet/minecraft/util/ResourceLocation;)V
+     725: aload         6
+     727: ldc_w         #747                // String required_item
+     730: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     733: ifeq          762
+     736: aload         7
+     738: aload_1
+     739: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     742: aload         6
+     744: ldc_w         #747                // String required_item
+     747: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     750: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     753: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     756: invokestatic  #751                // Method parseJsonOreList:(Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/Object;
+     759: invokevirtual #754                // Method thaumcraft/api/research/ResearchStage.setObtain:([Ljava/lang/Object;)V
+     762: aload         6
+     764: ldc_w         #756                // String required_craft
+     767: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     770: ifeq          945
+     773: aload         6
+     775: ldc_w         #756                // String required_craft
+     778: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     781: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     784: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     787: astore        8
+     789: aload         7
+     791: aload_1
+     792: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     795: aload         8
+     797: invokestatic  #751                // Method parseJsonOreList:(Ljava/lang/String;[Ljava/lang/String;)[Ljava/lang/Object;
+     800: invokevirtual #759                // Method thaumcraft/api/research/ResearchStage.setCraft:([Ljava/lang/Object;)V
+     803: aload         7
+     805: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     808: ifnull        945
+     811: aload         7
+     813: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     816: arraylength
+     817: ifle          945
+     820: aload         7
+     822: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     825: arraylength
+     826: newarray       int
+     828: astore        9
+     830: iconst_0
+     831: istore        10
+     833: aload         7
+     835: invokevirtual #212                // Method thaumcraft/api/research/ResearchStage.getCraft:()[Ljava/lang/Object;
+     838: astore        11
+     840: aload         11
+     842: arraylength
+     843: istore        12
+     845: iconst_0
+     846: istore        13
+     848: iload         13
+     850: iload         12
+     852: if_icmpge     938
+     855: aload         11
+     857: iload         13
+     859: aaload
+     860: astore        14
+     862: aload         14
+     864: instanceof    #277                // class net/minecraft/item/ItemStack
+     867: ifeq          881
+     870: aload         14
+     872: checkcast     #277                // class net/minecraft/item/ItemStack
+     875: invokestatic  #765                // Method createItemStackHash:(Lnet/minecraft/item/ItemStack;)I
+     878: goto          908
+     881: new           #467                // class java/lang/StringBuilder
+     884: dup
+     885: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     888: ldc_w         #767                // String oredict:
+     891: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     894: aload         14
+     896: checkcast     #111                // class java/lang/String
+     899: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     902: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     905: invokevirtual #770                // Method java/lang/String.hashCode:()I
+     908: istore        15
+     910: getstatic     #772                // Field craftingReferences:Ljava/util/LinkedHashSet;
+     913: iload         15
+     915: invokestatic  #775                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     918: invokevirtual #778                // Method java/util/LinkedHashSet.add:(Ljava/lang/Object;)Z
+     921: pop
+     922: aload         9
+     924: iload         10
+     926: iload         15
+     928: iastore
+     929: iinc          10, 1
+     932: iinc          13, 1
+     935: goto          848
+     938: aload         7
+     940: aload         9
+     942: invokevirtual #782                // Method thaumcraft/api/research/ResearchStage.setCraftReference:([I)V
+     945: aload         6
+     947: ldc_w         #784                // String required_knowledge
+     950: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+     953: ifeq          1073
+     956: aload         6
+     958: ldc_w         #784                // String required_knowledge
+     961: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     964: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+     967: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+     970: astore        8
+     972: aload         8
+     974: ifnull        1073
+     977: aload         8
+     979: arraylength
+     980: ifle          1073
+     983: new           #662                // class java/util/ArrayList
+     986: dup
+     987: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+     990: astore        9
+     992: aload         8
+     994: astore        10
+     996: aload         10
+     998: arraylength
+     999: istore        11
+    1001: iconst_0
+    1002: istore        12
+    1004: iload         12
+    1006: iload         11
+    1008: if_icmpge     1044
+    1011: aload         10
+    1013: iload         12
+    1015: aaload
+    1016: astore        13
+    1018: aload         13
+    1020: invokestatic  #719                // Method thaumcraft/api/research/ResearchStage$Knowledge.parse:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchStage$Knowledge;
+    1023: astore        14
+    1025: aload         14
+    1027: ifnull        1038
+    1030: aload         9
+    1032: aload         14
+    1034: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1037: pop
+    1038: iinc          12, 1
+    1041: goto          1004
+    1044: aload         9
+    1046: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1049: ifle          1073
+    1052: aload         7
+    1054: aload         9
+    1056: aload         9
+    1058: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1061: anewarray     #12                 // class thaumcraft/api/research/ResearchStage$Knowledge
+    1064: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+    1067: checkcast     #296                // class "[Lthaumcraft/api/research/ResearchStage$Knowledge;"
+    1070: invokevirtual #787                // Method thaumcraft/api/research/ResearchStage.setKnow:([Lthaumcraft/api/research/ResearchStage$Knowledge;)V
+    1073: aload         6
+    1075: ldc_w         #789                // String required_research
+    1078: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+    1081: ifeq          1226
+    1084: aload         7
+    1086: aload         6
+    1088: ldc_w         #789                // String required_research
+    1091: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    1094: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+    1097: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+    1100: invokevirtual #792                // Method thaumcraft/api/research/ResearchStage.setResearch:([Ljava/lang/String;)V
+    1103: aload         7
+    1105: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1108: ifnull        1226
+    1111: aload         7
+    1113: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1116: arraylength
+    1117: ifle          1226
+    1120: aload         7
+    1122: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1125: arraylength
+    1126: anewarray     #111                // class java/lang/String
+    1129: astore        8
+    1131: aload         7
+    1133: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1136: arraylength
+    1137: anewarray     #111                // class java/lang/String
+    1140: astore        9
+    1142: iconst_0
+    1143: istore        10
+    1145: iload         10
+    1147: aload         7
+    1149: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1152: arraylength
+    1153: if_icmpge     1212
+    1156: aload         7
+    1158: invokevirtual #222                // Method thaumcraft/api/research/ResearchStage.getResearch:()[Ljava/lang/String;
+    1161: iload         10
+    1163: aaload
+    1164: ldc_w         #794                // String ;
+    1167: invokevirtual #798                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+    1170: astore        11
+    1172: aload         8
+    1174: iload         10
+    1176: aload         11
+    1178: iconst_0
+    1179: aaload
+    1180: aastore
+    1181: aload         11
+    1183: arraylength
+    1184: iconst_1
+    1185: if_icmple     1200
+    1188: aload         9
+    1190: iload         10
+    1192: aload         11
+    1194: iconst_1
+    1195: aaload
+    1196: aastore
+    1197: goto          1206
+    1200: aload         9
+    1202: iload         10
+    1204: aconst_null
+    1205: aastore
+    1206: iinc          10, 1
+    1209: goto          1145
+    1212: aload         7
+    1214: aload         8
+    1216: invokevirtual #792                // Method thaumcraft/api/research/ResearchStage.setResearch:([Ljava/lang/String;)V
+    1219: aload         7
+    1221: aload         9
+    1223: invokevirtual #801                // Method thaumcraft/api/research/ResearchStage.setResearchIcon:([Ljava/lang/String;)V
+    1226: aload         6
+    1228: ldc_w         #802                // String warp
+    1231: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+    1234: ifeq          1253
+    1237: aload         7
+    1239: aload         6
+    1241: ldc_w         #802                // String warp
+    1244: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+    1247: invokevirtual #805                // Method com/google/gson/JsonPrimitive.getAsInt:()I
+    1250: invokevirtual #808                // Method thaumcraft/api/research/ResearchStage.setWarp:(I)V
+    1253: aload_3
+    1254: aload         7
+    1256: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1259: pop
+    1260: goto          622
+    1263: aload_3
+    1264: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1267: ifle          1288
+    1270: aload_1
+    1271: aload_3
+    1272: aload_3
+    1273: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1276: anewarray     #14                 // class thaumcraft/api/research/ResearchStage
+    1279: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+    1282: checkcast     #810                // class "[Lthaumcraft/api/research/ResearchStage;"
+    1285: invokevirtual #814                // Method thaumcraft/api/research/ResearchEntry.setStages:([Lthaumcraft/api/research/ResearchStage;)V
+    1288: aload_0
+    1289: ldc_w         #816                // String addenda
+    1292: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    1295: ifnull        1498
+    1298: aload_0
+    1299: ldc_w         #816                // String addenda
+    1302: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    1305: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+    1308: astore        4
+    1310: new           #662                // class java/util/ArrayList
+    1313: dup
+    1314: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+    1317: astore        5
+    1319: aload         4
+    1321: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+    1324: astore        6
+    1326: aload         6
+    1328: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+    1333: ifeq          1470
+    1336: aload         6
+    1338: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+    1343: checkcast     #507                // class com/google/gson/JsonElement
+    1346: astore        7
+    1348: aload         7
+    1350: invokevirtual #511                // Method com/google/gson/JsonElement.getAsJsonObject:()Lcom/google/gson/JsonObject;
+    1353: astore        8
+    1355: new           #360                // class thaumcraft/api/research/ResearchAddendum
+    1358: dup
+    1359: invokespecial #817                // Method thaumcraft/api/research/ResearchAddendum."<init>":()V
+    1362: astore        9
+    1364: aload         9
+    1366: aload         8
+    1368: ldc_w         #727                // String text
+    1371: invokevirtual #594                // Method com/google/gson/JsonObject.getAsJsonPrimitive:(Ljava/lang/String;)Lcom/google/gson/JsonPrimitive;
+    1374: invokevirtual #599                // Method com/google/gson/JsonPrimitive.getAsString:()Ljava/lang/String;
+    1377: invokevirtual #818                // Method thaumcraft/api/research/ResearchAddendum.setText:(Ljava/lang/String;)V
+    1380: aload         9
+    1382: invokevirtual #819                // Method thaumcraft/api/research/ResearchAddendum.getText:()Ljava/lang/String;
+    1385: ifnonnull     1399
+    1388: new           #451                // class java/lang/Exception
+    1391: dup
+    1392: ldc_w         #821                // String Illegal addendum text in research JSon
+    1395: invokespecial #606                // Method java/lang/Exception."<init>":(Ljava/lang/String;)V
+    1398: athrow
+    1399: aload         8
+    1401: ldc_w         #737                // String recipes
+    1404: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+    1407: ifeq          1429
+    1410: aload         9
+    1412: aload         8
+    1414: ldc_w         #737                // String recipes
+    1417: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    1420: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+    1423: invokestatic  #741                // Method arrayJsonToResourceLocations:(Lcom/google/gson/JsonArray;)[Lnet/minecraft/util/ResourceLocation;
+    1426: invokevirtual #822                // Method thaumcraft/api/research/ResearchAddendum.setRecipes:([Lnet/minecraft/util/ResourceLocation;)V
+    1429: aload         8
+    1431: ldc_w         #789                // String required_research
+    1434: invokevirtual #625                // Method com/google/gson/JsonObject.has:(Ljava/lang/String;)Z
+    1437: ifeq          1459
+    1440: aload         9
+    1442: aload         8
+    1444: ldc_w         #789                // String required_research
+    1447: invokevirtual #519                // Method com/google/gson/JsonObject.get:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+    1450: invokevirtual #523                // Method com/google/gson/JsonElement.getAsJsonArray:()Lcom/google/gson/JsonArray;
+    1453: invokestatic  #629                // Method arrayJsonToString:(Lcom/google/gson/JsonArray;)[Ljava/lang/String;
+    1456: invokevirtual #823                // Method thaumcraft/api/research/ResearchAddendum.setResearch:([Ljava/lang/String;)V
+    1459: aload         5
+    1461: aload         9
+    1463: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+    1466: pop
+    1467: goto          1326
+    1470: aload         5
+    1472: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1475: ifle          1498
+    1478: aload_1
+    1479: aload         5
+    1481: aload         5
+    1483: invokevirtual #677                // Method java/util/ArrayList.size:()I
+    1486: anewarray     #360                // class thaumcraft/api/research/ResearchAddendum
+    1489: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+    1492: checkcast     #358                // class "[Lthaumcraft/api/research/ResearchAddendum;"
+    1495: invokevirtual #827                // Method thaumcraft/api/research/ResearchEntry.setAddenda:([Lthaumcraft/api/research/ResearchAddendum;)V
+    1498: aload_1
+    1499: areturn
+
+  public static int createItemStackHash(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: ifnull        11
+       4: aload_0
+       5: invokevirtual #638                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+       8: ifeq          13
+      11: iconst_0
+      12: ireturn
+      13: aload_0
+      14: iconst_1
+      15: invokevirtual #857                // Method net/minecraft/item/ItemStack.func_190920_e:(I)V
+      18: aload_0
+      19: invokevirtual #858                // Method net/minecraft/item/ItemStack.toString:()Ljava/lang/String;
+      22: invokevirtual #770                // Method java/lang/String.hashCode:()I
+      25: ireturn
+
+  private static java.lang.String[] arrayJsonToString(com.google.gson.JsonArray);
+    Code:
+       0: new           #662                // class java/util/ArrayList
+       3: dup
+       4: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+      12: astore_2
+      13: aload_2
+      14: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      19: ifeq          44
+      22: aload_2
+      23: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      28: checkcast     #507                // class com/google/gson/JsonElement
+      31: astore_3
+      32: aload_1
+      33: aload_3
+      34: invokevirtual #859                // Method com/google/gson/JsonElement.getAsString:()Ljava/lang/String;
+      37: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      40: pop
+      41: goto          13
+      44: aload_1
+      45: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      48: ifne          55
+      51: aconst_null
+      52: goto          69
+      55: aload_1
+      56: aload_1
+      57: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      60: anewarray     #111                // class java/lang/String
+      63: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      66: checkcast     #395                // class "[Ljava/lang/String;"
+      69: areturn
+
+  private static net.minecraft.util.ResourceLocation[] arrayJsonToResourceLocations(com.google.gson.JsonArray);
+    Code:
+       0: new           #662                // class java/util/ArrayList
+       3: dup
+       4: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+      12: astore_2
+      13: aload_2
+      14: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      19: ifeq          51
+      22: aload_2
+      23: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      28: checkcast     #507                // class com/google/gson/JsonElement
+      31: astore_3
+      32: aload_1
+      33: new           #465                // class net/minecraft/util/ResourceLocation
+      36: dup
+      37: aload_3
+      38: invokevirtual #859                // Method com/google/gson/JsonElement.getAsString:()Ljava/lang/String;
+      41: invokespecial #644                // Method net/minecraft/util/ResourceLocation."<init>":(Ljava/lang/String;)V
+      44: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      47: pop
+      48: goto          13
+      51: aload_1
+      52: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      55: ifne          62
+      58: aconst_null
+      59: goto          76
+      62: aload_1
+      63: aload_1
+      64: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      67: anewarray     #465                // class net/minecraft/util/ResourceLocation
+      70: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      73: checkcast     #864                // class "[Lnet/minecraft/util/ResourceLocation;"
+      76: areturn
+
+  private static java.lang.Integer[] arrayJsonToInt(com.google.gson.JsonArray);
+    Code:
+       0: new           #662                // class java/util/ArrayList
+       3: dup
+       4: invokespecial #663                // Method java/util/ArrayList."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #526                // Method com/google/gson/JsonArray.iterator:()Ljava/util/Iterator;
+      12: astore_2
+      13: aload_2
+      14: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      19: ifeq          47
+      22: aload_2
+      23: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      28: checkcast     #507                // class com/google/gson/JsonElement
+      31: astore_3
+      32: aload_1
+      33: aload_3
+      34: invokevirtual #866                // Method com/google/gson/JsonElement.getAsInt:()I
+      37: invokestatic  #775                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      40: invokevirtual #674                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      43: pop
+      44: goto          13
+      47: aload_1
+      48: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      51: ifne          58
+      54: aconst_null
+      55: goto          72
+      58: aload_1
+      59: aload_1
+      60: invokevirtual #677                // Method java/util/ArrayList.size:()I
+      63: anewarray     #695                // class java/lang/Integer
+      66: invokevirtual #681                // Method java/util/ArrayList.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      69: checkcast     #867                // class "[Ljava/lang/Integer;"
+      72: areturn
+
+  private static net.minecraft.item.ItemStack[] parseJsonItemList(java.lang.String, java.lang.String[]);
+    Code:
+       0: aload_1
+       1: ifnull        9
+       4: aload_1
+       5: arraylength
+       6: ifne          11
+       9: aconst_null
+      10: areturn
+      11: aload_1
+      12: arraylength
+      13: anewarray     #277                // class net/minecraft/item/ItemStack
+      16: astore_2
+      17: iconst_0
+      18: istore_3
+      19: aload_1
+      20: astore        4
+      22: aload         4
+      24: arraylength
+      25: istore        5
+      27: iconst_0
+      28: istore        6
+      30: iload         6
+      32: iload         5
+      34: if_icmpge     91
+      37: aload         4
+      39: iload         6
+      41: aaload
+      42: astore        7
+      44: aload         7
+      46: ldc_w         #870                // String \'
+      49: ldc_w         #872                // String \"
+      52: invokevirtual #876                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+      55: astore        7
+      57: aload         7
+      59: invokestatic  #635                // Method parseJSONtoItemStack:(Ljava/lang/String;)Lnet/minecraft/item/ItemStack;
+      62: astore        8
+      64: aload         8
+      66: ifnull        85
+      69: aload         8
+      71: invokevirtual #638                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+      74: ifne          85
+      77: aload_2
+      78: iload_3
+      79: aload         8
+      81: aastore
+      82: iinc          3, 1
+      85: iinc          6, 1
+      88: goto          30
+      91: aconst_null
+      92: astore        4
+      94: iload_3
+      95: ifle          111
+      98: aload_2
+      99: iload_3
+     100: invokestatic  #880                // Method java/util/Arrays.copyOf:([Ljava/lang/Object;I)[Ljava/lang/Object;
+     103: checkcast     #271                // class "[Lnet/minecraft/item/ItemStack;"
+     106: checkcast     #271                // class "[Lnet/minecraft/item/ItemStack;"
+     109: astore        4
+     111: aload         4
+     113: areturn
+
+  private static java.lang.Object[] parseJsonOreList(java.lang.String, java.lang.String[]);
+    Code:
+       0: aload_1
+       1: ifnull        9
+       4: aload_1
+       5: arraylength
+       6: ifne          11
+       9: aconst_null
+      10: areturn
+      11: aload_1
+      12: arraylength
+      13: anewarray     #4                  // class java/lang/Object
+      16: astore_2
+      17: iconst_0
+      18: istore_3
+      19: aload_1
+      20: astore        4
+      22: aload         4
+      24: arraylength
+      25: istore        5
+      27: iconst_0
+      28: istore        6
+      30: iload         6
+      32: iload         5
+      34: if_icmpge     132
+      37: aload         4
+      39: iload         6
+      41: aaload
+      42: astore        7
+      44: aload         7
+      46: ldc_w         #870                // String \'
+      49: ldc_w         #872                // String \"
+      52: invokevirtual #876                // Method java/lang/String.replace:(Ljava/lang/CharSequence;Ljava/lang/CharSequence;)Ljava/lang/String;
+      55: astore        7
+      57: aload         7
+      59: ldc_w         #767                // String oredict:
+      62: invokevirtual #643                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      65: ifeq          98
+      68: aload         7
+      70: ldc_w         #885                // String :
+      73: invokevirtual #798                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      76: astore        8
+      78: aload         8
+      80: arraylength
+      81: iconst_1
+      82: if_icmple     95
+      85: aload_2
+      86: iload_3
+      87: aload         8
+      89: iconst_1
+      90: aaload
+      91: aastore
+      92: iinc          3, 1
+      95: goto          126
+      98: aload         7
+     100: invokestatic  #635                // Method parseJSONtoItemStack:(Ljava/lang/String;)Lnet/minecraft/item/ItemStack;
+     103: astore        8
+     105: aload         8
+     107: ifnull        126
+     110: aload         8
+     112: invokevirtual #638                // Method net/minecraft/item/ItemStack.func_190926_b:()Z
+     115: ifne          126
+     118: aload_2
+     119: iload_3
+     120: aload         8
+     122: aastore
+     123: iinc          3, 1
+     126: iinc          6, 1
+     129: goto          30
+     132: aconst_null
+     133: astore        4
+     135: iload_3
+     136: ifle          149
+     139: aload_2
+     140: iload_3
+     141: invokestatic  #880                // Method java/util/Arrays.copyOf:([Ljava/lang/Object;I)[Ljava/lang/Object;
+     144: checkcast     #631                // class "[Ljava/lang/Object;"
+     147: astore        4
+     149: aload         4
+     151: areturn
+
+  public static net.minecraft.item.ItemStack parseJSONtoItemStack(java.lang.String);
+    Code:
+       0: aload_0
+       1: ifnonnull     6
+       4: aconst_null
+       5: areturn
+       6: aload_0
+       7: ldc_w         #794                // String ;
+      10: invokevirtual #798                // Method java/lang/String.split:(Ljava/lang/String;)[Ljava/lang/String;
+      13: astore_1
+      14: aload_1
+      15: iconst_0
+      16: aaload
+      17: astore_2
+      18: iconst_m1
+      19: istore_3
+      20: iconst_m1
+      21: istore        4
+      23: aconst_null
+      24: astore        5
+      26: iconst_1
+      27: istore        6
+      29: iload         6
+      31: aload_1
+      32: arraylength
+      33: if_icmpge     125
+      36: aload_1
+      37: iload         6
+      39: aaload
+      40: ldc_w         #890                // String {
+      43: invokevirtual #643                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      46: ifeq          70
+      49: aload_1
+      50: iload         6
+      52: aaload
+      53: astore        5
+      55: aload         5
+      57: ldc_w         #870                // String \'
+      60: ldc_w         #872                // String \"
+      63: invokevirtual #894                // Method java/lang/String.replaceAll:(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+      66: pop
+      67: goto          125
+      70: iconst_m1
+      71: istore        7
+      73: aload_1
+      74: iload         6
+      76: aaload
+      77: invokestatic  #897                // Method java/lang/Integer.parseInt:(Ljava/lang/String;)I
+      80: istore        7
+      82: goto          90
+      85: astore        8
+      87: goto          119
+      90: iload         7
+      92: iflt          105
+      95: iload_3
+      96: ifge          105
+      99: iload         7
+     101: istore_3
+     102: goto          119
+     105: iload         7
+     107: iflt          119
+     110: iload         4
+     112: ifge          119
+     115: iload         7
+     117: istore        4
+     119: iinc          6, 1
+     122: goto          29
+     125: iload_3
+     126: ifge          131
+     129: iconst_1
+     130: istore_3
+     131: iload         4
+     133: ifge          139
+     136: iconst_0
+     137: istore        4
+     139: getstatic     #900                // Field net/minecraft/item/ItemStack.field_190927_a:Lnet/minecraft/item/ItemStack;
+     142: astore        6
+     144: aload_2
+     145: invokestatic  #906                // Method net/minecraft/item/Item.func_111206_d:(Ljava/lang/String;)Lnet/minecraft/item/Item;
+     148: astore        7
+     150: aload         7
+     152: ifnull        184
+     155: new           #277                // class net/minecraft/item/ItemStack
+     158: dup
+     159: aload         7
+     161: iload_3
+     162: iload         4
+     164: invokespecial #909                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+     167: astore        6
+     169: aload         5
+     171: ifnull        184
+     174: aload         6
+     176: aload         5
+     178: invokestatic  #915                // Method net/minecraft/nbt/JsonToNBT.func_180713_a:(Ljava/lang/String;)Lnet/minecraft/nbt/NBTTagCompound;
+     181: invokevirtual #919                // Method net/minecraft/item/ItemStack.func_77982_d:(Lnet/minecraft/nbt/NBTTagCompound;)V
+     184: goto          189
+     187: astore        7
+     189: aload         6
+     191: areturn
+    Exception table:
+       from    to  target type
+          73    82    85   Class java/lang/NumberFormatException
+         144   184   187   Class java/lang/Exception
+
+  private static void addResearchToCategory(thaumcraft.api.research.ResearchEntry);
+    Code:
+       0: aload_0
+       1: invokevirtual #618                // Method thaumcraft/api/research/ResearchEntry.getCategory:()Ljava/lang/String;
+       4: invokestatic  #336                // Method thaumcraft/api/research/ResearchCategories.getResearchCategory:(Ljava/lang/String;)Lthaumcraft/api/research/ResearchCategory;
+       7: astore_1
+       8: aload_1
+       9: ifnull        252
+      12: aload_1
+      13: getfield      #340                // Field thaumcraft/api/research/ResearchCategory.research:Ljava/util/Map;
+      16: aload_0
+      17: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+      20: invokeinterface #928,  2          // InterfaceMethod java/util/Map.containsKey:(Ljava/lang/Object;)Z
+      25: ifne          252
+      28: aload_1
+      29: getfield      #340                // Field thaumcraft/api/research/ResearchCategory.research:Ljava/util/Map;
+      32: invokeinterface #346,  1          // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      37: invokeinterface #349,  1          // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      42: astore_2
+      43: aload_2
+      44: invokeinterface #328,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      49: ifeq          158
+      52: aload_2
+      53: invokeinterface #332,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      58: checkcast     #19                 // class thaumcraft/api/research/ResearchEntry
+      61: astore_3
+      62: aload_3
+      63: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+      66: aload_0
+      67: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+      70: if_icmpne     155
+      73: aload_3
+      74: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+      77: aload_0
+      78: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+      81: if_icmpne     155
+      84: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+      87: new           #467                // class java/lang/StringBuilder
+      90: dup
+      91: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+      94: ldc_w         #936                // String Research [
+      97: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     100: aload_0
+     101: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     104: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     107: ldc_w         #938                // String ] not added as it overlaps with existing research [
+     110: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     113: aload_3
+     114: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     117: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     120: ldc_w         #940                // String ] at
+     123: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     126: aload_0
+     127: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+     130: invokevirtual #550                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     133: ldc_w         #942                // String ,
+     136: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     139: aload_3
+     140: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+     143: invokevirtual #550                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     146: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     149: invokeinterface #559,  2          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;)V
+     154: return
+     155: goto          43
+     158: aload_1
+     159: getfield      #340                // Field thaumcraft/api/research/ResearchCategory.research:Ljava/util/Map;
+     162: aload_0
+     163: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     166: aload_0
+     167: invokeinterface #943,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     172: pop
+     173: aload_0
+     174: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+     177: aload_1
+     178: getfield      #946                // Field thaumcraft/api/research/ResearchCategory.minDisplayColumn:I
+     181: if_icmpge     192
+     184: aload_1
+     185: aload_0
+     186: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+     189: putfield      #946                // Field thaumcraft/api/research/ResearchCategory.minDisplayColumn:I
+     192: aload_0
+     193: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+     196: aload_1
+     197: getfield      #949                // Field thaumcraft/api/research/ResearchCategory.minDisplayRow:I
+     200: if_icmpge     211
+     203: aload_1
+     204: aload_0
+     205: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+     208: putfield      #949                // Field thaumcraft/api/research/ResearchCategory.minDisplayRow:I
+     211: aload_0
+     212: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+     215: aload_1
+     216: getfield      #952                // Field thaumcraft/api/research/ResearchCategory.maxDisplayColumn:I
+     219: if_icmple     230
+     222: aload_1
+     223: aload_0
+     224: invokevirtual #931                // Method thaumcraft/api/research/ResearchEntry.getDisplayColumn:()I
+     227: putfield      #952                // Field thaumcraft/api/research/ResearchCategory.maxDisplayColumn:I
+     230: aload_0
+     231: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+     234: aload_1
+     235: getfield      #955                // Field thaumcraft/api/research/ResearchCategory.maxDisplayRow:I
+     238: if_icmple     283
+     241: aload_1
+     242: aload_0
+     243: invokevirtual #934                // Method thaumcraft/api/research/ResearchEntry.getDisplayRow:()I
+     246: putfield      #955                // Field thaumcraft/api/research/ResearchCategory.maxDisplayRow:I
+     249: goto          283
+     252: getstatic     #545                // Field thaumcraft/Thaumcraft.log:Lorg/apache/logging/log4j/Logger;
+     255: new           #467                // class java/lang/StringBuilder
+     258: dup
+     259: invokespecial #468                // Method java/lang/StringBuilder."<init>":()V
+     262: ldc_w         #957                // String Could not add invalid research entry
+     265: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     268: aload_0
+     269: invokevirtual #356                // Method thaumcraft/api/research/ResearchEntry.getKey:()Ljava/lang/String;
+     272: invokevirtual #474                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     275: invokevirtual #485                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     278: invokeinterface #559,  2          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;)V
+     283: return
+
+  static {};
+    Code:
+       0: new           #134                // class java/util/concurrent/ConcurrentHashMap
+       3: dup
+       4: invokespecial #961                // Method java/util/concurrent/ConcurrentHashMap."<init>":()V
+       7: putstatic     #122                // Field syncList:Ljava/util/concurrent/ConcurrentHashMap;
+      10: iconst_0
+      11: putstatic     #265                // Field noFlags:Z
+      14: new           #777                // class java/util/LinkedHashSet
+      17: dup
+      18: invokespecial #962                // Method java/util/LinkedHashSet."<init>":()V
+      21: putstatic     #772                // Field craftingReferences:Ljava/util/LinkedHashSet;
+      24: return
+}

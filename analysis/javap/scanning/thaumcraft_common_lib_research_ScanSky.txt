@@ -1,0 +1,573 @@
+Compiled from "ScanSky.java"
+public class thaumcraft.common.lib.research.ScanSky implements thaumcraft.api.research.IScanThing {
+  public thaumcraft.common.lib.research.ScanSky();
+    Code:
+       0: aload_0
+       1: invokespecial #11                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public boolean checkThing(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     62
+       4: aload_1
+       5: getfield      #21                 // Field net/minecraft/entity/player/EntityPlayer.field_70125_A:F
+       8: fconst_0
+       9: fcmpl
+      10: ifgt          62
+      13: aload_1
+      14: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      17: aload_1
+      18: invokevirtual #29                 // Method net/minecraft/entity/player/EntityPlayer.func_180425_c:()Lnet/minecraft/util/math/BlockPos;
+      21: invokevirtual #34                 // Method net/minecraft/util/math/BlockPos.func_177984_a:()Lnet/minecraft/util/math/BlockPos;
+      24: invokevirtual #40                 // Method net/minecraft/world/World.func_175678_i:(Lnet/minecraft/util/math/BlockPos;)Z
+      27: ifeq          62
+      30: aload_1
+      31: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      34: getfield      #44                 // Field net/minecraft/world/World.field_73011_w:Lnet/minecraft/world/WorldProvider;
+      37: invokevirtual #50                 // Method net/minecraft/world/WorldProvider.func_186058_p:()Lnet/minecraft/world/DimensionType;
+      40: getstatic     #56                 // Field net/minecraft/world/DimensionType.OVERWORLD:Lnet/minecraft/world/DimensionType;
+      43: if_acmpne     62
+      46: aload_1
+      47: iconst_1
+      48: anewarray     #58                 // class java/lang/String
+      51: dup
+      52: iconst_0
+      53: ldc           #60                 // String CELESTIALSCANNING
+      55: aastore
+      56: invokestatic  #66                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+      59: ifne          64
+      62: iconst_0
+      63: ireturn
+      64: aload_1
+      65: getfield      #69                 // Field net/minecraft/entity/player/EntityPlayer.field_70177_z:F
+      68: ldc           #70                 // float 90.0f
+      70: fadd
+      71: f2i
+      72: sipush        360
+      75: irem
+      76: istore_3
+      77: aload_1
+      78: getfield      #21                 // Field net/minecraft/entity/player/EntityPlayer.field_70125_A:F
+      81: invokestatic  #76                 // Method java/lang/Math.abs:(F)F
+      84: f2i
+      85: istore        4
+      87: aload_1
+      88: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      91: fconst_0
+      92: invokevirtual #79                 // Method net/minecraft/world/World.func_72826_c:(F)F
+      95: f2d
+      96: ldc2_w        #80                 // double 0.25d
+      99: dadd
+     100: ldc2_w        #82                 // double 360.0d
+     103: dmul
+     104: d2i
+     105: sipush        360
+     108: irem
+     109: istore        5
+     111: iload         5
+     113: sipush        180
+     116: if_icmple     123
+     119: iconst_1
+     120: goto          124
+     123: iconst_0
+     124: istore        6
+     126: iconst_0
+     127: istore        7
+     129: iconst_0
+     130: istore        8
+     132: iload         6
+     134: ifeq          143
+     137: iinc_w        5, -180
+     143: iload         5
+     145: bipush        90
+     147: if_icmple     200
+     150: iload_3
+     151: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     154: sipush        180
+     157: isub
+     158: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     161: bipush        10
+     163: if_icmpge     170
+     166: iconst_1
+     167: goto          171
+     170: iconst_0
+     171: istore        7
+     173: sipush        180
+     176: iload         5
+     178: isub
+     179: iload         4
+     181: isub
+     182: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     185: bipush        7
+     187: if_icmpge     194
+     190: iconst_1
+     191: goto          195
+     194: iconst_0
+     195: istore        8
+     197: goto          236
+     200: iload_3
+     201: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     204: bipush        10
+     206: if_icmpge     213
+     209: iconst_1
+     210: goto          214
+     213: iconst_0
+     214: istore        7
+     216: iload         5
+     218: iload         4
+     220: isub
+     221: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     224: bipush        7
+     226: if_icmpge     233
+     229: iconst_1
+     230: goto          234
+     233: iconst_0
+     234: istore        8
+     236: iload         7
+     238: ifeq          248
+     241: iload         8
+     243: ifeq          248
+     246: iconst_1
+     247: ireturn
+     248: iload         6
+     250: ifeq          255
+     253: iconst_1
+     254: ireturn
+     255: iconst_0
+     256: ireturn
+
+  public void onSuccess(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: aload_2
+       1: ifnonnull     46
+       4: aload_1
+       5: getfield      #21                 // Field net/minecraft/entity/player/EntityPlayer.field_70125_A:F
+       8: fconst_0
+       9: fcmpl
+      10: ifgt          46
+      13: aload_1
+      14: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      17: aload_1
+      18: invokevirtual #29                 // Method net/minecraft/entity/player/EntityPlayer.func_180425_c:()Lnet/minecraft/util/math/BlockPos;
+      21: invokevirtual #34                 // Method net/minecraft/util/math/BlockPos.func_177984_a:()Lnet/minecraft/util/math/BlockPos;
+      24: invokevirtual #40                 // Method net/minecraft/world/World.func_175678_i:(Lnet/minecraft/util/math/BlockPos;)Z
+      27: ifeq          46
+      30: aload_1
+      31: iconst_1
+      32: anewarray     #58                 // class java/lang/String
+      35: dup
+      36: iconst_0
+      37: ldc           #60                 // String CELESTIALSCANNING
+      39: aastore
+      40: invokestatic  #66                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+      43: ifne          47
+      46: return
+      47: aload_1
+      48: getfield      #69                 // Field net/minecraft/entity/player/EntityPlayer.field_70177_z:F
+      51: ldc           #70                 // float 90.0f
+      53: fadd
+      54: f2i
+      55: sipush        360
+      58: irem
+      59: istore_3
+      60: aload_1
+      61: getfield      #21                 // Field net/minecraft/entity/player/EntityPlayer.field_70125_A:F
+      64: invokestatic  #76                 // Method java/lang/Math.abs:(F)F
+      67: f2i
+      68: istore        4
+      70: aload_1
+      71: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+      74: fconst_0
+      75: invokevirtual #79                 // Method net/minecraft/world/World.func_72826_c:(F)F
+      78: f2d
+      79: ldc2_w        #80                 // double 0.25d
+      82: dadd
+      83: ldc2_w        #82                 // double 360.0d
+      86: dmul
+      87: d2i
+      88: sipush        360
+      91: irem
+      92: istore        5
+      94: iload         5
+      96: sipush        180
+      99: if_icmple     106
+     102: iconst_1
+     103: goto          107
+     106: iconst_0
+     107: istore        6
+     109: iconst_0
+     110: istore        7
+     112: iconst_0
+     113: istore        8
+     115: iload         6
+     117: ifeq          126
+     120: iinc_w        5, -180
+     126: iload         5
+     128: bipush        90
+     130: if_icmple     183
+     133: iload_3
+     134: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     137: sipush        180
+     140: isub
+     141: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     144: bipush        10
+     146: if_icmpge     153
+     149: iconst_1
+     150: goto          154
+     153: iconst_0
+     154: istore        7
+     156: sipush        180
+     159: iload         5
+     161: isub
+     162: iload         4
+     164: isub
+     165: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     168: bipush        7
+     170: if_icmpge     177
+     173: iconst_1
+     174: goto          178
+     177: iconst_0
+     178: istore        8
+     180: goto          219
+     183: iload_3
+     184: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     187: bipush        10
+     189: if_icmpge     196
+     192: iconst_1
+     193: goto          197
+     196: iconst_0
+     197: istore        7
+     199: iload         5
+     201: iload         4
+     203: isub
+     204: invokestatic  #86                 // Method java/lang/Math.abs:(I)I
+     207: bipush        7
+     209: if_icmpge     216
+     212: iconst_1
+     213: goto          217
+     216: iconst_0
+     217: istore        8
+     219: aload_1
+     220: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     223: invokevirtual #104                // Method net/minecraft/world/World.func_82737_E:()J
+     226: ldc2_w        #105                // long 24000l
+     229: ldiv
+     230: l2i
+     231: istore        9
+     233: iload         7
+     235: ifeq          523
+     238: iload         8
+     240: ifeq          523
+     243: new           #108                // class java/lang/StringBuilder
+     246: dup
+     247: invokespecial #109                // Method java/lang/StringBuilder."<init>":()V
+     250: ldc           #111                // String CEL_
+     252: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     255: iload         9
+     257: invokevirtual #118                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     260: ldc           #120                // String _
+     262: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     265: invokevirtual #124                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     268: astore        10
+     270: new           #108                // class java/lang/StringBuilder
+     273: dup
+     274: invokespecial #109                // Method java/lang/StringBuilder."<init>":()V
+     277: aload         10
+     279: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     282: iload         6
+     284: ifeq          325
+     287: new           #108                // class java/lang/StringBuilder
+     290: dup
+     291: invokespecial #109                // Method java/lang/StringBuilder."<init>":()V
+     294: ldc           #126                // String Moon
+     296: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     299: aload_1
+     300: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     303: getfield      #44                 // Field net/minecraft/world/World.field_73011_w:Lnet/minecraft/world/WorldProvider;
+     306: aload_1
+     307: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     310: invokevirtual #129                // Method net/minecraft/world/World.func_72820_D:()J
+     313: invokevirtual #133                // Method net/minecraft/world/WorldProvider.func_76559_b:(J)I
+     316: invokevirtual #118                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     319: invokevirtual #124                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     322: goto          327
+     325: ldc           #135                // String Sun
+     327: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     330: invokevirtual #124                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     333: astore        11
+     335: aload_1
+     336: iconst_1
+     337: anewarray     #58                 // class java/lang/String
+     340: dup
+     341: iconst_0
+     342: aload         11
+     344: aastore
+     345: invokestatic  #138                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearch:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     348: ifeq          375
+     351: aload_1
+     352: new           #140                // class net/minecraft/util/text/TextComponentTranslation
+     355: dup
+     356: ldc           #142                // String tc.celestial.fail.1
+     358: iconst_1
+     359: anewarray     #4                  // class java/lang/Object
+     362: dup
+     363: iconst_0
+     364: ldc           #144                // String
+     366: aastore
+     367: invokespecial #147                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     370: iconst_1
+     371: invokevirtual #151                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     374: return
+     375: aload_1
+     376: new           #153                // class net/minecraft/item/ItemStack
+     379: dup
+     380: getstatic     #159                // Field thaumcraft/api/items/ItemsTC.scribingTools:Lnet/minecraft/item/Item;
+     383: iconst_1
+     384: sipush        32767
+     387: invokespecial #162                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+     390: iconst_1
+     391: invokestatic  #168                // Method thaumcraft/common/lib/utils/InventoryUtils.isPlayerCarryingAmount:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;Z)Z
+     394: ifeq          492
+     397: aload_1
+     398: new           #153                // class net/minecraft/item/ItemStack
+     401: dup
+     402: getstatic     #173                // Field net/minecraft/init/Items.field_151121_aF:Lnet/minecraft/item/Item;
+     405: invokespecial #176                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+     408: iconst_0
+     409: iconst_1
+     410: invokestatic  #180                // Method thaumcraft/common/lib/utils/InventoryUtils.consumePlayerItem:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;ZZ)Z
+     413: ifeq          492
+     416: new           #153                // class net/minecraft/item/ItemStack
+     419: dup
+     420: getstatic     #183                // Field thaumcraft/api/items/ItemsTC.celestialNotes:Lnet/minecraft/item/Item;
+     423: iconst_1
+     424: iload         6
+     426: ifeq          451
+     429: iconst_5
+     430: aload_1
+     431: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     434: getfield      #44                 // Field net/minecraft/world/World.field_73011_w:Lnet/minecraft/world/WorldProvider;
+     437: aload_1
+     438: getfield      #25                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+     441: invokevirtual #129                // Method net/minecraft/world/World.func_72820_D:()J
+     444: invokevirtual #133                // Method net/minecraft/world/WorldProvider.func_76559_b:(J)I
+     447: iadd
+     448: goto          452
+     451: iconst_0
+     452: invokespecial #162                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+     455: astore        12
+     457: aload_1
+     458: getfield      #189                // Field net/minecraft/entity/player/EntityPlayer.field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     461: aload         12
+     463: invokevirtual #195                // Method net/minecraft/entity/player/InventoryPlayer.func_70441_a:(Lnet/minecraft/item/ItemStack;)Z
+     466: ifne          477
+     469: aload_1
+     470: aload         12
+     472: iconst_0
+     473: invokevirtual #199                // Method net/minecraft/entity/player/EntityPlayer.func_71019_a:(Lnet/minecraft/item/ItemStack;Z)Lnet/minecraft/entity/item/EntityItem;
+     476: pop
+     477: getstatic     #205                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     480: aload_1
+     481: aload         11
+     483: invokeinterface #211,  3          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+     488: pop
+     489: goto          515
+     492: aload_1
+     493: new           #140                // class net/minecraft/util/text/TextComponentTranslation
+     496: dup
+     497: ldc           #213                // String tc.celestial.fail.2
+     499: iconst_1
+     500: anewarray     #4                  // class java/lang/Object
+     503: dup
+     504: iconst_0
+     505: ldc           #144                // String
+     507: aastore
+     508: invokespecial #147                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     511: iconst_1
+     512: invokevirtual #151                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     515: aload_0
+     516: aload_1
+     517: aload         10
+     519: invokespecial #217                // Method cleanResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)V
+     522: return
+     523: iload         6
+     525: ifeq          761
+     528: aload_1
+     529: invokevirtual #221                // Method net/minecraft/entity/player/EntityPlayer.func_184172_bi:()Lnet/minecraft/util/EnumFacing;
+     532: astore        10
+     534: aload         10
+     536: invokevirtual #227                // Method net/minecraft/util/EnumFacing.func_176745_a:()I
+     539: iconst_2
+     540: isub
+     541: istore        11
+     543: new           #108                // class java/lang/StringBuilder
+     546: dup
+     547: invokespecial #109                // Method java/lang/StringBuilder."<init>":()V
+     550: ldc           #111                // String CEL_
+     552: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     555: iload         9
+     557: invokevirtual #118                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     560: ldc           #120                // String _
+     562: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     565: invokevirtual #124                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     568: astore        12
+     570: new           #108                // class java/lang/StringBuilder
+     573: dup
+     574: invokespecial #109                // Method java/lang/StringBuilder."<init>":()V
+     577: aload         12
+     579: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     582: ldc           #229                // String Star
+     584: invokevirtual #115                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     587: iload         11
+     589: invokevirtual #118                // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     592: invokevirtual #124                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     595: astore        13
+     597: aload_1
+     598: iconst_1
+     599: anewarray     #58                 // class java/lang/String
+     602: dup
+     603: iconst_0
+     604: aload         13
+     606: aastore
+     607: invokestatic  #138                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearch:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     610: ifeq          637
+     613: aload_1
+     614: new           #140                // class net/minecraft/util/text/TextComponentTranslation
+     617: dup
+     618: ldc           #142                // String tc.celestial.fail.1
+     620: iconst_1
+     621: anewarray     #4                  // class java/lang/Object
+     624: dup
+     625: iconst_0
+     626: ldc           #144                // String
+     628: aastore
+     629: invokespecial #147                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     632: iconst_1
+     633: invokevirtual #151                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     636: return
+     637: aload_1
+     638: new           #153                // class net/minecraft/item/ItemStack
+     641: dup
+     642: getstatic     #159                // Field thaumcraft/api/items/ItemsTC.scribingTools:Lnet/minecraft/item/Item;
+     645: iconst_1
+     646: sipush        32767
+     649: invokespecial #162                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+     652: iconst_1
+     653: invokestatic  #168                // Method thaumcraft/common/lib/utils/InventoryUtils.isPlayerCarryingAmount:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;Z)Z
+     656: ifeq          730
+     659: aload_1
+     660: new           #153                // class net/minecraft/item/ItemStack
+     663: dup
+     664: getstatic     #173                // Field net/minecraft/init/Items.field_151121_aF:Lnet/minecraft/item/Item;
+     667: invokespecial #176                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+     670: iconst_0
+     671: iconst_1
+     672: invokestatic  #180                // Method thaumcraft/common/lib/utils/InventoryUtils.consumePlayerItem:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;ZZ)Z
+     675: ifeq          730
+     678: new           #153                // class net/minecraft/item/ItemStack
+     681: dup
+     682: getstatic     #183                // Field thaumcraft/api/items/ItemsTC.celestialNotes:Lnet/minecraft/item/Item;
+     685: iconst_1
+     686: iconst_1
+     687: iload         11
+     689: iadd
+     690: invokespecial #162                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;II)V
+     693: astore        14
+     695: aload_1
+     696: getfield      #189                // Field net/minecraft/entity/player/EntityPlayer.field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     699: aload         14
+     701: invokevirtual #195                // Method net/minecraft/entity/player/InventoryPlayer.func_70441_a:(Lnet/minecraft/item/ItemStack;)Z
+     704: ifne          715
+     707: aload_1
+     708: aload         14
+     710: iconst_0
+     711: invokevirtual #199                // Method net/minecraft/entity/player/EntityPlayer.func_71019_a:(Lnet/minecraft/item/ItemStack;Z)Lnet/minecraft/entity/item/EntityItem;
+     714: pop
+     715: getstatic     #205                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     718: aload_1
+     719: aload         13
+     721: invokeinterface #211,  3          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+     726: pop
+     727: goto          753
+     730: aload_1
+     731: new           #140                // class net/minecraft/util/text/TextComponentTranslation
+     734: dup
+     735: ldc           #213                // String tc.celestial.fail.2
+     737: iconst_1
+     738: anewarray     #4                  // class java/lang/Object
+     741: dup
+     742: iconst_0
+     743: ldc           #144                // String
+     745: aastore
+     746: invokespecial #147                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     749: iconst_1
+     750: invokevirtual #151                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     753: aload_0
+     754: aload_1
+     755: aload         12
+     757: invokespecial #217                // Method cleanResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)V
+     760: return
+     761: return
+
+  private void cleanResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: new           #241                // class java/util/ArrayList
+       3: dup
+       4: invokespecial #242                // Method java/util/ArrayList."<init>":()V
+       7: astore_3
+       8: aload_1
+       9: invokestatic  #246                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+      12: invokeinterface #252,  1          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.getResearchList:()Ljava/util/Set;
+      17: invokeinterface #258,  1          // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      22: astore        4
+      24: aload         4
+      26: invokeinterface #264,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      31: ifeq          75
+      34: aload         4
+      36: invokeinterface #268,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      41: checkcast     #58                 // class java/lang/String
+      44: astore        5
+      46: aload         5
+      48: ldc           #111                // String CEL_
+      50: invokevirtual #272                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      53: ifeq          72
+      56: aload         5
+      58: aload_2
+      59: invokevirtual #272                // Method java/lang/String.startsWith:(Ljava/lang/String;)Z
+      62: ifne          72
+      65: aload_3
+      66: aload         5
+      68: invokevirtual #276                // Method java/util/ArrayList.add:(Ljava/lang/Object;)Z
+      71: pop
+      72: goto          24
+      75: aload_3
+      76: invokevirtual #277                // Method java/util/ArrayList.iterator:()Ljava/util/Iterator;
+      79: astore        4
+      81: aload         4
+      83: invokeinterface #264,  1          // InterfaceMethod java/util/Iterator.hasNext:()Z
+      88: ifeq          118
+      91: aload         4
+      93: invokeinterface #268,  1          // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      98: checkcast     #58                 // class java/lang/String
+     101: astore        5
+     103: aload_1
+     104: invokestatic  #246                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+     107: aload         5
+     109: invokeinterface #280,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.removeResearch:(Ljava/lang/String;)Z
+     114: pop
+     115: goto          81
+     118: getstatic     #286                // Field thaumcraft/common/lib/research/ResearchManager.syncList:Ljava/util/concurrent/ConcurrentHashMap;
+     121: aload_1
+     122: invokevirtual #289                // Method net/minecraft/entity/player/EntityPlayer.func_70005_c_:()Ljava/lang/String;
+     125: iconst_1
+     126: invokestatic  #295                // Method java/lang/Boolean.valueOf:(Z)Ljava/lang/Boolean;
+     129: invokevirtual #301                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     132: pop
+     133: return
+
+  public java.lang.String getResearchKey(net.minecraft.entity.player.EntityPlayer, java.lang.Object);
+    Code:
+       0: ldc           #144                // String
+       2: areturn
+}

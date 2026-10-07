@@ -1,0 +1,684 @@
+Compiled from "AspectList.java"
+public class thaumcraft.api.aspects.AspectList implements java.io.Serializable {
+  public java.util.LinkedHashMap<thaumcraft.api.aspects.Aspect, java.lang.Integer> aspects;
+
+  public thaumcraft.api.aspects.AspectList(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: invokespecial #17                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #19                 // class java/util/LinkedHashMap
+       8: dup
+       9: invokespecial #20                 // Method java/util/LinkedHashMap."<init>":()V
+      12: putfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      15: aload_1
+      16: invokestatic  #28                 // Method thaumcraft/api/aspects/AspectHelper.getObjectAspects:(Lnet/minecraft/item/ItemStack;)Lthaumcraft/api/aspects/AspectList;
+      19: astore_2
+      20: aload_2
+      21: ifnull        68
+      24: aload_2
+      25: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+      28: astore_3
+      29: aload_3
+      30: arraylength
+      31: istore        4
+      33: iconst_0
+      34: istore        5
+      36: iload         5
+      38: iload         4
+      40: if_icmpge     68
+      43: aload_3
+      44: iload         5
+      46: aaload
+      47: astore        6
+      49: aload_0
+      50: aload         6
+      52: aload_2
+      53: aload         6
+      55: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      58: invokevirtual #44                 // Method add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      61: pop
+      62: iinc          5, 1
+      65: goto          36
+      68: goto          72
+      71: astore_2
+      72: return
+    Exception table:
+       from    to  target type
+          15    68    71   Class java/lang/Exception
+
+  public thaumcraft.api.aspects.AspectList();
+    Code:
+       0: aload_0
+       1: invokespecial #17                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #19                 // class java/util/LinkedHashMap
+       8: dup
+       9: invokespecial #20                 // Method java/util/LinkedHashMap."<init>":()V
+      12: putfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      15: return
+
+  public thaumcraft.api.aspects.AspectList copy();
+    Code:
+       0: new           #2                  // class thaumcraft/api/aspects/AspectList
+       3: dup
+       4: invokespecial #54                 // Method "<init>":()V
+       7: astore_1
+       8: aload_0
+       9: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+      12: astore_2
+      13: aload_2
+      14: arraylength
+      15: istore_3
+      16: iconst_0
+      17: istore        4
+      19: iload         4
+      21: iload_3
+      22: if_icmpge     50
+      25: aload_2
+      26: iload         4
+      28: aaload
+      29: astore        5
+      31: aload_1
+      32: aload         5
+      34: aload_0
+      35: aload         5
+      37: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      40: invokevirtual #44                 // Method add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      43: pop
+      44: iinc          4, 1
+      47: goto          19
+      50: aload_1
+      51: areturn
+
+  public int size();
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #60                 // Method java/util/LinkedHashMap.size:()I
+       7: ireturn
+
+  public int visSize();
+    Code:
+       0: iconst_0
+       1: istore_1
+       2: aload_0
+       3: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       6: invokevirtual #65                 // Method java/util/LinkedHashMap.keySet:()Ljava/util/Set;
+       9: invokeinterface #71,  1           // InterfaceMethod java/util/Set.iterator:()Ljava/util/Iterator;
+      14: astore_2
+      15: aload_2
+      16: invokeinterface #77,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      21: ifeq          45
+      24: aload_2
+      25: invokeinterface #81,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      30: checkcast     #83                 // class thaumcraft/api/aspects/Aspect
+      33: astore_3
+      34: iload_1
+      35: aload_0
+      36: aload_3
+      37: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      40: iadd
+      41: istore_1
+      42: goto          15
+      45: iload_1
+      46: ireturn
+
+  public thaumcraft.api.aspects.Aspect[] getAspects();
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #65                 // Method java/util/LinkedHashMap.keySet:()Ljava/util/Set;
+       7: iconst_0
+       8: anewarray     #83                 // class thaumcraft/api/aspects/Aspect
+      11: invokeinterface #90,  2           // InterfaceMethod java/util/Set.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      16: checkcast     #36                 // class "[Lthaumcraft/api/aspects/Aspect;"
+      19: areturn
+
+  public thaumcraft.api.aspects.Aspect[] getAspectsSortedByName();
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #65                 // Method java/util/LinkedHashMap.keySet:()Ljava/util/Set;
+       7: iconst_0
+       8: anewarray     #83                 // class thaumcraft/api/aspects/Aspect
+      11: invokeinterface #90,  2           // InterfaceMethod java/util/Set.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      16: checkcast     #36                 // class "[Lthaumcraft/api/aspects/Aspect;"
+      19: astore_1
+      20: iconst_0
+      21: istore_2
+      22: iconst_0
+      23: istore_2
+      24: iconst_0
+      25: istore_3
+      26: iload_3
+      27: aload_1
+      28: arraylength
+      29: iconst_1
+      30: isub
+      31: if_icmpge     95
+      34: aload_1
+      35: iload_3
+      36: aaload
+      37: astore        4
+      39: aload_1
+      40: iload_3
+      41: iconst_1
+      42: iadd
+      43: aaload
+      44: astore        5
+      46: aload         4
+      48: ifnull        89
+      51: aload         5
+      53: ifnull        89
+      56: aload         4
+      58: invokevirtual #95                 // Method thaumcraft/api/aspects/Aspect.getTag:()Ljava/lang/String;
+      61: aload         5
+      63: invokevirtual #95                 // Method thaumcraft/api/aspects/Aspect.getTag:()Ljava/lang/String;
+      66: invokevirtual #101                // Method java/lang/String.compareTo:(Ljava/lang/String;)I
+      69: ifle          89
+      72: aload_1
+      73: iload_3
+      74: aload         5
+      76: aastore
+      77: aload_1
+      78: iload_3
+      79: iconst_1
+      80: iadd
+      81: aload         4
+      83: aastore
+      84: iconst_1
+      85: istore_2
+      86: goto          95
+      89: iinc          3, 1
+      92: goto          26
+      95: iload_2
+      96: iconst_1
+      97: if_icmpeq     22
+     100: aload_1
+     101: areturn
+     102: astore_1
+     103: aload_0
+     104: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+     107: areturn
+    Exception table:
+       from    to  target type
+           0   101   102   Class java/lang/Exception
+
+  public thaumcraft.api.aspects.Aspect[] getAspectsSortedByAmount();
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #65                 // Method java/util/LinkedHashMap.keySet:()Ljava/util/Set;
+       7: iconst_0
+       8: anewarray     #83                 // class thaumcraft/api/aspects/Aspect
+      11: invokeinterface #90,  2           // InterfaceMethod java/util/Set.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+      16: checkcast     #36                 // class "[Lthaumcraft/api/aspects/Aspect;"
+      19: astore_1
+      20: iconst_0
+      21: istore_2
+      22: iconst_0
+      23: istore_2
+      24: iconst_0
+      25: istore_3
+      26: iload_3
+      27: aload_1
+      28: arraylength
+      29: iconst_1
+      30: isub
+      31: if_icmpge     106
+      34: aload_0
+      35: aload_1
+      36: iload_3
+      37: aaload
+      38: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      41: istore        4
+      43: aload_0
+      44: aload_1
+      45: iload_3
+      46: iconst_1
+      47: iadd
+      48: aaload
+      49: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      52: istore        5
+      54: iload         4
+      56: ifle          100
+      59: iload         5
+      61: ifle          100
+      64: iload         5
+      66: iload         4
+      68: if_icmple     100
+      71: aload_1
+      72: iload_3
+      73: aaload
+      74: astore        6
+      76: aload_1
+      77: iload_3
+      78: iconst_1
+      79: iadd
+      80: aaload
+      81: astore        7
+      83: aload_1
+      84: iload_3
+      85: aload         7
+      87: aastore
+      88: aload_1
+      89: iload_3
+      90: iconst_1
+      91: iadd
+      92: aload         6
+      94: aastore
+      95: iconst_1
+      96: istore_2
+      97: goto          106
+     100: iinc          3, 1
+     103: goto          26
+     106: iload_2
+     107: iconst_1
+     108: if_icmpeq     22
+     111: aload_1
+     112: areturn
+     113: astore_1
+     114: aload_0
+     115: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+     118: areturn
+    Exception table:
+       from    to  target type
+           0   112   113   Class java/lang/Exception
+
+  public int getAmount(thaumcraft.api.aspects.Aspect);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: aload_1
+       5: invokevirtual #114                // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       8: ifnonnull     15
+      11: iconst_0
+      12: goto          29
+      15: aload_0
+      16: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      19: aload_1
+      20: invokevirtual #114                // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      23: checkcast     #116                // class java/lang/Integer
+      26: invokevirtual #119                // Method java/lang/Integer.intValue:()I
+      29: ireturn
+
+  public boolean reduce(thaumcraft.api.aspects.Aspect, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+       5: iload_2
+       6: if_icmplt     32
+       9: aload_0
+      10: aload_1
+      11: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      14: iload_2
+      15: isub
+      16: istore_3
+      17: aload_0
+      18: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      21: aload_1
+      22: iload_3
+      23: invokestatic  #126                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      26: invokevirtual #130                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      29: pop
+      30: iconst_1
+      31: ireturn
+      32: iconst_0
+      33: ireturn
+
+  public thaumcraft.api.aspects.AspectList remove(thaumcraft.api.aspects.Aspect, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+       5: iload_2
+       6: isub
+       7: istore_3
+       8: iload_3
+       9: ifgt          24
+      12: aload_0
+      13: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      16: aload_1
+      17: invokevirtual #135                // Method java/util/LinkedHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+      20: pop
+      21: goto          37
+      24: aload_0
+      25: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      28: aload_1
+      29: iload_3
+      30: invokestatic  #126                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      33: invokevirtual #130                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      36: pop
+      37: aload_0
+      38: areturn
+
+  public thaumcraft.api.aspects.AspectList remove(thaumcraft.api.aspects.Aspect);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: aload_1
+       5: invokevirtual #135                // Method java/util/LinkedHashMap.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+       8: pop
+       9: aload_0
+      10: areturn
+
+  public thaumcraft.api.aspects.AspectList add(thaumcraft.api.aspects.Aspect, int);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: aload_1
+       5: invokevirtual #140                // Method java/util/LinkedHashMap.containsKey:(Ljava/lang/Object;)Z
+       8: ifeq          30
+      11: aload_0
+      12: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      15: aload_1
+      16: invokevirtual #114                // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      19: checkcast     #116                // class java/lang/Integer
+      22: invokevirtual #119                // Method java/lang/Integer.intValue:()I
+      25: istore_3
+      26: iload_2
+      27: iload_3
+      28: iadd
+      29: istore_2
+      30: aload_0
+      31: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      34: aload_1
+      35: iload_2
+      36: invokestatic  #126                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      39: invokevirtual #130                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      42: pop
+      43: aload_0
+      44: areturn
+
+  public thaumcraft.api.aspects.AspectList merge(thaumcraft.api.aspects.Aspect, int);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: aload_1
+       5: invokevirtual #140                // Method java/util/LinkedHashMap.containsKey:(Ljava/lang/Object;)Z
+       8: ifeq          33
+      11: aload_0
+      12: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      15: aload_1
+      16: invokevirtual #114                // Method java/util/LinkedHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+      19: checkcast     #116                // class java/lang/Integer
+      22: invokevirtual #119                // Method java/lang/Integer.intValue:()I
+      25: istore_3
+      26: iload_2
+      27: iload_3
+      28: if_icmpge     33
+      31: iload_3
+      32: istore_2
+      33: aload_0
+      34: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+      37: aload_1
+      38: iload_2
+      39: invokestatic  #126                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+      42: invokevirtual #130                // Method java/util/LinkedHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      45: pop
+      46: aload_0
+      47: areturn
+
+  public thaumcraft.api.aspects.AspectList add(thaumcraft.api.aspects.AspectList);
+    Code:
+       0: aload_1
+       1: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+       4: astore_2
+       5: aload_2
+       6: arraylength
+       7: istore_3
+       8: iconst_0
+       9: istore        4
+      11: iload         4
+      13: iload_3
+      14: if_icmpge     42
+      17: aload_2
+      18: iload         4
+      20: aaload
+      21: astore        5
+      23: aload_0
+      24: aload         5
+      26: aload_1
+      27: aload         5
+      29: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      32: invokevirtual #44                 // Method add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      35: pop
+      36: iinc          4, 1
+      39: goto          11
+      42: aload_0
+      43: areturn
+
+  public thaumcraft.api.aspects.AspectList remove(thaumcraft.api.aspects.AspectList);
+    Code:
+       0: aload_1
+       1: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+       4: astore_2
+       5: aload_2
+       6: arraylength
+       7: istore_3
+       8: iconst_0
+       9: istore        4
+      11: iload         4
+      13: iload_3
+      14: if_icmpge     42
+      17: aload_2
+      18: iload         4
+      20: aaload
+      21: astore        5
+      23: aload_0
+      24: aload         5
+      26: aload_1
+      27: aload         5
+      29: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      32: invokevirtual #147                // Method remove:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      35: pop
+      36: iinc          4, 1
+      39: goto          11
+      42: aload_0
+      43: areturn
+
+  public thaumcraft.api.aspects.AspectList merge(thaumcraft.api.aspects.AspectList);
+    Code:
+       0: aload_1
+       1: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+       4: astore_2
+       5: aload_2
+       6: arraylength
+       7: istore_3
+       8: iconst_0
+       9: istore        4
+      11: iload         4
+      13: iload_3
+      14: if_icmpge     42
+      17: aload_2
+      18: iload         4
+      20: aaload
+      21: astore        5
+      23: aload_0
+      24: aload         5
+      26: aload_1
+      27: aload         5
+      29: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      32: invokevirtual #149                // Method merge:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      35: pop
+      36: iinc          4, 1
+      39: goto          11
+      42: aload_0
+      43: areturn
+
+  public void readFromNBT(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #154                // Method java/util/LinkedHashMap.clear:()V
+       7: aload_1
+       8: ldc           #156                // String Aspects
+      10: bipush        10
+      12: invokevirtual #162                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      15: astore_2
+      16: iconst_0
+      17: istore_3
+      18: iload_3
+      19: aload_2
+      20: invokevirtual #167                // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      23: if_icmpge     71
+      26: aload_2
+      27: iload_3
+      28: invokevirtual #171                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      31: astore        4
+      33: aload         4
+      35: ldc           #172                // String key
+      37: invokevirtual #176                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      40: ifeq          65
+      43: aload_0
+      44: aload         4
+      46: ldc           #172                // String key
+      48: invokevirtual #180                // Method net/minecraft/nbt/NBTTagCompound.func_74779_i:(Ljava/lang/String;)Ljava/lang/String;
+      51: invokestatic  #184                // Method thaumcraft/api/aspects/Aspect.getAspect:(Ljava/lang/String;)Lthaumcraft/api/aspects/Aspect;
+      54: aload         4
+      56: ldc           #185                // String amount
+      58: invokevirtual #188                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+      61: invokevirtual #44                 // Method add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      64: pop
+      65: iinc          3, 1
+      68: goto          18
+      71: return
+
+  public void readFromNBT(net.minecraft.nbt.NBTTagCompound, java.lang.String);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field aspects:Ljava/util/LinkedHashMap;
+       4: invokevirtual #154                // Method java/util/LinkedHashMap.clear:()V
+       7: aload_1
+       8: aload_2
+       9: bipush        10
+      11: invokevirtual #162                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      14: astore_3
+      15: iconst_0
+      16: istore        4
+      18: iload         4
+      20: aload_3
+      21: invokevirtual #167                // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      24: if_icmpge     73
+      27: aload_3
+      28: iload         4
+      30: invokevirtual #171                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      33: astore        5
+      35: aload         5
+      37: ldc           #172                // String key
+      39: invokevirtual #176                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      42: ifeq          67
+      45: aload_0
+      46: aload         5
+      48: ldc           #172                // String key
+      50: invokevirtual #180                // Method net/minecraft/nbt/NBTTagCompound.func_74779_i:(Ljava/lang/String;)Ljava/lang/String;
+      53: invokestatic  #184                // Method thaumcraft/api/aspects/Aspect.getAspect:(Ljava/lang/String;)Lthaumcraft/api/aspects/Aspect;
+      56: aload         5
+      58: ldc           #185                // String amount
+      60: invokevirtual #188                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+      63: invokevirtual #44                 // Method add:(Lthaumcraft/api/aspects/Aspect;I)Lthaumcraft/api/aspects/AspectList;
+      66: pop
+      67: iinc          4, 1
+      70: goto          18
+      73: return
+
+  public void writeToNBT(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: new           #164                // class net/minecraft/nbt/NBTTagList
+       3: dup
+       4: invokespecial #199                // Method net/minecraft/nbt/NBTTagList."<init>":()V
+       7: astore_2
+       8: aload_1
+       9: ldc           #156                // String Aspects
+      11: aload_2
+      12: invokevirtual #203                // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+      15: aload_0
+      16: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+      19: astore_3
+      20: aload_3
+      21: arraylength
+      22: istore        4
+      24: iconst_0
+      25: istore        5
+      27: iload         5
+      29: iload         4
+      31: if_icmpge     91
+      34: aload_3
+      35: iload         5
+      37: aaload
+      38: astore        6
+      40: aload         6
+      42: ifnull        85
+      45: new           #158                // class net/minecraft/nbt/NBTTagCompound
+      48: dup
+      49: invokespecial #204                // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+      52: astore        7
+      54: aload         7
+      56: ldc           #172                // String key
+      58: aload         6
+      60: invokevirtual #95                 // Method thaumcraft/api/aspects/Aspect.getTag:()Ljava/lang/String;
+      63: invokevirtual #208                // Method net/minecraft/nbt/NBTTagCompound.func_74778_a:(Ljava/lang/String;Ljava/lang/String;)V
+      66: aload         7
+      68: ldc           #185                // String amount
+      70: aload_0
+      71: aload         6
+      73: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      76: invokevirtual #212                // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+      79: aload_2
+      80: aload         7
+      82: invokevirtual #216                // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      85: iinc          5, 1
+      88: goto          27
+      91: return
+
+  public void writeToNBT(net.minecraft.nbt.NBTTagCompound, java.lang.String);
+    Code:
+       0: new           #164                // class net/minecraft/nbt/NBTTagList
+       3: dup
+       4: invokespecial #199                // Method net/minecraft/nbt/NBTTagList."<init>":()V
+       7: astore_3
+       8: aload_1
+       9: aload_2
+      10: aload_3
+      11: invokevirtual #203                // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+      14: aload_0
+      15: invokevirtual #32                 // Method getAspects:()[Lthaumcraft/api/aspects/Aspect;
+      18: astore        4
+      20: aload         4
+      22: arraylength
+      23: istore        5
+      25: iconst_0
+      26: istore        6
+      28: iload         6
+      30: iload         5
+      32: if_icmpge     93
+      35: aload         4
+      37: iload         6
+      39: aaload
+      40: astore        7
+      42: aload         7
+      44: ifnull        87
+      47: new           #158                // class net/minecraft/nbt/NBTTagCompound
+      50: dup
+      51: invokespecial #204                // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+      54: astore        8
+      56: aload         8
+      58: ldc           #172                // String key
+      60: aload         7
+      62: invokevirtual #95                 // Method thaumcraft/api/aspects/Aspect.getTag:()Ljava/lang/String;
+      65: invokevirtual #208                // Method net/minecraft/nbt/NBTTagCompound.func_74778_a:(Ljava/lang/String;Ljava/lang/String;)V
+      68: aload         8
+      70: ldc           #185                // String amount
+      72: aload_0
+      73: aload         7
+      75: invokevirtual #40                 // Method getAmount:(Lthaumcraft/api/aspects/Aspect;)I
+      78: invokevirtual #212                // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+      81: aload_3
+      82: aload         8
+      84: invokevirtual #216                // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      87: iinc          6, 1
+      90: goto          28
+      93: return
+}

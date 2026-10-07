@@ -1,0 +1,347 @@
+Compiled from "InternalMethodHandler.java"
+public class thaumcraft.common.lib.InternalMethodHandler implements thaumcraft.api.internal.IInternalMethodHandler {
+  public thaumcraft.common.lib.InternalMethodHandler();
+    Code:
+       0: aload_0
+       1: invokespecial #26                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public boolean addKnowledge(net.minecraft.entity.player.EntityPlayer, thaumcraft.api.capabilities.IPlayerKnowledge$EnumKnowledgeType, thaumcraft.api.research.ResearchCategory, int);
+    Code:
+       0: iload         4
+       2: ifeq          15
+       5: aload_1
+       6: getfield      #36                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       9: getfield      #42                 // Field net/minecraft/world/World.field_72995_K:Z
+      12: ifeq          17
+      15: iconst_0
+      16: ireturn
+      17: aload_1
+      18: aload_2
+      19: aload_3
+      20: iload         4
+      22: invokestatic  #46                 // Method thaumcraft/common/lib/research/ResearchManager.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+      25: ireturn
+
+  public void addWarpToPlayer(net.minecraft.entity.player.EntityPlayer, int, thaumcraft.api.capabilities.IPlayerWarp$EnumWarpType);
+    Code:
+       0: iload_2
+       1: ifeq          14
+       4: aload_1
+       5: getfield      #36                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       8: getfield      #42                 // Field net/minecraft/world/World.field_72995_K:Z
+      11: ifeq          15
+      14: return
+      15: aload_1
+      16: invokestatic  #62                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getWarp:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerWarp;
+      19: astore        4
+      21: aload         4
+      23: aload_3
+      24: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+      29: istore        5
+      31: iload_2
+      32: ifge          45
+      35: iload         5
+      37: iload_2
+      38: iadd
+      39: ifge          45
+      42: iload         5
+      44: istore_2
+      45: aload         4
+      47: aload_3
+      48: iload_2
+      49: invokeinterface #70,  3           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.add:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;I)I
+      54: pop
+      55: aload_3
+      56: getstatic     #74                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.PERMANENT:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+      59: if_acmpne     82
+      62: getstatic     #80                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+      65: new           #82                 // class thaumcraft/common/lib/network/playerdata/PacketWarpMessage
+      68: dup
+      69: aload_1
+      70: iconst_0
+      71: iload_2
+      72: invokespecial #85                 // Method thaumcraft/common/lib/network/playerdata/PacketWarpMessage."<init>":(Lnet/minecraft/entity/player/EntityPlayer;BI)V
+      75: aload_1
+      76: checkcast     #87                 // class net/minecraft/entity/player/EntityPlayerMP
+      79: invokevirtual #93                 // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendTo:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+      82: aload_3
+      83: getstatic     #96                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.NORMAL:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+      86: if_acmpne     109
+      89: getstatic     #80                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+      92: new           #82                 // class thaumcraft/common/lib/network/playerdata/PacketWarpMessage
+      95: dup
+      96: aload_1
+      97: iconst_1
+      98: iload_2
+      99: invokespecial #85                 // Method thaumcraft/common/lib/network/playerdata/PacketWarpMessage."<init>":(Lnet/minecraft/entity/player/EntityPlayer;BI)V
+     102: aload_1
+     103: checkcast     #87                 // class net/minecraft/entity/player/EntityPlayerMP
+     106: invokevirtual #93                 // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendTo:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     109: aload_3
+     110: getstatic     #99                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.TEMPORARY:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     113: if_acmpne     136
+     116: getstatic     #80                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+     119: new           #82                 // class thaumcraft/common/lib/network/playerdata/PacketWarpMessage
+     122: dup
+     123: aload_1
+     124: iconst_2
+     125: iload_2
+     126: invokespecial #85                 // Method thaumcraft/common/lib/network/playerdata/PacketWarpMessage."<init>":(Lnet/minecraft/entity/player/EntityPlayer;BI)V
+     129: aload_1
+     130: checkcast     #87                 // class net/minecraft/entity/player/EntityPlayerMP
+     133: invokevirtual #93                 // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendTo:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     136: iload_2
+     137: ifle          179
+     140: aload         4
+     142: aload         4
+     144: getstatic     #99                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.TEMPORARY:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     147: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+     152: aload         4
+     154: getstatic     #74                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.PERMANENT:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     157: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+     162: iadd
+     163: aload         4
+     165: getstatic     #96                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.NORMAL:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     168: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+     173: iadd
+     174: invokeinterface #103,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.setCounter:(I)V
+     179: aload_3
+     180: getstatic     #99                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.TEMPORARY:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+     183: if_acmpeq     244
+     186: aload_1
+     187: iconst_1
+     188: anewarray     #105                // class java/lang/String
+     191: dup
+     192: iconst_0
+     193: ldc           #107                // String FIRSTSTEPS
+     195: aastore
+     196: invokestatic  #111                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     199: ifeq          244
+     202: aload_1
+     203: iconst_1
+     204: anewarray     #105                // class java/lang/String
+     207: dup
+     208: iconst_0
+     209: ldc           #113                // String WARP
+     211: aastore
+     212: invokestatic  #111                // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.knowsResearchStrict:(Lnet/minecraft/entity/player/EntityPlayer;[Ljava/lang/String;)Z
+     215: ifne          244
+     218: aload_0
+     219: aload_1
+     220: ldc           #113                // String WARP
+     222: invokevirtual #117                // Method completeResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+     225: pop
+     226: aload_1
+     227: new           #119                // class net/minecraft/util/text/TextComponentTranslation
+     230: dup
+     231: ldc           #121                // String research.WARP.warn
+     233: iconst_0
+     234: anewarray     #4                  // class java/lang/Object
+     237: invokespecial #124                // Method net/minecraft/util/text/TextComponentTranslation."<init>":(Ljava/lang/String;[Ljava/lang/Object;)V
+     240: iconst_1
+     241: invokevirtual #128                // Method net/minecraft/entity/player/EntityPlayer.func_146105_b:(Lnet/minecraft/util/text/ITextComponent;Z)V
+     244: aload         4
+     246: aload_1
+     247: checkcast     #87                 // class net/minecraft/entity/player/EntityPlayerMP
+     250: invokeinterface #132,  2          // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.sync:(Lnet/minecraft/entity/player/EntityPlayerMP;)V
+     255: return
+
+  public boolean progressResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_2
+       1: ifnull        14
+       4: aload_1
+       5: getfield      #36                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       8: getfield      #42                 // Field net/minecraft/world/World.field_72995_K:Z
+      11: ifeq          16
+      14: iconst_0
+      15: ireturn
+      16: aload_1
+      17: aload_2
+      18: invokestatic  #138                // Method thaumcraft/common/lib/research/ResearchManager.progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+      21: ireturn
+
+  public boolean completeResearch(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_2
+       1: ifnull        14
+       4: aload_1
+       5: getfield      #36                 // Field net/minecraft/entity/player/EntityPlayer.field_70170_p:Lnet/minecraft/world/World;
+       8: getfield      #42                 // Field net/minecraft/world/World.field_72995_K:Z
+      11: ifeq          16
+      14: iconst_0
+      15: ireturn
+      16: aload_1
+      17: aload_2
+      18: invokestatic  #141                // Method thaumcraft/common/lib/research/ResearchManager.completeResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+      21: ireturn
+
+  public boolean doesPlayerHaveRequisites(net.minecraft.entity.player.EntityPlayer, java.lang.String);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #144                // Method thaumcraft/common/lib/research/ResearchManager.doesPlayerHaveRequisites:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+       5: ireturn
+
+  public thaumcraft.api.aspects.AspectList getObjectAspects(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokestatic  #151                // Method thaumcraft/common/lib/crafting/ThaumcraftCraftingManager.getObjectTags:(Lnet/minecraft/item/ItemStack;)Lthaumcraft/api/aspects/AspectList;
+       4: areturn
+
+  public thaumcraft.api.aspects.AspectList generateTags(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokestatic  #156                // Method thaumcraft/common/lib/crafting/ThaumcraftCraftingManager.generateTags:(Lnet/minecraft/item/ItemStack;)Lthaumcraft/api/aspects/AspectList;
+       4: areturn
+
+  public float drainFlux(net.minecraft.world.World, net.minecraft.util.math.BlockPos, float, boolean);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: fload_3
+       3: iload         4
+       5: invokestatic  #162                // Method thaumcraft/common/world/aura/AuraHandler.drainFlux:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;FZ)F
+       8: freturn
+
+  public float getFlux(net.minecraft.world.World, net.minecraft.util.math.BlockPos);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #171                // Method thaumcraft/common/world/aura/AuraHandler.getFlux:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)F
+       5: freturn
+
+  public float drainVis(net.minecraft.world.World, net.minecraft.util.math.BlockPos, float, boolean);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: fload_3
+       3: iload         4
+       5: invokestatic  #174                // Method thaumcraft/common/world/aura/AuraHandler.drainVis:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;FZ)F
+       8: freturn
+
+  public void addVis(net.minecraft.world.World, net.minecraft.util.math.BlockPos, float);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: fload_3
+       3: invokestatic  #178                // Method thaumcraft/common/world/aura/AuraHandler.addVis:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;F)V
+       6: return
+
+  public float getTotalAura(net.minecraft.world.World, net.minecraft.util.math.BlockPos);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #181                // Method thaumcraft/common/world/aura/AuraHandler.getTotalAura:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)F
+       5: freturn
+
+  public float getVis(net.minecraft.world.World, net.minecraft.util.math.BlockPos);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #184                // Method thaumcraft/common/world/aura/AuraHandler.getVis:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)F
+       5: freturn
+
+  public int getAuraBase(net.minecraft.world.World, net.minecraft.util.math.BlockPos);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: invokestatic  #188                // Method thaumcraft/common/world/aura/AuraHandler.getAuraBase:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)I
+       5: ireturn
+
+  public void addFlux(net.minecraft.world.World, net.minecraft.util.math.BlockPos, float, boolean);
+    Code:
+       0: aload_1
+       1: getfield      #42                 // Field net/minecraft/world/World.field_72995_K:Z
+       4: ifeq          8
+       7: return
+       8: aload_1
+       9: aload_2
+      10: fload_3
+      11: invokestatic  #192                // Method thaumcraft/common/world/aura/AuraHandler.addFlux:(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;F)V
+      14: iload         4
+      16: ifeq          72
+      19: fload_3
+      20: fconst_0
+      21: fcmpl
+      22: ifle          72
+      25: getstatic     #80                 // Field thaumcraft/common/lib/network/PacketHandler.INSTANCE:Lnet/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper;
+      28: new           #194                // class thaumcraft/common/lib/network/fx/PacketFXPollute
+      31: dup
+      32: aload_2
+      33: fload_3
+      34: invokespecial #197                // Method thaumcraft/common/lib/network/fx/PacketFXPollute."<init>":(Lnet/minecraft/util/math/BlockPos;F)V
+      37: new           #19                 // class net/minecraftforge/fml/common/network/NetworkRegistry$TargetPoint
+      40: dup
+      41: aload_1
+      42: getfield      #201                // Field net/minecraft/world/World.field_73011_w:Lnet/minecraft/world/WorldProvider;
+      45: invokevirtual #207                // Method net/minecraft/world/WorldProvider.getDimension:()I
+      48: aload_2
+      49: invokevirtual #212                // Method net/minecraft/util/math/BlockPos.func_177958_n:()I
+      52: i2d
+      53: aload_2
+      54: invokevirtual #215                // Method net/minecraft/util/math/BlockPos.func_177956_o:()I
+      57: i2d
+      58: aload_2
+      59: invokevirtual #218                // Method net/minecraft/util/math/BlockPos.func_177952_p:()I
+      62: i2d
+      63: ldc2_w        #219                // double 32.0d
+      66: invokespecial #223                // Method net/minecraftforge/fml/common/network/NetworkRegistry$TargetPoint."<init>":(IDDDD)V
+      69: invokevirtual #227                // Method net/minecraftforge/fml/common/network/simpleimpl/SimpleNetworkWrapper.sendToAllAround:(Lnet/minecraftforge/fml/common/network/simpleimpl/IMessage;Lnet/minecraftforge/fml/common/network/NetworkRegistry$TargetPoint;)V
+      72: return
+
+  public void registerSeal(thaumcraft.api.golems.seals.ISeal);
+    Code:
+       0: aload_1
+       1: invokestatic  #234                // Method thaumcraft/common/golems/seals/SealHandler.registerSeal:(Lthaumcraft/api/golems/seals/ISeal;)V
+       4: return
+
+  public thaumcraft.api.golems.seals.ISeal getSeal(java.lang.String);
+    Code:
+       0: aload_1
+       1: invokestatic  #240                // Method thaumcraft/common/golems/seals/SealHandler.getSeal:(Ljava/lang/String;)Lthaumcraft/api/golems/seals/ISeal;
+       4: areturn
+
+  public thaumcraft.api.golems.seals.ISealEntity getSealEntity(int, thaumcraft.api.golems.seals.SealPos);
+    Code:
+       0: iload_1
+       1: aload_2
+       2: invokestatic  #245                // Method thaumcraft/common/golems/seals/SealHandler.getSealEntity:(ILthaumcraft/api/golems/seals/SealPos;)Lthaumcraft/api/golems/seals/ISealEntity;
+       5: areturn
+
+  public void addGolemTask(int, thaumcraft.api.golems.tasks.Task);
+    Code:
+       0: iload_1
+       1: aload_2
+       2: invokestatic  #254                // Method thaumcraft/common/golems/tasks/TaskHandler.addTask:(ILthaumcraft/api/golems/tasks/Task;)V
+       5: return
+
+  public boolean shouldPreserveAura(net.minecraft.world.World, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.math.BlockPos);
+    Code:
+       0: aload_1
+       1: aload_2
+       2: aload_3
+       3: invokestatic  #260                // Method thaumcraft/common/world/aura/AuraHandler.shouldPreserveAura:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/util/math/BlockPos;)Z
+       6: ireturn
+
+  public net.minecraft.item.ItemStack getSealStack(java.lang.String);
+    Code:
+       0: aload_1
+       1: invokestatic  #266                // Method thaumcraft/common/golems/seals/ItemSealPlacer.getSealStack:(Ljava/lang/String;)Lnet/minecraft/item/ItemStack;
+       4: areturn
+
+  public int getActualWarp(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: aload_1
+       1: invokestatic  #62                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getWarp:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerWarp;
+       4: astore_2
+       5: aload_2
+       6: getstatic     #96                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.NORMAL:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+       9: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+      14: aload_2
+      15: getstatic     #74                 // Field thaumcraft/api/capabilities/IPlayerWarp$EnumWarpType.PERMANENT:Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;
+      18: invokeinterface #66,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerWarp.get:(Lthaumcraft/api/capabilities/IPlayerWarp$EnumWarpType;)I
+      23: iadd
+      24: ireturn
+}

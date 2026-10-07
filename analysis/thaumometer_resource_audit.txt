@@ -1,0 +1,7 @@
+assets/thaumcraft/models/item/scanner.obj -> src/main/resources/assets/thaumcraft/models/item/scanner.obj: byte-identical=True sha256=6adbc3c4a4ec444e2b07c0bdde3566203158a660676187747f1c447a9e130f49
+assets/thaumcraft/textures/items/scanner.png -> src/main/resources/assets/thaumcraft/textures/item/scanner.png: byte-identical=True sha256=6267ea1ede77e04f66e506a4ca997d795ee3d0c7be4009bd6ef49abd5ff6442b
+assets/thaumcraft/textures/items/scanscreen.png -> src/main/resources/assets/thaumcraft/textures/item/scanscreen.png: byte-identical=True sha256=68de90dafd6a72aed37166ac774017dbcf935215236c862b0c71056bc47c75f5
+assets/thaumcraft/textures/items/scanscreen.png.mcmeta -> src/main/resources/assets/thaumcraft/textures/item/scanscreen.png.mcmeta: byte-identical=True sha256=8528aed6c0862de0cfd75d59908320e573b9f06393441dd605058605defd43ad
+assets/thaumcraft/sounds/scan.ogg -> src/main/resources/assets/thaumcraft/sounds/scan.ogg: byte-identical=True sha256=6dba5438b6ca6778bb9a8ffde9e5a1966eae3e03e8dc2b2d29e98e6bc12c9bc3
+scanner.mtl: adapted=true; only legacy texture path convention items\ -> modern item/ is intentionally rewritten
+scanner.mtl original_sha256=35d3a127ebcf9f2b4e672b0570296ddd84fc0d19e4b0b324fd638e2963651530 modern_sha256=a924cb03190c66ecb6c9e53c196d80d7f7b08e1862108348b12370e5511acfd0

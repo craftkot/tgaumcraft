@@ -1,0 +1,42 @@
+[
+  {
+    "file": "alchemy.json",
+    "same": true,
+    "sha256": "195b04d9dfa811c765cdcf9b17513bd3358ff942a3cd04df06173fbc876ba5d4"
+  },
+  {
+    "file": "artifice.json",
+    "same": true,
+    "sha256": "615ac0c944aa19bf6bb3bf5f02158eb99577aa979bf0767dfd3aef0badc7834c"
+  },
+  {
+    "file": "auromancy.json",
+    "same": true,
+    "sha256": "654e16833b2b8715af74adf3a26b5bc68d874f559c38a56b170628f8a75da604"
+  },
+  {
+    "file": "basics.json",
+    "same": true,
+    "sha256": "22addef24e9b0d0e0f4b2570d2da2e4ee9393876a341f592cfc2f32586a9d1aa"
+  },
+  {
+    "file": "eldritch.json",
+    "same": true,
+    "sha256": "122f8a547debd0559512d7c0e28a74a087f31a75f49119e9738e56f335fee83e"
+  },
+  {
+    "file": "golemancy.json",
+    "same": true,
+    "sha256": "a574bee623f4597c6bf37de9e020413e1fb2b5f5bdba8c68fcb2cfa77f101268"
+  },
+  {
+    "file": "infusion.json",
+    "same": true,
+    "sha256": "54d76698e0f842396e992fd9dec26a18b74f593cf765bcf6eb76211660e85913"
+  },
+  {
+    "file": "scans.json",
+    "same": true,
+    "sha256": "36bcb8c263effada0a9b746adf09b331f50dc818e93c8c7f7a7d5a29be5c34b5"
+  }
+]

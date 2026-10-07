@@ -1,0 +1,35 @@
+{
+  "english_keys": 1464,
+  "russian_original_keys": 1452,
+  "russian_final_keys": 1464,
+  "missing_in_original_ru": [
+    "enchantment.infusion.LAMPLIGHT",
+    "golem.prop.silk",
+    "item.seal.breaker_advanced.name",
+    "research.SEALBREAK.stage.ADV",
+    "stability.gain",
+    "stability.loss",
+    "stability.range",
+    "thaumcraft.BOLT.text",
+    "tile.inlay.name",
+    "workbench.available",
+    "workbench.cost",
+    "workbench.discount"
+  ],
+  "missing_in_final_ru": [],
+  "extra_in_final_ru": [],
+  "patched_ru": {
+    "enchantment.infusion.LAMPLIGHT": "Фонарщик",
+    "golem.prop.silk": "Использовать «Шёлковое касание»",
+    "item.seal.breaker_advanced.name": "Печать управления: продвинутый разрушитель блоков",
+    "research.SEALBREAK.stage.ADV": "Теперь я могу создать улучшенную версию печати, которая позволяет фильтровать больше предметов одновременно и даёт голему возможность разрушать блоки так, словно он использует «Шёлковое касание».<BR>При использовании «Шёлкового касания» големы будут разрушать блоки дольше. ",
+    "stability.gain": "прирост / цикл",
+    "stability.loss": "потеря / цикл",
+    "stability.range": "от 0 до ",
+    "thaumcraft.BOLT.text": "Направляет магию прямо в цель в виде концентрированного сгустка энергии. Эффект мгновенный, но дальность ограничена 16 блоками.",
+    "tile.inlay.name": "Редстоуновая инкрустация",
+    "workbench.available": "доступно",
+    "workbench.cost": "вис",
+    "workbench.discount": "скидка"
+  }
+}

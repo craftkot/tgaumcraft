@@ -1,0 +1,20 @@
+Stage 10 audit
+JAR baseline: 1120 classes / 1112 Thaumcraft / 1531 assets
+Localization: EN 1464 / RU 1464 / missing RU 0
+Aspects: 37 total / 6 primal / 31 compound
+Research runtime catalog: 148/148 entries / 271 stages / 16 addenda
+Research categories: ALCHEMY=22, ARTIFICE=20, AUROMANCY=23, BASICS=32, ELDRITCH=5, GOLEMANCY=29, INFUSION=17
+Research meta: HEX=12, HIDDEN=43, REVERSE=18, ROUND=34, SPIKY=10
+Recipe IDs: 198 unique / 137 require modern mapping / 0 lowercase collisions
+Scan registration bytecode: 71 explicit constructor sites / 71 explicit add calls
+Scan constructor sites: ScanBlock=18, ScanEnchantment=1, ScanEntity=34, ScanGeneric=1, ScanItem=10, ScanMaterial=1, ScanOreDictionary=4, ScanPotion=1, ScanSky=1
+Scanning core: ordered multi-handler control flow + legacy research expression queries + generic category formula implemented
+Core Java files: 52
+Core parity tests: 4667 assertions — OK
+Current runtime localization: EN 1469 / RU 1469 / symmetric keys True
+FIRSTSTEPS critical item/block registration + Salis transform sources: PRESENT (not full-Gradle-compiled)
+FIRSTSTEPS critical models/textures: PRESENT
+Player attachment/sync source layer: PRESENT (not full-Gradle-compiled)
+FIRSTSTEPS C2S authoritative progression source: PRESENT (not full-Gradle-compiled)
+NeoForge Gradle build tested: NO
+AUDIT OK

@@ -1,0 +1,667 @@
+{
+  "source": "Thaumcraft-1.12.2-6.1.BETA26.jar / ConfigResearch.initScannables javap bytecode",
+  "explicit_constructor_sites": 71,
+  "explicit_addScannableThing_calls": 71,
+  "constructor_site_counts": {
+    "ScanBlock": 18,
+    "ScanEnchantment": 1,
+    "ScanEntity": 34,
+    "ScanGeneric": 1,
+    "ScanItem": 10,
+    "ScanMaterial": 1,
+    "ScanOreDictionary": 4,
+    "ScanPotion": 1,
+    "ScanSky": 1
+  },
+  "runtime_expansion_notes": [
+    "ScanEnchantment constructor site is inside a loop over the entire Enchantment registry.",
+    "ScanPotion constructor site is inside a loop over the entire Potion registry.",
+    "Each ScanBlock(String, Block...) constructor also registers companion ScanItem handlers for its blocks."
+  ],
+  "sites": [
+    {
+      "ordinal": 0,
+      "type": "ScanGeneric",
+      "class": "thaumcraft.common.lib.research.ScanGeneric",
+      "research_key_candidate": null,
+      "string_constants_in_constructor_window": []
+    },
+    {
+      "ordinal": 1,
+      "type": "ScanEnchantment",
+      "class": "thaumcraft.common.lib.research.ScanEnchantment",
+      "research_key_candidate": null,
+      "string_constants_in_constructor_window": []
+    },
+    {
+      "ordinal": 2,
+      "type": "ScanPotion",
+      "class": "thaumcraft.common.lib.research.ScanPotion",
+      "research_key_candidate": null,
+      "string_constants_in_constructor_window": []
+    },
+    {
+      "ordinal": 3,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!Wisp",
+      "string_constants_in_constructor_window": [
+        "!Wisp"
+      ]
+    },
+    {
+      "ordinal": 4,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!ThaumSlime",
+      "string_constants_in_constructor_window": [
+        "!ThaumSlime"
+      ]
+    },
+    {
+      "ordinal": 5,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!Firebat",
+      "string_constants_in_constructor_window": [
+        "!Firebat"
+      ]
+    },
+    {
+      "ordinal": 6,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!Pech",
+      "string_constants_in_constructor_window": [
+        "!Pech"
+      ]
+    },
+    {
+      "ordinal": 7,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!BrainyZombie",
+      "string_constants_in_constructor_window": [
+        "!BrainyZombie"
+      ]
+    },
+    {
+      "ordinal": 8,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!EldritchCrab",
+      "string_constants_in_constructor_window": [
+        "!EldritchCrab"
+      ]
+    },
+    {
+      "ordinal": 9,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!EldritchCrab",
+      "string_constants_in_constructor_window": [
+        "!EldritchCrab"
+      ]
+    },
+    {
+      "ordinal": 10,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!CrimsonCultist",
+      "string_constants_in_constructor_window": [
+        "!CrimsonCultist"
+      ]
+    },
+    {
+      "ordinal": 11,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!EldritchGuardian",
+      "string_constants_in_constructor_window": [
+        "!EldritchGuardian"
+      ]
+    },
+    {
+      "ordinal": 12,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!TaintCrawler",
+      "string_constants_in_constructor_window": [
+        "!TaintCrawler"
+      ]
+    },
+    {
+      "ordinal": 13,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!Taintacle",
+      "string_constants_in_constructor_window": [
+        "!Taintacle"
+      ]
+    },
+    {
+      "ordinal": 14,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!TaintSeed",
+      "string_constants_in_constructor_window": [
+        "!TaintSeed"
+      ]
+    },
+    {
+      "ordinal": 15,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!TaintSwarm",
+      "string_constants_in_constructor_window": [
+        "!TaintSwarm"
+      ]
+    },
+    {
+      "ordinal": 16,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_toomuchflux",
+      "string_constants_in_constructor_window": [
+        "f_toomuchflux"
+      ]
+    },
+    {
+      "ordinal": 17,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!FluxRift",
+      "string_constants_in_constructor_window": [
+        "!FluxRift"
+      ]
+    },
+    {
+      "ordinal": 18,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_golem",
+      "string_constants_in_constructor_window": [
+        "f_golem"
+      ]
+    },
+    {
+      "ordinal": 19,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_golem",
+      "string_constants_in_constructor_window": [
+        "f_golem"
+      ]
+    },
+    {
+      "ordinal": 20,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_SPIDER",
+      "string_constants_in_constructor_window": [
+        "f_SPIDER"
+      ]
+    },
+    {
+      "ordinal": 21,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_BAT",
+      "string_constants_in_constructor_window": [
+        "f_BAT"
+      ]
+    },
+    {
+      "ordinal": 22,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_BAT",
+      "string_constants_in_constructor_window": [
+        "f_BAT"
+      ]
+    },
+    {
+      "ordinal": 23,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 24,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 25,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 26,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 27,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 28,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 29,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_FLY",
+      "string_constants_in_constructor_window": [
+        "f_FLY"
+      ]
+    },
+    {
+      "ordinal": 30,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!ORMOB",
+      "string_constants_in_constructor_window": [
+        "!ORMOB"
+      ]
+    },
+    {
+      "ordinal": 31,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "!ORBOSS",
+      "string_constants_in_constructor_window": [
+        "!ORBOSS"
+      ]
+    },
+    {
+      "ordinal": 32,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!ORBLOCK1",
+      "string_constants_in_constructor_window": [
+        "!ORBLOCK1"
+      ]
+    },
+    {
+      "ordinal": 33,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!ORBLOCK2",
+      "string_constants_in_constructor_window": [
+        "!ORBLOCK2"
+      ]
+    },
+    {
+      "ordinal": 34,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!ORBLOCK3",
+      "string_constants_in_constructor_window": [
+        "!ORBLOCK3"
+      ]
+    },
+    {
+      "ordinal": 35,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "ORE",
+      "string_constants_in_constructor_window": [
+        "ORE"
+      ]
+    },
+    {
+      "ordinal": 36,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!OREAMBER",
+      "string_constants_in_constructor_window": [
+        "!OREAMBER"
+      ]
+    },
+    {
+      "ordinal": 37,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!ORECINNABAR",
+      "string_constants_in_constructor_window": [
+        "!ORECINNABAR"
+      ]
+    },
+    {
+      "ordinal": 38,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!ORECRYSTAL",
+      "string_constants_in_constructor_window": [
+        "!ORECRYSTAL"
+      ]
+    },
+    {
+      "ordinal": 39,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "PLANTS",
+      "string_constants_in_constructor_window": [
+        "PLANTS"
+      ]
+    },
+    {
+      "ordinal": 40,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTWOOD",
+      "string_constants_in_constructor_window": [
+        "!PLANTWOOD"
+      ]
+    },
+    {
+      "ordinal": 41,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTWOOD",
+      "string_constants_in_constructor_window": [
+        "!PLANTWOOD"
+      ]
+    },
+    {
+      "ordinal": 42,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTWOOD",
+      "string_constants_in_constructor_window": [
+        "!PLANTWOOD"
+      ]
+    },
+    {
+      "ordinal": 43,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTWOOD",
+      "string_constants_in_constructor_window": [
+        "!PLANTWOOD"
+      ]
+    },
+    {
+      "ordinal": 44,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTCINDERPEARL",
+      "string_constants_in_constructor_window": [
+        "!PLANTCINDERPEARL"
+      ]
+    },
+    {
+      "ordinal": 45,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTSHIMMERLEAF",
+      "string_constants_in_constructor_window": [
+        "!PLANTSHIMMERLEAF"
+      ]
+    },
+    {
+      "ordinal": 46,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "!PLANTVISHROOM",
+      "string_constants_in_constructor_window": [
+        "!PLANTVISHROOM"
+      ]
+    },
+    {
+      "ordinal": 47,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "PRIMPEARL",
+      "string_constants_in_constructor_window": [
+        "PRIMPEARL"
+      ]
+    },
+    {
+      "ordinal": 48,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "!DRAGONBREATH",
+      "string_constants_in_constructor_window": [
+        "!DRAGONBREATH"
+      ]
+    },
+    {
+      "ordinal": 49,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "!TOTEMUNDYING",
+      "string_constants_in_constructor_window": [
+        "!TOTEMUNDYING"
+      ]
+    },
+    {
+      "ordinal": 50,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "f_TELEPORT",
+      "string_constants_in_constructor_window": [
+        "f_TELEPORT"
+      ]
+    },
+    {
+      "ordinal": 51,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_TELEPORT",
+      "string_constants_in_constructor_window": [
+        "f_TELEPORT"
+      ]
+    },
+    {
+      "ordinal": 52,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_TELEPORT",
+      "string_constants_in_constructor_window": [
+        "f_TELEPORT"
+      ]
+    },
+    {
+      "ordinal": 53,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_BRAIN",
+      "string_constants_in_constructor_window": [
+        "f_BRAIN"
+      ]
+    },
+    {
+      "ordinal": 54,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_BRAIN",
+      "string_constants_in_constructor_window": [
+        "f_BRAIN"
+      ]
+    },
+    {
+      "ordinal": 55,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "f_DISPENSER",
+      "string_constants_in_constructor_window": [
+        "f_DISPENSER"
+      ]
+    },
+    {
+      "ordinal": 56,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_DISPENSER",
+      "string_constants_in_constructor_window": [
+        "f_DISPENSER"
+      ]
+    },
+    {
+      "ordinal": 57,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_MATCLAY",
+      "string_constants_in_constructor_window": [
+        "f_MATCLAY"
+      ]
+    },
+    {
+      "ordinal": 58,
+      "type": "ScanBlock",
+      "class": "thaumcraft.api.research.ScanBlock",
+      "research_key_candidate": "f_MATCLAY",
+      "string_constants_in_constructor_window": [
+        "f_MATCLAY"
+      ]
+    },
+    {
+      "ordinal": 59,
+      "type": "ScanMaterial",
+      "class": "thaumcraft.api.research.ScanMaterial",
+      "research_key_candidate": "f_MATCLAY",
+      "string_constants_in_constructor_window": [
+        "f_MATCLAY"
+      ]
+    },
+    {
+      "ordinal": 60,
+      "type": "ScanOreDictionary",
+      "class": "thaumcraft.api.research.ScanOreDictionary",
+      "research_key_candidate": "f_MATIRON",
+      "string_constants_in_constructor_window": [
+        "f_MATIRON",
+        "oreIron",
+        "ingotIron",
+        "blockIron",
+        "plateIron"
+      ]
+    },
+    {
+      "ordinal": 61,
+      "type": "ScanOreDictionary",
+      "class": "thaumcraft.api.research.ScanOreDictionary",
+      "research_key_candidate": "f_MATBRASS",
+      "string_constants_in_constructor_window": [
+        "f_MATBRASS",
+        "ingotBrass",
+        "blockBrass",
+        "plateBrass"
+      ]
+    },
+    {
+      "ordinal": 62,
+      "type": "ScanOreDictionary",
+      "class": "thaumcraft.api.research.ScanOreDictionary",
+      "research_key_candidate": "f_MATTHAUMIUM",
+      "string_constants_in_constructor_window": [
+        "f_MATTHAUMIUM",
+        "ingotThaumium",
+        "blockThaumium",
+        "plateThaumium"
+      ]
+    },
+    {
+      "ordinal": 63,
+      "type": "ScanOreDictionary",
+      "class": "thaumcraft.api.research.ScanOreDictionary",
+      "research_key_candidate": "f_MATVOID",
+      "string_constants_in_constructor_window": [
+        "f_MATVOID",
+        "ingotVoid",
+        "blockVoid",
+        "plateVoid"
+      ]
+    },
+    {
+      "ordinal": 64,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_arrow",
+      "string_constants_in_constructor_window": [
+        "f_arrow"
+      ]
+    },
+    {
+      "ordinal": 65,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_arrow",
+      "string_constants_in_constructor_window": [
+        "f_arrow"
+      ]
+    },
+    {
+      "ordinal": 66,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_fireball",
+      "string_constants_in_constructor_window": [
+        "f_fireball"
+      ]
+    },
+    {
+      "ordinal": 67,
+      "type": "ScanEntity",
+      "class": "thaumcraft.api.research.ScanEntity",
+      "research_key_candidate": "f_spit",
+      "string_constants_in_constructor_window": [
+        "f_spit"
+      ]
+    },
+    {
+      "ordinal": 68,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "!Pechwand",
+      "string_constants_in_constructor_window": [
+        "!Pechwand"
+      ]
+    },
+    {
+      "ordinal": 69,
+      "type": "ScanItem",
+      "class": "thaumcraft.api.research.ScanItem",
+      "research_key_candidate": "f_VOIDSEED",
+      "string_constants_in_constructor_window": [
+        "f_VOIDSEED"
+      ]
+    },
+    {
+      "ordinal": 70,
+      "type": "ScanSky",
+      "class": "thaumcraft.common.lib.research.ScanSky",
+      "research_key_candidate": null,
+      "string_constants_in_constructor_window": []
+    }
+  ]
+}

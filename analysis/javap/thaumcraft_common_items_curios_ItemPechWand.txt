@@ -1,0 +1,183 @@
+Compiled from "ItemPechWand.java"
+public class thaumcraft.common.items.curios.ItemPechWand extends thaumcraft.common.items.ItemTCBase {
+  public thaumcraft.common.items.curios.ItemPechWand();
+    descriptor: ()V
+    Code:
+       0: aload_0
+       1: ldc           #14                 // String pech_wand
+       3: iconst_0
+       4: anewarray     #16                 // class java/lang/String
+       7: invokespecial #19                 // Method thaumcraft/common/items/ItemTCBase."<init>":(Ljava/lang/String;[Ljava/lang/String;)V
+      10: return
+
+  public net.minecraft.item.EnumRarity func_77613_e(net.minecraft.item.ItemStack);
+    descriptor: (Lnet/minecraft/item/ItemStack;)Lnet/minecraft/item/EnumRarity;
+    Code:
+       0: getstatic     #29                 // Field net/minecraft/item/EnumRarity.RARE:Lnet/minecraft/item/EnumRarity;
+       3: areturn
+
+  public void func_77624_a(net.minecraft.item.ItemStack, net.minecraft.world.World, java.util.List<java.lang.String>, net.minecraft.client.util.ITooltipFlag);
+    descriptor: (Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/client/util/ITooltipFlag;)V
+    Code:
+       0: aload_3
+       1: ldc           #39                 // String item.curio.text
+       3: invokestatic  #45                 // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+       6: invokeinterface #51,  2           // InterfaceMethod java/util/List.add:(Ljava/lang/Object;)Z
+      11: pop
+      12: return
+
+  public net.minecraft.util.ActionResult<net.minecraft.item.ItemStack> func_77659_a(net.minecraft.world.World, net.minecraft.entity.player.EntityPlayer, net.minecraft.util.EnumHand);
+    descriptor: (Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/util/EnumHand;)Lnet/minecraft/util/ActionResult;
+    Code:
+       0: aload_2
+       1: invokestatic  #67                 // Method thaumcraft/api/capabilities/ThaumcraftCapabilities.getKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;)Lthaumcraft/api/capabilities/IPlayerKnowledge;
+       4: astore        4
+       6: aload         4
+       8: ldc           #69                 // String BASEAUROMANCY
+      10: invokeinterface #73,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+      15: ifne          68
+      18: aload_1
+      19: getfield      #79                 // Field net/minecraft/world/World.field_72995_K:Z
+      22: ifne          60
+      25: aload_2
+      26: new           #81                 // class net/minecraft/util/text/TextComponentString
+      29: dup
+      30: new           #83                 // class java/lang/StringBuilder
+      33: dup
+      34: invokespecial #85                 // Method java/lang/StringBuilder."<init>":()V
+      37: getstatic     #91                 // Field net/minecraft/util/text/TextFormatting.RED:Lnet/minecraft/util/text/TextFormatting;
+      40: invokevirtual #95                 // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+      43: ldc           #97                 // String not.pechwand
+      45: invokestatic  #45                 // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+      48: invokevirtual #100                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      51: invokevirtual #104                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      54: invokespecial #107                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+      57: invokevirtual #113                // Method net/minecraft/entity/player/EntityPlayer.func_145747_a:(Lnet/minecraft/util/text/ITextComponent;)V
+      60: aload_0
+      61: aload_1
+      62: aload_2
+      63: aload_3
+      64: invokespecial #115                // Method thaumcraft/common/items/ItemTCBase.func_77659_a:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/util/EnumHand;)Lnet/minecraft/util/ActionResult;
+      67: areturn
+      68: aload_2
+      69: getfield      #119                // Field net/minecraft/entity/player/EntityPlayer.field_71075_bZ:Lnet/minecraft/entity/player/PlayerCapabilities;
+      72: getfield      #124                // Field net/minecraft/entity/player/PlayerCapabilities.field_75098_d:Z
+      75: ifne          87
+      78: aload_2
+      79: aload_3
+      80: invokevirtual #128                // Method net/minecraft/entity/player/EntityPlayer.func_184586_b:(Lnet/minecraft/util/EnumHand;)Lnet/minecraft/item/ItemStack;
+      83: iconst_1
+      84: invokevirtual #134                // Method net/minecraft/item/ItemStack.func_190918_g:(I)V
+      87: aload_1
+      88: aconst_null
+      89: checkcast     #109                // class net/minecraft/entity/player/EntityPlayer
+      92: aload_2
+      93: getfield      #138                // Field net/minecraft/entity/player/EntityPlayer.field_70165_t:D
+      96: aload_2
+      97: getfield      #141                // Field net/minecraft/entity/player/EntityPlayer.field_70163_u:D
+     100: aload_2
+     101: getfield      #144                // Field net/minecraft/entity/player/EntityPlayer.field_70161_v:D
+     104: getstatic     #150                // Field thaumcraft/common/lib/SoundsTC.learn:Lnet/minecraft/util/SoundEvent;
+     107: getstatic     #156                // Field net/minecraft/util/SoundCategory.NEUTRAL:Lnet/minecraft/util/SoundCategory;
+     110: ldc           #157                // float 0.5f
+     112: ldc           #158                // float 0.4f
+     114: getstatic     #162                // Field field_77697_d:Ljava/util/Random;
+     117: invokevirtual #168                // Method java/util/Random.nextFloat:()F
+     120: ldc           #158                // float 0.4f
+     122: fmul
+     123: ldc           #169                // float 0.8f
+     125: fadd
+     126: fdiv
+     127: invokevirtual #173                // Method net/minecraft/world/World.func_184148_a:(Lnet/minecraft/entity/player/EntityPlayer;DDDLnet/minecraft/util/SoundEvent;Lnet/minecraft/util/SoundCategory;FF)V
+     130: aload_1
+     131: getfield      #79                 // Field net/minecraft/world/World.field_72995_K:Z
+     134: ifne          314
+     137: aload         4
+     139: ldc           #175                // String FOCUSPECH
+     141: invokeinterface #73,  2           // InterfaceMethod thaumcraft/api/capabilities/IPlayerKnowledge.isResearchKnown:(Ljava/lang/String;)Z
+     146: ifne          196
+     149: getstatic     #181                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     152: aload_2
+     153: ldc           #175                // String FOCUSPECH
+     155: invokeinterface #187,  3          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.progressResearch:(Lnet/minecraft/entity/player/EntityPlayer;Ljava/lang/String;)Z
+     160: pop
+     161: aload_2
+     162: new           #81                 // class net/minecraft/util/text/TextComponentString
+     165: dup
+     166: new           #83                 // class java/lang/StringBuilder
+     169: dup
+     170: invokespecial #85                 // Method java/lang/StringBuilder."<init>":()V
+     173: getstatic     #190                // Field net/minecraft/util/text/TextFormatting.DARK_PURPLE:Lnet/minecraft/util/text/TextFormatting;
+     176: invokevirtual #95                 // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     179: ldc           #192                // String got.pechwand
+     181: invokestatic  #45                 // Method net/minecraft/util/text/translation/I18n.func_74838_a:(Ljava/lang/String;)Ljava/lang/String;
+     184: invokevirtual #100                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     187: invokevirtual #104                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     190: invokespecial #107                // Method net/minecraft/util/text/TextComponentString."<init>":(Ljava/lang/String;)V
+     193: invokevirtual #113                // Method net/minecraft/entity/player/EntityPlayer.func_145747_a:(Lnet/minecraft/util/text/ITextComponent;)V
+     196: getstatic     #196                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     199: invokevirtual #200                // Method thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.getProgression:()I
+     202: istore        5
+     204: getstatic     #206                // Field thaumcraft/api/research/ResearchCategories.researchCategories:Ljava/util/LinkedHashMap;
+     207: invokevirtual #212                // Method java/util/LinkedHashMap.values:()Ljava/util/Collection;
+     210: iconst_0
+     211: anewarray     #214                // class thaumcraft/api/research/ResearchCategory
+     214: invokeinterface #220,  2          // InterfaceMethod java/util/Collection.toArray:([Ljava/lang/Object;)[Ljava/lang/Object;
+     219: checkcast     #222                // class "[Lthaumcraft/api/research/ResearchCategory;"
+     222: astore        6
+     224: getstatic     #181                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     227: aload_2
+     228: getstatic     #196                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.OBSERVATION:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     231: aload         6
+     233: aload_2
+     234: invokevirtual #226                // Method net/minecraft/entity/player/EntityPlayer.func_70681_au:()Ljava/util/Random;
+     237: aload         6
+     239: arraylength
+     240: invokevirtual #230                // Method java/util/Random.nextInt:(I)I
+     243: aaload
+     244: aload_2
+     245: invokevirtual #226                // Method net/minecraft/entity/player/EntityPlayer.func_70681_au:()Ljava/util/Random;
+     248: iload         5
+     250: iconst_3
+     251: idiv
+     252: iload         5
+     254: iconst_2
+     255: idiv
+     256: invokestatic  #236                // Method net/minecraft/util/math/MathHelper.func_76136_a:(Ljava/util/Random;II)I
+     259: invokeinterface #240,  5          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+     264: pop
+     265: getstatic     #243                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.THEORY:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     268: invokevirtual #200                // Method thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.getProgression:()I
+     271: istore        7
+     273: getstatic     #181                // Field thaumcraft/api/ThaumcraftApi.internalMethods:Lthaumcraft/api/internal/IInternalMethodHandler;
+     276: aload_2
+     277: getstatic     #243                // Field thaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType.THEORY:Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;
+     280: aload         6
+     282: aload_2
+     283: invokevirtual #226                // Method net/minecraft/entity/player/EntityPlayer.func_70681_au:()Ljava/util/Random;
+     286: aload         6
+     288: arraylength
+     289: invokevirtual #230                // Method java/util/Random.nextInt:(I)I
+     292: aaload
+     293: aload_2
+     294: invokevirtual #226                // Method net/minecraft/entity/player/EntityPlayer.func_70681_au:()Ljava/util/Random;
+     297: iload         7
+     299: iconst_5
+     300: idiv
+     301: iload         7
+     303: iconst_4
+     304: idiv
+     305: invokestatic  #236                // Method net/minecraft/util/math/MathHelper.func_76136_a:(Ljava/util/Random;II)I
+     308: invokeinterface #240,  5          // InterfaceMethod thaumcraft/api/internal/IInternalMethodHandler.addKnowledge:(Lnet/minecraft/entity/player/EntityPlayer;Lthaumcraft/api/capabilities/IPlayerKnowledge$EnumKnowledgeType;Lthaumcraft/api/research/ResearchCategory;I)Z
+     313: pop
+     314: aload_2
+     315: aload_0
+     316: invokestatic  #249                // Method net/minecraft/stats/StatList.func_188057_b:(Lnet/minecraft/item/Item;)Lnet/minecraft/stats/StatBase;
+     319: invokevirtual #253                // Method net/minecraft/entity/player/EntityPlayer.func_71029_a:(Lnet/minecraft/stats/StatBase;)V
+     322: aload_0
+     323: aload_1
+     324: aload_2
+     325: aload_3
+     326: invokespecial #115                // Method thaumcraft/common/items/ItemTCBase.func_77659_a:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/util/EnumHand;)Lnet/minecraft/util/ActionResult;
+     329: areturn
+}

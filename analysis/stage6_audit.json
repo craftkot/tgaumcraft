@@ -1,0 +1,49 @@
+{
+  "jar_sha256": "9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f",
+  "class_files_total": 1120,
+  "thaumcraft_classes": 1112,
+  "assets_files": 1531,
+  "thaumcraft_assets_files": 1520,
+  "localization": {
+    "en": 1464,
+    "ru": 1464,
+    "missing_ru": [],
+    "extra_ru": []
+  },
+  "research": {
+    "files": 8,
+    "entries": 148,
+    "stages": 271,
+    "addenda": 16,
+    "unknown_or_legacy_ignored_stage_fields": [
+      [
+        "ARCANEEAR",
+        "required_knowledgeauram"
+      ]
+    ]
+  },
+  "recipe_refs": {
+    "total": 248,
+    "unique": 198,
+    "modern_invalid_case_or_chars": 137
+  },
+  "legacy_requirement_strings": {
+    "total": 103,
+    "unique": 93
+  },
+  "aspects": {
+    "count": 37,
+    "primals": 6,
+    "compounds": 31
+  },
+  "core_java_files": 21,
+  "core_test_result": "Core parity tests: OK (4348 assertions)",
+  "neoforge_build": {
+    "build_gradle": true,
+    "wrapper_properties": true,
+    "wrapper_jar": false,
+    "compile_tested": false,
+    "reason": "No Gradle executable/wrapper JAR and runtime dependency download is unavailable in this container."
+  },
+  "errors": []
+}
