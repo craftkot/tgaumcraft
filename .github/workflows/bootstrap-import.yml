@@ -24,6 +24,7 @@ jobs:
           unzip -oq /tmp/worklayer.zip -d .
           rm -rf bootstrap
           rm -f .github/workflows/bootstrap-import.yml
+          rm -f .github/workflows/ci.yml
       - name: Commit expanded sources
         run: |
           git config user.name "github-actions[bot]"
