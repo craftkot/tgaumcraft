@@ -1,7 +1,7 @@
 package dev.ehtid.thaumcraft.registry;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
-import net.minecraft.world.level.block.Block;
+import dev.ehtid.thaumcraft.block.ArcaneWorkbenchBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -14,8 +14,8 @@ public final class ThaumcraftBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(ThaumcraftPort.MOD_ID);
 
-    public static final DeferredBlock<Block> ARCANE_WORKBENCH = BLOCKS.registerSimpleBlock(
-            "arcane_workbench",
+    public static final DeferredBlock<ArcaneWorkbenchBlock> ARCANE_WORKBENCH = BLOCKS.registerBlock(
+            "arcane_workbench", ArcaneWorkbenchBlock::new,
             BlockBehaviour.Properties.of()
                     .destroyTime(2.5F)
                     .explosionResistance(2.5F)
