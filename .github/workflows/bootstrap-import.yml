@@ -1,0 +1,37 @@
+name: Bootstrap import
+permissions:
+  contents: write
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'bootstrap/**'
+      - '.github/workflows/bootstrap-import.yml'
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reassemble source archive
+        run: |
+          cat bootstrap/part-* > /tmp/worklayer.zip
+          unzip -t /tmp/worklayer.zip
+      - name: Expand working layer
+        run: |
+          unzip -oq /tmp/worklayer.zip -d .
+          rm -rf bootstrap
+          rm -f .github/workflows/bootstrap-import.yml
+      - name: Commit expanded sources
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Import Thaumcraft port working layer (27% baseline)"
+            git push
+          fi
