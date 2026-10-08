@@ -165,7 +165,7 @@ public final class ThaumometerScanDispatcher {
             ItemStack stack = scanningStackFor(player, pos);
             return stack.isEmpty() ? null : GenericScanKeyLogic.forModernItem(
                     BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
-                    stack.isDamageableItem(), 0));
+                    stack.isDamageableItem(), 0);
         }
         return null;
     }
