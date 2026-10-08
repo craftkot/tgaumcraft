@@ -54,16 +54,34 @@ jobs:
         run: |
           mkdir -p run
           echo "eula=true" > run/eula.txt
-          set +e
-          timeout 90s gradle runServer --no-daemon > server-smoke.log 2>&1
-          code=$?
-          set -e
+
+          gradle runServer --no-daemon > server-smoke.log 2>&1 &
+          server_pid=$!
+          ready=0
+
+          for _ in $(seq 1 90); do
+            if grep -Eiq "Exception in server tick loop|Failed to start the minecraft server|Mod loading has failed|Crash report" server-smoke.log; then
+              break
+            fi
+            if grep -Eq 'Done \([^)]*\)!' server-smoke.log; then
+              ready=1
+              break
+            fi
+            if ! kill -0 "$server_pid" 2>/dev/null; then
+              break
+            fi
+            sleep 1
+          done
+
+          kill "$server_pid" 2>/dev/null || true
+          wait "$server_pid" 2>/dev/null || true
           cat server-smoke.log
+
           if grep -Eiq "Exception in server tick loop|Failed to start the minecraft server|Mod loading has failed|Crash report" server-smoke.log; then
             exit 1
           fi
-          if ! grep -Eq 'Done \([^)]*\)!' server-smoke.log; then
-            echo "Dedicated server never reached ready state (exit=$code)"
+          if [ "$ready" -ne 1 ]; then
+            echo "Dedicated server never reached ready state"
             exit 1
           fi
 
