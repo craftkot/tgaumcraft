@@ -164,7 +164,7 @@ public final class ThaumometerScanDispatcher {
             // pick/clone stack, then falls back to water/lava buckets. ScanGeneric
             // keys the resulting ITEM registry id rather than the block id.
             ItemStack stack = scanningStackFor(player, pos);
-            return stack.isEmpty() ? null : GenericScanKeyLogic.forItem(
+            return stack.isEmpty() ? null : GenericScanKeyLogic.forModernItem(
                     BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
                     stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
         }
