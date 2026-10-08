@@ -936,6 +936,12 @@ public final class CoreParityTest {
         eq(225, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,-1.0));
         eq(500, AuraGenerationLogic.generatedBase(2f,2f,2f,2f,2f,0.0));
         eq(0, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,-20.0));
+
+        eq(.125f, LegacyBiomeAuraModifiers.modifier("DRY"));
+        eq(.75f, LegacyBiomeAuraModifiers.modifier("MAGICAL"));
+        eq(.45f, LegacyBiomeAuraModifiers.average(java.util.List.of("FOREST","WET")));
+        eq(.5f, LegacyBiomeAuraModifiers.average(java.util.List.of("FOREST","UNKNOWN")));
+        eq(29, LegacyBiomeAuraModifiers.table().size());
     }
 
 
