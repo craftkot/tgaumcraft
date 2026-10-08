@@ -101,6 +101,11 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if (index == 0) {
             if (!(player instanceof ServerPlayer sp) || !canCraftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
             if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
+            // The output stack is virtual: crafting commits exactly once after
+            // inventory insertion, and the server refreshes the next preview.
+            if (!craftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
+            broadcastChanges();
+            return before;
         } else if (index < 16) {
             if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
         } else {
