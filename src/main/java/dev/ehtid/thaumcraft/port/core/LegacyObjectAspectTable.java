@@ -5,9 +5,12 @@ public final class LegacyObjectAspectTable {
     private LegacyObjectAspectTable() {}
     public static AspectListData get(AspectRegistry a, String id) {
         return switch (id) {
+            case "minecraft:lapis_lazuli" -> list(a.SENSES,15);
+            case "minecraft:lapis_ore" -> list(a.EARTH,5,a.SENSES,15);
             case "minecraft:diamond" -> list(a.CRYSTAL,15,a.DESIRE,15);
             case "minecraft:emerald" -> list(a.CRYSTAL,15,a.DESIRE,10);
             case "minecraft:quartz" -> list(a.CRYSTAL,5);
+            case "minecraft:nether_quartz_ore" -> list(a.EARTH,5,a.CRYSTAL,10);
             case "minecraft:iron_ingot" -> list(a.METAL,15);
             case "minecraft:gold_ingot" -> list(a.METAL,10,a.DESIRE,10);
             case "minecraft:redstone" -> list(a.ENERGY,10);
@@ -17,6 +20,9 @@ public final class LegacyObjectAspectTable {
             case "minecraft:iron_ore" -> list(a.EARTH,5,a.METAL,15);
             case "minecraft:gold_ore" -> list(a.EARTH,5,a.METAL,10,a.DESIRE,10);
             case "minecraft:redstone_ore" -> list(a.EARTH,5,a.ENERGY,15);
+            case "minecraft:glowstone" -> list(a.SENSES,10,a.LIGHT,15);
+            case "minecraft:coal" -> list(a.ENERGY,10,a.FIRE,10);
+            case "minecraft:coal_ore" -> list(a.EARTH,5,a.ENERGY,10,a.FIRE,10);
             default -> new AspectListData();
         };
     }
