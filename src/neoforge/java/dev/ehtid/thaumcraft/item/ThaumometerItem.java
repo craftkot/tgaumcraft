@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.item;
 import dev.ehtid.thaumcraft.client.ThaumometerRuneFx;
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import dev.ehtid.thaumcraft.scanning.ThaumometerIdleHighlight;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.server.level.ServerLevel;
@@ -45,9 +46,17 @@ public final class ThaumometerItem extends Item {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
 
         // ItemThaumometer#onUpdate in BETA26 used (isSelected || itemSlot == 0).
-        // Every 20 ticks on the server it sent PacketAuraToClient(base, vis, flux).
         boolean active = isSelected || slotId == 0;
-        if (!active || level.isClientSide() || entity.tickCount % 20 != 0) return;
+        if (!active) return;
+
+        if (level.isClientSide()) {
+            if (entity instanceof Player player && entity.tickCount % 5 == 0)
+                ThaumometerIdleHighlight.tick(level, player);
+            return;
+        }
+
+        // Every 20 ticks on the server BETA26 sent PacketAuraToClient(base, vis, flux).
+        if (entity.tickCount % 20 != 0) return;
         if (!(entity instanceof ServerPlayer player) || !(level instanceof ServerLevel serverLevel)) return;
 
         var aura = ThaumcraftAuraSavedData.get(serverLevel).getChunk(player.blockPosition());

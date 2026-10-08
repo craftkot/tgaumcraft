@@ -8,6 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
@@ -87,7 +88,21 @@ public final class ThaumometerScanDispatcher {
         return anySuccess;
     }
 
-    private static AspectListData aspectsFor(ServerPlayer player, Object target) {
+    public static boolean isStillScannable(Player player, Object target) {
+        if (target == null) return false;
+        AspectListData scannedAspects = aspectsFor(player, target);
+        if (scannedAspects == null || scannedAspects.size() == 0) return false;
+        String genericKey = genericKey(player, target);
+        if (genericKey == null) return false;
+
+        PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        return SCANS.isThingStillScannable(
+                knowledge,
+                new CriticalScanHandlers.Target(genericKey, scannedAspects),
+                PlayerKnowledgeData::isResearchKnown);
+    }
+
+    private static AspectListData aspectsFor(Player player, Object target) {
         if (target instanceof ItemStack stack) return objectAspects(stack);
         if (target instanceof ItemEntity itemEntity) return objectAspects(itemEntity.getItem());
         if (target instanceof Entity entity) {
@@ -109,7 +124,7 @@ public final class ThaumometerScanDispatcher {
         return LegacyObjectAspectTable.get(ASPECTS, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
     }
 
-    static String genericKey(ServerPlayer player, Object target) {
+    static String genericKey(Player player, Object target) {
         if (target instanceof ItemStack stack) return genericItemKey(stack);
         // BETA26 ScanGeneric treats EntityItem as an item, not as an entity.
         if (target instanceof ItemEntity itemEntity) return genericItemKey(itemEntity.getItem());
@@ -155,14 +170,14 @@ public final class ThaumometerScanDispatcher {
      * BETA26 ScanningManager.rayTrace uses a fixed four-block ray and asks blocks
      * for their pick stack with that hit result.
      */
-    private static BlockHitResult scanPickHit(ServerPlayer player) {
+    private static BlockHitResult scanPickHit(Player player) {
         Vec3 start = player.getEyePosition(0.0F);
         Vec3 end = start.add(player.getViewVector(0.0F).scale(4.0D));
         return player.level().clip(new ClipContext(
                 start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
     }
 
-    private static ItemStack scanningStackFor(ServerPlayer player, BlockPos pos) {
+    private static ItemStack scanningStackFor(Player player, BlockPos pos) {
         BlockState state = player.level().getBlockState(pos);
         ItemStack stack;
         try {
