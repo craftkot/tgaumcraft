@@ -73,6 +73,34 @@ public final class GenericScanKeyLogic {
                         false, metadata < 4 ? metadata : metadata - 4);
             }
         }
+        // Pre-flattening block item variants; values are the exact Minecraft 1.12
+        // item damage metadata, not state orientation or a 1.21 block property.
+        // Do not map newly introduced polished/deepslate variants to old blocks.
+        String oldVariant = switch (modernRegistryId) {
+            case "minecraft:granite" -> "stone|1";
+            case "minecraft:polished_granite" -> "stone|2";
+            case "minecraft:diorite" -> "stone|3";
+            case "minecraft:polished_diorite" -> "stone|4";
+            case "minecraft:andesite" -> "stone|5";
+            case "minecraft:polished_andesite" -> "stone|6";
+            case "minecraft:coarse_dirt" -> "dirt|1";
+            case "minecraft:podzol" -> "dirt|2";
+            case "minecraft:red_sand" -> "sand|1";
+            case "minecraft:prismarine_bricks" -> "prismarine|1";
+            case "minecraft:dark_prismarine" -> "prismarine|2";
+            case "minecraft:chiseled_quartz_block" -> "quartz_block|1";
+            case "minecraft:quartz_pillar" -> "quartz_block|2";
+            case "minecraft:chiseled_sandstone" -> "sandstone|1";
+            case "minecraft:cut_sandstone" -> "sandstone|2";
+            case "minecraft:chiseled_red_sandstone" -> "red_sandstone|1";
+            case "minecraft:cut_red_sandstone" -> "red_sandstone|2";
+            default -> null;
+        };
+        if (oldVariant != null) {
+            int separator = oldVariant.indexOf('|');
+            return forItem("minecraft:" + oldVariant.substring(0, separator),
+                    false, Integer.parseInt(oldVariant.substring(separator + 1)));
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
