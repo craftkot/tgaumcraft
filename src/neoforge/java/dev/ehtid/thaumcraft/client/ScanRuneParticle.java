@@ -8,7 +8,6 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -77,8 +76,7 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         @Override
         public @Nullable Particle createParticle(SimpleParticleType type, ClientLevel level,
                                                  double x, double y, double z,
-                                                 double red, double green, double blue,
-                                                 RandomSource random) {
+                                                 double red, double green, double blue) {
             return new ScanRuneParticle(level, x, y, z, red, green, blue, sprites);
         }
     }
