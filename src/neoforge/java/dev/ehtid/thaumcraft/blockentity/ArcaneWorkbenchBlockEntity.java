@@ -59,13 +59,22 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
      */
     public boolean craftThaumometer(float totalDiscount) {
         int cost = ThaumometerRecipeLogic.discountedVis(totalDiscount);
-        int[] consumed = {1, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14};
-        for (int slot : consumed) {
-            if (items.get(slot).isEmpty()) return false;
+        for (int slot = 0; slot < ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot++) {
+            ItemStack stack = items.get(slot);
+            if (slot == 4) {
+                if (!stack.is(net.minecraft.world.item.Items.GLASS_PANE)) return false;
+            } else if (slot == 1 || slot == 3 || slot == 5 || slot == 7) {
+                if (!stack.is(net.minecraft.world.item.Items.GOLD_INGOT)) return false;
+            } else if (!stack.isEmpty()) {
+                return false;
+            }
+        }
+        for (int slot = ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot < ArcaneWorkbenchRuntime.SLOT_COUNT; slot++) {
+            if (items.get(slot).isEmpty() || !canPlaceItem(slot, items.get(slot))) return false;
         }
         if (vis < cost) return false;
 
-        for (int slot : consumed) items.get(slot).shrink(1);
+        for (int slot : new int[]{1, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14}) items.get(slot).shrink(1);
         vis -= cost;
         setChanged();
         return true;
