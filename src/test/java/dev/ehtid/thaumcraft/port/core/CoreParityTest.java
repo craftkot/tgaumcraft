@@ -991,6 +991,19 @@ public final class CoreParityTest {
             eq("!minecraft:stained_hardened_clay" + metadata,
                     GenericScanKeyLogic.forModernItem("minecraft:" + blockColors[metadata] + "_terracotta", false, 0));
         }
+        String[][] legacyFamilies = {
+            {"_wool", "wool"}, {"_carpet", "carpet"},
+            {"_stained_glass", "stained_glass"},
+            {"_stained_glass_pane", "stained_glass_pane"},
+            {"_concrete", "concrete"}, {"_concrete_powder", "concrete_powder"}
+        };
+        for (String[] family : legacyFamilies) {
+            for (int metadata = 0; metadata < blockColors.length; metadata++) {
+                eq("!minecraft:" + family[1] + metadata,
+                        GenericScanKeyLogic.forModernItem(
+                                "minecraft:" + blockColors[metadata] + family[0], false, 0));
+            }
+        }
         eq("!minecraft:hardened_clay0",
                 GenericScanKeyLogic.forModernItem("minecraft:terracotta", false, 0));
         eq("!minecraft:blue_glazed_terracotta0",
