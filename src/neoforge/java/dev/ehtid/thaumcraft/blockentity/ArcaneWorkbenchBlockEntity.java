@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
+import dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.core.BlockPos;
@@ -49,6 +50,24 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         if (amount < 0.0F) throw new IllegalArgumentException("amount");
         if (vis < amount) return false;
         setVis(vis - amount);
+        return true;
+    }
+
+    /**
+     * Commits the legacy Thaumometer inputs and vis as one server-side transaction.
+     * Callers must validate research separately; this method never partially consumes.
+     */
+    public boolean craftThaumometer(float totalDiscount) {
+        int cost = ThaumometerRecipeLogic.discountedVis(totalDiscount);
+        int[] consumed = {1, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14};
+        for (int slot : consumed) {
+            if (items.get(slot).isEmpty()) return false;
+        }
+        if (vis < cost) return false;
+
+        for (int slot : consumed) items.get(slot).shrink(1);
+        vis -= cost;
+        setChanged();
         return true;
     }
 
