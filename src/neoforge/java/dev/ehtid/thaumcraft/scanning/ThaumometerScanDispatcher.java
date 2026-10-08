@@ -15,9 +15,12 @@ import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.Direction;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Server-authoritative bridge from the real Thaumometer target to the loader-neutral
@@ -112,11 +115,22 @@ public final class ThaumometerScanDispatcher {
         return null;
     }
 
+    /**
+     * BETA26 ScanningManager.rayTrace uses a fixed four-block ray and asks blocks
+     * for their pick stack with that hit result.
+     */
+    private static BlockHitResult scanPickHit(ServerPlayer player) {
+        Vec3 start = player.getEyePosition(0.0F);
+        Vec3 end = start.add(player.getViewVector(0.0F).scale(4.0D));
+        return player.level().clip(new ClipContext(
+                start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.ANY, player));
+    }
+
     private static ItemStack scanningStackFor(ServerPlayer player, BlockPos pos) {
         BlockState state = player.level().getBlockState(pos);
         ItemStack stack;
         try {
-            stack = state.getCloneItemStack(pos, player.level(), false, player);
+            stack = state.getCloneItemStack(scanPickHit(player), player.level(), pos, player);
         } catch (Exception ignored) {
             stack = ItemStack.EMPTY;
         }
