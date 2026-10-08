@@ -1,6 +1,11 @@
 package dev.ehtid.thaumcraft.menu;
 
+import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
+import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import net.minecraft.server.level.ServerPlayer;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -39,6 +44,18 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 104 + row * 18));
         for (int col = 0; col < 9; col++)
             addSlot(new Slot(inventory, col, 8 + col * 18, 162));
+    }
+
+    /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
+    public boolean craftThaumometer(ServerPlayer player, float totalDiscount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return false;
+        var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (!workbench.craftThaumometer(knowledge, totalDiscount)) return false;
+        ItemStack output = new ItemStack(ThaumcraftItems.THAUMOMETER.get());
+        if (!player.getInventory().add(output)) player.drop(output, false);
+        ThaumcraftNetworking.sync(player);
+        broadcastChanges();
+        return true;
     }
 
     @Override public boolean stillValid(Player player) {
