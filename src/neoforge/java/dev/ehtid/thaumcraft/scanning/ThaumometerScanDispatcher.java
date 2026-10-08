@@ -11,6 +11,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.Direction;
@@ -64,8 +66,7 @@ public final class ThaumometerScanDispatcher {
             return LegacyEntityAspectTable.get(ASPECTS, legacy, powered, elder);
         }
         if (target instanceof BlockPos pos) {
-            ItemStack stack = new ItemStack(player.level().getBlockState(pos).getBlock());
-            return objectAspects(stack);
+            return objectAspects(scanningStackFor(player, pos));
         }
         return new AspectListData();
     }
@@ -82,14 +83,31 @@ public final class ThaumometerScanDispatcher {
             return GenericScanKeyLogic.forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
         }
         if (target instanceof BlockPos pos) {
-            // Legacy ScanningManager.getItemFromParms(BlockPos) builds an ItemStack from the block/state,
-            // then ScanGeneric keys the ITEM registry id (not the block registry id).
-            ItemStack stack = new ItemStack(player.level().getBlockState(pos).getBlock());
+            // BETA26 ScanningManager.getItemFromParms first asks the block for its
+            // pick/clone stack, then falls back to water/lava buckets. ScanGeneric
+            // keys the resulting ITEM registry id rather than the block id.
+            ItemStack stack = scanningStackFor(player, pos);
             return stack.isEmpty() ? null : GenericScanKeyLogic.forItem(
                     BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
                     stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
         }
         return null;
+    }
+
+    private static ItemStack scanningStackFor(ServerPlayer player, BlockPos pos) {
+        BlockState state = player.level().getBlockState(pos);
+        ItemStack stack;
+        try {
+            stack = state.getCloneItemStack(pos, player.level(), false, player);
+        } catch (Exception ignored) {
+            stack = ItemStack.EMPTY;
+        }
+        if (!stack.isEmpty()) return stack;
+
+        // Exact BETA26 ScanningManager fallback for non-pickable water/lava blocks.
+        if (state.getFluidState().is(FluidTags.WATER)) return new ItemStack(Items.WATER_BUCKET);
+        if (state.getFluidState().is(FluidTags.LAVA)) return new ItemStack(Items.LAVA_BUCKET);
+        return ItemStack.EMPTY;
     }
 
     /**
