@@ -34,7 +34,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         addSlot(new Slot(result, 0, 160, 64) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
             @Override public boolean mayPickup(Player player) {
-                return player instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F);
+                if (player instanceof ServerPlayer sp) return canCraftThaumometer(sp, 0.0F);
+                return result.getItem(0).is(ThaumcraftItems.THAUMOMETER.get());
             }
             @Override public void onTake(Player player, ItemStack stack) {
                 if (player instanceof ServerPlayer sp) craftThaumometer(sp, 0.0F);
