@@ -60,6 +60,19 @@ public final class GenericScanKeyLogic {
                 return forItem("minecraft:sapling", false, metadata);
             }
         }
+        // 1.12 split logs/leaves into two registry families (four + two wood
+        // species). Inventory item metadata identifies species, not log axis or
+        // leaf decay flags. These are scan ITEM keys, not block-state keys.
+        for (int metadata = 0; metadata < oldWood.length; metadata++) {
+            if (("minecraft:" + oldWood[metadata] + "_log").equals(modernRegistryId)) {
+                return forItem(metadata < 4 ? "minecraft:log" : "minecraft:log2",
+                        false, metadata < 4 ? metadata : metadata - 4);
+            }
+            if (("minecraft:" + oldWood[metadata] + "_leaves").equals(modernRegistryId)) {
+                return forItem(metadata < 4 ? "minecraft:leaves" : "minecraft:leaves2",
+                        false, metadata < 4 ? metadata : metadata - 4);
+            }
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
