@@ -7,6 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Server-authoritative bridge from the real Thaumometer target to the loader-neutral
@@ -38,14 +40,25 @@ public final class ThaumometerScanDispatcher {
     }
 
     static String genericKey(ServerPlayer player, Object target) {
+        // BETA26 ScanGeneric treats EntityItem as an item, not as an entity.
+        if (target instanceof ItemEntity itemEntity) return genericItemKey(itemEntity.getItem());
         if (target instanceof Entity entity) {
             return GenericScanKeyLogic.forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
         }
         if (target instanceof BlockPos pos) {
-            var state = player.level().getBlockState(pos);
-            return GenericScanKeyLogic.forItem(
-                    BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString(), false, 0);
+            // Legacy ScanningManager.getItemFromParms(BlockPos) builds an ItemStack from the block/state,
+            // then ScanGeneric keys the ITEM registry id (not the block registry id).
+            ItemStack stack = new ItemStack(player.level().getBlockState(pos).getBlock());
+            return stack.isEmpty() ? null : genericItemKey(stack);
         }
         return null;
     }
+
+    private static String genericItemKey(ItemStack stack) {
+        String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        // 1.21 no longer exposes the 1.12 metadata integer. Damageable stacks still follow the exact
+        // legacy no-metadata branch; non-damageable compatibility metadata remains 0 until state mapping lands.
+        return GenericScanKeyLogic.forItem(id, stack.isDamageableItem(), 0);
+    }
 }
+
