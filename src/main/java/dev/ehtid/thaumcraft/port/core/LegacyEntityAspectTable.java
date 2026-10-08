@@ -57,6 +57,25 @@ public final class LegacyEntityAspectTable {
             case "Parrot" -> list(a.BEAST,5,a.FLIGHT,5,a.SENSES,5);
             case "Stray" -> list(a.UNDEAD,20,a.MAN,5,a.TRAP,5);
             case "Vex" -> list(a.ELDRITCH,5,a.FLIGHT,5,a.MAGIC,5,a.MAN,5);
+            case "Thaumcraft.FluxRift" -> list(a.FLUX,20,a.ELDRITCH,20,a.AURA,20);
+            case "Thaumcraft.Firebat" -> list(a.BEAST,5,a.FLIGHT,5,a.FIRE,10);
+            case "Thaumcraft.ThaumSlime" -> list(a.LIFE,5,a.WATER,5,a.FLUX,5,a.ALCHEMY,5);
+            case "Thaumcraft.BrainyZombie" -> list(a.UNDEAD,20,a.MAN,10,a.MIND,5,a.AVERSION,5);
+            case "Thaumcraft.GiantBrainyZombie" -> list(a.UNDEAD,25,a.MAN,15,a.MIND,5,a.AVERSION,10);
+            case "Thaumcraft.Taintacle" -> list(a.FLUX,15,a.BEAST,10);
+            case "Thaumcraft.TaintacleTiny" -> list(a.FLUX,5,a.BEAST,5);
+            case "Thaumcraft.TaintSwarm" -> list(a.FLUX,15,a.AIR,5);
+            case "Thaumcraft.MindSpider" -> list(a.FLUX,5,a.FIRE,5);
+            case "Thaumcraft.EldritchGuardian" -> list(a.ELDRITCH,20,a.DEATH,20,a.UNDEAD,20);
+            case "Thaumcraft.CultistKnight","Thaumcraft.CultistCleric" -> list(a.ELDRITCH,5,a.MAN,15,a.AVERSION,5);
+            case "Thaumcraft.EldritchCrab" -> list(a.ELDRITCH,10,a.BEAST,10,a.TRAP,10);
+            case "Thaumcraft.InhabitedZombie" -> list(a.ELDRITCH,10,a.UNDEAD,10,a.MAN,5);
+            case "Thaumcraft.EldritchWarden" -> list(a.ELDRITCH,40,a.DEATH,40,a.UNDEAD,40);
+            case "Thaumcraft.EldritchGolem" -> list(a.ELDRITCH,40,a.ENERGY,40,a.MECHANISM,40);
+            case "Thaumcraft.CultistLeader" -> list(a.ELDRITCH,40,a.AVERSION,40,a.MAN,40);
+            case "Thaumcraft.TaintacleGiant" -> list(a.ELDRITCH,40,a.BEAST,40,a.FLUX,40);
+            case "Thaumcraft.Wisp" -> list(a.AURA,5,a.FLIGHT,5);
+            case "Thaumcraft.Golem" -> list(a.MECHANISM,10,a.MAN,10,a.MOTION,10);
             default -> new AspectListData();
         };
     }
