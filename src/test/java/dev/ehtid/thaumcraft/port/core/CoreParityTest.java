@@ -1001,6 +1001,14 @@ public final class CoreParityTest {
         eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forItem("minecraft:ender_pearl"));
         eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forEntity("minecraft:enderman"));
         eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forBlock("minecraft:dispenser"));
+        // ScanBlock installs an additional ScanItem matcher; BETA26 also explicitly
+        // registers the dispenser item. Legacy clay/terracotta item forms must work.
+        eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forItem("minecraft:dispenser"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:clay_ball"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:clay"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:clay"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:blue_terracotta"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:blue_glazed_terracotta"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:red_terracotta"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forBlock("minecraft:red_glazed_terracotta"));
         eq(java.util.Set.of("f_arrow"),LegacyVanillaSpecialScans.forItem("minecraft:arrow"));
