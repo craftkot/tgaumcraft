@@ -1,1 +1,6 @@
-{"container.thaumcraft.arcane_workbench":"Магический верстак"}
+{
+  "container.thaumcraft.arcane_workbench": "Магический верстак",
+  "workbench.available": "доступно",
+  "workbench.cost": "вис",
+  "workbench.discount": "скидка"
+}

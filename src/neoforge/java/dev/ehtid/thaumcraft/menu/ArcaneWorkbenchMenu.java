@@ -12,6 +12,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -20,16 +21,23 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     private final Container bench;
     private final SimpleContainer result = new SimpleContainer(1);
     private final Player owner;
+    private final DataSlot availableVis;
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory) {
-        this(id, inventory, new SimpleContainer(ArcaneWorkbenchRuntime.SLOT_COUNT));
+        this(id, inventory, new SimpleContainer(ArcaneWorkbenchRuntime.SLOT_COUNT), DataSlot.standalone());
     }
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory, Container bench) {
+        this(id, inventory, bench, visSlot(bench));
+    }
+
+    private ArcaneWorkbenchMenu(int id, Inventory inventory, Container bench, DataSlot availableVis) {
         super(ThaumcraftMenus.ARCANE_WORKBENCH.get(), id);
         checkContainerSize(bench, ArcaneWorkbenchRuntime.SLOT_COUNT);
         this.bench = bench;
         this.owner = inventory.player;
+        this.availableVis = availableVis;
+        addDataSlot(availableVis);
         bench.startOpen(inventory.player);
         addSlot(new Slot(result, 0, 160, 64) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
@@ -60,6 +68,31 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 addSlot(new Slot(inventory, col + row * 9 + 9, 16 + col * 18, 151 + row * 18));
         for (int col = 0; col < 9; col++)
             addSlot(new Slot(inventory, col, 16 + col * 18, 209));
+    }
+
+    private static DataSlot visSlot(Container bench) {
+        return new DataSlot() {
+            @Override
+            public int get() {
+                return bench instanceof ArcaneWorkbenchBlockEntity workbench ? (int) workbench.getVis() : 0;
+            }
+
+            @Override
+            public void set(int value) {
+                // Server slot is read-only. Client menus use DataSlot.standalone().
+            }
+        };
+    }
+
+    /** BETA26 synced auraVisClient equivalent (property id 0). */
+    public int availableVis() {
+        return availableVis.get();
+    }
+
+    /** Current FIRSTSTEPS port only exposes the exact Thaumometer arcane recipe. */
+    public int displayedVisCost() {
+        return result.getItem(0).is(ThaumcraftItems.THAUMOMETER.get())
+                ? dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic.BASE_VIS : 0;
     }
 
     private boolean canCraftThaumometer(ServerPlayer player, float totalDiscount) {

@@ -1,1 +1,6 @@
-{"container.thaumcraft.arcane_workbench":"Arcane Workbench"}
+{
+  "container.thaumcraft.arcane_workbench": "Arcane Workbench",
+  "workbench.available": "available",
+  "workbench.cost": "vis",
+  "workbench.discount": "discount"
+}
