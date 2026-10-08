@@ -48,6 +48,18 @@ public final class GenericScanKeyLogic {
                 if (oldColor >= 0) return forItem("minecraft:" + oldBlockFamilies[i + 1], false, oldColor);
             }
         }
+        // 1.12 planks and saplings share six wood-variant metadata values.
+        // Keep the exact legacy block-item registry name rather than creating
+        // separate research keys for 1.13+ flattened variants.
+        String[] oldWood = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"};
+        for (int metadata = 0; metadata < oldWood.length; metadata++) {
+            if (("minecraft:" + oldWood[metadata] + "_planks").equals(modernRegistryId)) {
+                return forItem("minecraft:planks", false, metadata);
+            }
+            if (("minecraft:" + oldWood[metadata] + "_sapling").equals(modernRegistryId)) {
+                return forItem("minecraft:sapling", false, metadata);
+            }
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
