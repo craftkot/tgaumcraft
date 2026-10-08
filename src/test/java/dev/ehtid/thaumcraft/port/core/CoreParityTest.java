@@ -1022,6 +1022,26 @@ public final class CoreParityTest {
         }
         eq("!minecraft:cherry_log0",
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_log", false, 0));
+        String[][] classicVariants = {
+            {"granite", "stone", "1"}, {"polished_granite", "stone", "2"},
+            {"diorite", "stone", "3"}, {"polished_diorite", "stone", "4"},
+            {"andesite", "stone", "5"}, {"polished_andesite", "stone", "6"},
+            {"coarse_dirt", "dirt", "1"}, {"podzol", "dirt", "2"},
+            {"red_sand", "sand", "1"},
+            {"prismarine_bricks", "prismarine", "1"}, {"dark_prismarine", "prismarine", "2"},
+            {"chiseled_quartz_block", "quartz_block", "1"}, {"quartz_pillar", "quartz_block", "2"},
+            {"chiseled_sandstone", "sandstone", "1"}, {"cut_sandstone", "sandstone", "2"},
+            {"chiseled_red_sandstone", "red_sandstone", "1"},
+            {"cut_red_sandstone", "red_sandstone", "2"}
+        };
+        for (String[] mapping : classicVariants) {
+            eq("!minecraft:" + mapping[1] + mapping[2],
+                    GenericScanKeyLogic.forModernItem("minecraft:" + mapping[0], false, 0));
+        }
+        eq("!minecraft:polished_deepslate0",
+                GenericScanKeyLogic.forModernItem("minecraft:polished_deepslate", false, 0));
+        eq("!minecraft:smooth_red_sandstone0",
+                GenericScanKeyLogic.forModernItem("minecraft:smooth_red_sandstone", false, 0));
         eq("!minecraft:cherry_planks0",
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_planks", false, 0));
         eq("!minecraft:mangrove_propagule0",
