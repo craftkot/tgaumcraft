@@ -1011,6 +1011,17 @@ public final class CoreParityTest {
             eq("!minecraft:sapling" + metadata,
                     GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_sapling", false, 0));
         }
+        for (int metadata = 0; metadata < wood.length; metadata++) {
+            String oldLog = metadata < 4 ? "log" : "log2";
+            int oldMetadata = metadata < 4 ? metadata : metadata - 4;
+            String oldLeaves = metadata < 4 ? "leaves" : "leaves2";
+            eq("!minecraft:" + oldLog + oldMetadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_log", false, 0));
+            eq("!minecraft:" + oldLeaves + oldMetadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_leaves", false, 0));
+        }
+        eq("!minecraft:cherry_log0",
+                GenericScanKeyLogic.forModernItem("minecraft:cherry_log", false, 0));
         eq("!minecraft:cherry_planks0",
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_planks", false, 0));
         eq("!minecraft:mangrove_propagule0",
