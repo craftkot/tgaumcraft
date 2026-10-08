@@ -92,7 +92,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return bench.stillValid(player);
     }
 
-    private boolean hasInventorySpace(Player player, ItemStack stack) {
+    private boolean hasInventorySpace(ItemStack stack) {
         for (int i = 16; i < 52; i++) {
             Slot slot = slots.get(i);
             ItemStack existing = slot.getItem();
@@ -112,9 +112,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         ItemStack before = stack.copy();
         if (index == 0) {
             if (!(player instanceof ServerPlayer sp) || !canCraftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
-            if (!hasInventorySpace(player, stack)) return ItemStack.EMPTY;
-            // The output stack is virtual: crafting commits exactly once after
-            // inventory insertion, and the server refreshes the next preview.
+            if (!hasInventorySpace(stack)) return ItemStack.EMPTY;
+            // The output stack is virtual: commit resources once before inserting
+            // the crafted item, then refresh the preview from server state.
             if (!craftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
             ItemStack crafted = new ItemStack(ThaumcraftItems.THAUMOMETER.get());
             if (!moveItemStackTo(crafted, 16, 52, true)) {
