@@ -82,7 +82,7 @@ public final class LegacyEntityAspectTable {
 
     public static AspectListData get(AspectRegistry a, String n, boolean poweredCreeper, boolean elderGuardian) {
         if ("Creeper".equals(n) && poweredCreeper) return list(a.PLANT,15,a.FIRE,15,a.ENERGY,15);
-        if ("Guardian".equals(n) && elderGuardian) return list(a.BEAST,15,a.ELDRITCH,15,a.WATER,15);
+        if ("Guardian".equals(n) && elderGuardian) return list(a.BEAST,10,a.ELDRITCH,15,a.WATER,15);
         return get(a,n);
     }
 
@@ -130,7 +130,7 @@ public final class LegacyEntityAspectTable {
         e("minecraft:ghast","Ghast"),e("minecraft:zombified_piglin","PigZombie"),e("minecraft:enderman","Enderman"),e("minecraft:cave_spider","CaveSpider"),
         e("minecraft:silverfish","Silverfish"),e("minecraft:blaze","Blaze"),e("minecraft:magma_cube","LavaSlime"),e("minecraft:ender_dragon","EnderDragon"),
         e("minecraft:wither","WitherBoss"),e("minecraft:witch","Witch"),e("minecraft:villager","Villager"),e("minecraft:iron_golem","VillagerGolem"),
-        e("minecraft:end_crystal","EnderCrystal"),e("minecraft:item_frame","ItemFrame"),e("minecraft:painting","Painting"),e("minecraft:guardian","Guardian"),
+        e("minecraft:end_crystal","EnderCrystal"),e("minecraft:item_frame","ItemFrame"),e("minecraft:painting","Painting"),e("minecraft:guardian","Guardian"),e("minecraft:elder_guardian","Guardian"),
         e("minecraft:rabbit","Rabbit"),e("minecraft:endermite","Endermite"),e("minecraft:polar_bear","PolarBear"),e("minecraft:shulker","Shulker"),
         e("minecraft:evoker","EvocationIllager"),e("minecraft:vindicator","VindicationIllager"),e("minecraft:illusioner","IllusionIllager"),
         e("minecraft:llama","Llama"),e("minecraft:parrot","Parrot"),e("minecraft:stray","Stray"),e("minecraft:vex","Vex")

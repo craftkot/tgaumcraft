@@ -32,6 +32,7 @@ public final class CoreParityTest {
         testLegacyOrderedScanningRegistry();
         testFirstStepsVerticalSlice();
         testCriticalScanHandlers();
+        testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
@@ -950,6 +951,21 @@ public final class CoreParityTest {
         PlayerKnowledgeData p2=new PlayerKnowledgeData(); AspectListData rich=new AspectListData().add(aspects.MAGIC,100).add(aspects.AIR,100).add(aspects.EARTH,100);
         var rr=scans.scanTheThing(p2,new CriticalScanHandlers.Target("!rich",rich),(player,key)->player.addResearch(key)); isTrue(rr.anySuccess());
         int expected=cats.get("BASICS").applyFormula(rich)+3; eq(expected,p2.getKnowledgeRaw(KnowledgeType.OBSERVATION,"BASICS")); isTrue(expected>=1);
+    }
+
+
+    private static void testEntityAspectRuntimeMappings() {
+        AspectRegistry a = new AspectRegistry();
+        eq("Guardian", LegacyEntityAspectTable.legacyName("minecraft:guardian"));
+        eq("Guardian", LegacyEntityAspectTable.legacyName("minecraft:elder_guardian"));
+        AspectListData guardian = LegacyEntityAspectTable.get(a, "Guardian", false, false);
+        eq(10, guardian.getAmount(a.BEAST)); eq(10, guardian.getAmount(a.ELDRITCH)); eq(10, guardian.getAmount(a.WATER));
+        AspectListData elder = LegacyEntityAspectTable.get(a, "Guardian", false, true);
+        eq(10, elder.getAmount(a.BEAST)); eq(15, elder.getAmount(a.ELDRITCH)); eq(15, elder.getAmount(a.WATER));
+        AspectListData creeper = LegacyEntityAspectTable.get(a, "Creeper", false, false);
+        eq(15, creeper.getAmount(a.PLANT)); eq(15, creeper.getAmount(a.FIRE)); eq(0, creeper.getAmount(a.ENERGY));
+        AspectListData powered = LegacyEntityAspectTable.get(a, "Creeper", true, false);
+        eq(15, powered.getAmount(a.PLANT)); eq(15, powered.getAmount(a.FIRE)); eq(15, powered.getAmount(a.ENERGY));
     }
 
 
