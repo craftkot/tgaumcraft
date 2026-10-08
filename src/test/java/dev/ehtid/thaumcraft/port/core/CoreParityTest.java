@@ -948,6 +948,14 @@ public final class CoreParityTest {
         eq(-.1f, VisDiscountLogic.totalDiscount(0, 0, null));
         eq(-.3f, VisDiscountLogic.totalDiscount(0, null, 2));
         eq(.1f, VisDiscountLogic.totalDiscount(50, 1, 3));
+
+        isTrue(LegacyVanillaBiomeTypes.types("OCEAN").contains("WATER"));
+        isTrue(LegacyVanillaBiomeTypes.types("RIVER").contains("WATER"));
+        eq(.33f, LegacyVanillaBiomeTypes.auraModifier("OCEAN"));
+        eq(.235f, LegacyVanillaBiomeTypes.auraModifier("DESERT"));
+        eq(.5f, LegacyVanillaBiomeTypes.auraModifier("MUTATED_PLAINS")); // RARE has no TC biomeInfo row -> catch fallback.
+        eq(.5f, LegacyVanillaBiomeTypes.auraModifier("VOID")); // VOID likewise falls through BETA26's exception fallback.
+        eq(62, LegacyVanillaBiomeTypes.table().size());
     }
 
 
