@@ -969,7 +969,7 @@ public final class CoreParityTest {
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(43,scans.size()); // 37 ScanAspect + ScanGeneric + five mapped vanilla special registrations.
+        eq(46,scans.size()); // 37 ScanAspect + ScanGeneric + eight mapped vanilla special registrations.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
@@ -1003,6 +1003,13 @@ public final class CoreParityTest {
         eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forBlock("minecraft:dispenser"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:red_terracotta"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forBlock("minecraft:red_glazed_terracotta"));
+        eq(java.util.Set.of("f_arrow"),LegacyVanillaSpecialScans.forItem("minecraft:arrow"));
+        eq(java.util.Set.of("f_arrow"),LegacyVanillaSpecialScans.forEntity("minecraft:spectral_arrow"));
+        eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:fireball"));
+        eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:small_fireball"));
+        eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:dragon_fireball"));
+        eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:wither_skull"));
+        eq(java.util.Set.of("f_spit"),LegacyVanillaSpecialScans.forEntity("minecraft:llama_spit"));
     }
 
 
