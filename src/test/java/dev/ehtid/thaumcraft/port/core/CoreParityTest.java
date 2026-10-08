@@ -1040,6 +1040,14 @@ public final class CoreParityTest {
             eq("!minecraft:" + mapping[1] + mapping[2],
                     GenericScanKeyLogic.forModernItem("minecraft:" + mapping[0], false, 0));
         }
+        // Block pick stacks must derive the generic key from the item, not
+        // from the facing/axis of the world block (BETA26 ScanGeneric).
+        eq("!minecraft:dispenser0",
+                GenericScanKeyLogic.forModernItem("minecraft:dispenser", false, 0));
+        eq("!minecraft:log0",
+                GenericScanKeyLogic.forModernItem("minecraft:oak_log", false, 0));
+        eq("!minecraft:log2" ,
+                GenericScanKeyLogic.forModernItem("minecraft:birch_log", false, 0));
         eq("!minecraft:polished_deepslate0",
                 GenericScanKeyLogic.forModernItem("minecraft:polished_deepslate", false, 0));
         eq("!minecraft:smooth_red_sandstone0",
