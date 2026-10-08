@@ -18,7 +18,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -164,9 +163,9 @@ public final class ThaumometerScanDispatcher {
             // pick/clone stack, then falls back to water/lava buckets. ScanGeneric
             // keys the resulting ITEM registry id rather than the block id.
             ItemStack stack = scanningStackFor(player, pos);
-            return stack.isEmpty() ? null : GenericScanKeyLogic.forItem(
+            return stack.isEmpty() ? null : LegacyVanillaItemIdentity.genericScanKey(
                     BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
-                    stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
+                    stack.isDamageableItem());
         }
         return null;
     }
@@ -221,30 +220,10 @@ public final class ThaumometerScanDispatcher {
         return ItemStack.EMPTY;
     }
 
-    /**
-     * Only project metadata where the legacy numeric encoding is known.
-     * Unmapped modern states deliberately fall back to zero rather than inventing
-     * a metadata value based on arbitrary property names.
-     */
-    private static int legacyBlockMetadata(BlockState state) {
-        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-            Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            return switch (direction) {
-                case NORTH -> 2;
-                case SOUTH -> 3;
-                case WEST -> 4;
-                case EAST -> 5;
-                default -> 0;
-            };
-        }
-        return 0;
-    }
-
     private static String genericItemKey(ItemStack stack) {
         String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
-        // 1.21 no longer exposes the 1.12 metadata integer. Damageable stacks still follow the exact
-        // legacy no-metadata branch; non-damageable compatibility metadata remains 0 until state mapping lands.
-        return GenericScanKeyLogic.forItem(id, stack.isDamageableItem(), 0);
+        // Reconstruct the 1.12 registry identity and metadata for known flattened vanilla variants.
+        return LegacyVanillaItemIdentity.genericScanKey(id, stack.isDamageableItem());
     }
 }
 

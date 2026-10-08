@@ -26,6 +26,7 @@ public final class CoreParityTest {
         testResearchRequisites();
         testLegacyPlayerTransfer();
         testLegacyScanItemLogic();
+        testLegacyVanillaItemIdentity();
         testSkyScanLogic();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
@@ -1106,6 +1107,25 @@ public final class CoreParityTest {
         isTrue(k.getKnowledge(KnowledgeType.OBSERVATION,"BASICS")>=1); isTrue(gate.requisitesSatisfied(k)); isTrue(gate.request(k,warp,svc,true,true,false).progressed());
         // Stage 3 has no requisites; one final server progression completes FIRSTSTEPS at stageCount+1 == 4.
         isTrue(gate.requisitesSatisfied(k)); isTrue(gate.request(k,warp,svc,true,true,false).progressed()); eq(4,k.getResearchStage("FIRSTSTEPS")); isTrue(k.isResearchComplete("FIRSTSTEPS",cat));
+    }
+
+
+    private static void testLegacyVanillaItemIdentity() {
+        // ScanGeneric uses the original 1.12 item id + metadata, not the flattened 1.21 id.
+        eq("!minecraft:wool14", LegacyVanillaItemIdentity.genericScanKey("minecraft:red_wool", false));
+        eq("!minecraft:wool0", LegacyVanillaItemIdentity.genericScanKey("minecraft:white_wool", false));
+        eq("!minecraft:stained_hardened_clay11", LegacyVanillaItemIdentity.genericScanKey("minecraft:blue_terracotta", false));
+        eq("!minecraft:hardened_clay0", LegacyVanillaItemIdentity.genericScanKey("minecraft:terracotta", false));
+        eq("!minecraft:stained_glass_pane5", LegacyVanillaItemIdentity.genericScanKey("minecraft:lime_stained_glass_pane", false));
+        eq("!minecraft:concrete_powder15", LegacyVanillaItemIdentity.genericScanKey("minecraft:black_concrete_powder", false));
+        eq("!minecraft:carpet8", LegacyVanillaItemIdentity.genericScanKey("minecraft:light_gray_carpet", false));
+        eq("!minecraft:dye4", LegacyVanillaItemIdentity.genericScanKey("minecraft:lapis_lazuli", false));
+        eq("!minecraft:dye15", LegacyVanillaItemIdentity.genericScanKey("minecraft:bone_meal", false));
+        eq("!minecraft:dye1", LegacyVanillaItemIdentity.genericScanKey("minecraft:red_dye", false));
+        eq("!minecraft:dispenser0", LegacyVanillaItemIdentity.genericScanKey("minecraft:dispenser", false));
+        eq("!minecraft:iron_ore0", LegacyVanillaItemIdentity.genericScanKey("minecraft:iron_ore", false));
+        eq("!minecraft:iron_sword", LegacyVanillaItemIdentity.genericScanKey("minecraft:iron_sword", true));
+        eq("!othermod:crystal0", LegacyVanillaItemIdentity.genericScanKey("othermod:crystal", false));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
