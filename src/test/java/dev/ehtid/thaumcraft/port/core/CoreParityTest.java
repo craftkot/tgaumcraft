@@ -942,6 +942,12 @@ public final class CoreParityTest {
         eq(.45f, LegacyBiomeAuraModifiers.average(java.util.List.of("FOREST","WET")));
         eq(.5f, LegacyBiomeAuraModifiers.average(java.util.List.of("FOREST","UNKNOWN")));
         eq(29, LegacyBiomeAuraModifiers.table().size());
+
+        eq(.25f, VisDiscountLogic.totalDiscount(25, null, null));
+        eq(1.25f, VisDiscountLogic.totalDiscount(125, null, null));
+        eq(-.1f, VisDiscountLogic.totalDiscount(0, 0, null));
+        eq(-.3f, VisDiscountLogic.totalDiscount(0, null, 2));
+        eq(.1f, VisDiscountLogic.totalDiscount(50, 1, 3));
     }
 
 
