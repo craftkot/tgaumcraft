@@ -35,5 +35,6 @@ public final class ThaumcraftPort {
         NeoForge.EVENT_BUS.addListener(FirstStepsPlayerEvents::onWake);
         NeoForge.EVENT_BUS.addListener(FirstStepsPlayerEvents::onCrafted);
         NeoForge.EVENT_BUS.addListener(SalisMundusTransformQueue::onServerTick);
+        NeoForge.EVENT_BUS.addListener(SalisMundusTransformQueue::onServerStopped);
     }
 }
