@@ -969,7 +969,7 @@ public final class CoreParityTest {
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(38,scans.size()); // 37 ScanAspect registrations precede the explicit ScanGeneric.
+        eq(43,scans.size()); // 37 ScanAspect + ScanGeneric + five mapped vanilla special registrations.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
@@ -985,6 +985,24 @@ public final class CoreParityTest {
         PlayerKnowledgeData p2=new PlayerKnowledgeData(); AspectListData rich=new AspectListData().add(aspects.MAGIC,100).add(aspects.AIR,100).add(aspects.EARTH,100);
         var rr=scans.scanTheThing(p2,new CriticalScanHandlers.Target("!rich",rich),(player,key)->player.addResearch(key)); isTrue(rr.anySuccess());
         int expected=cats.get("BASICS").applyFormula(rich)+3; eq(expected,p2.getKnowledgeRaw(KnowledgeType.OBSERVATION,"BASICS")); isTrue(expected>=1);
+
+        // Special BETA26 ScanItem/ScanBlock/ScanEntity registrations do not depend on object aspects.
+        PlayerKnowledgeData p3=new PlayerKnowledgeData();
+        var special=scans.scanTheThing(p3,
+                new CriticalScanHandlers.Target(null,new AspectListData(),java.util.Set.of(LegacyVanillaSpecialScans.TELEPORT)),
+                (player,key)->player.addResearch(key));
+        isTrue(special.anySuccess()); eq(1,special.successfulHandlers()); isTrue(p3.isResearchKnown("f_TELEPORT"));
+        isFalse(scans.isThingStillScannable(p3,
+                new CriticalScanHandlers.Target(null,new AspectListData(),java.util.Set.of(LegacyVanillaSpecialScans.TELEPORT)),
+                PlayerKnowledgeData::isResearchKnown));
+
+        eq(java.util.Set.of("!DRAGONBREATH"),LegacyVanillaSpecialScans.forItem("minecraft:dragon_breath"));
+        eq(java.util.Set.of("!TOTEMUNDYING"),LegacyVanillaSpecialScans.forItem("minecraft:totem_of_undying"));
+        eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forItem("minecraft:ender_pearl"));
+        eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forEntity("minecraft:enderman"));
+        eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forBlock("minecraft:dispenser"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:red_terracotta"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forBlock("minecraft:red_glazed_terracotta"));
     }
 
 

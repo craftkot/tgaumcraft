@@ -55,10 +55,14 @@ public final class ThaumometerScanDispatcher {
 
         boolean anySuccess = false;
         String genericKey = genericKey(player, target);
-        if (genericKey != null && scannedAspects != null && scannedAspects.size() > 0) {
+        java.util.Set<String> specialKeys = specialKeys(player, target);
+        boolean hasGeneric = genericKey != null && scannedAspects != null && scannedAspects.size() > 0;
+        if (hasGeneric || !specialKeys.isEmpty()) {
             PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
             var result = SCANS.scanTheThing(knowledge,
-                    new CriticalScanHandlers.Target(genericKey, scannedAspects),
+                    new CriticalScanHandlers.Target(genericKey,
+                            scannedAspects == null ? new AspectListData() : scannedAspects,
+                            specialKeys),
                     (ignored, key) -> knowledge.addResearch(key));
 
             // BETA26 ScanningManager feedback is an action-bar TextComponentString:
@@ -91,15 +95,39 @@ public final class ThaumometerScanDispatcher {
     public static boolean isStillScannable(Player player, Object target) {
         if (target == null) return false;
         AspectListData scannedAspects = aspectsFor(player, target);
-        if (scannedAspects == null || scannedAspects.size() == 0) return false;
         String genericKey = genericKey(player, target);
-        if (genericKey == null) return false;
+        java.util.Set<String> specialKeys = specialKeys(player, target);
+        boolean hasGeneric = genericKey != null && scannedAspects != null && scannedAspects.size() > 0;
+        if (!hasGeneric && specialKeys.isEmpty()) return false;
 
         PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         return SCANS.isThingStillScannable(
                 knowledge,
-                new CriticalScanHandlers.Target(genericKey, scannedAspects),
+                new CriticalScanHandlers.Target(genericKey,
+                        scannedAspects == null ? new AspectListData() : scannedAspects,
+                        specialKeys),
                 PlayerKnowledgeData::isResearchKnown);
+    }
+
+    private static java.util.Set<String> specialKeys(Player player, Object target) {
+        if (target instanceof ItemStack stack) {
+            return stack.isEmpty() ? java.util.Set.of()
+                    : LegacyVanillaSpecialScans.forItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        }
+        if (target instanceof ItemEntity itemEntity) {
+            ItemStack stack = itemEntity.getItem();
+            return stack.isEmpty() ? java.util.Set.of()
+                    : LegacyVanillaSpecialScans.forItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        }
+        if (target instanceof Entity entity) {
+            return LegacyVanillaSpecialScans.forEntity(
+                    BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
+        }
+        if (target instanceof BlockPos pos) {
+            return LegacyVanillaSpecialScans.forBlock(
+                    BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(pos).getBlock()).toString());
+        }
+        return java.util.Set.of();
     }
 
     private static AspectListData aspectsFor(Player player, Object target) {
