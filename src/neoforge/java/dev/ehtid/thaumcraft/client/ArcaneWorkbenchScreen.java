@@ -20,7 +20,6 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
         inventoryLabelY = 140;
         titleLabelX = 16;
         titleLabelY = 5;
-        // Keep the full legacy-height inventory visible on smaller windows.
     }
 
     @Override
