@@ -59,9 +59,11 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
      * Commits the legacy Thaumometer inputs and vis as one server-side transaction.
      * Callers must validate research separately; this method never partially consumes.
      */
-    public boolean canCraftThaumometer(PlayerKnowledgeData knowledge, float totalDiscount) {
-        if (!knowledge.isResearchKnown(ThaumometerRecipeLogic.RESEARCH)) return false;
-        int cost = ThaumometerRecipeLogic.discountedVis(totalDiscount);
+    /**
+     * BETA26 findMatchingArcaneRecipe() exposes recipe cost before vis/crystal/research
+     * gates are applied to the actual result slot.
+     */
+    public boolean matchesThaumometerPattern() {
         for (int slot = 0; slot < ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot++) {
             ItemStack stack = items.get(slot);
             if (slot == 4) {
@@ -72,6 +74,13 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
                 return false;
             }
         }
+        return true;
+    }
+
+    public boolean canCraftThaumometer(PlayerKnowledgeData knowledge, float totalDiscount) {
+        if (!matchesThaumometerPattern()) return false;
+        if (!knowledge.isResearchKnown(ThaumometerRecipeLogic.RESEARCH)) return false;
+        int cost = ThaumometerRecipeLogic.discountedVis(totalDiscount);
         for (int slot = ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot < ArcaneWorkbenchRuntime.SLOT_COUNT; slot++) {
             if (items.get(slot).isEmpty() || !canPlaceItem(slot, items.get(slot))) return false;
         }
