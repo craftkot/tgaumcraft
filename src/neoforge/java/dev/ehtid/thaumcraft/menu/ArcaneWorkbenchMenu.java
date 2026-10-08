@@ -18,6 +18,8 @@ import net.minecraft.world.item.ItemStack;
 /** Server-authoritative 15-slot Arcane Workbench inventory bridge. */
 public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     private final Container bench;
+    private final SimpleContainer result = new SimpleContainer(1);
+    private final Player owner;
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory) {
         this(id, inventory, new SimpleContainer(ArcaneWorkbenchRuntime.SLOT_COUNT));
@@ -27,7 +29,18 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         super(ThaumcraftMenus.ARCANE_WORKBENCH.get(), id);
         checkContainerSize(bench, ArcaneWorkbenchRuntime.SLOT_COUNT);
         this.bench = bench;
+        this.owner = inventory.player;
         bench.startOpen(inventory.player);
+        addSlot(new Slot(result, 0, 160, 64) {
+            @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override public boolean mayPickup(Player player) {
+                return player instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F);
+            }
+            @Override public void onTake(Player player, ItemStack stack) {
+                if (player instanceof ServerPlayer sp) craftThaumometer(sp, 0.0F);
+                super.onTake(player, stack);
+            }
+        });
         for (int i = 0; i < 9; i++) {
             addSlot(new Slot(bench, i, 8 + (i % 3) * 18, 18 + (i / 3) * 18));
         }
@@ -46,16 +59,32 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             addSlot(new Slot(inventory, col, 8 + col * 18, 162));
     }
 
+    private boolean canCraftThaumometer(ServerPlayer player, float totalDiscount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return false;
+        return workbench.canCraftThaumometer(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), totalDiscount);
+    }
+
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
     public boolean craftThaumometer(ServerPlayer player, float totalDiscount) {
         if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return false;
         var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         if (!workbench.craftThaumometer(knowledge, totalDiscount)) return false;
-        ItemStack output = new ItemStack(ThaumcraftItems.THAUMOMETER.get());
-        if (!player.getInventory().add(output)) player.drop(output, false);
         ThaumcraftNetworking.sync(player);
+        refreshResult();
         broadcastChanges();
         return true;
+    }
+
+    private void refreshResult() {
+        if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
+            result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
+        else result.setItem(0, ItemStack.EMPTY);
+    }
+
+    @Override public void broadcastChanges() {
+        refreshResult();
+        super.broadcastChanges();
     }
 
     @Override public boolean stillValid(Player player) {
@@ -68,18 +97,20 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if (!source.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = source.getItem();
         ItemStack before = stack.copy();
-        if (index < 15) {
-            if (!moveItemStackTo(stack, 15, 51, true)) return ItemStack.EMPTY;
+        if (index == 0) {
+            if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
+        } else if (index < 16) {
+            if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
         } else {
             boolean moved = false;
-            for (int i = 9; i < 15; i++) {
+            for (int i = 10; i < 16; i++) {
                 if (slots.get(i).mayPlace(stack)
                         && moveItemStackTo(stack, i, i + 1, false)) {
                     moved = true;
                     break;
                 }
             }
-            if (!moved && !moveItemStackTo(stack, 0, 9, false)) return ItemStack.EMPTY;
+            if (!moved && !moveItemStackTo(stack, 1, 10, false)) return ItemStack.EMPTY;
         }
         if (stack.isEmpty()) source.set(ItemStack.EMPTY);
         else source.setChanged();
