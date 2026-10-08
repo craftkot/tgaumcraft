@@ -969,7 +969,7 @@ public final class CoreParityTest {
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(46,scans.size()); // 37 ScanAspect + ScanGeneric + eight mapped vanilla special registrations.
+        eq(50,scans.size()); // 37 ScanAspect + ScanGeneric + twelve mapped vanilla special registrations.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
@@ -1010,6 +1010,15 @@ public final class CoreParityTest {
         eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:dragon_fireball"));
         eq(java.util.Set.of("f_fireball"),LegacyVanillaSpecialScans.forEntity("minecraft:wither_skull"));
         eq(java.util.Set.of("f_spit"),LegacyVanillaSpecialScans.forEntity("minecraft:llama_spit"));
+        eq(java.util.Set.of("f_golem"),LegacyVanillaSpecialScans.forEntity("minecraft:iron_golem"));
+        eq(java.util.Set.of("f_golem"),LegacyVanillaSpecialScans.forEntity("minecraft:snow_golem"));
+        eq(java.util.Set.of("f_SPIDER"),LegacyVanillaSpecialScans.forEntity("minecraft:spider"));
+        eq(java.util.Set.of("f_SPIDER"),LegacyVanillaSpecialScans.forEntity("minecraft:cave_spider"));
+        eq(java.util.Set.of("f_BAT","f_FLY"),LegacyVanillaSpecialScans.forEntity("minecraft:bat"));
+        eq(java.util.Set.of("f_FLY"),LegacyVanillaSpecialScans.forEntity("minecraft:parrot"));
+        eq(java.util.Set.of("f_FLY"),LegacyVanillaSpecialScans.forEntity("minecraft:ghast"));
+        eq(java.util.Set.of("f_FLY"),LegacyVanillaSpecialScans.forEntity("minecraft:blaze"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forEntity("minecraft:phantom"));
     }
 
 

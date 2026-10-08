@@ -15,6 +15,10 @@ import java.util.Set;
 public final class LegacyVanillaSpecialScans {
     private LegacyVanillaSpecialScans() {}
 
+    public static final String GOLEM = "f_golem";
+    public static final String SPIDER = "f_SPIDER";
+    public static final String BAT = "f_BAT";
+    public static final String FLY = "f_FLY";
     public static final String DRAGON_BREATH = "!DRAGONBREATH";
     public static final String TOTEM_UNDYING = "!TOTEMUNDYING";
     public static final String TELEPORT = "f_TELEPORT";
@@ -25,6 +29,7 @@ public final class LegacyVanillaSpecialScans {
     public static final String SPIT = "f_spit";
 
     public static final List<String> REGISTRATION_ORDER = List.of(
+            GOLEM, SPIDER, BAT, FLY,
             DRAGON_BREATH, TOTEM_UNDYING, TELEPORT, DISPENSER, MAT_CLAY,
             ARROW, FIREBALL, SPIT);
 
@@ -40,6 +45,26 @@ public final class LegacyVanillaSpecialScans {
 
     public static Set<String> forEntity(String entityId) {
         LinkedHashSet<String> out = new LinkedHashSet<>();
+        // BETA26 used EntityGolem.class with subclasses enabled.
+        if ("minecraft:iron_golem".equals(entityId) || "minecraft:snow_golem".equals(entityId))
+            out.add(GOLEM);
+
+        // EntitySpider.class with subclasses enabled also matched cave spiders.
+        if ("minecraft:spider".equals(entityId) || "minecraft:cave_spider".equals(entityId))
+            out.add(SPIDER);
+
+        // Bat had two independent BETA26 registrations: f_BAT and f_FLY.
+        if ("minecraft:bat".equals(entityId)) {
+            out.add(BAT);
+            out.add(FLY);
+        }
+
+        // Remaining vanilla members of the BETA26 f_FLY registrations.
+        if ("minecraft:parrot".equals(entityId)
+                || "minecraft:ghast".equals(entityId)
+                || "minecraft:blaze".equals(entityId))
+            out.add(FLY);
+
         if ("minecraft:enderman".equals(entityId)) out.add(TELEPORT);
 
         // BETA26 ScanEntity(..., EntityArrow.class, true): vanilla 1.12 arrow subclasses
