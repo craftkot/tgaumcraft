@@ -12,7 +12,8 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.core.Direction;
 
 /**
  * Server-authoritative bridge from the real Thaumometer target to the loader-neutral
@@ -91,21 +92,21 @@ public final class ThaumometerScanDispatcher {
         return null;
     }
 
-    /** 1.12-style metadata projection for simple horizontal-facing and axis block states. */
+    /**
+     * Only project metadata where the legacy numeric encoding is known.
+     * Unmapped modern states deliberately fall back to zero rather than inventing
+     * a metadata value based on arbitrary property names.
+     */
     private static int legacyBlockMetadata(BlockState state) {
-        for (Property<?> property : state.getProperties()) {
-            if ("facing".equals(property.getName())) {
-                String facing = state.getValue(property).toString();
-                return switch (facing) {
-                    case "down" -> 0;
-                    case "up" -> 1;
-                    case "north" -> 2;
-                    case "south" -> 3;
-                    case "west" -> 4;
-                    case "east" -> 5;
-                    default -> 0;
-                };
-            }
+        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
+            Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
+            return switch (direction) {
+                case NORTH -> 2;
+                case SOUTH -> 3;
+                case WEST -> 4;
+                case EAST -> 5;
+                default -> 0;
+            };
         }
         return 0;
     }
