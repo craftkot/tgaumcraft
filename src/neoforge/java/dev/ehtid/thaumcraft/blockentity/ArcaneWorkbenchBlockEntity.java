@@ -39,6 +39,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
     }
 
     public void setVis(float vis) {
+        if (!Float.isFinite(vis)) throw new IllegalArgumentException("vis must be finite");
         float normalized = Math.max(0.0F, vis);
         if (Float.compare(this.vis, normalized) != 0) {
             this.vis = normalized;
@@ -48,7 +49,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
     /** Atomically checks and consumes vis; failed crafts leave the stored value untouched. */
     public boolean consumeVis(float amount) {
-        if (amount < 0.0F) throw new IllegalArgumentException("amount");
+        if (!Float.isFinite(amount) || amount < 0.0F) throw new IllegalArgumentException("amount");
         if (vis < amount) return false;
         setVis(vis - amount);
         return true;
@@ -159,6 +160,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         ContainerHelper.loadAllItems(tag, items, registries);
-        vis = Math.max(0.0F, tag.getFloat(TAG_VIS));
+        float storedVis = tag.getFloat(TAG_VIS);
+        vis = Float.isFinite(storedVis) ? Math.max(0.0F, storedVis) : 0.0F;
     }
 }
