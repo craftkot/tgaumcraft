@@ -1015,6 +1015,20 @@ public final class CoreParityTest {
         eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forBlock("minecraft:iron_block"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:raw_iron"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:iron_nugget"));
+        // The item identity must actually progress the BETA26 research marker,
+        // without inventing an aspect tag for an otherwise unmapped object.
+        PlayerKnowledgeData ironKnowledge = new PlayerKnowledgeData();
+        var ironScan = scans.scanTheThing(ironKnowledge,
+                new CriticalScanHandlers.Target(null, new AspectListData(),
+                        LegacyVanillaSpecialScans.forItem("minecraft:iron_ingot")),
+                (player, key) -> player.addResearch(key));
+        isTrue(ironScan.anySuccess());
+        eq(1, ironScan.successfulHandlers());
+        isTrue(ironKnowledge.isResearchKnown("f_MATIRON"));
+        isFalse(scans.scanTheThing(ironKnowledge,
+                new CriticalScanHandlers.Target(null, new AspectListData(),
+                        LegacyVanillaSpecialScans.forItem("minecraft:iron_block")),
+                (player, key) -> player.addResearch(key)).anySuccess());
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:blue_glazed_terracotta"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:red_terracotta"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forBlock("minecraft:red_glazed_terracotta"));
