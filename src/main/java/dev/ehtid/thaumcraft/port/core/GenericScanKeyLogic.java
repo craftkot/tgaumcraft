@@ -29,6 +29,25 @@ public final class GenericScanKeyLogic {
                 return forItem("minecraft:stained_hardened_clay", false, oldColor);
             }
         }
+        // Additional BETA26 metadata-bearing block item families flattened in 1.13.
+        // Match the final suffix, preserving multiword colors such as light_blue.
+        String[] oldBlockFamilies = {
+            "_stained_glass_pane", "stained_glass_pane",
+            "_stained_glass", "stained_glass",
+            "_concrete_powder", "concrete_powder",
+            "_concrete", "concrete",
+            "_wool", "wool",
+            "_carpet", "carpet"
+        };
+        for (int i = 0; i < oldBlockFamilies.length; i += 2) {
+            String suffix = oldBlockFamilies[i];
+            if (modernRegistryId.startsWith("minecraft:") && modernRegistryId.endsWith(suffix)) {
+                String color = modernRegistryId.substring("minecraft:".length(),
+                        modernRegistryId.length() - suffix.length());
+                int oldColor = legacyDyeColorMetadata(color);
+                if (oldColor >= 0) return forItem("minecraft:" + oldBlockFamilies[i + 1], false, oldColor);
+            }
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
