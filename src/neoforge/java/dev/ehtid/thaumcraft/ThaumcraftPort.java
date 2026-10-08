@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftRecipes;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.SalisMundusTransformQueue;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -24,6 +25,7 @@ public final class ThaumcraftPort {
         ThaumcraftMenus.register(modBus);
         ThaumcraftItems.register(modBus);
         ThaumcraftRecipes.register(modBus);
+        ThaumcraftSounds.register(modBus);
         ThaumcraftPlayerAttachments.register(modBus);
         modBus.addListener(ThaumcraftNetworking::registerPayloads);
 

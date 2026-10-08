@@ -1,0 +1,10 @@
+{
+  "scan": {
+    "sounds": [
+      {
+        "name": "thaumcraft:scan",
+        "stream": false
+      }
+    ]
+  }
+}
