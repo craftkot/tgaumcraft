@@ -122,6 +122,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
     @Override
     public void setItem(int slot, ItemStack stack) {
+        if (slot < 0 || slot >= getContainerSize()) return;
         if (!stack.isEmpty() && !canPlaceItem(slot, stack)) return;
         items.set(slot, stack);
         if (stack.getCount() > getMaxStackSize()) stack.setCount(getMaxStackSize());
