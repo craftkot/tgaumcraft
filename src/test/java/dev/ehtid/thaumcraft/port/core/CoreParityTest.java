@@ -956,6 +956,13 @@ public final class CoreParityTest {
         eq(.5f, LegacyVanillaBiomeTypes.auraModifier("MUTATED_PLAINS")); // RARE has no TC biomeInfo row -> catch fallback.
         eq(.5f, LegacyVanillaBiomeTypes.auraModifier("VOID")); // VOID likewise falls through BETA26's exception fallback.
         eq(62, LegacyVanillaBiomeTypes.table().size());
+
+        var hud = ThaumometerHudMath.calculate((short) 525, 262.5f, 0f);
+        eq(1f, hud.base()); eq(.5f, hud.vis()); eq(0f, hud.flux());
+        eq(42f, hud.visTop()); eq(42f, hud.fluxTop()); eq(8f, hud.baseTop());
+        var overflowHud = ThaumometerHudMath.calculate((short) 525, 525f, 525f);
+        eq(.5f, overflowHud.base()); eq(.5f, overflowHud.vis()); eq(.5f, overflowHud.flux());
+        eq(42f, overflowHud.visTop()); eq(10f, overflowHud.fluxTop()); eq(40f, overflowHud.baseTop());
     }
 
 
