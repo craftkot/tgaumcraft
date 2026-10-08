@@ -106,6 +106,14 @@ public final class GenericScanKeyLogic {
             return forItem("minecraft:" + oldVariant.substring(0, separator),
                     false, Integer.parseInt(oldVariant.substring(separator + 1)));
         }
+        // BETA26 bed ITEM has color metadata 0..15, using block-color order.
+        // This is the inventory item key, independent of bed head/foot/facing.
+        if (modernRegistryId.startsWith("minecraft:") && modernRegistryId.endsWith("_bed")) {
+            String color = modernRegistryId.substring("minecraft:".length(),
+                    modernRegistryId.length() - "_bed".length());
+            int oldColor = legacyDyeColorMetadata(color);
+            if (oldColor >= 0) return forItem("minecraft:bed", false, oldColor);
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
