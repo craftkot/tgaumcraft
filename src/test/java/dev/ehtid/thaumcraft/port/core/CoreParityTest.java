@@ -999,6 +999,9 @@ public final class CoreParityTest {
         eq(java.util.Set.of("!DRAGONBREATH"),LegacyVanillaSpecialScans.forItem("minecraft:dragon_breath"));
         eq(java.util.Set.of("!TOTEMUNDYING"),LegacyVanillaSpecialScans.forItem("minecraft:totem_of_undying"));
         eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forItem("minecraft:ender_pearl"));
+        eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forItem("minecraft:end_portal_frame"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:ender_eye"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:obsidian"));
         eq(java.util.Set.of("f_TELEPORT"),LegacyVanillaSpecialScans.forEntity("minecraft:enderman"));
         eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forBlock("minecraft:dispenser"));
         // ScanBlock installs an additional ScanItem matcher; BETA26 also explicitly
