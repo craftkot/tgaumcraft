@@ -103,11 +103,12 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
     @Override
     public ItemStack getItem(int slot) {
-        return items.get(slot);
+        return slot >= 0 && slot < items.size() ? items.get(slot) : ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeItem(int slot, int count) {
+        if (slot < 0 || slot >= items.size() || count <= 0) return ItemStack.EMPTY;
         ItemStack removed = ContainerHelper.removeItem(items, slot, count);
         if (!removed.isEmpty()) setChanged();
         return removed;
@@ -115,6 +116,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
     @Override
     public ItemStack removeItemNoUpdate(int slot) {
+        if (slot < 0 || slot >= items.size()) return ItemStack.EMPTY;
         ItemStack removed = ContainerHelper.takeItem(items, slot);
         if (!removed.isEmpty()) setChanged();
         return removed;
