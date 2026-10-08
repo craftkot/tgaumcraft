@@ -1056,6 +1056,13 @@ public final class CoreParityTest {
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_planks", false, 0));
         eq("!minecraft:mangrove_propagule0",
                 GenericScanKeyLogic.forModernItem("minecraft:mangrove_propagule", false, 0));
+        // BETA26 bed item metadata is the color index; 1.21 separates bed ids.
+        for (int metadata = 0; metadata < blockColors.length; metadata++) {
+            eq("!minecraft:bed" + metadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + blockColors[metadata] + "_bed", false, 0));
+        }
+        eq("!minecraft:unrecognized_bed0",
+                GenericScanKeyLogic.forModernItem("minecraft:unrecognized_bed", false, 0));
         eq("!minecraft:hardened_clay0",
                 GenericScanKeyLogic.forModernItem("minecraft:terracotta", false, 0));
         eq("!minecraft:blue_glazed_terracotta0",
