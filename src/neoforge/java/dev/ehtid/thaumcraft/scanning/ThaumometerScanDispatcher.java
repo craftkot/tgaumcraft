@@ -8,6 +8,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Guardian;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -53,7 +55,10 @@ public final class ThaumometerScanDispatcher {
         if (target instanceof Entity entity) {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
             String legacy = LegacyEntityAspectTable.legacyName(id);
-            return legacy == null ? new AspectListData() : LegacyEntityAspectTable.get(ASPECTS, legacy);
+            if (legacy == null) return new AspectListData();
+            boolean powered = entity instanceof Creeper creeper && creeper.isPowered();
+            boolean elder = entity instanceof Guardian guardian && guardian.isElder();
+            return LegacyEntityAspectTable.get(ASPECTS, legacy, powered, elder);
         }
         if (target instanceof BlockPos pos) {
             ItemStack stack = new ItemStack(player.level().getBlockState(pos).getBlock());

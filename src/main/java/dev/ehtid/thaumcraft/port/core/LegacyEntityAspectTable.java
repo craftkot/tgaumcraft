@@ -61,6 +61,12 @@ public final class LegacyEntityAspectTable {
         };
     }
 
+    public static AspectListData get(AspectRegistry a, String n, boolean poweredCreeper, boolean elderGuardian) {
+        if ("Creeper".equals(n) && poweredCreeper) return list(a.PLANT,15,a.FIRE,15,a.ENERGY,15);
+        if ("Guardian".equals(n) && elderGuardian) return list(a.BEAST,15,a.ELDRITCH,15,a.WATER,15);
+        return get(a,n);
+    }
+
     public static String legacyName(String id) {
         return MODERN_TO_LEGACY.get(id);
     }
