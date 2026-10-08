@@ -244,7 +244,7 @@ public final class ThaumometerScanDispatcher {
         String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         // 1.21 no longer exposes the 1.12 metadata integer. Damageable stacks still follow the exact
         // legacy no-metadata branch; non-damageable compatibility metadata remains 0 until state mapping lands.
-        return GenericScanKeyLogic.forItem(id, stack.isDamageableItem(), 0);
+        return GenericScanKeyLogic.forModernItem(id, stack.isDamageableItem(), 0);
     }
 }
 
