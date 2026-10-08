@@ -98,8 +98,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         for (int i = 16; i < 52; i++) {
             Slot slot = slots.get(i);
             ItemStack existing = slot.getItem();
-            if (existing.isEmpty() && slot.mayPlace(stack)) return true;
-            if (!existing.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack)
+            if (existing.isEmpty() && slot.mayPlace(stack) && slot.isActive()) return true;
+            if (!existing.isEmpty() && slot.isActive() && slot.mayPlace(stack)
+                    && ItemStack.isSameItemSameComponents(existing, stack)
                     && existing.getCount() < Math.min(slot.getMaxStackSize(existing), existing.getMaxStackSize()))
                 return true;
         }
