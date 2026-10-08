@@ -972,6 +972,21 @@ public final class CoreParityTest {
         eq("!minecraft:iron_ingot0", GenericScanKeyLogic.forModernItem("minecraft:iron_ingot", false, 0));
         eq("!minecraft:diamond_sword", GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 20));
         eq("!minecraft:dye4", GenericScanKeyLogic.forItem("minecraft:dye", false, 4));
+        String[] dyes = {
+            "black", "red", "green", "brown", "blue", "purple", "cyan", "light_gray",
+            "gray", "pink", "lime", "yellow", "light_blue", "magenta", "orange", "white"
+        };
+        for (int metadata = 0; metadata < dyes.length; metadata++) {
+            eq("!minecraft:dye" + metadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + dyes[metadata] + "_dye", false, 0));
+        }
+        eq("!minecraft:dye0", GenericScanKeyLogic.forModernItem("minecraft:ink_sac", false, 0));
+        eq("!minecraft:dye3", GenericScanKeyLogic.forModernItem("minecraft:cocoa_beans", false, 0));
+        eq("!minecraft:dye15", GenericScanKeyLogic.forModernItem("minecraft:bone_meal", false, 0));
+        eq("!minecraft:glow_ink_sac0",
+                GenericScanKeyLogic.forModernItem("minecraft:glow_ink_sac", false, 0));
+        eq("!minecraft:diamond_sword",
+                GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 83));
     }
 
     private static void testCriticalScanHandlers() {
