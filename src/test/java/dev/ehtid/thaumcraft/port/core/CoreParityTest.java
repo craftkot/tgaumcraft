@@ -929,6 +929,13 @@ public final class CoreParityTest {
         w2.set(4,new ArcaneWorkbenchRuntime.Stack("minecraft:glass_pane",1,null));
         for(int i=0;i<6;i++) w2.set(9+i,new ArcaneWorkbenchRuntime.Stack("thaumcraft:crystal_essence",1,ArcaneWorkbenchRuntime.PRIMAL_ORDER[i]));
         aura2.set(ck,3); var neg=ThaumometerRecipeLogic.craft(k,w2,aura2,ck,1.25f); isTrue(neg.crafted()); eq(-5,neg.visCost()); eq(3f,aura2.get(ck));
+
+        // AuraHandler.generateAura arithmetic is preserved independently from loader biome mapping.
+        eq(250, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,0.0));
+        eq(275, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,1.0));
+        eq(225, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,-1.0));
+        eq(500, AuraGenerationLogic.generatedBase(2f,2f,2f,2f,2f,0.0));
+        eq(0, AuraGenerationLogic.generatedBase(.5f,.5f,.5f,.5f,.5f,-20.0));
     }
 
 
