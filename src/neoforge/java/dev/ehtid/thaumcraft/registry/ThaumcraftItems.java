@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.registry;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
+import dev.ehtid.thaumcraft.item.ThaumometerItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -21,8 +22,8 @@ public final class ThaumcraftItems {
             "salis_mundus", SalisMundusItem::new, new Item.Properties());
     public static final DeferredItem<Item> THAUMONOMICON = ITEMS.registerSimpleItem(
             "thaumonomicon", new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> THAUMOMETER = ITEMS.registerSimpleItem(
-            "thaumometer", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<ThaumometerItem> THAUMOMETER = ITEMS.registerItem(
+            "thaumometer", ThaumometerItem::new, new Item.Properties().stacksTo(1));
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
 
