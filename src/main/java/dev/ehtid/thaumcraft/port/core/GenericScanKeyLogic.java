@@ -77,6 +77,11 @@ public final class GenericScanKeyLogic {
         // item damage metadata, not state orientation or a 1.21 block property.
         // Do not map newly introduced polished/deepslate variants to old blocks.
         String oldVariant = switch (modernRegistryId) {
+            // 1.12 grass was the grass-covered dirt block; tallgrass was a separate
+            // block/item with subtype metadata for shrub, grass, and fern.
+            case "minecraft:grass_block" -> "grass|0";
+            case "minecraft:short_grass" -> "tallgrass|1";
+            case "minecraft:fern" -> "tallgrass|2";
             case "minecraft:granite" -> "stone|1";
             case "minecraft:polished_granite" -> "stone|2";
             case "minecraft:diorite" -> "stone|3";
