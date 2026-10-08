@@ -91,7 +91,10 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         if (!canCraftThaumometer(knowledge, totalDiscount)) return false;
         int cost = ThaumometerRecipeLogic.discountedVis(totalDiscount);
         for (int slot : new int[]{1, 3, 4, 5, 7, 9, 10, 11, 12, 13, 14}) items.get(slot).shrink(1);
-        vis -= cost;
+        // BETA26 SlotCraftingArcaneWorkbench only calls spendAura when the
+        // discounted cost is strictly positive. A >100% discount therefore
+        // permits the craft but must NOT add aura back to the workbench.
+        if (cost > 0) vis -= cost;
         setChanged();
         knowledge.addResearch(ThaumometerRecipeLogic.LEGACY_CRAFT_MARKER);
         return true;
