@@ -98,6 +98,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         ItemStack stack = source.getItem();
         ItemStack before = stack.copy();
         if (index == 0) {
+            if (!(player instanceof ServerPlayer sp) || !canCraftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
             if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
         } else if (index < 16) {
             if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
@@ -115,6 +116,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if (stack.isEmpty()) source.set(ItemStack.EMPTY);
         else source.setChanged();
         source.onTake(player, stack);
+        broadcastChanges();
         return before;
     }
 
