@@ -14,13 +14,19 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     public ArcaneWorkbenchScreen(ArcaneWorkbenchMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        imageHeight = 222;
-        inventoryLabelY = 94;
+        imageWidth = 190;
+        imageHeight = 234;
+        inventoryLabelX = 16;
+        inventoryLabelY = 140;
+        titleLabelX = 16;
+        titleLabelY = 5;
     }
 
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
-        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight);
+        // Temporary vanilla texture until the original BETA26 art is migrated.
+        // Do not sample outside the 256x256 texture or stretch beyond its source bounds.
+        graphics.blit(TEXTURE, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
     }
 
     @Override
