@@ -24,13 +24,14 @@ public final class LegacyVanillaSpecialScans {
     public static final String TELEPORT = "f_TELEPORT";
     public static final String DISPENSER = "f_DISPENSER";
     public static final String MAT_CLAY = "f_MATCLAY";
+    public static final String MAT_IRON = "f_MATIRON";
     public static final String ARROW = "f_arrow";
     public static final String FIREBALL = "f_fireball";
     public static final String SPIT = "f_spit";
 
     public static final List<String> REGISTRATION_ORDER = List.of(
             GOLEM, SPIDER, BAT, FLY,
-            DRAGON_BREATH, TOTEM_UNDYING, TELEPORT, DISPENSER, MAT_CLAY,
+            DRAGON_BREATH, TOTEM_UNDYING, TELEPORT, DISPENSER, MAT_CLAY, MAT_IRON,
             ARROW, FIREBALL, SPIT);
 
     public static Set<String> forItem(String itemId) {
@@ -43,6 +44,11 @@ public final class LegacyVanillaSpecialScans {
         // ScanBlock also installs companion item handlers; dispenser has an explicit
         // ScanItem registration in BETA26 as well.
         if ("minecraft:dispenser".equals(itemId)) out.add(DISPENSER);
+        // BETA26 ScanOreDictionary: oreIron, ingotIron, blockIron, plateIron.
+        // Only the three identities present in vanilla 1.12 are translated here;
+        // third-party ore-dictionary/tag matching remains a separate bridge.
+        if ("minecraft:iron_ore".equals(itemId) || "minecraft:iron_ingot".equals(itemId)
+                || "minecraft:iron_block".equals(itemId)) out.add(MAT_IRON);
         if ("minecraft:arrow".equals(itemId)) out.add(ARROW);
         return Set.copyOf(out);
     }
@@ -95,6 +101,7 @@ public final class LegacyVanillaSpecialScans {
                 || "minecraft:end_portal_frame".equals(blockId)) out.add(TELEPORT);
         if ("minecraft:dispenser".equals(blockId)) out.add(DISPENSER);
         if ("minecraft:clay".equals(blockId) || isTerracotta(blockId)) out.add(MAT_CLAY);
+        if ("minecraft:iron_ore".equals(blockId) || "minecraft:iron_block".equals(blockId)) out.add(MAT_IRON);
         return Set.copyOf(out);
     }
 
