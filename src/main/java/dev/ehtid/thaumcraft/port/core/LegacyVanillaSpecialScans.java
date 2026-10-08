@@ -38,7 +38,11 @@ public final class LegacyVanillaSpecialScans {
         if ("minecraft:dragon_breath".equals(itemId)) out.add(DRAGON_BREATH);
         if ("minecraft:totem_of_undying".equals(itemId)) out.add(TOTEM_UNDYING);
         if ("minecraft:ender_pearl".equals(itemId)) out.add(TELEPORT);
-        if ("minecraft:clay_ball".equals(itemId)) out.add(MAT_CLAY);
+        if ("minecraft:clay_ball".equals(itemId) || "minecraft:clay".equals(itemId)
+                || isTerracotta(itemId)) out.add(MAT_CLAY);
+        // ScanBlock also installs companion item handlers; dispenser has an explicit
+        // ScanItem registration in BETA26 as well.
+        if ("minecraft:dispenser".equals(itemId)) out.add(DISPENSER);
         if ("minecraft:arrow".equals(itemId)) out.add(ARROW);
         return Set.copyOf(out);
     }
@@ -90,7 +94,7 @@ public final class LegacyVanillaSpecialScans {
                 || "minecraft:end_portal".equals(blockId)
                 || "minecraft:end_portal_frame".equals(blockId)) out.add(TELEPORT);
         if ("minecraft:dispenser".equals(blockId)) out.add(DISPENSER);
-        if (isTerracotta(blockId)) out.add(MAT_CLAY);
+        if ("minecraft:clay".equals(blockId) || isTerracotta(blockId)) out.add(MAT_CLAY);
         return Set.copyOf(out);
     }
 
