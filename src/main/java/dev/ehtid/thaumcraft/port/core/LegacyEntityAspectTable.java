@@ -87,7 +87,36 @@ public final class LegacyEntityAspectTable {
     }
 
     public static String legacyName(String id) {
-        return MODERN_TO_LEGACY.get(id);
+        String mapped = MODERN_TO_LEGACY.get(id);
+        if (mapped != null) return mapped;
+        if (id != null && id.startsWith("thaumcraft:")) return customLegacyName(id.substring("thaumcraft:".length()));
+        return null;
+    }
+
+    private static String customLegacyName(String path) {
+        return switch (path) {
+            case "flux_rift" -> "Thaumcraft.FluxRift";
+            case "firebat" -> "Thaumcraft.Firebat";
+            case "thaum_slime" -> "Thaumcraft.ThaumSlime";
+            case "brainy_zombie" -> "Thaumcraft.BrainyZombie";
+            case "giant_brainy_zombie" -> "Thaumcraft.GiantBrainyZombie";
+            case "taintacle" -> "Thaumcraft.Taintacle";
+            case "taintacle_tiny" -> "Thaumcraft.TaintacleTiny";
+            case "taint_swarm" -> "Thaumcraft.TaintSwarm";
+            case "mind_spider" -> "Thaumcraft.MindSpider";
+            case "eldritch_guardian" -> "Thaumcraft.EldritchGuardian";
+            case "cultist_knight" -> "Thaumcraft.CultistKnight";
+            case "cultist_cleric" -> "Thaumcraft.CultistCleric";
+            case "eldritch_crab" -> "Thaumcraft.EldritchCrab";
+            case "inhabited_zombie" -> "Thaumcraft.InhabitedZombie";
+            case "eldritch_warden" -> "Thaumcraft.EldritchWarden";
+            case "eldritch_golem" -> "Thaumcraft.EldritchGolem";
+            case "cultist_leader" -> "Thaumcraft.CultistLeader";
+            case "taintacle_giant" -> "Thaumcraft.TaintacleGiant";
+            case "wisp" -> "Thaumcraft.Wisp";
+            case "golem" -> "Thaumcraft.Golem";
+            default -> null;
+        };
     }
 
     private static final Map<String,String> MODERN_TO_LEGACY = Map.ofEntries(
