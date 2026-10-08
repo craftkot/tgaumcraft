@@ -18,7 +18,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -166,7 +165,7 @@ public final class ThaumometerScanDispatcher {
             ItemStack stack = scanningStackFor(player, pos);
             return stack.isEmpty() ? null : GenericScanKeyLogic.forModernItem(
                     BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
-                    stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
+                    stack.isDamageableItem(), 0));
         }
         return null;
     }
@@ -221,24 +220,9 @@ public final class ThaumometerScanDispatcher {
         return ItemStack.EMPTY;
     }
 
-    /**
-     * Only project metadata where the legacy numeric encoding is known.
-     * Unmapped modern states deliberately fall back to zero rather than inventing
-     * a metadata value based on arbitrary property names.
-     */
-    private static int legacyBlockMetadata(BlockState state) {
-        if (state.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) {
-            Direction direction = state.getValue(BlockStateProperties.HORIZONTAL_FACING);
-            return switch (direction) {
-                case NORTH -> 2;
-                case SOUTH -> 3;
-                case WEST -> 4;
-                case EAST -> 5;
-                default -> 0;
-            };
-        }
-        return 0;
-    }
+    // ScanGeneric builds the key from the picked ItemStack's damage metadata,
+    // NOT from the scanned block's orientation. Modern pick stacks expose no
+    // numeric variant metadata; forModernItem reconstructs verified 1.12 variants.
 
     private static String genericItemKey(ItemStack stack) {
         String id = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
