@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * Server-owned, persisted BETA26 workbench inventory:
  * crafting 0..8; six ordered primal Crystal Essence slots 9..14.
- * The menu/vis transaction bridge is deliberately a separate follow-up.
+ * Server-authoritative vis transactions are exposed through the menu bridge.
  */
 public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Container {
     private static final String TAG_VIS = "vis";
