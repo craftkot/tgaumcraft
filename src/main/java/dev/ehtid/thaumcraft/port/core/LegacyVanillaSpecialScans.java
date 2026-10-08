@@ -38,7 +38,10 @@ public final class LegacyVanillaSpecialScans {
         LinkedHashSet<String> out = new LinkedHashSet<>();
         if ("minecraft:dragon_breath".equals(itemId)) out.add(DRAGON_BREATH);
         if ("minecraft:totem_of_undying".equals(itemId)) out.add(TOTEM_UNDYING);
-        if ("minecraft:ender_pearl".equals(itemId)) out.add(TELEPORT);
+        // End portal frames are item forms of a BETA26 ScanBlock registration.
+        // Nether/end portal blocks have no corresponding obtainable inventory item.
+        if ("minecraft:ender_pearl".equals(itemId)
+                || "minecraft:end_portal_frame".equals(itemId)) out.add(TELEPORT);
         if ("minecraft:clay_ball".equals(itemId) || "minecraft:clay".equals(itemId)
                 || isTerracotta(itemId)) out.add(MAT_CLAY);
         // ScanBlock also installs companion item handlers; dispenser has an explicit
