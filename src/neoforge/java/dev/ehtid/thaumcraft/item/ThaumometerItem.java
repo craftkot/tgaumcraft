@@ -21,8 +21,11 @@ public final class ThaumometerItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (level.isClientSide()) return InteractionResultHolder.pass(stack);
-        boolean scanned = player instanceof ServerPlayer serverPlayer && ThaumometerScanDispatcher.scan(serverPlayer);
-        return scanned ? InteractionResultHolder.success(stack) : InteractionResultHolder.pass(stack);
+        // BETA26 always returned SUCCESS for Thaumometer right-click. The server
+        // attempted scanTheThing even when the target was null/already scanned;
+        // client-side FX/sound are a separate visual follow-up.
+        if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer)
+            ThaumometerScanDispatcher.scan(serverPlayer);
+        return InteractionResultHolder.success(stack);
     }
 }
