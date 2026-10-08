@@ -43,11 +43,13 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             }
         });
         for (int i = 0; i < 9; i++) {
-            addSlot(new Slot(bench, i, 8 + (i % 3) * 18, 18 + (i / 3) * 18));
+            addSlot(new Slot(bench, i, 40 + (i % 3) * 24, 40 + (i / 3) * 24));
         }
+        final int[] crystalX = {64, 17, 112, 17, 112, 64};
+        final int[] crystalY = {13, 35, 35, 93, 93, 115};
         for (int i = 9; i < 15; i++) {
             final int slot = i;
-            addSlot(new Slot(bench, slot, 8 + (slot - 9) * 18, 76) {
+            addSlot(new Slot(bench, slot, crystalX[slot - 9], crystalY[slot - 9]) {
                 @Override public boolean mayPlace(ItemStack stack) {
                     return bench.canPlaceItem(slot, stack);
                 }
@@ -55,9 +57,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         }
         for (int row = 0; row < 3; row++)
             for (int col = 0; col < 9; col++)
-                addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 104 + row * 18));
+                addSlot(new Slot(inventory, col + row * 9 + 9, 16 + col * 18, 151 + row * 18));
         for (int col = 0; col < 9; col++)
-            addSlot(new Slot(inventory, col, 8 + col * 18, 162));
+            addSlot(new Slot(inventory, col, 16 + col * 18, 209));
     }
 
     private boolean canCraftThaumometer(ServerPlayer player, float totalDiscount) {
