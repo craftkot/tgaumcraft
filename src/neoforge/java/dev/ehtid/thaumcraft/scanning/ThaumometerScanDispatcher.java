@@ -25,8 +25,17 @@ public final class ThaumometerScanDispatcher {
 
     private ThaumometerScanDispatcher() {}
 
+    public static boolean scan(ServerPlayer player) {
+        Object target = ThaumometerTargeting.findScanTarget(player.level(), player);
+        return scan(player, target, aspectsFor(target));
+    }
+
     public static boolean scan(ServerPlayer player, AspectListData scannedAspects) {
         Object target = ThaumometerTargeting.findScanTarget(player.level(), player);
+        return scan(player, target, scannedAspects);
+    }
+
+    private static boolean scan(ServerPlayer player, Object target, AspectListData scannedAspects) {
         if (target == null || scannedAspects == null || scannedAspects.size() == 0) return false;
 
         String genericKey = genericKey(player, target);
@@ -37,6 +46,15 @@ public final class ThaumometerScanDispatcher {
                 (ignored, key) -> knowledge.addResearch(key));
         if (result.anySuccess()) ThaumcraftNetworking.sync(player);
         return result.anySuccess();
+    }
+
+    private static AspectListData aspectsFor(Object target) {
+        if (target instanceof Entity entity && !(entity instanceof ItemEntity)) {
+            String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
+            String legacy = LegacyEntityAspectTable.legacyName(id);
+            return legacy == null ? new AspectListData() : LegacyEntityAspectTable.get(ASPECTS, legacy);
+        }
+        return new AspectListData();
     }
 
     static String genericKey(ServerPlayer player, Object target) {
