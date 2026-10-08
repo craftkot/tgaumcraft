@@ -32,6 +32,18 @@ public final class LegacyEntityAspectTable {
             case "Bat" -> list(a.BEAST,5,a.FLIGHT,5,a.DARKNESS,5);
             case "Spider" -> list(a.BEAST,10,a.ENTROPY,10,a.TRAP,10);
             case "Slime" -> list(a.LIFE,10,a.WATER,10,a.ALCHEMY,5);
+            case "MagmaCube" -> list(a.LIFE,10,a.FIRE,10,a.ALCHEMY,5);
+            case "Blaze" -> list(a.FIRE,20,a.FLIGHT,10,a.MAGIC,5);
+            case "Ghast" -> list(a.BEAST,10,a.FLIGHT,15,a.FIRE,10);
+            case "Enderman" -> list(a.MAN,10,a.VOID,20,a.MOTION,10);
+            case "Endermite" -> list(a.BEAST,5,a.VOID,10,a.ENTROPY,5);
+            case "Silverfish" -> list(a.BEAST,5,a.EARTH,5,a.ENTROPY,5);
+            case "Guardian" -> list(a.BEAST,15,a.WATER,15,a.AVERSION,10);
+            case "ElderGuardian" -> list(a.BEAST,20,a.WATER,20,a.AVERSION,15);
+            case "Witch" -> list(a.MAN,10,a.MAGIC,15,a.ALCHEMY,10);
+            case "Villager" -> list(a.MAN,15,a.DESIRE,10);
+            case "IronGolem" -> list(a.METAL,20,a.MAN,5,a.MECHANISM,10,a.PROTECT,10);
+            case "Shulker" -> list(a.BEAST,10,a.PROTECT,15,a.VOID,10);
             default -> new AspectListData();
         };
     }
@@ -50,7 +62,13 @@ public final class LegacyEntityAspectTable {
                 Map.entry("minecraft:ocelot","Ozelot"), Map.entry("minecraft:chicken","Chicken"),
                 Map.entry("minecraft:squid","Squid"), Map.entry("minecraft:wolf","Wolf"),
                 Map.entry("minecraft:bat","Bat"), Map.entry("minecraft:spider","Spider"),
-                Map.entry("minecraft:slime","Slime")
+                Map.entry("minecraft:slime","Slime"), Map.entry("minecraft:magma_cube","MagmaCube"),
+                Map.entry("minecraft:blaze","Blaze"), Map.entry("minecraft:ghast","Ghast"),
+                Map.entry("minecraft:enderman","Enderman"), Map.entry("minecraft:endermite","Endermite"),
+                Map.entry("minecraft:silverfish","Silverfish"), Map.entry("minecraft:guardian","Guardian"),
+                Map.entry("minecraft:elder_guardian","ElderGuardian"), Map.entry("minecraft:witch","Witch"),
+                Map.entry("minecraft:villager","Villager"), Map.entry("minecraft:iron_golem","IronGolem"),
+                Map.entry("minecraft:shulker","Shulker")
         ).get(modernId);
     }
 
