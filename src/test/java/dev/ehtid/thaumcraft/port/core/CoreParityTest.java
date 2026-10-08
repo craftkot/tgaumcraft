@@ -1023,6 +1023,8 @@ public final class CoreParityTest {
         eq("!minecraft:cherry_log0",
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_log", false, 0));
         String[][] classicVariants = {
+            {"grass_block", "grass", "0"},
+            {"short_grass", "tallgrass", "1"}, {"fern", "tallgrass", "2"},
             {"granite", "stone", "1"}, {"polished_granite", "stone", "2"},
             {"diorite", "stone", "3"}, {"polished_diorite", "stone", "4"},
             {"andesite", "stone", "5"}, {"polished_andesite", "stone", "6"},
