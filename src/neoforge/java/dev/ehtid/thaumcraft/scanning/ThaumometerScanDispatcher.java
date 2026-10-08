@@ -9,7 +9,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
-import net.minecraft.world.entity.monster.Guardian;
+import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -57,7 +57,7 @@ public final class ThaumometerScanDispatcher {
             String legacy = LegacyEntityAspectTable.legacyName(id);
             if (legacy == null) return new AspectListData();
             boolean powered = entity instanceof Creeper creeper && creeper.isPowered();
-            boolean elder = entity instanceof Guardian guardian && guardian.isElder();
+            boolean elder = entity instanceof ElderGuardian;
             return LegacyEntityAspectTable.get(ASPECTS, legacy, powered, elder);
         }
         if (target instanceof BlockPos pos) {
