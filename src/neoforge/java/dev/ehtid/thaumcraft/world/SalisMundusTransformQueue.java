@@ -17,6 +17,8 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
@@ -29,11 +31,18 @@ public final class SalisMundusTransformQueue {
                            UUID playerId, FirstStepsBootstrapLogic.DustTarget target, long dueGameTime) {}
 
     private static final List<Pending> PENDING = new ArrayList<>();
+    private static final Set<MinecraftServer> ACTIVE_SERVERS = new HashSet<>();
 
     public static void schedule(ServerLevel level, BlockPos pos, BlockState source, ServerPlayer player,
                                 FirstStepsBootstrapLogic.DustTarget target) {
+        ACTIVE_SERVERS.add(level.getServer());
         PENDING.add(new Pending(level.dimension(), pos.immutable(), source, player.getUUID(), target,
                 level.getGameTime() + FirstStepsBootstrapLogic.dustDelayTicks()));
+    }
+
+    public static void onServerStopped(net.neoforged.neoforge.event.server.ServerStoppedEvent event) {
+        PENDING.clear();
+        ACTIVE_SERVERS.clear();
     }
 
     public static void onServerTick(ServerTickEvent.Post event) {
