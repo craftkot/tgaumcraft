@@ -969,7 +969,7 @@ public final class CoreParityTest {
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(50,scans.size()); // 37 ScanAspect + ScanGeneric + twelve mapped vanilla special registrations.
+        eq(51,scans.size()); // 37 ScanAspect + ScanGeneric + thirteen mapped vanilla special registrations.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
@@ -1008,6 +1008,13 @@ public final class CoreParityTest {
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:clay"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:clay"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:blue_terracotta"));
+        eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_ingot"));
+        eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_ore"));
+        eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_block"));
+        eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forBlock("minecraft:iron_ore"));
+        eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forBlock("minecraft:iron_block"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:raw_iron"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:iron_nugget"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:blue_glazed_terracotta"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:red_terracotta"));
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forBlock("minecraft:red_glazed_terracotta"));
