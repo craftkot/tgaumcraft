@@ -983,6 +983,20 @@ public final class CoreParityTest {
         eq("!minecraft:dye0", GenericScanKeyLogic.forModernItem("minecraft:ink_sac", false, 0));
         eq("!minecraft:dye3", GenericScanKeyLogic.forModernItem("minecraft:cocoa_beans", false, 0));
         eq("!minecraft:dye15", GenericScanKeyLogic.forModernItem("minecraft:bone_meal", false, 0));
+        String[] blockColors = {
+            "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+            "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black"
+        };
+        for (int metadata = 0; metadata < blockColors.length; metadata++) {
+            eq("!minecraft:stained_hardened_clay" + metadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + blockColors[metadata] + "_terracotta", false, 0));
+        }
+        eq("!minecraft:hardened_clay0",
+                GenericScanKeyLogic.forModernItem("minecraft:terracotta", false, 0));
+        eq("!minecraft:blue_glazed_terracotta0",
+                GenericScanKeyLogic.forModernItem("minecraft:blue_glazed_terracotta", false, 0));
+        eq("!minecraft:unrecognized_terracotta0",
+                GenericScanKeyLogic.forModernItem("minecraft:unrecognized_terracotta", false, 0));
         eq("!minecraft:glow_ink_sac0",
                 GenericScanKeyLogic.forModernItem("minecraft:glow_ink_sac", false, 0));
         eq("!minecraft:diamond_sword",
