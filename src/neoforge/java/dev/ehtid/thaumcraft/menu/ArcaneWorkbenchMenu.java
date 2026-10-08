@@ -92,6 +92,18 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return bench.stillValid(player);
     }
 
+    private boolean hasInventorySpace(Player player, ItemStack stack) {
+        for (int i = 16; i < 52; i++) {
+            Slot slot = slots.get(i);
+            ItemStack existing = slot.getItem();
+            if (existing.isEmpty() && slot.mayPlace(stack)) return true;
+            if (!existing.isEmpty() && ItemStack.isSameItemSameComponents(existing, stack)
+                    && existing.getCount() < Math.min(slot.getMaxStackSize(existing), existing.getMaxStackSize()))
+                return true;
+        }
+        return false;
+    }
+
     @Override public ItemStack quickMoveStack(Player player, int index) {
         if (index < 0 || index >= slots.size()) return ItemStack.EMPTY;
         Slot source = slots.get(index);
@@ -100,10 +112,15 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         ItemStack before = stack.copy();
         if (index == 0) {
             if (!(player instanceof ServerPlayer sp) || !canCraftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
-            if (!moveItemStackTo(stack, 16, 52, true)) return ItemStack.EMPTY;
+            if (!hasInventorySpace(player, stack)) return ItemStack.EMPTY;
             // The output stack is virtual: crafting commits exactly once after
             // inventory insertion, and the server refreshes the next preview.
             if (!craftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
+            ItemStack crafted = new ItemStack(ThaumcraftItems.THAUMOMETER.get());
+            if (!moveItemStackTo(crafted, 16, 52, true)) {
+                // Defensive fallback: a concurrently filled inventory must not delete the item.
+                player.drop(crafted, false);
+            }
             broadcastChanges();
             return before;
         } else if (index < 16) {
