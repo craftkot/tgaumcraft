@@ -1004,6 +1004,17 @@ public final class CoreParityTest {
                                 "minecraft:" + blockColors[metadata] + family[0], false, 0));
             }
         }
+        String[] wood = {"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"};
+        for (int metadata = 0; metadata < wood.length; metadata++) {
+            eq("!minecraft:planks" + metadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_planks", false, 0));
+            eq("!minecraft:sapling" + metadata,
+                    GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_sapling", false, 0));
+        }
+        eq("!minecraft:cherry_planks0",
+                GenericScanKeyLogic.forModernItem("minecraft:cherry_planks", false, 0));
+        eq("!minecraft:mangrove_propagule0",
+                GenericScanKeyLogic.forModernItem("minecraft:mangrove_propagule", false, 0));
         eq("!minecraft:hardened_clay0",
                 GenericScanKeyLogic.forModernItem("minecraft:terracotta", false, 0));
         eq("!minecraft:blue_glazed_terracotta0",
