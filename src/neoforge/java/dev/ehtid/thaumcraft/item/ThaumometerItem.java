@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.item;
 
+import dev.ehtid.thaumcraft.client.ThaumometerRuneFx;
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
@@ -30,6 +31,7 @@ public final class ThaumometerItem extends Item {
         // BETA26 always played the scan sound client-side at 0.5 volume / 1.0 pitch,
         // independently from whether ScanningManager actually discovered something.
         if (level.isClientSide()) {
+            ThaumometerRuneFx.draw(level, player);
             level.playLocalSound(player.getX(), player.getY(), player.getZ(),
                     ThaumcraftSounds.SCAN.get(), SoundSource.PLAYERS, 0.5F, 1.0F, false);
         } else if (player instanceof ServerPlayer serverPlayer) {
