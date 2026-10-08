@@ -31,6 +31,7 @@ public final class CoreParityTest {
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
         testFirstStepsVerticalSlice();
+        testLegacyLapisGenericIdentity();
         testCriticalScanHandlers();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
@@ -965,6 +966,13 @@ public final class CoreParityTest {
         eq(42f, overflowHud.visTop()); eq(10f, overflowHud.fluxTop()); eq(40f, overflowHud.baseTop());
     }
 
+
+    private static void testLegacyLapisGenericIdentity() {
+        eq("!minecraft:dye4", GenericScanKeyLogic.forModernItem("minecraft:lapis_lazuli", false, 0));
+        eq("!minecraft:iron_ingot0", GenericScanKeyLogic.forModernItem("minecraft:iron_ingot", false, 0));
+        eq("!minecraft:diamond_sword", GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 20));
+        eq("!minecraft:dye4", GenericScanKeyLogic.forItem("minecraft:dye", false, 4));
+    }
 
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
