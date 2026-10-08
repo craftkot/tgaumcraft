@@ -49,6 +49,24 @@ jobs:
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 
+      - name: Dedicated server smoke test
+        shell: bash
+        run: |
+          mkdir -p run
+          echo "eula=true" > run/eula.txt
+          set +e
+          timeout 90s gradle runServer --no-daemon > server-smoke.log 2>&1
+          code=$?
+          set -e
+          cat server-smoke.log
+          if grep -Eiq "Exception in server tick loop|Failed to start the minecraft server|Mod loading has failed|Crash report" server-smoke.log; then
+            exit 1
+          fi
+          if ! grep -Eq 'Done \([^)]*\)!' server-smoke.log; then
+            echo "Dedicated server never reached ready state (exit=$code)"
+            exit 1
+          fi
+
       - name: Upload built jars
         if: success()
         uses: actions/upload-artifact@v4
