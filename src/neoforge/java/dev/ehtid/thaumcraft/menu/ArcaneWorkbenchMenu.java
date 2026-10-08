@@ -63,14 +63,14 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private boolean canCraftThaumometer(ServerPlayer player, float totalDiscount) {
-        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return false;
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench) || !stillValid(player)) return false;
         return workbench.canCraftThaumometer(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
     public boolean craftThaumometer(ServerPlayer player, float totalDiscount) {
-        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return false;
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench) || !stillValid(player)) return false;
         var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         if (!workbench.craftThaumometer(knowledge, totalDiscount)) return false;
         ThaumcraftNetworking.sync(player);
