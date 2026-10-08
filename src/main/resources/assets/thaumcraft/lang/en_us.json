@@ -2,5 +2,8 @@
   "container.thaumcraft.arcane_workbench": "Arcane Workbench",
   "workbench.available": "available",
   "workbench.cost": "vis",
-  "workbench.discount": "discount"
+  "workbench.discount": "discount",
+  "tc.unknownobject": "Nothing new can be learned from this.",
+  "tc.knownobject": "You have learned something new.",
+  "tc.invtoolarge": "Inventory too large. Only scanning first 100 items."
 }

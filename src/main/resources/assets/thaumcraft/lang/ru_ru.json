@@ -2,5 +2,8 @@
   "container.thaumcraft.arcane_workbench": "Магический верстак",
   "workbench.available": "доступно",
   "workbench.cost": "вис",
-  "workbench.discount": "скидка"
+  "workbench.discount": "скидка",
+  "tc.unknownobject": "Из этого нельзя узнать ничего нового.",
+  "tc.knownobject": "Вы узнали что-то новое.",
+  "tc.invtoolarge": "Инвентарь слишком большой. Будет просканировано только первые 100 предметов."
 }

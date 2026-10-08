@@ -5,6 +5,8 @@ import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -51,6 +53,22 @@ public final class ThaumometerScanDispatcher {
         var result = SCANS.scanTheThing(knowledge,
                 new CriticalScanHandlers.Target(genericKey, scannedAspects),
                 (ignored, key) -> knowledge.addResearch(key));
+
+        // BETA26 ScanningManager feedback is an action-bar TextComponentString:
+        // §5§o tc.unknownobject or §a§o tc.knownobject. Any unkeyed success
+        // suppresses both messages.
+        if (result.feedback() == ScanningService.Feedback.UNKNOWN_OBJECT) {
+            player.displayClientMessage(
+                    Component.translatable("tc.unknownobject")
+                            .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
+                    true);
+        } else if (result.feedback() == ScanningService.Feedback.KNOWN_OBJECT) {
+            player.displayClientMessage(
+                    Component.translatable("tc.knownobject")
+                            .withStyle(ChatFormatting.GREEN, ChatFormatting.ITALIC),
+                    true);
+        }
+
         if (result.anySuccess()) ThaumcraftNetworking.sync(player);
         return result.anySuccess();
     }
