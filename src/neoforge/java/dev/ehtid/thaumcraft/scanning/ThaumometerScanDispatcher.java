@@ -21,6 +21,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 
 /**
  * Server-authoritative bridge from the real Thaumometer target to the loader-neutral
@@ -48,35 +50,45 @@ public final class ThaumometerScanDispatcher {
     }
 
     private static boolean scan(ServerPlayer player, Object target, AspectListData scannedAspects) {
-        if (target == null || scannedAspects == null || scannedAspects.size() == 0) return false;
+        if (target == null) return false;
 
+        boolean anySuccess = false;
         String genericKey = genericKey(player, target);
-        if (genericKey == null) return false;
-        PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
-        var result = SCANS.scanTheThing(knowledge,
-                new CriticalScanHandlers.Target(genericKey, scannedAspects),
-                (ignored, key) -> knowledge.addResearch(key));
+        if (genericKey != null && scannedAspects != null && scannedAspects.size() > 0) {
+            PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+            var result = SCANS.scanTheThing(knowledge,
+                    new CriticalScanHandlers.Target(genericKey, scannedAspects),
+                    (ignored, key) -> knowledge.addResearch(key));
 
-        // BETA26 ScanningManager feedback is an action-bar TextComponentString:
-        // §5§o tc.unknownobject or §a§o tc.knownobject. Any unkeyed success
-        // suppresses both messages.
-        if (result.feedback() == ScanningService.Feedback.UNKNOWN_OBJECT) {
-            player.displayClientMessage(
-                    Component.translatable("tc.unknownobject")
-                            .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
-                    true);
-        } else if (result.feedback() == ScanningService.Feedback.KNOWN_OBJECT) {
-            player.displayClientMessage(
-                    Component.translatable("tc.knownobject")
-                            .withStyle(ChatFormatting.GREEN, ChatFormatting.ITALIC),
-                    true);
+            // BETA26 ScanningManager feedback is an action-bar TextComponentString:
+            // §5§o tc.unknownobject or §a§o tc.knownobject. Any unkeyed success
+            // suppresses both messages.
+            if (result.feedback() == ScanningService.Feedback.UNKNOWN_OBJECT) {
+                player.displayClientMessage(
+                        Component.translatable("tc.unknownobject")
+                                .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
+                        true);
+            } else if (result.feedback() == ScanningService.Feedback.KNOWN_OBJECT) {
+                player.displayClientMessage(
+                        Component.translatable("tc.knownobject")
+                                .withStyle(ChatFormatting.GREEN, ChatFormatting.ITALIC),
+                        true);
+            }
+
+            if (result.anySuccess()) {
+                anySuccess = true;
+                ThaumcraftNetworking.sync(player);
+            }
         }
 
-        if (result.anySuccess()) ThaumcraftNetworking.sync(player);
-        return result.anySuccess();
+        // BETA26 ScanningManager always probes an UP-side item handler after a
+        // BlockPos scan, even when the block itself yielded no successful scan.
+        if (target instanceof BlockPos pos) anySuccess |= scanContainer(player, pos);
+        return anySuccess;
     }
 
     private static AspectListData aspectsFor(ServerPlayer player, Object target) {
+        if (target instanceof ItemStack stack) return objectAspects(stack);
         if (target instanceof ItemEntity itemEntity) return objectAspects(itemEntity.getItem());
         if (target instanceof Entity entity) {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
@@ -98,6 +110,7 @@ public final class ThaumometerScanDispatcher {
     }
 
     static String genericKey(ServerPlayer player, Object target) {
+        if (target instanceof ItemStack stack) return genericItemKey(stack);
         // BETA26 ScanGeneric treats EntityItem as an item, not as an entity.
         if (target instanceof ItemEntity itemEntity) return genericItemKey(itemEntity.getItem());
         if (target instanceof Entity entity) {
@@ -113,6 +126,29 @@ public final class ThaumometerScanDispatcher {
                     stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
         }
         return null;
+    }
+
+    private static boolean scanContainer(ServerPlayer player, BlockPos pos) {
+        IItemHandler handler = player.level().getCapability(Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
+        if (handler == null) return false;
+
+        boolean anySuccess = false;
+        int nonEmpty = 0;
+        for (int slot = 0; slot < handler.getSlots(); slot++) {
+            ItemStack stack = handler.getStackInSlot(slot);
+            if (stack == null || stack.isEmpty()) continue;
+
+            anySuccess |= scan(player, stack, objectAspects(stack));
+            nonEmpty++;
+            if (nonEmpty >= 100) {
+                player.displayClientMessage(
+                        Component.translatable("tc.invtoolarge")
+                                .withStyle(ChatFormatting.DARK_PURPLE, ChatFormatting.ITALIC),
+                        true);
+                break;
+            }
+        }
+        return anySuccess;
     }
 
     /**
