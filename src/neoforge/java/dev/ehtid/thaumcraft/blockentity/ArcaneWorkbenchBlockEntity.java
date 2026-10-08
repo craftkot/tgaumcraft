@@ -6,6 +6,8 @@ import dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -33,14 +35,27 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         super(ThaumcraftBlockEntities.ARCANE_WORKBENCH.get(), pos, state);
     }
 
-    /** Server-owned vis snapshot used by FIRSTSTEPS arcane crafting transactions. */
+    /** Server-owned chunk aura snapshot used by FIRSTSTEPS arcane crafting transactions. */
     public float getVis() {
+        if (level instanceof ServerLevel serverLevel) {
+            ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(serverLevel);
+            if (aura.hasChunk(worldPosition)) {
+                vis = aura.getVis(worldPosition);
+                return vis;
+            }
+            // One-time migration from the earlier block-entity-local prototype.
+            if (vis > 0.0F) {
+                aura.putChunk(worldPosition, (short) Math.min(500, (int) vis), vis, 0.0F);
+            }
+        }
         return vis;
     }
 
     public void setVis(float vis) {
         if (!Float.isFinite(vis)) throw new IllegalArgumentException("vis must be finite");
         float normalized = Math.max(0.0F, vis);
+        if (level instanceof ServerLevel serverLevel)
+            ThaumcraftAuraSavedData.get(serverLevel).setVis(worldPosition, normalized);
         if (Float.compare(this.vis, normalized) != 0) {
             this.vis = normalized;
             setChanged();
@@ -50,8 +65,9 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
     /** Atomically checks and consumes vis; failed crafts leave the stored value untouched. */
     public boolean consumeVis(float amount) {
         if (!Float.isFinite(amount) || amount < 0.0F) throw new IllegalArgumentException("amount");
-        if (vis < amount) return false;
-        setVis(vis - amount);
+        float available = getVis();
+        if (available < amount) return false;
+        setVis(available - amount);
         return true;
     }
 
@@ -84,7 +100,7 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         for (int slot = ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot < ArcaneWorkbenchRuntime.SLOT_COUNT; slot++) {
             if (items.get(slot).isEmpty() || !canPlaceItem(slot, items.get(slot))) return false;
         }
-        return vis >= cost;
+        return getVis() >= cost;
     }
 
     public boolean craftThaumometer(PlayerKnowledgeData knowledge, float totalDiscount) {
@@ -94,8 +110,8 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         // BETA26 SlotCraftingArcaneWorkbench only calls spendAura when the
         // discounted cost is strictly positive. A >100% discount therefore
         // permits the craft but must NOT add aura back to the workbench.
-        if (cost > 0) vis -= cost;
-        setChanged();
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
         knowledge.addResearch(ThaumometerRecipeLogic.LEGACY_CRAFT_MARKER);
         return true;
     }
