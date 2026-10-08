@@ -7,7 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
-/** Minimal 15-slot FIRSTSTEPS screen, without premature arcane result crafting. */
+/** FIRSTSTEPS arcane workbench screen; legacy slot geometry is owned by the menu. */
 public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneWorkbenchMenu> {
     private static final ResourceLocation TEXTURE =
             ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
@@ -20,6 +20,7 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
         inventoryLabelY = 140;
         titleLabelX = 16;
         titleLabelY = 5;
+        // Keep the full legacy-height inventory visible on smaller windows.
     }
 
     @Override
