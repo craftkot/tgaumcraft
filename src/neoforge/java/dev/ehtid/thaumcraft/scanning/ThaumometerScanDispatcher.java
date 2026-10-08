@@ -11,6 +11,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 
 /**
  * Server-authoritative bridge from the real Thaumometer target to the loader-neutral
@@ -82,9 +84,30 @@ public final class ThaumometerScanDispatcher {
             // Legacy ScanningManager.getItemFromParms(BlockPos) builds an ItemStack from the block/state,
             // then ScanGeneric keys the ITEM registry id (not the block registry id).
             ItemStack stack = new ItemStack(player.level().getBlockState(pos).getBlock());
-            return stack.isEmpty() ? null : genericItemKey(stack);
+            return stack.isEmpty() ? null : GenericScanKeyLogic.forItem(
+                    BuiltInRegistries.ITEM.getKey(stack.getItem()).toString(),
+                    stack.isDamageableItem(), legacyBlockMetadata(player.level().getBlockState(pos)));
         }
         return null;
+    }
+
+    /** 1.12-style metadata projection for simple horizontal-facing and axis block states. */
+    private static int legacyBlockMetadata(BlockState state) {
+        for (Property<?> property : state.getProperties()) {
+            if ("facing".equals(property.getName())) {
+                String facing = state.getValue(property).toString();
+                return switch (facing) {
+                    case "down" -> 0;
+                    case "up" -> 1;
+                    case "north" -> 2;
+                    case "south" -> 3;
+                    case "west" -> 4;
+                    case "east" -> 5;
+                    default -> 0;
+                };
+            }
+        }
+        return 0;
     }
 
     private static String genericItemKey(ItemStack stack) {
