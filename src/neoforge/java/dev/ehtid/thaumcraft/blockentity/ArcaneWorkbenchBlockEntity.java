@@ -21,11 +21,35 @@ import net.minecraft.world.level.block.state.BlockState;
  * The menu/vis transaction bridge is deliberately a separate follow-up.
  */
 public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Container {
+    private static final String TAG_VIS = "vis";
+
     private final NonNullList<ItemStack> items =
             NonNullList.withSize(ArcaneWorkbenchRuntime.SLOT_COUNT, ItemStack.EMPTY);
+    private float vis;
 
     public ArcaneWorkbenchBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.ARCANE_WORKBENCH.get(), pos, state);
+    }
+
+    /** Server-owned vis snapshot used by FIRSTSTEPS arcane crafting transactions. */
+    public float getVis() {
+        return vis;
+    }
+
+    public void setVis(float vis) {
+        float normalized = Math.max(0.0F, vis);
+        if (Float.compare(this.vis, normalized) != 0) {
+            this.vis = normalized;
+            setChanged();
+        }
+    }
+
+    /** Atomically checks and consumes vis; failed crafts leave the stored value untouched. */
+    public boolean consumeVis(float amount) {
+        if (amount < 0.0F) throw new IllegalArgumentException("amount");
+        if (vis < amount) return false;
+        setVis(vis - amount);
+        return true;
     }
 
     @Override
@@ -93,11 +117,13 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
+        tag.putFloat(TAG_VIS, vis);
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         ContainerHelper.loadAllItems(tag, items, registries);
+        vis = Math.max(0.0F, tag.getFloat(TAG_VIS));
     }
 }
