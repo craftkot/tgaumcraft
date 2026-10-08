@@ -103,16 +103,34 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         setDirty();
     }
 
-    /** BETA26 non-preserving drain: returns the amount actually removed. */
-    public float drainVis(BlockPos pos, float amount) {
-        if (!Float.isFinite(amount) || amount <= 0.0F) return 0.0F;
+    /**
+     * Exact AuraHandler.modifyVisInChunk semantics: a missing chunk returns false;
+     * simulation succeeds without mutation; real writes clamp only the lower bound.
+     */
+    public boolean modifyVis(BlockPos pos, float amount, boolean simulate) {
+        if (!Float.isFinite(amount)) return false;
         long key = key(pos);
         AuraChunk old = chunks.get(key);
-        if (old == null || old.vis() <= 0.0F) return 0.0F;
-        float drained = Math.min(amount, old.vis());
-        chunks.put(key, new AuraChunk(old.base(), old.vis() - drained, old.flux()));
-        setDirty();
-        return drained;
+        if (old == null) return false;
+        if (!simulate) {
+            chunks.put(key, new AuraChunk(old.base(), Math.max(0.0F, old.vis() + amount), old.flux()));
+            setDirty();
+        }
+        return true;
+    }
+
+    /** Exact BETA26 AuraHandler.drainVis amount capping + simulation semantics. */
+    public float drainVis(BlockPos pos, float amount, boolean simulate) {
+        if (!Float.isFinite(amount)) return 0.0F;
+        long key = key(pos);
+        AuraChunk old = chunks.get(key);
+        if (old == null) return 0.0F;
+        if (amount > old.vis()) amount = old.vis();
+        return modifyVis(pos, -amount, simulate) ? amount : 0.0F;
+    }
+
+    public float drainVis(BlockPos pos, float amount) {
+        return drainVis(pos, amount, false);
     }
 
     private static long key(BlockPos pos) {
