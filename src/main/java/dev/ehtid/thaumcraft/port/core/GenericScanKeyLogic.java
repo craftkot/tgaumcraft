@@ -14,6 +14,21 @@ public final class GenericScanKeyLogic {
      */
     public static String forModernItem(String modernRegistryId, boolean damageable, int modernMetadata) {
         Objects.requireNonNull(modernRegistryId, "modernRegistryId");
+        // BETA26 used a single stained_hardened_clay item with color metadata.
+        // Modern terracotta has separate item ids; preserve its original scan key.
+        if ("minecraft:terracotta".equals(modernRegistryId)) {
+            return forItem("minecraft:hardened_clay", false, 0);
+        }
+        if (modernRegistryId.startsWith("minecraft:")
+                && modernRegistryId.endsWith("_terracotta")
+                && !modernRegistryId.endsWith("_glazed_terracotta")) {
+            String color = modernRegistryId.substring("minecraft:".length(),
+                    modernRegistryId.length() - "_terracotta".length());
+            int oldColor = legacyDyeColorMetadata(color);
+            if (oldColor >= 0) {
+                return forItem("minecraft:stained_hardened_clay", false, oldColor);
+            }
+        }
         int oldDye = switch (modernRegistryId) {
             case "minecraft:ink_sac", "minecraft:black_dye" -> 0;
             case "minecraft:red_dye" -> 1;
@@ -36,6 +51,29 @@ public final class GenericScanKeyLogic {
         return oldDye >= 0
                 ? forItem("minecraft:dye", false, oldDye)
                 : forItem(modernRegistryId, damageable, modernMetadata);
+    }
+
+    /** Classic Minecraft 1.12 block color order, distinct from dye item damage order. */
+    private static int legacyDyeColorMetadata(String color) {
+        return switch (color) {
+            case "white" -> 0;
+            case "orange" -> 1;
+            case "magenta" -> 2;
+            case "light_blue" -> 3;
+            case "yellow" -> 4;
+            case "lime" -> 5;
+            case "pink" -> 6;
+            case "gray" -> 7;
+            case "light_gray" -> 8;
+            case "cyan" -> 9;
+            case "purple" -> 10;
+            case "blue" -> 11;
+            case "brown" -> 12;
+            case "green" -> 13;
+            case "red" -> 14;
+            case "black" -> 15;
+            default -> -1;
+        };
     }
 
     public static String forEntity(String entityId) {
