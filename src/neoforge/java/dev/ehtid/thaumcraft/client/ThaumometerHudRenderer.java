@@ -51,7 +51,7 @@ public final class ThaumometerHudRenderer {
             RenderSystem.defaultBlendFunc();
 
             if (minecraft.player.isShiftKeyDown())
-                drawHalfScaleText(graphics, VALUE_FORMAT.format(aura.vis()), 16.0F, state.visTop(), 15641343);
+                drawReadableValue(graphics, VALUE_FORMAT.format(aura.vis()), 16.0F, state.visTop(), 15641343);
         }
 
         if (state.flux() > 0.0F) {
@@ -66,7 +66,7 @@ public final class ThaumometerHudRenderer {
             RenderSystem.defaultBlendFunc();
 
             if (minecraft.player.isShiftKeyDown())
-                drawHalfScaleText(graphics, VALUE_FORMAT.format(aura.flux()), 16.0F, state.fluxTop() - 4.0F, 11145659);
+                drawReadableValue(graphics, VALUE_FORMAT.format(aura.flux()), 16.0F, state.fluxTop() - 4.0F, 11145659);
         }
 
         drawRotatedCrop(graphics, 1.0F, 1.0F, 72, 48, 16, 80,
@@ -105,12 +105,15 @@ public final class ThaumometerHudRenderer {
         graphics.pose().popPose();
     }
 
-    private static void drawHalfScaleText(GuiGraphics graphics, String text, float x, float y, int color) {
+    private static void drawReadableValue(GuiGraphics graphics, String text, float x, float y, int color) {
+        // BETA26 used half-scale numbers with no shadow directly over the
+        // changing world background. Normal Minecraft glyph size and a compact
+        // high-contrast backing fix the unreadability at ordinary GUI scales.
         Minecraft minecraft = Minecraft.getInstance();
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0.0F);
-        graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(minecraft.font, text, 0, 0, color, false);
-        graphics.pose().popPose();
+        int px = Math.round(x);
+        int py = Math.round(y);
+        int width = minecraft.font.width(text);
+        graphics.fill(px - 2, py - 2, px + width + 3, py + 11, 0xCE14201C);
+        graphics.drawString(minecraft.font, text, px, py, color | 0xFF000000, true);
     }
 }
