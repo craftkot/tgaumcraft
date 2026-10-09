@@ -156,6 +156,12 @@ public final class LegacyResearchTableData {
     public int inspirationStart() { return inspirationStart; }
     public int penaltyStart() { return penaltyStart; }
     public int bonusDraws() { return bonusDraws; }
+    /** Exact mutable bonusDraws counter used by CardPonder/CardRethink. */
+    public void addBonusDraws(int amount) { bonusDraws += amount; }
+
+    /** BETA26 CardRethink and CardPonder inspect the TreeMap key presence. */
+    public boolean hasTotal(String category) { return categoryTotals.containsKey(category); }
+
     public int placedCards() { return placedCards; }
     public int aidsChosen() { return aidsChosen; }
 
