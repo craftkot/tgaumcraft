@@ -82,6 +82,29 @@ public final class LegacyResearchTableData {
         if (inspiration > inspirationStart) inspiration = inspirationStart;
     }
 
+    /**
+     * ResearchTableData.getAvailableCategories iterates registration order,
+     * omits blocked category keys and requires strict completion of a
+     * category's optional researchKey. A null key is always accessible.
+     */
+    public static List<String> availableCategories(
+            PlayerKnowledgeData knowledge, ResearchCatalog catalog,
+            ResearchCategoryRegistry categories, java.util.Set<String> blocked) {
+        Objects.requireNonNull(knowledge, "knowledge");
+        Objects.requireNonNull(catalog, "catalog");
+        Objects.requireNonNull(categories, "categories");
+        Objects.requireNonNull(blocked, "blocked");
+        List<String> available = new ArrayList<>();
+        for (ResearchCategoryData category : categories.values()) {
+            if (blocked.contains(category.key())) continue;
+            if (category.researchKey() == null
+                    || knowledge.isResearchComplete(category.researchKey(), catalog)) {
+                available.add(category.key());
+            }
+        }
+        return List.copyOf(available);
+    }
+
     public boolean isComplete() { return inspiration <= 0; }
     public int inspiration() { return inspiration; }
     public int inspirationStart() { return inspirationStart; }
