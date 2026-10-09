@@ -26,10 +26,10 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     // The original sprites/buttons are 49x11 with HALF-SIZE glyphs, which
     // made Russian translations unreadable. Expand ONLY the click targets and
     // text backgrounds; original BETA26 atlas and card logic remain intact.
-    private static final int CREATE_X = 128, CREATE_Y = 22;
-    private static final int COMPLETE_X = 128, COMPLETE_Y = 96;
-    private static final int SCRAP_X = 128, SCRAP_Y = 155;
-    private static final int BUTTON_WIDTH = 116, BUTTON_HEIGHT = 18;
+    private static final int CREATE_X = 116, CREATE_Y = 22;
+    private static final int COMPLETE_X = 116, COMPLETE_Y = 96;
+    private static final int SCRAP_X = 116, SCRAP_Y = 155;
+    private static final int BUTTON_WIDTH = 132, BUTTON_HEIGHT = 18;
 
     public ResearchTableScreen(ResearchTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -153,5 +153,26 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         renderBackground(graphics, mouseX, mouseY, partialTick);
         super.render(graphics, mouseX, mouseY, partialTick);
         renderTooltip(graphics, mouseX, mouseY);
+        // Full unshortened translation on hover, even if a long modded
+        // language pack cannot fit the enlarged button's single line.
+        Component button = null;
+        int x, y;
+        if (!menu.hasSession() && canStartTheory()) {
+            x = CREATE_X;
+            y = CREATE_Y;
+            button = Component.translatable("button.create.theory");
+        } else if (menu.hasSession()) {
+            boolean complete = menu.inspiration() <= 0;
+            x = complete ? COMPLETE_X : SCRAP_X;
+            y = complete ? COMPLETE_Y : SCRAP_Y;
+            button = Component.translatable(
+                    complete ? "button.complete.theory" : "button.scrap.theory");
+        } else {
+            return;
+        }
+        if (mouseX >= leftPos + x && mouseX < leftPos + x + BUTTON_WIDTH
+                && mouseY >= topPos + y && mouseY < topPos + y + BUTTON_HEIGHT) {
+            graphics.renderTooltip(font, button, mouseX, mouseY);
+        }
     }
 }
