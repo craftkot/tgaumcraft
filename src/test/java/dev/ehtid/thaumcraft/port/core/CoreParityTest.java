@@ -1873,11 +1873,13 @@ public final class CoreParityTest {
         var scans = CriticalScanHandlers.createCriticalRegistry(
                 a, BuiltInResearchCategories.create(a));
         PlayerKnowledgeData research = new PlayerKnowledgeData();
-        var target = new CriticalScanHandlers.Target("!minecraft:player", steve);
+        eq("!null", GenericScanKeyLogic.forEntity(null));
+        var target = new CriticalScanHandlers.Target(
+                GenericScanKeyLogic.forEntity(null), steve);
         var first = scans.scanTheThing(research, target, (p, key) -> p.addResearch(key));
         eq(5, first.successfulHandlers()); // 4 aspect keys + ScanGeneric
         for (String key : new String[]{"!humanus", "!victus", "!vitreus",
-                "!sensus", "!minecraft:player"}) isTrue(research.isResearchKnown(key));
+                "!sensus", "!null"}) isTrue(research.isResearchKnown(key));
         isFalse(scans.scanTheThing(research, target,
                 (p, key) -> p.addResearch(key)).anySuccess());
     }
