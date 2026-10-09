@@ -1759,6 +1759,22 @@ public final class CoreParityTest {
         eq(2, zero.size());
         eq(0, zero.getAmount(a.AIR));
         eq(-1, zero.getAmount(a.FIRE));
+
+        // Original BETA26 cullTags hangs if 8+ weighted aspects are all
+        // >= 32767 because no candidate beats its hardcoded minimum.
+        // The port fixes this *without* changing normal aspect balance:
+        // deterministic culling still removes earliest tied primal tag.
+        AspectListData huge = new AspectListData()
+                .add(a.AIR, 50000).add(a.EARTH, 50000)
+                .add(a.FIRE, 50000).add(a.WATER, 50000)
+                .add(a.ORDER, 50000).add(a.ENTROPY, 50000)
+                .add(a.MAGIC, 50000).add(a.MIND, 50000);
+        AspectListData safe = LegacyObjectAspectFinalizer.finish(huge);
+        eq(7, safe.size());
+        eq(0, safe.getAmount(a.AIR));
+        eq(500, safe.getAmount(a.EARTH));
+        eq(500, safe.getAmount(a.MIND));
+        eq(8, huge.size()); // Original data remains unchanged.
     }
 
     private static void testLegacyEnchantmentAspectBonuses() {
