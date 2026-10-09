@@ -87,6 +87,13 @@ public final class LegacyTheorycraftDrawEngine {
         ArrayList<CardChoice> choices = new ArrayList<>();
         Set<String> chosenKeys = new HashSet<>();
         int attempts = 0;
+        // BETA26 burns 10,000 attempts on an EMPTY card registry, catching
+        // Random.nextInt(0) every time. This is a confirmed no-op: no card
+        // can appear and no RNG call advances. Return the same empty choice
+        // list immediately instead of blocking the server thread.
+        if (remainingCards > 0 && aids.isEmpty() && normalCardKeys.isEmpty()) {
+            return new Result(choices, aids, remainingBonuses, attempts);
+        }
         while (remainingCards > 0 && attempts < MAX_ATTEMPTS) {
             attempts++;
             boolean tryAid = !aids.isEmpty() && random.nextFloat() <= 0.25F;
