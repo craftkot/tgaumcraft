@@ -162,6 +162,16 @@ public final class LegacyResearchTableData {
     /** BETA26 CardRethink and CardPonder inspect the TreeMap key presence. */
     public boolean hasTotal(String category) { return categoryTotals.containsKey(category); }
 
+    /** Exact CardBalance.put replacement: don't delete keys at zero. */
+    public void replaceTotalsForBalance(int average) {
+        for (Map.Entry<String, Integer> e : categoryTotals.entrySet()) {
+            if (!categoriesBlocked.contains(e.getKey())) e.setValue(average);
+        }
+    }
+
+    /** CardBalance increments the rank exempt from finishing penalties. */
+    public void addPenaltyStart(int amount) { penaltyStart += amount; }
+
     public int placedCards() { return placedCards; }
     public int aidsChosen() { return aidsChosen; }
 
