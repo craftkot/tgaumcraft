@@ -82,8 +82,11 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
 
     /** Grant theory once; a second finish cannot duplicate the reward. */
     public boolean finishTheory(ServerPlayer player) {
-        if (level == null || level.isClientSide || session == null || !session.isComplete())
-            return false;
+        // Safety improvement: completing a saved theory requires the
+        // ORIGINAL live table and a nearby player, even when invoked by
+        // another server-side integration rather than the vanilla menu.
+        if (level == null || level.isClientSide || session == null
+                || !session.isComplete() || !stillValid(player)) return false;
         session.grantFinishedTheory(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge());
         session = null;
