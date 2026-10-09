@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified gameplay CI checkpoint at time of this handoff: `941d2cbdd3d8af1f3e83263627fdbd4851c641d2` (SUCCESS: 5,757 core parity assertions, NeoForge build + dedicated-server ready state).
-- Confirmed estimated overall progress: **61%** after BETA26 enchantment-derived aspects, original weighted 7-type culling/500-amount cap, and name-deterministic player aspects. Keep this as the next baseline until further substantial work.
+- Last verified gameplay CI checkpoint at time of this handoff: `805257662a8c15f490eeb974618c77b8fb405784` (SUCCESS: 5,823 core assertions, NeoForge build, dedicated-server smoke, original celestial assets and scribing recipes).
+- Confirmed estimated overall progress: **62%** after original BETA26 ScanSky mechanics, thirteen original celestial note variants and their original textures, and glass-bottle scribing tool/refill crafting recipes. Keep this as the next baseline until further substantial work.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 61%.
+Never lower the confirmed baseline below 62%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -125,6 +125,15 @@ Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradl
 - `LegacyPlayerEntityAspectTable.java`: exact `AspectHelper.getEntityAspects(EntityPlayer)` 1.12 rule: base Humanus 4 plus THREE randomly selected aspects worth 15 each, seeded by `new Random(playerName.hashCode())` over aspect registration order. Wired to NeoForge scanning for player entities.
 - Pending after verified checkpoint: generic key for unregistered 1.12 EntityPlayer is `!null` (legacy EntityList did not register player), rather than synthetic modern `!minecraft:player`. Check CI for commits `fe6361ed` and `191dde67` before claiming full green.
 - **User-requested future feature, NOT yet implemented:** at the END of port, optional random *uncollected* moon phase paper after sky scan, rather than waiting actual moon phases, keeping original behavior as setting. Do not implement this before core port is done.
+
+## 2026-10-09 BETA26 celestial scanning and original artwork
+- Pure Java `LegacyCelestialScanService` reproduces `ScanSky`'s day-key prefixes (`CEL_Day_`), aligned Sun vs 8 **real moon phases**, night-directional 4 star quadrants, per-day duplicate checks, paper + scribing-tool requirements, and old-day research removal quirks. See `testLegacyCelestialScanService`.
+- NeoForge `ThaumometerScanDispatcher.scanSky` now handles true unobstructed null targets in the overworld after `CELESTIALSCANNING`, returns Sun/Star/Moon notes with metadata 0..12, consumes one paper, does NOT consume or damage `scribing_tools`, and synchronizes knowledge.
+- `CelestialNotesItem` preserves the original 13 metadata variants via `CUSTOM_DATA` and `CUSTOM_MODEL_DATA`. Original 15 PNG textures (13 overlays + sheet + scribing_tools) extracted from **user-provided BETA26 JAR** and copied unchanged to `assets/thaumcraft/textures/item`. They are included in GitHub, NOT the original JAR.
+- 14 modern item model JSONs recreate all original layered Sun/Moon/Star drawings, plus original EN/RU strings, aqua tooltips, and `tc.celestial.fail.*` feedback. `scribing_tools` original 100 durability and glass-bottle/feather/black-dye recipe and refill are registered; original phial variant remains for future when phial item is ported.
+- Gameplay commit `805257662a8c15f490eeb974618c77b8fb405784` **CI SUCCESS**: 5,823 core assertions, NeoForge build, dedicated server smoke and jar upload.
+- The newer `.github/workflows/ci.yml` also validates all artwork models/languages/recipes; run `f42d138c` initially failed solely on a CI path prefix mistake; fixed at `1e2da266`; check fresh CI.
+- **Important: User wants randomized uncollected moon-phase papers only AT THE END of the full port.** Original physical moon phase dependence must REMAIN active now; random variant as optional config may be developed at final polishing stage.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
