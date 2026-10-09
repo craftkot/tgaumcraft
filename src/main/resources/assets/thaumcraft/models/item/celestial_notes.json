@@ -1,0 +1,81 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thaumcraft:item/celestial/sheet",
+    "layer1": "thaumcraft:item/celestial/sun"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "thaumcraft:item/celestial_notes_stars_1"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "thaumcraft:item/celestial_notes_stars_2"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "thaumcraft:item/celestial_notes_stars_3"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 4
+      },
+      "model": "thaumcraft:item/celestial_notes_stars_4"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 5
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_1"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 6
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_2"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 7
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_3"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 8
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_4"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 9
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_5"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 10
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_6"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 11
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_7"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 12
+      },
+      "model": "thaumcraft:item/celestial_notes_moon_8"
+    }
+  ]
+}
