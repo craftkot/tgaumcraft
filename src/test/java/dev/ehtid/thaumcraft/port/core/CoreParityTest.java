@@ -35,6 +35,7 @@ public final class CoreParityTest {
         testLegacyOreDictionaryScans();
         testLegacyEnchantmentEffectScans();
         testLegacyEnchantmentAspectBonuses();
+        testLegacyObjectAspectFinalizer();
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
@@ -1082,6 +1083,67 @@ public final class CoreParityTest {
                 GenericScanKeyLogic.forModernItem("minecraft:glow_ink_sac", false, 0));
         eq("!minecraft:diamond_sword",
                 GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 83));
+    }
+
+    private static void testLegacyObjectAspectFinalizer() {
+        AspectRegistry a = new AspectRegistry();
+
+        AspectListData uncapped = new AspectListData()
+                .add(a.AIR, 800).add(a.FIRE, 2).add(a.MAGIC, 999);
+        AspectListData capped = LegacyObjectAspectFinalizer.finish(uncapped);
+        eq(3, capped.size());
+        eq(500, capped.getAmount(a.AIR));
+        eq(2, capped.getAmount(a.FIRE));
+        eq(500, capped.getAmount(a.MAGIC));
+        eq(800, uncapped.getAmount(a.AIR)); // Finalizer must not mutate source.
+
+        // AspectHelper.cullTags defaults to SEVEN distinct aspects, even if
+        // each is a registered vanilla aspect with a positive quantity.
+        AspectListData nine = new AspectListData()
+                .add(a.AIR, 10).add(a.EARTH, 10).add(a.FIRE, 10)
+                .add(a.WATER, 10).add(a.ORDER, 10).add(a.ENTROPY, 10)
+                .add(a.MAGIC, 10).add(a.ALCHEMY, 10).add(a.MIND, 10);
+        AspectListData seven = LegacyObjectAspectFinalizer.finish(nine);
+        eq(9, nine.size());
+        eq(7, seven.size());
+        eq(0, seven.getAmount(a.AIR));
+        eq(0, seven.getAmount(a.EARTH));
+        eq(10, seven.getAmount(a.FIRE));
+        eq(10, seven.getAmount(a.MAGIC));
+        eq(10, seven.getAmount(a.ALCHEMY));
+        eq(10, seven.getAmount(a.MIND));
+
+        // The least weighted amount is removed: primal x0.9 compared with
+        // compound x1.1 for a first-level non-primal component. Amount still
+        // takes precedence over the primals' built-in preference.
+        AspectListData eight = new AspectListData()
+                .add(a.AIR, 20).add(a.EARTH, 20).add(a.FIRE, 20)
+                .add(a.WATER, 20).add(a.ORDER, 20).add(a.ENTROPY, 20)
+                .add(a.MAGIC, 1).add(a.MIND, 30);
+        AspectListData pruned = LegacyObjectAspectFinalizer.finish(eight);
+        eq(7, pruned.size());
+        eq(0, pruned.getAmount(a.MAGIC));
+        eq(20, pruned.getAmount(a.AIR));
+        eq(30, pruned.getAmount(a.MIND));
+
+        // Exact strict (<) tie-breaking removes whichever aspect was added
+        // FIRST, not the last one or the one with a lexicographic key.
+        AspectListData tied = LegacyObjectAspectFinalizer.finish(
+                nine, 8, 500);
+        eq(8, tied.size());
+        eq(0, tied.getAmount(a.AIR));
+        eq(10, tied.getAmount(a.EARTH));
+        eq(9, LegacyObjectAspectFinalizer.finish(nine, 9, 500).size());
+        eq(0, LegacyObjectAspectFinalizer.finish(
+                new AspectListData(), 7, 500).size());
+
+        // Legacy cullTags never removes zero-valued registered entries when
+        // there are already <=7 types; it only copies them verbatim.
+        var zero = LegacyObjectAspectFinalizer.finish(
+                new AspectListData().add(a.AIR, 0).add(a.FIRE, -1));
+        eq(2, zero.size());
+        eq(0, zero.getAmount(a.AIR));
+        eq(-1, zero.getAmount(a.FIRE));
     }
 
     private static void testLegacyEnchantmentAspectBonuses() {
