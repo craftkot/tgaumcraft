@@ -34,6 +34,7 @@ public final class CoreParityTest {
         testLegacyLapisGenericIdentity();
         testLegacyOreDictionaryScans();
         testLegacyEnchantmentEffectScans();
+        testLegacyEnchantmentAspectBonuses();
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
@@ -1081,6 +1082,100 @@ public final class CoreParityTest {
                 GenericScanKeyLogic.forModernItem("minecraft:glow_ink_sac", false, 0));
         eq("!minecraft:diamond_sword",
                 GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 83));
+    }
+
+    private static void testLegacyEnchantmentAspectBonuses() {
+        AspectRegistry a = new AspectRegistry();
+        String[][] vanilla = {
+            // id / 1.12 rarity / aspect bonus at level 2 (scaled=6; half=3).
+            {"protection", "COMMON", "praemunio:6"},
+            {"fire_protection", "UNCOMMON", "praemunio:3,ignis:3"},
+            {"feather_falling", "UNCOMMON", "volatus:6"},
+            {"blast_protection", "RARE", "praemunio:3,perditio:3"},
+            {"projectile_protection", "UNCOMMON", "praemunio:6"},
+            {"respiration", "RARE", "aer:6"},
+            {"aqua_affinity", "RARE", "aqua:6"},
+            {"thorns", "VERY_RARE", "aversio:6"},
+            {"depth_strider", "RARE", "aqua:6"},
+            {"frost_walker", "RARE", "gelum:6"},
+            {"binding_curse", "VERY_RARE", ""},
+            {"sharpness", "COMMON", "aversio:6"},
+            {"smite", "UNCOMMON", "exanimis:3,aversio:3"},
+            {"bane_of_arthropods", "UNCOMMON", "bestia:3,aversio:3"},
+            {"knockback", "UNCOMMON", "aer:6"},
+            {"fire_aspect", "RARE", "ignis:3,aversio:3"},
+            {"looting", "RARE", "desiderium:6"},
+            {"sweeping_edge", "RARE", ""},
+            {"efficiency", "COMMON", "instrumentum:6"},
+            {"silk_touch", "VERY_RARE", "permutatio:6"},
+            {"unbreaking", "UNCOMMON", "terra:6"},
+            {"fortune", "RARE", "desiderium:6"},
+            {"power", "COMMON", "aversio:6"},
+            {"punch", "RARE", "aer:6"},
+            {"flame", "RARE", "ignis:6"},
+            {"infinity", "VERY_RARE", "fabrico:6"},
+            {"luck_of_the_sea", "RARE", "desiderium:6"},
+            {"lure", "RARE", "bestia:6"},
+            {"mending", "RARE", "fabrico:6"},
+            {"vanishing_curse", "VERY_RARE", ""}
+        };
+        eq(30, vanilla.length);
+        for (String[] data : vanilla) {
+            String name = "minecraft:" + data[0];
+            var rarity = LegacyEnchantmentAspectBonuses.Rarity.valueOf(data[1]);
+            eq(rarity, LegacyEnchantmentAspectBonuses.oldVanillaRarity(name));
+            var enchantment = new LegacyEnchantmentAspectBonuses.Enchantment(
+                    name, 2, LegacyEnchantmentAspectBonuses.Rarity.COMMON);
+            // Original vanilla rarity overrides the supplied modern rarity.
+            AspectListData result = LegacyEnchantmentAspectBonuses.apply(
+                    a, new AspectListData(), java.util.List.of(enchantment));
+            eq(6 + rarity.magicBonus(), result.getAmount(a.MAGIC));
+            String[] expected = data[2].isEmpty() ? new String[0] : data[2].split(",");
+            eq(1 + expected.length, result.size());
+            for (String pair : expected) {
+                String[] entry = pair.split(":");
+                eq(Integer.parseInt(entry[1]), result.getAmount(a.get(entry[0])));
+            }
+        }
+        eq(null, LegacyEnchantmentAspectBonuses.oldVanillaRarity("minecraft:density"));
+        eq(LegacyEnchantmentAspectBonuses.Rarity.RARE,
+                LegacyEnchantmentAspectBonuses.Rarity.fromWeight(2));
+        eq(LegacyEnchantmentAspectBonuses.Rarity.COMMON,
+                LegacyEnchantmentAspectBonuses.Rarity.fromWeight(99));
+
+        AspectListData mixed = LegacyEnchantmentAspectBonuses.apply(a,
+                new AspectListData().add(a.AVERSION, 40),
+                java.util.List.of(
+                        new LegacyEnchantmentAspectBonuses.Enchantment(
+                                "minecraft:sharpness", 5,
+                                LegacyEnchantmentAspectBonuses.Rarity.COMMON),
+                        new LegacyEnchantmentAspectBonuses.Enchantment(
+                                "minecraft:fire_aspect", 2,
+                                LegacyEnchantmentAspectBonuses.Rarity.COMMON),
+                        new LegacyEnchantmentAspectBonuses.Enchantment(
+                                "minecraft:mending", 1,
+                                LegacyEnchantmentAspectBonuses.Rarity.COMMON)));
+        // Levels: 15 + 6 + 3; old rarities: 0 + 4 + 4.
+        eq(32, mixed.getAmount(a.MAGIC));
+        eq(40, mixed.getAmount(a.AVERSION)); // merge(MAX), not addition
+        eq(3, mixed.getAmount(a.FIRE));
+        eq(3, mixed.getAmount(a.CRAFT));
+
+        var custom = LegacyEnchantmentAspectBonuses.apply(a, new AspectListData(),
+                java.util.List.of(new LegacyEnchantmentAspectBonuses.Enchantment(
+                        "example:unknown_enchantment", 1,
+                        LegacyEnchantmentAspectBonuses.Rarity.VERY_RARE)));
+        eq(1, custom.size());
+        eq(9, custom.getAmount(a.MAGIC)); // modded enchants still contribute
+        eq(0, LegacyEnchantmentAspectBonuses.apply(
+                a, new AspectListData(), java.util.List.of()).size());
+
+        // Legacy enchantment NBT getShort(lvl) followed by multiply and i2s.
+        var narrowed = LegacyEnchantmentAspectBonuses.apply(
+                a, new AspectListData(), java.util.List.of(
+                        new LegacyEnchantmentAspectBonuses.Enchantment("minecraft:sharpness",
+                                10923, LegacyEnchantmentAspectBonuses.Rarity.COMMON)));
+        eq(0, narrowed.getAmount(a.MAGIC)); // 10923 * 3 wraps to -32767; culled
     }
 
     private static void testLegacyEnchantmentEffectScans() {
