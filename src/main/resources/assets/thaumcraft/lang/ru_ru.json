@@ -29,5 +29,7 @@
   "research_table.inspiration": "Вдохновение: %s / %s",
   "block.thaumcraft.table_wood": "Деревянный стол",
   "item.thaumcraft.table_wood": "Деревянный стол",
-  "item.thaumcraft.research_table": "Исследовательский стол"
+  "item.thaumcraft.research_table": "Исследовательский стол",
+  "button.complete.theory": "Завершить теорию",
+  "button.scrap.theory": "Порвать теорию"
 }
