@@ -104,6 +104,11 @@ public final class LegacyResearchTableData {
     }
 
     public List<String> blockedCategories() { return List.copyOf(categoriesBlocked); }
+    /** BETA26 CardReject appends a blocked category, retaining list order. */
+    public void appendBlockedCategory(String category) {
+        categoriesBlocked.add(Objects.requireNonNull(category, "category"));
+    }
+
     public void replaceBlockedCategories(List<String> categories) {
         categoriesBlocked.clear();
         categoriesBlocked.addAll(List.copyOf(categories));
