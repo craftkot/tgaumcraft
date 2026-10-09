@@ -311,6 +311,10 @@ public final class ThaumometerScanDispatcher {
         if (target instanceof ItemStack stack) return genericItemKey(stack);
         // BETA26 ScanGeneric treats EntityItem as an item, not as an entity.
         if (target instanceof ItemEntity itemEntity) return genericItemKey(itemEntity.getItem());
+        // Vanilla 1.12 EntityList did not register EntityPlayer. Consequently
+        // ScanGeneric concatenated the null ResourceLocation as literal "!null"
+        // rather than a modern synthetic minecraft:player registry key.
+        if (target instanceof Player) return GenericScanKeyLogic.forEntity(null);
         if (target instanceof Entity entity) {
             return GenericScanKeyLogic.forEntity(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
         }
