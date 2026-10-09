@@ -27,6 +27,7 @@ public final class CoreParityTest {
         testLegacyPlayerTransfer();
         testLegacyScanItemLogic();
         testSkyScanLogic();
+        testLegacyCelestialScanService();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
@@ -807,6 +808,75 @@ public final class CoreParityTest {
         isTrue(SkyScanLogic.shouldRemoveOldCelestialResearch("CEL_11_Moon2", "CEL_12_"));
         isFalse(SkyScanLogic.shouldRemoveOldCelestialResearch("CEL_12_Star0", "CEL_12_"));
         isFalse(SkyScanLogic.shouldRemoveOldCelestialResearch("BASEAUROMANCY", "CEL_12_"));
+    }
+
+    private static void testLegacyCelestialScanService() {
+        SkyScanLogic.Geometry sun = SkyScanLogic.check(
+                true, -90, true, true, true, -90, 0.0f);
+        SkyScanLogic.Geometry blocked = SkyScanLogic.check(
+                false, -90, true, true, true, -90, 0.0f);
+        var denied = LegacyCelestialScanService.examine(
+                blocked, 24000, 0, 2, java.util.Set.of(), true, true);
+        eq(LegacyCelestialScanService.Status.NOT_SCANNABLE, denied.status());
+        eq(null, denied.observation());
+
+        var day = LegacyCelestialScanService.examine(
+                sun, 49000, 0, 2, java.util.Set.of(), true, true);
+        eq(LegacyCelestialScanService.Status.READY, day.status());
+        eq(LegacyCelestialScanService.Kind.SUN, day.observation().kind());
+        eq("CEL_2_Sun", day.observation().researchKey());
+        eq("CEL_2_", day.observation().dayPrefix());
+        eq(0, day.observation().itemMetadata());
+        isFalse(day.observation().night());
+
+        var noPen = LegacyCelestialScanService.examine(
+                sun, 49000, 0, 2, java.util.Set.of(), false, true);
+        eq(LegacyCelestialScanService.Status.NEEDS_MATERIALS, noPen.status());
+        var noPaper = LegacyCelestialScanService.examine(
+                sun, 49000, 0, 2, java.util.Set.of(), true, false);
+        eq(LegacyCelestialScanService.Status.NEEDS_MATERIALS, noPaper.status());
+        var duplicate = LegacyCelestialScanService.examine(
+                sun, 49000, 0, 2, java.util.Set.of("CEL_2_Sun"), false, false);
+        eq(LegacyCelestialScanService.Status.ALREADY_SEEN, duplicate.status());
+        eq(0, duplicate.observation().itemMetadata());
+
+        // The original ScanSky generates moon notes based on ACTUAL moon phase,
+        // not on any random missing note; preserve this until final polish.
+        var alignedMoon = new SkyScanLogic.Geometry(true, true, true, 89, 0, 89);
+        for (int phase = 0; phase < 8; phase++) {
+            var result = LegacyCelestialScanService.examine(
+                    alignedMoon, 24000L * (10 + phase), phase, 2,
+                    java.util.Set.of(), true, true);
+            eq(LegacyCelestialScanService.Status.READY, result.status());
+            eq(LegacyCelestialScanService.Kind.MOON, result.observation().kind());
+            eq(5 + phase, result.observation().itemMetadata());
+            eq("CEL_" + (10 + phase) + "_Moon" + phase,
+                    result.observation().researchKey());
+        }
+
+        var stars = new SkyScanLogic.Geometry(true, true, false, 75, 20, 20);
+        for (int facing = 2; facing <= 5; facing++) {
+            var result = LegacyCelestialScanService.examine(
+                    stars, 50000, 4, facing, java.util.Set.of(), true, true);
+            eq(LegacyCelestialScanService.Status.READY, result.status());
+            eq(LegacyCelestialScanService.Kind.STAR, result.observation().kind());
+            eq(facing - 1, result.observation().itemMetadata());
+            eq("CEL_2_Star" + (facing - 2), result.observation().researchKey());
+        }
+        eq(LegacyCelestialScanService.Status.NOT_SCANNABLE,
+                LegacyCelestialScanService.examine(
+                        stars, 50000, 4, 0, java.util.Set.of(), true, true).status());
+
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        knowledge.addResearch("CEL_1_Sun");
+        knowledge.addResearch("CEL_2_Moon0");
+        knowledge.addResearch("CEL_2_Star3");
+        knowledge.addResearch("FIRSTSTEPS");
+        LegacyCelestialScanService.removeOldDayResearch(knowledge, "CEL_2_");
+        isFalse(knowledge.isResearchKnown("CEL_1_Sun"));
+        isTrue(knowledge.isResearchKnown("CEL_2_Moon0"));
+        isTrue(knowledge.isResearchKnown("CEL_2_Star3"));
+        isTrue(knowledge.isResearchKnown("FIRSTSTEPS"));
     }
 
     private static void testLegacyThaumometerTargeting() {
