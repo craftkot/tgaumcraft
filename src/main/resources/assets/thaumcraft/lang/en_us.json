@@ -29,5 +29,7 @@
   "research_table.inspiration": "Inspiration: %s / %s",
   "block.thaumcraft.table_wood": "Wooden Table",
   "item.thaumcraft.table_wood": "Wooden Table",
-  "item.thaumcraft.research_table": "Research Table"
+  "item.thaumcraft.research_table": "Research Table",
+  "button.complete.theory": "Complete Theory",
+  "button.scrap.theory": "Scrap Theory"
 }
