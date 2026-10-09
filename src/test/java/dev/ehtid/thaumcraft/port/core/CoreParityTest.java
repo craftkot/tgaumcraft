@@ -33,6 +33,7 @@ public final class CoreParityTest {
         testFirstStepsVerticalSlice();
         testLegacyLapisGenericIdentity();
         testLegacyOreDictionaryScans();
+        testLegacyEnchantmentEffectScans();
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
@@ -1082,6 +1083,107 @@ public final class CoreParityTest {
                 GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 83));
     }
 
+    private static void testLegacyEnchantmentEffectScans() {
+        eq(30, LegacyEnchantmentEffectScans.enchantmentResearchKeys().size());
+        eq(27, LegacyEnchantmentEffectScans.effectResearchKeys().size());
+        eq(57, LegacyEnchantmentEffectScans.allResearchKeys().size());
+        eq(57, new java.util.HashSet<>(LegacyEnchantmentEffectScans.allResearchKeys()).size());
+
+        String[][] enchantments = {
+            {"minecraft:protection", "!enchantment.protect.all"},
+            {"minecraft:fire_protection", "!enchantment.protect.fire"},
+            {"minecraft:feather_falling", "!enchantment.protect.fall"},
+            {"minecraft:blast_protection", "!enchantment.protect.explosion"},
+            {"minecraft:projectile_protection", "!enchantment.protect.projectile"},
+            {"minecraft:respiration", "!enchantment.oxygen"},
+            {"minecraft:aqua_affinity", "!enchantment.waterWorker"},
+            {"minecraft:thorns", "!enchantment.thorns"},
+            {"minecraft:depth_strider", "!enchantment.waterWalker"},
+            {"minecraft:frost_walker", "!enchantment.frostWalker"},
+            {"minecraft:binding_curse", "!enchantment.binding_curse"},
+            {"minecraft:sharpness", "!enchantment.damage.all"},
+            {"minecraft:smite", "!enchantment.damage.undead"},
+            {"minecraft:bane_of_arthropods", "!enchantment.damage.arthropods"},
+            {"minecraft:knockback", "!enchantment.knockback"},
+            {"minecraft:fire_aspect", "!enchantment.fire"},
+            {"minecraft:looting", "!enchantment.lootBonus"},
+            {"minecraft:sweeping_edge", "!enchantment.sweeping"},
+            {"minecraft:efficiency", "!enchantment.digging"},
+            {"minecraft:silk_touch", "!enchantment.untouching"},
+            {"minecraft:unbreaking", "!enchantment.durability"},
+            {"minecraft:fortune", "!enchantment.lootBonusDigger"},
+            {"minecraft:power", "!enchantment.arrowDamage"},
+            {"minecraft:punch", "!enchantment.arrowKnockback"},
+            {"minecraft:flame", "!enchantment.arrowFire"},
+            {"minecraft:infinity", "!enchantment.arrowInfinite"},
+            {"minecraft:luck_of_the_sea", "!enchantment.lootBonusFishing"},
+            {"minecraft:lure", "!enchantment.fishingSpeed"},
+            {"minecraft:mending", "!enchantment.mending"},
+            {"minecraft:vanishing_curse", "!enchantment.vanishing_curse"}
+        };
+        for (String[] pair : enchantments) {
+            eq(java.util.Set.of(pair[1]), LegacyEnchantmentEffectScans.forItemEnchantments(
+                    java.util.Set.of(pair[0])));
+        }
+        String[][] effects = {
+            {"speed", "moveSpeed"}, {"slowness", "moveSlowdown"},
+            {"haste", "digSpeed"}, {"mining_fatigue", "digSlowDown"},
+            {"strength", "damageBoost"}, {"instant_health", "heal"},
+            {"instant_damage", "harm"}, {"jump_boost", "jump"},
+            {"nausea", "confusion"}, {"regeneration", "regeneration"},
+            {"resistance", "resistance"}, {"fire_resistance", "fireResistance"},
+            {"water_breathing", "waterBreathing"}, {"invisibility", "invisibility"},
+            {"blindness", "blindness"}, {"night_vision", "nightVision"},
+            {"hunger", "hunger"}, {"weakness", "weakness"},
+            {"poison", "poison"}, {"wither", "wither"},
+            {"health_boost", "healthBoost"}, {"absorption", "absorption"},
+            {"saturation", "saturation"}, {"glowing", "glowing"},
+            {"levitation", "levitation"}, {"luck", "luck"}, {"unluck", "unluck"}
+        };
+        for (String[] pair : effects) {
+            eq(java.util.Set.of("!effect." + pair[1]),
+                    LegacyEnchantmentEffectScans.forPotionEffects(
+                            java.util.Set.of("minecraft:" + pair[0])));
+        }
+        eq(java.util.Set.of("!enchantment.damage.all", "!enchantment.durability"),
+                LegacyEnchantmentEffectScans.forItemEnchantments(
+                        java.util.Set.of("minecraft:sharpness", "minecraft:unbreaking",
+                                "minecraft:density")));
+        eq(java.util.Set.of("!effect.poison", "!effect.regeneration"),
+                LegacyEnchantmentEffectScans.forPotionEffects(
+                        java.util.Set.of("minecraft:poison", "minecraft:regeneration",
+                                "minecraft:trial_omen")));
+        eq(java.util.Set.of(), LegacyEnchantmentEffectScans.forItemEnchantments(
+                java.util.Set.of("minecraft:wind_burst", "minecraft:breach")));
+        eq(java.util.Set.of(), LegacyEnchantmentEffectScans.forPotionEffects(
+                java.util.Set.of("minecraft:darkness", "minecraft:slow_falling")));
+
+        AspectRegistry registry = new AspectRegistry();
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                registry, BuiltInResearchCategories.create(registry));
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        var enchanted = new CriticalScanHandlers.Target(
+                null, new AspectListData(),
+                LegacyEnchantmentEffectScans.forItemEnchantments(
+                        java.util.Set.of("minecraft:sharpness", "minecraft:smite")));
+        var result = scans.scanTheThing(player, enchanted, (p, key) -> p.addResearch(key));
+        eq(2, result.successfulHandlers());
+        isTrue(player.isResearchKnown("!enchantment.damage.all"));
+        isTrue(player.isResearchKnown("!enchantment.damage.undead"));
+        isFalse(scans.scanTheThing(player, enchanted,
+                (p, key) -> p.addResearch(key)).anySuccess());
+
+        var potion = new CriticalScanHandlers.Target(null, new AspectListData(),
+                LegacyEnchantmentEffectScans.forPotionEffects(
+                        java.util.Set.of("minecraft:speed", "minecraft:poison")));
+        isTrue(scans.isThingStillScannable(player, potion, PlayerKnowledgeData::isResearchKnown));
+        var potionResult = scans.scanTheThing(player, potion, (p, key) -> p.addResearch(key));
+        eq(2, potionResult.successfulHandlers());
+        isTrue(player.isResearchKnown("!effect.moveSpeed"));
+        isTrue(player.isResearchKnown("!effect.poison"));
+        isFalse(scans.isThingStillScannable(player, potion, PlayerKnowledgeData::isResearchKnown));
+    }
+
     private static void testLegacyOreDictionaryScans() {
         eq(13, LegacyOreDictionaryScans.modernTagNames().size());
         eq(13, new java.util.HashSet<>(LegacyOreDictionaryScans.modernTagNames()).size());
@@ -1140,7 +1242,7 @@ public final class CoreParityTest {
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(54,scans.size()); // 37 ScanAspect + ScanGeneric + sixteen mapped vanilla and OreDictionary research keys.
+        eq(111,scans.size()); // 37 ScanAspect + Generic + 30 enchantment + 27 effect + 16 explicit material/vanilla scan keys.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
