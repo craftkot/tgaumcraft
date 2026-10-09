@@ -34,6 +34,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftDrawEngine();
         testLegacyBasicTheoryCards();
         testLegacyAdditionalTheoryCards();
+        testLegacyTheorycraftManifest();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1274,6 +1275,46 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyTheorycraftManifest() {
+        eq(33, LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER.size());
+        eq(14, LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.size());
+        eq(33, LegacyTheorycraftManifest.allCardKeys().size());
+        eq(33, new java.util.HashSet<>(
+                LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER).size());
+        eq(14, new java.util.HashSet<>(
+                LegacyTheorycraftManifest.AID_REGISTRATION_ORDER).size());
+        eq("thaumcraft.api.research.theorycraft.CardStudy",
+                LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER.get(0));
+        eq("thaumcraft.common.lib.research.theorycraft.CardRealization",
+                LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER.get(32));
+        eq("thaumcraft.api.research.theorycraft.AidBookshelf",
+                LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.get(0));
+        eq("thaumcraft.common.lib.research.theorycraft.AidBeacon",
+                LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.get(13));
+
+        java.util.List<String> originalHashOrder =
+                LegacyTheorycraftManifest.cardsInHashMapIterationOrder();
+        eq(33, originalHashOrder.size());
+        eq(LegacyTheorycraftManifest.allCardKeys(),
+                new java.util.HashSet<>(originalHashOrder));
+        isFalse(originalHashOrder.equals(
+                LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER));
+        // Same original HashMap initialization is deterministic within JVM.
+        eq(originalHashOrder, LegacyTheorycraftManifest.cardsInHashMapIterationOrder());
+        eq(14, LegacyTheorycraftManifest.aidsInHashMapIterationOrder().size());
+
+        for (String key : new String[]{
+                LegacyBasicTheoryCards.PONDER_KEY,
+                LegacyBasicTheoryCards.RETHINK_KEY,
+                LegacyAdditionalTheoryCards.BALANCE_KEY,
+                LegacyAdditionalTheoryCards.NOTATION_KEY,
+                LegacyAdditionalTheoryCards.STUDY_KEY,
+                LegacyAdditionalTheoryCards.EXPERIMENTATION_KEY,
+                "thaumcraft.common.lib.research.theorycraft.CardCelestial"}) {
+            isTrue(LegacyTheorycraftManifest.allCardKeys().contains(key));
+        }
     }
 
     private static void testLegacyAdditionalTheoryCards() {
