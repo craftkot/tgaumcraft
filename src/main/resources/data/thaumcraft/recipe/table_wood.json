@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "decorations",
+  "group": "thaumcraft:wooden_table",
+  "pattern": [
+    "SSS",
+    "W W"
+  ],
+  "key": {
+    "S": {
+      "tag": "minecraft:wooden_slabs"
+    },
+    "W": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:table_wood",
+    "count": 1
+  }
+}
