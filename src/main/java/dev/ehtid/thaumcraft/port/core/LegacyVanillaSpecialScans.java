@@ -46,10 +46,15 @@ public final class LegacyVanillaSpecialScans {
         // Nether/end portal blocks have no corresponding obtainable inventory item.
         if ("minecraft:ender_pearl".equals(itemId)
                 || "minecraft:end_portal_frame".equals(itemId)) out.add(TELEPORT);
-        // BETA26 matches the clay ball through ScanItem and terracotta through
-        // ScanBlock companion items. Its ScanMaterial matches placed clay only;
-        // a clay block inventory stack is not a ScanMaterial target.
-        if ("minecraft:clay_ball".equals(itemId) || isTerracotta(itemId)) out.add(MAT_CLAY);
+        // BETA26 has an explicit clay-ball ScanItem. ScanBlock's two
+        // terracotta companion item registrations use new ItemStack(block),
+        // i.e. legacy metadata 0; crafting equality compares item metadata.
+        // Only WHITE stained terracotta matches in item form, whereas ANY
+        // stained-terracotta color still matches the placed ScanBlock.
+        // ScanMaterial also only accepts BlockPos, never an inventory stack.
+        if ("minecraft:clay_ball".equals(itemId)
+                || "minecraft:terracotta".equals(itemId)
+                || "minecraft:white_terracotta".equals(itemId)) out.add(MAT_CLAY);
         // ScanBlock also installs companion item handlers; dispenser has an explicit
         // ScanItem registration in BETA26 as well.
         if ("minecraft:dispenser".equals(itemId)) out.add(DISPENSER);
