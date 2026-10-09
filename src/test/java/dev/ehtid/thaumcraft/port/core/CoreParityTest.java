@@ -35,6 +35,7 @@ public final class CoreParityTest {
         testLegacyBasicTheoryCards();
         testLegacyAdditionalTheoryCards();
         testLegacyTheorycraftManifest();
+        testLegacyTheorycraftMiscCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1275,6 +1276,89 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyTheorycraftMiscCards() {
+        eq(2, LegacyTheorycraftMiscCards.INSPIRED_COST);
+        eq(0, LegacyTheorycraftMiscCards.REJECT_COST);
+        eq(1, LegacyTheorycraftMiscCards.MEASURE_COST);
+        eq(1, LegacyTheorycraftMiscCards.SCULPTING_COST);
+        eq(1, LegacyTheorycraftMiscCards.AWARENESS_COST);
+        for (String key : new String[]{
+                LegacyTheorycraftMiscCards.INSPIRED,
+                LegacyTheorycraftMiscCards.REJECT,
+                LegacyTheorycraftMiscCards.MEASURE,
+                LegacyTheorycraftMiscCards.SCULPTING,
+                LegacyTheorycraftMiscCards.AWARENESS
+        }) isTrue(LegacyTheorycraftManifest.allCardKeys().contains(key));
+
+        LegacyResearchTableData state = new LegacyResearchTableData(7);
+        eq(null, LegacyTheorycraftMiscCards.initializeInspired(state));
+        eq(null, LegacyTheorycraftMiscCards.initializeReject(state, 10));
+        state.addTotal("BASICS", 15);
+        state.addTotal("ALCHEMY", 30);
+        state.addTotal("AUROMANCY", 30);
+        var inspired = LegacyTheorycraftMiscCards.initializeInspired(state);
+        eq("ALCHEMY", inspired.category()); // Earliest TreeMap key wins tie.
+        eq(25, inspired.amount()); // 10 + 30/2, stored in cardNBT.
+        isTrue(LegacyTheorycraftMiscCards.inspire(state, inspired));
+        eq(55, state.getTotal("ALCHEMY"));
+        eq(30, state.getTotal("AUROMANCY"));
+        isFalse(LegacyTheorycraftMiscCards.inspire(state, null));
+
+        // Seed is used to choose from the eligible ordered category list;
+        // original CardReject does NOT subtract or redistribute category totals.
+        java.util.List<String> categories = java.util.List.of(
+                "ALCHEMY", "AUROMANCY", "BASICS");
+        String expected = categories.get(new java.util.Random(1234L)
+                .nextInt(categories.size()));
+        String rejectedCategory = LegacyTheorycraftMiscCards.initializeReject(state, 1234L);
+        eq(expected, rejectedCategory);
+        isTrue(LegacyTheorycraftMiscCards.reject(state, rejectedCategory));
+        eq(20, state.getTotal("BASICS")); // +5 irrespective of selected cat.
+        eq(java.util.List.of(rejectedCategory), state.blockedCategories());
+        isFalse(LegacyTheorycraftMiscCards.reject(state, rejectedCategory));
+        eq(20, state.getTotal("BASICS")); // No free second activation.
+        eq(3, state.categoryTotals().size()); // selected category still exists
+        var remaining = new java.util.ArrayList<>(categories);
+        remaining.remove(rejectedCategory);
+        String second = LegacyTheorycraftMiscCards.initializeReject(state, 1L);
+        eq(remaining.get(new java.util.Random(1L).nextInt(remaining.size())), second);
+        state.replaceBlockedCategories(categories);
+        eq(null, LegacyTheorycraftMiscCards.initializeReject(state, 0L));
+
+        LegacyResearchTableData measure = new LegacyResearchTableData(5);
+        LegacyTheorycraftMiscCards.measure(measure);
+        eq(15, measure.getTotal("INFUSION"));
+        eq(1, measure.bonusDraws());
+        LegacyTheorycraftMiscCards.sculpt(measure);
+        eq(20, measure.getTotal("GOLEMANCY"));
+        eq(2, measure.bonusDraws());
+
+        LegacyResearchTableData awareness = new LegacyResearchTableData(5);
+        PlayerWarpData warp = new PlayerWarpData();
+        int[] rolls = {0, 0};
+        LegacyTheorycraftMiscCards.awareness(awareness, warp,
+                new LegacyTheorycraftMiscCards.AwarenessRandom() {
+                    @Override public float nextFloat() { rolls[0]++; return 0.33F; }
+                    @Override public int nextInt(int bound) { rolls[1]++; return 0; }
+                });
+        eq(20, awareness.getTotal("AUROMANCY"));
+        // Float 0.33f is actually 0.330000013..., just ABOVE double 0.33.
+        eq(0, awareness.getTotal("ELDRITCH"));
+        eq(0, warp.get(WarpType.NORMAL));
+        eq(1, rolls[0]);
+        eq(0, rolls[1]); // No conditional roll when >=0.33.
+
+        LegacyTheorycraftMiscCards.awareness(awareness, warp,
+                new LegacyTheorycraftMiscCards.AwarenessRandom() {
+                    @Override public float nextFloat() { return 0.0F; }
+                    @Override public int nextInt(int bound) { eq(5, bound); return bound - 1; }
+                });
+        eq(40, awareness.getTotal("AUROMANCY"));
+        eq(5, awareness.getTotal("ELDRITCH"));
+        eq(1, warp.get(WarpType.NORMAL));
+        eq(0, warp.get(WarpType.TEMPORARY));
     }
 
     private static void testLegacyTheorycraftManifest() {
