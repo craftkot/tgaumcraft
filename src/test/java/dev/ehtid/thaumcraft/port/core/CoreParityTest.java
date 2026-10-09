@@ -32,6 +32,7 @@ public final class CoreParityTest {
         testLegacyResearchTableData();
         testLegacyResearchTableExtendedSaveFields();
         testLegacyTheorycraftDrawEngine();
+        testLegacyBasicTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1248,6 +1249,89 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyBasicTheoryCards() {
+        eq("thaumcraft.api.research.theorycraft.CardPonder",
+                LegacyBasicTheoryCards.PONDER_KEY);
+        eq("thaumcraft.api.research.theorycraft.CardRethink",
+                LegacyBasicTheoryCards.RETHINK_KEY);
+        eq(2, LegacyBasicTheoryCards.PONDER_INSPIRATION_COST);
+        eq(-1, LegacyBasicTheoryCards.RETHINK_INSPIRATION_COST);
+
+        LegacyResearchTableData empty = new LegacyResearchTableData(5);
+        isFalse(LegacyBasicTheoryCards.canPonder(empty));
+        isFalse(LegacyBasicTheoryCards.canRethink(empty));
+        isFalse(LegacyBasicTheoryCards.rethink(empty, new java.util.Random(0L)));
+        eq(0, empty.bonusDraws());
+
+        LegacyResearchTableData normal = new LegacyResearchTableData(5);
+        normal.addTotal("BASICS", 10);
+        normal.addTotal("ALCHEMY", 10);
+        isTrue(LegacyBasicTheoryCards.canPonder(normal));
+        isTrue(LegacyBasicTheoryCards.ponder(normal));
+        eq(23, normal.getTotal("ALCHEMY")); // 13 of 25 from TreeMap order.
+        eq(27, normal.getTotal("BASICS")); // 12 of 25 + 5 fixed bonus.
+        eq(1, normal.bonusDraws());
+        normal.consumeInspirationAndPlaceCard(
+                LegacyBasicTheoryCards.PONDER_INSPIRATION_COST);
+        eq(3, normal.inspiration());
+        eq(1, normal.placedCards());
+
+        LegacyResearchTableData blocked = new LegacyResearchTableData(5);
+        blocked.addTotal("ALCHEMY", 12);
+        blocked.addTotal("BASICS", 10);
+        blocked.replaceBlockedCategories(java.util.List.of("ALCHEMY"));
+        isTrue(LegacyBasicTheoryCards.canPonder(blocked));
+        isTrue(LegacyBasicTheoryCards.ponder(blocked));
+        eq(12, blocked.getTotal("ALCHEMY"));
+        eq(40, blocked.getTotal("BASICS")); // 25 points + 5 BASICS.
+        eq(1, blocked.bonusDraws());
+
+        LegacyResearchTableData noAccess = new LegacyResearchTableData(5);
+        noAccess.addTotal("BASICS", 10);
+        noAccess.replaceBlockedCategories(java.util.List.of("BASICS"));
+        isFalse(LegacyBasicTheoryCards.canPonder(noAccess));
+        isFalse(LegacyBasicTheoryCards.ponder(noAccess));
+        eq(10, noAccess.getTotal("BASICS"));
+        eq(0, noAccess.bonusDraws());
+
+        // Vanilla CardPonder compares blocked list LENGTH, not how many
+        // listed categories are actually in categoryTotals.
+        LegacyResearchTableData irrelevantBlock = new LegacyResearchTableData(5);
+        irrelevantBlock.addTotal("BASICS", 20);
+        irrelevantBlock.replaceBlockedCategories(java.util.List.of("MISSING"));
+        isFalse(LegacyBasicTheoryCards.canPonder(irrelevantBlock));
+
+        LegacyResearchTableData rethink = new LegacyResearchTableData(5);
+        rethink.addTotal("ALCHEMY", 6);
+        rethink.addTotal("BASICS", 4);
+        isTrue(LegacyBasicTheoryCards.canRethink(rethink));
+        rethink.addInspiration(-1);
+        isTrue(LegacyBasicTheoryCards.rethink(rethink, new java.util.Random(0L)));
+        eq(0, rethink.getTotal("ALCHEMY"));
+        eq(1, rethink.getTotal("BASICS")); // 10 removed, + 1 from Random(0).
+        eq(1, rethink.bonusDraws());
+        rethink.consumeInspirationAndPlaceCard(
+                LegacyBasicTheoryCards.RETHINK_INSPIRATION_COST);
+        eq(5, rethink.inspiration()); // Negative cost gives back inspiration.
+        eq(1, rethink.placedCards());
+
+        // Rethink initializes on total>=10, not on individual category sizes.
+        LegacyResearchTableData tooSmall = new LegacyResearchTableData(5);
+        tooSmall.addTotal("BASICS", 9);
+        isFalse(LegacyBasicTheoryCards.canRethink(tooSmall));
+        isFalse(LegacyBasicTheoryCards.rethink(tooSmall, new java.util.Random(7L)));
+        eq(9, tooSmall.getTotal("BASICS"));
+        eq(0, tooSmall.bonusDraws());
+
+        LegacyResearchTableData twoCategories = new LegacyResearchTableData(5);
+        twoCategories.addTotal("ALCHEMY", 7);
+        twoCategories.addTotal("BASICS", 11);
+        isTrue(LegacyBasicTheoryCards.rethink(twoCategories, new java.util.Random(0L)));
+        eq(2, twoCategories.getTotal("ALCHEMY"));
+        eq(7, twoCategories.getTotal("BASICS")); // -5 then +1.
+        eq(1, twoCategories.bonusDraws());
     }
 
     private static void testLegacyCelestialTheoryCard() {
