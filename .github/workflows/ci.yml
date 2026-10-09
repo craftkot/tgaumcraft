@@ -41,6 +41,53 @@ jobs:
           test -f src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftItems.java
           test -f src/neoforge/java/dev/ehtid/thaumcraft/world/SalisMundusTransformQueue.java
 
+      - name: Check BETA26 celestial note textures and models
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("src/main/resources/assets/thaumcraft")
+          model_dir = root / "models/item"
+          texture_dir = root / "textures/item"
+          notes = json.loads((model_dir / "celestial_notes.json").read_text())
+          expected = (["stars_" + str(n) for n in range(1, 5)]
+                      + ["moon_" + str(n) for n in range(1, 9)])
+          assert len(notes["overrides"]) == 12
+          assert notes["textures"]["layer0"] == "thaumcraft:item/celestial/sheet"
+          assert notes["textures"]["layer1"] == "thaumcraft:item/celestial/sun"
+          for metadata, name in enumerate(expected, 1):
+              override = notes["overrides"][metadata - 1]
+              assert override["predicate"]["custom_model_data"] == metadata
+              assert override["model"] == "thaumcraft:item/celestial_notes_" + name
+              model = json.loads((model_dir / ("celestial_notes_" + name + ".json")).read_text())
+              assert model["textures"]["layer0"] == notes["textures"]["layer0"]
+              png = model["textures"]["layer1"].split(":", 1)[1] + ".png"
+              image = texture_dir / png
+              assert image.is_file() and image.read_bytes().startswith(bytes.fromhex("89504e470d0a1a0a"))
+
+          for name in ["sun", "sheet", *["stars" + str(i) for i in range(1, 5)],
+                       *["moon" + str(i) for i in range(1, 9)]]:
+              image = texture_dir / "celestial" / (name + ".png")
+              assert image.is_file() and image.read_bytes().startswith(bytes.fromhex("89504e470d0a1a0a"))
+          assert (texture_dir / "scribing_tools.png").is_file()
+          assert (model_dir / "scribing_tools.json").is_file()
+
+          for language in ("en_us", "ru_ru"):
+              data = json.loads((root / "lang" / (language + ".json")).read_text())
+              for key in ("item.thaumcraft.scribing_tools", "item.thaumcraft.celestial_notes",
+                          "tc.celestial.fail.1", "tc.celestial.fail.2"):
+                  assert key in data, (language, key)
+              for name in ("sun", *expected):
+                  assert "item.celestial_notes." + name + ".text" in data
+          for recipe_name in ("scribing_tools", "scribing_tools_refill"):
+              recipe = json.loads((Path("src/main/resources/data/thaumcraft/recipe") /
+                                   (recipe_name + ".json")).read_text())
+              assert recipe["result"]["id"] == "thaumcraft:scribing_tools"
+          print("Celestial art, 13 variants, two languages and two recipes: OK")
+          PY
+
       - name: Set up Gradle 9.2.1
         uses: gradle/actions/setup-gradle@v4
         with:
