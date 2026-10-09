@@ -38,6 +38,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftMiscCards();
         testLegacyCardAnalyzeBugfix();
         testLegacySpecialtyTheoryCards();
+        testLegacyAlchemyTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1278,6 +1279,80 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyAlchemyTheoryCards() {
+        AspectRegistry a = new AspectRegistry();
+        eq(1, LegacyAlchemyTheoryCards.INSPIRATION_COST);
+        for (String key : new String[]{
+                LegacyAlchemyTheoryCards.CONCENTRATE,
+                LegacyAlchemyTheoryCards.CHANNEL,
+                LegacyAlchemyTheoryCards.REACTIONS,
+                LegacyAlchemyTheoryCards.SYNTHESIS
+        }) isTrue(LegacyTheorycraftManifest.allCardKeys().contains(key));
+
+        var originalOrder = a.compoundAspects();
+        for (long seed : new long[]{0L, 1L, 42L, 777L, Long.MAX_VALUE}) {
+            AspectData expected = originalOrder.get(new java.util.Random(seed)
+                    .nextInt(originalOrder.size()));
+            eq(expected, LegacyAlchemyTheoryCards.selectCompound(a, seed));
+            var synth = LegacyAlchemyTheoryCards.initializeSynthesis(a, seed);
+            eq(expected, synth.result());
+            eq(expected.components().get(0), synth.component1());
+            eq(expected.components().get(1), synth.component2());
+            eq(expected, a.combinationResult(synth.component1(), synth.component2()));
+
+            var reaction = LegacyAlchemyTheoryCards.initializeReactions(a, seed);
+            isFalse(reaction.first() == reaction.second());
+            java.util.Random random = new java.util.Random(seed);
+            int i = random.nextInt(originalOrder.size());
+            int j = i;
+            while (j == i) j = random.nextInt(originalOrder.size());
+            eq(originalOrder.get(i), reaction.first());
+            eq(originalOrder.get(j), reaction.second());
+        }
+
+        // Actual 1.12 source compares double(nextFloat()) to 0.33d;
+        // literal Java float 0.33f is slightly GREATER than 0.33d.
+        isFalse(LegacyAlchemyTheoryCards.refundInspiration(0.33F));
+        isTrue(LegacyAlchemyTheoryCards.refundInspiration(0.329F));
+        isFalse(LegacyAlchemyTheoryCards.refundInspiration(0.98F));
+
+        LegacyResearchTableData table = new LegacyResearchTableData(6);
+        table.addInspiration(-2); // 4/6 inspiration.
+        var alwaysRefund = new LegacyTheorycraftMiscCards.AwarenessRandom() {
+            @Override public float nextFloat() { return 0.0F; }
+            @Override public int nextInt(int bound) { throw new AssertionError("extra roll"); }
+        };
+        var neverRefund = new LegacyTheorycraftMiscCards.AwarenessRandom() {
+            @Override public float nextFloat() { return 0.75F; }
+            @Override public int nextInt(int bound) { throw new AssertionError("extra roll"); }
+        };
+        LegacyAlchemyTheoryCards.concentrate(table, alwaysRefund);
+        eq(15, table.getTotal("ALCHEMY"));
+        eq(1, table.bonusDraws());
+        eq(5, table.inspiration()); // +1 refund at 0.0f
+        LegacyAlchemyTheoryCards.concentrate(table, neverRefund);
+        eq(30, table.getTotal("ALCHEMY"));
+        eq(2, table.bonusDraws());
+        eq(5, table.inspiration());
+
+        LegacyAlchemyTheoryCards.channel(table);
+        eq(25, table.getTotal("INFUSION"));
+        LegacyAlchemyTheoryCards.reactions(table, alwaysRefund);
+        eq(55, table.getTotal("ALCHEMY"));
+        eq(6, table.inspiration()); // Capped to inspirationStart.
+
+        LegacyResearchTableData output = new LegacyResearchTableData(6);
+        var synth = LegacyAlchemyTheoryCards.initializeSynthesis(a, 42L);
+        AspectData crafted = LegacyAlchemyTheoryCards.synthesisAfterInputsConsumed(
+                output, synth, neverRefund);
+        eq(synth.result(), crafted);
+        eq(40, output.getTotal("ALCHEMY"));
+        eq(6, output.inspiration());
+        eq(null, LegacyAlchemyTheoryCards.synthesisAfterInputsConsumed(
+                output, null, neverRefund));
+        eq(40, output.getTotal("ALCHEMY")); // A missing card yields no reward.
     }
 
     private static void testLegacySpecialtyTheoryCards() {
