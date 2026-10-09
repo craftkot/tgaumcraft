@@ -116,18 +116,25 @@ public final class ThaumometerScanDispatcher {
      * BETA26 OreDictionary material scanners translated to NeoForge item tags.
      * Multiple matching ore forms grant the same research key only once.
      */
+    private static java.util.Set<String> matchingCommonItemTags(ItemStack stack,
+                                                             java.util.List<String> tagIds) {
+        if (stack == null || stack.isEmpty()) return java.util.Set.of();
+        java.util.Set<String> matches = new java.util.HashSet<>();
+        for (String tagId : tagIds) {
+            TagKey<net.minecraft.world.item.Item> key =
+                    TagKey.create(Registries.ITEM, ResourceLocation.parse(tagId));
+            if (stack.is(key)) matches.add(tagId);
+        }
+        return matches;
+    }
+
     private static java.util.Set<String> itemSpecialKeys(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return java.util.Set.of();
         java.util.Set<String> keys = new java.util.LinkedHashSet<>(
                 LegacyVanillaSpecialScans.forItem(
                         BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()));
-        java.util.Set<String> matchingTags = new java.util.HashSet<>();
-        for (String tagId : LegacyOreDictionaryScans.modernTagNames()) {
-            TagKey<net.minecraft.world.item.Item> key =
-                    TagKey.create(Registries.ITEM, ResourceLocation.parse(tagId));
-            if (stack.is(key)) matchingTags.add(tagId);
-        }
-        keys.addAll(LegacyOreDictionaryScans.fromCommonTags(matchingTags));
+        keys.addAll(LegacyOreDictionaryScans.fromCommonTags(
+                matchingCommonItemTags(stack, LegacyOreDictionaryScans.modernTagNames())));
         return java.util.Set.copyOf(keys);
     }
 
@@ -169,8 +176,14 @@ public final class ThaumometerScanDispatcher {
     }
 
     private static AspectListData objectAspects(ItemStack stack) {
-        if (stack.isEmpty()) return new AspectListData();
-        return LegacyObjectAspectTable.get(ASPECTS, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        if (stack == null || stack.isEmpty()) return new AspectListData();
+        AspectListData direct = LegacyObjectAspectTable.get(
+                ASPECTS, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
+        if (direct.size() > 0) return direct;
+        // Fall back to exact TC6 ore-dictionary aspect registrations, translated
+        // to modern common tags. This is essential for cross-mod ores/ingots.
+        return LegacyOreAspectTable.fromCommonTags(
+                ASPECTS, matchingCommonItemTags(stack, LegacyOreAspectTable.modernTagNames()));
     }
 
     static String genericKey(Player player, Object target) {
