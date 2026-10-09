@@ -4,6 +4,9 @@ import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.*;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -108,23 +111,42 @@ public final class ThaumometerScanDispatcher {
                 PlayerKnowledgeData::isResearchKnown);
     }
 
+    /**
+     * Merge the exact BETA26 built-in item scan registrations with the four
+     * BETA26 OreDictionary material scanners translated to NeoForge item tags.
+     * Multiple matching ore forms grant the same research key only once.
+     */
+    private static java.util.Set<String> itemSpecialKeys(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return java.util.Set.of();
+        java.util.Set<String> keys = new java.util.LinkedHashSet<>(
+                LegacyVanillaSpecialScans.forItem(
+                        BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()));
+        java.util.Set<String> matchingTags = new java.util.HashSet<>();
+        for (String tagId : LegacyOreDictionaryScans.modernTagNames()) {
+            TagKey<net.minecraft.world.item.Item> key =
+                    TagKey.create(Registries.ITEM, ResourceLocation.parse(tagId));
+            if (stack.is(key)) matchingTags.add(tagId);
+        }
+        keys.addAll(LegacyOreDictionaryScans.fromCommonTags(matchingTags));
+        return java.util.Set.copyOf(keys);
+    }
+
     private static java.util.Set<String> specialKeys(Player player, Object target) {
-        if (target instanceof ItemStack stack) {
-            return stack.isEmpty() ? java.util.Set.of()
-                    : LegacyVanillaSpecialScans.forItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-        }
-        if (target instanceof ItemEntity itemEntity) {
-            ItemStack stack = itemEntity.getItem();
-            return stack.isEmpty() ? java.util.Set.of()
-                    : LegacyVanillaSpecialScans.forItem(BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-        }
+        if (target instanceof ItemStack stack) return itemSpecialKeys(stack);
+        if (target instanceof ItemEntity itemEntity) return itemSpecialKeys(itemEntity.getItem());
         if (target instanceof Entity entity) {
             return LegacyVanillaSpecialScans.forEntity(
                     BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
         }
         if (target instanceof BlockPos pos) {
-            return LegacyVanillaSpecialScans.forBlock(
-                    BuiltInRegistries.BLOCK.getKey(player.level().getBlockState(pos).getBlock()).toString());
+            java.util.Set<String> keys = new java.util.LinkedHashSet<>(
+                    LegacyVanillaSpecialScans.forBlock(
+                            BuiltInRegistries.BLOCK.getKey(
+                                    player.level().getBlockState(pos).getBlock()).toString()));
+            // Original ScanOreDictionary.getItemFromParms resolves a block pick
+            // stack before querying its OreDictionary ids; preserve that route.
+            keys.addAll(itemSpecialKeys(scanningStackFor(player, pos)));
+            return java.util.Set.copyOf(keys);
         }
         return java.util.Set.of();
     }
