@@ -39,6 +39,14 @@ public final class LegacyBasicTheoryCards {
      */
     public static boolean ponder(LegacyResearchTableData table) {
         Objects.requireNonNull(table, "table");
+        // Original bug: if categoriesBlocked contains EVERY existing theory
+        // category, the 1000-pass loop can't spend even one point but may
+        // still award a free BASICS bonus and a card reroll. Guard only this
+        // impossible state; successful original Ponder outcomes are unchanged.
+        if (table.categoryTotals().keySet().stream()
+                .noneMatch(key -> !table.blockedCategories().contains(key))) {
+            return false;
+        }
         int remaining = 25;
         int loops = 0;
         while (remaining > 0 && loops < 1000) {
