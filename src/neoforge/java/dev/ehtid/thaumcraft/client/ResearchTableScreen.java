@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.menu.ResearchTableMenu;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import net.minecraft.world.item.Items;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
@@ -22,6 +24,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                     "thaumcraft", "textures/gui/gui_base.png");
 
     // Exact BETA26 GuiResearchTable buttonCreate/Complete/Scrap positions.
+    private static final int CREATE_X = 128, CREATE_Y = 22;
     private static final int COMPLETE_X = 191, COMPLETE_Y = 96;
     private static final int SCRAP_X = 128, SCRAP_Y = 168;
     private static final int BUTTON_WIDTH = 49, BUTTON_HEIGHT = 11;
@@ -49,6 +52,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             } else {
                 renderOriginalButton(graphics, SCRAP_X, SCRAP_Y);
             }
+        } else if (canStartTheory()) {
+            renderOriginalButton(graphics, CREATE_X, CREATE_Y);
         }
     }
 
@@ -70,7 +75,21 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         } else {
             graphics.drawString(font, Component.translatable(
                     "research_table.awaiting_theory"), 80, 43, 0xEEE0BA, false);
+            if (canStartTheory()) {
+                renderButtonText(graphics, CREATE_X, CREATE_Y,
+                        Component.translatable("button.create.theory"));
+            }
         }
+    }
+
+    private boolean canStartTheory() {
+        var tools = menu.getSlot(0).getItem();
+        var paper = menu.getSlot(1).getItem();
+        return !menu.hasSession()
+                && tools.is(ThaumcraftItems.SCRIBING_TOOLS.get())
+                && tools.isDamageableItem()
+                && tools.getDamageValue() < tools.getMaxDamage()
+                && paper.is(Items.PAPER) && !paper.isEmpty();
     }
 
     private void renderOriginalButton(GuiGraphics graphics, int x, int y) {
@@ -89,6 +108,15 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        if (mouseButton == 0 && !menu.hasSession() && canStartTheory()
+                && minecraft != null && minecraft.gameMode != null
+                && mouseX >= leftPos + CREATE_X
+                && mouseX < leftPos + CREATE_X + BUTTON_WIDTH
+                && mouseY >= topPos + CREATE_Y
+                && mouseY < topPos + CREATE_Y + BUTTON_HEIGHT) {
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1);
+            return true;
+        }
         if (mouseButton == 0 && menu.hasSession() && minecraft != null
                 && minecraft.gameMode != null) {
             int x = menu.inspiration() <= 0 ? COMPLETE_X : SCRAP_X;
