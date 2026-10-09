@@ -1176,6 +1176,32 @@ public final class CoreParityTest {
                         new LegacyEnchantmentAspectBonuses.Enchantment("minecraft:sharpness",
                                 10923, LegacyEnchantmentAspectBonuses.Rarity.COMMON)));
         eq(0, narrowed.getAmount(a.MAGIC)); // 10923 * 3 wraps to -32767; culled
+
+        // End-to-end BETA26 behavior: an enchanted sword has its base weapon
+        // Aversio, enchant-derived Ignis/Praecantatio, a ScanGeneric identity,
+        // and the distinct ScanEnchantment research markers.
+        AspectListData sword = LegacyEquipmentAspectBonuses.apply(
+                a, new AspectListData(), "minecraft:iron_sword");
+        sword = LegacyEnchantmentAspectBonuses.apply(a, sword, java.util.List.of(
+                new LegacyEnchantmentAspectBonuses.Enchantment(
+                        "minecraft:sharpness", 2, LegacyEnchantmentAspectBonuses.Rarity.COMMON),
+                new LegacyEnchantmentAspectBonuses.Enchantment(
+                        "minecraft:fire_aspect", 1, LegacyEnchantmentAspectBonuses.Rarity.RARE)));
+        eq(24, sword.getAmount(a.AVERSION)); // Iron sword bonus beats sharpness II.
+        eq(1, sword.getAmount(a.FIRE)); // floor((1*3)/2)
+        eq(13, sword.getAmount(a.MAGIC)); // 6 + (3 + 4 rarity).
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                a, BuiltInResearchCategories.create(a));
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        var target = new CriticalScanHandlers.Target("!minecraft:iron_sword",
+                sword, LegacyEnchantmentEffectScans.forItemEnchantments(
+                        java.util.Set.of("minecraft:sharpness", "minecraft:fire_aspect")));
+        var result = scans.scanTheThing(player, target, (p, key) -> p.addResearch(key));
+        eq(6, result.successfulHandlers()); // 3 aspects + Generic + 2 enchants.
+        for (String key : new String[]{"!aversio", "!ignis", "!praecantatio",
+                "!minecraft:iron_sword", "!enchantment.damage.all",
+                "!enchantment.fire"}) isTrue(player.isResearchKnown(key));
+        isFalse(scans.scanTheThing(player, target, (p, key) -> p.addResearch(key)).anySuccess());
     }
 
     private static void testLegacyEnchantmentEffectScans() {
