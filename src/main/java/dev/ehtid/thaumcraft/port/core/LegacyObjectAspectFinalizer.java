@@ -28,7 +28,12 @@ public final class LegacyObjectAspectFinalizer {
         AspectListData culled = input.copy();
         while (culled.size() > maxTypes) {
             AspectData least = null;
-            float lowest = 32767.0F;
+            // Original BETA26 initializes this to 32767f. If 8+ aspects
+            // each have a weighted count >=32767, NONE is selected and the
+            // old while-loop never advances. The port can safely start at
+            // +infinity: ordinary <32767 data produces IDENTICAL selections,
+            // while unusually large/modded/corrupt aspect lists terminate.
+            float lowest = Float.POSITIVE_INFINITY;
             for (AspectData aspect : culled.getAspects()) {
                 if (aspect == null) continue;
                 float score = culled.getAmount(aspect);
@@ -53,10 +58,10 @@ public final class LegacyObjectAspectFinalizer {
                 }
             }
             if (least == null) {
-                // The original loop would not make progress when every
-                // weighted amount is >=32767; avoid a server-thread hang on
-                // synthetic/hostile NBT rather than looping forever.
-                throw new IllegalStateException("No removable aspect (legacy cullTags would stall)");
+                // Do not kill the server if a malformed external aspect
+                // definition supplies NaN scores for every candidate.
+                // Consistent fallback: drop the first registered entry.
+                least = culled.getAspects()[0];
             }
             culled.remove(least);
         }
