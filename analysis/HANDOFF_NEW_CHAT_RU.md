@@ -6,16 +6,17 @@
 
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
-- Current confirmed head: `df966330351c8b7bfa73f02d10b7b126dadfcca4`.
-- Current confirmed overall progress: **58%**.
-- Latest GitHub Actions for current head: SUCCESS (core parity + NeoForge build + dedicated-server smoke + artifact upload).
+- Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
+- Last verified gameplay CI checkpoint at time of this handoff: `79782b0ac634f3f5942f34247c4156f9daecabfa` (SUCCESS: core parity + NeoForge build + dedicated-server smoke).
+- Confirmed overall progress: **59%** (do not inflate until another substantial playable slice is verified).
+- Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
 - Original JAR SHA-256: `9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f`.
 
 ## User workflow/style
 - User often sends only `п` or `продолжай`: this means DO ACTUAL PORT WORK NOW.
-- For normal continuation responses, user wants only the final overall percentage, e.g. `59%`.
+- For normal continuation responses, user now allows **a short plain-Russian mini-summary plus final overall percentage**. Do real multi-part changes per `п`, not 1 trivial edit.
 - Do not ask clarifying questions for routine port work.
 - Prefer small coherent commits, then CI, then next block.
 - Avoid long polling loops that make the chat UI time out. Start CI, check enough to diagnose failures, but do not sit in an endless status loop.
@@ -23,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 58%.
+Never lower the confirmed baseline below 59%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -83,7 +84,20 @@ Do not spend a whole run only rereading state.
 - vanilla special scans ported
 - projectile scan registrations
 - vanilla golem/spider/bat/fly scan registrations
-- current head `df966330` is green.
+- BETA26 item metadata mapping for dyes, terracotta, logs/leaves, planks/saplings, bed colors and older stone variants.
+- modern common item-tag bridge for BETA26 iron, brass, thaumium and void material scans.
+- vanilla and modded ore-dictionary AspectList values extracted from ConfigAspects bytecode; exact ore quantities in `LegacyOreAspectTable`.
+- original BETA26 custom NBT `Aspects:[{key,amount}]` for crystal essence scanned as actual contained aspects, with duplicate merge, nonpositive cleanup and 500 cap.
+- original equipment bonus aspect handling for 1.12 armor, bows, swords and tools (`LegacyEquipmentAspectBonuses`).
+- original dye ore dictionary SENSES bonus projected to the 16 dye tags (`LegacyDyeAspectBonuses`).
+
+## 2026-10-09 continuation
+- Verified gameplay commit `79782b0a`: CI success for core parity, NeoForge and dedicated-server smoke, includes NBT-contained crystal essence scanning and vanilla equipment bonus aspects.
+- Subsequent dye bonuses: `32785ea3`, `ca18f963`, `4cd8535c`, `b72b3301`. Verify latest CI before describing them as passed; no gameplay client smoke yet.
+- Exact JAR is available in user Library `/ThaumcraftPort/original_BETA26.jar` and can be materialized for `javap -c -p` analysis. JAR must **never** be checked into GitHub.
+- Bytecode-verified sources: `thaumcraft.common.config.ConfigAspects.registerItemAspects`, `ThaumcraftCraftingManager.getBonusTags`, `ItemGenericEssentiaContainer.getAspects`. Read those to ground further porting.
+- Focus next on fixing latest CI if needed, enchantment aspect effects and full ScanPotion/ScanEnchantment registration parity; avoid fake parity or invented item ids.
+- No evidence of a real interactive client playthrough yet; server smoke does not mean full mod content is complete.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
@@ -119,4 +133,4 @@ For every meaningful code commit:
 
 ## New-chat start instruction
 On opening a new chat, say:
-`Продолжай Thaumcraft по analysis/HANDOFF_NEW_CHAT_RU.md из craftkot/tgaumcraft. Сначала fresh-read main и handoff, затем сразу продолжай работу. Не начинай заново. Пиши только процент.`
+`Продолжай Thaumcraft по analysis/HANDOFF_NEW_CHAT_RU.md из craftkot/tgaumcraft. Сначала fresh-read main и handoff, затем сразу продолжай работу. Не начинай заново. Пиши краткую сводку на простом русском и итоговый процент.`
