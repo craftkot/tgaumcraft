@@ -37,6 +37,7 @@ public final class CoreParityTest {
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
         testContainedCrystalAspectScanning();
+        testLegacyEquipmentBonuses();
         testOreMaterialIntegratedScan();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
@@ -1263,6 +1264,82 @@ public final class CoreParityTest {
         isTrue(plateResult.anySuccess());
         eq(1, plateResult.successfulHandlers());
         isTrue(p.isResearchKnown("!example:brass_plate0"));
+    }
+
+    private static void testLegacyEquipmentBonuses() {
+        AspectRegistry a = new AspectRegistry();
+        String[][] armor = {
+            {"leather_helmet", "1"}, {"leather_chestplate", "3"},
+            {"leather_leggings", "2"}, {"leather_boots", "1"},
+            {"chainmail_helmet", "2"}, {"chainmail_chestplate", "5"},
+            {"chainmail_leggings", "4"}, {"chainmail_boots", "1"},
+            {"iron_helmet", "2"}, {"iron_chestplate", "6"},
+            {"iron_leggings", "5"}, {"iron_boots", "2"},
+            {"golden_helmet", "2"}, {"golden_chestplate", "5"},
+            {"golden_leggings", "3"}, {"golden_boots", "1"},
+            {"diamond_helmet", "3"}, {"diamond_chestplate", "8"},
+            {"diamond_leggings", "6"}, {"diamond_boots", "3"}
+        };
+        for (String[] gear : armor) {
+            AspectListData result = LegacyEquipmentAspectBonuses.apply(
+                    a, new AspectListData(), "minecraft:" + gear[0]);
+            eq(1, result.size());
+            eq(Integer.parseInt(gear[1]) * 4, result.getAmount(a.PROTECT));
+        }
+        String[][] swords = {
+            {"wooden_sword", "16"}, {"stone_sword", "20"},
+            {"iron_sword", "24"}, {"golden_sword", "16"}, {"diamond_sword", "28"}
+        };
+        for (String[] sword : swords) {
+            AspectListData result = LegacyEquipmentAspectBonuses.apply(
+                    a, new AspectListData(), "minecraft:" + sword[0]);
+            eq(1, result.size());
+            eq(Integer.parseInt(sword[1]), result.getAmount(a.AVERSION));
+        }
+        for (String type : new String[]{"_pickaxe", "_shovel", "_axe", "_hoe"}) {
+            for (String[] tier : new String[][]{
+                    {"wooden", "4"}, {"stone", "8"}, {"iron", "12"},
+                    {"golden", "4"}, {"diamond", "16"}}) {
+                AspectListData result = LegacyEquipmentAspectBonuses.apply(
+                        a, new AspectListData(), "minecraft:" + tier[0] + type);
+                eq(1, result.size());
+                eq(Integer.parseInt(tier[1]), result.getAmount(a.TOOL));
+            }
+        }
+        eq(12, LegacyEquipmentAspectBonuses.apply(a,
+                new AspectListData(), "minecraft:shears").getAmount(a.TOOL));
+        AspectListData bow = LegacyEquipmentAspectBonuses.apply(
+                a, new AspectListData(), "minecraft:bow");
+        eq(2, bow.size());
+        eq(10, bow.getAmount(a.AVERSION));
+        eq(5, bow.getAmount(a.FLIGHT));
+
+        // Thaumcraft's AspectList.merge is MAX: existing stronger tags win.
+        AspectListData old = new AspectListData().add(a.AVERSION, 40).add(a.LIGHT, 3);
+        AspectListData updated = LegacyEquipmentAspectBonuses.apply(a, old, "minecraft:iron_sword");
+        eq(40, updated.getAmount(a.AVERSION));
+        eq(3, updated.getAmount(a.LIGHT));
+        eq(40, old.getAmount(a.AVERSION));
+        // 1.13+ items do not silently gain tags belonging to old vanilla gear.
+        for (String modern : new String[]{"minecraft:netherite_sword",
+                "minecraft:crossbow", "minecraft:trident", "minecraft:netherite_pickaxe"}) {
+            eq(0, LegacyEquipmentAspectBonuses.apply(
+                    a, new AspectListData(), modern).size());
+        }
+
+        // Original ScanAspect + ScanGeneric work on equipment bonuses without
+        // any direct ore-aspect registration (previously these objects had zero tags).
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                a, BuiltInResearchCategories.create(a));
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        var target = new CriticalScanHandlers.Target("!minecraft:bow",
+                LegacyEquipmentAspectBonuses.apply(a, new AspectListData(), "minecraft:bow"));
+        var first = scans.scanTheThing(player, target, (p, key) -> p.addResearch(key));
+        isTrue(first.anySuccess());
+        eq(3, first.successfulHandlers());
+        isTrue(player.isResearchKnown("!aversio"));
+        isTrue(player.isResearchKnown("!volatus"));
+        isTrue(player.isResearchKnown("!minecraft:bow"));
     }
 
     private static void testContainedCrystalAspectScanning() {
