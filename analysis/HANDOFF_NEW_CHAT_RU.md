@@ -171,6 +171,22 @@ Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradl
 - NEXT: Port genuine TheorycraftManager card registry and individual card subclass NBT/state; wire drawCards (paper consumption) and card selection (original required items/inspiration/seed) through server packets/menu, then real clickable client previews and aid scanning. Avoid stand-in cards.
 - USER FINAL-POLISH REQUEST still deferred: optional random *uncollected* moon-phase sky notes. Do not implement early.
 
+## 2026-10-10 quality/readability improvements (still 65% overall)
+
+User explicitly approved minor bug fixes and more legible GUIs, provided the mod's mechanics/balance/content remain original. **Do not change the original font resource for the whole game**: instead, use the player's active Minecraft language font at natural 1.0 scale and a shadow/contrast panel.
+
+- New `src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java`: full-size Minecraft glyphs including Russian, shadow and dark readable panels, wrapped text and full-width button labels.
+- Improved `ResearchTableScreen`: 132x18 readable dark-green BETA26-themed buttons, full-size titles, wrapped instruction text, button hover tooltip (even when another language is long), original GUI art unchanged. Buttons remain the only implemented original Create/Complete/Scrap actions.
+- Improved `ArcaneWorkbenchScreen`: cost/available Vis labels no longer use 0.5 scaling; shows full-size color-coded text with backplate. `ThaumometerHudRenderer`: Shift Vis/Flux numbers now full-size with shadows/backplate. No changes to aspect costs/aura math.
+- `LegacyObjectAspectFinalizer`: fixed genuine original BETA26 `AspectHelper.cullTags` potential infinite loop for >7 aspects whose weighted amounts all >=32767. Replace initial 32767f sentinel with `Float.POSITIVE_INFINITY`, preserve selection for normal input. Added regression test with 8 types at 50000.
+- `LegacyTheorycraftDrawEngine`: original 10,000 futile retries for an entirely empty normal-card+aid pool now fast-exit 0 attempts, unchanged empty result and unadvanced RNG. Regression in `CoreParityTest`.
+- `LegacyBasicTheoryCards.ponder`: prevent futile 1000 loops and erroneous reward when ALL categories are blocked (no valid target). Normal unblocked category mechanics are unchanged.
+- `ResearchTableBlockEntity.finishTheory`: now verifies player is still nearby and table is live before granting rewards, preventing remote/stale completion through future API paths.
+- Detailed change log: `analysis/PORT_QUALITY_IMPROVEMENTS_RU.md`.
+- Original BETA26 celestial Moon phase mechanic remains untouched until the requested *final* optional random uncollected moon-note mode. No premature randomization.
+- **Always check CI for newest head**. Last known readabilty-only slice `9bea11eb5f8` GREEN NeoForge+server; bug-fix + tests and docs latest are running through Actions. Do NOT claim an interactive Minecraft GUI screenshot/playthrough has been validated by server smoke.
+- **Overall completion estimate REMAINS 65%** until next substantial gameplay system is ported. Next step full Research Table card UI and aid detection, no placeholder mechanics.
+
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
 - `c5eccbfe` — restore BETA26 projectile scan registrations
