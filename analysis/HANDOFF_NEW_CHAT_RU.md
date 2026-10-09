@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified CI checkpoint at time of this handoff: `00afbf64de376a0793fd1b83c146c8acc50912a6` (SUCCESS: 5,924 core assertions, exact Research Table texture SHA256/model/loot/recipe checks, NeoForge build, dedicated-server ready state, artifact upload). Newer commits may still be verifying.
-- Confirmed estimated overall progress: **64%** after implementing the in-world research/wooden table, inventory/GUI/artwork, BETA26 scribing-tools upgrade and recipe. THE FULL THEORYCRAFT CARD GAME/UI IS NOT YET IMPLEMENTED. Do not present theorycraft as finished/playtested.
+- Last verified CI checkpoint at time of this handoff: `4a9d9f65a35ec9d7edf1352dda321f69e5b302bd` (SUCCESS: 6,021 core assertions, NeoForge build, dedicated-server ready, built jar artifact). Additional translation/asset CI may still be running.
+- Confirmed estimated overall progress: **65%** after faithful BETA26 research-table card choice/extra-state groundwork, core CardPonder and CardRethink logic, original clickable Create/Complete/Scrap buttons and lossless save passthrough. THE FULL CARD-DRAW/SELECT GAME AND ALL AID CARDS ARE NOT YET IMPLEMENTED. No real interactive client playthrough verified yet.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 64%.
+Never lower the confirmed baseline below 65%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -156,6 +156,20 @@ Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradl
 - **VERIFIED CI GREEN `00afbf64de3`**: 5,924 core assertions, original texture/checksum/integrity test PASS, NeoForge build PASS, dedicated server reached Done, built jars uploaded. Additional latest `44d28b5` with valid 1.21 recipe category assertion may still be pending; check.
 - **NOT YET FINISHED**: ResearchTableData.savedCards/cardChoices/lastDraw original state machine, drawCards selection, adjacent aid detection, GUI buttons and full end-to-end client interaction tests. The physical two-slot table works as a gameplay framework, but real theory cards cannot yet be selected through its screen. NEXT implement this honestly without fake random card list or losing persisted choices.
 - **User optional Moon random-notes remains DEFERRED until all original content is finished.** Do not introduce now.
+
+## 2026-10-09 late theory-card runtime (65% checkpoint)
+- LIVE ORIGINAL JAR bytecode audit: `ResearchTableData.serialize/deserialize/serializeCardChoice/drawCards`, `CardCelestial.serialize`, `CardPonder.activate`, `CardRethink.activate`, `ContainerResearchTable.enchantItem`, `GuiResearchTable`. Local reference JAR is in Library and/or materialized at `/mnt/data/thaumcraft_reference/original_BETA26.jar` when available; never commit JAR.
+- `LegacyResearchTableData` now preserves BETA26 `player`, `savedCards` long seeds, `aidCards` class names, `categoriesBlocked` in LIST ORDER with duplicates; `Snapshot` is immutable, tested and backward-compatible with seven-field old constructor. The loader NBT writer uses exact compound-list tags `savedCards:[{card:long}]`, `aidCards:[{aidCard:string}]`, `categoriesBlocked:[{category:string}]`.
+- **Critical lossless fix**: `LegacyResearchTableNbt.write(data, originalSession)` keeps unknown original `cardChoices`, `lastDraw` and their nested subclass `cardNBT` compound unchanged through save/reload; `ResearchTableBlockEntity.originalSessionNbt` retains raw copy across autosaves and resets on finish/abandon. Previously original card data could be silently discarded.
+- `LegacyCelestialChoiceNbt` handles exact `thaumcraft.common.lib.research.theorycraft.CardCelestial` card choice `cardChoice,aid,select,cardNBT:{seed,md1,md2,cat}`, declines other card classes without destroying their original raw NBT.
+- `LegacyTheorycraftDrawEngine`: exact vanilla drawCards semantics: requested THREE becomes TWO unless bonusDraws>0 (then consumes one); 25% <= float roll per attempt for aid card; accepted aid key removed, failed aid stays; retry 10000 times, no duplicates across aid/normal, normal key order provided unchanged from original HashMap iteration, rejects aidOnly/cost/category-blocked/uncategorized per bytecode. Works via callback so unported card classes are NOT faked. `CoreParityTest` validates rich deterministic draw/probability/duplicates/cost/bonus edge cases.
+- `LegacyBasicTheoryCards`: actual original `CardPonder` (cost 2, distribute 25 over unblocked TreeMap totals, +5 BASICS, +1 bonusDraw; preserve unusual boolean return) and `CardRethink` (cost -1, initialize on sum>=10, reduce up to ten points in iteration order, +1 bonusDraw, +1..10 BASICS). Verified 1.12 bytecode and tested several edge cases.
+- `ResearchTableBlockEntity.canStartNewTheory`: requires real charged IScribeTools and paper, does NOT consume either on creating the session. `ResearchTableMenu.clickMenuButton` restores IDs **1 create with empty aids**, **7 complete**, **9 abandon** and safely rejects **2/3 draw + 4/5/6 choose** until full card registry/aid UI is ready.
+- `ResearchTableScreen`: original 1.12 button positions: Create (128,22), Complete (191,96), Scrap (128,168); BETA26 `gui_base.png` texture from original JAR, button region (37,66), matching 49x11 size and original RU/EN text. Clicking invokes real server menu buttons. The `Create` path currently allows an explicitly ZERO-selected-aids start; surrounding aid detection and selection UI remain for later. DO NOT CLAIM THE FULL THEORYCRAFT GAME IS FINISHED.
+- **GREEN gameplay CI `4a9d9f65`**: 6,021 tests, NeoForge build successful, dedicated server reached Done, artifact uploaded. Later EN/RU strings, original GUI button SHA256 integrity CI run may be pending, check current HEAD.
+- Failures encountered and FIXED: `ResearchTableMenu` missing `ServerPlayer` import (`eb9cecd3`), 1.21 `GuiGraphics.drawString` translated Component + boolean overload (`b623aae4`). Earlier `LegacyTheorycraftDrawEngine` NPE calling `List.of().contains(null)` fixed (`68e0cedd`).
+- NEXT: Port genuine TheorycraftManager card registry and individual card subclass NBT/state; wire drawCards (paper consumption) and card selection (original required items/inspiration/seed) through server packets/menu, then real clickable client previews and aid scanning. Avoid stand-in cards.
+- USER FINAL-POLISH REQUEST still deferred: optional random *uncollected* moon-phase sky notes. Do not implement early.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
