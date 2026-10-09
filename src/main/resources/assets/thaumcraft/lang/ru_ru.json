@@ -22,5 +22,9 @@
   "item.celestial_notes.moon_7.text": "Луна, Первая четверть",
   "item.celestial_notes.moon_8.text": "Луна, Прибывающая",
   "tc.celestial.fail.1": "Вы уже изучали это сегодня.",
-  "tc.celestial.fail.2": "Вы не можете делать заметки о своих исследованиях."
+  "tc.celestial.fail.2": "Вы не можете делать заметки о своих исследованиях.",
+  "block.thaumcraft.research_table": "Исследовательский стол",
+  "container.thaumcraft.research_table": "Исследовательский стол",
+  "research_table.awaiting_theory": "Поместите бумагу и письменные принадлежности для исследований.",
+  "research_table.inspiration": "Вдохновение: %s / %s"
 }
