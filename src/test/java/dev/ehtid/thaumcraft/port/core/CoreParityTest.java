@@ -38,6 +38,7 @@ public final class CoreParityTest {
         testLegacyOreAspectTable();
         testContainedCrystalAspectScanning();
         testLegacyEquipmentBonuses();
+        testLegacyDyeBonuses();
         testOreMaterialIntegratedScan();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
@@ -1264,6 +1265,53 @@ public final class CoreParityTest {
         isTrue(plateResult.anySuccess());
         eq(1, plateResult.successfulHandlers());
         isTrue(p.isResearchKnown("!example:brass_plate0"));
+    }
+
+    private static void testLegacyDyeBonuses() {
+        AspectRegistry a = new AspectRegistry();
+        String[] dyes = {
+            "ink_sac", "red_dye", "green_dye", "cocoa_beans",
+            "lapis_lazuli", "purple_dye", "cyan_dye", "light_gray_dye",
+            "gray_dye", "pink_dye", "lime_dye", "yellow_dye",
+            "light_blue_dye", "magenta_dye", "orange_dye", "bone_meal",
+            "black_dye", "brown_dye", "blue_dye", "white_dye"
+        };
+        for (String dye : dyes) {
+            AspectListData result = LegacyDyeAspectBonuses.apply(a,
+                    new AspectListData(), "minecraft:" + dye, false);
+            eq(1, result.size());
+            eq(5, result.getAmount(a.SENSES));
+        }
+        eq(16, LegacyDyeAspectBonuses.modernTagNames().size());
+        eq(16, new java.util.HashSet<>(LegacyDyeAspectBonuses.modernTagNames()).size());
+        for (String tag : LegacyDyeAspectBonuses.modernTagNames()) {
+            isTrue(tag.startsWith("c:dyes/"));
+        }
+        AspectListData customModDye = LegacyDyeAspectBonuses.apply(a,
+                new AspectListData(), "example:custom_red_pigment", true);
+        eq(5, customModDye.getAmount(a.SENSES));
+        AspectListData lapis = LegacyDyeAspectBonuses.apply(a,
+                LegacyObjectAspectTable.get(a, "minecraft:lapis_lazuli"),
+                "minecraft:lapis_lazuli", false);
+        eq(15, lapis.getAmount(a.SENSES)); // Merge, not 15 + 5.
+        AspectListData strong = LegacyDyeAspectBonuses.apply(a,
+                new AspectListData().add(a.SENSES, 40).add(a.EARTH, 2),
+                "minecraft:red_dye", true);
+        eq(40, strong.getAmount(a.SENSES));
+        eq(2, strong.getAmount(a.EARTH));
+        eq(0, LegacyDyeAspectBonuses.apply(a,
+                new AspectListData(), "minecraft:glow_ink_sac", false).size());
+
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                a, BuiltInResearchCategories.create(a));
+        PlayerKnowledgeData p = new PlayerKnowledgeData();
+        var target = new CriticalScanHandlers.Target("!minecraft:red_dye0",
+                LegacyDyeAspectBonuses.apply(a, new AspectListData(), "minecraft:red_dye", false));
+        var first = scans.scanTheThing(p, target, (player, key) -> player.addResearch(key));
+        isTrue(first.anySuccess());
+        eq(2, first.successfulHandlers());
+        isTrue(p.isResearchKnown("!sensus"));
+        isTrue(p.isResearchKnown("!minecraft:red_dye0"));
     }
 
     private static void testLegacyEquipmentBonuses() {
