@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified gameplay CI checkpoint at time of this handoff: `6e8817c69f29e7338f43936efc60a5dfb9dd53f4` (SUCCESS: 5,566 assertions, NeoForge build + dedicated-server smoke).
-- Confirmed estimated overall progress: **60%** after BETA26 vanilla enchantment/potion scan completion. Keep this as the next baseline until further substantial work.
+- Last verified gameplay CI checkpoint at time of this handoff: `941d2cbdd3d8af1f3e83263627fdbd4851c641d2` (SUCCESS: 5,757 core parity assertions, NeoForge build + dedicated-server ready state).
+- Confirmed estimated overall progress: **61%** after BETA26 enchantment-derived aspects, original weighted 7-type culling/500-amount cap, and name-deterministic player aspects. Keep this as the next baseline until further substantial work.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 60%.
+Never lower the confirmed baseline below 61%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -115,6 +115,16 @@ User future gameplay change, **explicitly defer until the main mod port is compl
 - Original celestial scans depend on actual sun/moon/moon-phase/star conditions; user finds waiting for all moon phases excessively slow.
 - Near FINAL polishing, offer/configure an alternative in which successful moon scans give a random UNCOLLECTED moon-phase research note regardless of actual moon phase; no duplicates and keep reasonable per-day scan limit. Preserve original BETA26 mode as a toggle.
 - **Do not alter ScanSky behavior during present porting stages.**
+
+## 2026-10-09 enchantment bonuses, aspect culling and player scans
+
+Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradle NeoForge build and dedicated server smoke SUCCESS).
+- `LegacyEnchantmentAspectBonuses.java`: reconstructs exact BETA26 `ThaumcraftCraftingManager.getBonusTags` enchantment contributions from original JAR bytecode: 27 enchantment-specific aspect assignments; 30 vanilla enchantment historical rarities; `(short)(lvl*3)` arithmetic; uncommon/rare/very rare extra +2/+4/+6 Praecantatio, and `AspectList.merge` (MAX).
+- `ThaumometerScanDispatcher.itemEnchantmentBonuses`: reads `ENCHANTMENTS` or enchanted-book `STORED_ENCHANTMENTS` modern data components, includes modded fallback, then projects BETA26 aspect bonuses. Integration parity test combines iron sword + sharpness/fire aspect and ensures six independent scan successes.
+- `LegacyObjectAspectFinalizer.java`: exact `AspectHelper.cullTags(7)` weighted pruning: primal x0.9, compound nested x1.1/x1.05; ties remove earliest insertion. Then `capAspects(500)` quantity truncation. Applied to scanned vanilla/modded items and crystal-contained aspect lists. Protects against pathological never-progressing culling when all weighted scores >=32767 rather than hanging a server.
+- `LegacyPlayerEntityAspectTable.java`: exact `AspectHelper.getEntityAspects(EntityPlayer)` 1.12 rule: base Humanus 4 plus THREE randomly selected aspects worth 15 each, seeded by `new Random(playerName.hashCode())` over aspect registration order. Wired to NeoForge scanning for player entities.
+- Pending after verified checkpoint: generic key for unregistered 1.12 EntityPlayer is `!null` (legacy EntityList did not register player), rather than synthetic modern `!minecraft:player`. Check CI for commits `fe6361ed` and `191dde67` before claiming full green.
+- **User-requested future feature, NOT yet implemented:** at the END of port, optional random *uncollected* moon phase paper after sky scan, rather than waiting actual moon phases, keeping original behavior as setting. Do not implement this before core port is done.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
