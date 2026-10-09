@@ -96,7 +96,7 @@ public final class LegacyTheorycraftDrawEngine {
                 // Original never attempts the normal branch on a failed aid.
                 Candidate card = factory.generate(key, random);
                 if (card == null || card.inspirationCost() > inspiration
-                        || blockedCategories.contains(card.researchCategory())
+                        || containsLegacyNullable(blockedCategories, card.researchCategory())
                         || chosenKeys.contains(key)) continue;
                 chosenKeys.add(key);
                 choices.add(new CardChoice(card, true, false));
@@ -129,6 +129,14 @@ public final class LegacyTheorycraftDrawEngine {
             remainingCards--;
         }
         return new Result(choices, aids, remainingBonuses, attempts);
+    }
+
+    /** Original BETA26 ArrayList.contains(null) does not throw; List.of does. */
+    private static boolean containsLegacyNullable(List<String> list, String sought) {
+        for (String entry : list) {
+            if (Objects.equals(entry, sought)) return true;
+        }
+        return false;
     }
 
     public static RandomSource fromJavaRandom(java.util.Random random) {
