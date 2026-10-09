@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import java.util.Objects;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -24,6 +25,16 @@ public final class LegacyDyeAspectBonuses {
             "minecraft:black_dye", "minecraft:brown_dye",
             "minecraft:blue_dye", "minecraft:white_dye"
     );
+
+    public static List<String> modernTagNames() {
+        return List.of(
+                "c:dyes/black", "c:dyes/red", "c:dyes/green", "c:dyes/brown",
+                "c:dyes/blue", "c:dyes/purple", "c:dyes/cyan",
+                "c:dyes/light_gray", "c:dyes/gray", "c:dyes/pink",
+                "c:dyes/lime", "c:dyes/yellow", "c:dyes/light_blue",
+                "c:dyes/magenta", "c:dyes/orange", "c:dyes/white"
+        );
+    }
 
     public static AspectListData apply(AspectRegistry registry, AspectListData base, String itemId,
                                        boolean taggedAsDye) {
