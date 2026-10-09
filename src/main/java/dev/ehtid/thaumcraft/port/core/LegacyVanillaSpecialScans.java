@@ -25,13 +25,17 @@ public final class LegacyVanillaSpecialScans {
     public static final String DISPENSER = "f_DISPENSER";
     public static final String MAT_CLAY = "f_MATCLAY";
     public static final String MAT_IRON = "f_MATIRON";
+    public static final String MAT_BRASS = LegacyOreDictionaryScans.BRASS;
+    public static final String MAT_THAUMIUM = LegacyOreDictionaryScans.THAUMIUM;
+    public static final String MAT_VOID = LegacyOreDictionaryScans.VOID;
     public static final String ARROW = "f_arrow";
     public static final String FIREBALL = "f_fireball";
     public static final String SPIT = "f_spit";
 
     public static final List<String> REGISTRATION_ORDER = List.of(
             GOLEM, SPIDER, BAT, FLY,
-            DRAGON_BREATH, TOTEM_UNDYING, TELEPORT, DISPENSER, MAT_CLAY, MAT_IRON,
+            DRAGON_BREATH, TOTEM_UNDYING, TELEPORT, DISPENSER, MAT_CLAY,
+            MAT_IRON, MAT_BRASS, MAT_THAUMIUM, MAT_VOID,
             ARROW, FIREBALL, SPIT);
 
     public static Set<String> forItem(String itemId) {
