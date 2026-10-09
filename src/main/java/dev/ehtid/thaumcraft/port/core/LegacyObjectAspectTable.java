@@ -23,6 +23,9 @@ public final class LegacyObjectAspectTable {
             case "minecraft:glowstone" -> list(a.SENSES,10,a.LIGHT,15);
             case "minecraft:coal" -> list(a.ENERGY,10,a.FIRE,10);
             case "minecraft:coal_ore" -> list(a.EARTH,5,a.ENERGY,10,a.FIRE,10);
+            // BETA26 registers Salis Mundus directly as an ItemStack with
+            // exactly 5 Praecantatio and 5 Potentia (not a computed recipe tag).
+            case "thaumcraft:salis_mundus" -> list(a.MAGIC,5,a.ENERGY,5);
             // BETA26 ConfigAspects.registerItemAspects registrations verified
             // against the original JAR's bytecode. These map established
             // 1.12 ore-dictionary names to their unambiguous vanilla items.
