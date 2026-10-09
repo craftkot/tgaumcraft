@@ -53,6 +53,9 @@ public final class ThaumometerScanDispatcher {
         for (String id : LegacyOreAspectTable.modernTagNames()) {
             tags.putIfAbsent(id, TagKey.create(Registries.ITEM, ResourceLocation.parse(id)));
         }
+        for (String id : LegacyDyeAspectBonuses.modernTagNames()) {
+            tags.putIfAbsent(id, TagKey.create(Registries.ITEM, ResourceLocation.parse(id)));
+        }
         return java.util.Map.copyOf(tags);
     }
 
@@ -206,9 +209,11 @@ public final class ThaumometerScanDispatcher {
             direct = LegacyOreAspectTable.fromCommonTags(
                     ASPECTS, matchingCommonItemTags(stack, LegacyOreAspectTable.modernTagNames()));
         }
-        // TC6 getBonusTags next enriches armor, tools, bows and swords with
-        // equipment-derived aspects using merge (max, not addition).
-        return LegacyEquipmentAspectBonuses.apply(ASPECTS, direct, itemId);
+        // TC6 also merges Sensus for the sixteen historical dye ore names,
+        // then equipment-derived bonuses using AspectList.merge (max).
+        AspectListData withDye = LegacyDyeAspectBonuses.apply(ASPECTS, direct, itemId,
+                !matchingCommonItemTags(stack, LegacyDyeAspectBonuses.modernTagNames()).isEmpty());
+        return LegacyEquipmentAspectBonuses.apply(ASPECTS, withDye, itemId);
     }
 
     static String genericKey(Player player, Object target) {
