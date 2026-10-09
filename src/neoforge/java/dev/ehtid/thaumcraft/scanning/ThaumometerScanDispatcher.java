@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.scanning;
 
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -191,6 +193,12 @@ public final class ThaumometerScanDispatcher {
 
     private static AspectListData objectAspects(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return new AspectListData();
+        // BETA26 ThaumcraftCraftingManager.getBonusTags overrides the registered
+        // item tags with IEssentiaContainerItem.getAspects for crystal essence.
+        // This is what lets the Thaumometer discover its NBT-contained aspect.
+        if (stack.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())) {
+            return CrystalEssenceItem.legacyContainedAspects(stack, ASPECTS);
+        }
         AspectListData direct = LegacyObjectAspectTable.get(
                 ASPECTS, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
         if (direct.size() > 0) return direct;
