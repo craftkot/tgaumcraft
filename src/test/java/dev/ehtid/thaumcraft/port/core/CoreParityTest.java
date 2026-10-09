@@ -36,6 +36,7 @@ public final class CoreParityTest {
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
+        testContainedCrystalAspectScanning();
         testOreMaterialIntegratedScan();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
@@ -1262,6 +1263,50 @@ public final class CoreParityTest {
         isTrue(plateResult.anySuccess());
         eq(1, plateResult.successfulHandlers());
         isTrue(p.isResearchKnown("!example:brass_plate0"));
+    }
+
+    private static void testContainedCrystalAspectScanning() {
+        AspectRegistry a = new AspectRegistry();
+        var single = LegacyContainedAspectTags.fromLegacyNbt(a, java.util.List.of(
+                new LegacyContainedAspectTags.Entry("aer", 1)));
+        eq(1, single.size());
+        eq(1, single.getAmount(a.AIR));
+
+        var merged = LegacyContainedAspectTags.fromLegacyNbt(a, java.util.List.of(
+                new LegacyContainedAspectTags.Entry("aer", 3),
+                new LegacyContainedAspectTags.Entry("ignis", 2),
+                new LegacyContainedAspectTags.Entry("aer", 4),
+                new LegacyContainedAspectTags.Entry("terra", -2),
+                new LegacyContainedAspectTags.Entry("perditio", 0),
+                new LegacyContainedAspectTags.Entry("unknown_aspect", 30)));
+        eq(2, merged.size());
+        eq(7, merged.getAmount(a.AIR));
+        eq(2, merged.getAmount(a.FIRE));
+        eq(0, merged.getAmount(a.EARTH));
+        eq(0, merged.getAmount(a.ENTROPY));
+        var cap = LegacyContainedAspectTags.fromLegacyNbt(a, java.util.List.of(
+                new LegacyContainedAspectTags.Entry("praecantatio", 400),
+                new LegacyContainedAspectTags.Entry("praecantatio", 400)));
+        eq(1, cap.size());
+        eq(500, cap.getAmount(a.MAGIC));
+        eq(0, LegacyContainedAspectTags.fromLegacyNbt(a, java.util.List.of()).size());
+
+        // An essence can be aspectless until the first server inventory tick;
+        // after its legacy NBT is assigned it participates in real ScanAspect
+        // and ScanGeneric with exactly the contained amount.
+        var categories = BuiltInResearchCategories.create(a);
+        var scanning = CriticalScanHandlers.createCriticalRegistry(a, categories);
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        var crystal = new CriticalScanHandlers.Target("!thaumcraft:crystal_essence0", single);
+        var first = scanning.scanTheThing(player, crystal, (p, key) -> p.addResearch(key));
+        isTrue(first.anySuccess());
+        eq(2, first.matchingHandlers());
+        eq(2, first.successfulHandlers());
+        isTrue(player.isResearchKnown("!aer"));
+        isTrue(player.isResearchKnown("!thaumcraft:crystal_essence0"));
+        isFalse(scanning.scanTheThing(player, crystal, (p, key) -> p.addResearch(key)).anySuccess());
+        eq(0, scanning.isThingStillScannable(player, crystal,
+                PlayerKnowledgeData::isResearchKnown) ? 1 : 0);
     }
 
     private static void testLegacyOreAspectTable() {
