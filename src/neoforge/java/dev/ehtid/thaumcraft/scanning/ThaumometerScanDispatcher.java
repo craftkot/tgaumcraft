@@ -17,7 +17,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.core.component.DataComponents;
@@ -165,7 +164,10 @@ public final class ThaumometerScanDispatcher {
         // registry entries. Old EnchantmentHelper.getEnchantments includes
         // enchanted-book stored enchantments as well as regular item enchants.
         java.util.Set<String> enchanted = new java.util.HashSet<>();
-        collectEnchantmentKeys(enchanted, EnchantmentHelper.getEnchantments(stack));
+        // Since 1.21 enchantments live in data components, not a stack
+        // EnchantmentHelper.getEnchantments method.
+        ItemEnchantments applied = stack.get(DataComponents.ENCHANTMENTS);
+        if (applied != null) collectEnchantmentKeys(enchanted, applied);
         ItemEnchantments stored = stack.get(DataComponents.STORED_ENCHANTMENTS);
         if (stored != null) collectEnchantmentKeys(enchanted, stored);
         keys.addAll(LegacyEnchantmentEffectScans.forItemEnchantments(enchanted));
