@@ -111,7 +111,22 @@ public final class LegacyCelestialTheoryCard {
      * stream usage. The loader must debit the required note slots and apply
      * the returned theory totals / temporary warp in the SAME server action.
      */
+    @FunctionalInterface
+    public interface BoundedRandom {
+        int nextInt(int bound);
+    }
+
     public static Activation activate(Selection selected, Random playerRandom, int[] noteSlots) {
+        Objects.requireNonNull(playerRandom, "playerRandom");
+        return activate(selected, (BoundedRandom) playerRandom::nextInt, noteSlots);
+    }
+
+    /**
+     * The NeoForge bridge delegates this directly to the living player's
+     * RandomSource, preserving the number and order of randomness calls.
+     */
+    public static Activation activate(Selection selected, BoundedRandom playerRandom,
+                                      int[] noteSlots) {
         Objects.requireNonNull(selected, "selected");
         Objects.requireNonNull(playerRandom, "playerRandom");
         if (noteSlots == null || noteSlots.length != 2 || noteSlots[0] == noteSlots[1])
