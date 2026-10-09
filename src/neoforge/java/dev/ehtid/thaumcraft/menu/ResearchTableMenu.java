@@ -106,15 +106,24 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
      * 1 = keep selected card, 2/3 = draw choices (consume paper),
      * 4..6 = activate one of three choices, 7 = finish, 9 = abandon.
      *
-     * The full draw/activate buttons remain disabled until the complete
-     * original card registry and choice serialization are live. Only the
-     * two already ported terminal actions are server-authoritative here.
+     * Start/finish/abandon are implemented with true table inventory checks.
+     * Draw/activate choices remain disabled until original CardChoice class
+     * dispatch and nearby aid selection are fully ported.
      */
     @Override
     public boolean clickMenuButton(Player player, int buttonId) {
         if (!(player instanceof ServerPlayer serverPlayer)
                 || !stillValid(serverPlayer)
                 || !(table instanceof ResearchTableBlockEntity researchTable)) return false;
+        if (buttonId == 1) {
+            // Original GUI sends a separate PacketStartTheoryToServer carrying
+            // selected aid IDs. The selected-aid GUI is still being ported;
+            // for now an explicit click starts with the valid EMPTY aid set.
+            // The user can cancel without consuming paper or ink.
+            if (!researchTable.startNewTheory(serverPlayer, java.util.Set.of())) return false;
+            broadcastChanges();
+            return true;
+        }
         if (buttonId == 7) {
             if (!researchTable.finishTheory(serverPlayer)) return false;
             broadcastChanges();
