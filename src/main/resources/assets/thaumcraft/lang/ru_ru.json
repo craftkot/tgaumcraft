@@ -5,5 +5,22 @@
   "workbench.discount": "скидка",
   "tc.unknownobject": "Из этого нельзя узнать ничего нового.",
   "tc.knownobject": "Вы узнали что-то новое.",
-  "tc.invtoolarge": "Инвентарь слишком большой. Будет просканировано только первые 100 предметов."
+  "tc.invtoolarge": "Инвентарь слишком большой. Будет просканировано только первые 100 предметов.",
+  "item.thaumcraft.celestial_notes": "Заметки о небесах",
+  "item.thaumcraft.scribing_tools": "Письменные принадлежности",
+  "item.celestial_notes.sun.text": "Солнце",
+  "item.celestial_notes.stars_1.text": "Звёзды, Северный квадрант",
+  "item.celestial_notes.stars_2.text": "Звёзды, Южный квадрант",
+  "item.celestial_notes.stars_3.text": "Звёзды, Западный квадрант",
+  "item.celestial_notes.stars_4.text": "Звёзды, Восточный квадрант",
+  "item.celestial_notes.moon_1.text": "Луна, Полная",
+  "item.celestial_notes.moon_2.text": "Луна, Убывающая",
+  "item.celestial_notes.moon_3.text": "Луна, Третья четверть",
+  "item.celestial_notes.moon_4.text": "Луна, Старая",
+  "item.celestial_notes.moon_5.text": "Луна, Новая",
+  "item.celestial_notes.moon_6.text": "Луна, Молодая",
+  "item.celestial_notes.moon_7.text": "Луна, Первая четверть",
+  "item.celestial_notes.moon_8.text": "Луна, Прибывающая",
+  "tc.celestial.fail.1": "Вы уже изучали это сегодня.",
+  "tc.celestial.fail.2": "Вы не можете делать заметки о своих исследованиях."
 }

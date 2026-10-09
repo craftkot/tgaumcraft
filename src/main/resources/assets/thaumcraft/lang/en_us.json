@@ -5,5 +5,22 @@
   "workbench.discount": "discount",
   "tc.unknownobject": "Nothing new can be learned from this.",
   "tc.knownobject": "You have learned something new.",
-  "tc.invtoolarge": "Inventory too large. Only scanning first 100 items."
+  "tc.invtoolarge": "Inventory too large. Only scanning first 100 items.",
+  "item.thaumcraft.celestial_notes": "Celestial Notes",
+  "item.thaumcraft.scribing_tools": "Scribing Tools",
+  "item.celestial_notes.sun.text": "Solar",
+  "item.celestial_notes.stars_1.text": "Stellar, Northern Quadrant",
+  "item.celestial_notes.stars_2.text": "Stellar, Southern Quadrant",
+  "item.celestial_notes.stars_3.text": "Stellar, Western Quadrant",
+  "item.celestial_notes.stars_4.text": "Stellar, Eastern Quadrant",
+  "item.celestial_notes.moon_1.text": "Lunar, Full",
+  "item.celestial_notes.moon_2.text": "Lunar, Waning Gibbous",
+  "item.celestial_notes.moon_3.text": "Lunar, Third Quarter",
+  "item.celestial_notes.moon_4.text": "Lunar, Waning Crescent",
+  "item.celestial_notes.moon_5.text": "Lunar, New",
+  "item.celestial_notes.moon_6.text": "Lunar, Waxing Crescent",
+  "item.celestial_notes.moon_7.text": "Lunar, First Quarter",
+  "item.celestial_notes.moon_8.text": "Lunar, Waxing Gibbous",
+  "tc.celestial.fail.1": "You have already studied that today.",
+  "tc.celestial.fail.2": "You are unable to take notes of your studies."
 }
