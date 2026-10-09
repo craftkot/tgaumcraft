@@ -95,6 +95,10 @@ public final class LegacyTheorycraftDrawEngine {
             return new Result(choices, aids, remainingBonuses, attempts);
         }
         while (remainingCards > 0 && attempts < MAX_ATTEMPTS) {
+            // Can also become empty halfway through a draw when its LAST aid
+            // is consumed. The old code would then spin until attempt 10000.
+            // This exit changes neither selections nor the RNG sequence.
+            if (aids.isEmpty() && normalCardKeys.isEmpty()) break;
             attempts++;
             boolean tryAid = !aids.isEmpty() && random.nextFloat() <= 0.25F;
             if (tryAid) {
