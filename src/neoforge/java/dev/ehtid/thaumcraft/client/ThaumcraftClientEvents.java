@@ -17,6 +17,7 @@ public final class ThaumcraftClientEvents {
     @SubscribeEvent
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ThaumcraftMenus.ARCANE_WORKBENCH.get(), ArcaneWorkbenchScreen::new);
+        event.register(ThaumcraftMenus.RESEARCH_TABLE.get(), ResearchTableScreen::new);
     }
 
     @SubscribeEvent
