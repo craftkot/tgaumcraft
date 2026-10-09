@@ -23,11 +23,13 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             ResourceLocation.fromNamespaceAndPath(
                     "thaumcraft", "textures/gui/gui_base.png");
 
-    // Exact BETA26 GuiResearchTable buttonCreate/Complete/Scrap positions.
+    // The original sprites/buttons are 49x11 with HALF-SIZE glyphs, which
+    // made Russian translations unreadable. Expand ONLY the click targets and
+    // text backgrounds; original BETA26 atlas and card logic remain intact.
     private static final int CREATE_X = 128, CREATE_Y = 22;
-    private static final int COMPLETE_X = 191, COMPLETE_Y = 96;
-    private static final int SCRAP_X = 128, SCRAP_Y = 168;
-    private static final int BUTTON_WIDTH = 49, BUTTON_HEIGHT = 11;
+    private static final int COMPLETE_X = 128, COMPLETE_Y = 96;
+    private static final int SCRAP_X = 128, SCRAP_Y = 155;
+    private static final int BUTTON_WIDTH = 116, BUTTON_HEIGHT = 18;
 
     public ResearchTableScreen(ResearchTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -59,12 +61,21 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
-        super.renderLabels(graphics, mouseX, mouseY);
+        // Vanilla AbstractContainerScreen paints both labels DARK GREY onto
+        // the original DARK WOOD, which effectively makes them invisible.
+        // Use the current language's actual vanilla glyphs at full scale.
+        ThaumcraftReadableText.line(graphics, font, title, 80, 8,
+                ThaumcraftReadableText.TEXT);
+        ThaumcraftReadableText.line(graphics, font, playerInventoryTitle, 78, 177,
+                ThaumcraftReadableText.TEXT);
+
+        ThaumcraftReadableText.panel(graphics, 75, 44, 175, 43);
         if (menu.hasSession()) {
             Component inspiration = Component.translatable(
                     "research_table.inspiration",
                     menu.inspiration(), menu.inspirationStart());
-            graphics.drawString(font, inspiration, 80, 43, 0xEEE0BA, false);
+            ThaumcraftReadableText.wrapped(graphics, font, inspiration,
+                    81, 50, 162, 3, ThaumcraftReadableText.TEXT);
             if (menu.inspiration() <= 0) {
                 renderButtonText(graphics, COMPLETE_X, COMPLETE_Y,
                         Component.translatable("button.complete.theory"));
@@ -73,8 +84,9 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                         Component.translatable("button.scrap.theory"));
             }
         } else {
-            graphics.drawString(font, Component.translatable(
-                    "research_table.awaiting_theory"), 80, 43, 0xEEE0BA, false);
+            ThaumcraftReadableText.wrapped(graphics, font,
+                    Component.translatable("research_table.awaiting_theory"),
+                    81, 50, 162, 3, ThaumcraftReadableText.MUTED_TEXT);
             if (canStartTheory()) {
                 renderButtonText(graphics, CREATE_X, CREATE_Y,
                         Component.translatable("button.create.theory"));
@@ -93,17 +105,21 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     }
 
     private void renderOriginalButton(GuiGraphics graphics, int x, int y) {
-        // Exact green BETA26 GuiImageButton texture region (37,66) in gui_base.
-        graphics.blit(BUTTON_ATLAS, leftPos + x, topPos + y,
-                37, 66, BUTTON_WIDTH, BUTTON_HEIGHT, 256, 256);
+        // Keep the same BETA26 green palette and original sprite as trim,
+        // but provide 116x18 of legible space rather than a tiny 49x11 hitbox.
+        int xx = leftPos + x;
+        int yy = topPos + y;
+        graphics.fill(xx, yy, xx + BUTTON_WIDTH, yy + BUTTON_HEIGHT, 0xD887795E);
+        graphics.fill(xx + 1, yy + 1,
+                xx + BUTTON_WIDTH - 1, yy + BUTTON_HEIGHT - 1, 0xF02A4535);
+        graphics.blit(BUTTON_ATLAS, xx + 3, yy + 3,
+                37, 66, 9, 11, 256, 256);
     }
 
     private void renderButtonText(GuiGraphics graphics, int x, int y, Component text) {
-        graphics.pose().pushPose();
-        graphics.pose().translate(x + BUTTON_WIDTH / 2.0, y + 2, 0.0);
-        graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(font, text.getString(), -font.width(text) / 2, 0, 0x89AFAA, false);
-        graphics.pose().popPose();
+        ThaumcraftReadableText.centeredLabel(
+                graphics, font, text, x + 11, y + 5,
+                BUTTON_WIDTH - 16, ThaumcraftReadableText.GREEN_TEXT);
     }
 
     @Override
