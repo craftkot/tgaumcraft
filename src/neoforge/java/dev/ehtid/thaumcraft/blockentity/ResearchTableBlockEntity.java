@@ -77,6 +77,20 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         return true;
     }
 
+    /**
+     * BETA26 ContainerResearchTable button 9: abandon an INCOMPLETE theory.
+     * Neither the table's two item slots nor the player's inventory is
+     * discarded. A completed theory must instead use button 7.
+     */
+    public boolean abandonTheory(ServerPlayer player) {
+        if (level == null || level.isClientSide || session == null
+                || session.isComplete() || !stillValid(player)) return false;
+        session = null;
+        originalSessionNbt = new CompoundTag();
+        setChanged();
+        return true;
+    }
+
     /** BETA26 consumeInkFromTable, incrementing damage rather than consuming item. */
     public boolean consumeInkFromTable() {
         ItemStack scribing = items.get(SCRIBING_SLOT);
