@@ -193,6 +193,36 @@ public final class ThaumometerScanDispatcher {
         }
     }
 
+    /** Modern data-component equivalent of BETA26's ench NBT iteration. */
+    private static java.util.List<LegacyEnchantmentAspectBonuses.Enchantment>
+    itemEnchantmentBonuses(ItemStack stack) {
+        // Enchanted books use StoredEnchantments in original 1.12; ordinary
+        // equipment uses its live enchantment NBT. Do not count both twice.
+        ItemEnchantments applied = stack.get(DataComponents.ENCHANTMENTS);
+        ItemEnchantments stored = stack.get(DataComponents.STORED_ENCHANTMENTS);
+        ItemEnchantments enchants = stack.is(Items.ENCHANTED_BOOK) && stored != null
+                ? stored : applied;
+        if (enchants == null || enchants.isEmpty()) return java.util.List.of();
+
+        java.util.List<LegacyEnchantmentAspectBonuses.Enchantment> out =
+                new java.util.ArrayList<>();
+        for (var holder : enchants.keySet()) {
+            var key = holder.unwrapKey();
+            if (key.isEmpty()) continue;
+            String id = key.get().location().toString();
+            var rarity = LegacyEnchantmentAspectBonuses.oldVanillaRarity(id);
+            if (rarity == null) {
+                // Preserve modded-enchantment fallback using modern rarity
+                // when no canonical 1.12 vanilla rarity exists.
+                rarity = LegacyEnchantmentAspectBonuses.Rarity.fromWeight(
+                        holder.value().definition().weight());
+            }
+            out.add(new LegacyEnchantmentAspectBonuses.Enchantment(
+                    id, enchants.getLevel(holder), rarity));
+        }
+        return java.util.List.copyOf(out);
+    }
+
     private static java.util.Set<String> specialKeys(Player player, Object target) {
         if (target instanceof ItemStack stack) return itemSpecialKeys(stack);
         if (target instanceof ItemEntity itemEntity) return itemSpecialKeys(itemEntity.getItem());
@@ -260,7 +290,11 @@ public final class ThaumometerScanDispatcher {
         // then equipment-derived bonuses using AspectList.merge (max).
         AspectListData withDye = LegacyDyeAspectBonuses.apply(ASPECTS, direct, itemId,
                 !matchingCommonItemTags(stack, LegacyDyeAspectBonuses.modernTagNames()).isEmpty());
-        return LegacyEquipmentAspectBonuses.apply(ASPECTS, withDye, itemId);
+        AspectListData equipped = LegacyEquipmentAspectBonuses.apply(ASPECTS, withDye, itemId);
+        // BETA26 getBonusTags processes the vanilla/mapped enchant aspect
+        // bonuses last, including rarity-dependent Praecantatio.
+        return LegacyEnchantmentAspectBonuses.apply(ASPECTS, equipped,
+                itemEnchantmentBonuses(stack));
     }
 
     static String genericKey(Player player, Object target) {
