@@ -1188,6 +1188,22 @@ public final class CoreParityTest {
         isTrue(aids.choices().get(1).fromAid());
         eq(0, aids.remainingAidCards().size());
         eq(2, aids.attempts());
+
+        // Exhausting the LAST aid before the requested draw count is met
+        // must NOT burn the old 10,000 retry limit with an empty card pool.
+        var singleAid = LegacyTheorycraftDrawEngine.draw(
+                3, 1, 4, java.util.List.of("AidOne"),
+                java.util.List.of(), java.util.Set.of(), java.util.List.of(),
+                new LegacyTheorycraftDrawEngine.RandomSource() {
+                    @Override public float nextFloat() { return 0.0F; }
+                    @Override public int nextInt(int bound) { return 0; }
+                    @Override public long nextLong() { return 77L; }
+                }, factory);
+        eq(1, singleAid.choices().size());
+        eq("AidOne", singleAid.choices().get(0).card().key());
+        eq(1, singleAid.attempts());
+        eq(0, singleAid.remainingAidCards().size());
+        eq(0, singleAid.remainingBonusDraws());
         eq(20L, aids.choices().get(0).card().seed());
         eq(21L, aids.choices().get(1).card().seed());
 
