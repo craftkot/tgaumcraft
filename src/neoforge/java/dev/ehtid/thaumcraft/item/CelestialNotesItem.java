@@ -2,6 +2,9 @@ package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.item.TooltipFlag;
+import java.util.List;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
@@ -46,6 +49,17 @@ public final class CelestialNotesItem extends Item {
 
     @Override
     public Component getName(ItemStack stack) {
-        return Component.translatable("item.thaumcraft.celestial_notes." + VARIANTS[legacyMetadata(stack)]);
+        return Component.translatable("item.thaumcraft.celestial_notes");
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context,
+                                List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        // Original ItemCelestialNotes has a fixed item display name and the
+        // metadata-dependent explanation in aqua text on the tooltip.
+        tooltip.add(Component.translatable(
+                "item.celestial_notes." + VARIANTS[legacyMetadata(stack)] + ".text")
+                .withStyle(ChatFormatting.AQUA));
     }
 }
