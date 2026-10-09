@@ -31,5 +31,6 @@
   "item.thaumcraft.table_wood": "Деревянный стол",
   "item.thaumcraft.research_table": "Исследовательский стол",
   "button.complete.theory": "Завершить теорию",
-  "button.scrap.theory": "Порвать теорию"
+  "button.scrap.theory": "Порвать теорию",
+  "button.create.theory": "Создать теорию"
 }
