@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified gameplay CI checkpoint at time of this handoff: `805257662a8c15f490eeb974618c77b8fb405784` (SUCCESS: 5,823 core assertions, NeoForge build, dedicated-server smoke, original celestial assets and scribing recipes).
-- Confirmed estimated overall progress: **62%** after original BETA26 ScanSky mechanics, thirteen original celestial note variants and their original textures, and glass-bottle scribing tool/refill crafting recipes. Keep this as the next baseline until further substantial work.
+- Last verified CI checkpoint at time of this handoff: `c05bad3325b1360525d44853f1458e7099535b60` (SUCCESS: 5,910 core assertions, NeoForge build, dedicated-server ready state, artifact upload). Newer commits may still be verifying.
+- Confirmed estimated overall progress: **63%** after completing the BETA26 celestial theory-card calculation and the research-table state/inspiration/reward core. THE IN-GAME RESEARCH-TABLE GUI/BLOCK IS NOT IMPLEMENTED YET; do not present the theorycraft system as fully playable.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 62%.
+Never lower the confirmed baseline below 63%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -134,6 +134,17 @@ Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradl
 - Gameplay commit `805257662a8c15f490eeb974618c77b8fb405784` **CI SUCCESS**: 5,823 core assertions, NeoForge build, dedicated server smoke and jar upload.
 - The newer `.github/workflows/ci.yml` also validates all artwork models/languages/recipes; run `f42d138c` initially failed solely on a CI path prefix mistake; fixed at `1e2da266`; check fresh CI.
 - **Important: User wants randomized uncollected moon-phase papers only AT THE END of the full port.** Original physical moon phase dependence must REMAIN active now; random variant as optional config may be developed at final polishing stage.
+
+## 2026-10-09 theorycraft continuation — now 63% overall (core, NOT a finished table)
+- Original JAR bytecode thoroughly consulted: `thaumcraft.common.lib.research.theorycraft.CardCelestial`, `thaumcraft.api.research.theorycraft.ResearchTableData`, and `thaumcraft.common.tiles.crafting.TileResearchTable.finishTheory`.
+- `LegacyCelestialTheoryCard.java`: initializes from a seeded `java.util.Random` choosing distinct metadata 0..12; selects the highest TreeMap category total (lexicographic tie ordering); requires TWO separate original note item variants; activation gains 25..50 theory total, plus special effects: star note yields +0..10 ELDRITCH (twice a 0..5 random roll), 0..5 TEMPORARY warp; Sun note increments penaltyStart; Moon note increments bonusDraws. Correct card inspiration cost 1 is separate from activation.
+- `LegacyResearchTableData.java`: original `ResearchTableData.addTotal` map removal at <=0; upper-clamped `addInspiration`, `isComplete`, permanent session counters; `TileResearchTable.finishTheory` category-sorted rewards with THEORY progression=32 and exact rank/penaltyStart reduction. Added `Snapshot` and restore for original scalar/total fields. Does NOT yet model all original research cards and server block entity.
+- `LegacyTheorycraftInspiration.java`: BETA26 getAvailableInspiration: base 5f, +0.5 for strictly COMPLETED SPIKY, +0.1 for strictly COMPLETED HIDDEN, cap min(15, round), chosen aid SET size subtracted without lower clamp. Category availability respects strictly completed research keys and blocked categories.
+- `CelestialTheorycraftInventoryBridge.java`: compile-verified server helper checks both matching note variants in player's main inventory, consumes one each, applies original theory+warp effects and one inspiration cost, syncs player data. NOT CALLED BY A REAL RESEARCH-TABLE UI YET. Do not claim the complete in-game table works.
+- `LegacyResearchTableNbt.java` writes/reads original BETA26 scalar session fields and categoryTotals list to/from NeoForge NBT, awaiting integration in full table BlockEntity.
+- CI SUCCESS at `c05bad33`: 5,910 assertions, NeoForge build and dedicated server startup. Later commits (`31d2664e`, `9bc706f5`, `bd57a67b`, `c3462346`) extend NBT and category gating; verify CI for latest HEAD before claiming them fully green.
+- NEXT PRIORITY: full faithful in-game Research Table block + BlockEntity, inventory, menu, original GUI art and packets; then connect CelestialTheorycraftInventoryBridge to authentic card-choice actions. Do not invent placeholder mechanics. Add more original theory cards and end-to-end test.
+- **Deferred user feature stays deferred:** after all original gameplay content is ported, add optional *random uncollected moon note* from scanning Moon independent of actual phase, preserving original phase mode.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
