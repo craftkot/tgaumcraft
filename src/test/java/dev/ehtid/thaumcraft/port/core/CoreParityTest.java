@@ -28,6 +28,7 @@ public final class CoreParityTest {
         testLegacyScanItemLogic();
         testSkyScanLogic();
         testLegacyCelestialScanService();
+        testLegacyCelestialTheoryCard();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
@@ -877,6 +878,95 @@ public final class CoreParityTest {
         isTrue(knowledge.isResearchKnown("CEL_2_Moon0"));
         isTrue(knowledge.isResearchKnown("CEL_2_Star3"));
         isTrue(knowledge.isResearchKnown("FIRSTSTEPS"));
+    }
+
+    private static void testLegacyCelestialTheoryCard() {
+        eq(null, LegacyCelestialTheoryCard.initialize(false,
+                java.util.Map.of("BASICS", 10), 42L));
+        eq(null, LegacyCelestialTheoryCard.initialize(true,
+                java.util.Map.of(), 42L));
+
+        // The original CardCelestial creates Random(getSeed()) and samples
+        // two DISTINCT metadata indices from [0,12]. Tie ordering is TreeMap.
+        var card = LegacyCelestialTheoryCard.initialize(true,
+                java.util.Map.of("BASICS", 10, "ALCHEMY", 5), 42L);
+        eq(0, card.firstMetadata());
+        eq(7, card.secondMetadata());
+        eq("BASICS", card.category());
+        isTrue(card.requiresSun());
+        isTrue(card.requiresMoon());
+        isFalse(card.requiresStars());
+
+        var tied = LegacyCelestialTheoryCard.initialize(true,
+                java.util.Map.of("BASICS", 10, "ALCHEMY", 10, "AUROMANCY", 9), 1L);
+        eq(4, tied.firstMetadata());
+        eq(0, tied.secondMetadata());
+        eq("ALCHEMY", tied.category()); // Strict > picks first TreeMap key.
+        isTrue(tied.requiresStars());
+        isTrue(tied.requiresSun());
+        isFalse(tied.requiresMoon());
+
+        // Even zero-valued categories initialize a card with empty category
+        // in original bytecode (cat is nonnull, initialize returns true).
+        eq("", LegacyCelestialTheoryCard.initialize(true,
+                java.util.Map.of("BASICS", 0), 12345L).category());
+
+        // The in-inventory matching bridge must find both variants, not
+        // confuse the two notes or let a missing note consume anything.
+        java.util.List<Integer> inventory = java.util.Arrays.asList(
+                null, 8, 7, 0, 5, 7, 1, null);
+        int[] slots = LegacyCelestialTheoryCard.requiredNoteSlots(card, inventory);
+        eq(3, slots[0]);
+        eq(2, slots[1]);
+        eq(null, LegacyCelestialTheoryCard.requiredNoteSlots(card,
+                java.util.Arrays.asList(5, 7, 7, null)));
+        eq(null, LegacyCelestialTheoryCard.requiredNoteSlots(tied,
+                java.util.Arrays.asList(7, 0, 3, 12)));
+
+        // 25..50 from player's Random, plus a second 0..5 roll only when
+        // either required note is Stellar. Moon gives bonusDraws; Sun gives
+        // penaltyStart. All three bonuses may coexist only when appropriate.
+        var sunMoon = LegacyCelestialTheoryCard.activate(
+                card, new java.util.Random(42L), slots);
+        eq(25, sunMoon.categoryGain());
+        eq(0, sunMoon.temporaryWarp());
+        eq(0, sunMoon.eldritchGain());
+        eq(1, sunMoon.penaltyStartIncrement());
+        eq(1, sunMoon.bonusDrawsIncrement());
+        eq("BASICS", sunMoon.category());
+        eq(3, sunMoon.consumedSlots()[0]);
+        eq(2, sunMoon.consumedSlots()[1]);
+        int[] mutated = sunMoon.consumedSlots();
+        mutated[0] = 100;
+        eq(3, sunMoon.consumedSlots()[0]); // Defensive copy.
+
+        var starSun = LegacyCelestialTheoryCard.activate(
+                tied, new java.util.Random(0L), new int[]{6, 1});
+        eq(43, starSun.categoryGain());
+        eq(4, starSun.temporaryWarp());
+        eq(8, starSun.eldritchGain());
+        eq(1, starSun.penaltyStartIncrement());
+        eq(0, starSun.bonusDrawsIncrement());
+
+        var moonOnly = LegacyCelestialTheoryCard.initialize(
+                true, java.util.Map.of("ELDRITCH", 8), 0L);
+        eq(5, moonOnly.firstMetadata());
+        eq(10, moonOnly.secondMetadata());
+        var moonResult = LegacyCelestialTheoryCard.activate(
+                moonOnly, new java.util.Random(0L), new int[]{2, 7});
+        eq(0, moonResult.temporaryWarp());
+        eq(0, moonResult.penaltyStartIncrement());
+        eq(1, moonResult.bonusDrawsIncrement());
+
+        // A card with only one note available cannot be activated.
+        boolean rejected = false;
+        try {
+            LegacyCelestialTheoryCard.activate(card, new java.util.Random(0L),
+                    new int[]{1, 1});
+        } catch (IllegalArgumentException expected) {
+            rejected = true;
+        }
+        isTrue(rejected);
     }
 
     private static void testLegacyThaumometerTargeting() {
