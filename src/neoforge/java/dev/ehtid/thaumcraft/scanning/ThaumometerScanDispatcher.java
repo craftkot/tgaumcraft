@@ -39,6 +39,21 @@ public final class ThaumometerScanDispatcher {
     private static final ResearchCategoryRegistry CATEGORIES = BuiltInResearchCategories.create(ASPECTS);
     private static final ScanningService<PlayerKnowledgeData, CriticalScanHandlers.Target> SCANS =
             CriticalScanHandlers.createCriticalRegistry(ASPECTS, CATEGORIES);
+    // Compiled once, not recreated for each Thaumometer ray/highlight tick.
+    private static final java.util.Map<String, TagKey<net.minecraft.world.item.Item>> COMMON_ITEM_TAG_KEYS =
+            buildCommonItemTagKeys();
+
+    private static java.util.Map<String, TagKey<net.minecraft.world.item.Item>> buildCommonItemTagKeys() {
+        java.util.Map<String, TagKey<net.minecraft.world.item.Item>> tags = new java.util.LinkedHashMap<>();
+        for (String id : LegacyOreDictionaryScans.modernTagNames()) {
+            tags.put(id, TagKey.create(Registries.ITEM, ResourceLocation.parse(id)));
+        }
+        for (String id : LegacyOreAspectTable.modernTagNames()) {
+            tags.putIfAbsent(id, TagKey.create(Registries.ITEM, ResourceLocation.parse(id)));
+        }
+        return java.util.Map.copyOf(tags);
+    }
+
 
     private ThaumometerScanDispatcher() {}
 
@@ -121,9 +136,8 @@ public final class ThaumometerScanDispatcher {
         if (stack == null || stack.isEmpty()) return java.util.Set.of();
         java.util.Set<String> matches = new java.util.HashSet<>();
         for (String tagId : tagIds) {
-            TagKey<net.minecraft.world.item.Item> key =
-                    TagKey.create(Registries.ITEM, ResourceLocation.parse(tagId));
-            if (stack.is(key)) matches.add(tagId);
+            TagKey<net.minecraft.world.item.Item> key = COMMON_ITEM_TAG_KEYS.get(tagId);
+            if (key != null && stack.is(key)) matches.add(tagId);
         }
         return matches;
     }
