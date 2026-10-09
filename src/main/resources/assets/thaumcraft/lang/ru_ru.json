@@ -26,5 +26,8 @@
   "block.thaumcraft.research_table": "Исследовательский стол",
   "container.thaumcraft.research_table": "Исследовательский стол",
   "research_table.awaiting_theory": "Поместите бумагу и письменные принадлежности для исследований.",
-  "research_table.inspiration": "Вдохновение: %s / %s"
+  "research_table.inspiration": "Вдохновение: %s / %s",
+  "block.thaumcraft.table_wood": "Деревянный стол",
+  "item.thaumcraft.table_wood": "Деревянный стол",
+  "item.thaumcraft.research_table": "Исследовательский стол"
 }
