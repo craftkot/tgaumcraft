@@ -30,6 +30,7 @@ public final class CoreParityTest {
         testLegacyCelestialScanService();
         testLegacyCelestialTheoryCard();
         testLegacyResearchTableData();
+        testLegacyTheorycraftInspiration();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
@@ -879,6 +880,62 @@ public final class CoreParityTest {
         isTrue(knowledge.isResearchKnown("CEL_2_Moon0"));
         isTrue(knowledge.isResearchKnown("CEL_2_Star3"));
         isTrue(knowledge.isResearchKnown("FIRSTSTEPS"));
+    }
+
+    private static void testLegacyTheorycraftInspiration() {
+        ResearchCatalog catalog = new ResearchCatalog();
+        var singleStage = java.util.List.of(new ResearchStageData(
+                false, false, false, false, 0));
+        catalog.add(new ResearchEntryData("SPIKY_A", "BASICS",
+                java.util.Set.of(ResearchMeta.SPIKY), singleStage,
+                java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.List.of()));
+        catalog.add(new ResearchEntryData("HIDDEN_A", "BASICS",
+                java.util.Set.of(ResearchMeta.HIDDEN), singleStage,
+                java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.List.of()));
+        catalog.add(new ResearchEntryData("BOTH", "BASICS",
+                java.util.Set.of(ResearchMeta.HIDDEN, ResearchMeta.SPIKY), singleStage,
+                java.util.List.of(), java.util.List.of(), java.util.List.of(), java.util.List.of()));
+        PlayerKnowledgeData p = new PlayerKnowledgeData();
+        eq(5, LegacyTheorycraftInspiration.available(p, catalog));
+        p.addResearch("SPIKY_A"); // Stage 0 is not a strict completion.
+        p.addResearch("HIDDEN_A");
+        eq(5, LegacyTheorycraftInspiration.available(p, catalog));
+        p.setResearchStage("SPIKY_A", 2);
+        eq(6, LegacyTheorycraftInspiration.available(p, catalog));
+        p.setResearchStage("HIDDEN_A", 2);
+        eq(6, LegacyTheorycraftInspiration.available(p, catalog));
+        p.addResearch("BOTH");
+        p.setResearchStage("BOTH", 2);
+        eq(6, LegacyTheorycraftInspiration.available(p, catalog));
+        // Legacy pseudo/scan research keys have no ResearchEntryData; no
+        // amount of such markers can raise theorycraft inspiration.
+        for (int i = 0; i < 10; i++) p.addResearch("!scan_" + i);
+        eq(6, LegacyTheorycraftInspiration.available(p, catalog));
+
+        LegacyResearchTableData table = LegacyTheorycraftInspiration.start(
+                p, catalog, java.util.Set.of("bookshelf", "crafting_table"));
+        eq(6, table.inspirationStart());
+        eq(4, table.inspiration());
+        isFalse(table.isComplete());
+
+        // Caps at fifteen even with dozens of SPIKY+HIDDEN completions.
+        for (int i = 0; i < 25; i++) {
+            String key = "MORE_SPIKY_" + i;
+            catalog.add(new ResearchEntryData(key, "BASICS",
+                    java.util.Set.of(ResearchMeta.SPIKY, ResearchMeta.HIDDEN),
+                    singleStage, java.util.List.of(), java.util.List.of(),
+                    java.util.List.of(), java.util.List.of()));
+            p.addResearch(key);
+            p.setResearchStage(key, 2);
+        }
+        eq(15, LegacyTheorycraftInspiration.available(p, catalog));
+        var overwhelmed = LegacyTheorycraftInspiration.start(
+                p, catalog, java.util.Set.of(
+                        "a","b","c","d","e","f","g","h","i","j",
+                        "k","l","m","n","o","p"));
+        eq(15, overwhelmed.inspirationStart());
+        eq(-1, overwhelmed.inspiration()); // Original never clamps below 0.
+        isTrue(overwhelmed.isComplete());
     }
 
     private static void testLegacyResearchTableData() {
