@@ -100,6 +100,35 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     public int inspiration() { return inspiration.get(); }
     public int inspirationStart() { return inspirationStart.get(); }
 
+    /**
+     * BETA26 ContainerResearchTable.enchantItem button IDs:
+     * 1 = keep selected card, 2/3 = draw choices (consume paper),
+     * 4..6 = activate one of three choices, 7 = finish, 9 = abandon.
+     *
+     * The full draw/activate buttons remain disabled until the complete
+     * original card registry and choice serialization are live. Only the
+     * two already ported terminal actions are server-authoritative here.
+     */
+    @Override
+    public boolean clickMenuButton(Player player, int buttonId) {
+        if (!(player instanceof ServerPlayer serverPlayer)
+                || !stillValid(serverPlayer)
+                || !(table instanceof ResearchTableBlockEntity researchTable)) return false;
+        if (buttonId == 7) {
+            if (!researchTable.finishTheory(serverPlayer)) return false;
+            broadcastChanges();
+            return true;
+        }
+        if (buttonId == 9) {
+            if (!researchTable.abandonTheory(serverPlayer)) return false;
+            broadcastChanges();
+            return true;
+        }
+        // Don't let malformed/early client requests consume resources or
+        // fabricate theory results in place of the unported original cards.
+        return false;
+    }
+
     @Override public boolean stillValid(Player player) { return table.stillValid(player); }
 
     @Override public ItemStack quickMoveStack(Player player, int index) {
