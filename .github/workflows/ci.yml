@@ -88,6 +88,64 @@ jobs:
           print("Celestial art, 13 variants, two languages and two recipes: OK")
           PY
 
+      - name: Verify original wooden and research table gameplay assets
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+
+          assets = Path("src/main/resources/assets/thaumcraft")
+          expected_hashes = {
+              "block/base_wood_grain.png": "73cad612c749788c8bf892b3e9f771e1447fa1ccd756fb4a458a6fbb0e30c21d",
+              "block/research_table_front.png": "dcde776d7a8d16997fa5b5e2977c342f8e373007d4486a39a4599fd531c6c43d",
+              "block/research_table_side.png": "819025366e210a6e77cb22567073d329c6ed79c70f293188c514eb19aa348f3f",
+              "block/research_table_top.png": "eb863b414aef5562e81cc0c973e1cb8a8b2b19c957ede5bb2c6dc777b5d2adc4",
+              "block/research_table_model.png": "9cb849fa40792c254b10f69a183896a7047050659694d024772dac4073f0b3d0",
+              "block/table_wood_side.png": "986766e91e793db6f5d16ab18b256b98a699685d0f053be24ae6b843240e177e",
+              "block/table_wood_top.png": "ed844268fecc31c27691e6bf173855b3522fe816fe7451a8bbfdc1aa9425d2bf",
+              "gui/gui_research_table.png": "aa51f1474d7cb5f8dc774ff150c5c067b4ad0535f8fb120b44728be4120bb6ad"
+          }
+          for path, expected in expected_hashes.items():
+              actual = hashlib.sha256((assets / "textures" / path).read_bytes()).hexdigest()
+              assert actual == expected, (path, actual)
+
+          for name in ("table_wood", "research_table"):
+              model = json.loads((assets / "models/block" / (name + ".json")).read_text())
+              assert len(model["elements"]) == (6 if name == "table_wood" else 5)
+              for texture in model["textures"].values():
+                  ref = texture.split(":", 1)[1]
+                  assert ref.startswith("block/"), texture
+                  assert (assets / "textures" / (ref + ".png")).exists(), texture
+              item_model = json.loads((assets / "models/item" / (name + ".json")).read_text())
+              assert item_model["parent"] == "thaumcraft:block/" + name
+              state = json.loads((assets / "blockstates" / (name + ".json")).read_text())
+              assert state["variants"]
+
+              drops = json.loads((Path("src/main/resources/data/thaumcraft/loot_table/blocks") /
+                                 (name + ".json")).read_text())
+              assert drops["pools"][0]["entries"][0]["name"] == "thaumcraft:" + name
+
+          directions = json.loads((assets / "blockstates/research_table.json").read_text())["variants"]
+          assert set(directions) == {"facing=north", "facing=south", "facing=east", "facing=west"}
+
+          recipe = json.loads((Path("src/main/resources/data/thaumcraft/recipe/table_wood.json")).read_text())
+          assert recipe["type"] == "minecraft:crafting_shaped"
+          assert recipe["pattern"] == ["SSS", "W W"]
+          assert recipe["key"]["S"]["tag"] == "minecraft:wooden_slabs"
+          assert recipe["key"]["W"]["tag"] == "minecraft:planks"
+          assert recipe["result"]["id"] == "thaumcraft:table_wood"
+
+          for language in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (language + ".json")).read_text())
+              for key in ("block.thaumcraft.table_wood", "block.thaumcraft.research_table",
+                          "container.thaumcraft.research_table",
+                          "research_table.awaiting_theory", "research_table.inspiration"):
+                  assert key in entries, (language, key)
+          print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
+          PY
+
       - name: Set up Gradle 9.2.1
         uses: gradle/actions/setup-gradle@v4
         with:
