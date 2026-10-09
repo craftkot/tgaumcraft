@@ -32,6 +32,7 @@ public final class CoreParityTest {
         testLegacyOrderedScanningRegistry();
         testFirstStepsVerticalSlice();
         testLegacyLapisGenericIdentity();
+        testLegacyOreDictionaryScans();
         testCriticalScanHandlers();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
@@ -1075,10 +1076,65 @@ public final class CoreParityTest {
                 GenericScanKeyLogic.forModernItem("minecraft:diamond_sword", true, 83));
     }
 
+    private static void testLegacyOreDictionaryScans() {
+        eq(13, LegacyOreDictionaryScans.modernTagNames().size());
+        eq(13, new java.util.HashSet<>(LegacyOreDictionaryScans.modernTagNames()).size());
+        String[][] mapped = {
+            {"c:ores/iron", "f_MATIRON"},
+            {"c:ingots/iron", "f_MATIRON"},
+            {"c:storage_blocks/iron", "f_MATIRON"},
+            {"c:plates/iron", "f_MATIRON"},
+            {"c:ingots/brass", "f_MATBRASS"},
+            {"c:storage_blocks/brass", "f_MATBRASS"},
+            {"c:plates/brass", "f_MATBRASS"},
+            {"c:ingots/thaumium", "f_MATTHAUMIUM"},
+            {"c:storage_blocks/thaumium", "f_MATTHAUMIUM"},
+            {"c:plates/thaumium", "f_MATTHAUMIUM"},
+            {"c:ingots/void", "f_MATVOID"},
+            {"c:storage_blocks/void", "f_MATVOID"},
+            {"c:plates/void", "f_MATVOID"}
+        };
+        for (String[] mapping : mapped) {
+            eq(java.util.Set.of(mapping[1]),
+                    LegacyOreDictionaryScans.fromCommonTags(java.util.Set.of(mapping[0])));
+        }
+        eq(java.util.Set.of("f_MATIRON"),
+                LegacyOreDictionaryScans.fromCommonTags(
+                        java.util.Set.of("c:ores/iron", "c:ingots/iron", "c:plates/iron")));
+        eq(java.util.Set.of("f_MATBRASS", "f_MATTHAUMIUM"),
+                LegacyOreDictionaryScans.fromCommonTags(
+                        java.util.Set.of("c:ingots/brass", "c:plates/thaumium")));
+        eq(java.util.Set.of(), LegacyOreDictionaryScans.fromCommonTags(java.util.Set.of(
+                "c:raw_materials/iron", "c:nuggets/iron", "c:ingots/gold",
+                "c:ingots/void_metal", "c:ores/brass", "c:gems/thaumium")));
+        eq(java.util.List.of("f_MATIRON", "f_MATBRASS", "f_MATTHAUMIUM", "f_MATVOID"),
+                LegacyVanillaSpecialScans.REGISTRATION_ORDER.subList(9, 13));
+
+        AspectRegistry aspectRegistry = new AspectRegistry();
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                aspectRegistry, BuiltInResearchCategories.create(aspectRegistry));
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        var first = scans.scanTheThing(player,
+                new CriticalScanHandlers.Target(null, new AspectListData(),
+                        LegacyOreDictionaryScans.fromCommonTags(
+                                java.util.Set.of("c:ingots/brass", "c:plates/brass"))),
+                (p, key) -> p.addResearch(key));
+        isTrue(first.anySuccess());
+        eq(1, first.successfulHandlers());
+        isTrue(player.isResearchKnown("f_MATBRASS"));
+        var second = scans.scanTheThing(player,
+                new CriticalScanHandlers.Target(null, new AspectListData(),
+                        LegacyOreDictionaryScans.fromCommonTags(
+                                java.util.Set.of("c:storage_blocks/brass"))),
+                (p, key) -> p.addResearch(key));
+        isFalse(second.anySuccess());
+        eq(0, second.successfulHandlers());
+    }
+
     private static void testCriticalScanHandlers() {
         AspectRegistry aspects=new AspectRegistry(); ResearchCategoryRegistry cats=BuiltInResearchCategories.create(aspects);
         ScanningService<PlayerKnowledgeData,CriticalScanHandlers.Target> scans=CriticalScanHandlers.createCriticalRegistry(aspects,cats);
-        eq(51,scans.size()); // 37 ScanAspect + ScanGeneric + thirteen mapped vanilla special registrations.
+        eq(54,scans.size()); // 37 ScanAspect + ScanGeneric + sixteen mapped vanilla and OreDictionary research keys.
         PlayerKnowledgeData p=new PlayerKnowledgeData();
         AspectListData targetAspects=new AspectListData().add(aspects.AIR,10).add(aspects.MAGIC,4);
         CriticalScanHandlers.Target t=new CriticalScanHandlers.Target("!minecraft:test0",targetAspects);
