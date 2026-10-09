@@ -30,6 +30,39 @@ public final class LegacyResearchTableData {
         this.inspiration = inspirationStart;
     }
 
+    /**
+     * Persistence subset of the original ResearchTableData compound:
+     * inspiration, inspirationStart, placedCards, bonusDraws, aidsChosen,
+     * penaltyStart and categoryTotals. CardChoice and aid-card instances
+     * require their separate full theorycraft object port.
+     */
+    public record Snapshot(int inspiration, int inspirationStart,
+                           int placedCards, int bonusDraws, int aidsChosen,
+                           int penaltyStart, Map<String, Integer> categoryTotals) {
+        public Snapshot {
+            Objects.requireNonNull(categoryTotals, "categoryTotals");
+            categoryTotals = Collections.unmodifiableMap(new TreeMap<>(categoryTotals));
+        }
+    }
+
+    public Snapshot snapshot() {
+        return new Snapshot(inspiration, inspirationStart, placedCards,
+                bonusDraws, aidsChosen, penaltyStart, categoryTotals);
+    }
+
+    public static LegacyResearchTableData fromSnapshot(Snapshot snapshot) {
+        Objects.requireNonNull(snapshot, "snapshot");
+        LegacyResearchTableData data = new LegacyResearchTableData(snapshot.inspirationStart());
+        data.inspiration = snapshot.inspiration();
+        data.placedCards = snapshot.placedCards();
+        data.bonusDraws = snapshot.bonusDraws();
+        data.aidsChosen = snapshot.aidsChosen();
+        data.penaltyStart = snapshot.penaltyStart();
+        // Original NBT deserialize performs TreeMap.put without filtering.
+        data.categoryTotals.putAll(snapshot.categoryTotals());
+        return data;
+    }
+
     public int getTotal(String category) { return categoryTotals.getOrDefault(category, 0); }
     public Map<String, Integer> categoryTotals() {
         return Collections.unmodifiableMap(categoryTotals);
