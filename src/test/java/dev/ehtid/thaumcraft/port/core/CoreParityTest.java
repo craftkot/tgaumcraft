@@ -37,6 +37,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftManifest();
         testLegacyTheorycraftMiscCards();
         testLegacyCardAnalyzeBugfix();
+        testLegacySpecialtyTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1277,6 +1278,69 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacySpecialtyTheoryCards() {
+        eq(1, LegacySpecialtyTheoryCards.INSPIRATION_COST);
+        for (String card : new String[]{
+                LegacySpecialtyTheoryCards.CALIBRATE,
+                LegacySpecialtyTheoryCards.FOCUS,
+                LegacySpecialtyTheoryCards.GLYPHS,
+                LegacySpecialtyTheoryCards.SYNERGY,
+                LegacySpecialtyTheoryCards.SCRIPTING}) {
+            isTrue(LegacyTheorycraftManifest.allCardKeys().contains(card));
+        }
+
+        LegacyResearchTableData table = new LegacyResearchTableData(6);
+        LegacySpecialtyTheoryCards.calibrate(table);
+        eq(15, table.getTotal("ARTIFICE"));
+        eq(1, table.bonusDraws());
+        LegacySpecialtyTheoryCards.focus(table);
+        eq(15, table.getTotal("AUROMANCY"));
+        eq(2, table.bonusDraws());
+
+        PlayerWarpData warp = new PlayerWarpData();
+        int[] calls = {0};
+        isTrue(LegacySpecialtyTheoryCards.glyphs(table, warp,
+                java.util.List.of("BASICS", "ALCHEMY", "ELDRITCH"),
+                bound -> { calls[0]++; return 0; }));
+        eq(3, calls[0]); // One category and two inclusive range rolls.
+        eq(10, table.getTotal("BASICS"));
+        eq(10, table.getTotal("ELDRITCH"));
+        eq(5, warp.get(WarpType.TEMPORARY));
+        eq(0, warp.get(WarpType.NORMAL));
+
+        isTrue(LegacySpecialtyTheoryCards.glyphs(table, warp,
+                java.util.List.of("BASICS", "ALCHEMY", "ELDRITCH"),
+                bound -> bound - 1));
+        eq(50, table.getTotal("ELDRITCH"));
+        eq(10, warp.get(WarpType.TEMPORARY));
+        isFalse(LegacySpecialtyTheoryCards.glyphs(table, warp,
+                java.util.List.of(), bound -> {
+                    throw new AssertionError("empty category list should not roll");
+                }));
+        eq(10, warp.get(WarpType.TEMPORARY));
+
+        LegacyResearchTableData synergy = new LegacyResearchTableData(6);
+        synergy.addTotal("ARTIFICE", 10);
+        synergy.addTotal("ALCHEMY", 5);
+        synergy.addTotal("INFUSION", 5);
+        isTrue(LegacySpecialtyTheoryCards.canSynergize(synergy));
+        isTrue(LegacySpecialtyTheoryCards.synergy(synergy));
+        eq(5, synergy.getTotal("ARTIFICE"));
+        eq(0, synergy.getTotal("ALCHEMY"));
+        eq(0, synergy.getTotal("INFUSION"));
+        eq(30, synergy.getTotal("GOLEMANCY"));
+        eq(1, synergy.penaltyStart());
+        isFalse(LegacySpecialtyTheoryCards.canSynergize(synergy));
+        isFalse(LegacySpecialtyTheoryCards.synergy(synergy));
+        eq(30, synergy.getTotal("GOLEMANCY"));
+
+        // Original CardScripting gives a fixed 25. The adapter must consume
+        // exactly one paper and one ink first, or never call this function.
+        LegacySpecialtyTheoryCards.scriptingAfterMaterialsConsumed(synergy);
+        eq(55, synergy.getTotal("GOLEMANCY"));
+        eq(1, synergy.penaltyStart());
     }
 
     private static void testLegacyCardAnalyzeBugfix() {
