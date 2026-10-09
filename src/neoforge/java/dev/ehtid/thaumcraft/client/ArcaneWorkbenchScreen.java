@@ -33,25 +33,29 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+        // Original workbench used 0.5x letters on a busy green dial: those
+        // pixels were too small for non-English translations and GUI scales.
+        // Keep all original vis/cost data, but draw with full vanilla glyphs.
+        ThaumcraftReadableText.line(graphics, font, title, 16, 5,
+                ThaumcraftReadableText.TEXT);
+        ThaumcraftReadableText.line(graphics, font, playerInventoryTitle, 16, 139,
+                ThaumcraftReadableText.TEXT);
+
         int available = menu.availableVis();
         int cost = menu.displayedVisCost();
-
-        String availableText = available + " " + Component.translatable("workbench.available").getString();
-        int availableColor = available < cost ? 15625838 : 7237358;
-        drawHalfScaleCentered(graphics, availableText, 168, 46, availableColor);
-
+        ThaumcraftReadableText.panel(graphics, 9, 112, 173, 24);
+        Component availableText = Component.literal(available + " ")
+                .append(Component.translatable("workbench.available"));
+        int availableColor = available < cost
+                ? ThaumcraftReadableText.BAD_TEXT : ThaumcraftReadableText.GREEN_TEXT;
+        ThaumcraftReadableText.centeredLabel(graphics, font, availableText,
+                15, 115, 161, availableColor);
         if (cost > 0) {
-            String costText = cost + " " + Component.translatable("workbench.cost").getString();
-            drawHalfScaleCentered(graphics, costText, 168, 38, 12648447);
+            Component costText = Component.literal(cost + " ")
+                    .append(Component.translatable("workbench.cost"));
+            ThaumcraftReadableText.centeredLabel(graphics, font, costText,
+                    15, 125, 161, ThaumcraftReadableText.MUTED_TEXT);
         }
-    }
-
-    private void drawHalfScaleCentered(GuiGraphics graphics, String text, int x, int y, int color) {
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0);
-        graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(font, text, -font.width(text) / 2, 0, color, false);
-        graphics.pose().popPose();
     }
 
     @Override
