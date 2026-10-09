@@ -34,6 +34,7 @@ public final class CoreParityTest {
         testLegacyLapisGenericIdentity();
         testLegacyOreDictionaryScans();
         testCriticalScanHandlers();
+        testExpandedVanillaObjectAspects();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
@@ -1219,6 +1220,61 @@ public final class CoreParityTest {
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forEntity("minecraft:phantom"));
     }
 
+
+    private static void testExpandedVanillaObjectAspects() {
+        AspectRegistry a = new AspectRegistry();
+        // Exact 1.12 ConfigAspects registerObjectTag names / AspectList additions,
+        // not modern guesses from similar-looking new Minecraft items.
+        String[][] sources = {
+            {"minecraft:stone", "terra:5"},
+            {"minecraft:granite", "terra:5"},
+            {"minecraft:andesite", "terra:5"},
+            {"minecraft:cobblestone", "terra:5", "perditio:1"},
+            {"minecraft:sand", "terra:5", "perditio:5"},
+            {"minecraft:grass_block", "terra:5", "herba:2"},
+            {"minecraft:end_stone", "terra:5", "tenebrae:5"},
+            {"minecraft:gravel", "terra:5", "perditio:2"},
+            {"minecraft:netherrack", "terra:5", "ignis:2"},
+            {"minecraft:nether_brick", "ignis:1", "ordo:1"},
+            {"minecraft:glass", "vitreus:5"},
+            {"minecraft:obsidian", "terra:5", "ignis:5", "tenebrae:5"},
+            {"minecraft:oak_log", "herba:20"},
+            {"minecraft:dark_oak_log", "herba:20"},
+            {"minecraft:oak_sapling", "herba:15", "victus:5"},
+            {"minecraft:birch_leaves", "herba:5"},
+            {"minecraft:vine", "herba:5"},
+            {"minecraft:nether_wart", "herba:1", "vitium:2", "alkimia:3"},
+            {"minecraft:cactus", "herba:5", "aqua:5", "aversio:1"},
+            {"minecraft:sugar_cane", "herba:5", "aqua:3", "aer:2"},
+            {"minecraft:wheat", "herba:5", "victus:5"},
+            {"minecraft:carrot", "herba:5", "victus:5", "sensus:5"},
+            {"minecraft:potato", "herba:5", "victus:5", "terra:5"},
+            {"minecraft:string", "bestia:5", "fabrico:1"},
+            {"minecraft:slime_ball", "aqua:5", "victus:5", "alkimia:1"},
+            {"minecraft:leather", "bestia:5", "praemunio:5"},
+            {"minecraft:feather", "volatus:5", "aer:5"},
+            {"minecraft:bone", "mortuus:5", "victus:5"},
+            {"minecraft:egg", "victus:5", "bestia:5"},
+            {"minecraft:gunpowder", "ignis:10", "perditio:10", "alkimia:5"},
+            {"minecraft:ender_pearl", "alienis:10", "motus:15"},
+            {"minecraft:nether_star", "alienis:10", "praecantatio:20", "ordo:20", "auram:10"}
+        };
+        for (String[] row : sources) {
+            AspectListData aspects = LegacyObjectAspectTable.get(a, row[0]);
+            eq(row.length - 1, aspects.size());
+            for (int i = 1; i < row.length; i++) {
+                String[] pair = row[i].split(":");
+                eq(Integer.parseInt(pair[1]), aspects.getAmount(a.get(pair[0])));
+            }
+        }
+        for (String wood : new String[]{"oak", "spruce", "birch", "jungle", "acacia", "dark_oak"}) {
+            eq(20, LegacyObjectAspectTable.get(a, "minecraft:" + wood + "_log").getAmount(a.PLANT));
+            eq(15, LegacyObjectAspectTable.get(a, "minecraft:" + wood + "_sapling").getAmount(a.PLANT));
+            eq(5, LegacyObjectAspectTable.get(a, "minecraft:" + wood + "_leaves").getAmount(a.PLANT));
+        }
+        eq(0, LegacyObjectAspectTable.get(a, "minecraft:cherry_log").size());
+        eq(0, LegacyObjectAspectTable.get(a, "minecraft:raw_copper").size());
+    }
 
     private static void testEntityAspectRuntimeMappings() {
         AspectRegistry a = new AspectRegistry();
