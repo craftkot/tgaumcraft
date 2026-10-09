@@ -31,5 +31,6 @@
   "item.thaumcraft.table_wood": "Wooden Table",
   "item.thaumcraft.research_table": "Research Table",
   "button.complete.theory": "Complete Theory",
-  "button.scrap.theory": "Scrap Theory"
+  "button.scrap.theory": "Scrap Theory",
+  "button.create.theory": "Create Theory"
 }
