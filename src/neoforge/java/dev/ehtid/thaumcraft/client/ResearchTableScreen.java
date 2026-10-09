@@ -83,7 +83,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         graphics.pose().pushPose();
         graphics.pose().translate(x + BUTTON_WIDTH / 2.0, y + 2, 0.0);
         graphics.pose().scale(0.5F, 0.5F, 1.0F);
-        graphics.drawString(font, text, -font.width(text) / 2, 0x89AFAA, false);
+        graphics.drawString(font, text.getString(), -font.width(text) / 2, 0, 0x89AFAA, false);
         graphics.pose().popPose();
     }
 
