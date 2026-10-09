@@ -277,7 +277,8 @@ public final class ThaumometerScanDispatcher {
         // item tags with IEssentiaContainerItem.getAspects for crystal essence.
         // This is what lets the Thaumometer discover its NBT-contained aspect.
         if (stack.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())) {
-            return CrystalEssenceItem.legacyContainedAspects(stack, ASPECTS);
+            return LegacyObjectAspectFinalizer.finish(
+                    CrystalEssenceItem.legacyContainedAspects(stack, ASPECTS));
         }
         String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
         AspectListData direct = LegacyObjectAspectTable.get(ASPECTS, itemId);
@@ -293,8 +294,11 @@ public final class ThaumometerScanDispatcher {
         AspectListData equipped = LegacyEquipmentAspectBonuses.apply(ASPECTS, withDye, itemId);
         // BETA26 getBonusTags processes the vanilla/mapped enchant aspect
         // bonuses last, including rarity-dependent Praecantatio.
-        return LegacyEnchantmentAspectBonuses.apply(ASPECTS, equipped,
-                itemEnchantmentBonuses(stack));
+        AspectListData enchanted = LegacyEnchantmentAspectBonuses.apply(
+                ASPECTS, equipped, itemEnchantmentBonuses(stack));
+        // BETA26 getBonusTags culls to seven aspect TYPES before
+        // getObjectTags caps each aspect QUANTITY at 500.
+        return LegacyObjectAspectFinalizer.finish(enchanted);
     }
 
     static String genericKey(Player player, Object target) {
