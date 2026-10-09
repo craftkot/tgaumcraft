@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.scanning;
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.*;
 import net.minecraft.core.BlockPos;
@@ -25,6 +26,7 @@ import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.ElderGuardian;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
@@ -78,7 +80,9 @@ public final class ThaumometerScanDispatcher {
     }
 
     private static boolean scan(ServerPlayer player, Object target, AspectListData scannedAspects) {
-        if (target == null) return false;
+        // BETA26 ScanSky is registered last and uniquely accepts null targets:
+        // an unobstructed Thaumometer ray towards the actual sky.
+        if (target == null) return scanSky(player);
 
         boolean anySuccess = false;
         String genericKey = genericKey(player, target);
@@ -117,6 +121,81 @@ public final class ThaumometerScanDispatcher {
         // BlockPos scan, even when the block itself yielded no successful scan.
         if (target instanceof BlockPos pos) anySuccess |= scanContainer(player, pos);
         return anySuccess;
+    }
+
+    /**
+     * Original BETA26 ScanSky: no sky research before CELESTIALSCANNING,
+     * day-aligned sun / moon-phase observations or night-facing star notes.
+     * A scribing tool must be in the main inventory; only paper is consumed.
+     *
+     * Deliberately does NOT implement the requested final-polish randomization
+     * of uncollected moon notes. Original phase dependence remains intact.
+     */
+    private static boolean scanSky(ServerPlayer player) {
+        PlayerKnowledgeData knowledge =
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        SkyScanLogic.Geometry geometry = SkyScanLogic.check(
+                true, player.getXRot(),
+                player.level().canSeeSky(player.blockPosition().above()),
+                player.level().dimension().equals(Level.OVERWORLD),
+                knowledge.isResearchKnown("CELESTIALSCANNING"),
+                player.getYRot(), player.level().getTimeOfDay(0.0F));
+
+        boolean hasTools = hasMainInventoryItem(player, ThaumcraftItems.SCRIBING_TOOLS.get());
+        boolean hasPaper = hasMainInventoryItem(player, Items.PAPER);
+        var result = LegacyCelestialScanService.examine(
+                geometry, player.level().getGameTime(), player.level().getMoonPhase(),
+                player.getDirection().get3DDataValue(), knowledge.getResearchList(),
+                hasTools, hasPaper);
+        if (result.status() == LegacyCelestialScanService.Status.NOT_SCANNABLE) {
+            return false;
+        }
+        if (result.status() == LegacyCelestialScanService.Status.ALREADY_SEEN) {
+            player.displayClientMessage(
+                    Component.translatable("tc.celestial.fail.1"), true);
+            return true;
+        }
+        if (result.status() == LegacyCelestialScanService.Status.NEEDS_MATERIALS) {
+            player.displayClientMessage(
+                    Component.translatable("tc.celestial.fail.2"), true);
+        } else {
+            // InventoryUtils.consumePlayerItem checks the main 36 slots in
+            // inventory order, consuming exactly one vanilla paper.
+            if (consumeMainInventoryPaper(player)) {
+                ItemStack note = CelestialNotesItem.create(
+                        result.observation().itemMetadata());
+                if (!player.getInventory().add(note)) player.drop(note, false);
+                knowledge.addResearch(result.observation().researchKey());
+                ThaumcraftNetworking.sync(player);
+            } else {
+                player.displayClientMessage(
+                        Component.translatable("tc.celestial.fail.2"), true);
+            }
+        }
+        // BETA26 ScanSky.onSuccess calls cleanResearch after eligible attempts
+        // even when paper/tools are missing, but not for already-seen notes.
+        LegacyCelestialScanService.removeOldDayResearch(
+                knowledge, result.observation().dayPrefix());
+        ThaumcraftNetworking.sync(player);
+        return true;
+    }
+
+    private static boolean hasMainInventoryItem(ServerPlayer player,
+                                                net.minecraft.world.item.Item item) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (!stack.isEmpty() && stack.is(item)) return true;
+        }
+        return false;
+    }
+
+    private static boolean consumeMainInventoryPaper(ServerPlayer player) {
+        for (ItemStack stack : player.getInventory().items) {
+            if (!stack.isEmpty() && stack.is(Items.PAPER)) {
+                stack.shrink(1);
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isStillScannable(Player player, Object target) {
