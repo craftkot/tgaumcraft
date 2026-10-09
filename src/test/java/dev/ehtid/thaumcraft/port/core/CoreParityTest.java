@@ -35,6 +35,7 @@ public final class CoreParityTest {
         testLegacyOreDictionaryScans();
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
+        testLegacyOreAspectTable();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
@@ -1220,6 +1221,70 @@ public final class CoreParityTest {
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forEntity("minecraft:phantom"));
     }
 
+
+    private static void testLegacyOreAspectTable() {
+        AspectRegistry a = new AspectRegistry();
+        // Exact quantities read from original BETA26 ConfigAspects.registerItemAspects
+        // ore dictionary registrations; these tags project its legacy ore names.
+        String[][] expected = {
+            {"c:ores/lapis", "terra:5,sensus:15"},
+            {"c:ores/diamond", "terra:5,desiderium:15,vitreus:15"},
+            {"c:gems/diamond", "vitreus:15,desiderium:15"},
+            {"c:ores/redstone", "terra:5,potentia:15"},
+            {"c:ores/emerald", "terra:5,desiderium:10,vitreus:15"},
+            {"c:gems/emerald", "vitreus:15,desiderium:10"},
+            {"c:ores/quartz", "terra:5,vitreus:10"},
+            {"c:gems/quartz", "vitreus:5"},
+            {"c:ores/iron", "terra:5,metallum:15"},
+            {"c:dusts/iron", "metallum:15,perditio:1"},
+            {"c:ingots/iron", "metallum:15"},
+            {"c:ores/gold", "terra:5,metallum:10,desiderium:10"},
+            {"c:dusts/gold", "metallum:10,desiderium:10,perditio:1"},
+            {"c:ingots/gold", "metallum:10,desiderium:10"},
+            {"c:dusts/redstone", "potentia:10"},
+            {"c:dusts/glowstone", "sensus:5,lux:10"},
+            {"c:ingots/copper", "metallum:10,permutatio:5"},
+            {"c:dusts/copper", "metallum:10,perditio:1,permutatio:5"},
+            {"c:ores/copper", "metallum:10,terra:5,permutatio:5"},
+            {"c:ingots/tin", "metallum:10,vitreus:5"},
+            {"c:dusts/tin", "metallum:10,perditio:1,vitreus:5"},
+            {"c:ores/tin", "metallum:10,terra:5,vitreus:5"},
+            {"c:ingots/silver", "metallum:10,desiderium:5"},
+            {"c:dusts/silver", "metallum:10,perditio:1,desiderium:5"},
+            {"c:ores/silver", "metallum:10,terra:5,desiderium:5"},
+            {"c:ingots/lead", "metallum:10,ordo:5"},
+            {"c:dusts/lead", "metallum:10,perditio:1,ordo:5"},
+            {"c:ores/lead", "metallum:10,terra:5,ordo:5"},
+            {"c:ingots/brass", "metallum:10,instrumentum:5"},
+            {"c:dusts/brass", "metallum:10,perditio:1,instrumentum:5"},
+            {"c:ingots/bronze", "metallum:10,instrumentum:5"},
+            {"c:dusts/bronze", "metallum:10,perditio:1,instrumentum:5"},
+            {"c:ores/uranium", "metallum:10,mortuus:5,potentia:10"},
+            {"c:ingots/uranium", "metallum:10,mortuus:5,potentia:10"},
+            {"c:gems/ruby", "vitreus:10,desiderium:10"},
+            {"c:gems/green_sapphire", "vitreus:10,desiderium:10"},
+            {"c:gems/sapphire", "vitreus:10,desiderium:10"},
+            {"c:ingots/steel", "metallum:15,ordo:5"}
+        };
+        eq(expected.length, LegacyOreAspectTable.modernTagNames().size());
+        for (String[] row : expected) {
+            isTrue(LegacyOreAspectTable.modernTagNames().contains(row[0]));
+            AspectListData tags = LegacyOreAspectTable.fromCommonTags(a, java.util.Set.of(row[0]));
+            String[] pairs = row[1].split(",");
+            eq(pairs.length, tags.size());
+            for (String pair : pairs) {
+                String[] entry = pair.split(":");
+                eq(Integer.parseInt(entry[1]), tags.getAmount(a.get(entry[0])));
+            }
+        }
+        AspectListData priority = LegacyOreAspectTable.fromCommonTags(a,
+                java.util.Set.of("c:ingots/iron", "c:ores/iron"));
+        eq(5, priority.getAmount(a.EARTH));
+        eq(15, priority.getAmount(a.METAL));
+        eq(2, priority.size()); // First legacy registration, not a sum of both.
+        eq(0, LegacyOreAspectTable.fromCommonTags(a, java.util.Set.of(
+                "c:raw_materials/iron", "c:nuggets/brass", "c:ingots/void")).size());
+    }
 
     private static void testExpandedVanillaObjectAspects() {
         AspectRegistry a = new AspectRegistry();
