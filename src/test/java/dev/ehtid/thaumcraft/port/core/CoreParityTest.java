@@ -29,6 +29,7 @@ public final class CoreParityTest {
         testSkyScanLogic();
         testLegacyCelestialScanService();
         testLegacyCelestialTheoryCard();
+        testLegacyResearchTableData();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
@@ -878,6 +879,82 @@ public final class CoreParityTest {
         isTrue(knowledge.isResearchKnown("CEL_2_Moon0"));
         isTrue(knowledge.isResearchKnown("CEL_2_Star3"));
         isTrue(knowledge.isResearchKnown("FIRSTSTEPS"));
+    }
+
+    private static void testLegacyResearchTableData() {
+        LegacyResearchTableData empty = new LegacyResearchTableData(8);
+        eq(8, empty.inspiration());
+        eq(8, empty.inspirationStart());
+        isFalse(empty.isComplete());
+        eq(0, empty.getTotal("BASICS"));
+        eq(java.util.Map.of(), empty.calculateTheoryRewards());
+        empty.addInspiration(99);
+        eq(8, empty.inspiration()); // Upper cap only, BETA26.
+        empty.addInspiration(-12);
+        eq(-4, empty.inspiration());
+        isTrue(empty.isComplete());
+
+        LegacyResearchTableData table = new LegacyResearchTableData(5);
+        table.addTotal("BASICS", 100);
+        table.addTotal("ALCHEMY", 50);
+        table.addTotal("ELDRITCH", 25);
+        eq(100, table.getTotal("BASICS"));
+        eq(50, table.getTotal("ALCHEMY"));
+        eq(25, table.getTotal("ELDRITCH"));
+        eq(3, table.categoryTotals().size());
+        eq(java.util.Map.of("BASICS", 32, "ALCHEMY", 10, "ELDRITCH", 5),
+                table.calculateTheoryRewards());
+        // addTotal drops zero and negative values rather than retaining keys.
+        table.addTotal("ELDRITCH", -25);
+        eq(0, table.getTotal("ELDRITCH"));
+        isFalse(table.categoryTotals().containsKey("ELDRITCH"));
+        table.addTotal("ELDRITCH", 25);
+
+        // Two notes 4 and 0: a star yields Eldritch and temporary warp,
+        // the Sun increases penaltyStart, and a theory card costs 1 inspiration.
+        var starSun = new LegacyCelestialTheoryCard.Selection(4, 0, "BASICS");
+        var outcome = LegacyCelestialTheoryCard.activate(
+                starSun, new java.util.Random(0L), new int[]{2, 5});
+        PlayerWarpData warp = new PlayerWarpData();
+        table.applyCelestialEffects(outcome, warp);
+        eq(143, table.getTotal("BASICS"));
+        eq(33, table.getTotal("ELDRITCH"));
+        eq(4, warp.get(WarpType.TEMPORARY));
+        eq(1, table.penaltyStart());
+        eq(0, table.bonusDraws());
+        eq(5, table.inspiration()); // Card.activate does NOT deduct cost.
+        table.consumeInspirationAndPlaceCard(1);
+        eq(4, table.inspiration());
+        eq(1, table.placedCards());
+
+        // Order BASICS (143), ALCHEMY (50), ELDRITCH (33).
+        // Sun note's penaltyStart=1 exempts the second highest category.
+        eq(java.util.Map.of("BASICS", 46, "ALCHEMY", 16, "ELDRITCH", 7),
+                table.calculateTheoryRewards());
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        table.grantFinishedTheory(knowledge);
+        eq(46, knowledge.getKnowledgeRaw(KnowledgeType.THEORY, "BASICS"));
+        eq(16, knowledge.getKnowledgeRaw(KnowledgeType.THEORY, "ALCHEMY"));
+        eq(7, knowledge.getKnowledgeRaw(KnowledgeType.THEORY, "ELDRITCH"));
+        eq(1, knowledge.getKnowledge(KnowledgeType.THEORY, "BASICS"));
+
+        // A moon note grants one bonus draw but no penalty or warp.
+        var moon = LegacyCelestialTheoryCard.activate(
+                new LegacyCelestialTheoryCard.Selection(5, 9, "BASICS"),
+                new java.util.Random(42L), new int[]{1, 7});
+        table.applyCelestialEffects(moon, warp);
+        eq(1, table.bonusDraws());
+        eq(1, table.penaltyStart());
+        eq(4, warp.get(WarpType.TEMPORARY));
+        eq(168, table.getTotal("BASICS"));
+        // Identical totals must sort by the original TreeMap's key ordering.
+        LegacyResearchTableData tied = new LegacyResearchTableData(1);
+        tied.addTotal("BASICS", 100);
+        tied.addTotal("ALCHEMY", 100);
+        eq(java.util.List.of("ALCHEMY", "BASICS"),
+                new java.util.ArrayList<>(tied.calculateTheoryRewards().keySet()));
+        eq(32, tied.calculateTheoryRewards().get("ALCHEMY"));
+        eq(21, tied.calculateTheoryRewards().get("BASICS"));
     }
 
     private static void testLegacyCelestialTheoryCard() {
