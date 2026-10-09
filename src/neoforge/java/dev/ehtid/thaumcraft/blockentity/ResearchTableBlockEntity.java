@@ -110,6 +110,32 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         return true;
     }
 
+    /**
+     * Bugfix for CardScripting and future theory redraws: the original code
+     * checks ItemStack != null, consumes ink and paper separately while
+     * discarding BOTH boolean results, and can award free theory when a
+     * player's paper slot is empty. Minecraft 1.21 additionally represents
+     * empty slots by nonnull ItemStack.EMPTY.
+     *
+     * The port checks BOTH resources before mutating EITHER resource, so a
+     * failed attempt costs no ink and no paper. One successful call consumes
+     * exactly one sheet and one unit of the 100-use ink supply.
+     */
+    public boolean consumePaperAndInkFromTable() {
+        if (level == null || level.isClientSide || session == null) return false;
+        ItemStack ink = items.get(SCRIBING_SLOT);
+        ItemStack paper = items.get(PAPER_SLOT);
+        if (!ink.is(ThaumcraftItems.SCRIBING_TOOLS.get())
+                || !ink.isDamageableItem()
+                || ink.getDamageValue() >= ink.getMaxDamage()
+                || paper.isEmpty() || !paper.is(Items.PAPER)) return false;
+
+        paper.shrink(1);
+        ink.setDamageValue(ink.getDamageValue() + 1);
+        setChanged();
+        return true;
+    }
+
     /** BETA26 consumeInkFromTable, incrementing damage rather than consuming item. */
     public boolean consumeInkFromTable() {
         ItemStack scribing = items.get(SCRIBING_SLOT);
