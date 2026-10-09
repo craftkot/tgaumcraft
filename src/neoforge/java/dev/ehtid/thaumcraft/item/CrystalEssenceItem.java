@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
+import dev.ehtid.thaumcraft.port.core.AspectListData;
+import dev.ehtid.thaumcraft.port.core.LegacyContainedAspectTags;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -49,6 +51,28 @@ public final class CrystalEssenceItem extends Item {
         CompoundTag row = aspects.getCompound(0);
         if (!row.contains("key", Tag.TAG_STRING)) return null;
         return row.getString("key");
+    }
+
+    /**
+     * Preserve the original TC6 ItemGenericEssentiaContainer contained-Vis
+     * override for object scanning. NBT entries are the exact old key/amount
+     * fields in CUSTOM_DATA; repeated keys are merged before the TC6 500 cap.
+     */
+    public static AspectListData legacyContainedAspects(ItemStack stack, AspectRegistry registry) {
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null || data.isEmpty()) return new AspectListData();
+        CompoundTag root = data.copyTag();
+        if (!root.contains("Aspects", Tag.TAG_LIST)) return new AspectListData();
+        ListTag aspects = root.getList("Aspects", Tag.TAG_COMPOUND);
+        java.util.ArrayList<LegacyContainedAspectTags.Entry> entries = new java.util.ArrayList<>();
+        for (int index = 0; index < aspects.size(); index++) {
+            CompoundTag row = aspects.getCompound(index);
+            if (row.contains("key", Tag.TAG_STRING)) {
+                entries.add(new LegacyContainedAspectTags.Entry(
+                        row.getString("key"), row.getInt("amount")));
+            }
+        }
+        return LegacyContainedAspectTags.fromLegacyNbt(registry, entries);
     }
 
     private static void assignRandomAspectIfMissing(ItemStack stack, Level level) {
