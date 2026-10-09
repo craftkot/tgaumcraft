@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
+import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -27,14 +28,17 @@ public final class ThaumcraftItems {
             "thaumometer", ThaumometerItem::new, new Item.Properties().stacksTo(1));
     // ScanSky uses a nonconsumable 100-durability scribing tool, one paper per
     // celestial observation, and one of thirteen BETA26 celestial notes.
-    public static final DeferredItem<Item> SCRIBING_TOOLS = ITEMS.registerSimpleItem(
-            "scribing_tools", new Item.Properties().durability(100).stacksTo(1));
+    public static final DeferredItem<ScribingToolsItem> SCRIBING_TOOLS = ITEMS.registerItem(
+            "scribing_tools", ScribingToolsItem::new,
+            new Item.Properties().durability(100).stacksTo(1));
     public static final DeferredItem<CelestialNotesItem> CELESTIAL_NOTES = ITEMS.registerItem(
             "celestial_notes", CelestialNotesItem::new, new Item.Properties());
 
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> TABLE_WOOD = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TABLE_WOOD, new Item.Properties());
     public static final DeferredItem<BlockItem> RESEARCH_TABLE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.RESEARCH_TABLE, new Item.Properties());
 
