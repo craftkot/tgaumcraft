@@ -1233,7 +1233,15 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(0L)), factory);
         eq(0, empty.choices().size());
-        eq(LegacyTheorycraftDrawEngine.MAX_ATTEMPTS, empty.attempts());
+        // Original bug: 10,000 retries of nextInt(0) on an empty registry.
+        // Same outcome, but skip impossible attempts without moving RNG state.
+        eq(0, empty.attempts());
+        java.util.Random untouchedRandom = new java.util.Random(123L);
+        LegacyTheorycraftDrawEngine.draw(
+                2, 0, 5, java.util.List.of(), java.util.List.of(),
+                java.util.Set.of(), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(untouchedRandom), factory);
+        eq(new java.util.Random(123L).nextLong(), untouchedRandom.nextLong());
 
         // No source mutation: the caller decides when to commit draw results.
         java.util.List<String> mutableAidInput = new java.util.ArrayList<>(
