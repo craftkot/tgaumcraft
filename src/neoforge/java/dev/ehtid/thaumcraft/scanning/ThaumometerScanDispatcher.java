@@ -199,13 +199,16 @@ public final class ThaumometerScanDispatcher {
         if (stack.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())) {
             return CrystalEssenceItem.legacyContainedAspects(stack, ASPECTS);
         }
-        AspectListData direct = LegacyObjectAspectTable.get(
-                ASPECTS, BuiltInRegistries.ITEM.getKey(stack.getItem()).toString());
-        if (direct.size() > 0) return direct;
-        // Fall back to exact TC6 ore-dictionary aspect registrations, translated
-        // to modern common tags. This is essential for cross-mod ores/ingots.
-        return LegacyOreAspectTable.fromCommonTags(
-                ASPECTS, matchingCommonItemTags(stack, LegacyOreAspectTable.modernTagNames()));
+        String itemId = BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+        AspectListData direct = LegacyObjectAspectTable.get(ASPECTS, itemId);
+        if (direct.size() == 0) {
+            // Original ore-name registrations also apply to tagged modded items.
+            direct = LegacyOreAspectTable.fromCommonTags(
+                    ASPECTS, matchingCommonItemTags(stack, LegacyOreAspectTable.modernTagNames()));
+        }
+        // TC6 getBonusTags next enriches armor, tools, bows and swords with
+        // equipment-derived aspects using merge (max, not addition).
+        return LegacyEquipmentAspectBonuses.apply(ASPECTS, direct, itemId);
     }
 
     static String genericKey(Player player, Object target) {
