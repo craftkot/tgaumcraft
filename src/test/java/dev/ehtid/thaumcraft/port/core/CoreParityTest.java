@@ -1569,6 +1569,16 @@ public final class CoreParityTest {
         // Same original HashMap initialization is deterministic within JVM.
         eq(originalHashOrder, LegacyTheorycraftManifest.cardsInHashMapIterationOrder());
         eq(14, LegacyTheorycraftManifest.aidsInHashMapIterationOrder().size());
+        eq(22, LegacyTheorycraftManifest.portedCoreCards().size());
+        eq(11, LegacyTheorycraftManifest.missingCoreCards().size());
+        isTrue(LegacyTheorycraftManifest.allCardKeys()
+                .containsAll(LegacyTheorycraftManifest.portedCoreCards()));
+        eq(33, LegacyTheorycraftManifest.portedCoreCards().size()
+                + LegacyTheorycraftManifest.missingCoreCards().size());
+        eq("thaumcraft.common.lib.research.theorycraft.CardCurio",
+                LegacyTheorycraftManifest.missingCoreCards().get(0));
+        eq("thaumcraft.common.lib.research.theorycraft.CardRealization",
+                LegacyTheorycraftManifest.missingCoreCards().get(10));
 
         for (String key : new String[]{
                 LegacyBasicTheoryCards.PONDER_KEY,
