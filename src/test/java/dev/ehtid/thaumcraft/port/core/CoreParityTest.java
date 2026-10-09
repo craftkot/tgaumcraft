@@ -36,6 +36,7 @@ public final class CoreParityTest {
         testCriticalScanHandlers();
         testExpandedVanillaObjectAspects();
         testLegacyOreAspectTable();
+        testOreMaterialIntegratedScan();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
@@ -1221,6 +1222,42 @@ public final class CoreParityTest {
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forEntity("minecraft:phantom"));
     }
 
+
+    private static void testOreMaterialIntegratedScan() {
+        AspectRegistry a = new AspectRegistry();
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                a, BuiltInResearchCategories.create(a));
+        PlayerKnowledgeData p = new PlayerKnowledgeData();
+        AspectListData brassAspects = LegacyOreAspectTable.fromCommonTags(
+                a, java.util.Set.of("c:ingots/brass"));
+        java.util.Set<String> brassMaterial = LegacyOreDictionaryScans.fromCommonTags(
+                java.util.Set.of("c:ingots/brass"));
+        CriticalScanHandlers.Target brass = new CriticalScanHandlers.Target(
+                "!example:brass_ingot0", brassAspects, brassMaterial);
+        var first = scans.scanTheThing(p, brass, (player, key) -> player.addResearch(key));
+        isTrue(first.anySuccess());
+        eq(4, first.matchingHandlers()); // Metallum, Instrumentum, Generic, f_MATBRASS.
+        eq(4, first.successfulHandlers());
+        for (String key : new String[]{"!metallum", "!instrumentum",
+                "!example:brass_ingot0", "f_MATBRASS"}) {
+            isTrue(p.isResearchKnown(key));
+        }
+        isFalse(scans.isThingStillScannable(p, brass, PlayerKnowledgeData::isResearchKnown));
+        var repeat = scans.scanTheThing(p, brass, (player, key) -> player.addResearch(key));
+        isFalse(repeat.anySuccess());
+        eq(0, repeat.successfulHandlers());
+
+        // A brass plate has the same original material research marker, but
+        // its own generic item research identity remains scannable.
+        CriticalScanHandlers.Target plate = new CriticalScanHandlers.Target(
+                "!example:brass_plate0", LegacyOreAspectTable.fromCommonTags(
+                        a, java.util.Set.of("c:ingots/brass")),
+                LegacyOreDictionaryScans.fromCommonTags(java.util.Set.of("c:plates/brass")));
+        var plateResult = scans.scanTheThing(p, plate, (player, key) -> player.addResearch(key));
+        isTrue(plateResult.anySuccess());
+        eq(1, plateResult.successfulHandlers());
+        isTrue(p.isResearchKnown("!example:brass_plate0"));
+    }
 
     private static void testLegacyOreAspectTable() {
         AspectRegistry a = new AspectRegistry();
