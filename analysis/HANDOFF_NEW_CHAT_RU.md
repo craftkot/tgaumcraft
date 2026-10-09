@@ -7,9 +7,9 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified gameplay CI checkpoint at time of this handoff: `79782b0ac634f3f5942f34247c4156f9daecabfa` (SUCCESS: core parity + NeoForge build + dedicated-server smoke).
-- Confirmed overall progress: **59%** (do not inflate until another substantial playable slice is verified).
-- Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success.
+- Last verified gameplay CI checkpoint at time of this handoff: `6e8817c69f29e7338f43936efc60a5dfb9dd53f4` (SUCCESS: 5,566 assertions, NeoForge build + dedicated-server smoke).
+- Confirmed estimated overall progress: **60%** after BETA26 vanilla enchantment/potion scan completion. Keep this as the next baseline until further substantial work.
+- Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
 - Original JAR SHA-256: `9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f`.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 59%.
+Never lower the confirmed baseline below 60%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -108,7 +108,7 @@ Original JAR bytecode verified:
 - `LegacyEnchantmentEffectScans.java` maps **30 vanilla 1.12 enchantments + 27 vanilla 1.12 effects** to their precise historical translation-key research IDs, excluding modern-only effects/enchantments.
 - `CriticalScanHandlers.java` now creates **111** loader-independent handlers (37 ScanAspect + Generic + 57 enchant/potion + 16 vanilla/material special markers).
 - `ThaumometerScanDispatcher.java` now extracts modern `ENCHANTMENTS` and `STORED_ENCHANTMENTS` component holder IDs (including enchanted books), modern `POTION_CONTENTS` from potion items and active MobEffectInstance IDs from LivingEntity, then projects them into BETA26 keys.
-- First NeoForge build on `0fc94aac` failed because `EnchantmentHelper.getEnchantments(ItemStack)` no longer exists. Corrected in `6e8817c69f` to use `DataComponents.ENCHANTMENTS`. **Check CI result for this commit before claiming full-green status**.
+- First NeoForge build on `0fc94aac` failed because `EnchantmentHelper.getEnchantments(ItemStack)` no longer exists. Corrected in `6e8817c69f` to use `DataComponents.ENCHANTMENTS`. **Confirmed CI SUCCESS on `6e8817c69f`: 5,566 core parity assertions, NeoForge build, dedicated server reaching Done state, built JAR artifact upload.**
 - `CoreParityTest` includes all 57 key mappings, unknown-modern exclusion, multiple simultaneous enchants/effects, once-only research progression.
 
 User future gameplay change, **explicitly defer until the main mod port is complete**:
