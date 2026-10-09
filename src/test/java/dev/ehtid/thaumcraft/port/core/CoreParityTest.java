@@ -1179,7 +1179,12 @@ public final class CoreParityTest {
         // ScanMaterial.checkThing accepts BlockPos only (BETA26 bytecode).
         eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:clay"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:clay"));
-        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:blue_terracotta"));
+        // ScanBlock companion ItemStack has metadata 0, unlike the placed block
+        // which matches all block states. Confirm the original 1.12 bytecode.
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:terracotta"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:white_terracotta"));
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:blue_terracotta"));
+        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:blue_terracotta"));
         eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_ingot"));
         eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_ore"));
         eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_block"));
