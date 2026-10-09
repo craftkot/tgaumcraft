@@ -29,9 +29,9 @@ import java.util.Set;
  * Slot 0 accepts IScribeTools; slot 1 accepts vanilla paper.
  *
  * The `note` NBT compound is the original research-table session field.
- * LegacyResearchTableData currently stores original scalar/category state;
- * savedCards, aidCards and cardChoices must be integrated before exposing a
- * full card drawing UI, to prevent discarding research progress.
+ * The original savedCards, aidCards and blocked-category lists are decoded.
+ * Unknown cardChoices and lastDraw retain their nested original NBT intact
+ * until their card subclasses are ported; don't erase them during autosave.
  */
 public final class ResearchTableBlockEntity extends BlockEntity implements Container {
     public static final int SCRIBING_SLOT = 0;
@@ -39,6 +39,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     private final NonNullList<ItemStack> items =
             NonNullList.withSize(2, ItemStack.EMPTY);
     private LegacyResearchTableData session;
+    /** Lossless NBT passthrough for original, not-yet-ported card subclasses. */
+    private CompoundTag originalSessionNbt = new CompoundTag();
 
     public ResearchTableBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.RESEARCH_TABLE.get(), pos, state);
@@ -56,6 +58,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         session = LegacyTheorycraftInspiration.start(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),
                 BuiltInResearchCatalog.create(), aids);
+        session.setPlayer(player.getGameProfile().getName());
+        originalSessionNbt = new CompoundTag();
         setChanged();
         return true;
     }
@@ -67,6 +71,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         session.grantFinishedTheory(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge());
         session = null;
+        originalSessionNbt = new CompoundTag();
         setChanged();
         ThaumcraftNetworking.sync(player);
         return true;
@@ -136,14 +141,16 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
         if (session == null) tag.remove("note");
-        else tag.put("note", LegacyResearchTableNbt.write(session));
+        else tag.put("note", LegacyResearchTableNbt.write(session, originalSessionNbt));
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         items.set(0, ItemStack.EMPTY);
         items.set(1, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items, registries);
+        originalSessionNbt = tag.contains("note", net.minecraft.nbt.Tag.TAG_COMPOUND)
+                ? tag.getCompound("note").copy() : new CompoundTag();
         session = tag.contains("note", net.minecraft.nbt.Tag.TAG_COMPOUND)
-                ? LegacyResearchTableNbt.read(tag.getCompound("note")) : null;
+                ? LegacyResearchTableNbt.read(originalSessionNbt) : null;
     }
 }
