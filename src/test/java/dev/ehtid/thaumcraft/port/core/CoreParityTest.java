@@ -1004,6 +1004,29 @@ public final class CoreParityTest {
         eq(1, table.penaltyStart());
         eq(4, warp.get(WarpType.TEMPORARY));
         eq(168, table.getTotal("BASICS"));
+
+        // Reload a saved theory session mid-work with the original NBT scalar
+        // field names, preserving the exact research and inspiration state.
+        LegacyResearchTableData.Snapshot snapshot = table.snapshot();
+        LegacyResearchTableData loaded = LegacyResearchTableData.fromSnapshot(snapshot);
+        eq(snapshot, loaded.snapshot());
+        eq(table.inspiration(), loaded.inspiration());
+        eq(table.inspirationStart(), loaded.inspirationStart());
+        eq(table.placedCards(), loaded.placedCards());
+        eq(table.penaltyStart(), loaded.penaltyStart());
+        eq(table.bonusDraws(), loaded.bonusDraws());
+        eq(table.categoryTotals(), loaded.categoryTotals());
+        loaded.addTotal("BASICS", 99);
+        eq(168, table.getTotal("BASICS")); // Reload has independent maps.
+        var copy = snapshot.categoryTotals();
+        boolean rejectedSnapshotMutation = false;
+        try {
+            copy.put("EXAMPLE", 999);
+        } catch (UnsupportedOperationException expected) {
+            rejectedSnapshotMutation = true;
+        }
+        isTrue(rejectedSnapshotMutation);
+
         // Identical totals must sort by the original TreeMap's key ordering.
         LegacyResearchTableData tied = new LegacyResearchTableData(1);
         tied.addTotal("BASICS", 100);
