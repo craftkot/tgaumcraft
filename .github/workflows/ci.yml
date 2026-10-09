@@ -105,7 +105,8 @@ jobs:
               "block/research_table_model.png": "9cb849fa40792c254b10f69a183896a7047050659694d024772dac4073f0b3d0",
               "block/table_wood_side.png": "986766e91e793db6f5d16ab18b256b98a699685d0f053be24ae6b843240e177e",
               "block/table_wood_top.png": "ed844268fecc31c27691e6bf173855b3522fe816fe7451a8bbfdc1aa9425d2bf",
-              "gui/gui_research_table.png": "aa51f1474d7cb5f8dc774ff150c5c067b4ad0535f8fb120b44728be4120bb6ad"
+              "gui/gui_research_table.png": "aa51f1474d7cb5f8dc774ff150c5c067b4ad0535f8fb120b44728be4120bb6ad",
+              "gui/gui_base.png": "bd227296741c97bcf280778b742f8e2b07227aeacc381335036d4939e77f2913"
           }
           for path, expected in expected_hashes.items():
               actual = hashlib.sha256((assets / "textures" / path).read_bytes()).hexdigest()
@@ -142,7 +143,9 @@ jobs:
               entries = json.loads((assets / "lang" / (language + ".json")).read_text())
               for key in ("block.thaumcraft.table_wood", "block.thaumcraft.research_table",
                           "container.thaumcraft.research_table",
-                          "research_table.awaiting_theory", "research_table.inspiration"):
+                          "research_table.awaiting_theory", "research_table.inspiration",
+                          "button.create.theory", "button.complete.theory",
+                          "button.scrap.theory"):
                   assert key in entries, (language, key)
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
