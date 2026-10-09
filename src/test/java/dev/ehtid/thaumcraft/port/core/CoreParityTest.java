@@ -30,6 +30,7 @@ public final class CoreParityTest {
         testLegacyCelestialScanService();
         testLegacyCelestialTheoryCard();
         testLegacyResearchTableData();
+        testLegacyResearchTableExtendedSaveFields();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1069,6 +1070,71 @@ public final class CoreParityTest {
                 new java.util.ArrayList<>(tied.calculateTheoryRewards().keySet()));
         eq(32, tied.calculateTheoryRewards().get("ALCHEMY"));
         eq(21, tied.calculateTheoryRewards().get("BASICS"));
+    }
+
+    private static void testLegacyResearchTableExtendedSaveFields() {
+        // BETA26 ResearchTableData.serialize() writes these lists as
+        // ordered TAG_COMPOUND rows, not sets or unordered string arrays.
+        LegacyResearchTableData state = new LegacyResearchTableData(11);
+        state.setPlayer("Researcher");
+        state.replaceSavedCards(java.util.List.of(42L, 42L, -1L, Long.MAX_VALUE));
+        state.replaceAidCards(java.util.List.of(
+                "thaumcraft.api.research.theorycraft.CardAnalyze",
+                "thaumcraft.api.research.theorycraft.CardPonder",
+                "thaumcraft.api.research.theorycraft.CardAnalyze"));
+        state.replaceBlockedCategories(java.util.List.of(
+                "ELDRITCH", "ALCHEMY", "ELDRITCH"));
+        state.addTotal("ALCHEMY", 91);
+        state.addInspiration(-3);
+        var snapshot = state.snapshot();
+        eq("Researcher", snapshot.player());
+        eq(java.util.List.of(42L, 42L, -1L, Long.MAX_VALUE),
+                snapshot.savedCards());
+        eq(java.util.List.of("thaumcraft.api.research.theorycraft.CardAnalyze",
+                "thaumcraft.api.research.theorycraft.CardPonder",
+                "thaumcraft.api.research.theorycraft.CardAnalyze"), snapshot.aidCards());
+        eq(java.util.List.of("ELDRITCH", "ALCHEMY", "ELDRITCH"),
+                snapshot.categoriesBlocked());
+        LegacyResearchTableData loaded = LegacyResearchTableData.fromSnapshot(snapshot);
+        eq(snapshot, loaded.snapshot());
+        eq(8, loaded.inspiration());
+        eq(91, loaded.getTotal("ALCHEMY"));
+
+        // A second session must have independent lists and mutable state.
+        loaded.setPlayer("Other");
+        loaded.replaceSavedCards(java.util.List.of(100L));
+        loaded.replaceAidCards(java.util.List.of());
+        loaded.replaceBlockedCategories(java.util.List.of());
+        eq("Researcher", state.player());
+        eq(4, state.savedCards().size());
+        eq(3, state.aidCards().size());
+        eq(3, state.blockedCategories().size());
+        eq(1, loaded.savedCards().size());
+        eq(0, loaded.aidCards().size());
+        eq(0, loaded.blockedCategories().size());
+
+        boolean blocked = false;
+        try {
+            snapshot.savedCards().add(99L);
+        } catch (UnsupportedOperationException expected) {
+            blocked = true;
+        }
+        isTrue(blocked);
+        blocked = false;
+        try {
+            state.aidCards().clear();
+        } catch (UnsupportedOperationException expected) {
+            blocked = true;
+        }
+        isTrue(blocked);
+        // All four original ordered-list fields must stay absent/empty for
+        // legacy 7-field snapshots created by previous port milestones.
+        var legacy = new LegacyResearchTableData.Snapshot(
+                5, 6, 1, 0, 0, 0, java.util.Map.of("BASICS", 30));
+        eq("", legacy.player());
+        eq(java.util.List.of(), legacy.savedCards());
+        eq(java.util.List.of(), legacy.aidCards());
+        eq(java.util.List.of(), legacy.categoriesBlocked());
     }
 
     private static void testLegacyCelestialTheoryCard() {
