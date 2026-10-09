@@ -56,6 +56,13 @@ public final class CriticalScanHandlers {
         ScanningService<PlayerKnowledgeData,Target> s=new ScanningService<>();
         for(AspectData a:aspects.values()) s.addScannableThing(aspect(a));
         s.addScannableThing(generic(categories));
+        // ConfigResearch registers vanilla enchantments, then potion effects,
+        // before its explicit ScanEntity/ScanBlock/ScanItem/OreDictionary sites.
+        // The loader bridge translates the modern enchantment/effect ids to
+        // these original 1.12 getName() research keys.
+        for (String key : LegacyEnchantmentEffectScans.allResearchKeys()) {
+            s.addScannableThing(special(key));
+        }
         for (String key : LegacyVanillaSpecialScans.REGISTRATION_ORDER) s.addScannableThing(special(key));
         return s;
     }
