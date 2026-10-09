@@ -257,6 +257,12 @@ public final class ThaumometerScanDispatcher {
     private static AspectListData aspectsFor(Player player, Object target) {
         if (target instanceof ItemStack stack) return objectAspects(stack);
         if (target instanceof ItemEntity itemEntity) return objectAspects(itemEntity.getItem());
+        // BETA26 AspectHelper special-cases EntityPlayer before looking up any
+        // registered EntityTags: the name hash deterministically picks 3 aspects.
+        if (target instanceof Player scannedPlayer) {
+            return LegacyPlayerEntityAspectTable.get(
+                    ASPECTS, scannedPlayer.getGameProfile().getName());
+        }
         if (target instanceof Entity entity) {
             String id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString();
             String legacy = LegacyEntityAspectTable.legacyName(id);
