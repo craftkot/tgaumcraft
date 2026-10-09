@@ -1304,6 +1304,19 @@ public final class CoreParityTest {
         eq(10, noAccess.getTotal("BASICS"));
         eq(0, noAccess.bonusDraws());
 
+        // BETA26 bugfix: if both categories are blocked, the old card could
+        // loop 1000 times, award +5 BASICS and a free bonusDraw despite
+        // making zero progress. Refuse this impossible activation.
+        LegacyResearchTableData allBlocked = new LegacyResearchTableData(5);
+        allBlocked.addTotal("ALCHEMY", 12);
+        allBlocked.addTotal("BASICS", 10);
+        allBlocked.replaceBlockedCategories(java.util.List.of(
+                "BASICS", "ALCHEMY"));
+        isFalse(LegacyBasicTheoryCards.ponder(allBlocked));
+        eq(12, allBlocked.getTotal("ALCHEMY"));
+        eq(10, allBlocked.getTotal("BASICS"));
+        eq(0, allBlocked.bonusDraws());
+
         // Vanilla CardPonder compares blocked list LENGTH, not how many
         // listed categories are actually in categoryTotals.
         LegacyResearchTableData irrelevantBlock = new LegacyResearchTableData(5);
