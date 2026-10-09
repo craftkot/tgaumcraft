@@ -33,6 +33,7 @@ public final class CoreParityTest {
         testLegacyResearchTableExtendedSaveFields();
         testLegacyTheorycraftDrawEngine();
         testLegacyBasicTheoryCards();
+        testLegacyAdditionalTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1273,6 +1274,108 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyAdditionalTheoryCards() {
+        eq("thaumcraft.api.research.theorycraft.CardBalance",
+                LegacyAdditionalTheoryCards.BALANCE_KEY);
+        eq("thaumcraft.api.research.theorycraft.CardNotation",
+                LegacyAdditionalTheoryCards.NOTATION_KEY);
+        eq("thaumcraft.api.research.theorycraft.CardStudy",
+                LegacyAdditionalTheoryCards.STUDY_KEY);
+        eq("thaumcraft.api.research.theorycraft.CardExperimentation",
+                LegacyAdditionalTheoryCards.EXPERIMENTATION_KEY);
+        eq(1, LegacyAdditionalTheoryCards.BALANCE_COST);
+        eq(1, LegacyAdditionalTheoryCards.NOTATION_COST);
+        eq(1, LegacyAdditionalTheoryCards.STUDY_COST);
+        eq(2, LegacyAdditionalTheoryCards.EXPERIMENTATION_COST);
+        isTrue(LegacyAdditionalTheoryCards.studyAidOnly());
+        isTrue(LegacyAdditionalTheoryCards.notationAidOnly());
+        isFalse(LegacyAdditionalTheoryCards.balanceAidOnly());
+        isFalse(LegacyAdditionalTheoryCards.experimentationAidOnly());
+
+        LegacyResearchTableData balance = new LegacyResearchTableData(5);
+        balance.addTotal("ALCHEMY", 10);
+        balance.addTotal("AUROMANCY", 30);
+        balance.addTotal("BASICS", 20);
+        isTrue(LegacyAdditionalTheoryCards.canBalance(balance));
+        isTrue(LegacyAdditionalTheoryCards.balance(balance));
+        eq(20, balance.getTotal("ALCHEMY"));
+        eq(20, balance.getTotal("AUROMANCY"));
+        eq(25, balance.getTotal("BASICS")); // +5 AFTER averaging.
+        eq(1, balance.penaltyStart());
+
+        LegacyResearchTableData partiallyBlocked = new LegacyResearchTableData(5);
+        partiallyBlocked.addTotal("ALCHEMY", 8);
+        partiallyBlocked.addTotal("AUROMANCY", 30);
+        partiallyBlocked.addTotal("BASICS", 16);
+        partiallyBlocked.replaceBlockedCategories(java.util.List.of("AUROMANCY"));
+        isTrue(LegacyAdditionalTheoryCards.canBalance(partiallyBlocked));
+        isTrue(LegacyAdditionalTheoryCards.balance(partiallyBlocked));
+        eq(12, partiallyBlocked.getTotal("ALCHEMY"));
+        eq(30, partiallyBlocked.getTotal("AUROMANCY")); // blocked, untouched.
+        eq(17, partiallyBlocked.getTotal("BASICS"));
+        eq(1, partiallyBlocked.penaltyStart());
+
+        LegacyResearchTableData one = new LegacyResearchTableData(5);
+        one.addTotal("BASICS", 100);
+        isFalse(LegacyAdditionalTheoryCards.canBalance(one));
+        isFalse(LegacyAdditionalTheoryCards.balance(one));
+        eq(0, one.penaltyStart());
+        eq(100, one.getTotal("BASICS"));
+
+        LegacyResearchTableData notate = new LegacyResearchTableData(5);
+        notate.addTotal("ALCHEMY", 9);
+        notate.addTotal("BASICS", 30);
+        notate.addTotal("AUROMANCY", 13);
+        var selected = LegacyAdditionalTheoryCards.initializeNotation(notate);
+        eq("ALCHEMY", selected.weakest());
+        eq("BASICS", selected.strongest());
+        isTrue(LegacyAdditionalTheoryCards.notation(notate, selected, bound -> bound - 1));
+        eq(0, notate.getTotal("ALCHEMY")); // Removes weakest category.
+        eq(38, notate.getTotal("BASICS")); // 30 + 4 + uniform[0..4]=4
+        eq(13, notate.getTotal("AUROMANCY"));
+        isFalse(notate.hasTotal("ALCHEMY"));
+        isFalse(LegacyAdditionalTheoryCards.notation(notate, selected, bound -> 0));
+        eq(38, notate.getTotal("BASICS"));
+
+        LegacyResearchTableData tie = new LegacyResearchTableData(5);
+        tie.addTotal("AUROMANCY", 5);
+        tie.addTotal("ALCHEMY", 5);
+        eq(null, LegacyAdditionalTheoryCards.initializeNotation(tie));
+        eq(null, LegacyAdditionalTheoryCards.initializeNotation(one));
+        eq(null, LegacyAdditionalTheoryCards.initializeNotation(
+                new LegacyResearchTableData(5)));
+
+        eq(null, LegacyAdditionalTheoryCards.initializeStudy(42L, java.util.List.of()));
+        var available = java.util.List.of("BASICS", "ALCHEMY", "AUROMANCY");
+        int chosenIdx = new java.util.Random(42L).nextInt(available.size());
+        eq(available.get(chosenIdx),
+                LegacyAdditionalTheoryCards.initializeStudy(42L, available));
+        var study = new LegacyResearchTableData(5);
+        isTrue(LegacyAdditionalTheoryCards.study(study, "AUROMANCY", bound -> 0));
+        eq(15, study.getTotal("AUROMANCY"));
+        isTrue(LegacyAdditionalTheoryCards.study(study, "AUROMANCY",
+                bound -> bound - 1));
+        eq(40, study.getTotal("AUROMANCY"));
+        isFalse(LegacyAdditionalTheoryCards.study(study, null, bound -> 0));
+        eq(40, study.getTotal("AUROMANCY"));
+
+        LegacyResearchTableData experimentation = new LegacyResearchTableData(5);
+        var calls = new int[1];
+        LegacyAdditionalTheoryCards.BoundedRandom scripted = bound -> {
+            int n = calls[0]++;
+            return n == 0 ? 2 : n == 1 ? 15 : 9;
+        };
+        isTrue(LegacyAdditionalTheoryCards.experiment(experimentation,
+                java.util.List.of("BASICS", "ALCHEMY", "ELDRITCH"), scripted));
+        eq(3, calls[0]); // Category, theory gain, BASICS gain.
+        eq(30, experimentation.getTotal("ELDRITCH"));
+        eq(10, experimentation.getTotal("BASICS"));
+        eq(0, experimentation.getTotal("ALCHEMY"));
+        isFalse(LegacyAdditionalTheoryCards.experiment(experimentation,
+                java.util.List.of(), bound -> { throw new AssertionError("must not roll"); }));
+        eq(30, experimentation.getTotal("ELDRITCH"));
     }
 
     private static void testLegacyBasicTheoryCards() {
