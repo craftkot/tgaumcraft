@@ -73,6 +73,44 @@ public final class LegacyTheorycraftManifest {
     }
 
     /**
+     * Bytecode-ported card effects/init models. These are NOT all connected to
+     * the playable menu: an unimplemented original card must never be replaced
+     * by another effect just to make the card-selection screen functional.
+     */
+    public static Set<String> portedCoreCards() {
+        return Set.of(
+                "thaumcraft.api.research.theorycraft.CardStudy",
+                "thaumcraft.api.research.theorycraft.CardAnalyze",
+                "thaumcraft.api.research.theorycraft.CardBalance",
+                "thaumcraft.api.research.theorycraft.CardNotation",
+                "thaumcraft.api.research.theorycraft.CardPonder",
+                "thaumcraft.api.research.theorycraft.CardRethink",
+                "thaumcraft.api.research.theorycraft.CardReject",
+                "thaumcraft.api.research.theorycraft.CardExperimentation",
+                "thaumcraft.api.research.theorycraft.CardInspired",
+                "thaumcraft.common.lib.research.theorycraft.CardCelestial",
+                "thaumcraft.common.lib.research.theorycraft.CardConcentrate",
+                "thaumcraft.common.lib.research.theorycraft.CardReactions",
+                "thaumcraft.common.lib.research.theorycraft.CardSynthesis",
+                "thaumcraft.common.lib.research.theorycraft.CardCalibrate",
+                "thaumcraft.common.lib.research.theorycraft.CardMeasure",
+                "thaumcraft.common.lib.research.theorycraft.CardChannel",
+                "thaumcraft.common.lib.research.theorycraft.CardFocus",
+                "thaumcraft.common.lib.research.theorycraft.CardAwareness",
+                "thaumcraft.common.lib.research.theorycraft.CardSculpting",
+                "thaumcraft.common.lib.research.theorycraft.CardScripting",
+                "thaumcraft.common.lib.research.theorycraft.CardSynergy",
+                "thaumcraft.common.lib.research.theorycraft.CardGlyphs");
+    }
+
+    /** Unported original cards remain explicit development blockers. */
+    public static List<String> missingCoreCards() {
+        return CARD_REGISTRATION_ORDER.stream()
+                .filter(key -> !portedCoreCards().contains(key))
+                .toList();
+    }
+
+    /**
      * Use the same java.util.HashMap container as the original manager.
      * Iteration order depends on exact key hashing and resizing and must not
      * be substituted with alphabetical or insertion ordering for random draws.
