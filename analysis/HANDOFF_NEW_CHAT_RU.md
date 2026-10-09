@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified CI checkpoint at time of this handoff: `4a9d9f65a35ec9d7edf1352dda321f69e5b302bd` (SUCCESS: 6,021 core assertions, NeoForge build, dedicated-server ready, built jar artifact). Additional translation/asset CI may still be running.
-- Confirmed estimated overall progress: **65%** after faithful BETA26 research-table card choice/extra-state groundwork, core CardPonder and CardRethink logic, original clickable Create/Complete/Scrap buttons and lossless save passthrough. THE FULL CARD-DRAW/SELECT GAME AND ALL AID CARDS ARE NOT YET IMPLEMENTED. No real interactive client playthrough verified yet.
+- Last verified gameplay CI checkpoint: `104c1ac472052ceedb423f3e620c8f58bd3bdacc` (SUCCESS: 6,267 core parity assertions, NeoForge build, dedicated-server smoke, uploaded JAR artifact). More recent commits may still be in CI.
+- Confirmed estimated overall progress: **66%** after porting exact effects/initialization for **22 of 33** registered BETA26 theory cards, all **14 original aid class registrations**, and BETA26 CardAnalyze and CardScripting bug fixes. THE FULL CARD-DRAW/SELECT GAME, actual aid objects, and item checks/rewards for some cards ARE NOT YET CONNECTED TO THE PLAYABLE GUI. No actual client playthrough verified.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 65%.
+Never lower the confirmed baseline below 66%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -186,6 +186,20 @@ User explicitly approved minor bug fixes and more legible GUIs, provided the mod
 - Original BETA26 celestial Moon phase mechanic remains untouched until the requested *final* optional random uncollected moon-note mode. No premature randomization.
 - **Always check CI for newest head**. Last known readabilty-only slice `9bea11eb5f8` GREEN NeoForge+server; bug-fix + tests and docs latest are running through Actions. Do NOT claim an interactive Minecraft GUI screenshot/playthrough has been validated by server smoke.
 - **Overall completion estimate REMAINS 65%** until next substantial gameplay system is ported. Next step full Research Table card UI and aid detection, no placeholder mechanics.
+
+## 2026-10-10 substantial theorycraft core (66% milestone)
+- Source-of-truth original JAR available in this runtime at `/mnt/data/thaumcraft_reference/original_BETA26.jar` (11.3MB) for local `javap -classpath ... -c -p`. Never commit original JAR. Its original SHA256 is stated in the header.
+- `LegacyTheorycraftManifest`: exactly **33** `TheorycraftCard` class names and **14** `ITheorycraftAid` names extracted in registration order from `ConfigResearch.initTheorycraft`. Provides original Java HashMap keySet iteration order for exact seeded selections. Also enumerates **22 completed core effect/initialization models and 11 not yet implemented**.
+- `LegacyAdditionalTheoryCards`: exact `CardBalance` category averaging incl direct TreeMap.put, `CardNotation` weakest/strongest seeded transfer, aid-only `CardStudy` seeded category/+15..25, `CardExperimentation` all registered categories/+15..30 and BASICS +1..10. `LegacyResearchTableData` now supports direct averages and penalty counters.
+- `LegacyTheorycraftMiscCards`: original `CardInspired` strongest category/+10+floor(max/2), `CardReject` seeded blocked category/+5 BASICS, `CardMeasure` +15 INFUSION/+1 draw, `CardSculpting` +20 GOLEMANCY/+1 draw (original ingredient check still must be wired), `CardAwareness` +20 AUROMANCY and 33% +1..5 ELDRITCH/+1 NORMAL warp.
+- `LegacyCardAnalyze` fixes provable original bug: BETA26 `CardAnalyze.initialize` loops research categories but asks knowledge for `card.cat` (null) rather than iterated category, often failing to select any. Port checks current category; EXACT activation cost 2, consumes 16 raw OBSERVATION, +5 BASICS, +25..50 matching category.
+- `LegacySpecialtyTheoryCards`: original `CardCalibrate` +15 ARTIFICE/+1 bonusDraw, `CardFocus` +15 AUROMANCY/+1, `CardGlyphs` two 10..20 theory rolls across random category/ELDRITCH and +5 TEMPORARY warp, `CardSynergy` remove 15 points in ARTIFICE/ALCHEMY/INFUSION rounds and grant +30 GOLEMANCY/+1 penalty, `CardScripting` +25 GOLEMANCY ONLY after material consumption.
+- `ResearchTableBlockEntity.consumePaperAndInkFromTable` ensures **atomic** consumption of both paper and charged writing tools; original `CardScripting.activate` checked only `!= null` and ignored BOTH consume boolean results, which could grant theory without paper in a 1.21 ItemStack.EMPTY inventory.
+- `LegacyAlchemyTheoryCards`: `CardConcentrate` single seeded compound-crystal +15 ALCHEMY/+1 draw/33% inspiration refund, `CardChannel` single seeded filled phial +25 INFUSION, `CardReactions` TWO distinct seeded compound crystals +25 ALCHEMY/33% inspiration refund, `CardSynthesis` seeded compound with TWO specific component crystals consumed to produce compound crystal plus +40 ALCHEMY/33% inspiration refund. Their material bridge/item output **not yet wired to GUI**; do not claim accessible gameplay.
+- End-to-end core parity coverage in `CoreParityTest` for 22 cards, seeds, category ordering, item signatures, warp and inspirations. Latest VERIFIED GREEN run `104c1ac` confirms 6,267 assertions and NeoForge server smoke; newer source/doc commits may be checking.
+- Missing original cards: `CardCurio`, `CardEnchantment`, `CardBeacon`, `CardMindOverMatter`, `CardTinker`, `CardInfuse`, `CardSpellbinding`, `CardDarkWhispers`, `CardPortal`, `CardRevelation`, `CardRealization`.
+- Detailed card-by-card status and original item constraints: `analysis/THEORYCRAFT_CARD_PROGRESS_RU.md`.
+- HIGH PRIORITY NEXT: complete 11 missing original cards and helper blocks; implement lossless card subclass NBT, server validation/material transfer, real draw/select buttons 2..6 and client card-choice UI. **Never sample only known card subset as a stand-in**: original draw distribution would differ. Keep the sky-note randomization until the final OPTIONAL quality feature requested by user.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
