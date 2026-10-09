@@ -43,6 +43,7 @@ public final class CoreParityTest {
         testLegacyEquipmentBonuses();
         testLegacyDyeBonuses();
         testOreMaterialIntegratedScan();
+        testLegacyPlayerEntityAspects();
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
@@ -1842,6 +1843,43 @@ public final class CoreParityTest {
         eq(5, salis.getAmount(a.MAGIC));
         eq(5, salis.getAmount(a.ENERGY));
 
+    }
+
+    private static void testLegacyPlayerEntityAspects() {
+        AspectRegistry a = new AspectRegistry();
+        AspectListData steve = LegacyPlayerEntityAspectTable.get(a, "Steve");
+        eq(4, steve.size());
+        eq(4, steve.getAmount(a.MAN));
+        eq(15, steve.getAmount(a.LIFE));
+        eq(15, steve.getAmount(a.CRYSTAL));
+        eq(15, steve.getAmount(a.SENSES));
+        eq(49, steve.visSize()); // 4 Humanus + 3 x 15 deterministic tags
+
+        AspectListData alex = LegacyPlayerEntityAspectTable.get(a, "Alex");
+        eq(4, alex.size());
+        eq(4, alex.getAmount(a.MAN));
+        eq(15, alex.getAmount(a.AVERSION));
+        eq(15, alex.getAmount(a.ENTROPY));
+        eq(15, alex.getAmount(a.CRAFT));
+        eq(49, alex.visSize());
+
+        // Original uses exact case-sensitive Java String.hashCode seed.
+        AspectListData steveAgain = LegacyPlayerEntityAspectTable.get(a, "Steve");
+        eq(steve.snapshot(), steveAgain.snapshot());
+        isFalse(steve.snapshot().equals(
+                LegacyPlayerEntityAspectTable.get(a, "steve").snapshot()));
+
+        // A player is a real ScanGeneric entity even with no equipped items.
+        var scans = CriticalScanHandlers.createCriticalRegistry(
+                a, BuiltInResearchCategories.create(a));
+        PlayerKnowledgeData research = new PlayerKnowledgeData();
+        var target = new CriticalScanHandlers.Target("!minecraft:player", steve);
+        var first = scans.scanTheThing(research, target, (p, key) -> p.addResearch(key));
+        eq(5, first.successfulHandlers()); // 4 aspect keys + ScanGeneric
+        for (String key : new String[]{"!humanus", "!victus", "!vitreus",
+                "!sensus", "!minecraft:player"}) isTrue(research.isResearchKnown(key));
+        isFalse(scans.scanTheThing(research, target,
+                (p, key) -> p.addResearch(key)).anySuccess());
     }
 
     private static void testEntityAspectRuntimeMappings() {
