@@ -31,6 +31,7 @@ public final class CoreParityTest {
         testLegacyCelestialTheoryCard();
         testLegacyResearchTableData();
         testLegacyResearchTableExtendedSaveFields();
+        testLegacyTheorycraftDrawEngine();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1135,6 +1136,118 @@ public final class CoreParityTest {
         eq(java.util.List.of(), legacy.savedCards());
         eq(java.util.List.of(), legacy.aidCards());
         eq(java.util.List.of(), legacy.categoriesBlocked());
+    }
+
+    private static void testLegacyTheorycraftDrawEngine() {
+        // The factory's responsibility is to instantiate the original card
+        // class and consume player's nextLong only for a known card.
+        LegacyTheorycraftDrawEngine.CardFactory factory = (key, random) ->
+                new LegacyTheorycraftDrawEngine.Candidate(
+                        key, Math.abs(random.nextLong()), 1, null, false);
+        var first = LegacyTheorycraftDrawEngine.draw(
+                3, 0, 5, java.util.List.of(), java.util.List.of("A", "B", "C"),
+                java.util.Set.of("BASICS"), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
+        eq(2, first.choices().size()); // Third choice requires bonusDraws.
+        eq(0, first.remainingBonusDraws());
+        eq(0, first.remainingAidCards().size());
+        isTrue(first.attempts() >= 2);
+        eq(2, new java.util.HashSet<>(
+                first.choices().stream().map(choice -> choice.card().key()).toList()).size());
+
+        var withBonus = LegacyTheorycraftDrawEngine.draw(
+                3, 2, 5, java.util.List.of(), java.util.List.of("A", "B", "C"),
+                java.util.Set.of(), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
+        eq(3, withBonus.choices().size());
+        eq(1, withBonus.remainingBonusDraws());
+        for (var choice : withBonus.choices()) {
+            isFalse(choice.fromAid());
+            isFalse(choice.selected());
+            eq(1, choice.card().inspirationCost());
+        }
+
+        // If a registered aid is chosen, it can be used once and removed,
+        // and ordinary cards cannot repeat a selected aid key.
+        LegacyTheorycraftDrawEngine.RandomSource alwaysAid =
+                new LegacyTheorycraftDrawEngine.RandomSource() {
+                    long seed = 20;
+                    @Override public float nextFloat() { return 0.25F; }
+                    @Override public int nextInt(int bound) { return 0; }
+                    @Override public long nextLong() { return seed++; }
+                };
+        var aids = LegacyTheorycraftDrawEngine.draw(
+                2, 0, 2, java.util.List.of("AidOne", "AidTwo"),
+                java.util.List.of("Ordinary"), java.util.Set.of(),
+                java.util.List.of(), alwaysAid, factory);
+        eq(2, aids.choices().size());
+        eq("AidOne", aids.choices().get(0).card().key());
+        eq("AidTwo", aids.choices().get(1).card().key());
+        isTrue(aids.choices().get(0).fromAid());
+        isTrue(aids.choices().get(1).fromAid());
+        eq(0, aids.remainingAidCards().size());
+        eq(2, aids.attempts());
+        eq(20L, aids.choices().get(0).card().seed());
+        eq(21L, aids.choices().get(1).card().seed());
+
+        var blocked = LegacyTheorycraftDrawEngine.draw(
+                1, 0, 1, java.util.List.of(), java.util.List.of("A"),
+                java.util.Set.of("AUROMANCY"), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(0L)),
+                (key, random) -> new LegacyTheorycraftDrawEngine.Candidate(
+                        key, random.nextLong(), 1, "ALCHEMY", false));
+        eq(0, blocked.choices().size());
+        eq(LegacyTheorycraftDrawEngine.MAX_ATTEMPTS, blocked.attempts());
+
+        // A card's isAidOnly disqualifies it from the normal pool even when
+        // inspiration and category requirements would otherwise allow it.
+        var aidOnly = LegacyTheorycraftDrawEngine.draw(
+                1, 0, 5, java.util.List.of(), java.util.List.of("A"),
+                java.util.Set.of("BASICS"), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(1L)),
+                (key, random) -> new LegacyTheorycraftDrawEngine.Candidate(
+                        key, random.nextLong(), 0, "BASICS", true));
+        eq(0, aidOnly.choices().size());
+        eq(LegacyTheorycraftDrawEngine.MAX_ATTEMPTS, aidOnly.attempts());
+
+        // An aid with forbidden category remains available rather than being
+        // removed. The rejection does not fall through to an ordinary card.
+        var rejectedAid = LegacyTheorycraftDrawEngine.draw(
+                1, 0, 5, java.util.List.of("Aid"),
+                java.util.List.of("A"), java.util.Set.of("BASICS"),
+                java.util.List.of("ELDRITCH"),
+                new LegacyTheorycraftDrawEngine.RandomSource() {
+                    @Override public float nextFloat() { return 0.0F; }
+                    @Override public int nextInt(int bound) { return 0; }
+                    @Override public long nextLong() { return 37L; }
+                },
+                (key, random) -> new LegacyTheorycraftDrawEngine.Candidate(
+                        key, random.nextLong(), 1, "ELDRITCH", false));
+        eq(0, rejectedAid.choices().size());
+        eq(java.util.List.of("Aid"), rejectedAid.remainingAidCards());
+        eq(LegacyTheorycraftDrawEngine.MAX_ATTEMPTS, rejectedAid.attempts());
+
+        var empty = LegacyTheorycraftDrawEngine.draw(
+                2, 0, 5, java.util.List.of(), java.util.List.of(),
+                java.util.Set.of(), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(0L)), factory);
+        eq(0, empty.choices().size());
+        eq(LegacyTheorycraftDrawEngine.MAX_ATTEMPTS, empty.attempts());
+
+        // No source mutation: the caller decides when to commit draw results.
+        java.util.List<String> mutableAidInput = new java.util.ArrayList<>(
+                java.util.List.of("AidOne", "AidTwo"));
+        var untouched = LegacyTheorycraftDrawEngine.draw(
+                1, 0, 5, mutableAidInput, java.util.List.of("A"),
+                java.util.Set.of(), java.util.List.of(), alwaysAid, factory);
+        eq(2, mutableAidInput.size());
+        eq(1, untouched.remainingAidCards().size());
+
+        var again = LegacyTheorycraftDrawEngine.draw(
+                3, 2, 5, java.util.List.of(), java.util.List.of("A", "B", "C"),
+                java.util.Set.of(), java.util.List.of(),
+                LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
+        eq(withBonus, again); // Identical player RNG and registry ordering.
     }
 
     private static void testLegacyCelestialTheoryCard() {
