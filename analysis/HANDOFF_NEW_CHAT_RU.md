@@ -7,8 +7,8 @@
 ## Primary / backup
 - PRIMARY: private GitHub repository `craftkot/tgaumcraft`, branch `main`.
 - Primary working tip: **always fetch `main` live**; don't treat the checkpoint SHA below as HEAD.
-- Last verified CI checkpoint at time of this handoff: `c05bad3325b1360525d44853f1458e7099535b60` (SUCCESS: 5,910 core assertions, NeoForge build, dedicated-server ready state, artifact upload). Newer commits may still be verifying.
-- Confirmed estimated overall progress: **63%** after completing the BETA26 celestial theory-card calculation and the research-table state/inspiration/reward core. THE IN-GAME RESEARCH-TABLE GUI/BLOCK IS NOT IMPLEMENTED YET; do not present the theorycraft system as fully playable.
+- Last verified CI checkpoint at time of this handoff: `00afbf64de376a0793fd1b83c146c8acc50912a6` (SUCCESS: 5,924 core assertions, exact Research Table texture SHA256/model/loot/recipe checks, NeoForge build, dedicated-server ready state, artifact upload). Newer commits may still be verifying.
+- Confirmed estimated overall progress: **64%** after implementing the in-world research/wooden table, inventory/GUI/artwork, BETA26 scribing-tools upgrade and recipe. THE FULL THEORYCRAFT CARD GAME/UI IS NOT YET IMPLEMENTED. Do not present theorycraft as finished/playtested.
 - Newer commits may exist beyond that checkpoint; inspect their CI outcomes before claiming success. The GitHub HEAD can advance during user conversations.
 - ChatGPT Library `/ThaumcraftPort` remains durable fallback/full reference.
 - Original JAR MUST NOT be committed to GitHub.
@@ -24,7 +24,7 @@
 
 ## Automation
 An hourly autonomous task exists for this port. It should keep GitHub `main` as primary code history and Library as fallback/reference.
-Never lower the confirmed baseline below 63%.
+Never lower the confirmed baseline below 64%.
 Each autonomous run should either:
 1. make at least one coherent gameplay/compatibility commit and bring CI green, or
 2. identify a concrete reproducible non-transient blocker.
@@ -145,6 +145,17 @@ Confirmed gameplay-compliant 61% checkpoint: `941d2cbd` (5,757 assertions, Gradl
 - CI SUCCESS at `c05bad33`: 5,910 assertions, NeoForge build and dedicated server startup. Later commits (`31d2664e`, `9bc706f5`, `bd57a67b`, `c3462346`) extend NBT and category gating; verify CI for latest HEAD before claiming them fully green.
 - NEXT PRIORITY: full faithful in-game Research Table block + BlockEntity, inventory, menu, original GUI art and packets; then connect CelestialTheorycraftInventoryBridge to authentic card-choice actions. Do not invent placeholder mechanics. Add more original theory cards and end-to-end test.
 - **Deferred user feature stays deferred:** after all original gameplay content is ported, add optional *random uncollected moon note* from scanning Moon independent of actual phase, preserving original phase mode.
+
+## 2026-10-09 research-table in-world gameplay slice (64%)
+- Original JAR direct-bytecode investigation: `thaumcraft.common.blocks.basic.BlockTable` upgrades `tableWood` when right-clicked with `IScribeTools`, sets the resulting `researchTable` block FACING to the player's horizontal facing, MOVES the WHOLE held tool stack into TileResearchTable slot 0 and empties hand; it does NOT consume ink. `ItemScribingTools` vanilla BETA26 max damage is 100.
+- `TableWoodBlock`, `ScribingToolsItem.useOn` and `ResearchTableBlock` implement that original workflow. `table_wood` original `ConfigRecipes` shaped recipe uses pattern `SSS` / `W W`, tags wooden slabs and planks. 1.21 recipe `category` MUST equal `building`, not `decorations` (fixed in `01cafe90`).
+- `ResearchTableBlockEntity`: original TWO inventory slots 0=IScribeTools and 1=paper, full Container persistence, `note` compound NBT for the current `LegacyResearchTableData` state. Server-only `startNewTheory` and `finishTheory` functions exist but are NOT exposed as GUI buttons before full original card-choice logic is implemented. Ink increments scribe damage, paper consumes exactly one.
+- `ResearchTableMenu`: original `ContainerResearchTable` two slot positions (16,15) and (224,16); player main 3x9 on RIGHT at x=77 y=190 and hotbar as 3x3 on LEFT at x=20 y=190. Correct server-validated shift-click routing and 3 menu data slots for session/inspiration.
+- `ResearchTableScreen`: original 256x256 GUI texture and synced research state; no fake choice buttons. `ThaumcraftClientEvents` registers screen; all registrations `ThaumcraftBlocks`, `ThaumcraftItems`, `ThaumcraftBlockEntities`, `ThaumcraftMenus` are wired. Original facing ResearchTable and wooden 3D models translated from Forge 1.12 JSON to vanilla 1.21; textures copied byte-identically from BETA26 JAR, including original GUI, wooden tops and sides.
+- Original wooden research table art SHA256, blockstates, item models, drops (1.21 `loot_table`), recipe and translations verified in CI `.github/workflows/ci.yml`.
+- **VERIFIED CI GREEN `00afbf64de3`**: 5,924 core assertions, original texture/checksum/integrity test PASS, NeoForge build PASS, dedicated server reached Done, built jars uploaded. Additional latest `44d28b5` with valid 1.21 recipe category assertion may still be pending; check.
+- **NOT YET FINISHED**: ResearchTableData.savedCards/cardChoices/lastDraw original state machine, drawCards selection, adjacent aid detection, GUI buttons and full end-to-end client interaction tests. The physical two-slot table works as a gameplay framework, but real theory cards cannot yet be selected through its screen. NEXT implement this honestly without fake random card list or losing persisted choices.
+- **User optional Moon random-notes remains DEFERRED until all original content is finished.** Do not introduce now.
 
 ## Recent green commits
 - `df966330` — restore vanilla golem/spider/bat/fly scans
