@@ -26,5 +26,8 @@
   "block.thaumcraft.research_table": "Research Table",
   "container.thaumcraft.research_table": "Research Table",
   "research_table.awaiting_theory": "Place paper and scribing tools to prepare your research.",
-  "research_table.inspiration": "Inspiration: %s / %s"
+  "research_table.inspiration": "Inspiration: %s / %s",
+  "block.thaumcraft.table_wood": "Wooden Table",
+  "item.thaumcraft.table_wood": "Wooden Table",
+  "item.thaumcraft.research_table": "Research Table"
 }
