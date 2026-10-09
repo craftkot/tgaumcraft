@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
+import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -24,6 +25,13 @@ public final class ThaumcraftItems {
             "thaumonomicon", new Item.Properties().stacksTo(1));
     public static final DeferredItem<ThaumometerItem> THAUMOMETER = ITEMS.registerItem(
             "thaumometer", ThaumometerItem::new, new Item.Properties().stacksTo(1));
+    // ScanSky uses a nonconsumable 100-durability scribing tool, one paper per
+    // celestial observation, and one of thirteen BETA26 celestial notes.
+    public static final DeferredItem<Item> SCRIBING_TOOLS = ITEMS.registerSimpleItem(
+            "scribing_tools", new Item.Properties().durability(100).stacksTo(1));
+    public static final DeferredItem<CelestialNotesItem> CELESTIAL_NOTES = ITEMS.registerItem(
+            "celestial_notes", CelestialNotesItem::new, new Item.Properties());
+
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
 
