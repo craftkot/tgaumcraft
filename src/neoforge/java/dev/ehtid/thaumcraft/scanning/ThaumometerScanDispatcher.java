@@ -15,6 +15,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.minecraft.world.item.alchemy.PotionContents;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.ElderGuardian;
@@ -154,15 +160,54 @@ public final class ThaumometerScanDispatcher {
                         BuiltInRegistries.ITEM.getKey(stack.getItem()).toString()));
         keys.addAll(LegacyOreDictionaryScans.fromCommonTags(
                 matchingCommonItemTags(stack, LegacyOreDictionaryScans.modernTagNames())));
+
+        // ConfigResearch creates ScanEnchantment handlers for 1.12 enchantment
+        // registry entries. Old EnchantmentHelper.getEnchantments includes
+        // enchanted-book stored enchantments as well as regular item enchants.
+        java.util.Set<String> enchanted = new java.util.HashSet<>();
+        collectEnchantmentKeys(enchanted, EnchantmentHelper.getEnchantments(stack));
+        ItemEnchantments stored = stack.get(DataComponents.STORED_ENCHANTMENTS);
+        if (stored != null) collectEnchantmentKeys(enchanted, stored);
+        keys.addAll(LegacyEnchantmentEffectScans.forItemEnchantments(enchanted));
+
+        // ScanPotion checks PotionUtils.getEffectsFromStack for ItemStack
+        // and the active MobEffect instances for living entities.
+        PotionContents potion = stack.get(DataComponents.POTION_CONTENTS);
+        if (potion != null) {
+            java.util.Set<String> effects = new java.util.HashSet<>();
+            for (MobEffectInstance effect : potion.getAllEffects()) {
+                effect.getEffect().unwrapKey().ifPresent(key ->
+                        effects.add(key.location().toString()));
+            }
+            keys.addAll(LegacyEnchantmentEffectScans.forPotionEffects(effects));
+        }
         return java.util.Set.copyOf(keys);
+    }
+
+    private static void collectEnchantmentKeys(java.util.Set<String> into,
+                                               ItemEnchantments enchantments) {
+        for (var enchantment : enchantments.keySet()) {
+            enchantment.unwrapKey().ifPresent(key -> into.add(key.location().toString()));
+        }
     }
 
     private static java.util.Set<String> specialKeys(Player player, Object target) {
         if (target instanceof ItemStack stack) return itemSpecialKeys(stack);
         if (target instanceof ItemEntity itemEntity) return itemSpecialKeys(itemEntity.getItem());
         if (target instanceof Entity entity) {
-            return LegacyVanillaSpecialScans.forEntity(
-                    BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString());
+            java.util.Set<String> keys = new java.util.LinkedHashSet<>(
+                    LegacyVanillaSpecialScans.forEntity(
+                            BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()).toString()));
+            // BETA26 ScanPotion checks active potion effects on EntityLivingBase.
+            if (entity instanceof LivingEntity living) {
+                java.util.Set<String> effects = new java.util.HashSet<>();
+                for (MobEffectInstance effect : living.getActiveEffects()) {
+                    effect.getEffect().unwrapKey().ifPresent(key ->
+                            effects.add(key.location().toString()));
+                }
+                keys.addAll(LegacyEnchantmentEffectScans.forPotionEffects(effects));
+            }
+            return java.util.Set.copyOf(keys);
         }
         if (target instanceof BlockPos pos) {
             java.util.Set<String> keys = new java.util.LinkedHashSet<>(
