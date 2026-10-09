@@ -31,6 +31,7 @@ public final class CoreParityTest {
         testLegacyCelestialTheoryCard();
         testLegacyResearchTableData();
         testLegacyTheorycraftInspiration();
+        testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
         testLegacyScanContainerLogic();
         testLegacyOrderedScanningRegistry();
@@ -880,6 +881,39 @@ public final class CoreParityTest {
         isTrue(knowledge.isResearchKnown("CEL_2_Moon0"));
         isTrue(knowledge.isResearchKnown("CEL_2_Star3"));
         isTrue(knowledge.isResearchKnown("FIRSTSTEPS"));
+    }
+
+    private static void testLegacyTheorycraftAvailableCategories() {
+        ResearchCatalog catalog = new ResearchCatalog();
+        var stage = java.util.List.of(new ResearchStageData(
+                false, false, false, false, 0));
+        catalog.add(new ResearchEntryData("AURO_ENTRY", "BASICS",
+                java.util.Set.of(), stage, java.util.List.of(), java.util.List.of(),
+                java.util.List.of(), java.util.List.of()));
+        ResearchCategoryRegistry registry = new ResearchCategoryRegistry()
+                .register(new ResearchCategoryData("BASICS", "BASICS", "x", null, null))
+                .register(new ResearchCategoryData("AUROMANCY", "AUROMANCY", "x",
+                        null, null, "AURO_ENTRY", null))
+                .register(new ResearchCategoryData("ALCHEMY", "ALCHEMY", "x",
+                        null, null, null, null));
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        eq(java.util.List.of("BASICS", "ALCHEMY"),
+                LegacyResearchTableData.availableCategories(
+                        player, catalog, registry, java.util.Set.of()));
+        player.addResearch("AURO_ENTRY");
+        eq(java.util.List.of("BASICS", "ALCHEMY"),
+                LegacyResearchTableData.availableCategories(
+                        player, catalog, registry, java.util.Set.of())); // Strict completion.
+        player.setResearchStage("AURO_ENTRY", 2);
+        eq(java.util.List.of("BASICS", "AUROMANCY", "ALCHEMY"),
+                LegacyResearchTableData.availableCategories(
+                        player, catalog, registry, java.util.Set.of()));
+        eq(java.util.List.of("BASICS", "ALCHEMY"),
+                LegacyResearchTableData.availableCategories(
+                        player, catalog, registry, java.util.Set.of("AUROMANCY")));
+        eq(java.util.List.of("ALCHEMY"),
+                LegacyResearchTableData.availableCategories(
+                        player, catalog, registry, java.util.Set.of("BASICS", "AUROMANCY")));
     }
 
     private static void testLegacyTheorycraftInspiration() {
