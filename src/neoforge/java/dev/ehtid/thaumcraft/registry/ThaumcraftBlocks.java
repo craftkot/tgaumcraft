@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.registry;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.block.ArcaneWorkbenchBlock;
+import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -19,6 +20,14 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of()
                     .destroyTime(2.5F)
                     .explosionResistance(2.5F)
+                    .sound(SoundType.WOOD));
+
+    public static final DeferredBlock<ResearchTableBlock> RESEARCH_TABLE = BLOCKS.registerBlock(
+            "research_table", ResearchTableBlock::new,
+            BlockBehaviour.Properties.of()
+                    .destroyTime(2.5F)
+                    .explosionResistance(2.5F)
+                    .noOcclusion()
                     .sound(SoundType.WOOD));
 
     public static void register(IEventBus modBus) {
