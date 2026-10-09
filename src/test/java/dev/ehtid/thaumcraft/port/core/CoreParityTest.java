@@ -1381,6 +1381,12 @@ public final class CoreParityTest {
         }
         eq(0, LegacyObjectAspectTable.get(a, "minecraft:cherry_log").size());
         eq(0, LegacyObjectAspectTable.get(a, "minecraft:raw_copper").size());
+        // Exact standalone BETA26 registerObjectTag(ItemStack) from ConfigAspects.
+        AspectListData salis = LegacyObjectAspectTable.get(a, "thaumcraft:salis_mundus");
+        eq(2, salis.size());
+        eq(5, salis.getAmount(a.MAGIC));
+        eq(5, salis.getAmount(a.ENERGY));
+
     }
 
     private static void testEntityAspectRuntimeMappings() {
