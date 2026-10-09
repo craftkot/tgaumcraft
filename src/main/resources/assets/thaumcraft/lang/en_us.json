@@ -22,5 +22,9 @@
   "item.celestial_notes.moon_7.text": "Lunar, First Quarter",
   "item.celestial_notes.moon_8.text": "Lunar, Waxing Gibbous",
   "tc.celestial.fail.1": "You have already studied that today.",
-  "tc.celestial.fail.2": "You are unable to take notes of your studies."
+  "tc.celestial.fail.2": "You are unable to take notes of your studies.",
+  "block.thaumcraft.research_table": "Research Table",
+  "container.thaumcraft.research_table": "Research Table",
+  "research_table.awaiting_theory": "Place paper and scribing tools to prepare your research.",
+  "research_table.inspiration": "Inspiration: %s / %s"
 }
