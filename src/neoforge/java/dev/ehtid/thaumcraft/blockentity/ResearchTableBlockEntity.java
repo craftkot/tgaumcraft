@@ -49,12 +49,28 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     public LegacyResearchTableData session() { return session; }
 
     /**
+     * The BETA26 GuiResearchTable create button becomes enabled only when
+     * paper is available and the IScribeTools item has ink remaining.
+     * Starting a theory itself consumes neither of those table slots.
+     */
+    public boolean canStartNewTheory() {
+        ItemStack tools = items.get(SCRIBING_SLOT);
+        ItemStack paper = items.get(PAPER_SLOT);
+        return session == null
+                && tools.is(ThaumcraftItems.SCRIBING_TOOLS.get())
+                && tools.isDamageableItem()
+                && tools.getDamageValue() < tools.getMaxDamage()
+                && paper.is(Items.PAPER) && !paper.isEmpty();
+    }
+
+    /**
      * ResearchTableData.initialize's current verified slice. The complete
      * card-selection UI will call this only after the player has chosen aides.
      */
     public boolean startNewTheory(ServerPlayer player, Set<String> aids) {
         Objects.requireNonNull(aids, "aids");
-        if (level == null || level.isClientSide || session != null) return false;
+        if (level == null || level.isClientSide || !canStartNewTheory()
+                || !stillValid(player)) return false;
         session = LegacyTheorycraftInspiration.start(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),
                 BuiltInResearchCatalog.create(), aids);
