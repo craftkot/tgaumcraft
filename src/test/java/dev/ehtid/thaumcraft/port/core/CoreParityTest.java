@@ -36,6 +36,7 @@ public final class CoreParityTest {
         testLegacyAdditionalTheoryCards();
         testLegacyTheorycraftManifest();
         testLegacyTheorycraftMiscCards();
+        testLegacyCardAnalyzeBugfix();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1276,6 +1277,47 @@ public final class CoreParityTest {
                 java.util.Set.of(), java.util.List.of(),
                 LegacyTheorycraftDrawEngine.fromJavaRandom(new java.util.Random(42L)), factory);
         eq(withBonus, again); // Identical player RNG and registry ordering.
+    }
+
+    private static void testLegacyCardAnalyzeBugfix() {
+        AspectRegistry a = new AspectRegistry();
+        ResearchCategoryRegistry categories = BuiltInResearchCategories.create(a);
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        LegacyResearchTableData table = new LegacyResearchTableData(5);
+        eq(2, LegacyCardAnalyze.INSPIRATION_COST);
+        isTrue(LegacyTheorycraftManifest.allCardKeys().contains(
+                LegacyCardAnalyze.CARD_KEY));
+
+        // BETA26 bug: initialize tests OBSERVATION on a NULL card.cat
+        // instead of the category being inspected. With only ALCHEMY
+        // observation, the original never finds the valid candidate.
+        knowledge.addKnowledge(KnowledgeType.OBSERVATION, "ALCHEMY", 16);
+        eq("ALCHEMY", LegacyCardAnalyze.initialize(42L, knowledge, categories));
+        eq(1, knowledge.getKnowledge(KnowledgeType.OBSERVATION, "ALCHEMY"));
+        eq(0, knowledge.getKnowledge(KnowledgeType.OBSERVATION, null));
+
+        isTrue(LegacyCardAnalyze.activate("ALCHEMY", knowledge, table,
+                bound -> bound - 1));
+        eq(0, knowledge.getKnowledgeRaw(KnowledgeType.OBSERVATION, "ALCHEMY"));
+        eq(50, table.getTotal("ALCHEMY"));
+        eq(5, table.getTotal("BASICS"));
+        isFalse(LegacyCardAnalyze.activate("ALCHEMY", knowledge, table,
+                bound -> { throw new AssertionError("must not draw"); }));
+        eq(50, table.getTotal("ALCHEMY"));
+        eq(5, table.getTotal("BASICS"));
+
+        knowledge.addKnowledge(KnowledgeType.OBSERVATION, "AUROMANCY", 48);
+        knowledge.addKnowledge(KnowledgeType.OBSERVATION, "BASICS", 200);
+        eq("AUROMANCY", LegacyCardAnalyze.initialize(10L, knowledge, categories));
+        isFalse(LegacyCardAnalyze.activate("BASICS", knowledge, table,
+                bound -> 0));
+        isFalse(LegacyCardAnalyze.activate(null, knowledge, table,
+                bound -> 0));
+        isTrue(LegacyCardAnalyze.activate("AUROMANCY", knowledge, table,
+                bound -> 0));
+        eq(32, knowledge.getKnowledgeRaw(KnowledgeType.OBSERVATION, "AUROMANCY"));
+        eq(25, table.getTotal("AUROMANCY"));
+        eq(10, table.getTotal("BASICS"));
     }
 
     private static void testLegacyTheorycraftMiscCards() {
