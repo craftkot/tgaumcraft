@@ -18,6 +18,12 @@ import java.util.TreeMap;
  */
 public final class LegacyResearchTableData {
     private final TreeMap<String, Integer> categoryTotals = new TreeMap<>();
+    // BETA26 ResearchTableData.serialize() persists these in separate compound
+    // lists. ArrayList ordering and duplicate entries are significant.
+    private String player = "";
+    private final ArrayList<Long> savedCards = new ArrayList<>();
+    private final ArrayList<String> aidCards = new ArrayList<>();
+    private final ArrayList<String> categoriesBlocked = new ArrayList<>();
     private int inspiration;
     private int inspirationStart;
     private int penaltyStart;
@@ -31,23 +37,39 @@ public final class LegacyResearchTableData {
     }
 
     /**
-     * Persistence subset of the original ResearchTableData compound:
-     * inspiration, inspirationStart, placedCards, bonusDraws, aidsChosen,
-     * penaltyStart and categoryTotals. CardChoice and aid-card instances
-     * require their separate full theorycraft object port.
+     * The original ResearchTableData scalar fields, TreeMap and ordered
+     * savedCards/aidCards/categoriesBlocked ArrayLists.
+     *
+     * CardChoice's nested cardNBT (which varies by subclass) is retained as
+     * raw NBT by the NeoForge adapter rather than being flattened or discarded.
      */
     public record Snapshot(int inspiration, int inspirationStart,
                            int placedCards, int bonusDraws, int aidsChosen,
-                           int penaltyStart, Map<String, Integer> categoryTotals) {
+                           int penaltyStart, Map<String, Integer> categoryTotals,
+                           String player, List<Long> savedCards, List<String> aidCards,
+                           List<String> categoriesBlocked) {
         public Snapshot {
             Objects.requireNonNull(categoryTotals, "categoryTotals");
             categoryTotals = Collections.unmodifiableMap(new TreeMap<>(categoryTotals));
+            player = player == null ? "" : player;
+            savedCards = List.copyOf(savedCards);
+            aidCards = List.copyOf(aidCards);
+            categoriesBlocked = List.copyOf(categoriesBlocked);
+        }
+
+        /** Compatibility with the earlier seven-field scalar-only snapshot. */
+        public Snapshot(int inspiration, int inspirationStart, int placedCards,
+                        int bonusDraws, int aidsChosen, int penaltyStart,
+                        Map<String, Integer> categoryTotals) {
+            this(inspiration, inspirationStart, placedCards, bonusDraws,
+                    aidsChosen, penaltyStart, categoryTotals, "", List.of(), List.of(), List.of());
         }
     }
 
     public Snapshot snapshot() {
         return new Snapshot(inspiration, inspirationStart, placedCards,
-                bonusDraws, aidsChosen, penaltyStart, categoryTotals);
+                bonusDraws, aidsChosen, penaltyStart, categoryTotals,
+                player, savedCards, aidCards, categoriesBlocked);
     }
 
     public static LegacyResearchTableData fromSnapshot(Snapshot snapshot) {
@@ -58,9 +80,33 @@ public final class LegacyResearchTableData {
         data.bonusDraws = snapshot.bonusDraws();
         data.aidsChosen = snapshot.aidsChosen();
         data.penaltyStart = snapshot.penaltyStart();
-        // Original NBT deserialize performs TreeMap.put without filtering.
         data.categoryTotals.putAll(snapshot.categoryTotals());
+        data.player = snapshot.player();
+        data.savedCards.addAll(snapshot.savedCards());
+        data.aidCards.addAll(snapshot.aidCards());
+        data.categoriesBlocked.addAll(snapshot.categoriesBlocked());
         return data;
+    }
+
+    public String player() { return player; }
+    public void setPlayer(String name) { player = Objects.requireNonNull(name); }
+
+    public List<Long> savedCards() { return List.copyOf(savedCards); }
+    public void replaceSavedCards(List<Long> seeds) {
+        savedCards.clear();
+        savedCards.addAll(List.copyOf(seeds));
+    }
+
+    public List<String> aidCards() { return List.copyOf(aidCards); }
+    public void replaceAidCards(List<String> keys) {
+        aidCards.clear();
+        aidCards.addAll(List.copyOf(keys));
+    }
+
+    public List<String> blockedCategories() { return List.copyOf(categoriesBlocked); }
+    public void replaceBlockedCategories(List<String> categories) {
+        categoriesBlocked.clear();
+        categoriesBlocked.addAll(List.copyOf(categories));
     }
 
     public int getTotal(String category) { return categoryTotals.getOrDefault(category, 0); }
