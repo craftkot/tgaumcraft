@@ -46,8 +46,10 @@ public final class LegacyVanillaSpecialScans {
         // Nether/end portal blocks have no corresponding obtainable inventory item.
         if ("minecraft:ender_pearl".equals(itemId)
                 || "minecraft:end_portal_frame".equals(itemId)) out.add(TELEPORT);
-        if ("minecraft:clay_ball".equals(itemId) || "minecraft:clay".equals(itemId)
-                || isTerracotta(itemId)) out.add(MAT_CLAY);
+        // BETA26 matches the clay ball through ScanItem and terracotta through
+        // ScanBlock companion items. Its ScanMaterial matches placed clay only;
+        // a clay block inventory stack is not a ScanMaterial target.
+        if ("minecraft:clay_ball".equals(itemId) || isTerracotta(itemId)) out.add(MAT_CLAY);
         // ScanBlock also installs companion item handlers; dispenser has an explicit
         // ScanItem registration in BETA26 as well.
         if ("minecraft:dispenser".equals(itemId)) out.add(DISPENSER);
