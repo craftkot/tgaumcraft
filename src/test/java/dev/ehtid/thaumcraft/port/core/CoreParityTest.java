@@ -1173,7 +1173,8 @@ public final class CoreParityTest {
         // registers the dispenser item. Legacy clay/terracotta item forms must work.
         eq(java.util.Set.of("f_DISPENSER"),LegacyVanillaSpecialScans.forItem("minecraft:dispenser"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:clay_ball"));
-        eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:clay"));
+        // ScanMaterial.checkThing accepts BlockPos only (BETA26 bytecode).
+        eq(java.util.Set.of(),LegacyVanillaSpecialScans.forItem("minecraft:clay"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forBlock("minecraft:clay"));
         eq(java.util.Set.of("f_MATCLAY"),LegacyVanillaSpecialScans.forItem("minecraft:blue_terracotta"));
         eq(java.util.Set.of("f_MATIRON"),LegacyVanillaSpecialScans.forItem("minecraft:iron_ingot"));
