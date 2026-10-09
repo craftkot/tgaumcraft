@@ -63,7 +63,7 @@ jobs:
               assert override["model"] == "thaumcraft:item/celestial_notes_" + name
               model = json.loads((model_dir / ("celestial_notes_" + name + ".json")).read_text())
               assert model["textures"]["layer0"] == notes["textures"]["layer0"]
-              png = model["textures"]["layer1"].split(":", 1)[1] + ".png"
+              png = model["textures"]["layer1"].split(":", 1)[1].removeprefix("item/") + ".png"
               image = texture_dir / png
               assert image.is_file() and image.read_bytes().startswith(bytes.fromhex("89504e470d0a1a0a"))
 
