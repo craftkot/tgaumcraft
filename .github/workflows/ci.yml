@@ -132,6 +132,7 @@ jobs:
 
           recipe = json.loads((Path("src/main/resources/data/thaumcraft/recipe/table_wood.json")).read_text())
           assert recipe["type"] == "minecraft:crafting_shaped"
+          assert recipe["category"] == "building" # Valid 1.21 CraftingBookCategory
           assert recipe["pattern"] == ["SSS", "W W"]
           assert recipe["key"]["S"]["tag"] == "minecraft:wooden_slabs"
           assert recipe["key"]["W"]["tag"] == "minecraft:planks"
