@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.registry;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.ResearchTableBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -19,6 +20,11 @@ public final class ThaumcraftBlockEntities {
             ARCANE_WORKBENCH = TYPES.register("arcane_workbench",
             () -> BlockEntityType.Builder.of(ArcaneWorkbenchBlockEntity::new,
                     ThaumcraftBlocks.ARCANE_WORKBENCH.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ResearchTableBlockEntity>>
+            RESEARCH_TABLE = TYPES.register("research_table",
+            () -> BlockEntityType.Builder.of(ResearchTableBlockEntity::new,
+                    ThaumcraftBlocks.RESEARCH_TABLE.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);
