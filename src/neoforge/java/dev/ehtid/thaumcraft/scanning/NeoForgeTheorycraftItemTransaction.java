@@ -47,6 +47,24 @@ public final class NeoForgeTheorycraftItemTransaction {
     }
 
     /**
+     * Pure preflight for a REAL original CardChoice saved by the research
+     * table. Unported material IDs return null, so the menu cannot silently
+     * substitute other inventory items or fabricate a successful payment.
+     *
+     * This method does NOT activate a card, deduct XP or consume resources.
+     * It is safe to use for future server-side requirement previews.
+     */
+    public static LegacyTheorycraftInventoryPlanner.Plan prepareOriginalChoice(
+            ServerPlayer player, LegacyTheorycraftChoiceNbt.Choice choice) {
+        Objects.requireNonNull(player);
+        Objects.requireNonNull(choice);
+        var materials = NeoForgeTheorycraftMaterialResolver.resolve(
+                choice.key(), choice.cardNBT());
+        return materials == null ? null
+                : prepare(player, materials.required(), materials.consumed());
+    }
+
+    /**
      * Recheck the WHOLE cost against the inventory at commit-time before any
      * item is shrunk. Expected to run on the server game thread as part of a
      * single validated card activation, not as an async callback.
