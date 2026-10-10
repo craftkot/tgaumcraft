@@ -147,6 +147,23 @@ jobs:
                           "button.create.theory", "button.complete.theory",
                           "button.scrap.theory"):
                   assert key in entries, (language, key)
+          original_cards = (
+              "study reject experimentation analyze rethink ponder notation balance "
+              "curio inspired enchantment beacon celestial concentrate reactions "
+              "synthesis measure channel infuse calibrate mindmatter tinker "
+              "spellbinding awareness focus sculpting scripting synergy "
+              "darkwhisper glyph portal revelation realization"
+          ).split()
+          assert len(original_cards) == 33 and len(set(original_cards)) == 33
+          for language in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (language + ".json")).read_text())
+              for short in original_cards:
+                  assert "card." + short + ".name" in entries, (language, short)
+              for key in ("button.keep.theory", "research_table.card_preview",
+                          "research_table.card_preview_tooltip",
+                          "research_table.unknown_card", "research_table.aids"):
+                  assert key in entries, (language, key)
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
