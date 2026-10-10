@@ -170,8 +170,14 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             return true;
         }
         if (buttonId == 1) {
-            // Original GUI carries an aid SET to the server. Revalidate all
-            // chosen helpers against the live surroundings at action time.
+            // BETA26 reuses ID 1: before theory it starts a session;
+            // after selecting a drawn card it keeps lastDraw and clears
+            // the choices. Never silently restart an active theory.
+            if (researchTable.session() != null) {
+                if (!researchTable.keepSelectedTheoryCard(serverPlayer)) return false;
+                broadcastChanges();
+                return true;
+            }
             if (!researchTable.startNewTheory(serverPlayer,
                     new java.util.HashSet<>(selectedAidKeys))) return false;
             selectedAidKeys.clear();
