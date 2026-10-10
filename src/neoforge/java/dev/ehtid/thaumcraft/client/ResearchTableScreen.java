@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.menu.ResearchTableMenu;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftCardLocalization;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftDisplayArgument;
 import net.minecraft.world.item.Items;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -148,7 +149,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 for (int i = 0; i < 3; i++) {
                     int code = menu.cardPreview(i);
                     if (code == 0) continue;
-                    String key = localizedCardTitle(code).getString();
+                    String key = localizedCardTitle(i).getString();
                     String visible = font.plainSubstrByWidth(key, CARD_WIDTH - 6);
                     int x = CARD_FIRST_X + i * CARD_STRIDE;
                     graphics.drawString(font, visible, x + 3, CARD_Y + 6,
@@ -187,15 +188,21 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         }
     }
 
-    private static Component localizedCardTitle(int preview) {
-        String key = LegacyTheorycraftChoicePreview.key(preview);
+    private Component localizedCardTitle(int choiceIndex) {
+        String key = LegacyTheorycraftChoicePreview.key(menu.cardPreview(choiceIndex));
         if (key == null) return Component.translatable("research_table.unknown_card");
         String name = LegacyTheorycraftCardLocalization.nameKey(key);
-        // In BETA26 Study/Reject/Analyze/Channel include a category/aspect
-        // placeholder. The server currently syncs only card identity; do
-        // not falsely invent a category before actual subclass sync exists.
-        return LegacyTheorycraftCardLocalization.needsNameArgument(key)
-                ? Component.translatable(name, "…") : Component.translatable(name);
+        if (!LegacyTheorycraftCardLocalization.needsNameArgument(key))
+            return Component.translatable(name);
+
+        // Original CardStudy/Reject/Analyze/Channel save their actual cat
+        // or aspect string in cardNBT. Display the real localized argument
+        // synchronized by the server, NEVER a guessed category.
+        String argument = LegacyTheorycraftDisplayArgument.translationKey(
+                menu.cardPreviewArgument(choiceIndex));
+        Component value = argument == null
+                ? Component.literal("…") : Component.translatable(argument);
+        return Component.translatable(name, value);
     }
 
     private boolean canStartTheory() {
