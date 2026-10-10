@@ -197,6 +197,14 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         }
         if (mouseButton == 0 && menu.hasSession() && minecraft != null
                 && minecraft.gameMode != null) {
+            if (menu.hasChosenTheoryCard() && menu.inspiration() > 0
+                    && mouseX >= leftPos + KEEP_X
+                    && mouseX < leftPos + KEEP_X + BUTTON_WIDTH
+                    && mouseY >= topPos + KEEP_Y
+                    && mouseY < topPos + KEEP_Y + BUTTON_HEIGHT) {
+                minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1);
+                return true;
+            }
             int x = menu.inspiration() <= 0 ? COMPLETE_X : SCRAP_X;
             int y = menu.inspiration() <= 0 ? COMPLETE_Y : SCRAP_Y;
             if (mouseX >= leftPos + x && mouseX < leftPos + x + BUTTON_WIDTH
