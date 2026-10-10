@@ -33,6 +33,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot inspirationStart;
     private final DataSlot nearbyAidBits;
     private final DataSlot selectedAidBits;
+    private final DataSlot hasChosenTheoryCard;
     private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
 
     public ResearchTableMenu(int id, Inventory inventory) {
@@ -70,6 +71,15 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                 } : DataSlot.standalone();
         addDataSlot(nearbyAidBits);
         addDataSlot(selectedAidBits);
+        hasChosenTheoryCard = table instanceof ResearchTableBlockEntity live
+                ? new DataSlot() {
+                    @Override public int get() {
+                        return live.pendingChoices().stream().anyMatch(c -> c.selected())
+                                ? 1 : 0;
+                    }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+        addDataSlot(hasChosenTheoryCard);
         table.startOpen(inventory.player);
 
         addSlot(new Slot(table, ResearchTableBlockEntity.SCRIBING_SLOT, 16, 15) {
@@ -136,6 +146,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                 && (selectedAidBits.get() & (1 << registrationIndex)) != 0;
     }
 
+    public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
     public boolean hasSession() { return hasSession.get() != 0; }
     public int inspiration() { return inspiration.get(); }
     public int inspirationStart() { return inspirationStart.get(); }
