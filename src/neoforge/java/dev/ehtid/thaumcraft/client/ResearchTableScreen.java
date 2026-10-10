@@ -58,6 +58,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 renderOriginalButton(graphics, COMPLETE_X, COMPLETE_Y);
             } else {
                 renderOriginalButton(graphics, SCRAP_X, SCRAP_Y);
+                if (menu.hasChosenTheoryCard())
+                    renderOriginalButton(graphics, KEEP_X, KEEP_Y);
             }
         } else if (canStartTheory()) {
             renderOriginalButton(graphics, CREATE_X, CREATE_Y);
