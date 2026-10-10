@@ -44,6 +44,7 @@ public final class CoreParityTest {
         testLegacyLateTheoryCards();
         testLegacyMaterialTheoryCards();
         testLegacyTheorycraftInventoryPlanner();
+        testLegacyTheorycraftChoiceFlow();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1063,6 +1064,72 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftChoiceFlow() {
+        var session = new LegacyResearchTableData(5);
+        var original = java.util.List.of(
+                new LegacyTheorycraftChoiceFlow.Choice("thaumcraft.api.research.theorycraft.CardStudy",
+                        41L, false, false),
+                new LegacyTheorycraftChoiceFlow.Choice("thaumcraft.api.research.theorycraft.CardNotation",
+                        42L, true, false),
+                new LegacyTheorycraftChoiceFlow.Choice("thaumcraft.api.research.theorycraft.CardBalance",
+                        43L, false, false));
+        eq(original, LegacyTheorycraftChoiceFlow.afterActivation(session, original, 1, 1, false));
+        eq(5, session.inspiration());
+        eq(0, session.placedCards());
+        eq(original, LegacyTheorycraftChoiceFlow.afterActivation(session, original, -1, 1, true));
+        eq(original, LegacyTheorycraftChoiceFlow.afterActivation(session, original, 3, 1, true));
+        eq(5, session.inspiration());
+
+        var selected = LegacyTheorycraftChoiceFlow.afterActivation(session, original, 1, 1, true);
+        isFalse(selected.get(0).selected());
+        isTrue(selected.get(1).selected());
+        isFalse(selected.get(2).selected());
+        eq(4, session.inspiration());
+        eq(0, session.placedCards()); // original ContainerResearchTable doesn't increment it
+        eq(false, original.get(1).selected());
+
+        // Original counts inspiration with the exact signed card cost;
+        // a negative-cost aid card increases it up to inspirationStart.
+        selected = LegacyTheorycraftChoiceFlow.afterActivation(session, selected, 0, -2, true);
+        eq(5, session.inspiration()); // capped from 6
+        isTrue(selected.get(0).selected());
+        isTrue(selected.get(1).selected());
+
+        var prior = new LegacyTheorycraftChoiceFlow.Choice(
+                "thaumcraft.api.research.theorycraft.CardStudy", 91L, false, true);
+        var kept = LegacyTheorycraftChoiceFlow.keepSelection(
+                selected, prior, java.util.List.of(50L, 50L));
+        eq(java.util.List.of(), kept.remainingChoices());
+        eq(selected.get(0), kept.lastDraw()); // first selected, not last selected
+        eq(java.util.List.of(50L, 50L, 91L), kept.savedCardSeeds());
+        eq(java.util.List.of(50L, 50L), java.util.List.of(50L, 50L));
+        eq(3, selected.size()); // input untouched
+        var nothing = LegacyTheorycraftChoiceFlow.keepSelection(original, null,
+                java.util.List.of());
+        eq(null, nothing.lastDraw());
+        eq(java.util.List.of(), nothing.savedCardSeeds());
+        var noNewSelection = LegacyTheorycraftChoiceFlow.keepSelection(original, prior,
+                java.util.List.of(9L));
+        eq(prior, noNewSelection.lastDraw());
+        eq(java.util.List.of(9L, 91L), noNewSelection.savedCardSeeds());
+
+        session.replaceAidCards(java.util.List.of("a", "a", "b"));
+        session.addBonusDraws(2);
+        var draw = new LegacyTheorycraftDrawEngine.Result(
+                java.util.List.of(), java.util.List.of("a", "b"), 1, 7);
+        LegacyTheorycraftChoiceFlow.afterPaperDebitedForDraw(session, draw, "Tester");
+        eq(java.util.List.of("a", "b"), session.aidCards());
+        eq(1, session.bonusDraws());
+        eq("Tester", session.player());
+        eq(5, session.inspiration());
+        eq(0, session.placedCards());
+        var drawnAgain = new LegacyTheorycraftDrawEngine.Result(
+                java.util.List.of(), java.util.List.of("b"), 0, 6);
+        LegacyTheorycraftChoiceFlow.afterPaperDebitedForDraw(session, drawnAgain, "Tester");
+        eq(java.util.List.of("b"), session.aidCards());
+        eq(0, session.bonusDraws());
     }
 
     private static void testLegacyTheorycraftInventoryPlanner() {
