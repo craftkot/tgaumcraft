@@ -40,7 +40,11 @@ public final class NeoForgeLegacyItemStackDecoder {
         if (parsed == null || !parsed.toString().equals(originalId))
             return ItemStack.EMPTY;
         Item item;
-        if (originalId.equals("thaumcraft:thaumometer")) {
+        // The 1.12 vanilla wool block had 16 metadata variants. ONLY
+        // damage=0 maps to 1.21's white_wool, without guessing colors.
+        if (originalId.equals("minecraft:wool")) {
+            item = Items.WHITE_WOOL;
+        } else if (originalId.equals("thaumcraft:thaumometer")) {
             item = ThaumcraftItems.THAUMOMETER.get();
         } else if (originalId.equals("thaumcraft:salis_mundus")) {
             item = ThaumcraftItems.SALIS_MUNDUS.get();
