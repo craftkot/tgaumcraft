@@ -29,6 +29,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     private static final int CREATE_X = 116, CREATE_Y = 22;
     private static final int COMPLETE_X = 116, COMPLETE_Y = 96;
     private static final int SCRAP_X = 116, SCRAP_Y = 155;
+    private static final int KEEP_X = 116, KEEP_Y = 121;
     private static final int BUTTON_WIDTH = 132, BUTTON_HEIGHT = 18;
     private static final int AID_FIRST_X = 76, AID_FIRST_Y = 95;
     private static final int AID_COL_STRIDE = 87, AID_ROW_STRIDE = 11;
