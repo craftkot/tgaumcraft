@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.LegacyResearchTableNbt;
 import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoiceFlow;
 import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftAidBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -75,6 +76,54 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
                     .allCardKeys().contains(choice.key())) return false;
         }
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, choices);
+        setChanged();
+        return true;
+    }
+
+    /**
+     * Original ContainerResearchTable button 1 during an existing theory:
+     * keep the selected card as lastDraw, append the PREVIOUS lastDraw seed
+     * to savedCards, then clear pending choices. No materials are charged.
+     *
+     * Unlike BETA26, a missing selection or malformed legacy NBT is rejected
+     * rather than saving duplicate seeds or discarding uninterpretable rows.
+     * This is safe for old theories loaded before the client card UI exists.
+     */
+    public boolean keepSelectedTheoryCard(ServerPlayer player) {
+        if (level == null || level.isClientSide || session == null || !stillValid(player))
+            return false;
+        if (!originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST))
+            return false;
+        var rawRows = originalSessionNbt.getList("cardChoices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        var choices = pendingChoices();
+        if (choices.isEmpty() || choices.size() != rawRows.size()) return false;
+
+        LegacyTheorycraftChoiceNbt.Choice chosen = null;
+        for (var choice : choices) {
+            if (!dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
+                    .allCardKeys().contains(choice.key())) return false;
+            if (choice.selected() && chosen == null) chosen = choice;
+        }
+        if (chosen == null || !chosen.cardNBT().contains("seed", net.minecraft.nbt.Tag.TAG_LONG))
+            return false;
+        if (originalSessionNbt.contains("lastDraw", net.minecraft.nbt.Tag.TAG_COMPOUND)
+                && lastDrawChoice().isEmpty()) return false;
+
+        var previous = lastDrawChoice().orElse(null);
+        if (previous != null && !previous.cardNBT()
+                .contains("seed", net.minecraft.nbt.Tag.TAG_LONG)) return false;
+
+        var plain = choices.stream().map(c -> new LegacyTheorycraftChoiceFlow.Choice(
+                c.key(), c.seed(), c.fromAid(), c.selected())).toList();
+        var previousPlain = previous == null ? null
+                : new LegacyTheorycraftChoiceFlow.Choice(
+                    previous.key(), previous.seed(), previous.fromAid(), previous.selected());
+        var transition = LegacyTheorycraftChoiceFlow.keepSelection(
+                plain, previousPlain, session.savedCards());
+        session.replaceSavedCards(transition.savedCardSeeds());
+        // Preserve the selected card's entire original subclass NBT.
+        LegacyTheorycraftChoiceNbt.writeLastDraw(originalSessionNbt, chosen);
+        LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
         return true;
     }
