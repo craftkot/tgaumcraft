@@ -306,3 +306,7 @@ On opening a new chat, say:
 ## Next continuation (2026-10-10)
 
 Current milestone: 74% pending final CI. Fresh-read analysis/CONTINUATION_74_CARD_CHOICE_SYNC.md for details. Three original CardChoice preview IDs + flags now synchronize server to client; all 33 original card cost/category/aid-only methods are bytecode mapped. Activation and drawing buttons 2–6 remain disabled until the complete original factory and material NBT integration are safe. Never start over; verify GitHub Actions before claiming complete. Optional randomized uncollected moon notes remain deferred.
+
+## 2026-10-10 continuation: original BETA26 card NBT and localization (75% pending CI)
+
+Fresh-read main and all handoffs, continued from 74%. See analysis/CONTINUATION_75_CARD_NBT_AND_LOCALIZATION.md for complete commits, bytecode-verified field schema (14 of 33 subclass serializers, 22 extra fields), safe NeoForge NBT validation, and restored original Russian/English card titles (33 each). All original assets and user font changes retained. Draw/select IDs 2-6 STILL intentionally disabled until all authentic 33 initializer/item transactions; no fake partial card draws, no manual client test claimed. Original moon scan unchanged; random uncollected notes are deferred optional polish. Check latest CI before claiming 75% fully verified.
