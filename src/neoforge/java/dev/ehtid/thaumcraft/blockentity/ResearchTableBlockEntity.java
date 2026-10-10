@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.LegacyResearchTableNbt;
 import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt;
+import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftCardTagValidator;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoiceFlow;
 import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftAidBridge;
 import net.minecraft.core.BlockPos;
@@ -72,8 +73,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         if (level == null || level.isClientSide || session == null) return false;
         java.util.Objects.requireNonNull(choices);
         for (var choice : choices) {
-            if (!dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
-                    .allCardKeys().contains(choice.key())) return false;
+            if (!LegacyTheorycraftCardTagValidator
+                    .structurallyValid(choice.key(), choice.cardNBT())) return false;
         }
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, choices);
         setChanged();
@@ -131,8 +132,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     /** Exact original lastDraw shape; null removes the compound entirely. */
     public boolean storeLastDrawChoice(LegacyTheorycraftChoiceNbt.Choice choice) {
         if (level == null || level.isClientSide || session == null) return false;
-        if (choice != null && !dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
-                .allCardKeys().contains(choice.key())) return false;
+        if (choice != null && !LegacyTheorycraftCardTagValidator
+                .structurallyValid(choice.key(), choice.cardNBT())) return false;
         LegacyTheorycraftChoiceNbt.writeLastDraw(originalSessionNbt, choice);
         setChanged();
         return true;
