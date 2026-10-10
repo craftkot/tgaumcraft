@@ -45,6 +45,13 @@ public final class NeoForgeTheorycraftMaterialResolver {
         if (!LegacyTheorycraftCardTagValidator.structurallyValid(cardKey, originalCardNbt))
             return null;
 
+        // BETA26 CardCelestial.initialize always chooses two distinct
+        // metadata variants. A forged saved card with duplicate md values
+        // must not be allowed to debit twice and grant celestial rewards.
+        if (cardKey.endsWith(".CardCelestial")
+                && originalCardNbt.getInt("md1") == originalCardNbt.getInt("md2"))
+            return null;
+
         List<LegacyTheorycraftRequiredItems.Requirement> descriptors =
                 LegacyTheorycraftRequiredItems.get(cardKey);
         ArrayList<ItemStack> items = new ArrayList<>(descriptors.size());
