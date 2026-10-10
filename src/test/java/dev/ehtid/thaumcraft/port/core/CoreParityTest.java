@@ -39,6 +39,7 @@ public final class CoreParityTest {
         testLegacyCardAnalyzeBugfix();
         testLegacySpecialtyTheoryCards();
         testLegacyAlchemyTheoryCards();
+        testLegacyLateTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -925,6 +926,140 @@ public final class CoreParityTest {
                         player, catalog, registry, java.util.Set.of("BASICS", "AUROMANCY")));
     }
 
+    /** Exact JAR bytecode arithmetic; full GUI/server XP transaction is still pending. */
+    private static void testLegacyLateTheoryCards() {
+        for (String key : new String[]{
+                LegacyLateTheoryCards.ENCHANTMENT,
+                LegacyLateTheoryCards.BEACON,
+                LegacyLateTheoryCards.SPELLBINDING,
+                LegacyLateTheoryCards.DARK_WHISPERS,
+                LegacyLateTheoryCards.PORTAL,
+                LegacyLateTheoryCards.REVELATION,
+                LegacyLateTheoryCards.REALIZATION}) {
+            isTrue(LegacyTheorycraftManifest.portedCoreCards().contains(key));
+        }
+        eq(1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.ENCHANTMENT));
+        eq(-2, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.BEACON));
+        eq(-1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.PORTAL));
+        eq(1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.SPELLBINDING));
+        eq(1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.DARK_WHISPERS));
+        eq(1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.REVELATION));
+        eq(1, LegacyLateTheoryCards.inspirationCost(LegacyLateTheoryCards.REALIZATION));
+        isTrue(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.ENCHANTMENT));
+        isTrue(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.BEACON));
+        isTrue(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.DARK_WHISPERS));
+        isTrue(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.PORTAL));
+        isFalse(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.REVELATION));
+        isFalse(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.REALIZATION));
+        isFalse(LegacyLateTheoryCards.aidOnly(LegacyLateTheoryCards.SPELLBINDING));
+
+        isFalse(LegacyLateTheoryCards.canEnchant(4));
+        isTrue(LegacyLateTheoryCards.canEnchant(5));
+        eq(0, LegacyLateTheoryCards.spellbindingLevels(0));
+        eq(1, LegacyLateTheoryCards.spellbindingLevels(1));
+        eq(5, LegacyLateTheoryCards.spellbindingLevels(10));
+        eq(10, LegacyLateTheoryCards.darkWhispersLevelDebit(0));
+        eq(19, LegacyLateTheoryCards.darkWhispersLevelDebit(9));
+
+        LegacyResearchTableData table = new LegacyResearchTableData(10);
+        LegacyLateTheoryCards.beacon(table);
+        eq(1, table.bonusDraws());
+        eq(1, table.penaltyStart());
+        Random expectation = new Random(73L);
+        int expectedInfusion = 15 + expectation.nextInt(6);
+        int expectedAuromancy = 15 + expectation.nextInt(6);
+        LegacyLateTheoryCards.enchantmentAfterFiveLevelsSpent(table, new Random(73L));
+        eq(expectedInfusion, table.getTotal("INFUSION"));
+        eq(expectedAuromancy, table.getTotal("AUROMANCY"));
+        LegacyLateTheoryCards.spellbindingAfterLevelsSpent(table, 3);
+        eq(expectedAuromancy + 15, table.getTotal("AUROMANCY"));
+
+        var categories = List.of("BASICS", "ALCHEMY", "INFUSION");
+        PlayerWarpData warp = new PlayerWarpData();
+        Random portalRng = new Random(112L);
+        Random portalExpected = new Random(112L);
+        String p1 = categories.get(portalExpected.nextInt(categories.size()));
+        int a1 = 5 + portalExpected.nextInt(6);
+        String p2 = categories.get(portalExpected.nextInt(categories.size()));
+        int a2 = 5 + portalExpected.nextInt(6);
+        int eld = 5 + portalExpected.nextInt(6);
+        isTrue(LegacyLateTheoryCards.portal(table, warp, categories, portalRng));
+        eq(a1 + (p1.equals(p2) ? a2 : 0), table.getTotal(p1));
+        if (!p1.equals(p2)) eq(a2, table.getTotal(p2));
+        eq(eld, table.getTotal("ELDRITCH"));
+        eq(3, table.bonusDraws());
+        eq(5, warp.get(WarpType.TEMPORARY));
+        eq(1, warp.get(WarpType.NORMAL));
+        eq(portalExpected.nextInt(32768), portalRng.nextInt(32768));
+
+        LegacyResearchTableData revelation = new LegacyResearchTableData(10);
+        PlayerWarpData revWarp = new PlayerWarpData();
+        Random revExpected = new Random(33L);
+        String revCategory = categories.get(revExpected.nextInt(categories.size()));
+        int revAmount = 5 + revExpected.nextInt(6);
+        isTrue(LegacyLateTheoryCards.revelation(revelation, revWarp, categories, new Random(33L)));
+        eq(revAmount, revelation.getTotal(revCategory));
+        eq(30, revelation.getTotal("ELDRITCH"));
+        eq(5, revWarp.get(WarpType.TEMPORARY));
+        eq(1, revWarp.get(WarpType.NORMAL));
+        eq(1, revelation.penaltyStart());
+
+        LegacyResearchTableData realization = new LegacyResearchTableData(10);
+        PlayerWarpData realWarp = new PlayerWarpData();
+        Random realExpected = new Random(9L);
+        String r1 = categories.get(realExpected.nextInt(categories.size()));
+        int rv1 = 5 + realExpected.nextInt(6);
+        String r2 = categories.get(realExpected.nextInt(categories.size()));
+        int rv2 = 5 + realExpected.nextInt(6);
+        boolean receivesNormal = realExpected.nextBoolean();
+        Random realRng = new Random(9L);
+        isTrue(LegacyLateTheoryCards.realization(realization, realWarp, categories, realRng));
+        eq(rv1 + (r1.equals(r2) ? rv2 : 0), realization.getTotal(r1));
+        if (!r1.equals(r2)) eq(rv2, realization.getTotal(r2));
+        eq(15, realization.getTotal("ELDRITCH"));
+        eq(5, realWarp.get(WarpType.TEMPORARY));
+        eq(receivesNormal ? 1 : 0, realWarp.get(WarpType.NORMAL));
+        eq(realExpected.nextInt(32768), realRng.nextInt(32768));
+
+        // Zero-level whispers still yield 1..5 ELDRITCH and one normal warp;
+        // zero XP means no category nextBoolean rolls at all.
+        LegacyResearchTableData whispers = new LegacyResearchTableData(10);
+        PlayerWarpData whisperWarp = new PlayerWarpData();
+        Random whisperExpected = new Random(222L);
+        int whisperEldritch = 1 + whisperExpected.nextInt(5);
+        boolean whisperBonus = whisperExpected.nextBoolean();
+        Random whisperRng = new Random(222L);
+        LegacyLateTheoryCards.darkWhispersAfterXpDebited(
+                whispers, whisperWarp, 0, categories, whisperRng);
+        eq(whisperEldritch, whispers.getTotal("ELDRITCH"));
+        eq(1, whisperWarp.get(WarpType.NORMAL));
+        eq(whisperBonus ? 1 : 0, whispers.bonusDraws());
+        eq(whisperExpected.nextInt(32768), whisperRng.nextInt(32768));
+
+        Random nineExpected = new Random(444L);
+        LegacyResearchTableData nineWhispers = new LegacyResearchTableData(10);
+        PlayerWarpData nineWarp = new PlayerWarpData();
+        for (String key : categories) if (!nineExpected.nextBoolean()) {
+            nineWhispers.addTotal(key, nineExpected.nextInt(4));
+        }
+        nineWhispers.addTotal("ELDRITCH", 1 + nineExpected.nextInt(5));
+        int bonus = nineExpected.nextBoolean() ? 1 : 0;
+        LegacyResearchTableData nineActual = new LegacyResearchTableData(10);
+        LegacyLateTheoryCards.darkWhispersAfterXpDebited(
+                nineActual, nineWarp, 9, categories, new Random(444L));
+        eq(nineWhispers.categoryTotals(), nineActual.categoryTotals());
+        eq(3, nineWarp.get(WarpType.NORMAL));
+        eq(bonus, nineActual.bonusDraws());
+
+        LegacyResearchTableData empty = new LegacyResearchTableData(5);
+        PlayerWarpData emptyWarp = new PlayerWarpData();
+        isFalse(LegacyLateTheoryCards.portal(empty, emptyWarp, List.of(), new Random(1)));
+        isFalse(LegacyLateTheoryCards.revelation(empty, emptyWarp, List.of(), new Random(1)));
+        isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
+        eq(java.util.Map.of(), empty.categoryTotals());
+        eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
     private static void testLegacyTheorycraftInspiration() {
         ResearchCatalog catalog = new ResearchCatalog();
         var singleStage = java.util.List.of(new ResearchStageData(
@@ -1569,16 +1704,16 @@ public final class CoreParityTest {
         // Same original HashMap initialization is deterministic within JVM.
         eq(originalHashOrder, LegacyTheorycraftManifest.cardsInHashMapIterationOrder());
         eq(14, LegacyTheorycraftManifest.aidsInHashMapIterationOrder().size());
-        eq(22, LegacyTheorycraftManifest.portedCoreCards().size());
-        eq(11, LegacyTheorycraftManifest.missingCoreCards().size());
+        eq(29, LegacyTheorycraftManifest.portedCoreCards().size());
+        eq(4, LegacyTheorycraftManifest.missingCoreCards().size());
         isTrue(LegacyTheorycraftManifest.allCardKeys()
                 .containsAll(LegacyTheorycraftManifest.portedCoreCards()));
         eq(33, LegacyTheorycraftManifest.portedCoreCards().size()
                 + LegacyTheorycraftManifest.missingCoreCards().size());
         eq("thaumcraft.common.lib.research.theorycraft.CardCurio",
                 LegacyTheorycraftManifest.missingCoreCards().get(0));
-        eq("thaumcraft.common.lib.research.theorycraft.CardRealization",
-                LegacyTheorycraftManifest.missingCoreCards().get(10));
+        eq("thaumcraft.common.lib.research.theorycraft.CardInfuse",
+                LegacyTheorycraftManifest.missingCoreCards().get(3));
 
         for (String key : new String[]{
                 LegacyBasicTheoryCards.PONDER_KEY,
