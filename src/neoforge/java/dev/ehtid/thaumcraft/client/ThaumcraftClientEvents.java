@@ -3,11 +3,15 @@ package dev.ehtid.thaumcraft.client;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 
 /** Client-only screen registration. */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
@@ -18,6 +22,18 @@ public final class ThaumcraftClientEvents {
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ThaumcraftMenus.ARCANE_WORKBENCH.get(), ArcaneWorkbenchScreen::new);
         event.register(ThaumcraftMenus.RESEARCH_TABLE.get(), ResearchTableScreen::new);
+    }
+
+    /** BETA26 phial overlay is tinted with its contained Aspect color. */
+    @SubscribeEvent
+    public static void registerItemColorHandlers(RegisterColorHandlersEvent.Item event) {
+        AspectRegistry aspects = new AspectRegistry();
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 1) return 0xFFFFFFFF; // Keep the glass unchanged.
+            String tag = PhialItem.containedAspect(stack);
+            var aspect = tag == null ? null : aspects.get(tag);
+            return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
+        }, ThaumcraftItems.PHIAL.get());
     }
 
     @SubscribeEvent
