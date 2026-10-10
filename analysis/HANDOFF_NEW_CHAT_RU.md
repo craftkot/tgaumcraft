@@ -256,3 +256,15 @@ On opening a new chat, say:
 - **Still missing for gameplay:** faithful original ItemStack array entries/legacy metadata, consumed-item server transactions, 14 nearby aid detections, card-choice subclass NBT UI and server packet button wiring (2-6), client manual playtest. NEVER infer the full Research Table works from 33/33 pure core formulas.
 - Deferred optional random previously-uncollected Moon research note MUST remain deferred until final polish. The font readability fixes remain; no gameplay/sky changes in this continuation.
 - The conservative **overall port estimate = 68%**, conditional on latest CI validation. 33/33 cards refers only to class effect/partial init port, not whole mod content.
+
+## 2026-10-10 later continuation: all original 14 theorycraft aid pools (estimated 69%)
+
+- Fresh-read `main` at `2669ed8e` and original handoff; verified previous fully-green CI (`2669ed8e`).
+- Bytecode audit of original BETA26 JAR: **all fourteen** ITheorycraftAid.getCards arrays and `TileResearchTable.checkSurroundingAids`/`ResearchTableData.initialize`. Detailed original values and bounds in `analysis/AID_BYTECODE_AUDIT_2026_10_10.md`.
+- New pure Java `LegacyTheorycraftAidCards` (`f9d95ff`): exact original 14 aid-card pools, including **Bookshelf 1 Balance + 2 Notation + 3 Study duplicates**, and surprising Eldritch aid containing an **unregistered CardTruth** class. Do not deduplicate or swap the missing class for something else.
+- `LegacyTheorycraftInspiration.start` (`8a91cc7`) now fills original weighted `aidCards` on session creation, preserving list persistence, and still subtracts the selected aid Set size from inspiration. `CoreParityTest` extended (`80a35a8`) to verify all 14 keys, 6 bookshelf entries, unregistered CardTruth, order, duplicates, save snapshots and unknown aid handling.
+- New `LegacyTheorycraftAidScanner` (`1dce8ed`) precisely models original detection bounds dy=-1..1 dx=-4..4 dz=-4..4, Block vs Block-pick ItemStack vs entity-Class probes, 5-block entity radius, deduplication. Tests (`ca8601c`) validate all boundaries and call counts. **It is a pure-Java probe, NOT wired to live NeoForge world yet**; missing blocks must NOT be invented.
+- At last check `f9d95ff` CI SUCCESS including server smoke, `80a35a8` completed core tests/build but server smoke still in progress; `ca8601c` had passed core tests and was building. Check latest runs before claiming newest HEAD green. Audit documentation `563ca3e`.
+- Next priority: build real NeoForge block/pick-stack/entity adapter for only grounded world objects, expose eligible aid list to client UI and allow genuine user selection, then finish original 33-card draw/activation/serialization and inventory transactions. The Research Table UI is NOT finished.
+- Original Moon-phase sky scan remains unchanged and user random-uncollected-note option deferred to final polish; readable GUI changes remain.
+- Overall estimate **69% only after core + Gradle + server CI passes**. The 14/14 aid pools are loader-independent calculations, not proof of playability.
