@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftInspiration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.LegacyResearchTableNbt;
+import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt;
 import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftAidBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -50,6 +51,44 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     }
 
     public LegacyResearchTableData session() { return session; }
+    /**
+     * BETA26 CardChoice values are live, subclass-specific NBT records. These
+     * accessors permit a future complete draw/activate bridge to preserve all
+     * 33 original subclasses without overwriting unknown saved fields.
+     */
+    public java.util.List<LegacyTheorycraftChoiceNbt.Choice> pendingChoices() {
+        return session == null ? java.util.List.of()
+                : LegacyTheorycraftChoiceNbt.readChoices(originalSessionNbt);
+    }
+
+    public java.util.Optional<LegacyTheorycraftChoiceNbt.Choice> lastDrawChoice() {
+        return session == null ? java.util.Optional.empty()
+                : LegacyTheorycraftChoiceNbt.readLastDraw(originalSessionNbt);
+    }
+
+    /** Server-side state writer. Call only after full card factory validation. */
+    public boolean storeCardChoices(java.util.List<LegacyTheorycraftChoiceNbt.Choice> choices) {
+        if (level == null || level.isClientSide || session == null) return false;
+        java.util.Objects.requireNonNull(choices);
+        for (var choice : choices) {
+            if (!dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
+                    .allCardKeys().contains(choice.key())) return false;
+        }
+        LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, choices);
+        setChanged();
+        return true;
+    }
+
+    /** Exact original lastDraw shape; null removes the compound entirely. */
+    public boolean storeLastDrawChoice(LegacyTheorycraftChoiceNbt.Choice choice) {
+        if (level == null || level.isClientSide || session == null) return false;
+        if (choice != null && !dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
+                .allCardKeys().contains(choice.key())) return false;
+        LegacyTheorycraftChoiceNbt.writeLastDraw(originalSessionNbt, choice);
+        setChanged();
+        return true;
+    }
+
     /**
      * The original 9x9x3 surroundings check is costly. Scan once per second
      * for menu display, but ALWAYS rescan at theory creation to make removed
@@ -102,6 +141,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
                 BuiltInResearchCatalog.create(), aids);
         session.setPlayer(player.getGameProfile().getName());
         originalSessionNbt = new CompoundTag();
+        LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
         return true;
     }
