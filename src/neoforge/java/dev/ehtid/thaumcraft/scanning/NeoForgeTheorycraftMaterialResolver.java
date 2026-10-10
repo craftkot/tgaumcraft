@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftRequiredItems;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.item.PhialItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,7 +20,9 @@ import java.util.Objects;
  * Creates REAL NeoForge stacks ONLY when the original BETA26 required
  * object has an already-ported 1.21 equivalent with checked metadata.
  *
- * No guesses for unported phials or Curio metadata; old saved stacks
+ * No guesses for unported Curio metadata; original filled phials now
+ * have a genuine 10-essentia item backed by the preserved Aspects tag.
+ * Other old saved stacks
  * decode only when their exact unchanged registry identity is validated
  * by NeoForgeLegacyItemStackDecoder.
  *
@@ -65,7 +68,7 @@ public final class NeoForgeTheorycraftMaterialResolver {
                 case VANILLA_CLAY_BALL -> new ItemStack(Items.CLAY_BALL);
                 case SAVED_ITEM_STACK -> NeoForgeLegacyItemStackDecoder.safeDecode(
                         originalCardNbt.getCompound(field));
-                case FILLED_PHIAL -> ItemStack.EMPTY;
+                case FILLED_PHIAL -> phial(originalCardNbt.getString(field));
             };
             if (next.isEmpty()) return null;
             items.add(next);
@@ -76,6 +79,12 @@ public final class NeoForgeTheorycraftMaterialResolver {
     private static ItemStack celestial(int metadata) {
         return metadata >= 0 && metadata <= 12
                 ? CelestialNotesItem.create(metadata) : ItemStack.EMPTY;
+    }
+
+    /** The original ItemPhial.makeFilledPhial(aspect) stores ten essentia. */
+    private static ItemStack phial(String aspectTag) {
+        return aspectTag == null || ASPECTS.get(aspectTag) == null
+                ? ItemStack.EMPTY : PhialItem.filledPhial(aspectTag);
     }
 
     /** BETA26 ThaumcraftApiHelper.makeCrystal(aspect) always holds one aspect. */
