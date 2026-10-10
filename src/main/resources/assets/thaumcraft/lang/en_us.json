@@ -83,5 +83,6 @@
   "card.glyph.name": "Study Glyphs",
   "card.portal.name": "Voices from Beyond",
   "card.revelation.name": "Revelation",
-  "card.realization.name": "Sudden Realization"
+  "card.realization.name": "Sudden Realization",
+  "research_table.unknown_card": "Unknown card"
 }
