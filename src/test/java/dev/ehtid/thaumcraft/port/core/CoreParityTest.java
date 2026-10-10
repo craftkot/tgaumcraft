@@ -46,6 +46,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftInventoryPlanner();
         testLegacyTheorycraftChoiceFlow();
         testLegacyTheorycraftChoicePreview();
+        testLegacyTheorycraftCardMetadata();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1065,6 +1066,76 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftCardMetadata() {
+        var keys = LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER;
+        eq(33, keys.size());
+        int[] counts = new int[7]; // one, two, zero, minus one, minus two, aidOnly, dynamic
+        java.util.Map<String, String> fixed = java.util.Map.ofEntries(
+                java.util.Map.entry("CardConcentrate", "ALCHEMY"),
+                java.util.Map.entry("CardReactions", "ALCHEMY"),
+                java.util.Map.entry("CardSynthesis", "ALCHEMY"),
+                java.util.Map.entry("CardCalibrate", "ARTIFICE"),
+                java.util.Map.entry("CardMindOverMatter", "ARTIFICE"),
+                java.util.Map.entry("CardTinker", "ARTIFICE"),
+                java.util.Map.entry("CardMeasure", "INFUSION"),
+                java.util.Map.entry("CardChannel", "INFUSION"),
+                java.util.Map.entry("CardInfuse", "INFUSION"),
+                java.util.Map.entry("CardFocus", "AUROMANCY"),
+                java.util.Map.entry("CardAwareness", "AUROMANCY"),
+                java.util.Map.entry("CardSpellbinding", "AUROMANCY"),
+                java.util.Map.entry("CardSculpting", "GOLEMANCY"),
+                java.util.Map.entry("CardScripting", "GOLEMANCY"),
+                java.util.Map.entry("CardSynergy", "GOLEMANCY"),
+                java.util.Map.entry("CardGlyphs", "ELDRITCH"),
+                java.util.Map.entry("CardDarkWhispers", "ELDRITCH"),
+                java.util.Map.entry("CardPortal", "ELDRITCH"),
+                java.util.Map.entry("CardRevelation", "ELDRITCH"),
+                java.util.Map.entry("CardRealization", "ELDRITCH"));
+        var dynamic = java.util.Set.of("CardStudy", "CardAnalyze",
+                "CardInspired", "CardCelestial");
+        var aidOnly = java.util.Set.of("CardStudy", "CardNotation", "CardEnchantment",
+                "CardBeacon", "CardDarkWhispers", "CardGlyphs", "CardPortal");
+        var twoCost = java.util.Set.of("CardAnalyze", "CardExperimentation",
+                "CardInspired", "CardPonder");
+        var minusOne = java.util.Set.of("CardRethink", "CardPortal");
+        for (String key : keys) {
+            String simple = key.substring(key.lastIndexOf('.') + 1);
+            var metadata = LegacyTheorycraftCardMetadata.get(key);
+            int expectedCost = simple.equals("CardBeacon") ? -2
+                    : simple.equals("CardReject") ? 0
+                    : minusOne.contains(simple) ? -1
+                    : twoCost.contains(simple) ? 2 : 1;
+            eq(expectedCost, metadata.cost());
+            eq(aidOnly.contains(simple), metadata.aidOnly());
+            eq(dynamic.contains(simple), metadata.dynamicCategory());
+            eq(fixed.get(simple), metadata.fixedCategory());
+            eq(dynamic.contains(simple) ? "BASICS" : fixed.get(simple),
+                    metadata.categoryAfterInitialization("BASICS"));
+            switch (expectedCost) {
+                case 1 -> counts[0]++;
+                case 2 -> counts[1]++;
+                case 0 -> counts[2]++;
+                case -1 -> counts[3]++;
+                case -2 -> counts[4]++;
+                default -> throw new AssertionError("unknown BETA26 cost");
+            }
+            if (metadata.aidOnly()) counts[5]++;
+            if (metadata.dynamicCategory()) counts[6]++;
+        }
+        eq(java.util.List.of(25, 4, 1, 2, 1, 7, 4),
+                java.util.Arrays.stream(counts).boxed().toList());
+        // BETA26 has extra concrete card classes in the JAR that were not
+        // registered in ConfigResearch.initTheorycraft. Exclude both.
+        for (String extra : java.util.List.of(
+                "thaumcraft.common.lib.research.theorycraft.CardTruth",
+                "thaumcraft.common.lib.research.theorycraft.CardDragonEgg")) {
+            try {
+                LegacyTheorycraftCardMetadata.get(extra);
+                throw new AssertionError("unregistered theory card accepted");
+            } catch (IllegalArgumentException expected) { assertions++; }
+        }
     }
 
     private static void testLegacyTheorycraftChoicePreview() {
