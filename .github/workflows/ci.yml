@@ -181,6 +181,25 @@ jobs:
                           "research_table.unknown_card", "research_table.aids"):
                   assert key in entries, (language, key)
 
+          # ItemPhial.makeFilledPhial(aspect) preserves the original capacity
+          # and 0=empty / 1=filled visual variants. Check real PNG bytes and
+          # model override rather than trusting an absent texture reference.
+          phial = json.loads((assets / "models/item/phial.json").read_text())
+          filled = json.loads((assets / "models/item/phial_filled.json").read_text())
+          assert phial["textures"]["layer0"] == "thaumcraft:item/phial"
+          assert phial["overrides"][0]["predicate"]["custom_model_data"] == 1
+          assert phial["overrides"][0]["model"] == "thaumcraft:item/phial_filled"
+          assert filled["textures"]["layer0"] == "thaumcraft:item/phial"
+          assert filled["textures"]["layer1"] == "thaumcraft:item/phial_overlay"
+          for name in ("phial", "phial_overlay"):
+              data = (assets / "textures/item" / (name + ".png")).read_bytes()
+              assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n", name
+              assert len(data) > 100, name
+          for language in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (language + ".json")).read_text())
+              assert entries.get("item.phial.empty.name"), language
+              assert "%s" in entries.get("item.phial.filled.name", ""), language
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
