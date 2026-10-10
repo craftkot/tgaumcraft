@@ -39,6 +39,10 @@ public final class LegacyTheorycraftInspiration {
         // The vanilla table's ResearchTableData.initialize subtracts the aid
         // SET size, not only the valid aids. Never invent aid card bonuses.
         table.addInspiration(-chosenAids.size());
+        // BETA26 ResearchTableData.initialize concatenates ALL classes from
+        // each selected aid (including duplicates) into aidCards. This pool
+        // must survive save/reload even before the card-choice UI is wired.
+        table.replaceAidCards(LegacyTheorycraftAidCards.forSelected(chosenAids));
         return table;
     }
 }
