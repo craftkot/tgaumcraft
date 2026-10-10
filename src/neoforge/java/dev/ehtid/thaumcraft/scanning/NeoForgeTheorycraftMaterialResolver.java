@@ -8,6 +8,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.CustomData;
 
 import java.util.ArrayList;
@@ -18,8 +19,8 @@ import java.util.Objects;
  * Creates REAL NeoForge stacks ONLY when the original BETA26 required
  * object has an already-ported 1.21 equivalent with checked metadata.
  *
- * No guesses for unported phials, Curio, Infuse, Tinker, MindOverMatter
- * source item identities or the unresolved 1.12 Sculpting item.
+ * No guesses for unported phials, Curio, Infuse, Tinker or MindOverMatter
+ * source item identities.
  *
  * Returns null for any unmapped original object or invalid subclass NBT.
  * The returned stacks are ingredient SPECIFICATIONS, not rewards and are
@@ -60,8 +61,8 @@ public final class NeoForgeTheorycraftMaterialResolver {
             ItemStack next = switch (descriptor.source()) {
                 case CELESTIAL_NOTE -> celestial(originalCardNbt.getInt(field));
                 case ASPECT_CRYSTAL -> crystal(originalCardNbt.getString(field));
-                case FILLED_PHIAL, SAVED_ITEM_STACK, ORIGINAL_VANILLA_151119_AD ->
-                        ItemStack.EMPTY;
+                case VANILLA_CLAY_BALL -> new ItemStack(Items.CLAY_BALL);
+                case FILLED_PHIAL, SAVED_ITEM_STACK -> ItemStack.EMPTY;
             };
             if (next.isEmpty()) return null;
             items.add(next);
