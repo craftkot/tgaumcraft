@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.blockentity.ResearchTableBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -34,6 +35,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot nearbyAidBits;
     private final DataSlot selectedAidBits;
     private final DataSlot hasChosenTheoryCard;
+    private final DataSlot[] previewCards = new DataSlot[3];
     private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
 
     public ResearchTableMenu(int id, Inventory inventory) {
@@ -80,6 +82,24 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                     @Override public void set(int ignored) { }
                 } : DataSlot.standalone();
         addDataSlot(hasChosenTheoryCard);
+        // Original BETA26 draws at most three pending card choices. Their
+        // full subclass NBT never leaves the server through these DataSlots:
+        // the client receives only read-only class IDs and visual flags.
+        for (int i = 0; i < previewCards.length; i++) {
+            final int choiceIndex = i;
+            previewCards[i] = table instanceof ResearchTableBlockEntity live
+                    ? new DataSlot() {
+                        @Override public int get() {
+                            var choices = live.pendingChoices();
+                            if (choiceIndex >= choices.size()) return 0;
+                            var choice = choices.get(choiceIndex);
+                            return LegacyTheorycraftChoicePreview.encode(
+                                    choice.key(), choice.fromAid(), choice.selected());
+                        }
+                        @Override public void set(int ignored) { }
+                    } : DataSlot.standalone();
+            addDataSlot(previewCards[i]);
+        }
         table.startOpen(inventory.player);
 
         addSlot(new Slot(table, ResearchTableBlockEntity.SCRIBING_SLOT, 16, 15) {
@@ -144,6 +164,10 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         return registrationIndex >= 0
                 && registrationIndex < LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.size()
                 && (selectedAidBits.get() & (1 << registrationIndex)) != 0;
+    }
+
+    public int cardPreview(int index) {
+        return index >= 0 && index < previewCards.length ? previewCards[index].get() : 0;
     }
 
     public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
