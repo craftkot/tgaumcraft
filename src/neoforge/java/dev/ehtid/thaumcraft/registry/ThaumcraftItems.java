@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
+import dev.ehtid.thaumcraft.item.PhialItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -33,6 +34,10 @@ public final class ThaumcraftItems {
             new Item.Properties().durability(100).stacksTo(1));
     public static final DeferredItem<CelestialNotesItem> CELESTIAL_NOTES = ITEMS.registerItem(
             "celestial_notes", CelestialNotesItem::new, new Item.Properties());
+
+    // BETA26 ItemPhial: original capacity 10, empty meta 0 / filled meta 1.
+    public static final DeferredItem<PhialItem> PHIAL = ITEMS.registerItem(
+            "phial", PhialItem::new, new Item.Properties().stacksTo(64));
 
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
