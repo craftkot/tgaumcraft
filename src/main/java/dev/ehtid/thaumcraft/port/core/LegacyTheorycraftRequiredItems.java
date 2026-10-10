@@ -27,14 +27,14 @@ public final class LegacyTheorycraftRequiredItems {
         ASPECT_CRYSTAL,
         /** Saved original ItemStack NBT chosen by initialize(). */
         SAVED_ITEM_STACK,
-        /** Items.field_151119_aD in original 1.12 mappings, not guessed. */
-        ORIGINAL_VANILLA_151119_AD
+        /** Original Items.field_151119_aD = Minecraft 1.12 clay_ball. */
+        VANILLA_CLAY_BALL
     }
 
     public record Requirement(Source source, String cardField, boolean consumed) {
         public Requirement {
             Objects.requireNonNull(source);
-            if (source != Source.ORIGINAL_VANILLA_151119_AD) {
+            if (source != Source.VANILLA_CLAY_BALL) {
                 if (cardField == null || cardField.isBlank())
                     throw new IllegalArgumentException("original card field");
             }
@@ -72,7 +72,7 @@ public final class LegacyTheorycraftRequiredItems {
                     kept(Source.ASPECT_CRYSTAL, "aspect1"),
                     kept(Source.ASPECT_CRYSTAL, "aspect2"));
             case "CardSculpting" -> List.of(
-                    consumed(Source.ORIGINAL_VANILLA_151119_AD, null));
+                    consumed(Source.VANILLA_CLAY_BALL, null));
             case "CardSynthesis" -> List.of(
                     consumed(Source.ASPECT_CRYSTAL, "aspect1"),
                     consumed(Source.ASPECT_CRYSTAL, "aspect2"));
