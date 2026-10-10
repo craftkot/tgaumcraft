@@ -35,6 +35,7 @@ public final class CoreParityTest {
         testLegacyBasicTheoryCards();
         testLegacyAdditionalTheoryCards();
         testLegacyTheorycraftManifest();
+        testLegacyTheorycraftAidCards();
         testLegacyTheorycraftMiscCards();
         testLegacyCardAnalyzeBugfix();
         testLegacySpecialtyTheoryCards();
@@ -1787,6 +1788,61 @@ public final class CoreParityTest {
         eq(5, awareness.getTotal("ELDRITCH"));
         eq(1, warp.get(WarpType.NORMAL));
         eq(0, warp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftAidCards() {
+        var aids = LegacyTheorycraftAidCards.all();
+        eq(14, aids.size());
+        eq(new java.util.HashSet<>(LegacyTheorycraftManifest.AID_REGISTRATION_ORDER),
+                aids.keySet());
+        for (String aid : LegacyTheorycraftManifest.AID_REGISTRATION_ORDER) {
+            var classes = LegacyTheorycraftAidCards.forAid(aid);
+            isTrue(classes != null && !classes.isEmpty());
+            for (String card : classes) {
+                if (!card.endsWith("CardTruth")) {
+                    isTrue(LegacyTheorycraftManifest.allCardKeys().contains(card));
+                }
+            }
+        }
+        String bookshelf = "thaumcraft.api.research.theorycraft.AidBookshelf";
+        var weighted = LegacyTheorycraftAidCards.forAid(bookshelf);
+        eq(6, weighted.size());
+        eq(1, java.util.Collections.frequency(weighted,
+                "thaumcraft.api.research.theorycraft.CardBalance"));
+        eq(2, java.util.Collections.frequency(weighted,
+                "thaumcraft.api.research.theorycraft.CardNotation"));
+        eq(3, java.util.Collections.frequency(weighted,
+                "thaumcraft.api.research.theorycraft.CardStudy"));
+
+        String eldritch = "thaumcraft.common.lib.research.theorycraft.AidBasicEldritch";
+        isTrue(LegacyTheorycraftAidCards.forAid(eldritch).contains(
+                "thaumcraft.common.lib.research.theorycraft.CardTruth"));
+        isFalse(LegacyTheorycraftManifest.allCardKeys().contains(
+                "thaumcraft.common.lib.research.theorycraft.CardTruth"));
+        eq(null, LegacyTheorycraftAidCards.forAid("unknown"));
+
+        java.util.Set<String> selected = new java.util.LinkedHashSet<>();
+        selected.add(bookshelf);
+        selected.add(eldritch);
+        var expanded = LegacyTheorycraftAidCards.forSelected(selected);
+        eq(9, expanded.size());
+        eq(weighted, expanded.subList(0, 6));
+        eq(LegacyTheorycraftAidCards.forAid(eldritch), expanded.subList(6, 9));
+
+        LegacyResearchTableData started = LegacyTheorycraftInspiration.start(
+                new PlayerKnowledgeData(), new ResearchCatalog(), selected);
+        eq(5, started.inspirationStart());
+        eq(3, started.inspiration());
+        eq(expanded, started.aidCards());
+        // The same list, duplicates included, round-trips the table snapshot.
+        eq(expanded, LegacyResearchTableData.fromSnapshot(started.snapshot()).aidCards());
+
+        selected.add("nonexistent-aid");
+        LegacyResearchTableData unknown = LegacyTheorycraftInspiration.start(
+                new PlayerKnowledgeData(), new ResearchCatalog(), selected);
+        eq(2, unknown.inspiration());
+        eq(expanded, unknown.aidCards());
+        eq(java.util.List.of(), LegacyTheorycraftAidCards.forSelected(java.util.Set.of()));
     }
 
     private static void testLegacyTheorycraftManifest() {
