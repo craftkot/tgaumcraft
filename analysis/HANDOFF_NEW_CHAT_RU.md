@@ -302,3 +302,7 @@ On opening a new chat, say:
 - CI at documentation creation: prior head `f1929569` verified green; `0cb11c3e` had passed core parity and NeoForge compilation, dedicated-server smoke still underway, `467b5eb7` CI started. **Verify newest run green before declaring validation.**
 - Next BIG work: full 33-card factory init + original ItemStack/metadata resolutions, client card-choice synchronization, atomic transaction + actual card activation and menu button IDs 2..6. DO NOT enable draw with fake/partial cards. Preserve original sky-scan until optional final QoL random-uncollected moon note. Readable font retained.
 - Estimated **72% overall only contingent on latest CI pass**, not a claim playable full Thaumcraft. 
+
+## Next continuation (2026-10-10)
+
+Current milestone: 74% pending final CI. Fresh-read analysis/CONTINUATION_74_CARD_CHOICE_SYNC.md for details. Three original CardChoice preview IDs + flags now synchronize server to client; all 33 original card cost/category/aid-only methods are bytecode mapped. Activation and drawing buttons 2–6 remain disabled until the complete original factory and material NBT integration are safe. Never start over; verify GitHub Actions before claiming complete. Optional randomized uncollected moon notes remain deferred.
