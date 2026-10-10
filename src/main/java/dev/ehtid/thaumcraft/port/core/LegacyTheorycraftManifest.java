@@ -44,6 +44,8 @@ public final class LegacyTheorycraftManifest {
             "thaumcraft.api.research.theorycraft.CardExperimentation",
             "thaumcraft.common.lib.research.theorycraft.CardCurio",
             "thaumcraft.api.research.theorycraft.CardInspired",
+                LegacyLateTheoryCards.ENCHANTMENT,
+                LegacyLateTheoryCards.BEACON,
             "thaumcraft.common.lib.research.theorycraft.CardEnchantment",
             "thaumcraft.common.lib.research.theorycraft.CardBeacon",
             "thaumcraft.common.lib.research.theorycraft.CardCelestial",
@@ -51,6 +53,7 @@ public final class LegacyTheorycraftManifest {
             "thaumcraft.common.lib.research.theorycraft.CardReactions",
             "thaumcraft.common.lib.research.theorycraft.CardSynthesis",
             "thaumcraft.common.lib.research.theorycraft.CardCalibrate",
+                LegacyLateTheoryCards.SPELLBINDING,
             "thaumcraft.common.lib.research.theorycraft.CardMindOverMatter",
             "thaumcraft.common.lib.research.theorycraft.CardTinker",
             "thaumcraft.common.lib.research.theorycraft.CardMeasure",
@@ -100,7 +103,11 @@ public final class LegacyTheorycraftManifest {
                 "thaumcraft.common.lib.research.theorycraft.CardSculpting",
                 "thaumcraft.common.lib.research.theorycraft.CardScripting",
                 "thaumcraft.common.lib.research.theorycraft.CardSynergy",
-                "thaumcraft.common.lib.research.theorycraft.CardGlyphs");
+                "thaumcraft.common.lib.research.theorycraft.CardGlyphs",
+                LegacyLateTheoryCards.DARK_WHISPERS,
+                LegacyLateTheoryCards.PORTAL,
+                LegacyLateTheoryCards.REVELATION,
+                LegacyLateTheoryCards.REALIZATION);
     }
 
     /** Unported original cards remain explicit development blockers. */
