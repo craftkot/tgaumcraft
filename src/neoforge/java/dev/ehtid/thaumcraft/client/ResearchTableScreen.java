@@ -236,6 +236,14 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 }
             }
         }
+        if (menu.hasSession() && menu.hasChosenTheoryCard()
+                && menu.inspiration() > 0
+                && mouseX >= leftPos + KEEP_X && mouseX < leftPos + KEEP_X + BUTTON_WIDTH
+                && mouseY >= topPos + KEEP_Y && mouseY < topPos + KEEP_Y + BUTTON_HEIGHT) {
+            graphics.renderTooltip(font, Component.translatable("button.keep.theory"),
+                    mouseX, mouseY);
+            return;
+        }
         Component button = null;
         int x, y;
         if (!menu.hasSession() && canStartTheory()) {
