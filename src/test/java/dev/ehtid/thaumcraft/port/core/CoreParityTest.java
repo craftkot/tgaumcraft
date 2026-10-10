@@ -51,6 +51,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftRequiredItems();
+        testLegacyTheorycraftOriginalOptionPools();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1070,6 +1071,72 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftOriginalOptionPools() {
+        var artifice = LegacyTheorycraftOptionPools.ARTIFICE;
+        var infusion = LegacyTheorycraftOptionPools.INFUSION;
+        eq(18, artifice.size());
+        eq(31, infusion.size());
+        eq(java.util.List.of(
+                "ItemsTC.visResonator", "ItemsTC.thaumometer",
+                "Blocks.field_150467_bQ", "Blocks.field_150408_cc",
+                "Blocks.field_150367_z", "Blocks.field_150409_cd",
+                "Blocks.field_150381_bn", "Blocks.field_150477_bB",
+                "Blocks.field_150421_aI", "Blocks.field_150453_bW",
+                "Blocks.field_150331_J", "Blocks.field_150438_bZ",
+                "Blocks.field_150320_F", "Items.field_151148_bJ",
+                "Items.field_151111_aL", "Items.field_151142_bV",
+                "Items.field_151132_bS", "Items.field_151113_aN"),
+                artifice.stream().map(LegacyTheorycraftOptionPools.Option::historicalField).toList());
+        eq(java.util.List.of(
+                "ItemsTC.alumentum", "BlocksTC.nitor", "ItemsTC.amber",
+                "ItemsTC.brain", "ItemsTC.fabric", "ItemsTC.salisMundus",
+                "ItemsTC.ingots", "ItemsTC.ingots", "ItemsTC.quicksilver",
+                "Items.field_151043_k", "Items.field_151042_j",
+                "Items.field_151045_i", "Items.field_151166_bC",
+                "Items.field_151072_bj", "Items.field_151116_aA",
+                "Blocks.field_150325_L", "Items.field_151118_aC",
+                "Items.field_151032_g", "Items.field_151110_aK",
+                "Items.field_151008_G", "Items.field_151114_aO",
+                "Items.field_151137_ax", "Items.field_151073_bk",
+                "Items.field_151016_H", "Items.field_151031_f",
+                "Items.field_151010_B", "Items.field_151040_l",
+                "Items.field_151035_b", "Items.field_151005_D",
+                "Items.field_151128_bU", "Items.field_151034_e"),
+                infusion.stream().map(LegacyTheorycraftOptionPools.Option::historicalField).toList());
+        eq(LegacyTheorycraftOptionPools.SourceKind.TC_COLORED_BLOCK, infusion.get(1).kind());
+        eq("YELLOW", infusion.get(1).variant());
+        eq(0, infusion.get(6).metadata());
+        eq(2, infusion.get(7).metadata());
+        for (int i = 0; i < infusion.size(); i++) {
+            if (i != 6 && i != 7) eq(-1, infusion.get(i).metadata());
+        }
+        eq(2, (int) infusion.stream().filter(v ->
+                v.historicalField().equals("ItemsTC.ingots")).count());
+        eq(1, (int) infusion.stream().filter(v ->
+                v.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_COLORED_BLOCK).count());
+        eq(2, (int) artifice.stream().filter(v ->
+                v.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_ITEM).count());
+        eq(9, (int) infusion.subList(0, 9).stream().filter(v ->
+                v.kind() != LegacyTheorycraftOptionPools.SourceKind.VANILLA_BLOCK
+                    && v.kind() != LegacyTheorycraftOptionPools.SourceKind.VANILLA_ITEM).count());
+
+        // Both ARTIFICE option arrays are byte-identical. The seeded
+        // ItemStack selection is therefore a stable descriptor lookup.
+        for (long seed : new long[]{0L, 1L, 7L, 100L, 99999L, Long.MIN_VALUE}) {
+            int index = LegacyMaterialTheoryCards.initializeArtificeOption(seed);
+            eq(artifice.get(index), LegacyTheorycraftOptionPools.artifice(seed));
+            var original = LegacyMaterialTheoryCards.initializeInfuse(new AspectRegistry(), seed);
+            var restored = LegacyTheorycraftOptionPools.infusion(new AspectRegistry(), seed);
+            eq(original.aspect().tag(), restored.compoundAspect().tag());
+            eq(infusion.get(original.itemOptionIndex()), restored.requiredItem());
+        }
+        try {
+            new LegacyTheorycraftOptionPools.Option(
+                    LegacyTheorycraftOptionPools.SourceKind.VANILLA_ITEM, "srg", 0, "YELLOW");
+            throw new AssertionError("unexpected dyed vanilla item accepted");
+        } catch (IllegalArgumentException expected) { assertions++; }
     }
 
     private static void testLegacyTheorycraftRequiredItems() {
