@@ -120,6 +120,10 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             } else {
                 renderButtonText(graphics, SCRAP_X, SCRAP_Y,
                         Component.translatable("button.scrap.theory"));
+                if (menu.hasChosenTheoryCard()) {
+                    renderButtonText(graphics, KEEP_X, KEEP_Y,
+                            Component.translatable("button.keep.theory"));
+                }
             }
         } else {
             ThaumcraftReadableText.wrapped(graphics, font,
