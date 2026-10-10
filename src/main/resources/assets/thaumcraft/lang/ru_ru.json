@@ -83,5 +83,6 @@
   "card.glyph.name": "Изучить глифы",
   "card.portal.name": "Голоса извне",
   "card.revelation.name": "Откровение",
-  "card.realization.name": "Внезапное осознание"
+  "card.realization.name": "Внезапное осознание",
+  "research_table.unknown_card": "Неизвестная карта"
 }
