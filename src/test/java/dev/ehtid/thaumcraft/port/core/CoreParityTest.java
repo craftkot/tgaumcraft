@@ -49,6 +49,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftCardMetadata();
         testLegacyTheorycraftCardFields();
         testLegacyTheorycraftCardLocalization();
+        testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1068,6 +1069,59 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftDisplayArgument() {
+        var categories = java.util.List.of("BASICS", "AUROMANCY", "ALCHEMY",
+                "ARTIFICE", "INFUSION", "GOLEMANCY", "ELDRITCH");
+        eq(categories, LegacyTheorycraftDisplayArgument.categories());
+        var aspects = new AspectRegistry();
+        eq(37, LegacyTheorycraftDisplayArgument.aspects().size());
+        eq(aspects.values().stream().map(AspectData::tag).toList(),
+                LegacyTheorycraftDisplayArgument.aspects());
+        eq(0, LegacyTheorycraftDisplayArgument.EMPTY);
+        eq(63, LegacyTheorycraftDisplayArgument.UNKNOWN);
+        java.util.Set<Integer> seen = new java.util.HashSet<>();
+        for (String card : java.util.List.of(
+                "thaumcraft.api.research.theorycraft.CardStudy",
+                "thaumcraft.api.research.theorycraft.CardReject",
+                "thaumcraft.api.research.theorycraft.CardAnalyze")) {
+            eq("cat", LegacyTheorycraftDisplayArgument.fieldKey(card));
+            for (int i = 0; i < categories.size(); i++) {
+                int value = LegacyTheorycraftDisplayArgument.encode(card, categories.get(i));
+                eq(i + 1, value);
+                eq("tc.research_category." + categories.get(i),
+                        LegacyTheorycraftDisplayArgument.translationKey(value));
+                isFalse(LegacyTheorycraftDisplayArgument.unknown(value));
+                seen.add(value);
+            }
+            eq(63, LegacyTheorycraftDisplayArgument.encode(card, "UNREGISTERED"));
+            eq(63, LegacyTheorycraftDisplayArgument.encode(card, ""));
+            eq(63, LegacyTheorycraftDisplayArgument.encode(card, null));
+        }
+        String channel = "thaumcraft.common.lib.research.theorycraft.CardChannel";
+        eq("aspect", LegacyTheorycraftDisplayArgument.fieldKey(channel));
+        for (int i = 0; i < LegacyTheorycraftDisplayArgument.aspects().size(); i++) {
+            String aspect = LegacyTheorycraftDisplayArgument.aspects().get(i);
+            int code = LegacyTheorycraftDisplayArgument.encode(channel, aspect);
+            eq(8 + i, code);
+            eq("tc.aspect." + aspect,
+                    LegacyTheorycraftDisplayArgument.translationKey(code));
+            isTrue(seen.add(code));
+        }
+        eq(44, seen.size());
+        eq(63, LegacyTheorycraftDisplayArgument.encode(channel, "modded_unknown"));
+        eq(63, LegacyTheorycraftDisplayArgument.encode(channel, "BASICS"));
+        eq(null, LegacyTheorycraftDisplayArgument.translationKey(0));
+        eq(null, LegacyTheorycraftDisplayArgument.translationKey(45));
+        eq(null, LegacyTheorycraftDisplayArgument.translationKey(63));
+        eq(null, LegacyTheorycraftDisplayArgument.translationKey(-1));
+        isTrue(LegacyTheorycraftDisplayArgument.unknown(63));
+        isFalse(LegacyTheorycraftDisplayArgument.unknown(0));
+        String ponder = "thaumcraft.api.research.theorycraft.CardPonder";
+        eq(null, LegacyTheorycraftDisplayArgument.fieldKey(ponder));
+        eq(0, LegacyTheorycraftDisplayArgument.encode(ponder, "ALCHEMY"));
+        eq(null, LegacyTheorycraftDisplayArgument.fieldKey(null));
     }
 
     private static void testLegacyTheorycraftCardLocalization() {
