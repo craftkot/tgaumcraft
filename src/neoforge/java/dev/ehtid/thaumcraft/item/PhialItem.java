@@ -27,7 +27,6 @@ import java.util.List;
  */
 public final class PhialItem extends Item {
     public static final int CAPACITY = 10;
-    private static final String[] VARIANTS = {"empty", "filled"};
     private static final AspectRegistry BUILTIN = new AspectRegistry();
 
     public PhialItem(Properties properties) {
@@ -76,8 +75,11 @@ public final class PhialItem extends Item {
 
     @Override
     public Component getName(ItemStack stack) {
-        String variant = containedAspect(stack) == null ? VARIANTS[0] : VARIANTS[1];
-        return Component.translatable("item.thaumcraft.phial." + variant);
+        String aspect = containedAspect(stack);
+        return aspect == null
+                ? Component.translatable("item.phial.empty.name")
+                : Component.translatable("item.phial.filled.name",
+                        Component.translatable("tc.aspect." + aspect));
     }
 
     @Override
