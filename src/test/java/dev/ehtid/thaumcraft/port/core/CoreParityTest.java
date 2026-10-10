@@ -43,6 +43,7 @@ public final class CoreParityTest {
         testLegacyAlchemyTheoryCards();
         testLegacyLateTheoryCards();
         testLegacyMaterialTheoryCards();
+        testLegacyTheorycraftInventoryPlanner();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1062,6 +1063,102 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftInventoryPlanner() {
+        var plan = LegacyTheorycraftInventoryPlanner.plan(
+                List.of(new LegacyTheorycraftInventoryPlanner.Slot<>("paper", 2),
+                        new LegacyTheorycraftInventoryPlanner.Slot<>("paper", 1),
+                        new LegacyTheorycraftInventoryPlanner.Slot<>("ink", 1),
+                        new LegacyTheorycraftInventoryPlanner.Slot<String>(null, 0)),
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 2, true),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 1, true),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>("ink", 1, false)));
+        isTrue(plan != null);
+        eq(4, plan.slotCount());
+        eq(2, plan.consumedAt(0));
+        eq(1, plan.consumedAt(1));
+        eq(0, plan.consumedAt(2));
+        eq(0, plan.consumedAt(3));
+        eq(3, plan.totalConsumed());
+        int[] snapshot = plan.snapshot();
+        snapshot[0] = 777;
+        eq(2, plan.consumedAt(0));
+
+        // Original per-requirement checks accept BOTH identical 2-item costs
+        // against the same 2-item stack. A safe transaction must reject it.
+        var shortStack = List.of(new LegacyTheorycraftInventoryPlanner.Slot<>("paper", 2));
+        isTrue(LegacyTheorycraftInventoryPlanner.plan(shortStack,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 2, true),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 2, true)))
+                == null);
+        var exact = LegacyTheorycraftInventoryPlanner.plan(shortStack,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 1, true),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 1, true)));
+        isTrue(exact != null);
+        eq(2, exact.consumedAt(0));
+
+        // BETA26 separates a catalyst presence check from consumption: a
+        // catalyst may share its original stack with the spent ingredient.
+        var overlap = LegacyTheorycraftInventoryPlanner.plan(shortStack,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 2, false),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 2, true)));
+        isTrue(overlap != null);
+        eq(2, overlap.totalConsumed());
+        isTrue(LegacyTheorycraftInventoryPlanner.plan(shortStack,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 3, false)))
+                == null);
+
+        var empty = LegacyTheorycraftInventoryPlanner.plan(
+                List.<LegacyTheorycraftInventoryPlanner.Slot<String>>of(),
+                List.<LegacyTheorycraftInventoryPlanner.Ingredient<String>>of());
+        isTrue(empty != null);
+        eq(0, empty.slotCount());
+        eq(0, empty.totalConsumed());
+        eq(0, LegacyTheorycraftInventoryPlanner.plan(shortStack,
+                List.<LegacyTheorycraftInventoryPlanner.Ingredient<String>>of()).totalConsumed());
+        eq(null, LegacyTheorycraftInventoryPlanner.plan(
+                List.of(new LegacyTheorycraftInventoryPlanner.Slot<>("paper", 1)),
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>("ink", 1, true))));
+
+        // Value identity is not always enough; 1.12 aspects and 1.21 stack
+        // components must be included in the caller-supplied matcher.
+        record ComponentItem(String item, String aspect) {}
+        var air = new ComponentItem("thaumcraft:crystal_essence", "aer");
+        var fire = new ComponentItem("thaumcraft:crystal_essence", "ignis");
+        var itemSlots = List.of(new LegacyTheorycraftInventoryPlanner.Slot<>(air, 2),
+                new LegacyTheorycraftInventoryPlanner.Slot<>(fire, 1));
+        var needFire = List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>(fire, 2, true));
+        eq(null, LegacyTheorycraftInventoryPlanner.plan(itemSlots, needFire));
+        var mixed = LegacyTheorycraftInventoryPlanner.plan(itemSlots,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>(air, 1, true),
+                        new LegacyTheorycraftInventoryPlanner.Ingredient<>(fire, 1, true)));
+        isTrue(mixed != null);
+        eq(1, mixed.consumedAt(0));
+        eq(1, mixed.consumedAt(1));
+
+        // A custom matcher can implement relaxed NBT equivalence after that
+        // exception has been independently verified against the original.
+        var relaxed = LegacyTheorycraftInventoryPlanner.plan(itemSlots, needFire,
+                (left, right) -> left.item().equals(right.item()));
+        isTrue(relaxed != null);
+        eq(2, relaxed.consumedAt(0));
+
+        // Planner itself does not mutate inputs; all-or-nothing decisions
+        // remain possible even when requirements are repeated.
+        isTrue(LegacyTheorycraftInventoryPlanner.plan(itemSlots,
+                List.of(new LegacyTheorycraftInventoryPlanner.Ingredient<>(air, 3, true))) == null);
+        eq(2, itemSlots.get(0).count());
+        eq(1, itemSlots.get(1).count());
+
+        try {
+            new LegacyTheorycraftInventoryPlanner.Slot<>("paper", -1);
+            throw new AssertionError("negative inventory slots must fail");
+        } catch (IllegalArgumentException expected) { assertions++; }
+        try {
+            new LegacyTheorycraftInventoryPlanner.Ingredient<>("paper", 0, true);
+            throw new AssertionError("zero ingredient amount must fail");
+        } catch (IllegalArgumentException expected) { assertions++; }
     }
 
     private static void testLegacyMaterialTheoryCards() {
