@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.client;
 import dev.ehtid.thaumcraft.menu.ResearchTableMenu;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftCardLocalization;
 import net.minecraft.world.item.Items;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -147,7 +148,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 for (int i = 0; i < 3; i++) {
                     int code = menu.cardPreview(i);
                     if (code == 0) continue;
-                    String key = LegacyTheorycraftChoicePreview.displayClassName(code);
+                    String key = localizedCardTitle(code).getString();
                     String visible = font.plainSubstrByWidth(key, CARD_WIDTH - 6);
                     int x = CARD_FIRST_X + i * CARD_STRIDE;
                     graphics.drawString(font, visible, x + 3, CARD_Y + 6,
@@ -184,6 +185,17 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                         ThaumcraftReadableText.GREEN_TEXT, false);
             }
         }
+    }
+
+    private static Component localizedCardTitle(int preview) {
+        String key = LegacyTheorycraftChoicePreview.key(preview);
+        if (key == null) return Component.translatable("research_table.unknown_card");
+        String name = LegacyTheorycraftCardLocalization.nameKey(key);
+        // In BETA26 Study/Reject/Analyze/Channel include a category/aspect
+        // placeholder. The server currently syncs only card identity; do
+        // not falsely invent a category before actual subclass sync exists.
+        return LegacyTheorycraftCardLocalization.needsNameArgument(key)
+                ? Component.translatable(name, "…") : Component.translatable(name);
     }
 
     private boolean canStartTheory() {
@@ -284,7 +296,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 int y = topPos + CARD_Y;
                 if (mouseX >= x && mouseX < x + CARD_WIDTH
                         && mouseY >= y && mouseY < y + CARD_HEIGHT) {
-                    String name = LegacyTheorycraftChoicePreview.displayClassName(code);
+                    String name = localizedCardTitle(code).getString();
                     graphics.renderTooltip(font, Component.translatable(
                                     "research_table.card_preview_tooltip", name),
                             mouseX, mouseY);
