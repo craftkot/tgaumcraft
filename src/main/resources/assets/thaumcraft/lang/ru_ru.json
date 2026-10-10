@@ -49,6 +49,6 @@
   "research_table.aid.12": "Стол зачарований",
   "research_table.aid.13": "Маяк",
   "button.keep.theory": "Сохранить выбранную карту",
-  "research_table.card_preview": "Карты исследований (предпросмотр)",
+  "research_table.card_preview": "Карты (просмотр)",
   "research_table.card_preview_tooltip": "%s — пока только просмотр, применение карты недоступно"
 }
