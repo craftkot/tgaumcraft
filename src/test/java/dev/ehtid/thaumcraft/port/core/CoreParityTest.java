@@ -48,6 +48,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftChoicePreview();
         testLegacyTheorycraftCardMetadata();
         testLegacyTheorycraftCardFields();
+        testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1067,6 +1068,35 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftCardLocalization() {
+        java.util.Map<String, String> originalSpecial = java.util.Map.of(
+                "CardMindOverMatter", "card.mindmatter.name",
+                "CardDarkWhispers", "card.darkwhisper.name",
+                "CardGlyphs", "card.glyph.name");
+        java.util.Set<String> placeholders = java.util.Set.of(
+                "CardStudy", "CardReject", "CardAnalyze", "CardChannel");
+        java.util.Set<String> names = new java.util.HashSet<>();
+        for (String cls : LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER) {
+            String simple = cls.substring(cls.lastIndexOf('.') + 1);
+            String expected = originalSpecial.getOrDefault(simple,
+                    "card." + simple.substring(4).toLowerCase(java.util.Locale.ROOT) + ".name");
+            String actual = LegacyTheorycraftCardLocalization.nameKey(cls);
+            eq(expected, actual);
+            isTrue(names.add(actual));
+            eq(placeholders.contains(simple),
+                    LegacyTheorycraftCardLocalization.needsNameArgument(cls));
+        }
+        eq(33, names.size());
+        for (String unknown : java.util.List.of(
+                "thaumcraft.common.lib.research.theorycraft.CardTruth",
+                "thaumcraft.common.lib.research.theorycraft.CardDragonEgg")) {
+            try {
+                LegacyTheorycraftCardLocalization.nameKey(unknown);
+                throw new AssertionError("unregistered original card localized");
+            } catch (IllegalArgumentException expected) { assertions++; }
+        }
     }
 
     private static void testLegacyTheorycraftCardFields() {
