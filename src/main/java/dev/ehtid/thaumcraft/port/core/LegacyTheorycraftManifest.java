@@ -107,7 +107,11 @@ public final class LegacyTheorycraftManifest {
                 LegacyLateTheoryCards.DARK_WHISPERS,
                 LegacyLateTheoryCards.PORTAL,
                 LegacyLateTheoryCards.REVELATION,
-                LegacyLateTheoryCards.REALIZATION);
+                LegacyLateTheoryCards.REALIZATION,
+                LegacyMaterialTheoryCards.CURIO,
+                LegacyMaterialTheoryCards.MIND_OVER_MATTER,
+                LegacyMaterialTheoryCards.TINKER,
+                LegacyMaterialTheoryCards.INFUSE);
     }
 
     /** Unported original cards remain explicit development blockers. */
