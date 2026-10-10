@@ -128,5 +128,7 @@
   "tc.research_category.ARTIFICE": "Изобретения",
   "tc.research_category.INFUSION": "Наполнение",
   "tc.research_category.GOLEMANCY": "Големостроение",
-  "tc.research_category.ELDRITCH": "Потустороннее"
+  "tc.research_category.ELDRITCH": "Потустороннее",
+  "item.phial.empty.name": "Стеклянный пузырёк",
+  "item.phial.filled.name": "Пузырёк с эссенцией %s"
 }
