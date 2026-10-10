@@ -68,9 +68,10 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     private void renderAidCheckboxes(GuiGraphics graphics) {
         if (menu.hasSession()) return;
         for (int i = 0; i < AID_COUNT; i++) {
-            if (!menu.aidAvailable(i)) continue;
+            if (!menu.aidAvailable(i) && !menu.aidSelected(i)) continue;
             int x = leftPos + aidX(i), y = topPos + aidY(i);
-            int fill = menu.aidSelected(i) ? 0xEC3C6546 : 0xE3323129;
+            int fill = !menu.aidAvailable(i) ? 0xEC69312C
+                    : (menu.aidSelected(i) ? 0xEC3C6546 : 0xE3323129);
             graphics.fill(x, y, x + AID_WIDTH, y + AID_HEIGHT, 0xF3AA9A71);
             graphics.fill(x + 1, y + 1,
                     x + AID_WIDTH - 1, y + AID_HEIGHT - 1, fill);
@@ -128,7 +129,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             graphics.drawString(font, Component.translatable("research_table.aids"),
                     80, 86, ThaumcraftReadableText.TEXT, false);
             for (int i = 0; i < AID_COUNT; i++) {
-                if (!menu.aidAvailable(i)) continue;
+                if (!menu.aidAvailable(i) && !menu.aidSelected(i)) continue;
                 String label = Component.translatable("research_table.aid." + i).getString();
                 String visible = font.plainSubstrByWidth(label, AID_WIDTH - 11);
                 graphics.drawString(font, (menu.aidSelected(i) ? "✓" : "+")
@@ -180,7 +181,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         if (mouseButton == 0 && !menu.hasSession() && minecraft != null
                 && minecraft.gameMode != null) {
             for (int i = 0; i < AID_COUNT; i++) {
-                if (menu.aidAvailable(i)
+                if ((menu.aidAvailable(i) || menu.aidSelected(i))
                         && withinAid(i, mouseX, mouseY, leftPos, topPos)) {
                     minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 10 + i);
                     return true;
