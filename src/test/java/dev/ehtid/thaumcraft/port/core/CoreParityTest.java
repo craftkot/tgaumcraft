@@ -976,6 +976,7 @@ public final class CoreParityTest {
 
         var categories = List.of("BASICS", "ALCHEMY", "INFUSION");
         PlayerWarpData warp = new PlayerWarpData();
+        LegacyResearchTableData portalTable = new LegacyResearchTableData(10);
         Random portalRng = new Random(112L);
         Random portalExpected = new Random(112L);
         String p1 = categories.get(portalExpected.nextInt(categories.size()));
@@ -983,11 +984,11 @@ public final class CoreParityTest {
         String p2 = categories.get(portalExpected.nextInt(categories.size()));
         int a2 = 5 + portalExpected.nextInt(6);
         int eld = 5 + portalExpected.nextInt(6);
-        isTrue(LegacyLateTheoryCards.portal(table, warp, categories, portalRng));
-        eq(a1 + (p1.equals(p2) ? a2 : 0), table.getTotal(p1));
-        if (!p1.equals(p2)) eq(a2, table.getTotal(p2));
-        eq(eld, table.getTotal("ELDRITCH"));
-        eq(3, table.bonusDraws());
+        isTrue(LegacyLateTheoryCards.portal(portalTable, warp, categories, portalRng));
+        eq(a1 + (p1.equals(p2) ? a2 : 0), portalTable.getTotal(p1));
+        if (!p1.equals(p2)) eq(a2, portalTable.getTotal(p2));
+        eq(eld, portalTable.getTotal("ELDRITCH"));
+        eq(2, portalTable.bonusDraws());
         eq(5, warp.get(WarpType.TEMPORARY));
         eq(1, warp.get(WarpType.NORMAL));
         eq(portalExpected.nextInt(32768), portalRng.nextInt(32768));
