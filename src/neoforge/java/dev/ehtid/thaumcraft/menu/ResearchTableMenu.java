@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.menu;
 import dev.ehtid.thaumcraft.blockentity.ResearchTableBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -30,6 +31,9 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot hasSession;
     private final DataSlot inspiration;
     private final DataSlot inspirationStart;
+    private final DataSlot nearbyAidBits;
+    private final DataSlot selectedAidBits;
+    private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
 
     public ResearchTableMenu(int id, Inventory inventory) {
         this(id, inventory, new SimpleContainer(TABLE_SLOTS),
@@ -52,6 +56,20 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         addDataSlot(hasSession);
         addDataSlot(inspiration);
         addDataSlot(inspirationStart);
+        // Fourteen aid IDs fit inside one 16-bit vanilla DataSlot. Both masks
+        // are derived on the SERVER; clients only request index toggles.
+        nearbyAidBits = table instanceof ResearchTableBlockEntity live
+                ? new DataSlot() {
+                    @Override public int get() { return encodeAids(live.nearbyAids()); }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+        selectedAidBits = table instanceof ResearchTableBlockEntity
+                ? new DataSlot() {
+                    @Override public int get() { return encodeAids(selectedAidKeys); }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+        addDataSlot(nearbyAidBits);
+        addDataSlot(selectedAidBits);
         table.startOpen(inventory.player);
 
         addSlot(new Slot(table, ResearchTableBlockEntity.SCRIBING_SLOT, 16, 15) {
@@ -97,6 +115,27 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         };
     }
 
+    private static int encodeAids(java.util.Set<String> keys) {
+        int bits = 0;
+        var order = LegacyTheorycraftManifest.AID_REGISTRATION_ORDER;
+        for (int i = 0; i < order.size(); i++) {
+            if (keys.contains(order.get(i))) bits |= 1 << i;
+        }
+        return bits;
+    }
+
+    public boolean aidAvailable(int registrationIndex) {
+        return registrationIndex >= 0
+                && registrationIndex < LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.size()
+                && (nearbyAidBits.get() & (1 << registrationIndex)) != 0;
+    }
+
+    public boolean aidSelected(int registrationIndex) {
+        return registrationIndex >= 0
+                && registrationIndex < LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.size()
+                && (selectedAidBits.get() & (1 << registrationIndex)) != 0;
+    }
+
     public boolean hasSession() { return hasSession.get() != 0; }
     public int inspiration() { return inspiration.get(); }
     public int inspirationStart() { return inspirationStart.get(); }
@@ -115,12 +154,25 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         if (!(player instanceof ServerPlayer serverPlayer)
                 || !stillValid(serverPlayer)
                 || !(table instanceof ResearchTableBlockEntity researchTable)) return false;
+        if (buttonId >= 10 && buttonId < 10 + LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.size()) {
+            // A malicious client cannot select unsupported or absent helpers.
+            if (researchTable.session() != null) return false;
+            String key = LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.get(buttonId - 10);
+            if (!researchTable.nearbyAids().contains(key)) {
+                selectedAidKeys.remove(key);
+                broadcastChanges();
+                return false;
+            }
+            if (!selectedAidKeys.add(key)) selectedAidKeys.remove(key);
+            broadcastChanges();
+            return true;
+        }
         if (buttonId == 1) {
-            // Original GUI sends a separate PacketStartTheoryToServer carrying
-            // selected aid IDs. The selected-aid GUI is still being ported;
-            // for now an explicit click starts with the valid EMPTY aid set.
-            // The user can cancel without consuming paper or ink.
-            if (!researchTable.startNewTheory(serverPlayer, java.util.Set.of())) return false;
+            // Original GUI carries an aid SET to the server. Revalidate all
+            // chosen helpers against the live surroundings at action time.
+            if (!researchTable.startNewTheory(serverPlayer,
+                    new java.util.HashSet<>(selectedAidKeys))) return false;
+            selectedAidKeys.clear();
             broadcastChanges();
             return true;
         }
