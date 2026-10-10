@@ -30,6 +30,10 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     private static final int COMPLETE_X = 116, COMPLETE_Y = 96;
     private static final int SCRAP_X = 116, SCRAP_Y = 155;
     private static final int BUTTON_WIDTH = 132, BUTTON_HEIGHT = 18;
+    private static final int AID_FIRST_X = 76, AID_FIRST_Y = 95;
+    private static final int AID_COL_STRIDE = 87, AID_ROW_STRIDE = 11;
+    private static final int AID_WIDTH = 85, AID_HEIGHT = 11;
+    private static final int AID_COUNT = 14;
 
     public ResearchTableScreen(ResearchTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -57,6 +61,36 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         } else if (canStartTheory()) {
             renderOriginalButton(graphics, CREATE_X, CREATE_Y);
         }
+        renderAidCheckboxes(graphics);
+    }
+
+    /** An aid is selectable only after its real world object was found by the server. */
+    private void renderAidCheckboxes(GuiGraphics graphics) {
+        if (menu.hasSession()) return;
+        for (int i = 0; i < AID_COUNT; i++) {
+            if (!menu.aidAvailable(i)) continue;
+            int x = leftPos + aidX(i), y = topPos + aidY(i);
+            int fill = menu.aidSelected(i) ? 0xEC3C6546 : 0xE3323129;
+            graphics.fill(x, y, x + AID_WIDTH, y + AID_HEIGHT, 0xF3AA9A71);
+            graphics.fill(x + 1, y + 1,
+                    x + AID_WIDTH - 1, y + AID_HEIGHT - 1, fill);
+        }
+    }
+
+    private static int aidX(int index) {
+        return AID_FIRST_X + (index / 7) * AID_COL_STRIDE;
+    }
+
+    private static int aidY(int index) {
+        return AID_FIRST_Y + (index % 7) * AID_ROW_STRIDE;
+    }
+
+    private static boolean withinAid(int index, double mouseX, double mouseY,
+                                     int left, int top) {
+        return mouseX >= left + aidX(index)
+                && mouseX < left + aidX(index) + AID_WIDTH
+                && mouseY >= top + aidY(index)
+                && mouseY < top + aidY(index) + AID_HEIGHT;
     }
 
     @Override
@@ -90,6 +124,16 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             if (canStartTheory()) {
                 renderButtonText(graphics, CREATE_X, CREATE_Y,
                         Component.translatable("button.create.theory"));
+            }
+            graphics.drawString(font, Component.translatable("research_table.aids"),
+                    80, 86, ThaumcraftReadableText.TEXT, false);
+            for (int i = 0; i < AID_COUNT; i++) {
+                if (!menu.aidAvailable(i)) continue;
+                String label = Component.translatable("research_table.aid." + i).getString();
+                String visible = font.plainSubstrByWidth(label, AID_WIDTH - 11);
+                graphics.drawString(font, (menu.aidSelected(i) ? "✓" : "+")
+                                + visible, aidX(i) + 2, aidY(i) + 1,
+                        ThaumcraftReadableText.GREEN_TEXT, false);
             }
         }
     }
@@ -133,6 +177,16 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1);
             return true;
         }
+        if (mouseButton == 0 && !menu.hasSession() && minecraft != null
+                && minecraft.gameMode != null) {
+            for (int i = 0; i < AID_COUNT; i++) {
+                if (menu.aidAvailable(i)
+                        && withinAid(i, mouseX, mouseY, leftPos, topPos)) {
+                    minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 10 + i);
+                    return true;
+                }
+            }
+        }
         if (mouseButton == 0 && menu.hasSession() && minecraft != null
                 && minecraft.gameMode != null) {
             int x = menu.inspiration() <= 0 ? COMPLETE_X : SCRAP_X;
@@ -155,6 +209,17 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         renderTooltip(graphics, mouseX, mouseY);
         // Full unshortened translation on hover, even if a long modded
         // language pack cannot fit the enlarged button's single line.
+        if (!menu.hasSession()) {
+            for (int i = 0; i < AID_COUNT; i++) {
+                if (menu.aidAvailable(i)
+                        && withinAid(i, mouseX, mouseY, leftPos, topPos)) {
+                    graphics.renderTooltip(font,
+                            Component.translatable("research_table.aid." + i),
+                            mouseX, mouseY);
+                    return;
+                }
+            }
+        }
         Component button = null;
         int x, y;
         if (!menu.hasSession() && canStartTheory()) {
