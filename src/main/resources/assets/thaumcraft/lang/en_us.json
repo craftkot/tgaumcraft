@@ -47,5 +47,6 @@
   "research_table.aid.10": "Golem Builder",
   "research_table.aid.11": "Eldritch Block",
   "research_table.aid.12": "Enchanting Table",
-  "research_table.aid.13": "Beacon"
+  "research_table.aid.13": "Beacon",
+  "button.keep.theory": "Keep Selected Card"
 }
