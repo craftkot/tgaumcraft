@@ -159,6 +159,23 @@ jobs:
               entries = json.loads((assets / "lang" / (language + ".json")).read_text())
               for short in original_cards:
                   assert "card." + short + ".name" in entries, (language, short)
+              # BETA26 preserves the actual study/reject/analyze category
+              # and channel aspect names; translated names must be present
+              # or the client prints untranslated keys on selected cards.
+              categories = ["BASICS", "AUROMANCY", "ALCHEMY", "ARTIFICE",
+                            "INFUSION", "GOLEMANCY", "ELDRITCH"]
+              aspects = ("aer terra ignis aqua ordo perditio vacuos lux motus "
+                         "gelum vitreus metallum victus mortuus potentia "
+                         "permutatio praecantatio auram alkimia vitium "
+                         "tenebrae alienis volatus herba instrumentum "
+                         "fabrico machina vinculum spiritus cognitio "
+                         "sensus aversio praemunio desiderium exanimis "
+                         "bestia humanus").split()
+              assert len(aspects) == 37
+              for category in categories:
+                  assert entries.get("tc.research_category." + category), (language, category)
+              for aspect in aspects:
+                  assert entries.get("tc.aspect." + aspect), (language, aspect)
               for key in ("button.keep.theory", "research_table.card_preview",
                           "research_table.card_preview_tooltip",
                           "research_table.unknown_card", "research_table.aids"):
