@@ -40,6 +40,7 @@ public final class CoreParityTest {
         testLegacySpecialtyTheoryCards();
         testLegacyAlchemyTheoryCards();
         testLegacyLateTheoryCards();
+        testLegacyMaterialTheoryCards();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1061,6 +1062,116 @@ public final class CoreParityTest {
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
     }
 
+    private static void testLegacyMaterialTheoryCards() {
+        for (String key : new String[]{
+                LegacyMaterialTheoryCards.CURIO,
+                LegacyMaterialTheoryCards.MIND_OVER_MATTER,
+                LegacyMaterialTheoryCards.TINKER,
+                LegacyMaterialTheoryCards.INFUSE
+        }) isTrue(LegacyTheorycraftManifest.portedCoreCards().contains(key));
+        eq(1, LegacyMaterialTheoryCards.INSPIRATION_COST);
+        eq(18, LegacyMaterialTheoryCards.ARTIFICE_OPTION_COUNT);
+        eq(31, LegacyMaterialTheoryCards.INFUSE_OPTION_COUNT);
+        eq(java.util.List.of("arcane", "preserved", "ancient", "eldritch",
+                "knowledge", "twisted", "rites"),
+                LegacyMaterialTheoryCards.CURIO_VARIANTS);
+
+        isTrue(LegacyMaterialTheoryCards.initializeCurio(List.of(-1, -1, -1), 12L) == null);
+        var inventory = java.util.List.of(-1, 0, 5, -1, 0, 6, -1);
+        for (long seed : new long[]{0L, 1L, 42L, 77L, Long.MAX_VALUE}) {
+            int pos = new Random(seed).nextInt(4);
+            int slot = new int[]{1,2,4,5}[pos];
+            var selection = LegacyMaterialTheoryCards.initializeCurio(inventory, seed);
+            eq(slot, selection.mainInventorySlot());
+            eq(inventory.get(slot), Integer.valueOf(selection.variantMetadata()));
+            eq(LegacyMaterialTheoryCards.CURIO_VARIANTS.get(selection.variantMetadata()),
+                    selection.variantName());
+
+            int expectedIndex = new Random(seed).nextInt(18);
+            eq(expectedIndex, LegacyMaterialTheoryCards.initializeArtificeOption(seed));
+            var aspects = new AspectRegistry();
+            Random expectedInfuse = new Random(seed);
+            var compounds = aspects.compoundAspects();
+            var expectedAspect = compounds.get(expectedInfuse.nextInt(compounds.size()));
+            int expectedOption = expectedInfuse.nextInt(31);
+            var infuseChoice = LegacyMaterialTheoryCards.initializeInfuse(aspects, seed);
+            eq(expectedAspect, infuseChoice.aspect());
+            eq(expectedOption, infuseChoice.itemOptionIndex());
+        }
+        eq(0, LegacyMaterialTheoryCards.tinkerBaseValue(0));
+        eq(3, LegacyMaterialTheoryCards.tinkerBaseValue(15));
+        eq(10, LegacyMaterialTheoryCards.mindOverMatterReward(0));
+        eq(13, LegacyMaterialTheoryCards.mindOverMatterReward(15));
+        eq(15, LegacyMaterialTheoryCards.mindOverMatterReward(25));
+        eq(10, LegacyMaterialTheoryCards.infuseReward(0));
+        eq(14, LegacyMaterialTheoryCards.infuseReward(9));
+        eq(25, LegacyMaterialTheoryCards.infuseReward(100));
+        eq(10, LegacyMaterialTheoryCards.fallbackReward(
+                LegacyMaterialTheoryCards.MIND_OVER_MATTER));
+        eq(0, LegacyMaterialTheoryCards.fallbackReward(
+                LegacyMaterialTheoryCards.TINKER));
+        eq(10, LegacyMaterialTheoryCards.fallbackReward(
+                LegacyMaterialTheoryCards.INFUSE));
+
+        LegacyResearchTableData table = new LegacyResearchTableData(5);
+        LegacyMaterialTheoryCards.mindOverMatterAfterItemConsumed(table, 16);
+        eq(14, table.getTotal("ARTIFICE"));
+        Random expectedTinker = new Random(71L);
+        int randomTinker = expectedTinker.nextInt(11);
+        Random actualTinker = new Random(71L);
+        LegacyMaterialTheoryCards.tinkerWithRequiredItem(table, 81, actualTinker);
+        eq(14 + 18 + randomTinker, table.getTotal("ARTIFICE"));
+        eq(expectedTinker.nextInt(200), actualTinker.nextInt(200));
+        LegacyMaterialTheoryCards.infuseAfterBothItemsConsumed(table, 16);
+        eq(16, table.getTotal("INFUSION"));
+
+        var cats = List.of("BASICS", "ARTIFICE", "ELDRITCH");
+        for (int variant = 0; variant < 7; variant++) {
+            long seed = 131L + variant;
+            Random expected = new Random(seed);
+            Random actual = new Random(seed);
+            String picked = cats.get(expected.nextInt(cats.size()));
+            int first = 0;
+            int second = 0;
+            String extraCategory = switch (variant) {
+                case 0 -> "AUROMANCY";
+                case 1 -> "ALCHEMY";
+                case 2 -> "GOLEMANCY";
+                case 3 -> "ELDRITCH";
+                case 4 -> "INFUSION";
+                case 5 -> "ARTIFICE";
+                default -> null;
+            };
+            if (variant == 6) {
+                first = 15 + expected.nextInt(6);
+                second = 10 + expected.nextInt(6);
+            } else {
+                first = 25 + expected.nextInt(11);
+            }
+            int bonus = (expected.nextBoolean() ? 1 : 0)
+                    + (expected.nextBoolean() ? 1 : 0);
+            LegacyResearchTableData t = new LegacyResearchTableData(5);
+            isTrue(LegacyMaterialTheoryCards.curioAfterItemConsumed(t, variant, cats, actual));
+            eq(5 + (picked.equals("BASICS") ? 5 : 0), t.getTotal("BASICS"));
+            eq(5 * (picked.equals("ARTIFICE") ? 1 : 0)
+                    + (variant == 5 ? first : 0), t.getTotal("ARTIFICE"));
+            eq(5 * (picked.equals("ELDRITCH") ? 1 : 0)
+                    + (variant == 3 || variant == 6 ? first : 0), t.getTotal("ELDRITCH"));
+            if (extraCategory != null && !cats.contains(extraCategory))
+                eq(first, t.getTotal(extraCategory));
+            if (variant == 6) eq(second, t.getTotal("AUROMANCY"));
+            eq(bonus, t.bonusDraws());
+            eq(expected.nextInt(1000), actual.nextInt(1000));
+        }
+
+        var empty = new LegacyResearchTableData(5);
+        Random noRoll = new Random(17L);
+        isFalse(LegacyMaterialTheoryCards.curioAfterItemConsumed(empty, 7, cats, noRoll));
+        isFalse(LegacyMaterialTheoryCards.curioAfterItemConsumed(empty, 0, List.of(), noRoll));
+        eq(java.util.Map.of(), empty.categoryTotals());
+        eq(new Random(17L).nextInt(1000), noRoll.nextInt(1000));
+    }
+
     private static void testLegacyTheorycraftInspiration() {
         ResearchCatalog catalog = new ResearchCatalog();
         var singleStage = java.util.List.of(new ResearchStageData(
@@ -1705,16 +1816,14 @@ public final class CoreParityTest {
         // Same original HashMap initialization is deterministic within JVM.
         eq(originalHashOrder, LegacyTheorycraftManifest.cardsInHashMapIterationOrder());
         eq(14, LegacyTheorycraftManifest.aidsInHashMapIterationOrder().size());
-        eq(29, LegacyTheorycraftManifest.portedCoreCards().size());
-        eq(4, LegacyTheorycraftManifest.missingCoreCards().size());
+        eq(33, LegacyTheorycraftManifest.portedCoreCards().size());
+        eq(0, LegacyTheorycraftManifest.missingCoreCards().size());
         isTrue(LegacyTheorycraftManifest.allCardKeys()
                 .containsAll(LegacyTheorycraftManifest.portedCoreCards()));
         eq(33, LegacyTheorycraftManifest.portedCoreCards().size()
                 + LegacyTheorycraftManifest.missingCoreCards().size());
-        eq("thaumcraft.common.lib.research.theorycraft.CardCurio",
-                LegacyTheorycraftManifest.missingCoreCards().get(0));
-        eq("thaumcraft.common.lib.research.theorycraft.CardInfuse",
-                LegacyTheorycraftManifest.missingCoreCards().get(3));
+        isTrue(LegacyTheorycraftManifest.missingCoreCards().isEmpty());
+        eq(LegacyTheorycraftManifest.allCardKeys(), LegacyTheorycraftManifest.portedCoreCards());
 
         for (String key : new String[]{
                 LegacyBasicTheoryCards.PONDER_KEY,
