@@ -268,3 +268,14 @@ On opening a new chat, say:
 - Next priority: build real NeoForge block/pick-stack/entity adapter for only grounded world objects, expose eligible aid list to client UI and allow genuine user selection, then finish original 33-card draw/activation/serialization and inventory transactions. The Research Table UI is NOT finished.
 - Original Moon-phase sky scan remains unchanged and user random-uncollected-note option deferred to final polish; readable GUI changes remain.
 - Overall estimate **69% only after core + Gradle + server CI passes**. The 14/14 aid pools are loader-independent calculations, not proof of playability.
+
+## 2026-10-10 continuation: live NeoForge aide selection (70% estimate once latest CI green)
+
+- Fresh-read GitHub main and existing handoff, confirmed preceding source/test commits passed CI.
+- 5b68962: new NeoForgeTheorycraftAidBridge connects original 9x9x3 legacy scanner to real world BlockStates. Supports bookshelf, Nether/End portal, enchanting table, beacon and the ported arcane workbench. Missing Thaumcraft blocks / crimson portal entity not replaced or faked.
+- 0ade42e: ResearchTableBlockEntity caches nearby aid detection 20 ticks to avoid repeated 3400-probe scans, and ALWAYS rescans at session start to reject vanished or forged aid selections.
+- 2f2611e / 7a3f982: ResearchTableMenu exposes 14 aid choices as two synchronized DataSlot bitmasks; menu buttons 10..23 toggle aids only when valid, allow deselection after disappearance, and original button 1 starts with actual selected aids. Original card draw/activation buttons 2..6 remain disabled pending safe card-class and inventory transaction wiring.
+- cab31d7 / 95deb42: original 256x256 ResearchTableScreen now shows two-column selectable readable aid names with server-validated clicking, red highlights for missing selected blocks and localized tooltips. en_us/ru_ru translations in 37b8b11 / 4fe5808.
+- CI prior source-only adapter + blockentity + menu changes fully green. Verify latest UI and language commits against core parity, NeoForge build, dedicated-server smoke before claiming all green.
+- Still NOT fully playable: 33 original card class mathematical effects are not yet wired to GUI, original subtype NBT/material transactions not implemented, 8 of 14 possible aid objects still unported and actual client manual testing not performed.
+- Do not silently enable fake CardChoice results; preserve moon-scan original phase behavior until optional final polish.
