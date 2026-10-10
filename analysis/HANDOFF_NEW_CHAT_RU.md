@@ -236,3 +236,12 @@ For every meaningful code commit:
 ## New-chat start instruction
 On opening a new chat, say:
 `Продолжай Thaumcraft по analysis/HANDOFF_NEW_CHAT_RU.md из craftkot/tgaumcraft. Сначала fresh-read main и handoff, затем сразу продолжай работу. Не начинай заново. Пиши краткую сводку на простом русском и итоговый процент.`
+
+## 2026-10-10 next continuation — seven missing card cores (estimated 67% after CI)
+- Fresh-read GitHub main from 849da731; original JAR materialized from user Library and CardEnchantment/CardBeacon/CardSpellbinding/CardDarkWhispers/CardPortal/CardRevelation/CardRealization bytecode audited with javap -c -p.
+- Added `LegacyLateTheoryCards.java` with exact 1.12 inspirations (including beacon -2 and portal -1), aid-only metadata, enchant/spellbinding XP gating and math, DarkWhispers full per-category RNG and XP-derived ELDRITCH/Warp, portal/revelation/realization ordered random draws, bonus draw and penalty effects.
+- XP-based functions are intentionally named After...Spent/After...Debited: pure-Java core effects only. **Server XP removal is NOT yet wired to real GUI**. Do not treat XP effects as playable.
+- `LegacyTheorycraftManifest.portedCoreCards()` now tracks **29/33**, with exactly 4 remaining: CardCurio, CardMindOverMatter, CardTinker, CardInfuse. Original CARD_REGISTRATION_ORDER remains exactly 33 in unchanged order; an intermediate erroneous 36-registration commit was corrected at `e8d94bd8`.
+- `CoreParityTest` now tests 7 cards and original Java RNG order, warp, XP math, empty categories, and pool counts. The manifest/test/doc files were updated through commits `9a0ed729` → `e8d94bd8`, documentation `cf2789d0`. **Check latest GitHub Actions outcomes before claiming green**. Code-only first commit `9a0ed729` CI passed; `e8d94bd8` was progressing through server smoke at last read.
+- Next: finish four remaining bytecode/NBT/material-card cores, then wire original table selection/draw buttons with all cards (never substitute partial cards) and 14 real aids. Client manual verification still missing.
+- User requested percent only on this turn, but do not confuse 29/33 cards with 67% complete interactive mod; full port completion estimate conservative 67% subject to green CI.
