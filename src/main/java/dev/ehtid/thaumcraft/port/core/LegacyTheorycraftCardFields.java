@@ -14,7 +14,7 @@ import java.util.Objects;
 public final class LegacyTheorycraftCardFields {
     private LegacyTheorycraftCardFields() {}
 
-    public enum Type { STRING, INT, ITEM_STACK }
+    public enum Type { STRING, INT, LONG, ITEM_STACK }
     public record Field(String key, Type type) {
         public Field {
             if (key == null || key.isEmpty()) throw new IllegalArgumentException("NBT key");
@@ -49,7 +49,7 @@ public final class LegacyTheorycraftCardFields {
     }
 
     /** CardChoice.cardNBT always includes superclass seed (NBT long). */
-    public static Field baseSeed() { return new Field("seed", Type.INT); }
+    public static Field baseSeed() { return new Field("seed", Type.LONG); }
 
     /** Exactly fourteen registered BETA26 subclasses extend serialization. */
     public static boolean hasAdditionalFields(String cardKey) {
