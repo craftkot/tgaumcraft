@@ -32,5 +32,20 @@
   "item.thaumcraft.research_table": "Исследовательский стол",
   "button.complete.theory": "Завершить теорию",
   "button.scrap.theory": "Порвать теорию",
-  "button.create.theory": "Создать теорию"
+  "button.create.theory": "Создать теорию",
+  "research_table.aids": "Исследовательские помощники рядом",
+  "research_table.aid.0": "Книжная полка",
+  "research_table.aid.1": "Мозг в банке",
+  "research_table.aid.2": "Рунный камень",
+  "research_table.aid.3": "Портал Энда",
+  "research_table.aid.4": "Портал Незера",
+  "research_table.aid.5": "Багровый портал",
+  "research_table.aid.6": "Тигель",
+  "research_table.aid.7": "Магический верстак",
+  "research_table.aid.8": "Матрица наполнения",
+  "research_table.aid.9": "Манипулятор фокусов",
+  "research_table.aid.10": "Сборщик големов",
+  "research_table.aid.11": "Жуткий блок",
+  "research_table.aid.12": "Стол зачарований",
+  "research_table.aid.13": "Маяк"
 }
