@@ -36,6 +36,7 @@ public final class CoreParityTest {
         testLegacyAdditionalTheoryCards();
         testLegacyTheorycraftManifest();
         testLegacyTheorycraftAidCards();
+        testLegacyTheorycraftAidScanner();
         testLegacyTheorycraftMiscCards();
         testLegacyCardAnalyzeBugfix();
         testLegacySpecialtyTheoryCards();
@@ -1788,6 +1789,56 @@ public final class CoreParityTest {
         eq(5, awareness.getTotal("ELDRITCH"));
         eq(1, warp.get(WarpType.NORMAL));
         eq(0, warp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftAidScanner() {
+        String shelf = "thaumcraft.api.research.theorycraft.AidBookshelf";
+        String beacon = "thaumcraft.common.lib.research.theorycraft.AidBeacon";
+        String crimson = "thaumcraft.common.lib.research.theorycraft.AidPortal$AidPortalCrimson";
+        eq(LegacyTheorycraftAidScanner.Kind.BLOCK,
+                LegacyTheorycraftAidScanner.kind(shelf));
+        eq(LegacyTheorycraftAidScanner.Kind.PICKED_STACK,
+                LegacyTheorycraftAidScanner.kind(beacon));
+        eq(LegacyTheorycraftAidScanner.Kind.ENTITY_CLASS,
+                LegacyTheorycraftAidScanner.kind(crimson));
+        eq(null, LegacyTheorycraftAidScanner.kind("not_a_real_aid"));
+        int[] blockCalls = {0};
+        int[] entityCalls = {0};
+        var observed = LegacyTheorycraftAidScanner.scan(
+                new LegacyTheorycraftAidScanner.Probe() {
+                    @Override public boolean matches(String key,
+                            LegacyTheorycraftAidScanner.Kind kind, int x, int y, int z) {
+                        blockCalls[0]++;
+                        if (kind == LegacyTheorycraftAidScanner.Kind.ENTITY_CLASS)
+                            throw new AssertionError("entity aid tested as block");
+                        if (x < -4 || x > 4 || y < -1 || y > 1 || z < -4 || z > 4)
+                            throw new AssertionError("original aid scan bounds");
+                        return (key.equals(shelf) && x == -4 && y == -1 && z == 4)
+                                || (key.equals(beacon) && x == 4 && y == 1 && z == -4);
+                    }
+                    @Override public boolean hasEntity(String key, double radius) {
+                        entityCalls[0]++;
+                        eq(crimson, key);
+                        eq(5.0D, radius);
+                        return true;
+                    }
+                });
+        eq(java.util.Set.of(shelf, beacon, crimson), observed);
+        eq(13 * 3 * 9 * 9, blockCalls[0]);
+        eq(1, entityCalls[0]);
+        eq(3, observed.size());
+
+        var none = LegacyTheorycraftAidScanner.scan(
+                new LegacyTheorycraftAidScanner.Probe() {
+                    @Override public boolean matches(String key,
+                            LegacyTheorycraftAidScanner.Kind kind, int x, int y, int z) {
+                        return false;
+                    }
+                    @Override public boolean hasEntity(String key, double radius) {
+                        return false;
+                    }
+                });
+        eq(java.util.Set.of(), none);
     }
 
     private static void testLegacyTheorycraftAidCards() {
