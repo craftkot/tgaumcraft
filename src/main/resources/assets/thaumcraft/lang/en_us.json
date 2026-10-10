@@ -32,5 +32,20 @@
   "item.thaumcraft.research_table": "Research Table",
   "button.complete.theory": "Complete Theory",
   "button.scrap.theory": "Scrap Theory",
-  "button.create.theory": "Create Theory"
+  "button.create.theory": "Create Theory",
+  "research_table.aids": "Nearby research aids (select)",
+  "research_table.aid.0": "Bookshelf",
+  "research_table.aid.1": "Brain in a Jar",
+  "research_table.aid.2": "Glyphed Stone",
+  "research_table.aid.3": "End Portal",
+  "research_table.aid.4": "Nether Portal",
+  "research_table.aid.5": "Crimson Portal",
+  "research_table.aid.6": "Crucible",
+  "research_table.aid.7": "Arcane Workbench",
+  "research_table.aid.8": "Infusion Matrix",
+  "research_table.aid.9": "Focal Manipulator",
+  "research_table.aid.10": "Golem Builder",
+  "research_table.aid.11": "Eldritch Block",
+  "research_table.aid.12": "Enchanting Table",
+  "research_table.aid.13": "Beacon"
 }
