@@ -128,5 +128,7 @@
   "tc.research_category.ARTIFICE": "Artifice",
   "tc.research_category.INFUSION": "Arcane Infusion",
   "tc.research_category.GOLEMANCY": "Golemancy",
-  "tc.research_category.ELDRITCH": "Eldritch"
+  "tc.research_category.ELDRITCH": "Eldritch",
+  "item.phial.empty.name": "Glass Phial",
+  "item.phial.filled.name": "Phial of %s Essentia"
 }
