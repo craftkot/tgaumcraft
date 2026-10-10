@@ -45,6 +45,7 @@ public final class CoreParityTest {
         testLegacyMaterialTheoryCards();
         testLegacyTheorycraftInventoryPlanner();
         testLegacyTheorycraftChoiceFlow();
+        testLegacyTheorycraftChoicePreview();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1064,6 +1065,45 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftChoicePreview() {
+        var original = LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER;
+        eq(33, original.size());
+        eq(0, LegacyTheorycraftChoicePreview.encode(null, true, true));
+        eq(0, LegacyTheorycraftChoicePreview.id(0));
+        isFalse(LegacyTheorycraftChoicePreview.fromAid(0));
+        isFalse(LegacyTheorycraftChoicePreview.selected(0));
+        eq("", LegacyTheorycraftChoicePreview.displayClassName(0));
+        eq(null, LegacyTheorycraftChoicePreview.key(0));
+        for (int i = 0; i < original.size(); i++) {
+            String card = original.get(i);
+            String simple = card.substring(card.lastIndexOf('.') + 1).substring(4);
+            for (boolean aid : new boolean[]{false, true}) {
+                for (boolean selected : new boolean[]{false, true}) {
+                    int packed = LegacyTheorycraftChoicePreview.encode(card, aid, selected);
+                    between(packed, 1, 255);
+                    eq(i + 1, LegacyTheorycraftChoicePreview.id(packed));
+                    eq(card, LegacyTheorycraftChoicePreview.key(packed));
+                    eq(aid, LegacyTheorycraftChoicePreview.fromAid(packed));
+                    eq(selected, LegacyTheorycraftChoicePreview.selected(packed));
+                    isFalse(LegacyTheorycraftChoicePreview.unknown(packed));
+                    eq(simple, LegacyTheorycraftChoicePreview.displayClassName(packed));
+                }
+            }
+        }
+        int unknown = LegacyTheorycraftChoicePreview.encode("unregistered.CardTruth", true, true);
+        eq(63, LegacyTheorycraftChoicePreview.id(unknown));
+        eq(null, LegacyTheorycraftChoicePreview.key(unknown));
+        isTrue(LegacyTheorycraftChoicePreview.unknown(unknown));
+        isTrue(LegacyTheorycraftChoicePreview.selected(unknown));
+        isTrue(LegacyTheorycraftChoicePreview.fromAid(unknown));
+        eq("Unknown card", LegacyTheorycraftChoicePreview.displayClassName(unknown));
+        eq(null, LegacyTheorycraftChoicePreview.key(34));
+        eq(null, LegacyTheorycraftChoicePreview.key(62));
+        // Bits above vanilla's 8-bit preview value cannot forge a registered
+        // card identity and are never used for game logic anyway.
+        eq(original.get(0), LegacyTheorycraftChoicePreview.key(1 | (1 << 9)));
     }
 
     private static void testLegacyTheorycraftChoiceFlow() {
