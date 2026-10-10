@@ -52,6 +52,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftRequiredItems();
         testLegacyTheorycraftOriginalOptionPools();
+        testLegacyTheorycraftVanillaOptionIds();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1071,6 +1072,80 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftVanillaOptionIds() {
+        var mapped = LegacyTheorycraftVanillaOptionIds.all();
+        eq(38, mapped.size());
+        eq("minecraft:anvil", mapped.get("Blocks.field_150467_bQ"));
+        eq("minecraft:activator_rail", mapped.get("Blocks.field_150408_cc"));
+        eq("minecraft:dispenser", mapped.get("Blocks.field_150367_z"));
+        eq("minecraft:dropper", mapped.get("Blocks.field_150409_cd"));
+        eq("minecraft:enchanting_table", mapped.get("Blocks.field_150381_bn"));
+        eq("minecraft:ender_chest", mapped.get("Blocks.field_150477_bB"));
+        eq("minecraft:jukebox", mapped.get("Blocks.field_150421_aI"));
+        eq("minecraft:daylight_detector", mapped.get("Blocks.field_150453_bW"));
+        eq("minecraft:piston", mapped.get("Blocks.field_150331_J"));
+        eq("minecraft:hopper", mapped.get("Blocks.field_150438_bZ"));
+        eq("minecraft:sticky_piston", mapped.get("Blocks.field_150320_F"));
+        eq("minecraft:white_wool", mapped.get("Blocks.field_150325_L"));
+        eq("minecraft:map", mapped.get("Items.field_151148_bJ"));
+        eq("minecraft:compass", mapped.get("Items.field_151111_aL"));
+        eq("minecraft:tnt_minecart", mapped.get("Items.field_151142_bV"));
+        eq("minecraft:comparator", mapped.get("Items.field_151132_bS"));
+        eq("minecraft:clock", mapped.get("Items.field_151113_aN"));
+        eq("minecraft:gold_ingot", mapped.get("Items.field_151043_k"));
+        eq("minecraft:iron_ingot", mapped.get("Items.field_151042_j"));
+        eq("minecraft:diamond", mapped.get("Items.field_151045_i"));
+        eq("minecraft:emerald", mapped.get("Items.field_151166_bC"));
+        eq("minecraft:blaze_rod", mapped.get("Items.field_151072_bj"));
+        eq("minecraft:leather", mapped.get("Items.field_151116_aA"));
+        eq("minecraft:brick", mapped.get("Items.field_151118_aC"));
+        eq("minecraft:arrow", mapped.get("Items.field_151032_g"));
+        eq("minecraft:egg", mapped.get("Items.field_151110_aK"));
+        eq("minecraft:feather", mapped.get("Items.field_151008_G"));
+        eq("minecraft:glowstone_dust", mapped.get("Items.field_151114_aO"));
+        eq("minecraft:redstone", mapped.get("Items.field_151137_ax"));
+        eq("minecraft:ghast_tear", mapped.get("Items.field_151073_bk"));
+        eq("minecraft:gunpowder", mapped.get("Items.field_151016_H"));
+        eq("minecraft:bow", mapped.get("Items.field_151031_f"));
+        eq("minecraft:golden_sword", mapped.get("Items.field_151010_B"));
+        eq("minecraft:iron_sword", mapped.get("Items.field_151040_l"));
+        eq("minecraft:iron_pickaxe", mapped.get("Items.field_151035_b"));
+        eq("minecraft:golden_pickaxe", mapped.get("Items.field_151005_D"));
+        eq("minecraft:quartz", mapped.get("Items.field_151128_bU"));
+        eq("minecraft:apple", mapped.get("Items.field_151034_e"));
+
+        var allOriginal = new java.util.ArrayList<LegacyTheorycraftOptionPools.Option>();
+        allOriginal.addAll(LegacyTheorycraftOptionPools.ARTIFICE);
+        allOriginal.addAll(LegacyTheorycraftOptionPools.INFUSION);
+        int originalVanillaEntries = 0, originalTcEntries = 0;
+        java.util.HashSet<String> sources = new java.util.HashSet<>();
+        for (var option : allOriginal) {
+            String modern = LegacyTheorycraftVanillaOptionIds.modernId(option);
+            if (option.kind() == LegacyTheorycraftOptionPools.SourceKind.VANILLA_ITEM
+                    || option.kind() == LegacyTheorycraftOptionPools.SourceKind.VANILLA_BLOCK) {
+                originalVanillaEntries++;
+                isTrue(modern != null && modern.startsWith("minecraft:"));
+                isTrue(sources.add(option.historicalField()));
+                eq(-1, option.metadata());
+            } else {
+                originalTcEntries++;
+                eq(null, modern);
+            }
+        }
+        eq(38, originalVanillaEntries);
+        eq(11, originalTcEntries);
+        eq(mapped.keySet(), sources);
+        eq(38, new java.util.HashSet<>(mapped.values()).size());
+        // The old one-color wool registry is now 16 block IDs. Original
+        // default item damage zero is white wool only.
+        isFalse(mapped.containsValue("minecraft:wool"));
+        isFalse(mapped.containsValue("minecraft:filled_map"));
+        try {
+            mapped.put("Blocks.fake", "minecraft:stone");
+            throw new AssertionError("original static ID mapping must be immutable");
+        } catch (UnsupportedOperationException expected) { assertions++; }
     }
 
     private static void testLegacyTheorycraftOriginalOptionPools() {
