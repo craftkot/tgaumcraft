@@ -193,7 +193,7 @@ jobs:
           assert filled["textures"]["layer1"] == "thaumcraft:item/phial_overlay"
           for name in ("phial", "phial_overlay"):
               data = (assets / "textures/item" / (name + ".png")).read_bytes()
-              assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n", name
+              assert data[:8] == bytes([137,80,78,71,13,10,26,10]), name
               assert len(data) > 100, name
           for language in ("en_us", "ru_ru"):
               entries = json.loads((assets / "lang" / (language + ".json")).read_text())
