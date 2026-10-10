@@ -197,12 +197,19 @@ public final class LegacyResearchTableData {
     }
 
     /**
-     * Called by the card-selection layer after successfully activating a card.
-     * This accounting is separate from CardCelestial.activate itself.
+     * BETA26 ContainerResearchTable button 4..6 subtracts the activated
+     * card's signed cost AFTER activation returns true; it does NOT increment
+     * ResearchTableData.placedCards. That scalar exists in serialized data but
+     * isn't modified by the original container's selection logic.
      */
-    public void consumeInspirationAndPlaceCard(int cost) {
+    public void consumeInspirationAfterActivation(int cost) {
         addInspiration(-cost);
-        placedCards++;
+    }
+
+    /** Compatibility for earlier port callers; no phantom placedCards increment. */
+    @Deprecated
+    public void consumeInspirationAndPlaceCard(int cost) {
+        consumeInspirationAfterActivation(cost);
     }
 
     /**
