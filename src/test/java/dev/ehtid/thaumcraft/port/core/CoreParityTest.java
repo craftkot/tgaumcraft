@@ -50,6 +50,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftCardFields();
         testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftDisplayArgument();
+        testLegacyTheorycraftRequiredItems();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1069,6 +1070,60 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftRequiredItems() {
+        var expected = java.util.Map.ofEntries(
+                java.util.Map.entry("CardCelestial", "CELESTIAL_NOTE:md1:true,CELESTIAL_NOTE:md2:true"),
+                java.util.Map.entry("CardConcentrate", "ASPECT_CRYSTAL:aspect:false"),
+                java.util.Map.entry("CardChannel", "FILLED_PHIAL:aspect:false"),
+                java.util.Map.entry("CardCurio", "SAVED_ITEM_STACK:stack:true"),
+                java.util.Map.entry("CardInfuse", "SAVED_ITEM_STACK:stack:true,FILLED_PHIAL:aspect:true"),
+                java.util.Map.entry("CardMindOverMatter", "SAVED_ITEM_STACK:stack:true"),
+                java.util.Map.entry("CardReactions", "ASPECT_CRYSTAL:aspect1:false,ASPECT_CRYSTAL:aspect2:false"),
+                java.util.Map.entry("CardSculpting", "ORIGINAL_VANILLA_151119_AD:null:true"),
+                java.util.Map.entry("CardSynthesis", "ASPECT_CRYSTAL:aspect1:true,ASPECT_CRYSTAL:aspect2:true"),
+                java.util.Map.entry("CardTinker", "SAVED_ITEM_STACK:stack:false"));
+        int cardsRequiring = 0, items = 0, consumed = 0, retained = 0;
+        for (String cls : LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER) {
+            String name = cls.substring(cls.lastIndexOf('.') + 1);
+            var requirements = LegacyTheorycraftRequiredItems.get(cls);
+            var flags = LegacyTheorycraftRequiredItems.consumedFlags(cls);
+            eq(requirements.size(), LegacyTheorycraftRequiredItems.requiredItemCount(cls));
+            eq(requirements.size(), flags.length);
+            if (!requirements.isEmpty()) cardsRequiring++;
+            items += requirements.size();
+            String actual = requirements.stream()
+                    .map(r -> r.source().name() + ":" + r.cardField() + ":" + r.consumed())
+                    .collect(java.util.stream.Collectors.joining(","));
+            eq(expected.getOrDefault(name, ""), actual);
+            for (int i = 0; i < requirements.size(); i++) {
+                var requirement = requirements.get(i);
+                eq(requirement.consumed(), flags[i]);
+                if (flags[i]) consumed++; else retained++;
+                if (requirement.source()
+                        != LegacyTheorycraftRequiredItems.Source.ORIGINAL_VANILLA_151119_AD) {
+                    boolean known = LegacyTheorycraftCardFields.additionalFields(cls).stream()
+                            .anyMatch(field -> field.key().equals(requirement.cardField()));
+                    isTrue(known);
+                }
+            }
+        }
+        eq(10, cardsRequiring);
+        eq(14, items);
+        eq(9, consumed);
+        eq(5, retained);
+
+        String unknown = "thaumcraft.common.lib.research.theorycraft.CardTruth";
+        try {
+            LegacyTheorycraftRequiredItems.get(unknown);
+            throw new AssertionError("unknown BETA26 required items accepted");
+        } catch (IllegalArgumentException expectedFailure) { assertions++; }
+        var one = LegacyTheorycraftRequiredItems.consumedFlags(
+                "thaumcraft.common.lib.research.theorycraft.CardInfuse");
+        one[0] = false;
+        isTrue(LegacyTheorycraftRequiredItems.consumedFlags(
+                "thaumcraft.common.lib.research.theorycraft.CardInfuse")[0]);
     }
 
     private static void testLegacyTheorycraftDisplayArgument() {
