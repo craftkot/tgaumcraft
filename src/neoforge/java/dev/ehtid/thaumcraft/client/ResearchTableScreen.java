@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.menu.ResearchTableMenu;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
 import net.minecraft.world.item.Items;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -35,6 +36,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     private static final int AID_COL_STRIDE = 87, AID_ROW_STRIDE = 11;
     private static final int AID_WIDTH = 85, AID_HEIGHT = 11;
     private static final int AID_COUNT = 14;
+    private static final int CARD_FIRST_X = 77, CARD_Y = 97;
+    private static final int CARD_WIDTH = 56, CARD_HEIGHT = 22, CARD_STRIDE = 58;
 
     public ResearchTableScreen(ResearchTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -65,6 +68,29 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
             renderOriginalButton(graphics, CREATE_X, CREATE_Y);
         }
         renderAidCheckboxes(graphics);
+        renderCardPreviews(graphics);
+    }
+
+    /**
+     * The original saved CardChoice subclass NBT never goes to the client.
+     * These panels only show the server-synchronized identity and flags;
+     * no input action is attached until every original activation is ported.
+     */
+    private void renderCardPreviews(GuiGraphics graphics) {
+        if (!menu.hasSession() || menu.inspiration() <= 0) return;
+        for (int i = 0; i < 3; i++) {
+            int code = menu.cardPreview(i);
+            if (code == 0) continue;
+            int x = leftPos + CARD_FIRST_X + i * CARD_STRIDE;
+            int y = topPos + CARD_Y;
+            int outline = LegacyTheorycraftChoicePreview.selected(code)
+                    ? 0xFF91C8A0 : 0xFF91785B;
+            int interior = LegacyTheorycraftChoicePreview.fromAid(code)
+                    ? 0xEE3B344F : 0xEE292D27;
+            graphics.fill(x, y, x + CARD_WIDTH, y + CARD_HEIGHT, outline);
+            graphics.fill(x + 1, y + 1, x + CARD_WIDTH - 1, y + CARD_HEIGHT - 1,
+                    interior);
+        }
     }
 
     /** An aid is selectable only after its real world object was found by the server. */
@@ -114,6 +140,20 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                     menu.inspiration(), menu.inspirationStart());
             ThaumcraftReadableText.wrapped(graphics, font, inspiration,
                     81, 50, 162, 3, ThaumcraftReadableText.TEXT);
+            if (menu.inspiration() > 0) {
+                graphics.drawString(font, Component.translatable(
+                                "research_table.card_preview"),
+                        CARD_FIRST_X + 3, CARD_Y - 10, ThaumcraftReadableText.TEXT, false);
+                for (int i = 0; i < 3; i++) {
+                    int code = menu.cardPreview(i);
+                    if (code == 0) continue;
+                    String key = LegacyTheorycraftChoicePreview.displayClassName(code);
+                    String visible = font.plainSubstrByWidth(key, CARD_WIDTH - 6);
+                    int x = CARD_FIRST_X + i * CARD_STRIDE;
+                    graphics.drawString(font, visible, x + 3, CARD_Y + 6,
+                            ThaumcraftReadableText.GREEN_TEXT, false);
+                }
+            }
             if (menu.inspiration() <= 0) {
                 renderButtonText(graphics, COMPLETE_X, COMPLETE_Y,
                         Component.translatable("button.complete.theory"));
@@ -231,6 +271,22 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                         && withinAid(i, mouseX, mouseY, leftPos, topPos)) {
                     graphics.renderTooltip(font,
                             Component.translatable("research_table.aid." + i),
+                            mouseX, mouseY);
+                    return;
+                }
+            }
+        }
+        if (menu.hasSession() && menu.inspiration() > 0) {
+            for (int i = 0; i < 3; i++) {
+                int code = menu.cardPreview(i);
+                if (code == 0) continue;
+                int x = leftPos + CARD_FIRST_X + i * CARD_STRIDE;
+                int y = topPos + CARD_Y;
+                if (mouseX >= x && mouseX < x + CARD_WIDTH
+                        && mouseY >= y && mouseY < y + CARD_HEIGHT) {
+                    String name = LegacyTheorycraftChoicePreview.displayClassName(code);
+                    graphics.renderTooltip(font, Component.translatable(
+                                    "research_table.card_preview_tooltip", name),
                             mouseX, mouseY);
                     return;
                 }
