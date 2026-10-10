@@ -49,6 +49,6 @@
   "research_table.aid.12": "Enchanting Table",
   "research_table.aid.13": "Beacon",
   "button.keep.theory": "Keep Selected Card",
-  "research_table.card_preview": "Research choices (preview)",
+  "research_table.card_preview": "Cards (preview)",
   "research_table.card_preview_tooltip": "%s — preview only; card activation isn't ready"
 }
