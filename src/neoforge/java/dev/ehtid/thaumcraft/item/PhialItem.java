@@ -39,14 +39,21 @@ public final class PhialItem extends Item {
         return stack;
     }
 
-    /** Original BETA26 ItemPhial.makeFilledPhial(aspect): exactly 10 essentia. */
+    /** Original BETA26 ItemPhial.makeFilledPhial(aspect): exactly ten essentia. */
     public static ItemStack filledPhial(String aspectTag) {
+        return makePhial(aspectTag, CAPACITY);
+    }
+
+    /** Original ItemPhial.makePhial(aspect, amount) for partly filled jars. */
+    public static ItemStack makePhial(String aspectTag, int amount) {
         if (aspectTag == null || BUILTIN.get(aspectTag) == null)
             throw new IllegalArgumentException("unregistered BETA26 phial aspect: " + aspectTag);
+        if (amount <= 0 || amount > CAPACITY)
+            throw new IllegalArgumentException("invalid phial essentia amount: " + amount);
         ItemStack stack = new ItemStack(ThaumcraftItems.PHIAL.get());
         CompoundTag aspect = new CompoundTag();
         aspect.putString("key", aspectTag);
-        aspect.putInt("amount", CAPACITY);
+        aspect.putInt("amount", amount);
         ListTag list = new ListTag();
         list.add(aspect);
         CompoundTag content = new CompoundTag();
@@ -68,9 +75,17 @@ public final class PhialItem extends Item {
         CompoundTag entry = contents.getCompound(0);
         if (!entry.contains("key", Tag.TAG_STRING)
                 || !entry.contains("amount", Tag.TAG_INT)
-                || entry.getInt("amount") != CAPACITY) return null;
+                || entry.getInt("amount") <= 0
+                || entry.getInt("amount") > CAPACITY) return null;
         String aspect = entry.getString("key");
         return BUILTIN.get(aspect) == null ? null : aspect;
+    }
+
+    /** Exact saved essentia amount (0 for empty or invalid NBT). */
+    public static int containedAmount(ItemStack stack) {
+        if (containedAspect(stack) == null) return 0;
+        return stack.get(DataComponents.CUSTOM_DATA).copyTag()
+                .getList("Aspects", Tag.TAG_COMPOUND).getCompound(0).getInt("amount");
     }
 
     @Override
@@ -89,7 +104,7 @@ public final class PhialItem extends Item {
         String aspect = containedAspect(stack);
         if (aspect != null) {
             tooltip.add(Component.translatable("tc.aspect." + aspect)
-                    .append(" (" + CAPACITY + ")").withStyle(ChatFormatting.AQUA));
+                    .append(" (" + containedAmount(stack) + ")").withStyle(ChatFormatting.AQUA));
         }
     }
 }
