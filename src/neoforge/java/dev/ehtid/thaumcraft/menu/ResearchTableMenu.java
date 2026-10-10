@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftDisplayArgument;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -36,6 +37,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot selectedAidBits;
     private final DataSlot hasChosenTheoryCard;
     private final DataSlot[] previewCards = new DataSlot[3];
+    private final DataSlot[] previewArguments = new DataSlot[3];
     private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
 
     public ResearchTableMenu(int id, Inventory inventory) {
@@ -99,6 +101,22 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                         @Override public void set(int ignored) { }
                     } : DataSlot.standalone();
             addDataSlot(previewCards[i]);
+            // The original four card titles with dynamic placeholders need
+            // the genuine saved category/aspect. Sync only its bounded index,
+            // not a fabricated value or untrusted full NBT compound.
+            previewArguments[i] = table instanceof ResearchTableBlockEntity liveArgs
+                    ? new DataSlot() {
+                        @Override public int get() {
+                            var choices = liveArgs.pendingChoices();
+                            if (choiceIndex >= choices.size()) return 0;
+                            var choice = choices.get(choiceIndex);
+                            String field = LegacyTheorycraftDisplayArgument.fieldKey(choice.key());
+                            return field == null ? 0 : LegacyTheorycraftDisplayArgument.encode(
+                                    choice.key(), choice.cardNBT().getString(field));
+                        }
+                        @Override public void set(int ignored) { }
+                    } : DataSlot.standalone();
+            addDataSlot(previewArguments[i]);
         }
         table.startOpen(inventory.player);
 
@@ -168,6 +186,11 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
 
     public int cardPreview(int index) {
         return index >= 0 && index < previewCards.length ? previewCards[index].get() : 0;
+    }
+
+    public int cardPreviewArgument(int index) {
+        return index >= 0 && index < previewArguments.length
+                ? previewArguments[index].get() : 0;
     }
 
     public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
