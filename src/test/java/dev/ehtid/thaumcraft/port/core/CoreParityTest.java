@@ -1436,9 +1436,9 @@ public final class CoreParityTest {
         eq(1, table.penaltyStart());
         eq(0, table.bonusDraws());
         eq(5, table.inspiration()); // Card.activate does NOT deduct cost.
-        table.consumeInspirationAndPlaceCard(1);
+        table.consumeInspirationAfterActivation(1);
         eq(4, table.inspiration());
-        eq(1, table.placedCards());
+        eq(0, table.placedCards());
 
         // Order BASICS (143), ALCHEMY (50), ELDRITCH (33).
         // Sun note's penaltyStart=1 exempts the second highest category.
@@ -2232,10 +2232,10 @@ public final class CoreParityTest {
         eq(23, normal.getTotal("ALCHEMY")); // 13 of 25 from TreeMap order.
         eq(27, normal.getTotal("BASICS")); // 12 of 25 + 5 fixed bonus.
         eq(1, normal.bonusDraws());
-        normal.consumeInspirationAndPlaceCard(
+        normal.consumeInspirationAfterActivation(
                 LegacyBasicTheoryCards.PONDER_INSPIRATION_COST);
         eq(3, normal.inspiration());
-        eq(1, normal.placedCards());
+        eq(0, normal.placedCards());
 
         LegacyResearchTableData blocked = new LegacyResearchTableData(5);
         blocked.addTotal("ALCHEMY", 12);
@@ -2284,10 +2284,10 @@ public final class CoreParityTest {
         eq(0, rethink.getTotal("ALCHEMY"));
         eq(1, rethink.getTotal("BASICS")); // 10 removed, + 1 from Random(0).
         eq(1, rethink.bonusDraws());
-        rethink.consumeInspirationAndPlaceCard(
+        rethink.consumeInspirationAfterActivation(
                 LegacyBasicTheoryCards.RETHINK_INSPIRATION_COST);
         eq(5, rethink.inspiration()); // Negative cost gives back inspiration.
-        eq(1, rethink.placedCards());
+        eq(0, rethink.placedCards());
 
         // Rethink initializes on total>=10, not on individual category sizes.
         LegacyResearchTableData tooSmall = new LegacyResearchTableData(5);
