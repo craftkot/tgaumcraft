@@ -47,6 +47,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftChoiceFlow();
         testLegacyTheorycraftChoicePreview();
         testLegacyTheorycraftCardMetadata();
+        testLegacyTheorycraftCardFields();
         testLegacyTheorycraftInspiration();
         testLegacyTheorycraftAvailableCategories();
         testLegacyThaumometerTargeting();
@@ -1066,6 +1067,60 @@ public final class CoreParityTest {
         isFalse(LegacyLateTheoryCards.realization(empty, emptyWarp, List.of(), new Random(1)));
         eq(java.util.Map.of(), empty.categoryTotals());
         eq(0, emptyWarp.get(WarpType.TEMPORARY));
+    }
+
+    private static void testLegacyTheorycraftCardFields() {
+        var expected = java.util.Map.ofEntries(
+                java.util.Map.entry("CardStudy", "cat:S"),
+                java.util.Map.entry("CardAnalyze", "cat:S"),
+                java.util.Map.entry("CardReject", "cat:S"),
+                java.util.Map.entry("CardInspired", "cat:S,amt:I"),
+                java.util.Map.entry("CardNotation", "cat1:S,cat2:S"),
+                java.util.Map.entry("CardCurio", "stack:C"),
+                java.util.Map.entry("CardMindOverMatter", "stack:C"),
+                java.util.Map.entry("CardTinker", "stack:C"),
+                java.util.Map.entry("CardCelestial", "md1:I,md2:I,cat:S"),
+                java.util.Map.entry("CardConcentrate", "aspect:S"),
+                java.util.Map.entry("CardChannel", "aspect:S"),
+                java.util.Map.entry("CardReactions", "aspect1:S,aspect2:S"),
+                java.util.Map.entry("CardSynthesis", "aspect1:S,aspect2:S,aspect3:S"),
+                java.util.Map.entry("CardInfuse", "aspect:S,stack:C"));
+        eq(new LegacyTheorycraftCardFields.Field("seed",
+                LegacyTheorycraftCardFields.Type.LONG),
+                LegacyTheorycraftCardFields.baseSeed());
+        int serializingClasses = 0;
+        int totalAdditionalFields = 0;
+        for (String key : LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER) {
+            String cls = key.substring(key.lastIndexOf('.') + 1);
+            var fields = LegacyTheorycraftCardFields.additionalFields(key);
+            eq(expected.containsKey(cls), LegacyTheorycraftCardFields.hasAdditionalFields(key));
+            if (fields.isEmpty()) {
+                eq(null, expected.get(cls));
+                continue;
+            }
+            serializingClasses++;
+            totalAdditionalFields += fields.size();
+            String actual = fields.stream()
+                    .map(field -> field.key() + ":" + switch (field.type()) {
+                        case STRING -> "S";
+                        case INT -> "I";
+                        case LONG -> "L";
+                        case ITEM_STACK -> "C";
+                    })
+                    .collect(java.util.stream.Collectors.joining(","));
+            eq(expected.get(cls), actual);
+            eq(fields.size(), (int) fields.stream().map(
+                    LegacyTheorycraftCardFields.Field::key).distinct().count());
+        }
+        eq(14, serializingClasses);
+        eq(22, totalAdditionalFields);
+        try {
+            LegacyTheorycraftCardFields.additionalFields(
+                    "thaumcraft.common.lib.research.theorycraft.CardTruth");
+            throw new AssertionError("unregistered subclass accepted");
+        } catch (IllegalArgumentException expectedFailure) { assertions++; }
+        eq(java.util.List.of(), LegacyTheorycraftCardFields.additionalFields(
+                "thaumcraft.api.research.theorycraft.CardBalance"));
     }
 
     private static void testLegacyTheorycraftCardMetadata() {
