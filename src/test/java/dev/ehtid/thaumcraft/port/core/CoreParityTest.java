@@ -1081,7 +1081,7 @@ public final class CoreParityTest {
                 java.util.Map.entry("CardInfuse", "SAVED_ITEM_STACK:stack:true,FILLED_PHIAL:aspect:true"),
                 java.util.Map.entry("CardMindOverMatter", "SAVED_ITEM_STACK:stack:true"),
                 java.util.Map.entry("CardReactions", "ASPECT_CRYSTAL:aspect1:false,ASPECT_CRYSTAL:aspect2:false"),
-                java.util.Map.entry("CardSculpting", "ORIGINAL_VANILLA_151119_AD:null:true"),
+                java.util.Map.entry("CardSculpting", "VANILLA_CLAY_BALL:null:true"),
                 java.util.Map.entry("CardSynthesis", "ASPECT_CRYSTAL:aspect1:true,ASPECT_CRYSTAL:aspect2:true"),
                 java.util.Map.entry("CardTinker", "SAVED_ITEM_STACK:stack:false"));
         int cardsRequiring = 0, items = 0, consumed = 0, retained = 0;
@@ -1102,7 +1102,7 @@ public final class CoreParityTest {
                 eq(requirement.consumed(), flags[i]);
                 if (flags[i]) consumed++; else retained++;
                 if (requirement.source()
-                        != LegacyTheorycraftRequiredItems.Source.ORIGINAL_VANILLA_151119_AD) {
+                        != LegacyTheorycraftRequiredItems.Source.VANILLA_CLAY_BALL) {
                     boolean known = LegacyTheorycraftCardFields.additionalFields(cls).stream()
                             .anyMatch(field -> field.key().equals(requirement.cardField()));
                     isTrue(known);
