@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftInspiration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.LegacyResearchTableNbt;
+import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftAidBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -41,12 +42,36 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     private LegacyResearchTableData session;
     /** Lossless NBT passthrough for original, not-yet-ported card subclasses. */
     private CompoundTag originalSessionNbt = new CompoundTag();
+    private long lastNearbyAidsCheck = Long.MIN_VALUE;
+    private Set<String> cachedNearbyAids = Set.of();
 
     public ResearchTableBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.RESEARCH_TABLE.get(), pos, state);
     }
 
     public LegacyResearchTableData session() { return session; }
+    /**
+     * The original 9x9x3 surroundings check is costly. Scan once per second
+     * for menu display, but ALWAYS rescan at theory creation to make removed
+     * or changed aid blocks impossible to exploit between synchronization.
+     */
+    public Set<String> nearbyAids() {
+        if (level == null || level.isClientSide) return Set.of();
+        long tick = level.getGameTime();
+        if (lastNearbyAidsCheck == Long.MIN_VALUE || tick < lastNearbyAidsCheck
+                || tick - lastNearbyAidsCheck >= 20) {
+            return refreshNearbyAids();
+        }
+        return cachedNearbyAids;
+    }
+
+    private Set<String> refreshNearbyAids() {
+        if (level == null || level.isClientSide) return Set.of();
+        cachedNearbyAids = NeoForgeTheorycraftAidBridge.discover(level, worldPosition);
+        lastNearbyAidsCheck = level.getGameTime();
+        return cachedNearbyAids;
+    }
+
 
     /**
      * The BETA26 GuiResearchTable create button becomes enabled only when
@@ -70,7 +95,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     public boolean startNewTheory(ServerPlayer player, Set<String> aids) {
         Objects.requireNonNull(aids, "aids");
         if (level == null || level.isClientSide || !canStartNewTheory()
-                || !stillValid(player)) return false;
+                || !stillValid(player) || !refreshNearbyAids().containsAll(aids))
+            return false;
         session = LegacyTheorycraftInspiration.start(
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),
                 BuiltInResearchCatalog.create(), aids);
