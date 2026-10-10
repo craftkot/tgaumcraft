@@ -279,3 +279,14 @@ On opening a new chat, say:
 - CI prior source-only adapter + blockentity + menu changes fully green. Verify latest UI and language commits against core parity, NeoForge build, dedicated-server smoke before claiming all green.
 - Still NOT fully playable: 33 original card class mathematical effects are not yet wired to GUI, original subtype NBT/material transactions not implemented, 8 of 14 possible aid objects still unported and actual client manual testing not performed.
 - Do not silently enable fake CardChoice results; preserve moon-scan original phase behavior until optional final polish.
+
+## 2026-10-10 continuation: original nested CardChoice NBT access (71% estimate after CI)
+
+- Fresh-read GitHub main at 7b43c567 and latest handoff. Latest existing CI was fully green, including server smoke.
+- Decompilation audit of the user-supplied original BETA26 JAR with javap -c -p for thaumcraft.api.research.theorycraft.ResearchTableData, ResearchTableData$CardChoice, TheorycraftCard and ContainerResearchTable. Full key layout and exact server button ordering in analysis/THEORYCRAFT_CARD_CHOICE_NBT_AUDIT_RU.md (2e307889).
+- f74faa95: added LegacyTheorycraftChoiceNbt in NeoForge layer: original compound fields cardChoice (full class FQCN), aid boolean, select boolean, nested arbitrary cardNBT subclass NBT with seed; exact ListTag cardChoices order and nullable lastDraw; defensive copy and preservation of all unknown enclosing/nested tags including absence of cardNBT on legacy exceptional saves.
+- 0e982b4d: ResearchTableBlockEntity now exposes pendingChoices() and lastDrawChoice() and validated server-only writes of choice rows; rejects fake/unregistered card keys; initializes original empty cardChoices list for new theories and keeps originalSessionNbt passthrough for unknown state.
+- CI at last check f74faa95 complete SUCCESS core + NeoForge build + server smoke. 0e982b4d completed build/core, dedicated-server smoke still running. Check latest GitHub runs before claiming all green.
+- Still NOT complete gameplay: button IDs 2/3 and 4..6 (draw/select/activate) require server-factory initialization of all 33 cards, complete ingredient lookup and atomic item/XP transactions, live card-choice sync to client and manual playtests. This turn deliberately did NOT enable fake drawing/activation.
+- Font readability retained; user's optional random uncollected moon-note QoL remains deferred until final polish.
+- **Overall estimate: 71% after latest all-green CI**, not the percent of player-accessible research mechanics.
