@@ -158,12 +158,14 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             // A malicious client cannot select unsupported or absent helpers.
             if (researchTable.session() != null) return false;
             String key = LegacyTheorycraftManifest.AID_REGISTRATION_ORDER.get(buttonId - 10);
-            if (!researchTable.nearbyAids().contains(key)) {
-                selectedAidKeys.remove(key);
+            // Existing selections can always be removed, even if their
+            // surrounding block was broken after the aid was chosen.
+            if (selectedAidKeys.remove(key)) {
                 broadcastChanges();
-                return false;
+                return true;
             }
-            if (!selectedAidKeys.add(key)) selectedAidKeys.remove(key);
+            if (!researchTable.nearbyAids().contains(key)) return false;
+            selectedAidKeys.add(key);
             broadcastChanges();
             return true;
         }
