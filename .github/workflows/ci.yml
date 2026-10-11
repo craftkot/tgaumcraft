@@ -288,6 +288,28 @@ jobs:
           assert "Draw/activate choices remain disabled" in menu
           assert "return false;" in menu.split("if (buttonId == 9)", 1)[1].split("quickMoveStack", 1)[0]
 
+          # Every BETA26 registered theory card now has one exact effect
+          # dispatch branch. This effect is staged on COPIES: an activation
+          # cannot mutate real knowledge, warp or theory before item/XP
+          # preflight, which also budgets two inks for CardScripting.
+          manifest = Path("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftManifest.java").read_text()
+          registered = manifest.split("CARD_REGISTRATION_ORDER = List.of(",1)[1].split(");",1)[0]
+          registered_names = set(re.findall(r"\\.Card([A-Za-z]+)\\\"", registered))
+          effects = Path("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftActivationEffects.java").read_text()
+          case_block = effects.split("switch (card.key().substring(",1)[1].split("default ->",1)[0]
+          effects_names = set(re.findall(r'case "Card([A-Za-z]+)"', case_block))
+          # Several switch arms group two separate class names.
+          effects_names |= set(re.findall(r', "Card([A-Za-z]+)"', case_block))
+          assert len(registered_names) == 33 and effects_names == registered_names, (registered_names - effects_names, effects_names - registered_names)
+          assert "LegacyResearchTableData.fromSnapshot(originalTable.snapshot())" in effects
+          costs = Path("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftActivationPreflight.java").read_text()
+          assert "int ink = scripting ? 2 : 1" in costs
+          assert "int paper = scripting ? 1 : 0" in costs
+          assert "LegacyTheorycraftRequiredItems.requiredItemCount(key)" in costs
+          adapter = Path("src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftActivationPreflight.java").read_text()
+          assert "prepareOriginalChoice(" in adapter
+          assert "table.stillValid(player)" in adapter
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
