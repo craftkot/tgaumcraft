@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.item.ThaumometerItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.item.CurioItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -38,6 +39,10 @@ public final class ThaumcraftItems {
     // BETA26 ItemPhial: original capacity 10, empty meta 0 / filled meta 1.
     public static final DeferredItem<PhialItem> PHIAL = ITEMS.registerItem(
             "phial", PhialItem::new, new Item.Properties().stacksTo(64));
+
+    // Original BETA26 ItemCurio has seven metadata variants (0..6).
+    public static final DeferredItem<CurioItem> CURIO = ITEMS.registerItem(
+            "curio", CurioItem::new, new Item.Properties().stacksTo(64));
 
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
