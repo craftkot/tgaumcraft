@@ -15,9 +15,15 @@ chmod 700 "$XDG_RUNTIME_DIR"
 CLIENT_PID=''
 XVFB_PID=''
 WM_PID=''
+VIDEO_PID=''
 
 cleanup() {
   echo "Client probe cleanup"
+  # Ensure the MP4 trailer is written even if Minecraft crashes.
+  if [ -n "$VIDEO_PID" ] && kill -0 "$VIDEO_PID" 2>/dev/null; then
+    kill -INT "$VIDEO_PID" 2>/dev/null || true
+    wait "$VIDEO_PID" 2>/dev/null || true
+  fi
   if [ -n "$CLIENT_PID" ]; then
     pkill -TERM -P "$CLIENT_PID" 2>/dev/null || true
     kill "$CLIENT_PID" 2>/dev/null || true
@@ -99,6 +105,22 @@ capture 03-after-singleplayer
 xdotool mousemove 512 433 click 1
 sleep 3
 capture 04-commands-enabled
+
+# Record the actual Minecraft/Xvfb game, not a generated slideshow.
+# 960x600 @ 12 fps keeps the video small enough to attach in chat.
+# Start before world generation so the recording includes the real
+# loading screen, spawn, creative commands and Crucible interactions.
+ffmpeg -nostdin -hide_banner -loglevel warning -y \
+  -f x11grab -draw_mouse 1 -framerate 12 -video_size 1280x800 -i :99.0 \
+  -vf "scale=960:600" -c:v libx264 -preset ultrafast -crf 31 \
+  -pix_fmt yuv420p -movflags +faststart -an \
+  client-smoke/thaumcraft-live-world.mp4 \
+  > client-smoke/ffmpeg.log 2>&1 &
+VIDEO_PID=$!
+sleep 3
+kill -0 "$VIDEO_PID"
+echo 'CLIENT_SCREEN_RECORDING_STARTED=YES' | tee -a client-smoke-status.txt
+
 xdotool mousemove 275 716 click 1
 sleep 110
 capture 05-after-world-start
@@ -156,4 +178,15 @@ if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "
   echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
   exit 1
 fi
-echo 'PASS: real Minecraft client loaded world; additional crucible interactions captured for verification' | tee -a client-smoke-status.txt
+# Interrupt FFmpeg gracefully so the MP4 is finalized and browser-playable.
+if [ -n "$VIDEO_PID" ]; then
+  kill -INT "$VIDEO_PID" 2>/dev/null || true
+  wait "$VIDEO_PID" 2>/dev/null || true
+  VIDEO_PID=''
+fi
+test -s client-smoke/thaumcraft-live-world.mp4
+ffprobe -v error -show_entries format=duration,size \
+  -of default=noprint_wrappers=1 client-smoke/thaumcraft-live-world.mp4 \
+  | tee client-smoke/video-info.txt
+echo 'CLIENT_REAL_MP4=YES' | tee -a client-smoke-status.txt
+echo 'PASS: real Minecraft client world, screen recording and PNGs captured' | tee -a client-smoke-status.txt
