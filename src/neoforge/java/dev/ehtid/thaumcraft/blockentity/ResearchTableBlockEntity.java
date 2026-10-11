@@ -251,6 +251,123 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         return true;
     }
 
+    /**
+     * Server-authoritative BETA26 button 4..6 activation, with one synchronous
+     * transaction across the player's 36 inventory slots, table ink/paper,
+     * experience, original theory NBT, player knowledge and warp.
+     *
+     * Card effects are FIRST staged against copies. Every external resource is
+     * then rechecked BEFORE the first shrink/durability mutation. The normal
+     * server main thread performs the remainder without asynchronous calls;
+     * client-supplied NBT, card IDs, costs and rewards are never trusted.
+     *
+     * This does not imply the draw/select GUI is complete. Call this from
+     * the menu only when the complete research-card interaction is exposed.
+     */
+    public boolean activateOriginalTheoryCard(ServerPlayer player, int index) {
+        if (level == null || level.isClientSide || session == null
+                || !stillValid(player) || session.isComplete()
+                || index < 0 || index >= 3) return false;
+        // A partially corrupt legacy cardChoices list must not be rewritten
+        // or allowed to award anything: preserve it for a future migration.
+        if (!originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST))
+            return false;
+        var raw = originalSessionNbt.getList("cardChoices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        var choices = pendingChoices();
+        if (choices.size() != raw.size() || index >= choices.size()) return false;
+        for (var c : choices) {
+            if (!LegacyTheorycraftCardTagValidator.structurallyValid(c.key(), c.cardNBT()))
+                return false;
+        }
+
+        var preflight = dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftActivationPreflight
+                .check(player, this, index);
+        if (preflight == null || !preflight.canActivate()) return false;
+
+        // Staging may consume the actual player RNG but cannot change live
+        // inventory, table, research, warp or XP on a failed card effect.
+        var result = dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftActivationStager
+                .stageAfterValidatedCosts(player, this, index, preflight);
+        if (result == null) return false;
+
+        ItemStack reward = ItemStack.EMPTY;
+        if (result.spawnedCrystalAspect() != null) {
+            reward = dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftMaterialResolver
+                    .crystal(result.spawnedCrystalAspect());
+            if (reward.isEmpty()) return false;
+        }
+
+        // Do not let the stager's saved-card / source-NBT view go stale even
+        // if a future integration introduces nested callbacks.
+        var checked = dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftActivationPreflight
+                .check(player, this, index);
+        if (checked == null || !checked.canActivate()
+                || !checked.originalCard().equals(preflight.originalCard())
+                || !canSpendTableSupplies(checked.costs().inkUnits(),
+                        checked.costs().tablePaperUnits())) return false;
+        var required = dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftMaterialResolver
+                .resolve(checked.originalCard().key(), checked.originalCard().cardNBT());
+        if (required == null) return false;
+
+        // All failure-prone computations have finished before any debit.
+        // The item planner checks duplicate requirements and retained
+        // catalysts together, then rechecks the entire inventory on commit.
+        if (!dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftItemTransaction
+                .commit(player, required.required(), required.consumed())) return false;
+
+        if (!spendTableSupplies(checked.costs().inkUnits(),
+                checked.costs().tablePaperUnits()))
+            throw new IllegalStateException("research table supplies changed during atomic commit");
+        if (checked.costs().experienceLevelsDebited() > 0)
+            player.giveExperienceLevels(-checked.costs().experienceLevelsDebited());
+
+        var data = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
+        var knowledge = data.knowledge();
+        knowledge.loadSnapshot(knowledge.getResearchList(), knowledge.copyStages(),
+                knowledge.copyFlags(), result.playerKnowledgeRaw());
+        data.warp().loadLegacyWarpArray(result.warpArray());
+        data.warp().setCounter(result.warpCounter());
+
+        session = LegacyResearchTableData.fromSnapshot(result.theory());
+        var selected = new java.util.ArrayList<LegacyTheorycraftChoiceNbt.Choice>(choices);
+        var choice = selected.get(index);
+        selected.set(index, new LegacyTheorycraftChoiceNbt.Choice(
+                choice.key(), choice.fromAid(), true, choice.cardNBT(), choice.originalRow()));
+        LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, selected);
+        setChanged();
+        if (!reward.isEmpty() && !player.getInventory().add(reward))
+            player.drop(reward, false);
+        ThaumcraftNetworking.sync(player);
+        return true;
+    }
+
+    /**
+     * Original card 4..6 consumes one ink unit; Scripting consumes an extra
+     * ink unit AND paper. Both budgets must pass before either is touched.
+     */
+    public boolean canSpendTableSupplies(int inkUnits, int paperUnits) {
+        if (level == null || level.isClientSide || session == null
+                || inkUnits < 0 || paperUnits < 0) return false;
+        ItemStack ink = items.get(SCRIBING_SLOT);
+        ItemStack paper = items.get(PAPER_SLOT);
+        return ink.is(ThaumcraftItems.SCRIBING_TOOLS.get())
+                && ink.isDamageableItem()
+                && ink.getMaxDamage() - ink.getDamageValue() >= inkUnits
+                && (paperUnits == 0 || paper.is(Items.PAPER)
+                        && paper.getCount() >= paperUnits);
+    }
+
+    public boolean spendTableSupplies(int inkUnits, int paperUnits) {
+        if (!canSpendTableSupplies(inkUnits, paperUnits)) return false;
+        if (paperUnits > 0) items.get(PAPER_SLOT).shrink(paperUnits);
+        if (inkUnits > 0) {
+            ItemStack ink = items.get(SCRIBING_SLOT);
+            ink.setDamageValue(ink.getDamageValue() + inkUnits);
+        }
+        if (inkUnits > 0 || paperUnits > 0) setChanged();
+        return true;
+    }
+
     /** Grant theory once; a second finish cannot duplicate the reward. */
     public boolean finishTheory(ServerPlayer player) {
         // Safety improvement: completing a saved theory requires the
