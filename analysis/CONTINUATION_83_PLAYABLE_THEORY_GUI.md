@@ -27,3 +27,10 @@ No placeholder recipe/item conversions. Unported original requirements fail clos
 4. Continue remaining non-theory systems (alchemy/crucible, infusion, golems, foci, entities/dimension, mod inventory of original assets), and fill missing original aid blocks. Preserve original paper/ink consumption and original JAR parity. User's optional random uncollected moon-phase note QoL is deferred until near completion, and original readable font changes must remain.
 
 **Progress estimate:** 83% ONLY after latest CI success. Percentage is an approximation, NOT a claim that 83% of in-game content was playtested.
+
+
+## Follow-up on checkpoint 83 — exact safe cost/ingredient previews
+
+After the original playable-theory wiring, commit `5d85db4d6d2106c65874edfe0503b8dd71715be4` restores server-authoritative card cost previews that the BETA26 GUI had and the first 1.21 implementation lacked. It syncs exact bounded cost fields and exact resolved ItemStacks through hidden read-only vanilla slots, never the original cardNBT. The client can now show raw inspiration cost (including gain cards), Scripting's double ink + paper, special XP modes, consumed/kept required items, unresolved legacy requirements, and the live preflight failure reason. Hidden ghost slots are excluded from quick-move to prevent item materialization.
+
+GitHub Actions `38148914429` (#454) passed CoreParity, NeoForge Gradle build, dedicated-server smoke and artifact upload. No manual client GUI playthrough has been claimed. Rounded project estimate remains **83%**.

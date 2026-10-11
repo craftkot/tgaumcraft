@@ -353,3 +353,18 @@ Next major action: implement original 33-card *activation* dispatcher and atomic
 Не начинай сначала. Свежий main в начале этого шага был `b18aff2`; отчет со всеми SHA — `analysis/CONTINUATION_83_PLAYABLE_THEORY_GUI.md`. Теперь **реально** подключены ID 2/3 (оригинальный server draw 2/3 карт с расходом 1 бумаги, третья только при bonusDraws), ID 4..6 (активация одной из трёх оригинальных карт; 33-class factory + preflight + full staged effect commit + ink/XP/ingredients + player knowledge/warp + оригинальный NBT selected + Synthesis crystal reward), а также прежние keep/finish/abandon. 1.21 GUI позволяет играть с оригинальными подсказками EN/RU и увеличенным шрифтом. Исправлены сброс всей истории исследований при использовании live set-view в PlayerKnowledgeData.loadSnapshot и неправильный индекс hover tooltip. Draw не перетирает невыбранные pending варианты. CI-условие, раньше предписывавшее держать ID2..6 выключенными, теперь заменено на реальный тест подключенных транзакций; красные CI до `36582e7` вызваны **старой проверкой**. Проверить самую новую сборку с Gradle, CoreParity и server smoke прежде чем утверждать 83%.
 
 ВАЖНО: это первая wiring-реализация, полноценный ручной живой клиент НЕ тестировался. Оригинальные нехватающие предметы и динамический visSize пока fail closed, никакие дешёвые подмены не включать. Текущая теория и оригинал должны сохраняться. Дальше ручные тесты, tooltip стоимости карт, прочие большие системы (тигель/инфузия/големы/фокусы/мобы/измерения), недостающие блоки помощников и опциональная случайная неполученная лунная записка в самом конце.
+
+
+## 2026-10-11: server-synced exact theory-card costs and requirements
+
+Fresh main before this slice was `59b468ca5b56aca5419ed6c1c8e5f871f284285a`; Actions #453 was SUCCESS. Original BETA26 `GuiResearchTable` bytecode was checked again: each card visually exposes `getInspirationCost()`, real `getRequiredItems()` stacks and `getRequiredItemsConsumed()` flags. The current 1.21 GUI previously showed only a generic “requires original materials” hint.
+
+Commit `5d85db4d6d2106c65874edfe0503b8dd71715be4` restores that contract without trusting the client:
+- `ResearchTableMenu` derives card cost metadata from the authoritative saved choice: raw inspiration cost (including negative/gain cards), exact Scripting 2-ink + 1-paper requirement, XP-mode for Enchantment/Spellbinding/DarkWhispers, and live preflight failure reason.
+- Already-audited material requirements are converted on the SERVER through `NeoForgeTheorycraftMaterialResolver`. At most two exact ItemStacks per original card are synchronized through six hidden vanilla menu slots. The original cardNBT itself never leaves the server.
+- consumed-vs-kept flags are synchronized separately; unresolved legacy Saved ItemStack requirements stay fail-closed and display as unresolved rather than inventing a substitute.
+- hidden preview slots are `mayPickup=false`, `mayPlace=false`, and `quickMoveStack` rejects every index >= the real 38 table/player slots, preventing a ghost-item duplication path.
+- EN/RU card hover text now shows inspiration, ink, optional paper, special XP semantics, exact required item names/counts, whether the item is consumed or retained, and why activation is currently blocked.
+- Actions run `38148914429` / #454: SUCCESS through CoreParity, NeoForge build, dedicated-server smoke and uploaded `thaumcraft-port-jars` artifact.
+
+This is still NOT a manual rendered-client playthrough. Overall estimate remains rounded to **83%** because the change completes theory-table usability/fidelity but does not close the large missing alchemy/infusion/foci/golem/entity/dimension systems.
