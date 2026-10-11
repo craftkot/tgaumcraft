@@ -44,6 +44,13 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.SCRIBING_TOOLS.get());
                         output.accept(ThaumcraftItems.SALIS_MUNDUS.get());
                         output.accept(ThaumcraftItems.CRYSTAL_ESSENCE.get());
+                        // Original unvariant crafting ingredients, available
+                        // for creative playtests before their source recipes
+                        // and world-generation routes are fully migrated.
+                        output.accept(ThaumcraftItems.VIS_RESONATOR.get());
+                        output.accept(ThaumcraftItems.AMBER.get());
+                        output.accept(ThaumcraftItems.QUICKSILVER.get());
+                        output.accept(ThaumcraftItems.FABRIC.get());
 
                         // A distinct stack for every original 1.12 variant.
                         for (int variant = 0; variant < 7; variant++)
