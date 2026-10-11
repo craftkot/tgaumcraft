@@ -73,9 +73,14 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     public boolean storeCardChoices(java.util.List<LegacyTheorycraftChoiceNbt.Choice> choices) {
         if (level == null || level.isClientSide || session == null) return false;
         java.util.Objects.requireNonNull(choices);
+        // The BETA26 GUI has exactly three offer slots. Reject malformed
+        // cross-integration writes before changing any persistent NBT.
+        if (choices.size() > 3) return false;
+        int selectedCount = 0;
         for (var choice : choices) {
-            if (!LegacyTheorycraftCardTagValidator
+            if (choice == null || !LegacyTheorycraftCardTagValidator
                     .structurallyValid(choice.key(), choice.cardNBT())) return false;
+            if (choice.selected() && ++selectedCount > 1) return false;
         }
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, choices);
         setChanged();

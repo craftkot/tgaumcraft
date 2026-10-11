@@ -372,3 +372,7 @@ This is still NOT a manual rendered-client playthrough. Overall estimate remains
 
 ## 2026-10-11 — BlockEntity theory validation hardening
 Code commit `4fd818a01ff7d07706f7c8218d17acfbfa005f5b`: three-card draws now explicitly require bonusDraws > 0 at the BlockEntity boundary (not just ResearchTableMenu), before RNG usage and paper debit. Keeping a selected card now refuses legacy/corrupt choices where more than one CardChoice is selected, rather than silently preserving the first and deleting others. These are server-only rejection paths; original NBT is left intact on denial. This small hardening is not enough to raise the rounded overall 83%. Inspect latest CI before treating the change as verified.
+
+
+## 2026-10-11 continuation — save-boundary CardChoice integrity
+Previous GitHub Actions run #455 (38153717690) for commit 4fd818a completed SUCCESS. New hardening in `ResearchTableBlockEntity.storeCardChoices`: reject more than three pending cards, any null/structurally-invalid CardChoice, or more than one selected row BEFORE rewriting originalSessionNbt. Empty card offers remain legal. Earlier keep-path safeguard still applies to malformed old saves. No new gameplay category added; retain rounded 83% pending larger playable-content implementation. Check CI for this new commit.
