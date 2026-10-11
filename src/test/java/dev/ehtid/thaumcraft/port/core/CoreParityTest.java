@@ -49,6 +49,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftChoicePreview();
         testLegacyTheorycraftCardMetadata();
         testLegacyTheorycraftCardFields();
+        testLegacyTheorycraftFieldlessInitialization();
         testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftRequiredItems();
@@ -1349,6 +1350,72 @@ public final class CoreParityTest {
                 throw new AssertionError("unregistered original card localized");
             } catch (IllegalArgumentException expected) { assertions++; }
         }
+    }
+
+    private static void testLegacyTheorycraftFieldlessInitialization() {
+        var keys = LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER;
+        var empty = new LegacyResearchTableData(5);
+        int fieldless = 0;
+        int inheritedAlwaysTrue = 0;
+        java.util.Set<String> gated = java.util.Set.of(
+                "CardBalance", "CardPonder", "CardRethink",
+                "CardSpellbinding", "CardSynergy");
+        for (String key : keys) {
+            boolean noFields = LegacyTheorycraftCardFields.additionalFields(key).isEmpty();
+            eq(noFields, LegacyTheorycraftFieldlessInit.isFieldless(key));
+            if (!noFields) {
+                try {
+                    LegacyTheorycraftFieldlessInit.initialize(key, empty, 5);
+                    throw new AssertionError("original subclass fields cannot be faked: " + key);
+                } catch (IllegalArgumentException expected) { assertions++; }
+                continue;
+            }
+            fieldless++;
+            String simple = key.substring(key.lastIndexOf('.') + 1);
+            boolean initializedEmpty = LegacyTheorycraftFieldlessInit.initialize(key, empty, 0);
+            if (gated.contains(simple)) {
+                isFalse(initializedEmpty);
+            } else {
+                inheritedAlwaysTrue++;
+                isTrue(initializedEmpty);
+            }
+        }
+        eq(33, keys.size());
+        eq(19, fieldless);
+        eq(14, inheritedAlwaysTrue);
+
+        var withTheory = new LegacyResearchTableData(7);
+        withTheory.addTotal("BASICS", 20);
+        eq(true, LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardPonder", withTheory, 0));
+        eq(true, LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardRethink", withTheory, 0));
+        isFalse(LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardBalance", withTheory, 0));
+        withTheory.addTotal("ARTIFICE", 8);
+        withTheory.addTotal("ALCHEMY", 6);
+        withTheory.addTotal("INFUSION", 1);
+        isTrue(LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardBalance", withTheory, 0));
+        isTrue(LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.common.lib.research.theorycraft.CardSynergy", withTheory, 0));
+        var spell = "thaumcraft.common.lib.research.theorycraft.CardSpellbinding";
+        isFalse(LegacyTheorycraftFieldlessInit.initialize(spell, withTheory, 0));
+        isTrue(LegacyTheorycraftFieldlessInit.initialize(spell, withTheory, 1));
+        isTrue(LegacyTheorycraftFieldlessInit.initialize(spell, withTheory, 5));
+        withTheory.appendBlockedCategory("BASICS");
+        withTheory.appendBlockedCategory("ALCHEMY");
+        withTheory.appendBlockedCategory("ARTIFICE");
+        withTheory.appendBlockedCategory("INFUSION");
+        isFalse(LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardPonder", withTheory, 0));
+        isFalse(LegacyTheorycraftFieldlessInit.initialize(
+                "thaumcraft.api.research.theorycraft.CardBalance", withTheory, 0));
+        eq(null, LegacyTheorycraftFieldlessInit.isFieldless(null) ? "bad" : null);
+        try {
+            LegacyTheorycraftFieldlessInit.initialize(spell, withTheory, -1);
+            throw new AssertionError("negative XP should fail closed");
+        } catch (IllegalArgumentException expected) { assertions++; }
     }
 
     private static void testLegacyTheorycraftCardFields() {
