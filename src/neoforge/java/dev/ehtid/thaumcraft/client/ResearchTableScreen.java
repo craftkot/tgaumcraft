@@ -13,10 +13,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 
 /**
- * First playable research-table screen: the original BETA26 256x256
+ * Functional research-table screen: the original BETA26 256x256
  * gui_research_table.png, original table slots and the original side-by-side
- * inventory grid. Card-choice widgets are deliberately NOT fabricated before
- * the full old drawCards / savedCards state machine is restored.
+ * inventory grid. Original server card generation and all 33 activations
+ * are selectable with the historical numeric menu IDs.
  */
 public final class ResearchTableScreen extends AbstractContainerScreen<ResearchTableMenu> {
     private static final ResourceLocation TEXTURE =
@@ -33,6 +33,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     private static final int COMPLETE_X = 116, COMPLETE_Y = 96;
     private static final int SCRAP_X = 116, SCRAP_Y = 155;
     private static final int KEEP_X = 116, KEEP_Y = 121;
+    private static final int DRAW_X = 116, DRAW_Y = 121;
     private static final int BUTTON_WIDTH = 132, BUTTON_HEIGHT = 18;
     private static final int AID_FIRST_X = 76, AID_FIRST_Y = 95;
     private static final int AID_COL_STRIDE = 87, AID_ROW_STRIDE = 11;
@@ -55,9 +56,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
     protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         graphics.blit(TEXTURE, leftPos, topPos,
                 0, 0, imageWidth, imageHeight, 256, 256);
-        // GUI button IDs 7 and 9 are implemented server-authoritatively;
-        // original buttons for start/draw/select stay hidden until CardChoice
-        // generation and aid handling are completely restored.
+        // Server validates and commits every original card action; the
+        // client displays only the synchronized safe preview metadata.
         if (menu.hasSession()) {
             if (menu.inspiration() <= 0) {
                 renderOriginalButton(graphics, COMPLETE_X, COMPLETE_Y);
@@ -65,6 +65,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 renderOriginalButton(graphics, SCRAP_X, SCRAP_Y);
                 if (menu.hasChosenTheoryCard())
                     renderOriginalButton(graphics, KEEP_X, KEEP_Y);
+                else if (!menu.hasPendingCardChoices() && canDraw())
+                    renderOriginalButton(graphics, DRAW_X, DRAW_Y);
             }
         } else if (canStartTheory()) {
             renderOriginalButton(graphics, CREATE_X, CREATE_Y);
@@ -75,8 +77,8 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
 
     /**
      * The original saved CardChoice subclass NBT never goes to the client.
-     * These panels only show the server-synchronized identity and flags;
-     * no input action is attached until every original activation is ported.
+     * These panels show server-synchronized card identities and flags;
+     * clicking a candidate sends only the historic numeric menu slot ID.
      */
     private void renderCardPreviews(GuiGraphics graphics) {
         if (!menu.hasSession() || menu.inspiration() <= 0) return;
@@ -165,6 +167,10 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 if (menu.hasChosenTheoryCard()) {
                     renderButtonText(graphics, KEEP_X, KEEP_Y,
                             Component.translatable("button.keep.theory"));
+                } else if (!menu.hasPendingCardChoices() && canDraw()) {
+                    renderButtonText(graphics, DRAW_X, DRAW_Y,
+                            Component.translatable("research_table.draw_cards",
+                                    menu.bonusDraws() > 0 ? 3 : 2));
                 }
             }
         } else {
@@ -203,6 +209,12 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         Component value = argument == null
                 ? Component.literal("…") : Component.translatable(argument);
         return Component.translatable(name, value);
+    }
+
+    private boolean canDraw() {
+        return menu.hasSession() && menu.inspiration() > 0
+                && !menu.hasPendingCardChoices()
+                && menu.getSlot(1).getItem().is(Items.PAPER);
     }
 
     private boolean canStartTheory() {
@@ -256,6 +268,27 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         }
         if (mouseButton == 0 && menu.hasSession() && minecraft != null
                 && minecraft.gameMode != null) {
+            if (menu.inspiration() > 0 && !menu.hasChosenTheoryCard()
+                    && menu.hasPendingCardChoices()) {
+                for (int i = 0; i < 3; i++) {
+                    if (menu.cardPreview(i) == 0) continue;
+                    int cardX = leftPos + CARD_FIRST_X + i * CARD_STRIDE;
+                    int cardY = topPos + CARD_Y;
+                    if (mouseX >= cardX && mouseX < cardX + CARD_WIDTH
+                            && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT) {
+                        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, i + 4);
+                        return true;
+                    }
+                }
+            }
+            if (canDraw() && mouseX >= leftPos + DRAW_X
+                    && mouseX < leftPos + DRAW_X + BUTTON_WIDTH
+                    && mouseY >= topPos + DRAW_Y
+                    && mouseY < topPos + DRAW_Y + BUTTON_HEIGHT) {
+                minecraft.gameMode.handleInventoryButtonClick(
+                        menu.containerId, menu.bonusDraws() > 0 ? 3 : 2);
+                return true;
+            }
             if (menu.hasChosenTheoryCard() && menu.inspiration() > 0
                     && mouseX >= leftPos + KEEP_X
                     && mouseX < leftPos + KEEP_X + BUTTON_WIDTH
@@ -310,6 +343,15 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                     return;
                 }
             }
+        }
+        if (canDraw() && mouseX >= leftPos + DRAW_X
+                && mouseX < leftPos + DRAW_X + BUTTON_WIDTH
+                && mouseY >= topPos + DRAW_Y
+                && mouseY < topPos + DRAW_Y + BUTTON_HEIGHT) {
+            graphics.renderTooltip(font, Component.translatable(
+                    "research_table.draw_cards", menu.bonusDraws() > 0 ? 3 : 2),
+                    mouseX, mouseY);
+            return;
         }
         if (menu.hasSession() && menu.hasChosenTheoryCard()
                 && menu.inspiration() > 0
