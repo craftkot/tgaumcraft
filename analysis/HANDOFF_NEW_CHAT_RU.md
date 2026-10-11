@@ -384,3 +384,7 @@ CI #456 (run 38153911426) for previous commit succeeded. A malformed NBT cardCho
 
 ## 2026-10-11: reject invalid preserved theory offers before draw
 After commit bb45789, direct server draw also uses hasStructurallyValidPendingChoices for any existing cardChoices NBT. This closes a remaining inconsistency: a malformed existing list whose compound parser returned no choices could previously be overwritten by a new draw. Now empty valid lists remain drawable, but invalid legacy saves are preserved unchanged; no paper or RNG is used. Check latest GitHub Actions before claiming success. Still rounded 83%.
+
+
+## 2026-10-11 continuation — strict keep/lastDraw validation
+Fresh-read main 48b605b; GitHub Actions #458 passed. The BETA26 keep-selected action now calls the same full hasStructurallyValidPendingChoices invariant as server activation rather than accepting a malformed subset. It also refuses an existing lastDraw of the wrong NBT type or with an invalid subclass/seed before appending its seed to savedCards. No saved NBT is mutated on failure. Check new Actions before claiming compilation. The change is a defensive research progress integrity fix, not evidence of a playable full-client test; rounded estimate remains 83%.

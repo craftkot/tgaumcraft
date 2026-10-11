@@ -124,11 +124,11 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     public boolean keepSelectedTheoryCard(ServerPlayer player) {
         if (level == null || level.isClientSide || session == null || !stillValid(player))
             return false;
-        if (!originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST))
-            return false;
-        var rawRows = originalSessionNbt.getList("cardChoices", net.minecraft.nbt.Tag.TAG_COMPOUND);
+        // Preserve corrupt historical offers intact: the permissive decoder
+        // can skip broken rows, so checking only the decoded count is unsafe.
+        if (!hasStructurallyValidPendingChoices()) return false;
         var choices = pendingChoices();
-        if (choices.isEmpty() || choices.size() != rawRows.size()) return false;
+        if (choices.isEmpty()) return false;
 
         LegacyTheorycraftChoiceNbt.Choice chosen = null;
         for (var choice : choices) {
@@ -142,12 +142,15 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         }
         if (chosen == null || !chosen.cardNBT().contains("seed", net.minecraft.nbt.Tag.TAG_LONG))
             return false;
-        if (originalSessionNbt.contains("lastDraw", net.minecraft.nbt.Tag.TAG_COMPOUND)
-                && lastDrawChoice().isEmpty()) return false;
-
+        // A legacy lastDraw with wrong tag type, unknown subclass or
+        // incomplete NBT must never be appended to savedCards as a seed.
+        if (originalSessionNbt.contains("lastDraw")
+                && !originalSessionNbt.contains("lastDraw", net.minecraft.nbt.Tag.TAG_COMPOUND))
+            return false;
         var previous = lastDrawChoice().orElse(null);
-        if (previous != null && !previous.cardNBT()
-                .contains("seed", net.minecraft.nbt.Tag.TAG_LONG)) return false;
+        if (originalSessionNbt.contains("lastDraw") && previous == null) return false;
+        if (previous != null && !LegacyTheorycraftCardTagValidator.structurallyValid(
+                previous.key(), previous.cardNBT())) return false;
 
         var plain = choices.stream().map(c -> new LegacyTheorycraftChoiceFlow.Choice(
                 c.key(), c.seed(), c.fromAid(), c.selected())).toList();
