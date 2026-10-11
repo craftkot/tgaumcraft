@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.scanning;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.item.CurioItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -19,7 +20,8 @@ import net.minecraft.world.item.Items;
  * schemas and could accidentally substitute the wrong variant or item.
  *
  * This supports a true unchanged direct-registry ItemStack identity, count
- * 1, damage 0, and no legacy NBT. Everything else fails closed; the original
+ * 1, damage 0, and no legacy NBT, plus exact Curio variants 0..6.
+ * Everything else fails closed; the original
  * compound remains in saved CardChoice.cardNBT for future migration.
  */
 public final class NeoForgeLegacyItemStackDecoder {
@@ -31,11 +33,18 @@ public final class NeoForgeLegacyItemStackDecoder {
                 || !originalStack.contains("Count", Tag.TAG_BYTE)
                 || !originalStack.contains("Damage", Tag.TAG_SHORT)
                 || originalStack.contains("tag")
-                || originalStack.getByte("Count") != 1
-                || originalStack.getShort("Damage") != 0)
+                || originalStack.getByte("Count") != 1)
             return ItemStack.EMPTY;
 
         String originalId = originalStack.getString("id");
+        if (originalId.equals("thaumcraft:curio")) {
+            int variant = originalStack.getShort("Damage");
+            // BETA26 ItemCurio has seven *item variants*, not durability.
+            // Legacy metadata 1..6 must survive the 1.21 component transfer.
+            return variant >= 0 && variant < 7
+                    ? CurioItem.create(variant) : ItemStack.EMPTY;
+        }
+        if (originalStack.getShort("Damage") != 0) return ItemStack.EMPTY;
         ResourceLocation parsed = ResourceLocation.tryParse(originalId);
         if (parsed == null || !parsed.toString().equals(originalId))
             return ItemStack.EMPTY;
