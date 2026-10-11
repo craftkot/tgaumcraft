@@ -43,6 +43,7 @@ public final class CoreParityTest {
         testLegacyAlchemyTheoryCards();
         testLegacyLateTheoryCards();
         testLegacyMaterialTheoryCards();
+        testLegacyCurioUse();
         testLegacyTheorycraftInventoryPlanner();
         testLegacyTheorycraftChoiceFlow();
         testLegacyTheorycraftChoicePreview();
@@ -1577,6 +1578,95 @@ public final class CoreParityTest {
         LegacyTheorycraftChoiceFlow.afterPaperDebitedForDraw(session, drawnAgain, "Tester");
         eq(java.util.List.of("b"), session.aidCards());
         eq(0, session.bonusDraws());
+    }
+
+    private static void testLegacyCurioUse() {
+        var categories = BuiltInResearchCategories.create(new AspectRegistry()).values().stream()
+                .map(ResearchCategoryData::key).toList();
+        eq(java.util.List.of("BASICS", "AUROMANCY", "ALCHEMY", "ARTIFICE",
+                "INFUSION", "GOLEMANCY", "ELDRITCH"), categories);
+        eq(LegacyMaterialTheoryCards.CURIO_VARIANTS, LegacyCurioUse.VARIANTS);
+
+        String[] fixed = {"AUROMANCY", "ALCHEMY", "GOLEMANCY",
+                "ELDRITCH", "INFUSION", "ARTIFICE", "ELDRITCH"};
+        for (int variant = 0; variant < 7; variant++) {
+            PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+            PlayerWarpData warp = new PlayerWarpData();
+            if (variant == 6) {
+                warp.set(WarpType.PERMANENT, 10);
+                warp.set(WarpType.NORMAL, 11);
+            }
+            long seed = 1700L + variant;
+            Random r = new Random(seed);
+            Random source = new Random(seed);
+            int obs = 8 + source.nextInt(9);
+            int theory = 10 + source.nextInt(7);
+            boolean perm = variant == 6 && source.nextBoolean();
+            String randomObsCategory = categories.get(source.nextInt(categories.size()));
+            int randomObs = 8 + source.nextInt(9);
+            String randomTheoryCategory = categories.get(source.nextInt(categories.size()));
+            int randomTheory = 10 + source.nextInt(7);
+
+            var effect = LegacyCurioUse.activate(variant, knowledge, warp, categories,
+                    new LegacyCurioUse.Source() {
+                        @Override public int nextInt(int bound) { return r.nextInt(bound); }
+                        @Override public boolean nextBoolean() { return r.nextBoolean(); }
+                    });
+            isTrue(effect.consumed());
+            eq(variant == 6, effect.crimsonRitesResearchAttempt());
+            eq(fixed[variant], effect.primaryCategory());
+            eq(obs, effect.primaryObservation());
+            eq(theory, effect.primaryTheory());
+            eq(randomObsCategory, effect.randomObservationCategory());
+            eq(randomObs, effect.randomObservation());
+            eq(randomTheoryCategory, effect.randomTheoryCategory());
+            eq(randomTheory, effect.randomTheory());
+            eq(perm, effect.permanentWarp());
+            eq(obs + (fixed[variant].equals(randomObsCategory) ? randomObs : 0),
+                    knowledge.getKnowledgeRaw(KnowledgeType.OBSERVATION, fixed[variant]));
+            eq(theory + (fixed[variant].equals(randomTheoryCategory) ? randomTheory : 0),
+                    knowledge.getKnowledgeRaw(KnowledgeType.THEORY, fixed[variant]));
+            eq(randomObs + (fixed[variant].equals(randomObsCategory) ? obs : 0),
+                    knowledge.getKnowledgeRaw(KnowledgeType.OBSERVATION, randomObsCategory));
+            eq(randomTheory + (fixed[variant].equals(randomTheoryCategory) ? theory : 0),
+                    knowledge.getKnowledgeRaw(KnowledgeType.THEORY, randomTheoryCategory));
+            eq((variant == 6 ? 11 : 0) + ((variant == 3 || variant == 6) ? 1 : 0),
+                    warp.get(WarpType.NORMAL));
+            eq((variant == 3 || variant == 6) ? 5 : 0, warp.get(WarpType.TEMPORARY));
+            eq(variant == 6 ? 10 + (perm ? 1 : 0) : 0, warp.get(WarpType.PERMANENT));
+            eq(source.nextInt(100_000), r.nextInt(100_000)); // no extra RNG calls
+        }
+
+        PlayerKnowledgeData sealed = new PlayerKnowledgeData();
+        PlayerWarpData noWarp = new PlayerWarpData();
+        noWarp.set(WarpType.PERMANENT, 10);
+        noWarp.set(WarpType.NORMAL, 10);
+        noWarp.set(WarpType.TEMPORARY, 400); // ignored by getActualWarp
+        Random r = new Random(456L), control = new Random(456L);
+        var denied = LegacyCurioUse.activate(6, sealed, noWarp, categories,
+                new LegacyCurioUse.Source() {
+                    @Override public int nextInt(int bound) { return r.nextInt(bound); }
+                    @Override public boolean nextBoolean() { return r.nextBoolean(); }
+                });
+        isFalse(denied.consumed());
+        eq(0, sealed.copyKnowledgeRaw().size());
+        eq(10, noWarp.get(WarpType.NORMAL));
+        eq(400, noWarp.get(WarpType.TEMPORARY));
+        eq(control.nextInt(1000), r.nextInt(1000)); // denial uses NO RNG
+        noWarp.set(WarpType.NORMAL, 11);
+        isTrue(LegacyCurioUse.activate(6, sealed, noWarp, categories,
+                new LegacyCurioUse.Source() {
+                    @Override public int nextInt(int bound) { return r.nextInt(bound); }
+                    @Override public boolean nextBoolean() { return r.nextBoolean(); }
+                }).consumed());
+        try {
+            LegacyCurioUse.activate(7, sealed, noWarp, categories,
+                    new LegacyCurioUse.Source() {
+                        @Override public int nextInt(int bound) { return r.nextInt(bound); }
+                        @Override public boolean nextBoolean() { return r.nextBoolean(); }
+                    });
+            throw new AssertionError("unknown Curio metadata accepted");
+        } catch (IllegalArgumentException expected) { assertions++; }
     }
 
     private static void testLegacyTheorycraftInventoryPlanner() {
