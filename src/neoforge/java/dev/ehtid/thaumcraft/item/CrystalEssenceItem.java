@@ -41,6 +41,26 @@ public final class CrystalEssenceItem extends Item {
         assignRandomAspectIfMissing(stack, level);
     }
 
+    /**
+     * Original ThaumcraftApiHelper.makeCrystal(aspect) creates a deterministic
+     * single crystal containing exactly one specified aspect. Crucible outputs
+     * must NOT use inventoryTick's random untagged-stack initializer.
+     */
+    public static ItemStack ofAspect(String aspectTag) {
+        if (!BUILTIN_ASPECT_TAGS.contains(aspectTag))
+            throw new IllegalArgumentException("Unknown BETA26 crystal aspect " + aspectTag);
+        ItemStack result = new ItemStack(dev.ehtid.thaumcraft.registry.ThaumcraftItems.CRYSTAL_ESSENCE.get());
+        CompoundTag entry = new CompoundTag();
+        entry.putString("key", aspectTag);
+        entry.putInt("amount", 1);
+        ListTag list = new ListTag();
+        list.add(entry);
+        CompoundTag root = new CompoundTag();
+        root.put("Aspects", list);
+        result.set(DataComponents.CUSTOM_DATA, CustomData.of(root));
+        return result;
+    }
+
     public static String legacyAspect(ItemStack stack) {
         CustomData data = stack.get(DataComponents.CUSTOM_DATA);
         if (data == null || data.isEmpty()) return null;

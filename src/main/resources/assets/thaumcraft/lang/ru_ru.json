@@ -176,5 +176,16 @@
   "item.thaumcraft.crucible": "Алхимический тигель",
   "item.ingot.thaumium.name": "Слиток таумиума",
   "item.ingot.void.name": "Слиток пустотного металла",
-  "item.ingot.brass.name": "Слиток алхимической латуни"
+  "item.ingot.brass.name": "Слиток алхимической латуни",
+  "item.nugget.iron.name": "Кусочек железа",
+  "item.nugget.copper.name": "Кусочек меди",
+  "item.nugget.tin.name": "Кусочек олова",
+  "item.nugget.silver.name": "Кусочек серебра",
+  "item.nugget.lead.name": "Кусочек свинца",
+  "item.nugget.quicksilver.name": "Капля ртути",
+  "item.nugget.thaumium.name": "Кусочек таумиума",
+  "item.nugget.void.name": "Кусочек пустотного металла",
+  "item.nugget.brass.name": "Кусочек алхимической латуни",
+  "item.nugget.quartz.name": "Кварцевый осколок",
+  "item.nugget.rareearth.name": "Кусочек редкоземельного элемента"
 }

@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -45,6 +46,11 @@ public final class NeoForgeLegacyItemStackDecoder {
             // Legacy metadata 1..6 must survive the 1.21 component transfer.
             return variant >= 0 && variant < 7
                     ? CurioItem.create(variant) : ItemStack.EMPTY;
+        }
+        if (originalId.equals("thaumcraft:nugget")) {
+            int metadata = originalStack.getShort("Damage");
+            return metadata >= 0 && metadata < 11
+                    ? ThaumcraftNuggetItem.create(metadata) : ItemStack.EMPTY;
         }
         if (originalId.equals("thaumcraft:ingot")) {
             int metadata = originalStack.getShort("Damage");

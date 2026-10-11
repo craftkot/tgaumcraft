@@ -84,6 +84,7 @@ public final class CoreParityTest {
         testOriginalCrucibleLifecycle();
         testOriginalCrucibleDissolution();
         testOriginalCrucibleMetallurgyCatalysts();
+        testOriginalVisCrystalCrucibleRecipes();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4502,6 +4503,54 @@ public final class CoreParityTest {
         eq(50, LegacyCrucibleCatalystLogic.WATER_PER_CRAFT_MB);
         eq(false, LegacyCrucibleCatalystLogic.containsAll(
                 new AspectListData().add(a.MAGIC, 5), thaumium.required()));
+    }
+
+    private static void testOriginalVisCrystalCrucibleRecipes() {
+        AspectRegistry registry = new AspectRegistry();
+        eq(37, registry.size());
+        eq("BASEALCHEMY", LegacyVisCrystalCrucibleLogic.RESEARCH);
+        eq(9, LegacyVisCrystalCrucibleLogic.QUARTZ_NUGGET_META);
+        eq(2, LegacyVisCrystalCrucibleLogic.COST);
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        AspectListData contents = new AspectListData()
+                .add(registry.WATER, 1).add(registry.MAGIC, 4)
+                .add(registry.FIRE, 2).add(registry.AIR, 2);
+        eq(null, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, contents, registry));
+        knowledge.addResearch("BASEALCHEMY");
+        // First registered eligible aspect wins equal-cost tie even if
+        // another type has more essence; AIR precedes FIRE and MAGIC.
+        eq(registry.AIR, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, contents, registry));
+        AspectListData afterAir = LegacyVisCrystalCrucibleLogic.afterCraft(
+                contents, registry.AIR);
+        eq(0, afterAir.getAmount(registry.AIR));
+        eq(2, contents.getAmount(registry.AIR)); // no mutation
+        eq(registry.FIRE, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, afterAir, registry));
+        AspectListData afterFire = LegacyVisCrystalCrucibleLogic.afterCraft(
+                afterAir, registry.FIRE);
+        eq(registry.MAGIC, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, afterFire, registry));
+        AspectListData afterMagic = LegacyVisCrystalCrucibleLogic.afterCraft(
+                afterFire, registry.MAGIC);
+        eq(2, afterMagic.getAmount(registry.MAGIC));
+        eq(registry.MAGIC, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, afterMagic, registry));
+        AspectListData empty = LegacyVisCrystalCrucibleLogic.afterCraft(
+                afterMagic, registry.MAGIC);
+        eq(null, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                knowledge, empty, registry));
+        eq(1, empty.getAmount(registry.WATER));
+        eq(950, LegacyCrucibleCatalystLogic.waterAfterCraft(1000));
+
+        for (AspectData aspect : registry.values()) {
+            AspectListData one = new AspectListData().add(aspect, 2);
+            eq(aspect, LegacyVisCrystalCrucibleLogic.firstEligibleAspect(
+                    knowledge, one, registry));
+            eq(0, LegacyVisCrystalCrucibleLogic.afterCraft(one, aspect)
+                    .visSize());
+        }
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
@@ -54,6 +55,10 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.AMBER.get());
                         output.accept(ThaumcraftItems.QUICKSILVER.get());
                         output.accept(ThaumcraftItems.FABRIC.get());
+                        // Original eleven nugget variants, incl. quartz sliver
+                        // used by all thirty-seven vis crystal recipes.
+                        for (int metadata = 0; metadata < 11; metadata++)
+                            output.accept(ThaumcraftNuggetItem.create(metadata));
                         // BETA26 single ingot item: thaumium, void metal, brass.
                         for (int metadata = 0; metadata < 3; metadata++)
                             output.accept(ThaumcraftIngotItem.create(metadata));

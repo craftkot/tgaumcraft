@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -59,6 +60,10 @@ public final class ThaumcraftItems {
 
     // Original plate ItemTCBase metadata 0..3: brass, iron, thaumium, void.
     // Original single ItemsTC.ingots registry with metadata 0/1/2.
+    // The original nugget registry has eleven item metadata variants.
+    public static final DeferredItem<ThaumcraftNuggetItem> NUGGET = ITEMS.registerItem(
+            "nugget", ThaumcraftNuggetItem::new, new Item.Properties());
+
     public static final DeferredItem<ThaumcraftIngotItem> INGOT = ITEMS.registerItem(
             "ingot", ThaumcraftIngotItem::new, new Item.Properties());
 

@@ -1,0 +1,68 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thaumcraft:item/nugget_iron"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "thaumcraft:item/nugget_copper"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "thaumcraft:item/nugget_tin"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "thaumcraft:item/nugget_silver"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 4
+      },
+      "model": "thaumcraft:item/nugget_lead"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 5
+      },
+      "model": "thaumcraft:item/nugget_quicksilver"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 6
+      },
+      "model": "thaumcraft:item/nugget_thaumium"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 7
+      },
+      "model": "thaumcraft:item/nugget_void"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 8
+      },
+      "model": "thaumcraft:item/nugget_brass"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 9
+      },
+      "model": "thaumcraft:item/nugget_quartz"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 10
+      },
+      "model": "thaumcraft:item/nugget_rareearth"
+    }
+  ]
+}

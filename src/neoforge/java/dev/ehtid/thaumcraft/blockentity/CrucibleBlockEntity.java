@@ -6,6 +6,9 @@ import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleCatalystLogic;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
+import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.port.core.LegacyVisCrystalCrucibleLogic;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -87,6 +90,10 @@ public final class CrucibleBlockEntity extends BlockEntity {
         AspectListData tags = ThaumometerScanDispatcher.aspectsForCrucibleItem(stack);
         boolean iron = stack.is(Items.IRON_INGOT)
                 || stack.is(IRON_INGOT_C) || stack.is(IRON_INGOT_FORGE);
+        // BETA26 OreDictionary nuggetQuartz is original metadata 9,
+        // NOT a vanilla quartz item or any other nugget subtype.
+        boolean quartzSliver = ThaumcraftNuggetItem.legacyMetadata(stack)
+                == LegacyVisCrystalCrucibleLogic.QUARTZ_NUGGET_META;
         var knowledge = player == null ? null
                 : player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         int consumed = 0;
@@ -94,19 +101,32 @@ public final class CrucibleBlockEntity extends BlockEntity {
             var recipe = iron && waterMb > 0
                     ? LegacyCrucibleCatalystLogic.bestIronRecipe(knowledge, aspects, METALLURGY)
                     : null;
+            var crystal = quartzSliver && waterMb > 0
+                    ? LegacyVisCrystalCrucibleLogic.firstEligibleAspect(knowledge, aspects, ASPECTS)
+                    : null;
+            ItemStack product = ItemStack.EMPTY;
             if (recipe != null) {
                 aspects = LegacyCrucibleCatalystLogic.afterCraft(aspects, recipe);
                 waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
-                ItemStack output = ThaumcraftIngotItem.create(recipe.outputMeta());
-                ItemEntity ejected = new ItemEntity(server,
-                        worldPosition.getX() + 0.5D,
-                        worldPosition.getY() + 1.13D,
-                        worldPosition.getZ() + 0.5D, output);
-                ejected.setDeltaMovement(new Vec3(0.12D, 0.22D, 0.12D));
-                server.addFreshEntity(ejected);
+                product = ThaumcraftIngotItem.create(recipe.outputMeta());
+            } else if (crystal != null) {
+                // 37 original thaumcraft:vis_crystal_<aspect> recipes.
+                // The output NBT must contain the matched aspect; it
+                // must never be randomized by CrystalEssenceItem's tick.
+                aspects = LegacyVisCrystalCrucibleLogic.afterCraft(aspects, crystal);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                product = CrystalEssenceItem.ofAspect(crystal.tag());
             } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
                 aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
             } else break;
+            if (!product.isEmpty()) {
+                ItemEntity ejected = new ItemEntity(server,
+                        worldPosition.getX() + 0.5D,
+                        worldPosition.getY() + 1.13D,
+                        worldPosition.getZ() + 0.5D, product);
+                ejected.setDeltaMovement(new Vec3(0.12D, 0.22D, 0.12D));
+                server.addFreshEntity(ejected);
+            }
             consumed++;
         }
         if (consumed != 0) {

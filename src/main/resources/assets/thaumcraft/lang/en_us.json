@@ -176,5 +176,16 @@
   "item.thaumcraft.crucible": "Crucible",
   "item.ingot.thaumium.name": "Thaumium Ingot",
   "item.ingot.void.name": "Void Metal Ingot",
-  "item.ingot.brass.name": "Alchemical Brass Ingot"
+  "item.ingot.brass.name": "Alchemical Brass Ingot",
+  "item.nugget.iron.name": "Iron Nugget",
+  "item.nugget.copper.name": "Copper Nugget",
+  "item.nugget.tin.name": "Tin Nugget",
+  "item.nugget.silver.name": "Silver Nugget",
+  "item.nugget.lead.name": "Lead Nugget",
+  "item.nugget.quicksilver.name": "Quicksilver Drop",
+  "item.nugget.thaumium.name": "Thaumium Nugget",
+  "item.nugget.void.name": "Void Metal Nugget",
+  "item.nugget.brass.name": "Alchemical Brass Nugget",
+  "item.nugget.quartz.name": "Quartz Sliver",
+  "item.nugget.rareearth.name": "Rare Earths"
 }
