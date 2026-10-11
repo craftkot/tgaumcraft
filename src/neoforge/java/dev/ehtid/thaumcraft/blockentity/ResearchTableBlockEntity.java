@@ -104,7 +104,11 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         for (var choice : choices) {
             if (!dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest
                     .allCardKeys().contains(choice.key())) return false;
-            if (choice.selected() && chosen == null) chosen = choice;
+            if (choice.selected()) {
+                // Reject corrupt legacy saves with more than one selected row.
+                if (chosen != null) return false;
+                chosen = choice;
+            }
         }
         if (chosen == null || !chosen.cardNBT().contains("seed", net.minecraft.nbt.Tag.TAG_LONG))
             return false;
@@ -209,7 +213,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
     public boolean drawOriginalTheoryCards(ServerPlayer player, int requestedCards) {
         if (level == null || level.isClientSide || session == null
                 || session.isComplete() || !stillValid(player)
-                || (requestedCards != 2 && requestedCards != 3))
+                || (requestedCards != 2 && requestedCards != 3)
+                || (requestedCards == 3 && session.bonusDraws() <= 0))
             return false;
         // Never reroll and replace still-unactivated offers: the original
         // GUI only draws again after accepting one of the current cards.
