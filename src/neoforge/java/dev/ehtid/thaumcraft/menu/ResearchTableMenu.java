@@ -36,6 +36,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot nearbyAidBits;
     private final DataSlot selectedAidBits;
     private final DataSlot hasChosenTheoryCard;
+    private final DataSlot bonusDraws;
     private final DataSlot[] previewCards = new DataSlot[3];
     private final DataSlot[] previewArguments = new DataSlot[3];
     private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
@@ -84,6 +85,18 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                     @Override public void set(int ignored) { }
                 } : DataSlot.standalone();
         addDataSlot(hasChosenTheoryCard);
+        // The BETA26 GUI requests three cards only when one bonus draw is
+        // available; otherwise button 2 gives two. Never trust the client
+        // to invent bonus resources.
+        bonusDraws = table instanceof ResearchTableBlockEntity liveBonus
+                ? new DataSlot() {
+                    @Override public int get() {
+                        return liveBonus.session() == null ? 0
+                                : liveBonus.session().bonusDraws();
+                    }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+        addDataSlot(bonusDraws);
         // Original BETA26 draws at most three pending card choices. Their
         // full subclass NBT never leaves the server through these DataSlots:
         // the client receives only read-only class IDs and visual flags.
@@ -194,6 +207,12 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     }
 
     public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
+    public int bonusDraws() { return bonusDraws.get(); }
+    public boolean hasPendingCardChoices() {
+        for (int i = 0; i < previewCards.length; i++)
+            if (previewCards[i].get() != 0) return true;
+        return false;
+    }
     public boolean hasSession() { return hasSession.get() != 0; }
     public int inspiration() { return inspiration.get(); }
     public int inspirationStart() { return inspirationStart.get(); }
@@ -204,8 +223,9 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
      * 4..6 = activate one of three choices, 7 = finish, 9 = abandon.
      *
      * Start/finish/abandon are implemented with true table inventory checks.
-     * Draw/activate choices remain disabled until original CardChoice class
-     * dispatch and nearby aid selection are fully ported.
+     * Draw and activate are now server-authoritative: the complete 33-card
+     * factory, staged effects, atomic item/ink/paper/XP commit and original
+     * selected-row serialization handle buttons 2..6.
      */
     @Override
     public boolean clickMenuButton(Player player, int buttonId) {
@@ -242,6 +262,23 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             broadcastChanges();
             return true;
         }
+        if (buttonId == 2 || buttonId == 3) {
+            // One paper per full draw, no paper charged for a failed
+            // initialization. Three cards require a real bonusDraws token.
+            if (researchTable.session() == null || researchTable.session().isComplete()
+                    || researchTable.session().bonusDraws() <= 0 && buttonId == 3)
+                return false;
+            if (!researchTable.drawOriginalTheoryCards(serverPlayer, buttonId))
+                return false;
+            broadcastChanges();
+            return true;
+        }
+        if (buttonId >= 4 && buttonId <= 6) {
+            if (!researchTable.activateOriginalTheoryCard(serverPlayer, buttonId - 4))
+                return false;
+            broadcastChanges();
+            return true;
+        }
         if (buttonId == 7) {
             if (!researchTable.finishTheory(serverPlayer)) return false;
             broadcastChanges();
@@ -252,8 +289,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             broadcastChanges();
             return true;
         }
-        // Don't let malformed/early client requests consume resources or
-        // fabricate theory results in place of the unported original cards.
+        // Reject every other client-supplied button ID.
         return false;
     }
 
