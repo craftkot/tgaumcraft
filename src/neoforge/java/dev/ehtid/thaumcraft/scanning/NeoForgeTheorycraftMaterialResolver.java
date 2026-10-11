@@ -88,7 +88,8 @@ public final class NeoForgeTheorycraftMaterialResolver {
     }
 
     /** BETA26 ThaumcraftApiHelper.makeCrystal(aspect) always holds one aspect. */
-    private static ItemStack crystal(String aspectTag) {
+    /** Original ThaumcraftApiHelper.makeCrystal(aspect), for card input OR reward. */
+    public static ItemStack crystal(String aspectTag) {
         if (aspectTag == null || ASPECTS.get(aspectTag) == null)
             return ItemStack.EMPTY;
         ItemStack crystal = new ItemStack(ThaumcraftItems.CRYSTAL_ESSENCE.get());
