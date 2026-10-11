@@ -1,0 +1,44 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thaumcraft:item/curio_arcane"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "thaumcraft:item/curio_preserved"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "thaumcraft:item/curio_ancient"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "thaumcraft:item/curio_eldritch"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 4
+      },
+      "model": "thaumcraft:item/curio_knowledge"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 5
+      },
+      "model": "thaumcraft:item/curio_twisted"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 6
+      },
+      "model": "thaumcraft:item/curio_rites"
+    }
+  ]
+}
