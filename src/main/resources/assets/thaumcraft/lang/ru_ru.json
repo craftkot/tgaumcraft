@@ -140,5 +140,6 @@
   "item.curio.rites.name": "Багровые ритуалы",
   "item.curio.text": "Какие же секреты здесь спрятаны?",
   "fail.crimsonrites": "Эта книга не содержит ничего, кроме как сумасшедшего бреда.",
-  "tc.knowledge.gained": "Вы получили некоторые знания"
+  "tc.knowledge.gained": "Вы получили некоторые знания",
+  "itemGroup.thaumcraft": "Thaumcraft"
 }
