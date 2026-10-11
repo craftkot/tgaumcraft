@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -34,6 +35,15 @@ public final class ThaumcraftClientEvents {
             var aspect = tag == null ? null : aspects.get(tag);
             return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
         }, ThaumcraftItems.PHIAL.get());
+
+        // TC6 crystals tint their original white translucent icon by the
+        // one contained primal/compound Aspect, not a hard-coded color.
+        event.register((stack, tintIndex) -> {
+            if (tintIndex != 0) return 0xFFFFFFFF;
+            String tag = CrystalEssenceItem.legacyAspect(stack);
+            var aspect = tag == null ? null : aspects.get(tag);
+            return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
+        }, ThaumcraftItems.CRYSTAL_ESSENCE.get());
     }
 
     @SubscribeEvent
