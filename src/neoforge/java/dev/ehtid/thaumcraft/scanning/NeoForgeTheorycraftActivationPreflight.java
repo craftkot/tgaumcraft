@@ -36,6 +36,9 @@ public final class NeoForgeTheorycraftActivationPreflight {
         Objects.requireNonNull(player);
         Objects.requireNonNull(table);
         var session = table.session();
+        // readChoices skips malformed legacy rows. A truncated view must
+        // never claim an activation can succeed or disclose a fake preview.
+        if (!table.hasStructurallyValidPendingChoices()) return null;
         var choices = table.pendingChoices();
         if (index < 0 || index >= choices.size() || choices.size() > 3) return null;
         var selected = choices.get(index);

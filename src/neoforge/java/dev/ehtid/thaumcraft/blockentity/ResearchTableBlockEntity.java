@@ -64,6 +64,31 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
                 : LegacyTheorycraftChoiceNbt.readChoices(originalSessionNbt);
     }
 
+    /**
+     * Do not trust partially decoded old-world card choice lists: readChoices
+     * deliberately skips malformed rows to preserve legacy save passthrough.
+     * Gameplay must reject those sessions rather than showing an activatable
+     * subset that can never be committed.
+     */
+    public boolean hasStructurallyValidPendingChoices() {
+        if (session == null || !originalSessionNbt.contains("cardChoices",
+                net.minecraft.nbt.Tag.TAG_LIST)) return false;
+        var rawTag = originalSessionNbt.get("cardChoices");
+        if (!(rawTag instanceof net.minecraft.nbt.ListTag rows)
+                || rows.size() > 3
+                || (!rows.isEmpty() && rows.getElementType() != net.minecraft.nbt.Tag.TAG_COMPOUND))
+            return false;
+        var decoded = pendingChoices();
+        if (decoded.size() != rows.size()) return false;
+        int selected = 0;
+        for (var choice : decoded) {
+            if (!LegacyTheorycraftCardTagValidator.structurallyValid(
+                    choice.key(), choice.cardNBT())) return false;
+            if (choice.selected() && ++selected > 1) return false;
+        }
+        return true;
+    }
+
     public java.util.Optional<LegacyTheorycraftChoiceNbt.Choice> lastDrawChoice() {
         return session == null ? java.util.Optional.empty()
                 : LegacyTheorycraftChoiceNbt.readLastDraw(originalSessionNbt);
@@ -224,6 +249,9 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         // Never reroll and replace still-unactivated offers: the original
         // GUI only draws again after accepting one of the current cards.
         // Also preserve malformed legacy rows rather than overwriting them.
+        if (originalSessionNbt.contains("cardChoices")
+                && !originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST))
+            return false;
         if (!pendingChoices().isEmpty()
                 || (originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST)
                         && !originalSessionNbt.getList("cardChoices",

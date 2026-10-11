@@ -376,3 +376,7 @@ Code commit `4fd818a01ff7d07706f7c8218d17acfbfa005f5b`: three-card draws now exp
 
 ## 2026-10-11 continuation — save-boundary CardChoice integrity
 Previous GitHub Actions run #455 (38153717690) for commit 4fd818a completed SUCCESS. New hardening in `ResearchTableBlockEntity.storeCardChoices`: reject more than three pending cards, any null/structurally-invalid CardChoice, or more than one selected row BEFORE rewriting originalSessionNbt. Empty card offers remain legal. Earlier keep-path safeguard still applies to malformed old saves. No new gameplay category added; retain rounded 83% pending larger playable-content implementation. Check CI for this new commit.
+
+
+## 2026-10-11 continuation — corrupt legacy card list validation
+CI #456 (run 38153911426) for previous commit succeeded. A malformed NBT cardChoices list may decode to a shorter set because LegacyTheorycraftChoiceNbt.readChoices intentionally skips damaged rows. New BlockEntity.hasStructurallyValidPendingChoices rejects wrong tag type, non-compound elements, >3 rows, truncated decoder output, malformed subclass tags and multiple selected rows; NeoForgeTheorycraftActivationPreflight now fails closed before reporting a card as payable. drawOriginalTheoryCards also refuses to overwrite a saved cardChoices tag of an unexpected NBT type. No valid old-world card data is rewritten on rejection. Re-run CI; no rendered client test claimed. Retain ~83%.
