@@ -83,6 +83,7 @@ public final class CoreParityTest {
         testVisResonatorArcaneRecipe();
         testOriginalCrucibleLifecycle();
         testOriginalCrucibleDissolution();
+        testOriginalCrucibleMetallurgyCatalysts();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4458,6 +4459,49 @@ public final class CoreParityTest {
         // BETA26 no-recipe branch does NOT consume tank water: that
         // happens only when a matched CrucibleRecipe yields an item.
         eq(1000, LegacyCrucibleHeat.CAPACITY_MB);
+    }
+
+    private static void testOriginalCrucibleMetallurgyCatalysts() {
+        AspectRegistry a = new AspectRegistry();
+        var recipes = LegacyCrucibleCatalystLogic.originalIronRecipes(a);
+        eq(2, recipes.size());
+        var brass = recipes.get(0);
+        var thaumium = recipes.get(1);
+        eq("thaumcraft:brassingot", brass.id());
+        eq("METALLURGY@1", brass.research());
+        eq("ingotIron", brass.catalystOre());
+        eq(2, brass.outputMeta());
+        eq(5, brass.required().getAmount(a.TOOL));
+        eq("thaumcraft:thaumiumingot", thaumium.id());
+        eq("METALLURGY@2", thaumium.research());
+        eq(0, thaumium.outputMeta());
+        eq(5, thaumium.required().getAmount(a.MAGIC));
+        eq(5, thaumium.required().getAmount(a.EARTH));
+
+        var present = new AspectListData()
+                .add(a.TOOL, 5).add(a.MAGIC, 5).add(a.EARTH, 5);
+        PlayerKnowledgeData known = new PlayerKnowledgeData();
+        eq(null, LegacyCrucibleCatalystLogic.bestIronRecipe(null, present, recipes));
+        eq(null, LegacyCrucibleCatalystLogic.bestIronRecipe(known, present, recipes));
+        known.addResearch("METALLURGY");
+        known.setResearchStage("METALLURGY", 1);
+        eq(brass, LegacyCrucibleCatalystLogic.bestIronRecipe(known, present, recipes));
+        known.setResearchStage("METALLURGY", 2);
+        eq(thaumium, LegacyCrucibleCatalystLogic.bestIronRecipe(known, present, recipes));
+        var afterThaumium = LegacyCrucibleCatalystLogic.afterCraft(present, thaumium);
+        eq(0, afterThaumium.getAmount(a.MAGIC));
+        eq(0, afterThaumium.getAmount(a.EARTH));
+        eq(5, afterThaumium.getAmount(a.TOOL));
+        eq(5, present.getAmount(a.MAGIC)); // No mutation of source.
+        eq(brass, LegacyCrucibleCatalystLogic.bestIronRecipe(known, afterThaumium, recipes));
+        var afterBrass = LegacyCrucibleCatalystLogic.afterCraft(afterThaumium, brass);
+        eq(0, afterBrass.getAmount(a.TOOL));
+        eq(null, LegacyCrucibleCatalystLogic.bestIronRecipe(known, afterBrass, recipes));
+        eq(950, LegacyCrucibleCatalystLogic.waterAfterCraft(1000));
+        eq(0, LegacyCrucibleCatalystLogic.waterAfterCraft(20));
+        eq(50, LegacyCrucibleCatalystLogic.WATER_PER_CRAFT_MB);
+        eq(false, LegacyCrucibleCatalystLogic.containsAll(
+                new AspectListData().add(a.MAGIC, 5), thaumium.required()));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

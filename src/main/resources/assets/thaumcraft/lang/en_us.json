@@ -173,5 +173,8 @@
   "item.plate.thaumium.name": "Thaumium Plate",
   "item.plate.void.name": "Void Metal Plate",
   "block.thaumcraft.crucible": "Crucible",
-  "item.thaumcraft.crucible": "Crucible"
+  "item.thaumcraft.crucible": "Crucible",
+  "item.ingot.thaumium.name": "Thaumium Ingot",
+  "item.ingot.void.name": "Void Metal Ingot",
+  "item.ingot.brass.name": "Alchemical Brass Ingot"
 }

@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -57,6 +58,10 @@ public final class ThaumcraftItems {
             "fabric", new Item.Properties());
 
     // Original plate ItemTCBase metadata 0..3: brass, iron, thaumium, void.
+    // Original single ItemsTC.ingots registry with metadata 0/1/2.
+    public static final DeferredItem<ThaumcraftIngotItem> INGOT = ITEMS.registerItem(
+            "ingot", ThaumcraftIngotItem::new, new Item.Properties());
+
     public static final DeferredItem<PlateItem> PLATE = ITEMS.registerItem(
             "plate", PlateItem::new, new Item.Properties());
 

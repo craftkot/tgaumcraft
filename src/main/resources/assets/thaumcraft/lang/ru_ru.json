@@ -173,5 +173,8 @@
   "item.plate.thaumium.name": "Пластина из таумиума",
   "item.plate.void.name": "Пластина из пустотного металла",
   "block.thaumcraft.crucible": "Алхимический тигель",
-  "item.thaumcraft.crucible": "Алхимический тигель"
+  "item.thaumcraft.crucible": "Алхимический тигель",
+  "item.ingot.thaumium.name": "Слиток таумиума",
+  "item.ingot.void.name": "Слиток пустотного металла",
+  "item.ingot.brass.name": "Слиток алхимической латуни"
 }

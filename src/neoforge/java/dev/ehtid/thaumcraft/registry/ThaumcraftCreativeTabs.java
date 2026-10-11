@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
@@ -53,6 +54,9 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.AMBER.get());
                         output.accept(ThaumcraftItems.QUICKSILVER.get());
                         output.accept(ThaumcraftItems.FABRIC.get());
+                        // BETA26 single ingot item: thaumium, void metal, brass.
+                        for (int metadata = 0; metadata < 3; metadata++)
+                            output.accept(ThaumcraftIngotItem.create(metadata));
                         // All original BETA26 item metadata variants.
                         for (int variant = 0; variant < 4; variant++)
                             output.accept(PlateItem.create(variant));

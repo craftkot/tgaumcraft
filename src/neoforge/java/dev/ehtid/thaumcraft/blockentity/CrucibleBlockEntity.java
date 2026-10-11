@@ -4,6 +4,17 @@ import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
+import dev.ehtid.thaumcraft.port.core.LegacyCrucibleCatalystLogic;
+import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.Vec3;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleHeat;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
@@ -26,6 +37,12 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class CrucibleBlockEntity extends BlockEntity {
     private static final AspectRegistry ASPECTS = new AspectRegistry();
+    private static final java.util.List<LegacyCrucibleCatalystLogic.Recipe> METALLURGY =
+            LegacyCrucibleCatalystLogic.originalIronRecipes(ASPECTS);
+    private static final TagKey<Item> IRON_INGOT_C = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "ingots/iron"));
+    private static final TagKey<Item> IRON_INGOT_FORGE = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "ingots/iron"));
     private int waterMb;
     private int heat;
     private AspectListData aspects = new AspectListData();
@@ -52,28 +69,51 @@ public final class CrucibleBlockEntity extends BlockEntity {
         return true;
     }
 
-    /**
-     * BETA26 TileCrucible.attemptSmelt's no-recipe fallback: merge the
-     * BETA26 object tags into the stored AspectList, consuming exactly
-     * maxItems items. There is no recipe-reward shortcut in this slice.
-     *
-     * Return the number actually consumed so both direct interaction and
-     * ItemEntity collision update their own inventory/stack atomically.
-     */
+    /** Original null-player dropped catalysts do not match research recipes. */
     public int dissolve(ItemStack stack, int maxItems) {
-        if (level == null || level.isClientSide || stack.isEmpty() || maxItems <= 0)
-            return 0;
-        AspectListData objectTags = ThaumometerScanDispatcher.aspectsForCrucibleItem(stack);
-        if (!LegacyCrucibleDissolution.canDissolve(heat, waterMb, objectTags))
-            return 0;
-        int count = Math.min(stack.getCount(), maxItems);
-        if (count <= 0) return 0;
-        aspects = LegacyCrucibleDissolution.dissolve(aspects, objectTags, count);
-        // The original only drains 50 mB when a CATALYST produces an item;
-        // simple aspect dissolution does not consume water.
-        setChanged();
-        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
-        return count;
+        return attemptSmelt(stack, maxItems, null);
+    }
+
+    /**
+     * BETA26 TileCrucible.attemptSmelt: player research and catalyst
+     * recipes take priority over ordinary item-to-aspect dissolution.
+     * One input is processed per iteration; leftover stack remains owned
+     * by the caller until its actual consumed-count is returned.
+     */
+    public int attemptSmelt(ItemStack stack, int maxItems, ServerPlayer player) {
+        if (!(level instanceof ServerLevel server) || stack.isEmpty()
+                || maxItems <= 0 || !boiling()) return 0;
+        int remaining = Math.min(stack.getCount(), maxItems);
+        AspectListData tags = ThaumometerScanDispatcher.aspectsForCrucibleItem(stack);
+        boolean iron = stack.is(Items.IRON_INGOT)
+                || stack.is(IRON_INGOT_C) || stack.is(IRON_INGOT_FORGE);
+        var knowledge = player == null ? null
+                : player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        int consumed = 0;
+        while (consumed < remaining) {
+            var recipe = iron && waterMb > 0
+                    ? LegacyCrucibleCatalystLogic.bestIronRecipe(knowledge, aspects, METALLURGY)
+                    : null;
+            if (recipe != null) {
+                aspects = LegacyCrucibleCatalystLogic.afterCraft(aspects, recipe);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                ItemStack output = ThaumcraftIngotItem.create(recipe.outputMeta());
+                ItemEntity ejected = new ItemEntity(server,
+                        worldPosition.getX() + 0.5D,
+                        worldPosition.getY() + 1.13D,
+                        worldPosition.getZ() + 0.5D, output);
+                ejected.setDeltaMovement(new Vec3(0.12D, 0.22D, 0.12D));
+                server.addFreshEntity(ejected);
+            } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
+                aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
+            } else break;
+            consumed++;
+        }
+        if (consumed != 0) {
+            setChanged();
+            server.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        }
+        return consumed;
     }
 
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state,

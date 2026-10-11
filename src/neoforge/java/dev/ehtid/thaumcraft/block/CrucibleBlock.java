@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.server.level.ServerLevel;
@@ -95,7 +96,8 @@ public final class CrucibleBlock extends BaseEntityBlock {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (level.isClientSide)
             return ItemInteractionResult.SUCCESS;
-        int consumed = crucible.dissolve(stack, 1);
+        int consumed = player instanceof ServerPlayer serverPlayer
+                ? crucible.attemptSmelt(stack, 1, serverPlayer) : 0;
         if (consumed == 0)
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         if (!player.getAbilities().instabuild) stack.shrink(consumed);

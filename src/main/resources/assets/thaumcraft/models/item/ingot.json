@@ -1,0 +1,20 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thaumcraft:item/ingot_thaumium"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "thaumcraft:item/ingot_void"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "thaumcraft:item/ingot_brass"
+    }
+  ]
+}
