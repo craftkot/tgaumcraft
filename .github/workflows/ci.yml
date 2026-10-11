@@ -229,6 +229,28 @@ jobs:
                           "fail.crimsonrites"):
                   assert entries.get(key), (lang, key)
 
+          # BETA26 ConfigRecipes: eight metadata-0 phials from
+          # original shaped " C" / "G G" / " G", C=clay ball,
+          # G=blockGlass OreDictionary (plain + all 16 stained colors).
+          phial_recipe = json.loads((Path("src/main/resources/data/thaumcraft/recipe/phial.json")).read_text())
+          assert phial_recipe["type"] == "minecraft:crafting_shaped"
+          assert phial_recipe["pattern"] == [" C ", "G G", " G "]
+          assert phial_recipe["key"]["C"]["item"] == "minecraft:clay_ball"
+          assert phial_recipe["key"]["G"]["tag"] == "thaumcraft:phial_glass"
+          assert phial_recipe["result"] == {"id": "thaumcraft:phial", "count": 8}
+          glass_tag = json.loads((Path("src/main/resources/data/thaumcraft/tags/item/phial_glass.json")).read_text())
+          colors = ("white orange magenta light_blue yellow lime pink gray light_gray "
+                    "cyan purple blue brown green red black").split()
+          expected_glass = {"minecraft:glass"} | {
+              "minecraft:" + color + "_stained_glass" for color in colors}
+          assert set(value for value in glass_tag["values"] if isinstance(value, str)) == expected_glass
+          assert {"id":"#c:glass_blocks","required":False} in glass_tag["values"]
+          # Readable original creative group title and all true registered
+          # Curio/Celestial/Phial variants are now available for client tests.
+          for language in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (language + ".json")).read_text())
+              assert entries["itemGroup.thaumcraft"] == "Thaumcraft"
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
