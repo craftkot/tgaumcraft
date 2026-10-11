@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "thaumcraft:quartztonuggets",
+  "pattern": [
+    "#"
+  ],
+  "key": {
+    "#": {
+      "item": "minecraft:quartz"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:nugget",
+    "count": 9,
+    "components": {
+      "minecraft:custom_data": {
+        "LegacyNuggetMeta": 9
+      },
+      "minecraft:custom_model_data": 9
+    }
+  }
+}
