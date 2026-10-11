@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.scanning;
 
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftInventoryPlanner;
+import dev.ehtid.thaumcraft.item.CurioItem;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -43,7 +45,24 @@ public final class NeoForgeTheorycraftItemTransaction {
                     stack, stack.getCount(), consumed != null && consumed[i]));
         }
         return LegacyTheorycraftInventoryPlanner.plan(slots, needs,
-                ItemStack::isSameItemSameComponents);
+                NeoForgeTheorycraftItemTransaction::matchesOriginalItem);
+    }
+
+    /**
+     * Original BETA26 Curio stacks compare by ITEM and legacy DAMAGE (0..6).
+     * The modern custom model display component does not identify gameplay
+     * contents, and a bare Curio ItemStack is an exact metadata-0 curio.
+     * Other migrated items retain strict component comparison until their
+     * particular BETA26 NBT equivalence is independently verified.
+     */
+    private static boolean matchesOriginalItem(ItemStack actual, ItemStack requirement) {
+        if (actual.is(ThaumcraftItems.CURIO.get())
+                && requirement.is(ThaumcraftItems.CURIO.get())) {
+            int have = CurioItem.legacyMetadata(actual);
+            int needed = CurioItem.legacyMetadata(requirement);
+            return have >= 0 && have == needed;
+        }
+        return ItemStack.isSameItemSameComponents(actual, requirement);
     }
 
     /**
