@@ -1,0 +1,19 @@
+# 80% checkpoint — Thaumcraft original Creative tab, phial recipe and visible assets
+**Date:** 2026-10-11. **Repo:** craftkot/tgaumcraft, main.
+**Baseline:** Fresh-read HEAD `3b689791`, `analysis/HANDOFF_NEW_CHAT_RU.md` and `analysis/CONTINUATION_79_CURIO_ITEMS.md`. Baseline CI SUCCESS (CoreParity, NeoForge Gradle build and dedicated-server smoke).
+
+## Implemented in this continuation
+
+- `ThaumcraftCreativeTabs.java` `81e63253`: genuine NeoForge 1.21.1 Thaumcraft custom creative tab, with the original title `itemGroup.thaumcraft`, Thaumonomicon icon and all currently registered blocks and core items. Explicitly exposes **all 7 original Curio metadata variants**, **all 13 original Celestial Notes metadata variants**, empty phial, and **37 fully filled real aspect-specific phials** for client playtesting. This exposes *real registered ItemStacks*, not fake rewards. Registered it in `ThaumcraftPort.java` `48fb7cf`. Original English/Russian title added to both locale files (`f405083d`, `d2bc6d4c`). All related CI full GREEN.
+- **Original survival glass phial recipe restored** by inspecting `ConfigRecipes` directly in the supplied BETA26 JAR with `javap -c -p`: produces **8 empty phials** in shaped pattern `" C "`, `"G G"`, `" G "`, where `C=minecraft:clay_ball` and `G=blockGlass` OreDictionary. New NeoForge 1.21.1 vanilla shaped recipe `data/thaumcraft/recipe/phial.json` (`983830b4`) plus `tags/item/phial_glass.json` (`0c6c85dc`), supporting regular glass, **all 16 original dyed glass colors**, plus optional `#c:glass_blocks` for compatible added glasses. CI `6a38fb5b` explicitly checks original recipe shape, output=8, tag covers 17 vanilla glass IDs, correct title. All tests/build/server smoke for these commits SUCCESS.
+- **Removed missing-texture risk for the creative tab icon and crystal essence:** exact binary PNGs `assets/thaumcraft/textures/items/thaumonomicon.png` and `assets/thaumcraft/textures/items/crystal_essence.png` extracted from *user-provided ORIGINAL BETA26 JAR*, Git blob SHA-1 verified, installed under NeoForge `assets/thaumcraft/textures/item/` and linked by modern JSON item models (`e9d4b86a`). Original Thaumonomicon 32x32 art is used, not approximation. Crystal Essence item's original pixel sprite is tinted with the real saved BETA26 Aspect color client-side (`ThaumcraftClientEvents.java`, `91cf9c299`). CI asset assertions added in `279d139c`.
+- Prior ported research table/UI, 33 pure Java theorycard calculations, original research data, Curios, Phials, Russian text/font tweaks, sky scanning, etc. retained unchanged.
+- **80% checkpoint testing:** GitHub Actions CoreParity + NeoForge Gradle build + dedicated server smoke should be rechecked for final head `279d139c` and subsequent documentation commits before claiming green. Previous head `6a38fb5b` was full GREEN. Creative tab itself was compiled and server booted on commits `d2bc6d4c` and `6a38fb5b` (both green). There is **no manual Minecraft client playtest yet**.
+
+## Still to port — highest priority
+
+- ResearchTableMenu 2/3 draw and 4/5/6 original per-card activation with faithful initialization for **all 33** cards; never silently substitute incomplete pools or grant fake theory. Actual client selection, server transactions, sync.
+- The remaining original Thaumcraft blocks, alchemy, infusion, golems, foci, entities, dimension/biomes, complete recipes/loot. Some visible items still need their exact original 1.12 models/animated textures. Scribing and first steps already have special logic; don't replace.
+- User's optional sky scan changes: random previously **uncollected** Moon note, deferred to polishing; preserve original phase-based logic in baseline.
+
+**Estimate 80% is approximate whole port development effort, not working-gameplay coverage.** Always fresh-read main/handoff before continuation and verify CI.
