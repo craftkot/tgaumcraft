@@ -93,17 +93,34 @@ capture 02-after-accessibility
 xdotool mousemove 512 308 click 1
 sleep 8
 capture 03-after-singleplayer
-xdotool mousemove 512 672 click 1
-sleep 8
-capture 04-after-create-world
-xdotool mousemove 512 716 click 1
-sleep 75
-capture 05-after-world-attempt
-
+# After Singleplayer, with no saved worlds Minecraft opens
+# the CREATE WORLD form directly. Screenshots from CI run #471 verify
+# Allow Commands at x512,y430 and CREATE NEW WORLD at x275,y716.
+xdotool mousemove 512 433 click 1
+sleep 3
+capture 04-commands-enabled
+xdotool mousemove 275 716 click 1
+sleep 110
+capture 05-after-world-start
 if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Preparing spawn area|Joining world' client-smoke/client.log; then
   echo 'INTEGRATED_WORLD_START_LOG=YES' | tee -a client-smoke-status.txt
+  # Real creative-mode commands, sent through the actual game chat UI.
+  # Commands may still fail if the GUI has not yet released focus; the
+  # captured game screenshot and logs remain the ground truth.
+  xdotool key t
+  sleep 2
+  xdotool type --clearmodifiers --delay 30 '/gamemode creative'
+  xdotool key Return
+  sleep 4
+  xdotool key t
+  sleep 2
+  xdotool type --clearmodifiers --delay 30 '/give @p thaumcraft:crucible'
+  xdotool key Return
+  sleep 5
+  capture 06-crucible-give-attempt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+  exit 1
 fi
 if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
   echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
