@@ -200,6 +200,35 @@ jobs:
               assert entries.get("item.phial.empty.name"), language
               assert "%s" in entries.get("item.phial.filled.name", ""), language
 
+          # Seven original BETA26 Curio metadata variants include the
+          # Crimson Rites (metadata 6), which uses its own 32x32 original
+          # texture. Don't silently alias missing variants to Arcane.
+          variants = ["arcane", "preserved", "ancient", "eldritch",
+                      "knowledge", "twisted", "rites"]
+          model = json.loads((assets / "models/item/curio.json").read_text())
+          assert model["textures"]["layer0"] == "thaumcraft:item/curio_arcane"
+          assert len(model["overrides"]) == 6
+          for meta, variant in enumerate(variants):
+              item_texture = "crimson_rites" if variant == "rites" else "curio_" + variant
+              data = (assets / "textures/item" / (item_texture + ".png")).read_bytes()
+              assert data[:8] == bytes([137,80,78,71,13,10,26,10]), variant
+              assert len(data) > 100, variant
+              if meta != 0:
+                  entry = model["overrides"][meta - 1]
+                  assert entry["predicate"]["custom_model_data"] == meta
+                  assert entry["model"] == "thaumcraft:item/curio_" + variant
+                  variant_model = json.loads((assets / "models/item" /
+                                              ("curio_" + variant + ".json")).read_text())
+                  assert variant_model["textures"]["layer0"] == (
+                      "thaumcraft:item/" + item_texture)
+          for lang in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (lang + ".json")).read_text())
+              for variant in variants:
+                  assert entries.get("item.curio." + variant + ".name"), (lang, variant)
+              for key in ("item.curio.text", "tc.knowledge.gained",
+                          "fail.crimsonrites"):
+                  assert entries.get(key), (lang, key)
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
