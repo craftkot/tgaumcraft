@@ -4,6 +4,9 @@ import com.mojang.serialization.MapCodec;
 import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -70,17 +73,53 @@ public final class CrucibleBlock extends BaseEntityBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
                                                BlockPos pos, Player player, InteractionHand hand,
                                                BlockHitResult hit) {
-        if (!stack.is(Items.WATER_BUCKET)
-                || !(level.getBlockEntity(pos) instanceof CrucibleBlockEntity crucible)
-                || crucible.waterMb() != 0)
+        if (!(level.getBlockEntity(pos) instanceof CrucibleBlockEntity crucible))
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if (!level.isClientSide && crucible.fillBucket()) {
-            if (!player.getAbilities().instabuild)
-                player.setItemInHand(hand, new ItemStack(Items.BUCKET));
-            level.playSound(null, pos, SoundEvents.BUCKET_EMPTY,
-                    SoundSource.BLOCKS, 1.0F, 1.0F);
+        if (stack.is(Items.WATER_BUCKET)) {
+            if (crucible.waterMb() != 0)
+                return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+            if (!level.isClientSide && crucible.fillBucket()) {
+                if (!player.getAbilities().instabuild)
+                    player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+                level.playSound(null, pos, SoundEvents.BUCKET_EMPTY,
+                        SoundSource.BLOCKS, 1.0F, 1.0F);
+            }
+            return ItemInteractionResult.sidedSuccess(level.isClientSide);
         }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        // Original BlockCrucible: non-sneaking player, face UP, one item
+        // at a time while the water is actually boiling. Recipes are
+        // resolved before dissolution in the full original; recipe
+        // catalysts must be registered in the next porting stage.
+        if (player.isShiftKeyDown() || hit.getDirection() != Direction.UP
+                || stack.isEmpty())
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (level.isClientSide)
+            return ItemInteractionResult.SUCCESS;
+        int consumed = crucible.dissolve(stack, 1);
+        if (consumed == 0)
+            return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (!player.getAbilities().instabuild) stack.shrink(consumed);
+        return ItemInteractionResult.SUCCESS;
+    }
+
+    /**
+     * Original BlockCrucible.onEntityCollision sends genuine dropped
+     * ItemEntity stacks to TileCrucible.attemptSmelt once boiling.
+     * This branch converts their registered object tags to stored
+     * aspects (not yet to unported alchemical recipe outputs).
+     */
+    @Override
+    protected void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        if (!level.isClientSide && entity instanceof ItemEntity itemEntity
+                && level.getBlockEntity(pos) instanceof CrucibleBlockEntity crucible) {
+            ItemStack dropped = itemEntity.getItem();
+            int consumed = crucible.dissolve(dropped, dropped.getCount());
+            if (consumed > 0) {
+                dropped.shrink(consumed);
+                if (dropped.isEmpty()) itemEntity.discard();
+                else itemEntity.setItem(dropped);
+            }
+        }
     }
 
     @Override

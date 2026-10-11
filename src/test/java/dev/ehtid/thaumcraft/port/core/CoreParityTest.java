@@ -82,6 +82,7 @@ public final class CoreParityTest {
         testFirstStepsEndToEnd();
         testVisResonatorArcaneRecipe();
         testOriginalCrucibleLifecycle();
+        testOriginalCrucibleDissolution();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4423,6 +4424,40 @@ public final class CoreParityTest {
                 FirstStepsBootstrapLogic.dustTarget(player, "minecraft:water_cauldron"));
         eq(FirstStepsBootstrapLogic.DustTarget.NONE,
                 FirstStepsBootstrapLogic.dustTarget(player, "minecraft:lava_cauldron"));
+    }
+
+    private static void testOriginalCrucibleDissolution() {
+        AspectRegistry registry = new AspectRegistry();
+        AspectListData iron = LegacyObjectAspectTable.get(registry,
+                "minecraft:iron_ingot");
+        eq(15, iron.getAmount(registry.METAL));
+        isFalse(LegacyCrucibleDissolution.canDissolve(150, 1000, iron));
+        isFalse(LegacyCrucibleDissolution.canDissolve(151, 0, iron));
+        isFalse(LegacyCrucibleDissolution.canDissolve(200, 1000,
+                new AspectListData()));
+        isTrue(LegacyCrucibleDissolution.canDissolve(151, 1000, iron));
+
+        AspectListData stored = new AspectListData().add(registry.MAGIC, 2);
+        AspectListData merged = LegacyCrucibleDissolution.dissolve(stored,
+                iron, 3);
+        eq(45, merged.getAmount(registry.METAL));
+        eq(2, merged.getAmount(registry.MAGIC));
+        eq(0, stored.getAmount(registry.METAL));
+        eq(15, iron.getAmount(registry.METAL));
+        eq(47, merged.visSize());
+        eq(2, merged.size());
+
+        AspectListData quartz = LegacyObjectAspectTable.get(registry,
+                "minecraft:quartz");
+        eq(5, quartz.getAmount(registry.CRYSTAL));
+        AspectListData afterQuartz = LegacyCrucibleDissolution.dissolve(
+                merged, quartz, 1);
+        eq(5, afterQuartz.getAmount(registry.CRYSTAL));
+        eq(52, afterQuartz.visSize());
+        eq(0, merged.getAmount(registry.CRYSTAL));
+        // BETA26 no-recipe branch does NOT consume tank water: that
+        // happens only when a matched CrucibleRecipe yields an item.
+        eq(1000, LegacyCrucibleHeat.CAPACITY_MB);
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

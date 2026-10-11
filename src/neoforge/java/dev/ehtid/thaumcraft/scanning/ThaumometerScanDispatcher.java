@@ -356,6 +356,15 @@ public final class ThaumometerScanDispatcher {
         return new AspectListData();
     }
 
+    /**
+     * The original crucible and thaumometer BOTH use
+     * ThaumcraftCraftingManager.getObjectTags, including contained crystal
+     * aspects and enchantment bonuses. Reuse one exact resolver.
+     */
+    public static AspectListData aspectsForCrucibleItem(ItemStack stack) {
+        return objectAspects(stack);
+    }
+
     private static AspectListData objectAspects(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return new AspectListData();
         // BETA26 ThaumcraftCraftingManager.getBonusTags overrides the registered
