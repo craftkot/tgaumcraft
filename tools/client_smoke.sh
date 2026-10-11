@@ -104,20 +104,50 @@ sleep 110
 capture 05-after-world-start
 if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Preparing spawn area|Joining world' client-smoke/client.log; then
   echo 'INTEGRATED_WORLD_START_LOG=YES' | tee -a client-smoke-status.txt
-  # Real creative-mode commands, sent through the actual game chat UI.
-  # Commands may still fail if the GUI has not yet released focus; the
-  # captured game screenshot and logs remain the ground truth.
-  xdotool key t
+  # Actual interactive world commands, typed through the real Minecraft
+  # client chat; each step has a screenshot and may be checked independently.
+  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }
+  send_chat '/gamemode creative'
+  send_chat '/give @p thaumcraft:crucible'
+  capture 06-crucible-in-hand
+
+  # First attempt genuine first-person RIGHT CLICK placement of the held
+  # crucible at the original player's crosshair (may miss on snow terrain).
+  xdotool click 3
+  sleep 3
+  capture 07-right-click-place-attempt
+
+  # Then produce a deterministic, visible port block in the same live world:
+  # player positioned at (x,z) facing +Z with 25-degree downward pitch;
+  # block exactly three blocks along +Z, at the player's standing Y.
+  send_chat '/tp @p ~ ~ ~ 0 27'
+  send_chat '/setblock ~ ~ ~3 thaumcraft:crucible'
+  sleep 6
+  capture 08-actual-crucible-block
+  echo 'CLIENT_SENT_SETBLOCK=YES' | tee -a client-smoke-status.txt
+
+  # Real interaction path: get a water bucket and use it against the
+  # placed crucible. Keep a separate screenshot of the result.
+  send_chat '/give @p minecraft:water_bucket'
+  xdotool key --clearmodifiers 2
   sleep 2
-  xdotool type --clearmodifiers --delay 30 '/gamemode creative'
-  xdotool key Return
-  sleep 4
-  xdotool key t
-  sleep 2
-  xdotool type --clearmodifiers --delay 30 '/give @p thaumcraft:crucible'
-  xdotool key Return
+  xdotool click 3
   sleep 5
-  capture 06-crucible-give-attempt
+  capture 09-water-bucket-on-crucible
+
+  # Ask the integrated server for block-entity NBT (not a mock property).
+  # Screenshot proves any returned Water field, or records why targeting
+  # the bucket was unsuccessful. This is deliberately an *observation*.
+  send_chat '/data get block ~ ~ ~3'
+  sleep 3
+  capture 10-crucible-blockentity-nbt
+  echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
   exit 1
@@ -126,4 +156,4 @@ if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "
   echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
   exit 1
 fi
-echo 'PASS: real Minecraft client window + title screenshot + no observed crash' | tee -a client-smoke-status.txt
+echo 'PASS: real Minecraft client loaded world; additional crucible interactions captured for verification' | tee -a client-smoke-status.txt
