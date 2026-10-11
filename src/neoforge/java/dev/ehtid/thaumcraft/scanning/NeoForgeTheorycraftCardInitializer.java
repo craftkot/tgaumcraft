@@ -37,6 +37,12 @@ import java.util.Set;
  */
 public final class NeoForgeTheorycraftCardInitializer {
     private static final AspectRegistry ASPECTS = new AspectRegistry();
+    // 1.12 drawCards may try up to 10,000 candidates; avoid rebuilding the
+    // entire built-in research JSON catalog on each failed candidate.
+    private static final dev.ehtid.thaumcraft.port.core.ResearchCatalog CATALOG =
+            BuiltInResearchCatalog.create();
+    private static final dev.ehtid.thaumcraft.port.core.ResearchCategoryRegistry CATEGORIES =
+            BuiltInResearchCategories.create(ASPECTS);
 
     private NeoForgeTheorycraftCardInitializer() {}
 
@@ -61,8 +67,8 @@ public final class NeoForgeTheorycraftCardInitializer {
         } else {
             String name = key.substring(key.lastIndexOf('.') + 1);
             var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
-            var catalog = BuiltInResearchCatalog.create();
-            var categories = BuiltInResearchCategories.create(ASPECTS);
+            var catalog = CATALOG;
+            var categories = CATEGORIES;
             switch (name) {
                 case "CardStudy" -> {
                     var available = LegacyResearchTableData.availableCategories(
