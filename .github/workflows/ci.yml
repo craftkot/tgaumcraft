@@ -285,8 +285,25 @@ jobs:
           table = Path("src/neoforge/java/dev/ehtid/thaumcraft/blockentity/ResearchTableBlockEntity.java").read_text()
           assert "drawOriginalTheoryCards(" in table
           menu = Path("src/neoforge/java/dev/ehtid/thaumcraft/menu/ResearchTableMenu.java").read_text()
-          assert "Draw/activate choices remain disabled" in menu
-          assert "return false;" in menu.split("if (buttonId == 9)", 1)[1].split("quickMoveStack", 1)[0]
+          # Original buttons are NOW wired to a server-only atomic commit.
+          # Require both directions: activation never debits from client UI,
+          # and the server never accepts a failed material/ink/XP preflight.
+          assert "drawOriginalTheoryCards(serverPlayer, buttonId)" in menu
+          assert "activateOriginalTheoryCard(serverPlayer, buttonId - 4)" in menu
+          assert "researchTable.session().bonusDraws() <= 0 && buttonId == 3" in menu
+          screen = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ResearchTableScreen.java").read_text()
+          assert "menu.containerId, i + 4" in screen
+          assert "menu.bonusDraws() > 0 ? 3 : 2" in screen
+          for language in ("en_us", "ru_ru"):
+              entries = json.loads((assets / "lang" / (language + ".json")).read_text())
+              assert entries.get("research_table.draw_cards"), language
+          assert "pendingChoices().isEmpty()" in table
+          assert "stageAfterValidatedCosts(player, this, index, preflight)" in table
+          assert "NeoForgeTheorycraftItemTransaction" in table
+          assert ".commit(player, required.required(), required.consumed())" in table
+          assert "spendTableSupplies(checked.costs().inkUnits()" in table
+          assert "knowledge.loadSnapshot(" in table
+          assert "LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, selected)" in table
 
           # Every BETA26 registered theory card now has one exact effect
           # dispatch branch. This effect is staged on COPIES: an activation
