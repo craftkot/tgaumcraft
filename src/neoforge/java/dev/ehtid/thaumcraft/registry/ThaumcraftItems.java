@@ -45,6 +45,16 @@ public final class ThaumcraftItems {
             "curio", CurioItem::new,
             new Item.Properties().stacksTo(64).rarity(net.minecraft.world.item.Rarity.UNCOMMON));
 
+    // Four original zero-variant ItemTCBase materials (verified from BETA26 ConfigItems).
+    public static final DeferredItem<Item> VIS_RESONATOR = ITEMS.registerSimpleItem(
+            "vis_resonator", new Item.Properties());
+    public static final DeferredItem<Item> AMBER = ITEMS.registerSimpleItem(
+            "amber", new Item.Properties());
+    public static final DeferredItem<Item> QUICKSILVER = ITEMS.registerSimpleItem(
+            "quicksilver", new Item.Properties());
+    public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
+            "fabric", new Item.Properties());
+
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
 

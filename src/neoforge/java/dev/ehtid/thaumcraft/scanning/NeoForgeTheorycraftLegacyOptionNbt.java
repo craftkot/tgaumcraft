@@ -27,6 +27,10 @@ public final class NeoForgeTheorycraftLegacyOptionNbt {
             case TC_ITEM -> switch (option.historicalField()) {
                 case "ItemsTC.thaumometer" -> "thaumcraft:thaumometer";
                 case "ItemsTC.salisMundus" -> "thaumcraft:salis_mundus";
+                case "ItemsTC.visResonator" -> "thaumcraft:vis_resonator";
+                case "ItemsTC.amber" -> "thaumcraft:amber";
+                case "ItemsTC.quicksilver" -> "thaumcraft:quicksilver";
+                case "ItemsTC.fabric" -> "thaumcraft:fabric";
                 default -> null;
             };
             case TC_COLORED_BLOCK -> null; // yellow Nitor is not yet ported.

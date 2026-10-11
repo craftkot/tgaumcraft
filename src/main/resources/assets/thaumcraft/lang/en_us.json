@@ -163,5 +163,9 @@
   "item.curio.text": "What knowledge does this hold?",
   "fail.crimsonrites": "This book contains nothing but crazed ravings.",
   "tc.knowledge.gained": "You have gained some knowledge",
-  "itemGroup.thaumcraft": "Thaumcraft"
+  "itemGroup.thaumcraft": "Thaumcraft",
+  "item.thaumcraft.vis_resonator": "Vis Resonator",
+  "item.thaumcraft.amber": "Amber",
+  "item.thaumcraft.quicksilver": "Quicksilver",
+  "item.thaumcraft.fabric": "Enchanted Fabric"
 }

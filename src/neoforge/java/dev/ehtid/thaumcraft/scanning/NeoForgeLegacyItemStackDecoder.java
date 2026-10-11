@@ -57,6 +57,14 @@ public final class NeoForgeLegacyItemStackDecoder {
             item = ThaumcraftItems.THAUMOMETER.get();
         } else if (originalId.equals("thaumcraft:salis_mundus")) {
             item = ThaumcraftItems.SALIS_MUNDUS.get();
+        } else if (originalId.equals("thaumcraft:vis_resonator")) {
+            item = ThaumcraftItems.VIS_RESONATOR.get();
+        } else if (originalId.equals("thaumcraft:amber")) {
+            item = ThaumcraftItems.AMBER.get();
+        } else if (originalId.equals("thaumcraft:quicksilver")) {
+            item = ThaumcraftItems.QUICKSILVER.get();
+        } else if (originalId.equals("thaumcraft:fabric")) {
+            item = ThaumcraftItems.FABRIC.get();
         } else if (parsed.getNamespace().equals("minecraft")) {
             // The same concrete vanilla item ID must exist in 1.21.1.
             // No renaming, item->block or metadata fallbacks.

@@ -32,6 +32,14 @@ public final class NeoForgeTheorycraftOriginalOptionResolver {
                         new ItemStack(ThaumcraftItems.THAUMOMETER.get());
                 case "ItemsTC.salisMundus" ->
                         new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get());
+                case "ItemsTC.visResonator" ->
+                        new ItemStack(ThaumcraftItems.VIS_RESONATOR.get());
+                case "ItemsTC.amber" ->
+                        new ItemStack(ThaumcraftItems.AMBER.get());
+                case "ItemsTC.quicksilver" ->
+                        new ItemStack(ThaumcraftItems.QUICKSILVER.get());
+                case "ItemsTC.fabric" ->
+                        new ItemStack(ThaumcraftItems.FABRIC.get());
                 // Other original Thaumcraft objects do not exist in the
                 // current registry. Don't disguise them as a vanilla item.
                 default -> ItemStack.EMPTY;
