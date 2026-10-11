@@ -400,3 +400,7 @@ After CI #460 success at 988f22a, ResearchTableMenu now checks the complete Bloc
 
 ## 2026-10-11 — blocked false draw button on corrupt saved card lists
 At code head e510c0d, CI #461 is SUCCESS (NeoForge build plus dedicated-server smoke). Prior menu blocked invalid cards from preview, but thereby hasPendingCardChoices() became false; the client displayed an enabled Draw action that server drawOriginalTheoryCards correctly refused. A single server DataSlot corruptTheoryChoices now distinguishes an existing malformed cardChoices tag from a truly empty valid list, and ResearchTableScreen.canDraw suppresses the false button. BlockEntity exposes only the boolean raw-tag presence (never sends historic cardNBT). User can still deliberately abandon an incomplete corrupt session; no silent loss or mutation. Verify new CI. Still rounded 83% pending major gameplay milestones.
+
+
+## 2026-10-11 follow-up — validate original lastDraw before future draws
+At previous head f21c141, Actions #462 was still in progress at fresh-read. Added hasValidLastDrawHistory() to ResearchTableBlockEntity: existing lastDraw must be original CompoundTag and a structurally valid registered card; absent lastDraw is legal. Both drawOriginalTheoryCards and keepSelectedTheoryCard reject corrupt existing lastDraw before consuming paper/RNG or replacing saved history. Preserve the raw NBT for deliberate recovery. Verify Actions run for new commit; overall ~83% pending full client testing and large gameplay systems.

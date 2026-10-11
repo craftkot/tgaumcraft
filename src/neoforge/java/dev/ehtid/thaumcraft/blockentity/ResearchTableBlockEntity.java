@@ -93,6 +93,20 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         return true;
     }
 
+    /**
+     * A corrupt lastDraw must not be replaced by a subsequent keep operation.
+     * Preserve its original subclass NBT until an explicit migration.
+     */
+    public boolean hasValidLastDrawHistory() {
+        if (session == null) return false;
+        if (!originalSessionNbt.contains("lastDraw")) return true;
+        if (!originalSessionNbt.contains("lastDraw", net.minecraft.nbt.Tag.TAG_COMPOUND))
+            return false;
+        var last = lastDrawChoice();
+        return last.isPresent() && LegacyTheorycraftCardTagValidator
+                .structurallyValid(last.get().key(), last.get().cardNBT());
+    }
+
     public java.util.Optional<LegacyTheorycraftChoiceNbt.Choice> lastDrawChoice() {
         return session == null ? java.util.Optional.empty()
                 : LegacyTheorycraftChoiceNbt.readLastDraw(originalSessionNbt);
@@ -130,7 +144,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
             return false;
         // Preserve corrupt historical offers intact: the permissive decoder
         // can skip broken rows, so checking only the decoded count is unsafe.
-        if (!hasStructurallyValidPendingChoices()) return false;
+        if (!hasStructurallyValidPendingChoices()
+                || !hasValidLastDrawHistory()) return false;
         var choices = pendingChoices();
         if (choices.isEmpty()) return false;
 
@@ -263,6 +278,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         // future loader decodes only a subset, the raw NBT must be intact.
         if (originalSessionNbt.contains("cardChoices")
                 && !hasStructurallyValidPendingChoices()) return false;
+        if (!hasValidLastDrawHistory()) return false;
         if (!pendingChoices().isEmpty()) return false;
         ItemStack paper = items.get(PAPER_SLOT);
         if (paper.isEmpty() || !paper.is(Items.PAPER)) return false;
