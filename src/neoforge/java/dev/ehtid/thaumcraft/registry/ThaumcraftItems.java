@@ -42,7 +42,8 @@ public final class ThaumcraftItems {
 
     // Original BETA26 ItemCurio has seven metadata variants (0..6).
     public static final DeferredItem<CurioItem> CURIO = ITEMS.registerItem(
-            "curio", CurioItem::new, new Item.Properties().stacksTo(64));
+            "curio", CurioItem::new,
+            new Item.Properties().stacksTo(64).rarity(net.minecraft.world.item.Rarity.UNCOMMON));
 
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());
