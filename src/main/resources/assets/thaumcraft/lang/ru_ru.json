@@ -130,5 +130,15 @@
   "tc.research_category.GOLEMANCY": "Големостроение",
   "tc.research_category.ELDRITCH": "Потустороннее",
   "item.phial.empty.name": "Стеклянный пузырёк",
-  "item.phial.filled.name": "Пузырёк с эссенцией %s"
+  "item.phial.filled.name": "Пузырёк с эссенцией %s",
+  "item.curio.arcane.name": "Мистический реликт",
+  "item.curio.preserved.name": "Сохранившийся реликт",
+  "item.curio.eldritch.name": "Потусторонний реликт",
+  "item.curio.ancient.name": "Древний реликт",
+  "item.curio.twisted.name": "Запутанный реликт",
+  "item.curio.knowledge.name": "Сияющий реликт",
+  "item.curio.rites.name": "Багровые ритуалы",
+  "item.curio.text": "Какие же секреты здесь спрятаны?",
+  "fail.crimsonrites": "Эта книга не содержит ничего, кроме как сумасшедшего бреда.",
+  "tc.knowledge.gained": "Вы получили некоторые знания"
 }
