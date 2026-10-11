@@ -1,0 +1,54 @@
+name: Thaumcraft Real Client Smoke
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/client-smoke.yml'
+      - 'tools/client_smoke.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  real-minecraft-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+
+      - name: Install virtual graphics and input utilities
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick
+
+      - name: Run real Minecraft client and capture its screen
+        shell: bash
+        run: bash tools/client_smoke.sh
+
+      - name: Upload ACTUAL client screenshots and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: thaumcraft-real-client-screenshots
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

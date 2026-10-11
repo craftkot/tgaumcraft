@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# REAL Minecraft client under virtual X11/Mesa. Screenshots are of the
+# executing game, not examples downloaded from the web.
+mkdir -p client-smoke/screenshots run
+: > client-smoke-status.txt
+export DISPLAY=:99
+export LIBGL_ALWAYS_SOFTWARE=1
+export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
+export ALSOFT_DRIVERS=null
+export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+mkdir -p "$XDG_RUNTIME_DIR"
+chmod 700 "$XDG_RUNTIME_DIR"
+CLIENT_PID=''
+XVFB_PID=''
+WM_PID=''
+
+cleanup() {
+  echo "Client probe cleanup"
+  if [ -n "$CLIENT_PID" ]; then
+    pkill -TERM -P "$CLIENT_PID" 2>/dev/null || true
+    kill "$CLIENT_PID" 2>/dev/null || true
+  fi
+  if [ -n "$WM_PID" ]; then kill "$WM_PID" 2>/dev/null || true; fi
+  if [ -n "$XVFB_PID" ]; then kill "$XVFB_PID" 2>/dev/null || true; fi
+}
+trap cleanup EXIT
+
+Xvfb :99 -screen 0 1280x800x24 +extension GLX +render -noreset > client-smoke/xvfb.log 2>&1 &
+XVFB_PID=$!
+sleep 3
+xdpyinfo -display :99 > client-smoke/display.txt
+openbox > client-smoke/wm.log 2>&1 &
+WM_PID=$!
+sleep 2
+glxinfo -B | tee client-smoke/renderer.txt
+grep -iq 'OpenGL version string' client-smoke/renderer.txt
+
+echo 'Starting the actual NeoForge Minecraft 1.21.1 client'
+gradle runClient --no-daemon --console=plain > client-smoke/client.log 2>&1 &
+CLIENT_PID=$!
+WIN=''
+for i in $(seq 1 210); do
+  WIN=$(xdotool search --onlyvisible --name 'Minecraft' 2>/dev/null | tail -n 1 || true)
+  if [ -n "$WIN" ]; then
+    echo "CLIENT_WINDOW=YES after $i seconds" | tee -a client-smoke-status.txt
+    break
+  fi
+  if grep -Eiq 'Mod loading has failed|Failed to create window|GLFW error|Exception in thread "Render thread"' client-smoke/client.log; then
+    echo 'CLIENT_STARTUP_ERROR=YES' | tee -a client-smoke-status.txt
+    tail -100 client-smoke/client.log
+    exit 1
+  fi
+  if ! kill -0 "$CLIENT_PID" 2>/dev/null; then
+    echo 'CLIENT_EXITED_BEFORE_WINDOW=YES' | tee -a client-smoke-status.txt
+    tail -100 client-smoke/client.log
+    exit 1
+  fi
+  sleep 1
+done
+if [ -z "$WIN" ]; then
+  echo 'CLIENT_WINDOW=NO' | tee -a client-smoke-status.txt
+  tail -100 client-smoke/client.log
+  exit 1
+fi
+xdotool windowactivate --sync "$WIN" || true
+xdotool windowmove "$WIN" 0 0 || true
+xdotool windowsize "$WIN" 1024 768 || true
+xdotool mousemove 20 20
+sleep 35
+
+capture() {
+  name="$1"
+  import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
+  test -s "client-smoke/screenshots/$name.png"
+  identify "client-smoke/screenshots/$name.png"
+}
+
+capture 01-title
+echo 'REAL_TITLE_SCREENSHOT=YES' | tee -a client-smoke-status.txt
+convert client-smoke/screenshots/01-title.png -resize 512x320 -colors 64 PNG8:client-smoke/screenshots/title-thumb.png
+echo -n 'REAL_CLIENT_TITLE_THUMB_BASE64='
+base64 -w0 client-smoke/screenshots/title-thumb.png
+echo
+
+# Exploratory GUI inputs: do not claim the world is loaded merely because
+# a mouse action was sent. Save a screenshot of each navigation stage.
+xdotool mousemove 512 319 click 1
+sleep 9
+capture 02-after-singleplayer
+xdotool mousemove 512 717 click 1
+sleep 9
+capture 03-after-create-world
+xdotool mousemove 512 717 click 1
+sleep 65
+capture 04-after-world-attempt
+
+if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Preparing spawn area|Joining world' client-smoke/client.log; then
+  echo 'INTEGRATED_WORLD_START_LOG=YES' | tee -a client-smoke-status.txt
+else
+  echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+fi
+if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
+  echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
+  exit 1
+fi
+echo 'PASS: real Minecraft client window + title screenshot + no observed crash' | tee -a client-smoke-status.txt
