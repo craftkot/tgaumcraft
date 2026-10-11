@@ -50,6 +50,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftCardMetadata();
         testLegacyTheorycraftCardFields();
         testLegacyTheorycraftFieldlessInitialization();
+        testLegacyTheorycraftActivationPreflight();
         testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftRequiredItems();
@@ -1350,6 +1351,122 @@ public final class CoreParityTest {
                 throw new AssertionError("unregistered original card localized");
             } catch (IllegalArgumentException expected) { assertions++; }
         }
+    }
+
+    private static void testLegacyTheorycraftActivationPreflight() {
+        String normal = "thaumcraft.api.research.theorycraft.CardBalance";
+        String scripting = "thaumcraft.common.lib.research.theorycraft.CardScripting";
+        var test = LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(normal, true, true,
+                        false, false, 5, 10, 0, 0, true));
+        isTrue(test.accepted());
+        eq(LegacyTheorycraftActivationPreflight.Failure.NONE, test.failure());
+        eq(1, test.inspirationCost());
+        eq(1, test.inkUnits());
+        eq(0, test.tablePaperUnits());
+        eq(0, test.experienceLevelsDebited());
+        isFalse(test.debitAllPlusTenLevels());
+        isFalse(test.hasInventoryMaterials());
+
+        var script = LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(scripting, true, true,
+                        false, false, 5, 2, 1, 0, true));
+        isTrue(script.accepted());
+        eq(2, script.inkUnits());
+        eq(1, script.tablePaperUnits());
+        eq(1, script.inspirationCost());
+        eq(LegacyTheorycraftActivationPreflight.Failure.INK,
+                LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(scripting, true, true,
+                        false, false, 5, 1, 2, 0, true)).failure());
+        eq(LegacyTheorycraftActivationPreflight.Failure.PAPER,
+                LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(scripting, true, true,
+                        false, false, 5, 2, 0, 0, true)).failure());
+
+        var expectedXp = java.util.Map.of(
+                "CardEnchantment", 5,
+                "CardSpellbinding", 3,
+                "CardDarkWhispers", 13);
+        int requiringMaterials = 0, cost0 = 0, costMinus = 0;
+        for (String key : LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER) {
+            var inputs = new LegacyTheorycraftActivationPreflight.Inputs(
+                    key, true, true, false, false, 5, 6, 3, 3, true);
+            var plan = LegacyTheorycraftActivationPreflight.check(inputs);
+            if (key.endsWith(".CardEnchantment")) {
+                eq(LegacyTheorycraftActivationPreflight.Failure.EXPERIENCE, plan.failure());
+                continue;
+            }
+            isTrue(plan.accepted());
+            String name = key.substring(key.lastIndexOf('.') + 1);
+            eq(LegacyTheorycraftCardMetadata.get(key).cost(), plan.inspirationCost());
+            eq(name.equals("CardScripting") ? 2 : 1, plan.inkUnits());
+            eq(name.equals("CardScripting") ? 1 : 0, plan.tablePaperUnits());
+            eq(expectedXp.getOrDefault(name, 0), plan.experienceLevelsDebited());
+            eq(name.equals("CardDarkWhispers"), plan.debitAllPlusTenLevels());
+            eq(!LegacyTheorycraftRequiredItems.get(key).isEmpty(),
+                    plan.hasInventoryMaterials());
+            if (plan.hasInventoryMaterials()) requiringMaterials++;
+            if (plan.inspirationCost() == 0) cost0++;
+            if (plan.inspirationCost() < 0) costMinus++;
+            // No card can activate again after being selected or while a
+            // previous choice was successfully selected.
+            eq(LegacyTheorycraftActivationPreflight.Failure.ALREADY_SELECTED,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, true, true, true, false, 5, 6, 3, 10, true)).failure());
+            eq(LegacyTheorycraftActivationPreflight.Failure.ALREADY_SELECTED,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, true, true, false, true, 5, 6, 3, 10, true)).failure());
+            eq(LegacyTheorycraftActivationPreflight.Failure.INVALID_CARD_NBT,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, false, true, false, false, 5, 6, 3, 10, true)).failure());
+            eq(LegacyTheorycraftActivationPreflight.Failure.INVALID_THEORY,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, true, false, false, false, 5, 6, 3, 10, true)).failure());
+            eq(LegacyTheorycraftActivationPreflight.Failure.INSPIRATION,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, true, true, false, false, 0, 6, 3, 10, true)).failure());
+            eq(LegacyTheorycraftActivationPreflight.Failure.INK,
+                    LegacyTheorycraftActivationPreflight.check(
+                            new LegacyTheorycraftActivationPreflight.Inputs(
+                                    key, true, true, false, false, 5, 0, 3, 10, true)).failure());
+            if (plan.hasInventoryMaterials()) {
+                eq(LegacyTheorycraftActivationPreflight.Failure.REQUIRED_ITEMS,
+                        LegacyTheorycraftActivationPreflight.check(
+                                new LegacyTheorycraftActivationPreflight.Inputs(
+                                        key, true, true, false, false, 5, 6, 3, 10, false)).failure());
+            }
+        }
+        eq(10, requiringMaterials);
+        eq(1, cost0);
+        eq(3, costMinus); // Rethink=-1, Beacon=-2, Portal=-1
+        for (String key : java.util.List.of(
+                "thaumcraft.common.lib.research.theorycraft.CardEnchantment",
+                "thaumcraft.common.lib.research.theorycraft.CardSpellbinding",
+                "thaumcraft.common.lib.research.theorycraft.CardDarkWhispers")) {
+            var outcome = LegacyTheorycraftActivationPreflight.check(
+                    new LegacyTheorycraftActivationPreflight.Inputs(key, true, true,
+                            false, false, 5, 6, 3, 5, true));
+            isTrue(outcome.accepted());
+            eq(key.endsWith("DarkWhispers") ? 15 : 5, outcome.experienceLevelsDebited());
+        }
+        String dark = "thaumcraft.common.lib.research.theorycraft.CardDarkWhispers";
+        var darkZero = LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(dark, true, true,
+                        false, false, 5, 6, 3, 0, true));
+        isTrue(darkZero.accepted());
+        eq(10, darkZero.experienceLevelsDebited());
+        isTrue(darkZero.debitAllPlusTenLevels());
+        eq(LegacyTheorycraftActivationPreflight.Failure.UNKNOWN_CARD,
+                LegacyTheorycraftActivationPreflight.check(
+                new LegacyTheorycraftActivationPreflight.Inputs(
+                        "unregistered.card", true, true, false, false,
+                        5, 6, 3, 5, true)).failure());
     }
 
     private static void testLegacyTheorycraftFieldlessInitialization() {
