@@ -42,8 +42,14 @@ public final class NeoForgeTheorycraftActivationStager {
             NeoForgeTheorycraftActivationPreflight.Check preflight) {
         if (preflight == null || !preflight.canActivate() || table.session() == null
                 || index < 0 || index >= table.pendingChoices().size()) return null;
+        // A preflight result must not be reusable after inventory/XP/table
+        // changes. Always verify the authoritative current state before
+        // consuming one byte of the real player's activation RNG.
+        var current = NeoForgeTheorycraftActivationPreflight.check(player, table, index);
+        if (current == null || !current.canActivate()) return null;
         var choice = table.pendingChoices().get(index);
-        if (!choice.equals(preflight.originalCard())) return null;
+        if (!choice.equals(preflight.originalCard())
+                || !choice.equals(current.originalCard())) return null;
         if (!LegacyTheorycraftCardTagValidator.structurallyValid(
                 choice.key(), choice.cardNBT())) return null;
 
