@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
 import dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic;
 import dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic;
+import dev.ehtid.thaumcraft.item.PlateItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -112,7 +113,10 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
             Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "gems/quartz"));
 
     private static boolean isIronPlate(ItemStack stack) {
-        return stack.is(C_IRON_PLATES) || stack.is(FORGE_IRON_PLATES);
+        // Do not mistake brass, thaumium or void plate for iron: a
+        // shared item ID requires checking original metadata first.
+        return PlateItem.legacyMetadata(stack) == 1
+                || stack.is(C_IRON_PLATES) || stack.is(FORGE_IRON_PLATES);
     }
 
     private static boolean isQuartzGem(ItemStack stack) {

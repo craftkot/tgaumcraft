@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "thaumcraft:ironplate",
+  "pattern": [
+    "III"
+  ],
+  "key": {
+    "I": {
+      "tag": "c:ingots/iron"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:plate",
+    "count": 3,
+    "components": {
+      "minecraft:custom_data": {
+        "LegacyPlateMeta": 1
+      },
+      "minecraft:custom_model_data": 1
+    }
+  }
+}

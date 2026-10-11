@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.registry;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
+import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
@@ -51,6 +52,9 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.AMBER.get());
                         output.accept(ThaumcraftItems.QUICKSILVER.get());
                         output.accept(ThaumcraftItems.FABRIC.get());
+                        // All original BETA26 item metadata variants.
+                        for (int variant = 0; variant < 4; variant++)
+                            output.accept(PlateItem.create(variant));
 
                         // A distinct stack for every original 1.12 variant.
                         for (int variant = 0; variant < 7; variant++)

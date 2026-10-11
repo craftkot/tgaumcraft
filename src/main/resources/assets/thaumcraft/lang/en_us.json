@@ -167,5 +167,9 @@
   "item.thaumcraft.vis_resonator": "Vis Resonator",
   "item.thaumcraft.amber": "Amber",
   "item.thaumcraft.quicksilver": "Quicksilver",
-  "item.thaumcraft.fabric": "Enchanted Fabric"
+  "item.thaumcraft.fabric": "Enchanted Fabric",
+  "item.plate.brass.name": "Brass Plate",
+  "item.plate.iron.name": "Iron Plate",
+  "item.plate.thaumium.name": "Thaumium Plate",
+  "item.plate.void.name": "Void Metal Plate"
 }

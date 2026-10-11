@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
+import dev.ehtid.thaumcraft.item.PlateItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -54,6 +55,10 @@ public final class ThaumcraftItems {
             "quicksilver", new Item.Properties());
     public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
             "fabric", new Item.Properties());
+
+    // Original plate ItemTCBase metadata 0..3: brass, iron, thaumium, void.
+    public static final DeferredItem<PlateItem> PLATE = ITEMS.registerItem(
+            "plate", PlateItem::new, new Item.Properties());
 
     public static final DeferredItem<BlockItem> ARCANE_WORKBENCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ARCANE_WORKBENCH, new Item.Properties());

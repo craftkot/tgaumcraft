@@ -1,0 +1,26 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "thaumcraft:item/plate_brass"
+  },
+  "overrides": [
+    {
+      "predicate": {
+        "custom_model_data": 1
+      },
+      "model": "thaumcraft:item/plate_iron"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 2
+      },
+      "model": "thaumcraft:item/plate_thaumium"
+    },
+    {
+      "predicate": {
+        "custom_model_data": 3
+      },
+      "model": "thaumcraft:item/plate_void"
+    }
+  ]
+}

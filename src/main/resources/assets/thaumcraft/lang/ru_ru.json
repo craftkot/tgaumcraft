@@ -167,5 +167,9 @@
   "item.thaumcraft.vis_resonator": "Вис-резонатор",
   "item.thaumcraft.amber": "Янтарь",
   "item.thaumcraft.quicksilver": "Ртуть",
-  "item.thaumcraft.fabric": "Заколдованная ткань"
+  "item.thaumcraft.fabric": "Заколдованная ткань",
+  "item.plate.brass.name": "Латунная пластина",
+  "item.plate.iron.name": "Железная пластина",
+  "item.plate.thaumium.name": "Пластина из таумиума",
+  "item.plate.void.name": "Пластина из пустотного металла"
 }
