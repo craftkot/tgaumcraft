@@ -19,9 +19,10 @@ VIDEO_PID=''
 
 cleanup() {
   echo "Client probe cleanup"
-  # Ensure the MP4 trailer is written even if Minecraft crashes.
+  # FFmpeg background jobs can inherit SIGINT ignored from bash; use
+  # SIGTERM, which FFmpeg handles by writing the MP4 trailer.
   if [ -n "$VIDEO_PID" ] && kill -0 "$VIDEO_PID" 2>/dev/null; then
-    kill -INT "$VIDEO_PID" 2>/dev/null || true
+    kill -TERM "$VIDEO_PID" 2>/dev/null || true
     wait "$VIDEO_PID" 2>/dev/null || true
   fi
   if [ -n "$CLIENT_PID" ]; then
@@ -178,9 +179,9 @@ if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "
   echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
   exit 1
 fi
-# Interrupt FFmpeg gracefully so the MP4 is finalized and browser-playable.
+# SIGTERM FFmpeg gracefully so the MP4 is finalized and browser-playable.
 if [ -n "$VIDEO_PID" ]; then
-  kill -INT "$VIDEO_PID" 2>/dev/null || true
+  kill -TERM "$VIDEO_PID" 2>/dev/null || true
   wait "$VIDEO_PID" 2>/dev/null || true
   VIDEO_PID=''
 fi
