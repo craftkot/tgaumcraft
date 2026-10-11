@@ -278,6 +278,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
 
     private boolean canDraw() {
         return menu.hasSession() && menu.inspiration() > 0
+                && !menu.hasCorruptTheoryChoices()
                 && !menu.hasPendingCardChoices()
                 && menu.getSlot(1).getItem().is(Items.PAPER);
     }

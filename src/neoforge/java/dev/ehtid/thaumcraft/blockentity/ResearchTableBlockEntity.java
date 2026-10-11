@@ -70,6 +70,10 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
      * Gameplay must reject those sessions rather than showing an activatable
      * subset that can never be committed.
      */
+    public boolean hasSavedCardChoicesTag() {
+        return session != null && originalSessionNbt.contains("cardChoices");
+    }
+
     public boolean hasStructurallyValidPendingChoices() {
         if (session == null || !originalSessionNbt.contains("cardChoices",
                 net.minecraft.nbt.Tag.TAG_LIST)) return false;

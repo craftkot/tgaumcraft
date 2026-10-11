@@ -48,6 +48,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot selectedAidBits;
     private final DataSlot hasChosenTheoryCard;
     private final DataSlot bonusDraws;
+    private final DataSlot corruptTheoryChoices;
     private final DataSlot[] previewCards = new DataSlot[3];
     private final DataSlot[] previewArguments = new DataSlot[3];
     private final DataSlot[] previewInspirationCosts = new DataSlot[3];
@@ -118,6 +119,19 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                     @Override public void set(int ignored) { }
                 } : DataSlot.standalone();
         addDataSlot(bonusDraws);
+        // A saved malformed cardChoices tag may decode to zero preview
+        // cards. Sync its presence independently so the UI doesn't offer
+        // a fake draw button that the server will always reject.
+        corruptTheoryChoices = table instanceof ResearchTableBlockEntity liveCorrupt
+                ? new DataSlot() {
+                    @Override public int get() {
+                        return liveCorrupt.session() != null
+                                && liveCorrupt.hasSavedCardChoicesTag()
+                                && !liveCorrupt.hasStructurallyValidPendingChoices() ? 1 : 0;
+                    }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+        addDataSlot(corruptTheoryChoices);
         // Original BETA26 draws at most three pending card choices. Their
         // full subclass NBT never leaves the server through these DataSlots:
         // the client receives only read-only class IDs and visual flags.
@@ -412,6 +426,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     }
 
     public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
+    public boolean hasCorruptTheoryChoices() { return corruptTheoryChoices.get() != 0; }
     public int bonusDraws() { return bonusDraws.get(); }
     public boolean hasPendingCardChoices() {
         for (int i = 0; i < previewCards.length; i++)
