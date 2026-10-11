@@ -211,6 +211,14 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
                 || session.isComplete() || !stillValid(player)
                 || (requestedCards != 2 && requestedCards != 3))
             return false;
+        // Never reroll and replace still-unactivated offers: the original
+        // GUI only draws again after accepting one of the current cards.
+        // Also preserve malformed legacy rows rather than overwriting them.
+        if (!pendingChoices().isEmpty()
+                || (originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST)
+                        && !originalSessionNbt.getList("cardChoices",
+                                net.minecraft.nbt.Tag.TAG_COMPOUND).isEmpty()))
+            return false;
         ItemStack paper = items.get(PAPER_SLOT);
         if (paper.isEmpty() || !paper.is(Items.PAPER)) return false;
 
