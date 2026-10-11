@@ -261,6 +261,33 @@ jobs:
               assert model["parent"] == "minecraft:item/generated", item
               assert model["textures"]["layer0"] == "thaumcraft:item/" + item
 
+          # The BETA26 original card factory must preserve 33 registered
+          # subclasses and all 14 custom serialized NBT initializers, and
+          # must never enable paper-consuming GUI draws before every card
+          # can be activated with correct original effects.
+          import re
+          initializer = Path("src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftCardInitializer.java").read_text()
+          factory_cases = initializer.split("switch (name) {", 1)[1].split("default ->", 1)[0]
+          actual_fields = set(re.findall(r'"(Card[A-Za-z]+)"', factory_cases))
+          expected_fields = set((
+              "CardStudy CardAnalyze CardReject CardInspired CardNotation "
+              "CardCurio CardCelestial CardConcentrate CardChannel "
+              "CardReactions CardSynthesis CardMindOverMatter CardTinker "
+              "CardInfuse"
+          ).split())
+          assert actual_fields == expected_fields, (actual_fields, expected_fields)
+          fieldless = Path("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftFieldlessInit.java").read_text()
+          assert fieldless.count('case "Card') >= 6
+          draw = Path("src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftDrawBridge.java").read_text()
+          assert "cardsInHashMapIterationOrder()" in draw
+          assert "rng.nextLong()" in draw
+          assert "NeoForgeTheorycraftCardInitializer.initialize(" in draw
+          table = Path("src/neoforge/java/dev/ehtid/thaumcraft/blockentity/ResearchTableBlockEntity.java").read_text()
+          assert "drawOriginalTheoryCards(" in table
+          menu = Path("src/neoforge/java/dev/ehtid/thaumcraft/menu/ResearchTableMenu.java").read_text()
+          assert "Draw/activate choices remain disabled" in menu
+          assert "return false;" in menu.split("if (buttonId == 9)", 1)[1].split("quickMoveStack", 1)[0]
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
