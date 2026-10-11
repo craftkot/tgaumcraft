@@ -1,0 +1,63 @@
+package dev.ehtid.thaumcraft.registry;
+
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.item.CelestialNotesItem;
+import dev.ehtid.thaumcraft.item.CurioItem;
+import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.port.core.AspectData;
+import dev.ehtid.thaumcraft.port.core.AspectRegistry;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.function.Supplier;
+
+/**
+ * Original Thaumcraft creative tab restored for the currently registered
+ * BETA26 blocks/items. Not a cheat mechanism: only creative-mode browsing,
+ * while right-click and research mechanics still enforce the real server
+ * prerequisites and resources.
+ *
+ * Explicit all-variant stacks make creative client playtests possible
+ * without manufacturing a loot/research route not present in BETA26.
+ */
+public final class ThaumcraftCreativeTabs {
+    private ThaumcraftCreativeTabs() {}
+
+    private static final DeferredRegister<CreativeModeTab> TABS =
+            DeferredRegister.create(Registries.CREATIVE_MODE_TAB, ThaumcraftPort.MOD_ID);
+
+    public static final Supplier<CreativeModeTab> MAIN = TABS.register("thaumcraft",
+            () -> CreativeModeTab.builder()
+                    .title(Component.translatable("itemGroup.thaumcraft"))
+                    .icon(() -> new ItemStack(ThaumcraftItems.THAUMONOMICON.get()))
+                    .displayItems((parameters, output) -> {
+                        // Blocks and first-steps research infrastructure.
+                        output.accept(ThaumcraftItems.TABLE_WOOD.get());
+                        output.accept(ThaumcraftItems.RESEARCH_TABLE.get());
+                        output.accept(ThaumcraftItems.ARCANE_WORKBENCH.get());
+                        output.accept(ThaumcraftItems.THAUMONOMICON.get());
+                        output.accept(ThaumcraftItems.THAUMOMETER.get());
+                        output.accept(ThaumcraftItems.SCRIBING_TOOLS.get());
+                        output.accept(ThaumcraftItems.SALIS_MUNDUS.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_ESSENCE.get());
+
+                        // A distinct stack for every original 1.12 variant.
+                        for (int variant = 0; variant < 7; variant++)
+                            output.accept(CurioItem.create(variant));
+                        for (int variant = 0; variant <= 12; variant++)
+                            output.accept(CelestialNotesItem.create(variant));
+
+                        output.accept(PhialItem.emptyPhial());
+                        for (AspectData aspect : new AspectRegistry().values())
+                            output.accept(PhialItem.filledPhial(aspect.tag()));
+                    })
+                    .build());
+
+    public static void register(IEventBus modBus) {
+        TABS.register(modBus);
+    }
+}
