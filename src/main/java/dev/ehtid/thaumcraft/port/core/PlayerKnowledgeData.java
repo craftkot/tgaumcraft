@@ -141,8 +141,12 @@ public final class PlayerKnowledgeData {
     public void loadSnapshot(Set<String> researchKeys, Map<String, Integer> stageMap,
                              Map<String, ? extends Set<ResearchFlag>> flagMap,
                              Map<String, Integer> rawKnowledge) {
+        // The public getResearchList() returns a live unmodifiable view of
+        // this set. Snapshot it BEFORE clear(), or callers passing that view
+        // would silently erase all their discovered research on restore.
+        Set<String> researchCopy = researchKeys == null ? null : new HashSet<>(researchKeys);
         clear();
-        if (researchKeys != null) research.addAll(researchKeys);
+        if (researchCopy != null) research.addAll(researchCopy);
         if (stageMap != null) stages.putAll(stageMap);
         if (flagMap != null) {
             for (Map.Entry<String, ? extends Set<ResearchFlag>> entry : flagMap.entrySet()) {
