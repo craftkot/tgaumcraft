@@ -59,6 +59,8 @@ public final class SalisMundusTransformQueue {
                 case THAUMONOMICON_ITEM -> transformToThaumonomicon(level, pending.pos());
                 case ARCANE_WORKBENCH_BLOCK -> level.setBlock(pending.pos(),
                         ThaumcraftBlocks.ARCANE_WORKBENCH.get().defaultBlockState(), 3);
+                case CRUCIBLE_BLOCK -> level.setBlock(pending.pos(),
+                        ThaumcraftBlocks.CRUCIBLE.get().defaultBlockState(), 3);
                 default -> { }
             }
         }

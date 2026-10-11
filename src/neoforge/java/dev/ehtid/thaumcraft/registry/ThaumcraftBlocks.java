@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.block.ArcaneWorkbenchBlock;
 import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import dev.ehtid.thaumcraft.block.TableWoodBlock;
+import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -38,6 +39,12 @@ public final class ThaumcraftBlocks {
                     .explosionResistance(2.5F)
                     .noOcclusion()
                     .sound(SoundType.WOOD));
+
+    public static final DeferredBlock<CrucibleBlock> CRUCIBLE = BLOCKS.registerBlock(
+            "crucible", CrucibleBlock::new,
+            BlockBehaviour.Properties.of()
+                    .destroyTime(2.5F).explosionResistance(10.0F)
+                    .noOcclusion().sound(SoundType.STONE));
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);

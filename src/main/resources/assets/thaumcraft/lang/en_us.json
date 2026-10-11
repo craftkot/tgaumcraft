@@ -171,5 +171,7 @@
   "item.plate.brass.name": "Brass Plate",
   "item.plate.iron.name": "Iron Plate",
   "item.plate.thaumium.name": "Thaumium Plate",
-  "item.plate.void.name": "Void Metal Plate"
+  "item.plate.void.name": "Void Metal Plate",
+  "block.thaumcraft.crucible": "Crucible",
+  "item.thaumcraft.crucible": "Crucible"
 }

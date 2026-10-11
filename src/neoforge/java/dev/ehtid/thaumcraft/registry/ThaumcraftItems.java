@@ -68,6 +68,9 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> RESEARCH_TABLE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.RESEARCH_TABLE, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRUCIBLE, new Item.Properties());
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

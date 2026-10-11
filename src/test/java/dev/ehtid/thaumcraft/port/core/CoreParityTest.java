@@ -81,6 +81,7 @@ public final class CoreParityTest {
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
         testVisResonatorArcaneRecipe();
+        testOriginalCrucibleLifecycle();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4393,6 +4394,35 @@ public final class CoreParityTest {
         isTrue(VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz) == null);
         isTrue(VisResonatorRecipeLogic.matchGrid(
                 new boolean[8], new boolean[9], new boolean[9]) == null);
+    }
+
+    private static void testOriginalCrucibleLifecycle() {
+        eq(1000, LegacyCrucibleHeat.CAPACITY_MB);
+        eq(200, LegacyCrucibleHeat.MAX_HEAT);
+        eq(150, LegacyCrucibleHeat.BOILING_THRESHOLD);
+        eq(1, LegacyCrucibleHeat.next(0, 1000, true));
+        eq(151, LegacyCrucibleHeat.next(150, 1000, true));
+        eq(200, LegacyCrucibleHeat.next(200, 1000, true));
+        eq(149, LegacyCrucibleHeat.next(150, 1000, false));
+        eq(149, LegacyCrucibleHeat.next(150, 0, true));
+        eq(0, LegacyCrucibleHeat.next(0, 0, true));
+        eq(0, LegacyCrucibleHeat.next(-100, 0, false));
+        eq(200, LegacyCrucibleHeat.next(999, 1000, true));
+        isFalse(LegacyCrucibleHeat.boiling(150, 1000));
+        isTrue(LegacyCrucibleHeat.boiling(151, 1000));
+        isFalse(LegacyCrucibleHeat.boiling(151, 0));
+
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        isFalse(FirstStepsBootstrapLogic.dustTarget(player, "minecraft:cauldron")
+                == FirstStepsBootstrapLogic.DustTarget.CRUCIBLE_BLOCK);
+        player.addResearch("UNLOCKALCHEMY");
+        player.setResearchStage("UNLOCKALCHEMY", 1);
+        eq(FirstStepsBootstrapLogic.DustTarget.CRUCIBLE_BLOCK,
+                FirstStepsBootstrapLogic.dustTarget(player, "minecraft:cauldron"));
+        eq(FirstStepsBootstrapLogic.DustTarget.CRUCIBLE_BLOCK,
+                FirstStepsBootstrapLogic.dustTarget(player, "minecraft:water_cauldron"));
+        eq(FirstStepsBootstrapLogic.DustTarget.NONE,
+                FirstStepsBootstrapLogic.dustTarget(player, "minecraft:lava_cauldron"));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

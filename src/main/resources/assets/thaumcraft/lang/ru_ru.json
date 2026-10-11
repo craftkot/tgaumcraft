@@ -171,5 +171,7 @@
   "item.plate.brass.name": "Латунная пластина",
   "item.plate.iron.name": "Железная пластина",
   "item.plate.thaumium.name": "Пластина из таумиума",
-  "item.plate.void.name": "Пластина из пустотного металла"
+  "item.plate.void.name": "Пластина из пустотного металла",
+  "block.thaumcraft.crucible": "Алхимический тигель",
+  "item.thaumcraft.crucible": "Алхимический тигель"
 }

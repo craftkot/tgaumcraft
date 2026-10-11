@@ -15,7 +15,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 
-/** BETA26 ItemMagicDust behavior narrowed only to the two FIRSTSTEPS dust triggers. */
+/** BETA26 ItemMagicDust: FIRSTSTEPS and original UNLOCKALCHEMY crucible dust triggers. */
 public final class SalisMundusItem extends Item {
     public SalisMundusItem(Properties properties) {
         super(properties);
