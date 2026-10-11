@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt;
 import dev.ehtid.thaumcraft.scanning.LegacyTheorycraftCardTagValidator;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoiceFlow;
 import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftAidBridge;
+import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftDrawBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -192,6 +193,60 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         session.setPlayer(player.getGameProfile().getName());
         originalSessionNbt = new CompoundTag();
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
+        setChanged();
+        return true;
+    }
+
+    /**
+     * First genuine SERVER draw path, with all 33 BETA26 card subclasses
+     * initialized, their historical NBT preserved, and original aid/normal
+     * pools sampled without replacing missing source materials.
+     *
+     * This method is intentionally NOT reachable from ResearchTableMenu yet:
+     * activation and its 33 real card effects must be fully wired before
+     * exposing a paper-consuming draw to players.
+     */
+    public boolean drawOriginalTheoryCards(ServerPlayer player, int requestedCards) {
+        if (level == null || level.isClientSide || session == null
+                || session.isComplete() || !stillValid(player)
+                || (requestedCards != 2 && requestedCards != 3))
+            return false;
+        ItemStack paper = items.get(PAPER_SLOT);
+        if (paper.isEmpty() || !paper.is(Items.PAPER)) return false;
+
+        var rng = player.getRandom();
+        var prepared = NeoForgeTheorycraftDrawBridge.prepare(
+                player, session, requestedCards,
+                new dev.ehtid.thaumcraft.port.core.LegacyTheorycraftDrawEngine.RandomSource() {
+                    @Override public float nextFloat() { return rng.nextFloat(); }
+                    @Override public int nextInt(int bound) { return rng.nextInt(bound); }
+                    @Override public long nextLong() { return rng.nextLong(); }
+                });
+        if (prepared.choices().isEmpty() || prepared.choices().size() > 3) {
+            // The original can consume paper and return zero cards if no
+            // registered candidate survives. Never charge the player for
+            // a non-playable empty set during staged migration.
+            return false;
+        }
+        var chosenKeys = new java.util.HashSet<String>();
+        for (var choice : prepared.choices()) {
+            if (!chosenKeys.add(choice.key())
+                    || !LegacyTheorycraftCardTagValidator.structurallyValid(
+                            choice.key(), choice.cardNBT()))
+                return false;
+        }
+        // Verify helper pool is a MULTISET subset, keeping original
+        // BETA26 aid-card weights (not only presence) intact.
+        var oldAids = new java.util.ArrayList<>(session.aidCards());
+        for (String used : prepared.remainingAidCards()) {
+            if (!oldAids.remove(used)) return false;
+        }
+        if (!consumePaperFromTable()) return false;
+
+        LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, prepared.choices());
+        session.replaceAidCards(prepared.remainingAidCards());
+        session.addBonusDraws(prepared.remainingBonusDraws() - session.bonusDraws());
+        session.setPlayer(player.getGameProfile().getName());
         setChanged();
         return true;
     }
