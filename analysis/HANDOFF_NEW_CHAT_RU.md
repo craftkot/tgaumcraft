@@ -368,3 +368,7 @@ Commit `5d85db4d6d2106c65874edfe0503b8dd71715be4` restores that contract without
 - Actions run `38148914429` / #454: SUCCESS through CoreParity, NeoForge build, dedicated-server smoke and uploaded `thaumcraft-port-jars` artifact.
 
 This is still NOT a manual rendered-client playthrough. Overall estimate remains rounded to **83%** because the change completes theory-table usability/fidelity but does not close the large missing alchemy/infusion/foci/golem/entity/dimension systems.
+
+
+## 2026-10-11 — BlockEntity theory validation hardening
+Code commit `4fd818a01ff7d07706f7c8218d17acfbfa005f5b`: three-card draws now explicitly require bonusDraws > 0 at the BlockEntity boundary (not just ResearchTableMenu), before RNG usage and paper debit. Keeping a selected card now refuses legacy/corrupt choices where more than one CardChoice is selected, rather than silently preserving the first and deleting others. These are server-only rejection paths; original NBT is left intact on denial. This small hardening is not enough to raise the rounded overall 83%. Inspect latest CI before treating the change as verified.
