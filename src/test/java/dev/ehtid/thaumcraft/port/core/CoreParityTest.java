@@ -51,6 +51,7 @@ public final class CoreParityTest {
         testLegacyTheorycraftCardFields();
         testLegacyTheorycraftFieldlessInitialization();
         testLegacyTheorycraftActivationPreflight();
+        testLegacyTheorycraftActivationEffects();
         testLegacyTheorycraftCardLocalization();
         testLegacyTheorycraftDisplayArgument();
         testLegacyTheorycraftRequiredItems();
@@ -1351,6 +1352,84 @@ public final class CoreParityTest {
                 throw new AssertionError("unregistered original card localized");
             } catch (IllegalArgumentException expected) { assertions++; }
         }
+    }
+
+    private static void testLegacyTheorycraftActivationEffects() {
+        AspectRegistry aspects = new AspectRegistry();
+        var compound = aspects.compoundAspects().get(0);
+        var secondCompound = aspects.compoundAspects().get(1);
+        var categories = BuiltInResearchCategories.create(aspects).values().stream()
+                .map(ResearchCategoryData::key).toList();
+        var baseline = new LegacyResearchTableData(5);
+        for (String category : categories) baseline.addTotal(category, 40);
+        baseline.addTotal("BASICS", 20); // Guaranteed Ponder/Notation/Balance
+        var originalKnowledge = new PlayerKnowledgeData();
+        originalKnowledge.addKnowledge(KnowledgeType.OBSERVATION, "ALCHEMY", 32);
+        var originalWarp = new PlayerWarpData();
+        originalWarp.add(WarpType.NORMAL, 17);
+        int activated = 0;
+        for (String key : LegacyTheorycraftManifest.CARD_REGISTRATION_ORDER) {
+            var snapshots = baseline.snapshot();
+            var oldKnowledge = originalKnowledge.copyKnowledgeRaw();
+            int[] oldWarp = originalWarp.copyLegacyWarpArray();
+            Map<String, String> fields = new java.util.HashMap<>();
+            fields.put("cat", "ALCHEMY");
+            fields.put("cat1", "ALCHEMY");
+            fields.put("cat2", "BASICS");
+            fields.put("aspect", compound.tag());
+            fields.put("aspect1", compound.tag());
+            fields.put("aspect2", secondCompound.tag());
+            fields.put("aspect3", compound.tag());
+            if (key.endsWith(".CardSynthesis")) {
+                fields.put("aspect1", compound.components().get(0).tag());
+                fields.put("aspect2", compound.components().get(1).tag());
+            }
+            Map<String, Integer> ints = Map.of("amt", 18, "md1", 0, "md2", 5);
+            var card = new LegacyTheorycraftActivationEffects.Card(key, fields, ints, 2);
+            var result = LegacyTheorycraftActivationEffects.stage(
+                    card, baseline, originalKnowledge, originalWarp,
+                    categories, aspects, new Random(87902L), 5, 64);
+            isTrue(result != null);
+            activated++;
+            eq(snapshots, baseline.snapshot()); // NO effects until committed!
+            eq(oldKnowledge, originalKnowledge.copyKnowledgeRaw());
+            eq(java.util.Arrays.toString(oldWarp),
+                    java.util.Arrays.toString(originalWarp.copyLegacyWarpArray()));
+            // All returned original snapshots use their exact signed
+            // inspiration costs after success, even -1/-2 refund cards.
+            int cost = LegacyTheorycraftCardMetadata.get(key).cost();
+            eq(Math.min(5, 5 - cost), result.theory().inspiration());
+            eq(key.endsWith(".CardSynthesis") ? compound.tag() : null,
+                    result.spawnedCrystalAspect());
+            int[] returnedWarp = result.warpArray();
+            returnedWarp[0] = 200;
+            isFalse(result.warpArray()[0] == 200); // defensive clone
+            // No invented XP debit or resource charge exists in the pure
+            // effect staging layer: all costs are validated separately.
+        }
+        eq(33, activated);
+        var invalid = new LegacyTheorycraftActivationEffects.Card(
+                "thaumcraft.common.lib.research.theorycraft.CardTruth", Map.of(), Map.of(), 0);
+        eq(null, LegacyTheorycraftActivationEffects.stage(invalid,
+                baseline, originalKnowledge, originalWarp,
+                categories, aspects, new Random(1L), 5, 0));
+        var requireKnowledge = new LegacyTheorycraftActivationEffects.Card(
+                LegacyCardAnalyze.CARD_KEY, Map.of("cat", "GOLEMANCY"), Map.of(), -1);
+        eq(null, LegacyTheorycraftActivationEffects.stage(requireKnowledge,
+                baseline, originalKnowledge, originalWarp, categories,
+                aspects, new Random(4L), 5, -1));
+        var invalidSynthesis = new LegacyTheorycraftActivationEffects.Card(
+                "thaumcraft.common.lib.research.theorycraft.CardSynthesis",
+                Map.of("aspect1", "aer", "aspect2", "ignis", "aspect3", "ignis"),
+                Map.of(), -1);
+        eq(null, LegacyTheorycraftActivationEffects.stage(invalidSynthesis,
+                baseline, originalKnowledge, originalWarp, categories,
+                aspects, new Random(1L), 5, 0));
+        var noXp = new LegacyTheorycraftActivationEffects.Card(
+                LegacyLateTheoryCards.ENCHANTMENT, Map.of(), Map.of(), -1);
+        eq(null, LegacyTheorycraftActivationEffects.stage(noXp,
+                baseline, originalKnowledge, originalWarp, categories,
+                aspects, new Random(1L), 4, 0));
     }
 
     private static void testLegacyTheorycraftActivationPreflight() {
