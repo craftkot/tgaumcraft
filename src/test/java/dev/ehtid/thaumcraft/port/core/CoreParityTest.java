@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public final class CoreParityTest {
