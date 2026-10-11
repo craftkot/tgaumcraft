@@ -323,7 +323,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
 
         var data = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
         var knowledge = data.knowledge();
-        knowledge.loadSnapshot(knowledge.getResearchList(), knowledge.copyStages(),
+        // getResearchList() is a LIVE view; copy it before loadSnapshot.clear().
+        knowledge.loadSnapshot(new java.util.HashSet<>(knowledge.getResearchList()), knowledge.copyStages(),
                 knowledge.copyFlags(), result.playerKnowledgeRaw());
         data.warp().loadLegacyWarpArray(result.warpArray());
         data.warp().setCounter(result.warpCounter());
