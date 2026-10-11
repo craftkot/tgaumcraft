@@ -6,6 +6,11 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftManifest;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftDisplayArgument;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftActivationPreflight;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftCardMetadata;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftRequiredItems;
+import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftActivationPreflight;
+import dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftMaterialResolver;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -29,6 +34,12 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private static final int TABLE_SLOTS = 2;
     private static final int INVENTORY_END = 29; // table 2 + storage 27
     private static final int HOTBAR_END = 38;
+    private static final int REQUIREMENTS_PER_CARD = 2;
+    private static final int REQUIREMENT_PREVIEW_SLOTS = 3 * REQUIREMENTS_PER_CARD;
+    public static final int XP_NONE = 0;
+    public static final int XP_FIXED_FIVE = 1;
+    public static final int XP_UP_TO_FIVE = 2;
+    public static final int XP_ALL_PLUS_TEN = 3;
     private final Container table;
     private final DataSlot hasSession;
     private final DataSlot inspiration;
@@ -39,6 +50,15 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     private final DataSlot bonusDraws;
     private final DataSlot[] previewCards = new DataSlot[3];
     private final DataSlot[] previewArguments = new DataSlot[3];
+    private final DataSlot[] previewInspirationCosts = new DataSlot[3];
+    private final DataSlot[] previewInkCosts = new DataSlot[3];
+    private final DataSlot[] previewPaperCosts = new DataSlot[3];
+    private final DataSlot[] previewXpModes = new DataSlot[3];
+    private final DataSlot[] previewRequirementStates = new DataSlot[3];
+    private final DataSlot[] previewRequirementFlags = new DataSlot[3];
+    private final DataSlot[] previewFailureCodes = new DataSlot[3];
+    private final SimpleContainer requirementPreview =
+            new SimpleContainer(REQUIREMENT_PREVIEW_SLOTS);
     private final java.util.Set<String> selectedAidKeys = new java.util.HashSet<>();
 
     public ResearchTableMenu(int id, Inventory inventory) {
@@ -130,6 +150,30 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                         @Override public void set(int ignored) { }
                     } : DataSlot.standalone();
             addDataSlot(previewArguments[i]);
+
+            // Safe activation metadata is derived from the authoritative
+            // server CardChoice. The client never receives cardNBT.
+            previewInspirationCosts[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 0);
+            previewInkCosts[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 1);
+            previewPaperCosts[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 2);
+            previewXpModes[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 3);
+            previewRequirementStates[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 4);
+            previewRequirementFlags[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 5);
+            previewFailureCodes[i] =
+                    cardDataSlot(table, inventory.player, choiceIndex, 6);
+            addDataSlot(previewInspirationCosts[i]);
+            addDataSlot(previewInkCosts[i]);
+            addDataSlot(previewPaperCosts[i]);
+            addDataSlot(previewXpModes[i]);
+            addDataSlot(previewRequirementStates[i]);
+            addDataSlot(previewRequirementFlags[i]);
+            addDataSlot(previewFailureCodes[i]);
         }
         table.startOpen(inventory.player);
 
@@ -155,6 +199,114 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         for (int col = 0; col < 9; col++) {
             addSlot(new Slot(inventory, col,
                     20 + (col % 3) * 18, 190 + (col / 3) * 18));
+        }
+
+        // Six hidden, read-only ghost slots use vanilla menu ItemStack sync
+        // for the at-most-two exact BETA26 requirements of each card. This
+        // preserves item components/names without sending the original cardNBT.
+        for (int i = 0; i < REQUIREMENT_PREVIEW_SLOTS; i++) {
+            addSlot(new Slot(requirementPreview, i, -1000, -1000) {
+                @Override public boolean mayPlace(ItemStack stack) { return false; }
+                @Override public boolean mayPickup(Player player) { return false; }
+            });
+        }
+        refreshRequirementPreview();
+    }
+
+    private static DataSlot cardDataSlot(Container table, Player player,
+                                         int choiceIndex, int property) {
+        return table instanceof ResearchTableBlockEntity live
+                ? new DataSlot() {
+                    @Override public int get() {
+                        return cardDataValue(live, player, choiceIndex, property);
+                    }
+                    @Override public void set(int ignored) { }
+                } : DataSlot.standalone();
+    }
+
+    private static int cardDataValue(ResearchTableBlockEntity table, Player player,
+                                     int choiceIndex, int property) {
+        var choices = table.pendingChoices();
+        if (choiceIndex < 0 || choiceIndex >= choices.size()) return 0;
+        var choice = choices.get(choiceIndex);
+        String key = choice.key();
+        if (!LegacyTheorycraftManifest.allCardKeys().contains(key)) {
+            return property == 6
+                    ? LegacyTheorycraftActivationPreflight.Failure.UNKNOWN_CARD.ordinal() + 1
+                    : 0;
+        }
+
+        return switch (property) {
+            case 0 -> LegacyTheorycraftCardMetadata.get(key).cost();
+            case 1 -> key.endsWith(".CardScripting") ? 2 : 1;
+            case 2 -> key.endsWith(".CardScripting") ? 1 : 0;
+            case 3 -> xpMode(key);
+            case 4 -> requirementState(key, choice);
+            case 5 -> requirementFlags(key, choice);
+            case 6 -> {
+                if (!(player instanceof ServerPlayer serverPlayer)) yield 0;
+                var check = NeoForgeTheorycraftActivationPreflight.check(
+                        serverPlayer, table, choiceIndex);
+                var failure = check == null
+                        ? LegacyTheorycraftActivationPreflight.Failure.INVALID_CARD_NBT
+                        : check.costs().failure();
+                yield failure.ordinal() + 1;
+            }
+            default -> 0;
+        };
+    }
+
+    private static int xpMode(String key) {
+        if (key.endsWith(".CardEnchantment")) return XP_FIXED_FIVE;
+        if (key.endsWith(".CardSpellbinding")) return XP_UP_TO_FIVE;
+        if (key.endsWith(".CardDarkWhispers")) return XP_ALL_PLUS_TEN;
+        return XP_NONE;
+    }
+
+    private static NeoForgeTheorycraftMaterialResolver.Resolved resolvedRequirements(
+            String key, dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt.Choice choice) {
+        int expected = LegacyTheorycraftRequiredItems.requiredItemCount(key);
+        if (expected == 0) return new NeoForgeTheorycraftMaterialResolver.Resolved(
+                java.util.List.of(), new boolean[0]);
+        var resolved = NeoForgeTheorycraftMaterialResolver.resolve(key, choice.cardNBT());
+        if (resolved == null || resolved.required().size() != expected
+                || resolved.required().size() > REQUIREMENTS_PER_CARD) return null;
+        return resolved;
+    }
+
+    private static int requirementState(
+            String key, dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt.Choice choice) {
+        if (LegacyTheorycraftRequiredItems.requiredItemCount(key) == 0) return 0;
+        return resolvedRequirements(key, choice) == null ? 2 : 1;
+    }
+
+    private static int requirementFlags(
+            String key, dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt.Choice choice) {
+        var resolved = resolvedRequirements(key, choice);
+        if (resolved == null) return 0;
+        boolean[] consumed = resolved.consumed();
+        int flags = 0;
+        for (int i = 0; i < consumed.length && i < REQUIREMENTS_PER_CARD; i++)
+            if (consumed[i]) flags |= 1 << i;
+        return flags;
+    }
+
+    private void refreshRequirementPreview() {
+        if (!(table instanceof ResearchTableBlockEntity live)) return;
+        for (int slot = 0; slot < REQUIREMENT_PREVIEW_SLOTS; slot++)
+            requirementPreview.setItem(slot, ItemStack.EMPTY);
+
+        var choices = live.pendingChoices();
+        for (int card = 0; card < choices.size() && card < 3; card++) {
+            var choice = choices.get(card);
+            if (!LegacyTheorycraftManifest.allCardKeys().contains(choice.key())) continue;
+            var resolved = resolvedRequirements(choice.key(), choice);
+            if (resolved == null) continue;
+            for (int item = 0; item < resolved.required().size()
+                    && item < REQUIREMENTS_PER_CARD; item++) {
+                requirementPreview.setItem(card * REQUIREMENTS_PER_CARD + item,
+                        resolved.required().get(item).copy());
+            }
         }
     }
 
@@ -204,6 +356,53 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
     public int cardPreviewArgument(int index) {
         return index >= 0 && index < previewArguments.length
                 ? previewArguments[index].get() : 0;
+    }
+
+    public int cardInspirationCost(int index) {
+        return index >= 0 && index < previewInspirationCosts.length
+                ? previewInspirationCosts[index].get() : 0;
+    }
+
+    public int cardInkCost(int index) {
+        return index >= 0 && index < previewInkCosts.length
+                ? previewInkCosts[index].get() : 0;
+    }
+
+    public int cardPaperCost(int index) {
+        return index >= 0 && index < previewPaperCosts.length
+                ? previewPaperCosts[index].get() : 0;
+    }
+
+    public int cardXpMode(int index) {
+        return index >= 0 && index < previewXpModes.length
+                ? previewXpModes[index].get() : XP_NONE;
+    }
+
+    /** 0=no required items, 1=exact server ItemStacks synced, 2=fail-closed/unresolved. */
+    public int cardRequirementState(int index) {
+        return index >= 0 && index < previewRequirementStates.length
+                ? previewRequirementStates[index].get() : 0;
+    }
+
+    public ItemStack cardRequirement(int cardIndex, int requirementIndex) {
+        if (cardIndex < 0 || cardIndex >= 3 || requirementIndex < 0
+                || requirementIndex >= REQUIREMENTS_PER_CARD) return ItemStack.EMPTY;
+        return requirementPreview.getItem(
+                cardIndex * REQUIREMENTS_PER_CARD + requirementIndex);
+    }
+
+    public boolean cardRequirementConsumed(int cardIndex, int requirementIndex) {
+        if (cardIndex < 0 || cardIndex >= previewRequirementFlags.length
+                || requirementIndex < 0 || requirementIndex >= REQUIREMENTS_PER_CARD)
+            return false;
+        return (previewRequirementFlags[cardIndex].get()
+                & (1 << requirementIndex)) != 0;
+    }
+
+    /** Enum ordinal + 1; zero means no synchronized card/failure state. */
+    public int cardFailureCode(int index) {
+        return index >= 0 && index < previewFailureCodes.length
+                ? previewFailureCodes[index].get() : 0;
     }
 
     public boolean hasChosenTheoryCard() { return hasChosenTheoryCard.get() != 0; }
@@ -293,10 +492,18 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         return false;
     }
 
+    @Override
+    public void broadcastChanges() {
+        refreshRequirementPreview();
+        super.broadcastChanges();
+    }
+
     @Override public boolean stillValid(Player player) { return table.stillValid(player); }
 
     @Override public ItemStack quickMoveStack(Player player, int index) {
-        if (index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+        // Hidden requirement slots are server-synchronized previews only.
+        // Never allow shift-click to materialize a ghost ingredient.
+        if (index < 0 || index >= HOTBAR_END) return ItemStack.EMPTY;
         Slot source = slots.get(index);
         if (!source.hasItem()) return ItemStack.EMPTY;
         ItemStack stack = source.getItem();

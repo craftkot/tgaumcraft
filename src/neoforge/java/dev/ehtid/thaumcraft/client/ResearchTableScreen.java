@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftChoicePreview;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftCardLocalization;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftDisplayArgument;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftActivationPreflight;
 import net.minecraft.world.item.Items;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -211,6 +212,72 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
         return Component.translatable(name, value);
     }
 
+    private Component cardCostTooltip(int choiceIndex) {
+        var tooltip = Component.empty().append(localizedCardTitle(choiceIndex));
+        int inspiration = menu.cardInspirationCost(choiceIndex);
+        tooltip.append(Component.literal(" • ")).append(inspiration < 0
+                ? Component.translatable("research_table.cost.inspiration_gain",
+                        -inspiration)
+                : Component.translatable("research_table.cost.inspiration",
+                        inspiration));
+        tooltip.append(Component.literal(" • ")).append(
+                Component.translatable("research_table.cost.ink",
+                        menu.cardInkCost(choiceIndex)));
+        if (menu.cardPaperCost(choiceIndex) > 0) {
+            tooltip.append(Component.literal(" • ")).append(
+                    Component.translatable("research_table.cost.paper",
+                            menu.cardPaperCost(choiceIndex)));
+        }
+
+        switch (menu.cardXpMode(choiceIndex)) {
+            case ResearchTableMenu.XP_FIXED_FIVE ->
+                    tooltip.append(Component.literal(" • ")).append(
+                            Component.translatable("research_table.cost.xp_five"));
+            case ResearchTableMenu.XP_UP_TO_FIVE ->
+                    tooltip.append(Component.literal(" • ")).append(
+                            Component.translatable("research_table.cost.xp_up_to_five"));
+            case ResearchTableMenu.XP_ALL_PLUS_TEN ->
+                    tooltip.append(Component.literal(" • ")).append(
+                            Component.translatable("research_table.cost.xp_all_plus_ten"));
+            default -> { }
+        }
+
+        int requirementState = menu.cardRequirementState(choiceIndex);
+        if (requirementState == 2) {
+            tooltip.append(Component.literal(" • ")).append(
+                    Component.translatable("research_table.cost.unresolved"));
+        } else if (requirementState == 1) {
+            for (int requirement = 0; requirement < 2; requirement++) {
+                var stack = menu.cardRequirement(choiceIndex, requirement);
+                if (stack.isEmpty()) continue;
+                tooltip.append(Component.literal(" • ")).append(Component.translatable(
+                        menu.cardRequirementConsumed(choiceIndex, requirement)
+                                ? "research_table.cost.consume"
+                                : "research_table.cost.keep",
+                        stack.getCount(), stack.getHoverName()));
+            }
+        }
+
+        int failureCode = menu.cardFailureCode(choiceIndex);
+        if (failureCode > 0) {
+            int ordinal = failureCode - 1;
+            var values = LegacyTheorycraftActivationPreflight.Failure.values();
+            if (ordinal >= 0 && ordinal < values.length) {
+                var failure = values[ordinal];
+                tooltip.append(Component.literal(" • "));
+                if (failure == LegacyTheorycraftActivationPreflight.Failure.NONE) {
+                    tooltip.append(Component.translatable("research_table.status.ready"));
+                } else {
+                    tooltip.append(Component.translatable(
+                            "research_table.status.blocked",
+                            Component.translatable("research_table.failure."
+                                    + failure.name().toLowerCase(java.util.Locale.ROOT))));
+                }
+            }
+        }
+        return tooltip;
+    }
+
     private boolean canDraw() {
         return menu.hasSession() && menu.inspiration() > 0
                 && !menu.hasPendingCardChoices()
@@ -336,10 +403,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 int y = topPos + CARD_Y;
                 if (mouseX >= x && mouseX < x + CARD_WIDTH
                         && mouseY >= y && mouseY < y + CARD_HEIGHT) {
-                    String name = localizedCardTitle(i).getString();
-                    graphics.renderTooltip(font, Component.translatable(
-                                    "research_table.card_preview_tooltip", name),
-                            mouseX, mouseY);
+                    graphics.renderTooltip(font, cardCostTooltip(i), mouseX, mouseY);
                     return;
                 }
             }
