@@ -80,6 +80,7 @@ public final class CoreParityTest {
         testEntityAspectRuntimeMappings();
         testFirstStepsServerProgression();
         testFirstStepsEndToEnd();
+        testVisResonatorArcaneRecipe();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4347,6 +4348,51 @@ public final class CoreParityTest {
         isTrue(k.getKnowledge(KnowledgeType.OBSERVATION,"BASICS")>=1); isTrue(gate.requisitesSatisfied(k)); isTrue(gate.request(k,warp,svc,true,true,false).progressed());
         // Stage 3 has no requisites; one final server progression completes FIRSTSTEPS at stageCount+1 == 4.
         isTrue(gate.requisitesSatisfied(k)); isTrue(gate.request(k,warp,svc,true,true,false).progressed()); eq(4,k.getResearchStage("FIRSTSTEPS")); isTrue(k.isResearchComplete("FIRSTSTEPS",cat));
+    }
+
+    private static void testVisResonatorArcaneRecipe() {
+        eq("UNLOCKAUROMANCY@2", VisResonatorRecipeLogic.RESEARCH);
+        eq(50, VisResonatorRecipeLogic.BASE_VIS);
+        eq(0b000101, VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK);
+        eq(50, VisResonatorRecipeLogic.discountedVis(0.0F));
+        eq(25, VisResonatorRecipeLogic.discountedVis(0.5F));
+        eq(0, VisResonatorRecipeLogic.discountedVis(1.0F));
+
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        isFalse(knowledge.isResearchKnown(VisResonatorRecipeLogic.RESEARCH));
+        knowledge.addResearch("UNLOCKAUROMANCY");
+        knowledge.setResearchStage("UNLOCKAUROMANCY", 1);
+        isFalse(knowledge.isResearchKnown(VisResonatorRecipeLogic.RESEARCH));
+        knowledge.setResearchStage("UNLOCKAUROMANCY", 2);
+        isTrue(knowledge.isResearchKnown(VisResonatorRecipeLogic.RESEARCH));
+
+        // Unlike shaped recipes, any two cells are allowed, in either order.
+        boolean[] occupied = new boolean[9];
+        boolean[] plate = new boolean[9];
+        boolean[] quartz = new boolean[9];
+        occupied[0] = true;
+        occupied[8] = true;
+        plate[0] = true;
+        quartz[8] = true;
+        int[] pair = VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz);
+        isTrue(java.util.Arrays.equals(new int[] {0, 8}, pair));
+        plate[0] = false;
+        plate[8] = true;
+        quartz[8] = false;
+        quartz[0] = true;
+        pair = VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz);
+        isTrue(java.util.Arrays.equals(new int[] {8, 0}, pair));
+        // If an addon tags an item as both ore classes, the matcher must
+        // consider the swapped assignment rather than consume an extra item.
+        plate[0] = true;
+        isTrue(VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz) != null);
+        occupied[4] = true; // Extra ingredient invalidates the whole recipe.
+        isTrue(VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz) == null);
+        occupied[4] = false;
+        occupied[8] = false;
+        isTrue(VisResonatorRecipeLogic.matchGrid(occupied, plate, quartz) == null);
+        isTrue(VisResonatorRecipeLogic.matchGrid(
+                new boolean[8], new boolean[9], new boolean[9]) == null);
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

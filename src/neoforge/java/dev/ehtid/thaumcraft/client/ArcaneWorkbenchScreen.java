@@ -67,9 +67,14 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     private void renderCrystalRequirements(GuiGraphics graphics, float partialTick) {
         if (menu.displayedVisCost() <= 0) return;
+        int crystalMask = menu.requiredCrystalMask();
+        if (crystalMask == 0) return;
 
         int ticks = minecraft != null && minecraft.player != null ? minecraft.player.tickCount : 0;
         for (int i = 0; i < ASPECT_LOCS.length; i++) {
+            // BETA26 only highlights aspects actually required by the
+            // currently matched recipe, not all six primal crystals.
+            if ((crystalMask & (1 << i)) == 0) continue;
             int color = ASPECT_COLORS[i];
             float red = ((color >> 16) & 0xFF) / 255.0F;
             float green = ((color >> 8) & 0xFF) / 255.0F;

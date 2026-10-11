@@ -23,6 +23,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     private final Player owner;
     private final DataSlot availableVis;
     private final DataSlot displayedVisCost;
+    private final DataSlot requiredCrystalMask;
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory) {
         this(id, inventory, new SimpleContainer(ArcaneWorkbenchRuntime.SLOT_COUNT),
@@ -43,15 +44,18 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         this.displayedVisCost = displayedVisCost;
         addDataSlot(availableVis);
         addDataSlot(displayedVisCost);
+        requiredCrystalMask = crystalMaskSlot(bench);
+        addDataSlot(requiredCrystalMask);
         bench.startOpen(inventory.player);
         addSlot(new Slot(result, 0, 160, 64) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
             @Override public boolean mayPickup(Player player) {
-                if (player instanceof ServerPlayer sp) return canCraftThaumometer(sp, 0.0F);
-                return result.getItem(0).is(ThaumcraftItems.THAUMOMETER.get());
+                if (player instanceof ServerPlayer sp) return canCraftCurrentRecipe(sp, 0.0F);
+                return !result.getItem(0).isEmpty();
             }
             @Override public void onTake(Player player, ItemStack stack) {
-                if (player instanceof ServerPlayer sp) craftThaumometer(sp, 0.0F);
+                if (player instanceof ServerPlayer sp)
+                    craftSelectedRecipe(sp, stack, 0.0F);
                 super.onTake(player, stack);
             }
         });
@@ -93,9 +97,12 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return new DataSlot() {
             @Override
             public int get() {
-                return bench instanceof ArcaneWorkbenchBlockEntity workbench
-                        && workbench.matchesThaumometerPattern()
-                        ? dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic.BASE_VIS : 0;
+                if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                if (workbench.matchesThaumometerPattern())
+                    return dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic.BASE_VIS;
+                if (workbench.matchesVisResonatorPattern())
+                    return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.BASE_VIS;
+                return 0;
             }
 
             @Override
@@ -104,6 +111,22 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             }
         };
     }
+
+    private static DataSlot crystalMaskSlot(Container bench) {
+        return new DataSlot() {
+            @Override public int get() {
+                if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                if (workbench.matchesThaumometerPattern()) return 0b111111;
+                if (workbench.matchesVisResonatorPattern())
+                    return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
+                return 0;
+            }
+            @Override public void set(int ignored) { }
+        };
+    }
+
+    /** Synced aspect requirement bits: aer, ignis, aqua, terra, ordo, perditio. */
+    public int requiredCrystalMask() { return requiredCrystalMask.get(); }
 
     /** BETA26 synced auraVisClient equivalent (property id 0). */
     public int availableVis() {
@@ -121,6 +144,18 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), totalDiscount);
     }
 
+    private boolean canCraftVisResonator(ServerPlayer player, float totalDiscount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench) || !stillValid(player))
+            return false;
+        return workbench.canCraftVisResonator(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), totalDiscount);
+    }
+
+    private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
+        return canCraftThaumometer(player, totalDiscount)
+                || canCraftVisResonator(player, totalDiscount);
+    }
+
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
     public boolean craftThaumometer(ServerPlayer player, float totalDiscount) {
         if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench) || !stillValid(player)) return false;
@@ -132,9 +167,33 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+    /** Server-authoritative BETA26 vis-resonator arcane recipe endpoint. */
+    public boolean craftVisResonator(ServerPlayer player, float totalDiscount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench) || !stillValid(player))
+            return false;
+        var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (!workbench.craftVisResonator(knowledge, totalDiscount)) return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
+    private ItemStack craftSelectedRecipe(ServerPlayer player, ItemStack expected,
+                                          float totalDiscount) {
+        if (expected.is(ThaumcraftItems.THAUMOMETER.get())
+                && craftThaumometer(player, totalDiscount))
+            return new ItemStack(ThaumcraftItems.THAUMOMETER.get());
+        if (expected.is(ThaumcraftItems.VIS_RESONATOR.get())
+                && craftVisResonator(player, totalDiscount))
+            return new ItemStack(ThaumcraftItems.VIS_RESONATOR.get());
+        return ItemStack.EMPTY;
+    }
+
     private void refreshResult() {
         if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
+        else if (owner instanceof ServerPlayer sp && canCraftVisResonator(sp, 0.0F))
+            result.setItem(0, new ItemStack(ThaumcraftItems.VIS_RESONATOR.get()));
         else result.setItem(0, ItemStack.EMPTY);
     }
 
@@ -167,12 +226,13 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         ItemStack stack = source.getItem();
         ItemStack before = stack.copy();
         if (index == 0) {
-            if (!(player instanceof ServerPlayer sp) || !canCraftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
+            if (!(player instanceof ServerPlayer sp) || !canCraftCurrentRecipe(sp, 0.0F))
+                return ItemStack.EMPTY;
             if (!hasInventorySpace(stack)) return ItemStack.EMPTY;
-            // The output stack is virtual: commit resources once before inserting
-            // the crafted item, then refresh the preview from server state.
-            if (!craftThaumometer(sp, 0.0F)) return ItemStack.EMPTY;
-            ItemStack crafted = new ItemStack(ThaumcraftItems.THAUMOMETER.get());
+            // The output stack is virtual: commit whichever BETA26 recipe
+            // matches the exact preview, then insert only the earned item.
+            ItemStack crafted = craftSelectedRecipe(sp, before, 0.0F);
+            if (crafted.isEmpty()) return ItemStack.EMPTY;
             if (!moveItemStackTo(crafted, 16, 52, true)) {
                 // Defensive fallback: a concurrently filled inventory must not delete the item.
                 player.drop(crafted, false);

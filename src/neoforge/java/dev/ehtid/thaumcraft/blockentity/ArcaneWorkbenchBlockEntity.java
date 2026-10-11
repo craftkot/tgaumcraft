@@ -3,6 +3,12 @@ package dev.ehtid.thaumcraft.blockentity;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
 import dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic;
+import dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
@@ -90,6 +96,81 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
                 return false;
             }
         }
+        return true;
+    }
+
+    // 1.12 OreDictionary "plateIron" and "gemQuartz" have no single item
+    // identities in 1.21. NeoForge's community tags preserve modded plate
+    // ingredients; ordinary iron ingots MUST NOT satisfy plateIron.
+    private static final TagKey<Item> C_IRON_PLATES = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "plates/iron"));
+    private static final TagKey<Item> FORGE_IRON_PLATES = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "plates/iron"));
+    private static final TagKey<Item> C_QUARTZ_GEMS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "gems/quartz"));
+    private static final TagKey<Item> FORGE_QUARTZ_GEMS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "gems/quartz"));
+
+    private static boolean isIronPlate(ItemStack stack) {
+        return stack.is(C_IRON_PLATES) || stack.is(FORGE_IRON_PLATES);
+    }
+
+    private static boolean isQuartzGem(ItemStack stack) {
+        return stack.is(Items.QUARTZ) || stack.is(C_QUARTZ_GEMS)
+                || stack.is(FORGE_QUARTZ_GEMS);
+    }
+
+    /**
+     * The original ShapelessOreRecipe accepts the two ingredients in ANY
+     * 3x3 positions and requires all other grid slots empty. This also
+     * resolves ambiguous modded items tagged both iron plate and quartz.
+     */
+    private int[] visResonatorInputSlots() {
+        boolean[] occupied = new boolean[ArcaneWorkbenchRuntime.CRAFT_SLOTS];
+        boolean[] plates = new boolean[ArcaneWorkbenchRuntime.CRAFT_SLOTS];
+        boolean[] quartz = new boolean[ArcaneWorkbenchRuntime.CRAFT_SLOTS];
+        for (int i = 0; i < ArcaneWorkbenchRuntime.CRAFT_SLOTS; i++) {
+            ItemStack stack = items.get(i);
+            if (stack.isEmpty()) continue;
+            occupied[i] = true;
+            plates[i] = isIronPlate(stack);
+            quartz[i] = isQuartzGem(stack);
+        }
+        return VisResonatorRecipeLogic.matchGrid(occupied, plates, quartz);
+    }
+
+    public boolean matchesVisResonatorPattern() {
+        return visResonatorInputSlots() != null;
+    }
+
+    /**
+     * Authentic BETA26 vis_resonator arcane recipe:
+     * UNLOCKAUROMANCY@2; 50 vis; one Aer + one Aqua crystal;
+     * plateIron + gemQuartz as original ore-dictionary inputs.
+     */
+    public boolean canCraftVisResonator(PlayerKnowledgeData knowledge, float totalDiscount) {
+        if (visResonatorInputSlots() == null
+                || !knowledge.isResearchKnown(VisResonatorRecipeLogic.RESEARCH)) return false;
+        ItemStack aer = items.get(9);
+        ItemStack aqua = items.get(11);
+        if (aer.isEmpty() || aqua.isEmpty()
+                || !canPlaceItem(9, aer) || !canPlaceItem(11, aqua)) return false;
+        int cost = VisResonatorRecipeLogic.discountedVis(totalDiscount);
+        return getVis() >= Math.max(0, cost);
+    }
+
+    /** Spend all inputs and aura together on the server; failure changes nothing. */
+    public boolean craftVisResonator(PlayerKnowledgeData knowledge, float totalDiscount) {
+        if (!canCraftVisResonator(knowledge, totalDiscount)) return false;
+        int[] inputs = visResonatorInputSlots();
+        if (inputs == null) return false;
+        int cost = VisResonatorRecipeLogic.discountedVis(totalDiscount);
+        items.get(inputs[0]).shrink(1);
+        items.get(inputs[1]).shrink(1);
+        items.get(9).shrink(1);
+        items.get(11).shrink(1);
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
         return true;
     }
 
