@@ -388,3 +388,7 @@ After commit bb45789, direct server draw also uses hasStructurallyValidPendingCh
 
 ## 2026-10-11 continuation — strict keep/lastDraw validation
 Fresh-read main 48b605b; GitHub Actions #458 passed. The BETA26 keep-selected action now calls the same full hasStructurallyValidPendingChoices invariant as server activation rather than accepting a malformed subset. It also refuses an existing lastDraw of the wrong NBT type or with an invalid subclass/seed before appending its seed to savedCards. No saved NBT is mutated on failure. Check new Actions before claiming compilation. The change is a defensive research progress integrity fix, not evidence of a playable full-client test; rounded estimate remains 83%.
+
+
+## 2026-10-11 — readable multi-line theory card costs
+GitHub Actions #459 for 2bc4ad2: SUCCESS. The card tooltip was one concatenated line including item names and special XP, overflowing the screen particularly in Russian. Updated ResearchTableScreen to use vanilla GuiGraphics.renderComponentTooltip with separate lines for card name, inspiration, ink, optional paper, special XP, each actual synced ingredient, and server preflight status. All menu cost data remains authoritative, no cardNBT is exposed, no activation behavior modified. Check CI before calling it build verified; full client GUI screenshot/playthrough still outstanding. Project estimate stays rounded 83%.
