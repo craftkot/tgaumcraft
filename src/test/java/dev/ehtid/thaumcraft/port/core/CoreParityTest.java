@@ -125,6 +125,14 @@ public final class CoreParityTest {
         isTrue(k.hasResearchFlag("R", ResearchFlag.PAGE));
         isTrue(k.clearResearchFlag("R", ResearchFlag.PAGE));
         isFalse(k.hasResearchFlag("R", ResearchFlag.PAGE));
+
+        // Regression: getResearchList() is a live view. Restoring from it
+        // must not erase discovered research while publishing card effects.
+        k.loadSnapshot(k.getResearchList(), k.copyStages(), k.copyFlags(),
+                k.copyKnowledgeRaw());
+        isTrue(k.isResearchKnown("R"));
+        eq(4, k.getResearchStage("R"));
+        eq(16, k.getKnowledgeRaw(KnowledgeType.OBSERVATION, "BASICS"));
     }
 
     private static void testPearl() {
