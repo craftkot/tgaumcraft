@@ -75,26 +75,30 @@ capture() {
   import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
   test -s "client-smoke/screenshots/$name.png"
   identify "client-smoke/screenshots/$name.png"
+  convert "client-smoke/screenshots/$name.png" -resize 512x320 -colors 64 \
+    "PNG8:client-smoke/screenshots/$name-thumb.png"
+  echo -n "REAL_CLIENT_SCREEN_$name="
+  base64 -w0 "client-smoke/screenshots/$name-thumb.png"
+  echo
 }
 
-capture 01-title
-echo 'REAL_TITLE_SCREENSHOT=YES' | tee -a client-smoke-status.txt
-convert client-smoke/screenshots/01-title.png -resize 512x320 -colors 64 PNG8:client-smoke/screenshots/title-thumb.png
-echo -n 'REAL_CLIENT_TITLE_THUMB_BASE64='
-base64 -w0 client-smoke/screenshots/title-thumb.png
-echo
-
-# Exploratory GUI inputs: do not claim the world is loaded merely because
-# a mouse action was sent. Save a screenshot of each navigation stage.
-xdotool mousemove 512 319 click 1
-sleep 9
-capture 02-after-singleplayer
-xdotool mousemove 512 717 click 1
-sleep 9
-capture 03-after-create-world
-xdotool mousemove 512 717 click 1
-sleep 65
-capture 04-after-world-attempt
+# First-ever Minecraft dev run shows Accessibility/Narrator setup, not
+# Singleplayer. The Continue button is at physical (512,715) with the
+# fixed window on 1280x800 Xvfb; record actual screens at each step.
+capture 01-first-launch
+echo 'REAL_WINDOW_SCREENSHOT=YES' | tee -a client-smoke-status.txt
+xdotool mousemove 512 716 click 1
+sleep 8
+capture 02-after-accessibility
+xdotool mousemove 512 308 click 1
+sleep 8
+capture 03-after-singleplayer
+xdotool mousemove 512 672 click 1
+sleep 8
+capture 04-after-create-world
+xdotool mousemove 512 716 click 1
+sleep 75
+capture 05-after-world-attempt
 
 if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Preparing spawn area|Joining world' client-smoke/client.log; then
   echo 'INTEGRATED_WORLD_START_LOG=YES' | tee -a client-smoke-status.txt
