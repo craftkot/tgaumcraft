@@ -392,3 +392,7 @@ Fresh-read main 48b605b; GitHub Actions #458 passed. The BETA26 keep-selected ac
 
 ## 2026-10-11 — readable multi-line theory card costs
 GitHub Actions #459 for 2bc4ad2: SUCCESS. The card tooltip was one concatenated line including item names and special XP, overflowing the screen particularly in Russian. Updated ResearchTableScreen to use vanilla GuiGraphics.renderComponentTooltip with separate lines for card name, inspiration, ink, optional paper, special XP, each actual synced ingredient, and server preflight status. All menu cost data remains authoritative, no cardNBT is exposed, no activation behavior modified. Check CI before calling it build verified; full client GUI screenshot/playthrough still outstanding. Project estimate stays rounded 83%.
+
+
+## 2026-10-11 — prevent phantom research cards in client menu
+After CI #460 success at 988f22a, ResearchTableMenu now checks the complete BlockEntity.hasStructurallyValidPendingChoices invariant before exposing synchronized card IDs, names, selected flags, cost/XP/material metadata, or ghost ItemStack requirements. A malformed old-world cardChoices list previously decoded to a subset of enticing visible cards even though authoritative activation preflight rejected the entire list. Now no phantom selectable cards are shown, no client-supplied NBT or rewards, and the raw historical save remains intact for future migration. Build and server smoke of THIS commit must be checked separately. Maintain estimated 83%; no claim of manual GUI test.

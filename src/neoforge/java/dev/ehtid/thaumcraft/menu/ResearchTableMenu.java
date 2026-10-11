@@ -99,7 +99,8 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         hasChosenTheoryCard = table instanceof ResearchTableBlockEntity live
                 ? new DataSlot() {
                     @Override public int get() {
-                        return live.pendingChoices().stream().anyMatch(c -> c.selected())
+                        return live.hasStructurallyValidPendingChoices()
+                                && live.pendingChoices().stream().anyMatch(c -> c.selected())
                                 ? 1 : 0;
                     }
                     @Override public void set(int ignored) { }
@@ -125,6 +126,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             previewCards[i] = table instanceof ResearchTableBlockEntity live
                     ? new DataSlot() {
                         @Override public int get() {
+                            if (!live.hasStructurallyValidPendingChoices()) return 0;
                             var choices = live.pendingChoices();
                             if (choiceIndex >= choices.size()) return 0;
                             var choice = choices.get(choiceIndex);
@@ -140,6 +142,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             previewArguments[i] = table instanceof ResearchTableBlockEntity liveArgs
                     ? new DataSlot() {
                         @Override public int get() {
+                            if (!liveArgs.hasStructurallyValidPendingChoices()) return 0;
                             var choices = liveArgs.pendingChoices();
                             if (choiceIndex >= choices.size()) return 0;
                             var choice = choices.get(choiceIndex);
@@ -226,6 +229,7 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
 
     private static int cardDataValue(ResearchTableBlockEntity table, Player player,
                                      int choiceIndex, int property) {
+        if (!table.hasStructurallyValidPendingChoices()) return 0;
         var choices = table.pendingChoices();
         if (choiceIndex < 0 || choiceIndex >= choices.size()) return 0;
         var choice = choices.get(choiceIndex);
@@ -296,6 +300,8 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
         for (int slot = 0; slot < REQUIREMENT_PREVIEW_SLOTS; slot++)
             requirementPreview.setItem(slot, ItemStack.EMPTY);
 
+        // A damaged legacy list must not leak partial phantom card previews.
+        if (!live.hasStructurallyValidPendingChoices()) return;
         var choices = live.pendingChoices();
         for (int card = 0; card < choices.size() && card < 3; card++) {
             var choice = choices.get(card);
