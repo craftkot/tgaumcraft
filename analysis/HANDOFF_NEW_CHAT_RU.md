@@ -380,3 +380,7 @@ Previous GitHub Actions run #455 (38153717690) for commit 4fd818a completed SUCC
 
 ## 2026-10-11 continuation — corrupt legacy card list validation
 CI #456 (run 38153911426) for previous commit succeeded. A malformed NBT cardChoices list may decode to a shorter set because LegacyTheorycraftChoiceNbt.readChoices intentionally skips damaged rows. New BlockEntity.hasStructurallyValidPendingChoices rejects wrong tag type, non-compound elements, >3 rows, truncated decoder output, malformed subclass tags and multiple selected rows; NeoForgeTheorycraftActivationPreflight now fails closed before reporting a card as payable. drawOriginalTheoryCards also refuses to overwrite a saved cardChoices tag of an unexpected NBT type. No valid old-world card data is rewritten on rejection. Re-run CI; no rendered client test claimed. Retain ~83%.
+
+
+## 2026-10-11: reject invalid preserved theory offers before draw
+After commit bb45789, direct server draw also uses hasStructurallyValidPendingChoices for any existing cardChoices NBT. This closes a remaining inconsistency: a malformed existing list whose compound parser returned no choices could previously be overwritten by a new draw. Now empty valid lists remain drawable, but invalid legacy saves are preserved unchanged; no paper or RNG is used. Check latest GitHub Actions before claiming success. Still rounded 83%.

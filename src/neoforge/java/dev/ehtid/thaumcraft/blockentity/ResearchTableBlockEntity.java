@@ -252,11 +252,11 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         if (originalSessionNbt.contains("cardChoices")
                 && !originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST))
             return false;
-        if (!pendingChoices().isEmpty()
-                || (originalSessionNbt.contains("cardChoices", net.minecraft.nbt.Tag.TAG_LIST)
-                        && !originalSessionNbt.getList("cardChoices",
-                                net.minecraft.nbt.Tag.TAG_COMPOUND).isEmpty()))
-            return false;
+        // Never overwrite malformed or selected legacy offers. Even if a
+        // future loader decodes only a subset, the raw NBT must be intact.
+        if (originalSessionNbt.contains("cardChoices")
+                && !hasStructurallyValidPendingChoices()) return false;
+        if (!pendingChoices().isEmpty()) return false;
         ItemStack paper = items.get(PAPER_SLOT);
         if (paper.isEmpty() || !paper.is(Items.PAPER)) return false;
 
