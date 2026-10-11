@@ -130,5 +130,15 @@
   "tc.research_category.GOLEMANCY": "Golemancy",
   "tc.research_category.ELDRITCH": "Eldritch",
   "item.phial.empty.name": "Glass Phial",
-  "item.phial.filled.name": "Phial of %s Essentia"
+  "item.phial.filled.name": "Phial of %s Essentia",
+  "item.curio.arcane.name": "Arcane Curiosity",
+  "item.curio.preserved.name": "Preserved Curiosity",
+  "item.curio.eldritch.name": "Eldritch Curiosity",
+  "item.curio.ancient.name": "Ancient Curiosity",
+  "item.curio.twisted.name": "Twisted Curiosity",
+  "item.curio.knowledge.name": "Illuminating Curiosity",
+  "item.curio.rites.name": "Crimson Rites",
+  "item.curio.text": "What knowledge does this hold?",
+  "fail.crimsonrites": "This book contains nothing but crazed ravings.",
+  "tc.knowledge.gained": "You have gained some knowledge"
 }
