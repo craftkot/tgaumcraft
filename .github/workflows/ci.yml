@@ -251,6 +251,16 @@ jobs:
               entries = json.loads((assets / "lang" / (language + ".json")).read_text())
               assert entries["itemGroup.thaumcraft"] == "Thaumcraft"
 
+          # At the 80% milestone keep visual assets ORIGINAL, not
+          # missing purple checkerboards in the restored creative tab.
+          for item in ("thaumonomicon", "crystal_essence"):
+              png = (assets / "textures/item" / (item + ".png")).read_bytes()
+              assert png[:8] == bytes([137,80,78,71,13,10,26,10]), item
+              assert len(png) > 300, item
+              model = json.loads((assets / "models/item" / (item + ".json")).read_text())
+              assert model["parent"] == "minecraft:item/generated", item
+              assert model["textures"]["layer0"] == "thaumcraft:item/" + item
+
           print("Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK")
           PY
 
