@@ -303,7 +303,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 int y = topPos + CARD_Y;
                 if (mouseX >= x && mouseX < x + CARD_WIDTH
                         && mouseY >= y && mouseY < y + CARD_HEIGHT) {
-                    String name = localizedCardTitle(code).getString();
+                    String name = localizedCardTitle(i).getString();
                     graphics.renderTooltip(font, Component.translatable(
                                     "research_table.card_preview_tooltip", name),
                             mouseX, mouseY);
