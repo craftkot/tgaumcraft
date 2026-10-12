@@ -267,6 +267,19 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block 3 151 10 active'
   capture 23-matrix-invalid-auto-deactivation
   echo 'CLIENT_SENT_INFUSION_STRUCTURE_TEST=YES' | tee -a client-smoke-status.txt
+  # SOURCE BETA26: four eldritch corner pillars => +0.2/tick-recharge,
+  # time 7, cost multiplier 1.05. Observe actual synced BE NBT in world.
+  send_chat '/setblock 2 149 9 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 2 149 11 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 4 149 9 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 4 149 11 thaumcraft:pillar_eldritch'
+  send_chat '/data merge block 3 151 10 {active:1b,stability:0.0f}'
+  sleep 7
+  send_chat '/data get block 3 151 10 stability'
+  send_chat '/data get block 3 151 10 stabilityReplenish'
+  send_chat '/data get block 3 151 10 cycleTime'
+  capture 25-original-eldritch-stability-recharge
+  echo 'CLIENT_SENT_ELDRITCH_STABILITY_TEST=YES' | tee -a client-smoke-status.txt
   # Source BETA26 BlockPillar.breakBlock yields exactly 2 corresponding
   # BlockStoneTC materials, not the pillar itself. Vanilla /loot uses the
   # installed data pack loot tables, and /clear amount=0 only counts.

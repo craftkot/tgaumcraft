@@ -24,3 +24,7 @@ See full handoff for SHA/results. Original BETA26 `BlockPillar.func_180663_b` em
 
 ## Original OBJ pillar visual upgrade
 Source original BETA26 pillar.obj hash db048355f80d16b1c7cccbe53a17f139ab8e56aa903d04443d9e75d41354e007 restored. Three 64x64 pillar PNG and NeoForge builtin OBJ models for arcane/ancient/eldritch. Updated source verification and targeted real client smoke. CHECK client screenshots after latest main; no assumed working visuals on CI compilation. No 90% yet.
+
+
+### Source BETA26 live stability smoke (2026-10-12)
+After the original matrix invalidation screenshots 22–23, the real-client script now restores all four corner pillars as `pillar_eldritch`, sets `active=1, stability=0.0f`, waits seven seconds, queries actual `stability`, `stabilityReplenish` and `cycleTime` via integrated server `/data get block`, and takes real screenshot 25. Expected `stabilityReplenish=0.2`, `cycleTime=7`, stability increases; verify actual image/log independently, not implied by green workflow. No video before 90%.
