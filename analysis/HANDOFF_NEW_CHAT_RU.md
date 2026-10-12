@@ -584,3 +584,6 @@ Client-smoke script attempts actual first-person thrown item after the existing 
 
 ### Alumentum ballistic override (original bytecode fidelity)
 Direct `EntityAlumentum.func_70186_c(double,double,double,float,float)` overrides its argument speed and calls super with literal `0.75F`, so the `0.4F` supplied by `ItemAlumentum.func_184538_a` is NOT the effective flight velocity. Port `AlumentumProjectile.shoot` must override it to `0.75F`; CoreParity now checks both incoming 0.4 and actual 0.75. CI verify after follow-up commit.
+
+### Targeted REAL client projectile verification
+Real-client workflow path filter now includes `AlumentumProjectile`, `AlumentumItem`, entity registration and its model; projectile changes trigger a genuine client smoke test. `client_smoke.sh` builds a glass wall at z=8 after all prior crucible/nitor checks, throws Alumentum with a real mouse right-click, captures screenshots 16/17, queries original wall block (0,151,8) via `/execute if block ... minecraft:air run say ALUMENTUM_GLASS_DESTROYED`, captures screenshot 18. Check that the chat message actually appears; a successful workflow only means client did not crash unless this visual evidence independently confirms explosion. Keep CAPTURE_VIDEO=0 before 90%.

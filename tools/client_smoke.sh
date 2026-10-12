@@ -212,7 +212,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 15-blue-nitor-variant
   # Alumentum is a genuine thrown entity, not a decorative material.
   # This takes place AFTER the earlier 15 fixed Crucible/Nitor screenshots.
-  send_chat '/fill 0 149 6 4 150 6 minecraft:stone'
+  # Target a low-blast-resistance GLASS wall; 1.1-strength original
+  # impact should break it rather than relying on stone destruction RNG.
+  send_chat '/fill -2 149 8 2 156 8 minecraft:glass'
   send_chat '/gamemode creative'
   send_chat '/tp @p 0.5 150 0.5 0 5'
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:alumentum 16'
@@ -222,6 +224,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool click 3
   sleep 3
   capture 17-alumentum-after-right-click
+  # Real integrated-server block query, not rendered guesswork:
+  # conditional text appears in screenshot 18 ONLY if glass was destroyed.
+  send_chat '/execute if block 0 151 8 minecraft:air run say ALUMENTUM_GLASS_DESTROYED'
+  capture 18-alumentum-explosion-block-query
   echo 'CLIENT_SENT_ALUMENTUM_THROW=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else

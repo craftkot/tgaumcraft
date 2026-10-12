@@ -10,6 +10,11 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientEvents.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/CrucibleBlockEntity.java'
       - 'src/main/resources/assets/thaumcraft/models/item/crucible.json'
+      # Real projectile code/registration must also trigger genuine client testing.
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/AlumentumProjectile.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/AlumentumItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftEntities.java'
+      - 'src/main/resources/assets/thaumcraft/models/item/alumentum.json'
 
 permissions:
   contents: read
