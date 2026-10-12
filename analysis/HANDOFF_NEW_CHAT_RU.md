@@ -605,3 +605,6 @@ Audited original `TileInfusionMatrix.validLocation()` and `getSurroundings()` di
 
 ### Pedestal source integrity CI
 Added a dedicated python verifier running in GitHub Actions. It compares all SIX pedestal-related 16x16 PNGs to the user's BETA26 JAR by fixed SHA-256, verifies three 16-state blockstate variants, original 3-element model geometry and linked textures, each original block drop, item models, EN/RU display names and presence of block/entity/renderer implementations. It cannot substitute an actual gameplay interaction; client test remains separate.
+
+### 2026-10-12 original Eldritch stone image integrity fixed
+The new SHA256 verifier correctly caught one mistyped base64 chunk in `textures/block/eldritch_stone_1.png` on the first commit. Re-extracted source-original asset directly from JAR and created the Git blob whose SHA1 exactly matches the byte-for-byte original: `ea0303a48433a56a6e3ddc5752111958c9db2f06` (SHA256 `d974511375ce184958755790fda9bf377638d84f219fc22c0363f5b141f4f57c`). The other 5 images already match original. Previous CI was RED solely at new asset integrity step, before Gradle; re-run all tests on this repair commit and only report green after success.
