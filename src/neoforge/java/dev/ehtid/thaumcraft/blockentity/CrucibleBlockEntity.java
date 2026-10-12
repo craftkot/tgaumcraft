@@ -26,6 +26,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -155,6 +156,23 @@ public final class CrucibleBlockEntity extends BlockEntity {
         // when exceeding 500) into Aura pollution. Defer this until the
         // real aura/flux bridge can account for the pollution. Never
         // silently destroy players' collected essentia.
+    }
+
+    /**
+     * A client BlockEntityRenderer cannot see server-only water/essentia.
+     * Send the same BETA26-compatible saved aspect/water payload both on
+     * chunk load and on update, without custom/untrusted client packets.
+     */
+    @Override
+    public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, registries);
+        return tag;
+    }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override

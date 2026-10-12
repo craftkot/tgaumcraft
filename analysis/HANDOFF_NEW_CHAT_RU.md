@@ -498,3 +498,14 @@ Fresh main aec4c5d294a99bb7f67ba3fb7bf07e6a87c0428d, prior Actions #475 SUCCESS.
 
 ### Original quartz sliver survival crafting route
 Additional BETA26 ConfigRecipes.initializeNormalRecipes javap verified `quartztonuggets` uses ordinary shaped recipe pattern single "#" and input original vanilla `Items.QUARTZ` -> `ItemStack(ItemsTC.nuggets,9,meta9)`, not a fake glowstone substitution or nine quartz inputs. Port via `data/thaumcraft/recipe/quartztonuggets.json` output 9 x `thaumcraft:nugget` with both `minecraft:custom_data.LegacyNuggetMeta=9` and `minecraft:custom_model_data=9` consistent with ThaumcraftNuggetItem.create(9). This closes the ordinary survival acquisition of quartz slivers for the 37 vis-crystal CrucibleRecipes (actual BASEALCHEMY progression still required). Check 1.21 recipe JSON loading in subsequent client session; do not claim personally tested gameplay until confirmed.
+
+
+## 2026-10-12 — authentic BETA26 crucible liquid surface renderer (pending CI/client)
+Fresh main c7d2563774552e2857899cf6b1d3e1bd7d588662; CI #477 for quartz-to-nine nuggets verified SUCCESS before changes. Decompiled original TileCrucible.getFluidHeight() and client TileCrucibleRenderer.renderFluid() (not an invented surface):
+- Original water height = 0.3 + 0.5*(waterMb/1000), plus storedAspectVis/500*(1-height); values exceeding one become 1.001, exact 1 becomes 0.9999.
+- Original render color over vanilla still water texture: s=aspects/500; if s>0, s=.5+s/2; clamp s<=1. Tint components R=1,G=1-s/3,B=1-s,A=1-s/2.
+- New loader-neutral LegacyCrucibleSurface core reproduces these formulas and CoreParity tests check empty/partial/full tanks, overfill, aspect tint, opacity.
+- New CLIENT-ONLY CrucibleFluidRenderer uses BLOCK_ATLAS water_still TextureAtlasSprite and translucent VertexConsumer quad at that computed height inside interior 2/16..14/16, preserving exact geometry. Registers via EntityRenderersEvent.RegisterRenderers and ThaumcraftBlockEntities.CRUCIBLE.
+- CrucibleBlockEntity now has getUpdateTag(HolderLookup.Provider) and ClientboundBlockEntityDataPacket getUpdatePacket() so actual Water and Aspects NBT reach the CLIENT both on chunk-load and on server sendBlockUpdated. Before this, client renderer could not observe server tank and would have drawn empty even after successful /data get.
+- Original held crucible screenshot was oversized. The vanilla Minecraft block/item JSON had no display transforms; updated models/item/crucible.json with constrained firstperson scale .35, third-person .30, GUI .55, ground .35. World block 13-elements remains unchanged.
+- **Need verify:** NeoForge compile, actual in-world visible water with bucket and color, full surface rendering via screenshot in client smoke. User wants videos ONLY when completion reaches 90%, 95%, 100%; client screenshots okay if illustrative. Do not send new MP4 before milestone. This is visual/gameplay fidelity, not new alchemy recipes. Approx 84%, not 90.

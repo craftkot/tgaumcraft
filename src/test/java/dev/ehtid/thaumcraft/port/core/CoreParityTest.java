@@ -85,6 +85,7 @@ public final class CoreParityTest {
         testOriginalCrucibleDissolution();
         testOriginalCrucibleMetallurgyCatalysts();
         testOriginalVisCrystalCrucibleRecipes();
+        testOriginalCrucibleSurfaceRenderer();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4551,6 +4552,26 @@ public final class CoreParityTest {
             eq(0, LegacyVisCrystalCrucibleLogic.afterCraft(one, aspect)
                     .visSize());
         }
+    }
+
+    private static void testOriginalCrucibleSurfaceRenderer() {
+        // Byte-for-byte BETA26 TileCrucible.getFluidHeight arithmetic
+        // and TileCrucibleRenderer's magenta-tint response to aspects.
+        eq(0.0f, LegacyCrucibleSurface.height(0, 0));
+        isTrue(Math.abs(LegacyCrucibleSurface.height(1000, 0) - 0.8f) < 0.00001f);
+        isTrue(Math.abs(LegacyCrucibleSurface.height(500, 0) - 0.55f) < 0.00001f);
+        isTrue(Math.abs(LegacyCrucibleSurface.height(250, 0) - 0.425f) < 0.00001f);
+        eq(0.9999f, LegacyCrucibleSurface.height(1000, 500));
+        eq(1.001f, LegacyCrucibleSurface.height(1000, 1000));
+        eq(0.0f, LegacyCrucibleSurface.saturation(0));
+        eq(0.75f, LegacyCrucibleSurface.saturation(250));
+        eq(1.0f, LegacyCrucibleSurface.saturation(500));
+        eq(1.0f, LegacyCrucibleSurface.saturation(1000));
+        eq(1.0f, LegacyCrucibleSurface.red(250));
+        eq(0.75f, LegacyCrucibleSurface.green(250));
+        eq(0.25f, LegacyCrucibleSurface.blue(250));
+        eq(0.625f, LegacyCrucibleSurface.alpha(250));
+        eq(0.5f, LegacyCrucibleSurface.alpha(500));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

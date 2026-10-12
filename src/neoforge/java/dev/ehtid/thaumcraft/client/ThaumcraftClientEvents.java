@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.item.PhialItem;
@@ -18,6 +20,12 @@ import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class ThaumcraftClientEvents {
     private ThaumcraftClientEvents() {}
+
+    @SubscribeEvent
+    public static void registerCrucibleRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerBlockEntityRenderer(
+                ThaumcraftBlockEntities.CRUCIBLE.get(), CrucibleFluidRenderer::new);
+    }
 
     @SubscribeEvent
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
