@@ -48,6 +48,9 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.PILLAR_ARCANE.get());
                         output.accept(ThaumcraftItems.PILLAR_ANCIENT.get());
                         output.accept(ThaumcraftItems.PILLAR_ELDRITCH.get());
+                        output.accept(ThaumcraftItems.STONE_ARCANE.get());
+                        output.accept(ThaumcraftItems.STONE_ANCIENT.get());
+                        output.accept(ThaumcraftItems.STONE_ELDRITCH_TILE.get());
                         output.accept(ThaumcraftItems.INFUSION_MATRIX.get());
                         // All sixteen original dyed light/heater variants.
                         for (var color : dev.ehtid.thaumcraft.port.core.LegacyNitorColors.variants()) {

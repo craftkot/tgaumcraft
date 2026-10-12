@@ -89,6 +89,12 @@ public final class NeoForgeLegacyItemStackDecoder {
             var dye = net.minecraft.world.item.DyeColor.valueOf(
                     variant.modernDye().toUpperCase(java.util.Locale.ROOT));
             item = ThaumcraftItems.NITOR.get(dye).get();
+        } else if (originalId.equals("thaumcraft:stone_arcane")) {
+            item = ThaumcraftItems.STONE_ARCANE.get();
+        } else if (originalId.equals("thaumcraft:stone_ancient")) {
+            item = ThaumcraftItems.STONE_ANCIENT.get();
+        } else if (originalId.equals("thaumcraft:stone_eldritch_tile")) {
+            item = ThaumcraftItems.STONE_ELDRITCH_TILE.get();
         } else if (originalId.equals("thaumcraft:alumentum")) {
             item = ThaumcraftItems.ALUMENTUM.get();
         } else if (originalId.equals("thaumcraft:tallow")) {

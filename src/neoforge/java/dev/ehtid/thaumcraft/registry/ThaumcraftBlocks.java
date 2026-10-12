@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
+import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
@@ -76,6 +77,18 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<InfusionMatrixBlock> INFUSION_MATRIX = BLOCKS.registerBlock(
             "infusion_matrix", InfusionMatrixBlock::new,
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
+    // Pillars source drops two of these, rather than the pillar itself.
+    public static final DeferredBlock<Block> STONE_ARCANE = BLOCKS.registerSimpleBlock(
+            "stone_arcane", BlockBehaviour.Properties.of()
+                    .strength(2.0F, 10.0F).sound(SoundType.STONE));
+    public static final DeferredBlock<Block> STONE_ANCIENT = BLOCKS.registerSimpleBlock(
+            "stone_ancient", BlockBehaviour.Properties.of()
+                    .strength(2.0F, 10.0F).sound(SoundType.STONE));
+    public static final DeferredBlock<Block> STONE_ELDRITCH_TILE = BLOCKS.registerSimpleBlock(
+            "stone_eldritch_tile", BlockBehaviour.Properties.of()
+                    .strength(2.0F, 10.0F).sound(SoundType.STONE));
 
     /** Original BETA26 pillars (all satisfy TileInfusionMatrix.validLocation). */
     public static final DeferredBlock<InfusionPillarBlock> PILLAR_ARCANE = BLOCKS.registerBlock(

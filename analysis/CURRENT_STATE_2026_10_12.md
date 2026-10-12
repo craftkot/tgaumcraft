@@ -18,3 +18,6 @@ GitHub: https://github.com/craftkot/tgaumcraft
 3. Обработку `IInteractWithCaster` и оригинальный `TileInfusionMatrix.craftingStart/craftCycle/craftingFinish`: research, unordered components matching, essentia and instability, atomic debit/finish, sync/client tests.
 4. Потом оставшиеся фокусы/големы, другие крупные системы. 
 Не завышать %. Отчёт после каждого существенного push + CI, держать handoff свежим. Видео строго 90/95/100.
+
+## Follow-up: stone materials / correct pillar loot
+See full handoff for SHA/results. Original BETA26 `BlockPillar.func_180663_b` emits two corresponding stoneArcane/stoneAncient/stoneEldritchTile drops. Three authentic base stone block IDs, block items, 2× loot and original material art are being ported; do not substitute a pillar item. Check latest main CI. Real client #38261500900 SUCCESS: visible active1 before break and active0 after break. Matrix still no player-accessible crafting.

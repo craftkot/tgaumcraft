@@ -267,6 +267,20 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block 3 151 10 active'
   capture 23-matrix-invalid-auto-deactivation
   echo 'CLIENT_SENT_INFUSION_STRUCTURE_TEST=YES' | tee -a client-smoke-status.txt
+  # Source BETA26 BlockPillar.breakBlock yields exactly 2 corresponding
+  # BlockStoneTC materials, not the pillar itself. Vanilla /loot uses the
+  # installed data pack loot tables, and /clear amount=0 only counts.
+  send_chat '/setblock 1 149 6 thaumcraft:pillar_arcane'
+  send_chat '/setblock 2 149 6 thaumcraft:pillar_ancient'
+  send_chat '/setblock 3 149 6 thaumcraft:pillar_eldritch'
+  send_chat '/loot give @p mine 1 149 6 minecraft:diamond_pickaxe'
+  send_chat '/loot give @p mine 2 149 6 minecraft:diamond_pickaxe'
+  send_chat '/loot give @p mine 3 149 6 minecraft:diamond_pickaxe'
+  send_chat '/clear @p thaumcraft:stone_arcane 0'
+  send_chat '/clear @p thaumcraft:stone_ancient 0'
+  send_chat '/clear @p thaumcraft:stone_eldritch_tile 0'
+  capture 24-original-stone-pillar-loot
+  echo 'CLIENT_SENT_ORIGINAL_PILLAR_LOOT_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
