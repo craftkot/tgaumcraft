@@ -90,6 +90,7 @@ public final class CoreParityTest {
         testOriginalNitorCrucibleRecipe();
         testOriginalNitorDyeVariants();
         testOriginalAlumentumRecipeAndProjectileConstants();
+        testOriginalInfusionRecipeMatcher();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4724,6 +4725,46 @@ public final class CoreParityTest {
         eq(0.75F, LegacyAlumentumCrucibleRecipe.ACTUAL_PROJECTILE_SPEED);
         eq(2.0F, LegacyAlumentumCrucibleRecipe.THROW_INACCURACY);
         eq(-5.0F, LegacyAlumentumCrucibleRecipe.THROW_PITCH_OFFSET);
+    }
+
+    private static void testOriginalInfusionRecipeMatcher() {
+        // BETA26 InfusionRecipe.matches delegates unordered pedestal matching
+        // to Forge RecipeMatcher.findMatches. Each pedestal may be used ONCE.
+        java.util.function.Predicate<String> a = "a"::equals;
+        java.util.function.Predicate<String> b = "b"::equals;
+        java.util.function.Predicate<String> aOrB =
+                item -> "a".equals(item) || "b".equals(item);
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        var required = List.of(aOrB, a);
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("a", "b"), required));
+        knowledge.addResearch("INFUSION");
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "b", List.of("a", "b"), required)); // central ingredient mismatch
+        int[] assigned = LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("a", "b"), required);
+        isTrue(assigned != null);
+        eq(2, assigned.length);
+        isTrue(assigned[0] != assigned[1]);
+        eq("a", List.of("a", "b").get(assigned[1]));
+        // Overlapping alternatives require augmenting-path reallocation,
+        // not greedy take-first. Reversing pedestal order still matches.
+        isTrue(LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("b", "a"), required) != null);
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("a", "a"), List.of(a, b)));
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("a"), required)); // exact pedestal count
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,
+                "a", List.of("a", "b", "b"), required));
+        eq(null, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", null,
+                "a", List.of("a", "b"), required)); // absent source input
+        // BETA26 Ingredient.EMPTY accepts every central stack.
+        isTrue(LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION",
+                item -> true, "anything", List.of("b", "a"), required) != null);
+        eq(0, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION",
+                item -> true, "center", List.<String>of(),
+                List.<java.util.function.Predicate<String>>of()).length);
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
