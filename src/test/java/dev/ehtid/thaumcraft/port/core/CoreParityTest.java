@@ -93,6 +93,7 @@ public final class CoreParityTest {
         testOriginalInfusionRecipeMatcher();
         testOriginalInfusionPedestalRules();
         testOriginalInfusionMatrixLayout();
+        testOriginalInfusionPillars();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4832,6 +4833,22 @@ public final class CoreParityTest {
                 new LegacyInfusionMatrixLayout.Offset(0, -8, 1)));
         isFalse(LegacyInfusionMatrixLayout.withinScanVolume(
                 new LegacyInfusionMatrixLayout.Offset(0, 4, 1)));
+    }
+
+    private static void testOriginalInfusionPillars() {
+        eq(25, LegacyInfusionPillarLogic.ORIGINAL_HARDNESS_TENTHS);
+        eq(2, LegacyInfusionPillarLogic.ORIGINAL_STONE_DROP_COUNT);
+        eq(0.5, LegacyInfusionPillarLogic.SELECTION_HEIGHT);
+        eq(2.0, LegacyInfusionPillarLogic.COLLISION_HEIGHT);
+        for (int i = 0; i < 4; i++)
+            eq(i, LegacyInfusionPillarLogic.oppositeHorizontal(
+                    LegacyInfusionPillarLogic.oppositeHorizontal(i)));
+        eq("thaumcraft:stone_arcane", LegacyInfusionPillarLogic.originalDrop(
+                LegacyInfusionPillarLogic.Variant.ARCANE));
+        eq("thaumcraft:stone_ancient", LegacyInfusionPillarLogic.originalDrop(
+                LegacyInfusionPillarLogic.Variant.ANCIENT));
+        eq("thaumcraft:stone_eldritch_tile", LegacyInfusionPillarLogic.originalDrop(
+                LegacyInfusionPillarLogic.Variant.ELDRITCH));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

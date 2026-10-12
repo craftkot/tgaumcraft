@@ -229,5 +229,11 @@
   "block.thaumcraft.pedestal_ancient": "Ancient Pedestal",
   "item.thaumcraft.pedestal_ancient": "Ancient Pedestal",
   "block.thaumcraft.pedestal_eldritch": "Eldritch Pedestal",
-  "item.thaumcraft.pedestal_eldritch": "Eldritch Pedestal"
+  "item.thaumcraft.pedestal_eldritch": "Eldritch Pedestal",
+  "block.thaumcraft.pillar_arcane": "Arcane Pillar",
+  "item.thaumcraft.pillar_arcane": "Arcane Pillar",
+  "block.thaumcraft.pillar_ancient": "Ancient Pillar",
+  "item.thaumcraft.pillar_ancient": "Ancient Pillar",
+  "block.thaumcraft.pillar_eldritch": "Eldritch Pillar",
+  "item.thaumcraft.pillar_eldritch": "Eldritch Pillar"
 }

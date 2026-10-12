@@ -229,5 +229,11 @@
   "block.thaumcraft.pedestal_ancient": "Древний пьедестал",
   "item.thaumcraft.pedestal_ancient": "Древний пьедестал",
   "block.thaumcraft.pedestal_eldritch": "Потусторонний пьедестал",
-  "item.thaumcraft.pedestal_eldritch": "Потусторонний пьедестал"
+  "item.thaumcraft.pedestal_eldritch": "Потусторонний пьедестал",
+  "block.thaumcraft.pillar_arcane": "Мистическая колонна",
+  "item.thaumcraft.pillar_arcane": "Мистическая колонна",
+  "block.thaumcraft.pillar_ancient": "Древняя колонна",
+  "item.thaumcraft.pillar_ancient": "Древняя колонна",
+  "block.thaumcraft.pillar_eldritch": "Потусторонняя колонна",
+  "item.thaumcraft.pillar_eldritch": "Потусторонняя колонна"
 }

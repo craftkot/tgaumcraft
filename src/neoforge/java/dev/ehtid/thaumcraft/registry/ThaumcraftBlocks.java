@@ -7,6 +7,8 @@ import dev.ehtid.thaumcraft.block.TableWoodBlock;
 import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
+import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
 import net.minecraft.world.item.DyeColor;
@@ -67,6 +69,20 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<PedestalBlock> PEDESTAL_ELDRITCH = BLOCKS.registerBlock(
             "pedestal_eldritch",
             props -> new PedestalBlock(props, LegacyInfusionPedestalLogic.Variant.ELDRITCH),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    /** Original BETA26 pillars (all satisfy TileInfusionMatrix.validLocation). */
+    public static final DeferredBlock<InfusionPillarBlock> PILLAR_ARCANE = BLOCKS.registerBlock(
+            "pillar_arcane",
+            props -> new InfusionPillarBlock(props, LegacyInfusionPillarLogic.Variant.ARCANE),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+    public static final DeferredBlock<InfusionPillarBlock> PILLAR_ANCIENT = BLOCKS.registerBlock(
+            "pillar_ancient",
+            props -> new InfusionPillarBlock(props, LegacyInfusionPillarLogic.Variant.ANCIENT),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+    public static final DeferredBlock<InfusionPillarBlock> PILLAR_ELDRITCH = BLOCKS.registerBlock(
+            "pillar_eldritch",
+            props -> new InfusionPillarBlock(props, LegacyInfusionPillarLogic.Variant.ELDRITCH),
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
 
     // BETA26 registers one separate BlockNitor for every EnumDyeColor.

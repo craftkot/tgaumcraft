@@ -14,6 +14,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/AlumentumProjectile.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/AlumentumItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftEntities.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/InfusionPillarBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/PedestalBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/PedestalBlockEntity.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/PedestalItemRenderer.java'

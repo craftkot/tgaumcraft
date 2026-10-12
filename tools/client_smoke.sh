@@ -239,6 +239,17 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 3
   capture 19-three-original-infusion-pedestals
   echo 'CLIENT_SENT_PEDESTAL_WORLD_TEST=YES' | tee -a client-smoke-status.txt
+  # Three real BETA26 BlockPillar registry entries and orientations.
+  send_chat '/setblock 1 149 5 thaumcraft:pillar_arcane[facing=north]'
+  send_chat '/setblock 2 149 5 thaumcraft:pillar_ancient[facing=east]'
+  send_chat '/setblock 3 149 5 thaumcraft:pillar_eldritch[facing=south]'
+  send_chat '/gamemode spectator'
+  send_chat '/tp @p 1.5 154 1.5 0 41'
+  sleep 3
+  capture 20-original-pillar-geometry-in-world
+  send_chat '/data get block 1 149 5'
+  capture 21-pillar-world-query
+  echo 'CLIENT_SENT_PILLAR_WORLD_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

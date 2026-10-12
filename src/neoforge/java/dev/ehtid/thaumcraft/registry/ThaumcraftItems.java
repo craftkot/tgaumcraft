@@ -103,6 +103,13 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> PEDESTAL_ELDRITCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.PEDESTAL_ELDRITCH, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> PILLAR_ARCANE = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PILLAR_ARCANE, new Item.Properties());
+    public static final DeferredItem<BlockItem> PILLAR_ANCIENT = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PILLAR_ANCIENT, new Item.Properties());
+    public static final DeferredItem<BlockItem> PILLAR_ELDRITCH = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PILLAR_ELDRITCH, new Item.Properties());
+
     /** Every BETA26 Nitor block has its OWN matching BlockItem. */
     public static final Map<DyeColor, DeferredItem<BlockItem>> NITOR =
             registerAllNitorItems();
