@@ -6,6 +6,10 @@ on:
     paths:
       - '.github/workflows/client-smoke.yml'
       - 'tools/client_smoke.sh'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/CrucibleFluidRenderer.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientEvents.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/CrucibleBlockEntity.java'
+      - 'src/main/resources/assets/thaumcraft/models/item/crucible.json'
 
 permissions:
   contents: read
@@ -38,6 +42,9 @@ jobs:
 
       - name: Run real Minecraft client and capture its screen
         shell: bash
+        env:
+          # Videos are reserved for 90%, 95% and 100% user-approved milestones.
+          CAPTURE_VIDEO: '0'
         run: bash tools/client_smoke.sh
 
       - name: Upload ACTUAL client screenshots and diagnostic logs
