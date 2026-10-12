@@ -21,3 +21,6 @@ GitHub: https://github.com/craftkot/tgaumcraft
 
 ## Follow-up: stone materials / correct pillar loot
 See full handoff for SHA/results. Original BETA26 `BlockPillar.func_180663_b` emits two corresponding stoneArcane/stoneAncient/stoneEldritchTile drops. Three authentic base stone block IDs, block items, 2× loot and original material art are being ported; do not substitute a pillar item. Check latest main CI. Real client #38261500900 SUCCESS: visible active1 before break and active0 after break. Matrix still no player-accessible crafting.
+
+## Original OBJ pillar visual upgrade
+Source original BETA26 pillar.obj hash db048355f80d16b1c7cccbe53a17f139ab8e56aa903d04443d9e75d41354e007 restored. Three 64x64 pillar PNG and NeoForge builtin OBJ models for arcane/ancient/eldritch. Updated source verification and targeted real client smoke. CHECK client screenshots after latest main; no assumed working visuals on CI compilation. No 90% yet.

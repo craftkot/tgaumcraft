@@ -5,6 +5,7 @@ This is a resource/regression guard; actual client/server behavior is tested
 separately in client_smoke.sh and CoreParity.
 """
 import json
+import hashlib
 from pathlib import Path
 root=Path("src/main/resources/assets/thaumcraft")
 for variant in ("arcane", "ancient", "eldritch"):
@@ -13,10 +14,14 @@ for variant in ("arcane", "ancient", "eldritch"):
     assert set(state["variants"]) == {f"facing={f}" for f in ("north","south","east","west")}
     assert all(v["model"]==f"thaumcraft:block/{block}" for v in state["variants"].values())
     model=json.loads((root/"models/block"/f"{block}.json").read_text())
-    assert len(model["elements"])==4
-    assert model["elements"][0]["to"][1] == 8
-    assert model["elements"][-1]["to"][1] == 32
-    assert (root/"textures/block"/(model["textures"]["all"].split("/")[-1]+".png")).exists()
+    # All three share ORIGINAL BETA26 Wavefront OBJ, not blocky cuboids.
+    assert model["loader"]=="neoforge:obj",block
+    assert model["model"]=="thaumcraft:models/block/pillar.obj",block
+    assert model["mtl_override"]=="thaumcraft:models/block/pillar.mtl"
+    assert model["automatic_culling"] is False
+    original_name = "pillar_normal" if variant=="arcane" else block
+    assert model["textures"]["texture"]=="thaumcraft:block/"+original_name
+    assert model["textures"]["particle"]=="thaumcraft:block/"+original_name
     item=json.loads((root/"models/item"/f"{block}.json").read_text())
     assert item["parent"]==f"thaumcraft:block/{block}"
     # BETA26 BlockPillar.breakBlock emits exactly 2 of the corresponding
@@ -44,10 +49,23 @@ for path in (
 ):
     assert Path(path).is_file(),path
 
+# Original OBJ (byte-identical) and adapted .mtl texture reference.
+orig_obj=(root/"models/block/pillar.obj").read_bytes()
+assert hashlib.sha256(orig_obj).hexdigest()=="db048355f80d16b1c7cccbe53a17f139ab8e56aa903d04443d9e75d41354e007"
+lines=orig_obj.decode().splitlines()
+assert sum(line.startswith("v ") for line in lines)==24
+assert sum(line.startswith("vt ") for line in lines)==24
+assert sum(line.startswith("f ") for line in lines)==44
+mtl=(root/"models/block/pillar.mtl").read_text()
+assert "newmtl texture" in mtl and "map_Kd #texture" in mtl
+
 # Original BETA26 source PNG SHA256, extracted directly from original_BETA26.jar.
 # Refuse files rewritten through image editors or substituted placeholder art.
 import hashlib
 source_hashes = {
+    "pillar_normal": "b547f3b64dd7a583914a1954ef2f5dfa546a067b0763ffe6d52ff76634bb6d94",
+    "pillar_ancient": "d0e5906d5fe861200acf10a3d0ed08b580380ef9213c3f684eefff875f38a502",
+    "pillar_eldritch": "3340d6136dcebee9ba0ba006fd7ca0cb85aa0e4bc06a6dd75e37b10a215e3505",
     "arcane_stone_1": "1ffe08de5439f897f8a88276bd9d9514d8225cbe61bc7b6843f8b508d1dfe702",
     "arcane_stone_2": "d80004c95957dc4a13e5e5cc7d400b5068d9d7bf721ba8b529154f691cf0f912",
     "arcane_stone_3": "f71286f9045ebac11a6d33dbbc34fbc8bfd8957378d87d692892e216cd69760a",
@@ -89,4 +107,4 @@ for lang in ("en_us","ru_ru"):
         for name in expected:
             assert d.get(f"{kind}.thaumcraft.{name}"),(lang,kind,name)
 
-print("Original infusion pillar drops, stone models, all 12 PNG SHA256: OK; ritual pending")
+print("Original OBJ geometry, all 3 pillar and 12 stone PNGs, 2-stone loot: OK; ritual pending")
