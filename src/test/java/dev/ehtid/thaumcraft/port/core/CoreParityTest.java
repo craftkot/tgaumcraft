@@ -92,6 +92,7 @@ public final class CoreParityTest {
         testOriginalAlumentumRecipeAndProjectileConstants();
         testOriginalInfusionRecipeMatcher();
         testOriginalInfusionPedestalRules();
+        testOriginalInfusionMatrixLayout();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4789,6 +4790,48 @@ public final class CoreParityTest {
         isFalse(LegacyInfusionPedestalLogic.canInsert(true, 0));
         isTrue(LegacyInfusionPedestalLogic.canInsert(true, 64));
         isTrue(LegacyInfusionPedestalLogic.canInsert(true, 1));
+    }
+
+    private static void testOriginalInfusionMatrixLayout() {
+        var center = LegacyInfusionMatrixLayout.CENTER;
+        eq(new LegacyInfusionMatrixLayout.Offset(0, -2, 0), center);
+        eq(4, LegacyInfusionMatrixLayout.requiredPillarOffsets().size());
+        java.util.Map<LegacyInfusionMatrixLayout.Offset, LegacyInfusionMatrixLayout.Part> world =
+                new java.util.HashMap<>();
+        world.put(center, LegacyInfusionMatrixLayout.Part.PEDESTAL);
+        for (var corner : LegacyInfusionMatrixLayout.requiredPillarOffsets())
+            world.put(corner, LegacyInfusionMatrixLayout.Part.PILLAR);
+        java.util.function.Function<LegacyInfusionMatrixLayout.Offset,
+                LegacyInfusionMatrixLayout.Part> lookup =
+                at -> world.getOrDefault(at, LegacyInfusionMatrixLayout.Part.OTHER);
+        isTrue(LegacyInfusionMatrixLayout.validLocation(lookup));
+        world.remove(LegacyInfusionMatrixLayout.requiredPillarOffsets().get(2));
+        isFalse(LegacyInfusionMatrixLayout.validLocation(lookup));
+        world.put(LegacyInfusionMatrixLayout.requiredPillarOffsets().get(2),
+                LegacyInfusionMatrixLayout.Part.PILLAR);
+        world.remove(center);
+        isFalse(LegacyInfusionMatrixLayout.validLocation(lookup));
+        world.put(center, LegacyInfusionMatrixLayout.Part.PEDESTAL);
+        // Central column is deliberately excluded, even though central
+        // pedestal is mandatory 2 blocks below the runic matrix.
+        eq(0, LegacyInfusionMatrixLayout.scanPedestals(lookup).size());
+        var first = new LegacyInfusionMatrixLayout.Offset(-8, 3, -8);
+        var last = new LegacyInfusionMatrixLayout.Offset(8, -7, 8);
+        var nearby = new LegacyInfusionMatrixLayout.Offset(1, -2, 2);
+        world.put(first, LegacyInfusionMatrixLayout.Part.PEDESTAL);
+        world.put(nearby, LegacyInfusionMatrixLayout.Part.PEDESTAL);
+        world.put(last, LegacyInfusionMatrixLayout.Part.PEDESTAL);
+        eq(List.of(first, nearby, last),
+                LegacyInfusionMatrixLayout.scanPedestals(lookup));
+        isTrue(LegacyInfusionMatrixLayout.withinScanVolume(first));
+        isTrue(LegacyInfusionMatrixLayout.withinScanVolume(last));
+        isFalse(LegacyInfusionMatrixLayout.withinScanVolume(center));
+        isFalse(LegacyInfusionMatrixLayout.withinScanVolume(
+                new LegacyInfusionMatrixLayout.Offset(9, 0, 0)));
+        isFalse(LegacyInfusionMatrixLayout.withinScanVolume(
+                new LegacyInfusionMatrixLayout.Offset(0, -8, 1)));
+        isFalse(LegacyInfusionMatrixLayout.withinScanVolume(
+                new LegacyInfusionMatrixLayout.Offset(0, 4, 1)));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
