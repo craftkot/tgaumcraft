@@ -39,7 +39,7 @@ public final class LegacyInfusionStability {
 
     /** All four matching Ancient OR Eldritch pillars modify infusion. */
     public static Modifiers cornerModifiers(List<Pillar> corners) {
-        if (corners == null || corners.size() != 4 || corners.contains(null)
+        if (corners == null || corners.size() != 4 || corners.stream().anyMatch(java.util.Objects::isNull)
                 || corners.contains(Pillar.MISSING))
             throw new IllegalArgumentException("Matrix requires four pillars");
         int cycle = 10;
@@ -65,7 +65,7 @@ public final class LegacyInfusionStability {
      */
     public enum Glyph { NONE, SPEED, COST }
     public static Modifiers withGlyphs(Modifiers m, List<Glyph> glyphs) {
-        if (m == null || glyphs == null || glyphs.size() != 4 || glyphs.contains(null))
+        if (m == null || glyphs == null || glyphs.size() != 4 || glyphs.stream().anyMatch(java.util.Objects::isNull))
             throw new IllegalArgumentException("Expected four glyph blocks");
         int cycle = m.cycleTime();
         float cost = m.essentiaCostMult();
