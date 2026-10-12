@@ -210,6 +210,19 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/setblock 0 148 3 thaumcraft:nitor_blue'
   sleep 5
   capture 15-blue-nitor-variant
+  # Alumentum is a genuine thrown entity, not a decorative material.
+  # This takes place AFTER the earlier 15 fixed Crucible/Nitor screenshots.
+  send_chat '/fill 0 149 6 4 150 6 minecraft:stone'
+  send_chat '/gamemode creative'
+  send_chat '/tp @p 0.5 150 0.5 0 5'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:alumentum 16'
+  xdotool key --clearmodifiers 1
+  sleep 2
+  capture 16-alumentum-original-item
+  xdotool click 3
+  sleep 3
+  capture 17-alumentum-after-right-click
+  echo 'CLIENT_SENT_ALUMENTUM_THROW=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

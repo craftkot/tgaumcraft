@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.player.ThaumcraftPlayerEvents;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftCreativeTabs;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
@@ -26,6 +27,7 @@ public final class ThaumcraftPort {
         ThaumcraftBlockEntities.register(modBus);
         ThaumcraftMenus.register(modBus);
         ThaumcraftItems.register(modBus);
+        ThaumcraftEntities.register(modBus);
         ThaumcraftCreativeTabs.register(modBus);
         ThaumcraftParticles.register(modBus);
         ThaumcraftRecipes.register(modBus);

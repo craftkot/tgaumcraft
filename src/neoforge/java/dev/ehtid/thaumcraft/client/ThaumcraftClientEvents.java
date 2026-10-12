@@ -6,6 +6,8 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftEntities;
+import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
@@ -28,6 +30,11 @@ public final class ThaumcraftClientEvents {
     public static void registerCrucibleRenderer(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(
                 ThaumcraftBlockEntities.CRUCIBLE.get(), CrucibleFluidRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void registerAlumentumRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(ThaumcraftEntities.ALUMENTUM.get(), ThrownItemRenderer::new);
     }
 
     @SubscribeEvent

@@ -89,6 +89,8 @@ public final class NeoForgeLegacyItemStackDecoder {
             var dye = net.minecraft.world.item.DyeColor.valueOf(
                     variant.modernDye().toUpperCase(java.util.Locale.ROOT));
             item = ThaumcraftItems.NITOR.get(dye).get();
+        } else if (originalId.equals("thaumcraft:alumentum")) {
+            item = ThaumcraftItems.ALUMENTUM.get();
         } else if (originalId.equals("thaumcraft:tallow")) {
             item = ThaumcraftItems.TALLOW.get();
         } else if (originalId.equals("thaumcraft:fabric")) {

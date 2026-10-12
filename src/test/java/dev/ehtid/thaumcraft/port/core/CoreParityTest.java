@@ -89,6 +89,7 @@ public final class CoreParityTest {
         testOriginalCrucibleSurfaceRenderer();
         testOriginalNitorCrucibleRecipe();
         testOriginalNitorDyeVariants();
+        testOriginalAlumentumRecipeAndProjectileConstants();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4686,6 +4687,42 @@ public final class CoreParityTest {
         eq("thaumcraft:nitor_lightblue", LegacyNitorColors.get("lightblue").blockId());
         eq("minecraft:light_blue_dye", LegacyNitorColors.get("lightblue").dyeId());
         eq("thaumcraft:nitordye_blue", LegacyNitorColors.get("blue").recipeId());
+    }
+
+    private static void testOriginalAlumentumRecipeAndProjectileConstants() {
+        AspectRegistry a = new AspectRegistry();
+        eq("thaumcraft:alumentum", LegacyAlumentumCrucibleRecipe.ID);
+        eq("ALUMENTUM", LegacyAlumentumCrucibleRecipe.RESEARCH);
+        eq(25, LegacyAlumentumCrucibleRecipe.SCORE);
+        eq(50, LegacyCrucibleCatalystLogic.WATER_PER_CRAFT_MB);
+        eq(10, LegacyAlumentumCrucibleRecipe.required(a).getAmount(a.ENERGY));
+        eq(10, LegacyAlumentumCrucibleRecipe.required(a).getAmount(a.FIRE));
+        eq(5, LegacyAlumentumCrucibleRecipe.required(a).getAmount(a.ENTROPY));
+        eq(25, LegacyAlumentumCrucibleRecipe.required(a).visSize());
+        eq(true, LegacyAlumentumCrucibleRecipe.isOriginalCoalVariant("minecraft:coal"));
+        eq(true, LegacyAlumentumCrucibleRecipe.isOriginalCoalVariant("minecraft:charcoal"));
+        eq(false, LegacyAlumentumCrucibleRecipe.isOriginalCoalVariant("minecraft:coal_block"));
+        eq(false, LegacyAlumentumCrucibleRecipe.isOriginalCoalVariant("minecraft:blaze_rod"));
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        AspectListData present = LegacyAlumentumCrucibleRecipe.required(a).add(a.LIGHT, 7);
+        isFalse(LegacyAlumentumCrucibleRecipe.canCraft(knowledge, present, a));
+        knowledge.addResearch("ALUMENTUM");
+        isTrue(LegacyAlumentumCrucibleRecipe.canCraft(knowledge, present, a));
+        AspectListData reduced = LegacyAlumentumCrucibleRecipe.afterCraft(present, a);
+        eq(7, reduced.visSize());
+        eq(7, reduced.getAmount(a.LIGHT));
+        eq(0, reduced.getAmount(a.ENERGY));
+        eq(0, reduced.getAmount(a.FIRE));
+        eq(0, reduced.getAmount(a.ENTROPY));
+        eq(10, present.getAmount(a.ENERGY)); // input must stay intact
+        isFalse(LegacyAlumentumCrucibleRecipe.canCraft(knowledge, reduced, a));
+        isFalse(LegacyAlumentumCrucibleRecipe.canCraft(knowledge,
+                new AspectListData().add(a.ENERGY, 10).add(a.FIRE, 10)
+                        .add(a.ENTROPY, 4), a));
+        eq(1.1F, LegacyAlumentumCrucibleRecipe.EXPLOSION_POWER);
+        eq(0.4F, LegacyAlumentumCrucibleRecipe.THROW_SPEED);
+        eq(2.0F, LegacyAlumentumCrucibleRecipe.THROW_INACCURACY);
+        eq(-5.0F, LegacyAlumentumCrucibleRecipe.THROW_PITCH_OFFSET);
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

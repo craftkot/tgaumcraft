@@ -221,5 +221,7 @@
   "block.thaumcraft.nitor_red": "Red Nitor",
   "item.thaumcraft.nitor_red": "Red Nitor",
   "block.thaumcraft.nitor_black": "Black Nitor",
-  "item.thaumcraft.nitor_black": "Black Nitor"
+  "item.thaumcraft.nitor_black": "Black Nitor",
+  "item.thaumcraft.alumentum": "Alumentum",
+  "entity.thaumcraft.alumentum": "Alumentum"
 }

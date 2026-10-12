@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleCatalystLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyHedgeAlchemyLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorCrucibleRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyAlumentumCrucibleRecipe;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
@@ -122,6 +123,9 @@ public final class CrucibleBlockEntity extends BlockEntity {
             var hedge = rottenFlesh && waterMb > 0
                     ? LegacyHedgeAlchemyLogic.matchingRecipe(knowledge, aspects, HEDGE_RECIPES)
                     : null;
+            boolean alumentum = (stack.is(Items.COAL) || stack.is(Items.CHARCOAL))
+                    && waterMb > 0
+                    && LegacyAlumentumCrucibleRecipe.canCraft(knowledge, aspects, ASPECTS);
             boolean nitor = glowstoneDust && waterMb > 0
                     && LegacyNitorCrucibleRecipe.canCraft(knowledge, aspects, ASPECTS);
             ItemStack product = ItemStack.EMPTY;
@@ -150,6 +154,11 @@ public final class CrucibleBlockEntity extends BlockEntity {
                 aspects = LegacyNitorCrucibleRecipe.afterCraft(aspects, ASPECTS);
                 waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
                 product = new ItemStack(ThaumcraftItems.NITOR_YELLOW.get());
+            } else if (alumentum) {
+                // Original Items.COAL wildcard includes coal AND charcoal.
+                aspects = LegacyAlumentumCrucibleRecipe.afterCraft(aspects, ASPECTS);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                product = new ItemStack(ThaumcraftItems.ALUMENTUM.get());
             } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
                 aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
             } else break;

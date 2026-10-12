@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.registry;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.item.AlumentumItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
@@ -63,6 +64,10 @@ public final class ThaumcraftItems {
             "quicksilver", new Item.Properties());
     public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
             "fabric", new Item.Properties());
+
+    // Original throwable explosive, not an inert ingredient.
+    public static final DeferredItem<AlumentumItem> ALUMENTUM = ITEMS.registerItem(
+            "alumentum", AlumentumItem::new, new Item.Properties().stacksTo(64));
 
     // Original BETA26 ItemsTC.tallow, product of HEDGEALCHEMY@1 crucible.
     public static final DeferredItem<Item> TALLOW = ITEMS.registerSimpleItem(

@@ -62,6 +62,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.QUICKSILVER.get());
                         output.accept(ThaumcraftItems.FABRIC.get());
                         output.accept(ThaumcraftItems.TALLOW.get());
+                        output.accept(ThaumcraftItems.ALUMENTUM.get());
                         // Original eleven nugget variants, incl. quartz sliver
                         // used by all thirty-seven vis crystal recipes.
                         for (int metadata = 0; metadata < 11; metadata++)
