@@ -339,6 +339,10 @@ jobs:
         shell: bash
         run: python3 tools/verify_pedestal_assets.py
 
+      - name: Verify infusion pillar/matrix registration and states
+        shell: bash
+        run: python3 tools/verify_infusion_structure.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

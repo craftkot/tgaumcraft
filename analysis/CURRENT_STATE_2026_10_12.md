@@ -1,0 +1,20 @@
+# Thaumcraft 6.1.BETA26 → NeoForge 1.21.1: текущий краткий handoff (2026-10-12)
+
+GitHub: https://github.com/craftkot/tgaumcraft
+Последний исходный HEAD при записи: `f3ef8e01c420f1936fc7c3d42ef0aeaf872f5825`. ВСЕГДА заново читать main, этот SHA не неизменный указатель.
+Основная CI: https://github.com/craftkot/tgaumcraft/actions/runs/38261500915
+Настоящий клиент: https://github.com/craftkot/tgaumcraft/actions/runs/38261500900
+Оба результата по этому SHA требуют проверки, не утверждать успех заранее. Предыдущий `65b6a91` (пилоны) — CoreParity, Gradle, сервер и реальный клиент SUCCESS (#38260380755, #38260380407).
+Общий прогресс: ~86% ОЦЕНКА, а не доля проверенного в игровом клиенте.
+
+## Текущие механики
+- Ранее: теории 33 карт, аспекты, оригинальные исследования/частичная алхимия, тигель, рецепты и нагрев, 16 цветов нитора, Alumentum как entity со взрывом.
+- В этом этапе: BETA26 3 оригинальных ID пьедесталов, 3 разных InfusionPillarBlock с оригинальными ориентацией, hitbox=0.5 и collision=2.0, 3D временная модель; оригинальный TileInfusionMatrix.validLocation на реальных block classes; блок и Tile `infusion_matrix` с сохранением `active`, `crafting`, `stability`, `recipeinst` и 100-tick отключением при потере опоры.
+- Ничего из этого НЕ полноценный инфузионный ритуал; три новые колоны ещё используют временные текстуры существующих пьедесталов. Исходные 64×64 изображения pillar_*.png и OBJ+MTL есть в original JAR, их надо безопасно перенести (не выдавать визуальную аппроксимацию за точный оригинал). Настоящие stoneArcane/stoneAncient/stoneEldritchTile пока отсутствуют, две единицы при разрушении колонны не выдаются — это TODO, не подменять случайным блоком.
+
+## Следующие задачи по приоритету
+1. Проверить client-run #38261500900: matrix screenshots 22–23 должны подтвердить `active:1` при 4 колоннах+центральном пьедестале и `active:0` после их нарушения. Не путать успешный запуск workflow с подтверждённым результатом.
+2. Перенести оригинальные stone blocks и дроп 2 stone, оригинальные pillar mesh/textures, matrix модель/FX (не имитировать без пометки).
+3. Обработку `IInteractWithCaster` и оригинальный `TileInfusionMatrix.craftingStart/craftCycle/craftingFinish`: research, unordered components matching, essentia and instability, atomic debit/finish, sync/client tests.
+4. Потом оставшиеся фокусы/големы, другие крупные системы. 
+Не завышать %. Отчёт после каждого существенного push + CI, держать handoff свежим. Видео строго 90/95/100.
