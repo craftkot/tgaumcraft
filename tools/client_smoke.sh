@@ -192,6 +192,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block 0 149 3'
   sleep 2
   capture 12-overhead-fluid-and-nbt
+
+  # Verify the original magic heat source in actual Minecraft, not a
+  # theoretical unit test: replace the STONE below this exact Crucible
+  # with yellow Nitor, wait >=200 client/server ticks and inspect Heat.
+  send_chat '/setblock 0 148 3 thaumcraft:nitor_yellow'
+  sleep 13
+  capture 13-nitor-heating-crucible
+  send_chat '/data get block 0 149 3'
+  sleep 2
+  capture 14-crucible-heat-after-nitor
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

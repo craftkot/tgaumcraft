@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleCatalystLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyHedgeAlchemyLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyNitorCrucibleRecipe;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
@@ -22,6 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleHeat;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -51,6 +53,11 @@ public final class CrucibleBlockEntity extends BlockEntity {
             Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "ingots/iron"));
     private static final TagKey<Item> IRON_INGOT_FORGE = TagKey.create(
             Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "ingots/iron"));
+    // BETA26 OreDictionary "dustGlowstone": vanilla plus common mod dusts.
+    private static final TagKey<Item> GLOWSTONE_DUST_C = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "dusts/glowstone"));
+    private static final TagKey<Item> GLOWSTONE_DUST_FORGE = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "dusts/glowstone"));
     private int waterMb;
     private int heat;
     private AspectListData aspects = new AspectListData();
@@ -96,6 +103,8 @@ public final class CrucibleBlockEntity extends BlockEntity {
         boolean iron = stack.is(Items.IRON_INGOT)
                 || stack.is(IRON_INGOT_C) || stack.is(IRON_INGOT_FORGE);
         boolean rottenFlesh = stack.is(Items.ROTTEN_FLESH);
+        boolean glowstoneDust = stack.is(Items.GLOWSTONE_DUST)
+                || stack.is(GLOWSTONE_DUST_C) || stack.is(GLOWSTONE_DUST_FORGE);
         // BETA26 OreDictionary nuggetQuartz is original metadata 9,
         // NOT a vanilla quartz item or any other nugget subtype.
         boolean quartzSliver = ThaumcraftNuggetItem.legacyMetadata(stack)
@@ -113,6 +122,8 @@ public final class CrucibleBlockEntity extends BlockEntity {
             var hedge = rottenFlesh && waterMb > 0
                     ? LegacyHedgeAlchemyLogic.matchingRecipe(knowledge, aspects, HEDGE_RECIPES)
                     : null;
+            boolean nitor = glowstoneDust && waterMb > 0
+                    && LegacyNitorCrucibleRecipe.canCraft(knowledge, aspects, ASPECTS);
             ItemStack product = ItemStack.EMPTY;
             if (recipe != null) {
                 aspects = LegacyCrucibleCatalystLogic.afterCraft(aspects, recipe);
@@ -133,6 +144,12 @@ public final class CrucibleBlockEntity extends BlockEntity {
                 product = hedge.output() == LegacyHedgeAlchemyLogic.Output.TALLOW
                         ? new ItemStack(ThaumcraftItems.TALLOW.get())
                         : new ItemStack(Items.LEATHER);
+            } else if (nitor) {
+                // The BETA26 default nitorgroup CrucibleRecipe yields the
+                // yellow, permanent light/heat source after 30 essentia.
+                aspects = LegacyNitorCrucibleRecipe.afterCraft(aspects, ASPECTS);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                product = new ItemStack(ThaumcraftItems.NITOR_YELLOW.get());
             } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
                 aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
             } else break;
@@ -159,7 +176,8 @@ public final class CrucibleBlockEntity extends BlockEntity {
         // The BETA26 heat source set: fire, lava, nitor, magma. Original
         // nitor blocks are not available yet, so do not fake them.
         boolean heater = below.is(Blocks.FIRE) || below.is(Blocks.SOUL_FIRE)
-                || below.is(Blocks.LAVA) || below.is(Blocks.MAGMA_BLOCK);
+                || below.is(Blocks.LAVA) || below.is(Blocks.MAGMA_BLOCK)
+                || below.is(ThaumcraftBlocks.NITOR_YELLOW.get());
         int next = LegacyCrucibleHeat.next(tile.heat, tile.waterMb, heater);
         if (next != tile.heat) {
             boolean crossedBoiling = LegacyCrucibleHeat.boiling(next, tile.waterMb)

@@ -44,6 +44,13 @@ public final class ThaumcraftClientEvents {
             return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
         }, ThaumcraftItems.PHIAL.get());
 
+        // The original Nitor item has two greyscale icon layers. The
+        // yellow default block is dyed at layer 0, leaving the glowing
+        // core layer 1 bright just like the BETA26 dual-layer icon.
+        event.register((stack, tintIndex) ->
+                        tintIndex == 0 ? 0xFFFFD64A : 0xFFFFFFFF,
+                ThaumcraftItems.NITOR_YELLOW.get());
+
         // TC6 crystals tint their original white translucent icon by the
         // one contained primal/compound Aspect, not a hard-coded color.
         event.register((stack, tintIndex) -> {

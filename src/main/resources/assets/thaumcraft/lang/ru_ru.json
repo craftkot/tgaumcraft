@@ -189,5 +189,7 @@
   "item.nugget.quartz.name": "Кварцевый осколок",
   "item.nugget.rareearth.name": "Кусочек редкоземельного элемента",
   "item.thaumcraft.tallow": "Магический жир",
-  "item.tallow.name": "Магический жир"
+  "item.tallow.name": "Магический жир",
+  "block.thaumcraft.nitor_yellow": "Жёлтый нитор",
+  "item.thaumcraft.nitor_yellow": "Жёлтый нитор"
 }

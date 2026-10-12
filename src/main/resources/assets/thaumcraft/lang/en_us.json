@@ -189,5 +189,7 @@
   "item.nugget.quartz.name": "Quartz Sliver",
   "item.nugget.rareearth.name": "Rare Earths",
   "item.thaumcraft.tallow": "Magic Tallow",
-  "item.tallow.name": "Magic Tallow"
+  "item.tallow.name": "Magic Tallow",
+  "block.thaumcraft.nitor_yellow": "Yellow Nitor",
+  "item.thaumcraft.nitor_yellow": "Yellow Nitor"
 }

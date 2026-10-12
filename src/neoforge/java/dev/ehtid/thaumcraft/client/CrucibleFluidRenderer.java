@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyCrucibleSurface;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -33,9 +34,14 @@ public final class CrucibleFluidRenderer implements BlockEntityRenderer<Crucible
         TextureAtlasSprite sprite = Minecraft.getInstance()
                 .getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(STILL_WATER);
         VertexConsumer vertices = buffers.getBuffer(RenderType.translucent());
-        int r = Math.round(255.0f * LegacyCrucibleSurface.red(stored));
-        int g = Math.round(255.0f * LegacyCrucibleSurface.green(stored));
-        int b = Math.round(255.0f * LegacyCrucibleSurface.blue(stored));
+        // Minecraft's water_still atlas sprite is greyscale. Vanilla
+        // water receives its blue/biome shade at render time, not from
+        // its PNG. Without that tint the crucible water appears grey.
+        int biomeWater = tile.getLevel() == null ? 0x3F76E4
+                : BiomeColors.getAverageWaterColor(tile.getLevel(), tile.getBlockPos());
+        int r = LegacyCrucibleSurface.tintRed(biomeWater, stored);
+        int g = LegacyCrucibleSurface.tintGreen(biomeWater, stored);
+        int b = LegacyCrucibleSurface.tintBlue(biomeWater, stored);
         int a = Math.round(255.0f * LegacyCrucibleSurface.alpha(stored));
         // The bowl's inside walls begin at 2px and end at 14px.
         // Inset 1/1024 further to avoid depth-fighting with interior edges.

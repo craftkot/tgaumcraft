@@ -42,6 +42,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TABLE_WOOD.get());
                         output.accept(ThaumcraftItems.RESEARCH_TABLE.get());
                         output.accept(ThaumcraftItems.CRUCIBLE.get());
+                        output.accept(ThaumcraftItems.NITOR_YELLOW.get());
                         output.accept(ThaumcraftItems.ARCANE_WORKBENCH.get());
                         output.accept(ThaumcraftItems.THAUMONOMICON.get());
                         output.accept(ThaumcraftItems.THAUMOMETER.get());

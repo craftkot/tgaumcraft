@@ -29,4 +29,18 @@ public final class LegacyCrucibleSurface {
     public static float green(int storedVis) { return 1.0f - saturation(storedVis) / 3.0f; }
     public static float blue(int storedVis) { return 1.0f - saturation(storedVis); }
     public static float alpha(int storedVis) { return 1.0f - saturation(storedVis) / 2.0f; }
+
+    /** Vanilla water texture is white/grey; its BIOME tint is mandatory. */
+    public static int tintRed(int biomeWaterRgb, int storedVis) {
+        return Math.round(((biomeWaterRgb >>> 16) & 0xFF) * red(storedVis));
+    }
+
+    public static int tintGreen(int biomeWaterRgb, int storedVis) {
+        return Math.round(((biomeWaterRgb >>> 8) & 0xFF) * green(storedVis));
+    }
+
+    public static int tintBlue(int biomeWaterRgb, int storedVis) {
+        return Math.round((biomeWaterRgb & 0xFF) * blue(storedVis));
+    }
+
 }

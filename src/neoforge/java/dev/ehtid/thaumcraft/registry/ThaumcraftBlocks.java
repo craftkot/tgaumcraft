@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.block.ArcaneWorkbenchBlock;
 import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import dev.ehtid.thaumcraft.block.TableWoodBlock;
 import dev.ehtid.thaumcraft.block.CrucibleBlock;
+import dev.ehtid.thaumcraft.block.NitorBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -45,6 +46,16 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of()
                     .destroyTime(2.5F).explosionResistance(10.0F)
                     .noOcclusion().sound(SoundType.STONE));
+
+    /**
+     * Original BETA26 default nitor catalyst output is the floating
+     * bright yellow, fully luminous variant (16 dye variants exist).
+     */
+    public static final DeferredBlock<NitorBlock> NITOR_YELLOW = BLOCKS.registerBlock(
+            "nitor_yellow", NitorBlock::new,
+            BlockBehaviour.Properties.of()
+                    .strength(0.1F).lightLevel(state -> 15)
+                    .noCollission().noOcclusion().sound(SoundType.GLASS));
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);

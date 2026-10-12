@@ -85,6 +85,10 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.CRUCIBLE, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> NITOR_YELLOW =
+            ITEMS.registerSimpleBlockItem(
+                    ThaumcraftBlocks.NITOR_YELLOW, new Item.Properties());
+
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
     }

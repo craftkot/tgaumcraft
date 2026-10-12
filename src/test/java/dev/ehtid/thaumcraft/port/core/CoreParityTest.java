@@ -87,6 +87,7 @@ public final class CoreParityTest {
         testOriginalHedgeAlchemyCatalysts();
         testOriginalVisCrystalCrucibleRecipes();
         testOriginalCrucibleSurfaceRenderer();
+        testOriginalNitorCrucibleRecipe();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4573,6 +4574,14 @@ public final class CoreParityTest {
         eq(0.25f, LegacyCrucibleSurface.blue(250));
         eq(0.625f, LegacyCrucibleSurface.alpha(250));
         eq(0.5f, LegacyCrucibleSurface.alpha(500));
+        // Vanilla non-biome-tinted water atlas is neutral grey. Applying
+        // the actual biome-water RGB restores its blue/cyan appearance.
+        eq(63, LegacyCrucibleSurface.tintRed(0x3F76E4, 0));
+        eq(118, LegacyCrucibleSurface.tintGreen(0x3F76E4, 0));
+        eq(228, LegacyCrucibleSurface.tintBlue(0x3F76E4, 0));
+        eq(63, LegacyCrucibleSurface.tintRed(0x3F76E4, 250));
+        eq(89, LegacyCrucibleSurface.tintGreen(0x3F76E4, 250));
+        eq(57, LegacyCrucibleSurface.tintBlue(0x3F76E4, 250));
     }
 
     private static void testOriginalHedgeAlchemyCatalysts() {
@@ -4624,6 +4633,34 @@ public final class CoreParityTest {
         eq(null, LegacyHedgeAlchemyLogic.matchingRecipe(
                 knowledge, new AspectListData(), recipes));
         eq(950, LegacyCrucibleCatalystLogic.waterAfterCraft(1000));
+    }
+
+    private static void testOriginalNitorCrucibleRecipe() {
+        AspectRegistry a = new AspectRegistry();
+        eq("thaumcraft:nitor", LegacyNitorCrucibleRecipe.ID);
+        eq("UNLOCKALCHEMY@3", LegacyNitorCrucibleRecipe.RESEARCH);
+        eq(30, LegacyNitorCrucibleRecipe.SCORE);
+        AspectListData needed = LegacyNitorCrucibleRecipe.required(a);
+        eq(30, needed.visSize());
+        eq(10, needed.getAmount(a.ENERGY));
+        eq(10, needed.getAmount(a.FIRE));
+        eq(10, needed.getAmount(a.LIGHT));
+        PlayerKnowledgeData p = new PlayerKnowledgeData();
+        isFalse(LegacyNitorCrucibleRecipe.canCraft(p, needed, a));
+        p.addResearch("UNLOCKALCHEMY");
+        p.setResearchStage("UNLOCKALCHEMY", 2);
+        isFalse(LegacyNitorCrucibleRecipe.canCraft(p, needed, a));
+        p.setResearchStage("UNLOCKALCHEMY", 3);
+        isTrue(LegacyNitorCrucibleRecipe.canCraft(p, needed, a));
+        AspectListData have = needed.copy().add(a.WATER, 4);
+        AspectListData after = LegacyNitorCrucibleRecipe.afterCraft(have, a);
+        eq(4, after.visSize());
+        eq(4, after.getAmount(a.WATER));
+        eq(10, have.getAmount(a.ENERGY));
+        eq(950, LegacyCrucibleCatalystLogic.waterAfterCraft(1000));
+        isFalse(LegacyNitorCrucibleRecipe.canCraft(p,
+                new AspectListData().add(a.ENERGY, 10)
+                        .add(a.FIRE, 10).add(a.LIGHT, 9), a));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
