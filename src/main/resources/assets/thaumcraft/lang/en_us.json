@@ -187,5 +187,7 @@
   "item.nugget.void.name": "Void Metal Nugget",
   "item.nugget.brass.name": "Alchemical Brass Nugget",
   "item.nugget.quartz.name": "Quartz Sliver",
-  "item.nugget.rareearth.name": "Rare Earths"
+  "item.nugget.rareearth.name": "Rare Earths",
+  "item.thaumcraft.tallow": "Magic Tallow",
+  "item.tallow.name": "Magic Tallow"
 }

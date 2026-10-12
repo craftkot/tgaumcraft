@@ -58,6 +58,10 @@ public final class ThaumcraftItems {
     public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
             "fabric", new Item.Properties());
 
+    // Original BETA26 ItemsTC.tallow, product of HEDGEALCHEMY@1 crucible.
+    public static final DeferredItem<Item> TALLOW = ITEMS.registerSimpleItem(
+            "tallow", new Item.Properties());
+
     // Original plate ItemTCBase metadata 0..3: brass, iron, thaumium, void.
     // Original single ItemsTC.ingots registry with metadata 0/1/2.
     // The original nugget registry has eleven item metadata variants.

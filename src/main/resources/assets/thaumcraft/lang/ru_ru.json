@@ -187,5 +187,7 @@
   "item.nugget.void.name": "Кусочек пустотного металла",
   "item.nugget.brass.name": "Кусочек алхимической латуни",
   "item.nugget.quartz.name": "Кварцевый осколок",
-  "item.nugget.rareearth.name": "Кусочек редкоземельного элемента"
+  "item.nugget.rareearth.name": "Кусочек редкоземельного элемента",
+  "item.thaumcraft.tallow": "Магический жир",
+  "item.tallow.name": "Магический жир"
 }

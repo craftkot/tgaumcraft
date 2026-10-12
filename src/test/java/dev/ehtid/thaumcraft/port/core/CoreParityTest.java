@@ -84,6 +84,7 @@ public final class CoreParityTest {
         testOriginalCrucibleLifecycle();
         testOriginalCrucibleDissolution();
         testOriginalCrucibleMetallurgyCatalysts();
+        testOriginalHedgeAlchemyCatalysts();
         testOriginalVisCrystalCrucibleRecipes();
         testOriginalCrucibleSurfaceRenderer();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
@@ -4572,6 +4573,57 @@ public final class CoreParityTest {
         eq(0.25f, LegacyCrucibleSurface.blue(250));
         eq(0.625f, LegacyCrucibleSurface.alpha(250));
         eq(0.5f, LegacyCrucibleSurface.alpha(500));
+    }
+
+    private static void testOriginalHedgeAlchemyCatalysts() {
+        AspectRegistry registry = new AspectRegistry();
+        var recipes = LegacyHedgeAlchemyLogic.originalRecipes(registry);
+        eq(2, recipes.size());
+        var tallow = recipes.get(0);
+        var leather = recipes.get(1);
+        eq("thaumcraft:hedge_tallow", tallow.id());
+        eq("thaumcraft:hedge_leather", leather.id());
+        eq("HEDGEALCHEMY@1", tallow.research());
+        eq("HEDGEALCHEMY@1", leather.research());
+        eq(LegacyHedgeAlchemyLogic.Output.TALLOW, tallow.output());
+        eq(LegacyHedgeAlchemyLogic.Output.LEATHER, leather.output());
+        eq(1, tallow.required().getAmount(registry.FIRE));
+        eq(3, leather.required().getAmount(registry.AIR));
+        eq(3, leather.required().getAmount(registry.BEAST));
+        eq(1, tallow.score());
+        eq(6, leather.score());
+
+        PlayerKnowledgeData knowledge = new PlayerKnowledgeData();
+        AspectListData stocked = new AspectListData()
+                .add(registry.FIRE, 2).add(registry.AIR, 3)
+                .add(registry.BEAST, 3);
+        eq(null, LegacyHedgeAlchemyLogic.matchingRecipe(null, stocked, recipes));
+        eq(null, LegacyHedgeAlchemyLogic.matchingRecipe(knowledge, stocked, recipes));
+        knowledge.addResearch("HEDGEALCHEMY");
+        // Even discovered research needs the original FIRST stage.
+        eq(null, LegacyHedgeAlchemyLogic.matchingRecipe(knowledge, stocked, recipes));
+        knowledge.setResearchStage("HEDGEALCHEMY", 1);
+        // Leather wins over earlier-registered tallow by higher 6-vis cost.
+        eq(leather, LegacyHedgeAlchemyLogic.matchingRecipe(
+                knowledge, stocked, recipes));
+        AspectListData afterLeather =
+                LegacyHedgeAlchemyLogic.afterCraft(stocked, leather);
+        eq(2, afterLeather.getAmount(registry.FIRE));
+        eq(0, afterLeather.getAmount(registry.AIR));
+        eq(0, afterLeather.getAmount(registry.BEAST));
+        eq(3, stocked.getAmount(registry.AIR)); // no input mutation
+        eq(tallow, LegacyHedgeAlchemyLogic.matchingRecipe(
+                knowledge, afterLeather, recipes));
+        AspectListData afterTallow =
+                LegacyHedgeAlchemyLogic.afterCraft(afterLeather, tallow);
+        eq(1, afterTallow.getAmount(registry.FIRE));
+        eq(tallow, LegacyHedgeAlchemyLogic.matchingRecipe(
+                knowledge, afterTallow, recipes));
+        eq(0, LegacyHedgeAlchemyLogic.afterCraft(afterTallow, tallow)
+                .getAmount(registry.FIRE));
+        eq(null, LegacyHedgeAlchemyLogic.matchingRecipe(
+                knowledge, new AspectListData(), recipes));
+        eq(950, LegacyCrucibleCatalystLogic.waterAfterCraft(1000));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

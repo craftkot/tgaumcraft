@@ -81,6 +81,8 @@ public final class NeoForgeLegacyItemStackDecoder {
             item = ThaumcraftItems.AMBER.get();
         } else if (originalId.equals("thaumcraft:quicksilver")) {
             item = ThaumcraftItems.QUICKSILVER.get();
+        } else if (originalId.equals("thaumcraft:tallow")) {
+            item = ThaumcraftItems.TALLOW.get();
         } else if (originalId.equals("thaumcraft:fabric")) {
             item = ThaumcraftItems.FABRIC.get();
         } else if (parsed.getNamespace().equals("minecraft")) {

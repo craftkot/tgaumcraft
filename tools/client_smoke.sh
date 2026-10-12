@@ -173,6 +173,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block ~ ~ ~3'
   sleep 3
   capture 10-crucible-blockentity-nbt
+
+  # Raise the REAL client camera two blocks and pitch down into the
+  # exact same filled crucible; original horizontal snapshots proved NBT
+  # but obscured the surface behind the model's upper walls.
+  # The block remains at relative (-2 Y, +3 Z) after this teleport.
+  send_chat '/tp @p ~ ~2 ~ 0 48'
+  sleep 5
+  capture 11-overhead-filled-crucible
+  # Keep an overhead image WITH the integrated-server water/aspect data.
+  send_chat '/data get block ~ ~-2 ~3'
+  sleep 2
+  capture 12-overhead-fluid-and-nbt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
@@ -195,4 +207,4 @@ ffprobe -v error -show_entries format=duration,size \
   | tee client-smoke/video-info.txt
 echo 'CLIENT_REAL_MP4=YES' | tee -a client-smoke-status.txt
 fi
-echo 'PASS: real Minecraft client world, screen recording and PNGs captured' | tee -a client-smoke-status.txt
+echo 'PASS: real Minecraft client world, overhead crucible PNGs captured' | tee -a client-smoke-status.txt

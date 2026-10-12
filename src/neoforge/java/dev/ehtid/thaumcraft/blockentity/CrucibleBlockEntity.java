@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleCatalystLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyHedgeAlchemyLogic;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.Vec3;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleHeat;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
@@ -43,6 +45,8 @@ public final class CrucibleBlockEntity extends BlockEntity {
     private static final AspectRegistry ASPECTS = new AspectRegistry();
     private static final java.util.List<LegacyCrucibleCatalystLogic.Recipe> METALLURGY =
             LegacyCrucibleCatalystLogic.originalIronRecipes(ASPECTS);
+    private static final java.util.List<LegacyHedgeAlchemyLogic.Recipe> HEDGE_RECIPES =
+            LegacyHedgeAlchemyLogic.originalRecipes(ASPECTS);
     private static final TagKey<Item> IRON_INGOT_C = TagKey.create(
             Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "ingots/iron"));
     private static final TagKey<Item> IRON_INGOT_FORGE = TagKey.create(
@@ -91,6 +95,7 @@ public final class CrucibleBlockEntity extends BlockEntity {
         AspectListData tags = ThaumometerScanDispatcher.aspectsForCrucibleItem(stack);
         boolean iron = stack.is(Items.IRON_INGOT)
                 || stack.is(IRON_INGOT_C) || stack.is(IRON_INGOT_FORGE);
+        boolean rottenFlesh = stack.is(Items.ROTTEN_FLESH);
         // BETA26 OreDictionary nuggetQuartz is original metadata 9,
         // NOT a vanilla quartz item or any other nugget subtype.
         boolean quartzSliver = ThaumcraftNuggetItem.legacyMetadata(stack)
@@ -105,6 +110,9 @@ public final class CrucibleBlockEntity extends BlockEntity {
             var crystal = quartzSliver && waterMb > 0
                     ? LegacyVisCrystalCrucibleLogic.firstEligibleAspect(knowledge, aspects, ASPECTS)
                     : null;
+            var hedge = rottenFlesh && waterMb > 0
+                    ? LegacyHedgeAlchemyLogic.matchingRecipe(knowledge, aspects, HEDGE_RECIPES)
+                    : null;
             ItemStack product = ItemStack.EMPTY;
             if (recipe != null) {
                 aspects = LegacyCrucibleCatalystLogic.afterCraft(aspects, recipe);
@@ -117,6 +125,14 @@ public final class CrucibleBlockEntity extends BlockEntity {
                 aspects = LegacyVisCrystalCrucibleLogic.afterCraft(aspects, crystal);
                 waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
                 product = CrystalEssenceItem.ofAspect(crystal.tag());
+            } else if (hedge != null) {
+                // Original HEDGEALCHEMY@1: rotten flesh -> tallow (Ignis 1)
+                // or leather (Aer 3, Bestia 3); most expensive match wins.
+                aspects = LegacyHedgeAlchemyLogic.afterCraft(aspects, hedge);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                product = hedge.output() == LegacyHedgeAlchemyLogic.Output.TALLOW
+                        ? new ItemStack(ThaumcraftItems.TALLOW.get())
+                        : new ItemStack(Items.LEATHER);
             } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
                 aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
             } else break;
