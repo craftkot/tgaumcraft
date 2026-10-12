@@ -95,6 +95,7 @@ public final class CoreParityTest {
         testOriginalInfusionMatrixLayout();
         testOriginalInfusionPillars();
         testOriginalInfusionMatrixIdle();
+        testOriginalInfusionStability();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4866,6 +4867,54 @@ public final class CoreParityTest {
         isFalse(LegacyInfusionMatrixIdle.deactivate(false, false));
         isFalse(LegacyInfusionMatrixIdle.deactivate(true, true));
         isTrue(LegacyInfusionMatrixIdle.deactivate(true, false));
+    }
+
+    private static void testOriginalInfusionStability() {
+
+        var arc = LegacyInfusionStability.Pillar.ARCANE;
+        var anc = LegacyInfusionStability.Pillar.ANCIENT;
+        var eld = LegacyInfusionStability.Pillar.ELDRITCH;
+        var normal = LegacyInfusionStability.cornerModifiers(List.of(arc,anc,eld,arc));
+        eq(10,normal.cycleTime()); eq(1.0f,normal.essentiaCostMult());
+        eq(0.0f,normal.replenish()); eq(5,normal.countDelay());
+        var ancient = LegacyInfusionStability.cornerModifiers(List.of(anc,anc,anc,anc));
+        eq(9,ancient.cycleTime()); eq(0.9f,ancient.essentiaCostMult());
+        eq(-0.1f,ancient.replenish()); eq(4,ancient.countDelay());
+        var e = LegacyInfusionStability.cornerModifiers(List.of(eld,eld,eld,eld));
+        eq(7,e.cycleTime()); eq(1.05f,e.essentiaCostMult());
+        eq(0.2f,e.replenish()); eq(3,e.countDelay());
+        var glyphs = LegacyInfusionStability.withGlyphs(normal, List.of(
+                LegacyInfusionStability.Glyph.SPEED,
+                LegacyInfusionStability.Glyph.COST,
+                LegacyInfusionStability.Glyph.NONE,
+                LegacyInfusionStability.Glyph.NONE));
+        eq(10,glyphs.cycleTime());
+        isTrue(Math.abs(glyphs.essentiaCostMult()-0.99f) < 0.00001f);
+        eq(0.1f,LegacyInfusionStability.diminishing(0.1f,0));
+        eq((float)(0.1f*Math.pow(0.75,2)),
+                LegacyInfusionStability.diminishing(0.1f,2));
+        var at = new LegacyInfusionMatrixLayout.Offset(2,-1,3);
+        var mirror = new LegacyInfusionMatrixLayout.Offset(-2,-1,-3);
+        var filled = new LegacyInfusionStability.Stabilizer("thaumcraft:pedestal_eldritch",0.1f,true,0.1f);
+        var empty = new LegacyInfusionStability.Stabilizer("thaumcraft:pedestal_eldritch",0.1f,false,0.1f);
+        eq(-0.1f,LegacyInfusionStability.pedestalBalance(Map.of(at,filled)).replenishment());
+        eq(-0.1f,LegacyInfusionStability.pedestalBalance(Map.of(mirror,filled)).replenishment());
+        eq(-0.1f,LegacyInfusionStability.pedestalBalance(Map.of(at,filled,mirror,empty)).replenishment());
+        eq(0.1f,LegacyInfusionStability.pedestalBalance(Map.of(at,filled,mirror,filled)).replenishment());
+        eq(0.0f,LegacyInfusionStability.pedestalBalance(Map.of()).replenishment());
+        eq(0.0f,LegacyInfusionStability.idleRecharge(0,4,true,false,5,0.2f));
+        eq(0.2f,LegacyInfusionStability.idleRecharge(0,5,true,false,5,0.2f));
+        eq(0.1f,LegacyInfusionStability.idleRecharge(0,5,true,false,5,-0.1f));
+        eq(0.0f,LegacyInfusionStability.idleRecharge(0,5,false,false,5,0.2f));
+        eq(0.0f,LegacyInfusionStability.idleRecharge(0,5,true,true,5,0.2f));
+        eq(25f,LegacyInfusionStability.idleRecharge(24.9f,10,true,false,5,0.2f));
+        eq(LegacyInfusionStability.Rating.VERY_STABLE,
+                LegacyInfusionStability.rating(13,25));
+        eq(LegacyInfusionStability.Rating.UNSTABLE,
+                LegacyInfusionStability.rating(-1,25));
+        eq(LegacyInfusionStability.Rating.VERY_UNSTABLE,
+                LegacyInfusionStability.rating(-25,25));
+    
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
