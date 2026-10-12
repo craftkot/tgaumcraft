@@ -149,17 +149,28 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 3
   capture 07-right-click-place-attempt
 
-  # Then produce a deterministic, visible port block in the same live world:
-  # player positioned at (x,z) facing +Z with 25-degree downward pitch;
-  # block exactly three blocks along +Z, at the player's standing Y.
-  send_chat '/tp @p ~ ~ ~ 0 27'
-  send_chat '/setblock ~ ~ ~3 thaumcraft:crucible'
-  sleep 6
+  # A fixed test platform high above all generated terrain/trees avoids
+  # random leaves obscuring the Crucible in server-run screenshots.
+  # Chunk (0,0) is forcibly loaded before changing distant blocks.
+  send_chat '/forceload add 0 0'
+  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
+  send_chat '/tp @p 0.5 149 0.5 0 27'
+  send_chat '/setblock 0 149 3 thaumcraft:crucible'
+  sleep 5
   capture 08-actual-crucible-block
   echo 'CLIENT_SENT_SETBLOCK=YES' | tee -a client-smoke-status.txt
 
-  # Real interaction path: get a water bucket and use it against the
-  # placed crucible. Keep a separate screenshot of the result.
+  # Freeze the camera using vanilla spectator mode. A precisely identical
+  # elevated viewpoint can now be captured empty and full WITHOUT gravity.
+  send_chat '/gamemode spectator'
+  send_chat '/tp @p 0.5 152 0.5 0 52'
+  sleep 3
+  capture 08-empty-overhead-crucible
+  send_chat '/gamemode creative'
+  send_chat '/tp @p 0.5 149 0.5 0 27'
+
+  # Genuine client item interaction: vanilla water bucket aimed at the
+  # same known-coordinate Crucible and checked by the integrated server.
   send_chat '/give @p minecraft:water_bucket'
   xdotool key --clearmodifiers 2
   sleep 2
@@ -167,22 +178,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 5
   capture 09-water-bucket-on-crucible
 
-  # Ask the integrated server for block-entity NBT (not a mock property).
-  # Screenshot proves any returned Water field, or records why targeting
-  # the bucket was unsuccessful. This is deliberately an *observation*.
-  send_chat '/data get block ~ ~ ~3'
-  sleep 3
+  # Absolutely addressed /data avoids player-position drift; the
+  # integrated server must expose Water:1000, not a simulated counter.
+  send_chat '/data get block 0 149 3'
+  sleep 2
   capture 10-crucible-blockentity-nbt
 
-  # Raise the REAL client camera two blocks and pitch down into the
-  # exact same filled crucible; original horizontal snapshots proved NBT
-  # but obscured the surface behind the model's upper walls.
-  # The block remains at relative (-2 Y, +3 Z) after this teleport.
-  send_chat '/tp @p ~ ~2 ~ 0 48'
-  sleep 5
+  # Exact same stable top view as empty snapshot, now with filled water.
+  send_chat '/gamemode spectator'
+  send_chat '/tp @p 0.5 152 0.5 0 52'
+  sleep 4
   capture 11-overhead-filled-crucible
-  # Keep an overhead image WITH the integrated-server water/aspect data.
-  send_chat '/data get block ~ ~-2 ~3'
+  send_chat '/data get block 0 149 3'
   sleep 2
   capture 12-overhead-fluid-and-nbt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
