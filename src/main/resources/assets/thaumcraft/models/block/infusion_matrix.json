@@ -1,0 +1,170 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "side": "thaumcraft:block/pedestal_side",
+    "particle": "thaumcraft:block/pedestal_side"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        7,
+        7,
+        7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        0,
+        9
+      ],
+      "to": [
+        16,
+        7,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        9,
+        9,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        7
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        0,
+        9,
+        9
+      ],
+      "to": [
+        7,
+        16,
+        16
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        }
+      }
+    },
+    {
+      "from": [
+        4,
+        4,
+        4
+      ],
+      "to": [
+        12,
+        12,
+        12
+      ],
+      "faces": {
+        "up": {
+          "texture": "#side"
+        },
+        "down": {
+          "texture": "#side"
+        },
+        "north": {
+          "texture": "#side"
+        },
+        "south": {
+          "texture": "#side"
+        },
+        "east": {
+          "texture": "#side"
+        },
+        "west": {
+          "texture": "#side"
+        }
+      }
+    }
+  ]
+}

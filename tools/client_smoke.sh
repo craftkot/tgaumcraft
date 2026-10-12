@@ -250,6 +250,23 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block 1 149 5'
   capture 21-pillar-world-query
   echo 'CLIENT_SENT_PILLAR_WORLD_TEST=YES' | tee -a client-smoke-status.txt
+  # Real matrix + original actual world layout. Server NBT test checks
+  # 100-tick invalidation after physically removing one support pillar.
+  send_chat '/setblock 3 151 10 thaumcraft:infusion_matrix'
+  send_chat '/setblock 3 149 10 thaumcraft:pedestal_arcane'
+  send_chat '/setblock 2 149 9 thaumcraft:pillar_arcane'
+  send_chat '/setblock 2 149 11 thaumcraft:pillar_ancient'
+  send_chat '/setblock 4 149 9 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 4 149 11 thaumcraft:pillar_arcane'
+  send_chat '/data merge block 3 151 10 {active:1b}'
+  sleep 7
+  send_chat '/data get block 3 151 10 active'
+  capture 22-matrix-valid-structure-active
+  send_chat '/setblock 4 149 11 minecraft:air'
+  sleep 7
+  send_chat '/data get block 3 151 10 active'
+  capture 23-matrix-invalid-auto-deactivation
+  echo 'CLIENT_SENT_INFUSION_STRUCTURE_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

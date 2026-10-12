@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
+import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
@@ -69,6 +70,11 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<PedestalBlock> PEDESTAL_ELDRITCH = BLOCKS.registerBlock(
             "pedestal_eldritch",
             props -> new PedestalBlock(props, LegacyInfusionPedestalLogic.Variant.ELDRITCH),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    /** Source BETA26 runic matrix with a persistent Tile and layout gate. */
+    public static final DeferredBlock<InfusionMatrixBlock> INFUSION_MATRIX = BLOCKS.registerBlock(
+            "infusion_matrix", InfusionMatrixBlock::new,
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
 
     /** Original BETA26 pillars (all satisfy TileInfusionMatrix.validLocation). */

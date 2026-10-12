@@ -94,6 +94,7 @@ public final class CoreParityTest {
         testOriginalInfusionPedestalRules();
         testOriginalInfusionMatrixLayout();
         testOriginalInfusionPillars();
+        testOriginalInfusionMatrixIdle();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4849,6 +4850,22 @@ public final class CoreParityTest {
                 LegacyInfusionPillarLogic.Variant.ANCIENT));
         eq("thaumcraft:stone_eldritch_tile", LegacyInfusionPillarLogic.originalDrop(
                 LegacyInfusionPillarLogic.Variant.ELDRITCH));
+    }
+
+    private static void testOriginalInfusionMatrixIdle() {
+        eq(100, LegacyInfusionMatrixIdle.structureCheckInterval(false));
+        eq(20, LegacyInfusionMatrixIdle.structureCheckInterval(true));
+        isFalse(LegacyInfusionMatrixIdle.checkNow(0, false));
+        isFalse(LegacyInfusionMatrixIdle.checkNow(99, false));
+        isTrue(LegacyInfusionMatrixIdle.checkNow(100, false));
+        isFalse(LegacyInfusionMatrixIdle.checkNow(101, false));
+        isTrue(LegacyInfusionMatrixIdle.checkNow(200, false));
+        isFalse(LegacyInfusionMatrixIdle.checkNow(19, true));
+        isTrue(LegacyInfusionMatrixIdle.checkNow(20, true));
+        isTrue(LegacyInfusionMatrixIdle.checkNow(40, true));
+        isFalse(LegacyInfusionMatrixIdle.deactivate(false, false));
+        isFalse(LegacyInfusionMatrixIdle.deactivate(true, true));
+        isTrue(LegacyInfusionMatrixIdle.deactivate(true, false));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

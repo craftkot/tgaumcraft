@@ -235,5 +235,7 @@
   "block.thaumcraft.pillar_ancient": "Древняя колонна",
   "item.thaumcraft.pillar_ancient": "Древняя колонна",
   "block.thaumcraft.pillar_eldritch": "Потусторонняя колонна",
-  "item.thaumcraft.pillar_eldritch": "Потусторонняя колонна"
+  "item.thaumcraft.pillar_eldritch": "Потусторонняя колонна",
+  "block.thaumcraft.infusion_matrix": "Руническая матрица",
+  "item.thaumcraft.infusion_matrix": "Руническая матрица"
 }

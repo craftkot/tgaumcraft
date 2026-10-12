@@ -235,5 +235,7 @@
   "block.thaumcraft.pillar_ancient": "Ancient Pillar",
   "item.thaumcraft.pillar_ancient": "Ancient Pillar",
   "block.thaumcraft.pillar_eldritch": "Eldritch Pillar",
-  "item.thaumcraft.pillar_eldritch": "Eldritch Pillar"
+  "item.thaumcraft.pillar_eldritch": "Eldritch Pillar",
+  "block.thaumcraft.infusion_matrix": "Runic Matrix",
+  "item.thaumcraft.infusion_matrix": "Runic Matrix"
 }
