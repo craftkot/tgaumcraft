@@ -6,6 +6,12 @@ import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import dev.ehtid.thaumcraft.block.TableWoodBlock;
 import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import dev.ehtid.thaumcraft.block.NitorBlock;
+import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
+import net.minecraft.world.item.DyeColor;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.bus.api.IEventBus;
@@ -47,15 +53,29 @@ public final class ThaumcraftBlocks {
                     .destroyTime(2.5F).explosionResistance(10.0F)
                     .noOcclusion().sound(SoundType.STONE));
 
-    /**
-     * Original BETA26 default nitor catalyst output is the floating
-     * bright yellow, fully luminous variant (16 dye variants exist).
-     */
-    public static final DeferredBlock<NitorBlock> NITOR_YELLOW = BLOCKS.registerBlock(
-            "nitor_yellow", NitorBlock::new,
-            BlockBehaviour.Properties.of()
-                    .strength(0.1F).lightLevel(state -> 15)
-                    .noCollission().noOcclusion().sound(SoundType.GLASS));
+    // BETA26 registers one separate BlockNitor for every EnumDyeColor.
+    // The original names use silver/lightblue, not light_gray/light_blue.
+    public static final Map<DyeColor, DeferredBlock<NitorBlock>> NITOR =
+            registerAllNitorVariants();
+
+    // Preserve the existing production/recipe identifier and Java field.
+    public static final DeferredBlock<NitorBlock> NITOR_YELLOW = NITOR.get(DyeColor.YELLOW);
+
+    private static Map<DyeColor, DeferredBlock<NitorBlock>> registerAllNitorVariants() {
+        Map<DyeColor, DeferredBlock<NitorBlock>> registered =
+                new EnumMap<>(DyeColor.class);
+        for (LegacyNitorColors.Variant color : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(color.modernDye().toUpperCase(Locale.ROOT));
+            var entry = BLOCKS.registerBlock("nitor_" + color.legacy(),
+                    props -> new NitorBlock(props, color.particleRgb()),
+                    BlockBehaviour.Properties.of().strength(0.1f)
+                            .lightLevel(state -> 15)
+                            .noCollission().noOcclusion().sound(SoundType.GLASS));
+            registered.put(dye, entry);
+        }
+        if (registered.size() != 16) throw new IllegalStateException("Missing original Nitor color");
+        return Collections.unmodifiableMap(registered);
+    }
 
     public static void register(IEventBus modBus) {
         BLOCKS.register(modBus);

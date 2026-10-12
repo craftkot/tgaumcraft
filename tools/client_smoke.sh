@@ -202,6 +202,14 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/data get block 0 149 3'
   sleep 2
   capture 14-crucible-heat-after-nitor
+
+  # Original BETA26 color block registry smoke: replace yellow heater
+  # with a blue heater on the SAME water-filled crucible platform.
+  # Screenshot proves the blue registry/block and client particles render;
+  # previous Heat:200 screenshot proves yellow heat independently.
+  send_chat '/setblock 0 148 3 thaumcraft:nitor_blue'
+  sleep 5
+  capture 15-blue-nitor-variant
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

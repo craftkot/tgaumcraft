@@ -88,6 +88,7 @@ public final class CoreParityTest {
         testOriginalVisCrystalCrucibleRecipes();
         testOriginalCrucibleSurfaceRenderer();
         testOriginalNitorCrucibleRecipe();
+        testOriginalNitorDyeVariants();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4661,6 +4662,30 @@ public final class CoreParityTest {
         isFalse(LegacyNitorCrucibleRecipe.canCraft(p,
                 new AspectListData().add(a.ENERGY, 10)
                         .add(a.FIRE, 10).add(a.LIGHT, 9), a));
+    }
+
+    private static void testOriginalNitorDyeVariants() {
+        var variants = LegacyNitorColors.variants();
+        eq(16, variants.size());
+        var names = new java.util.HashSet<String>();
+        var dyes = new java.util.HashSet<String>();
+        var recipes = new java.util.HashSet<String>();
+        for (var v : variants) {
+            isTrue(names.add(v.blockId()));
+            isTrue(dyes.add(v.dyeId()));
+            isTrue(recipes.add(v.recipeId()));
+            isTrue(v.particleRgb() >= 0 && v.particleRgb() <= 0xFFFFFF);
+            eq(v, LegacyNitorColors.get(v.legacy()));
+            eq("thaumcraft:nitor_" + v.legacy(), v.blockId());
+        }
+        eq(null, LegacyNitorColors.get("unknown"));
+        eq("thaumcraft:nitor_yellow", LegacyNitorColors.get("yellow").blockId());
+        eq("minecraft:yellow_dye", LegacyNitorColors.get("yellow").dyeId());
+        eq("thaumcraft:nitor_silver", LegacyNitorColors.get("silver").blockId());
+        eq("minecraft:light_gray_dye", LegacyNitorColors.get("silver").dyeId());
+        eq("thaumcraft:nitor_lightblue", LegacyNitorColors.get("lightblue").blockId());
+        eq("minecraft:light_blue_dye", LegacyNitorColors.get("lightblue").dyeId());
+        eq("thaumcraft:nitordye_blue", LegacyNitorColors.get("blue").recipeId());
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

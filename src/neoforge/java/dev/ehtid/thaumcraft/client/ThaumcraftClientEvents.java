@@ -9,6 +9,9 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
+import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
+import net.minecraft.world.item.DyeColor;
+import java.util.Locale;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -44,12 +47,16 @@ public final class ThaumcraftClientEvents {
             return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
         }, ThaumcraftItems.PHIAL.get());
 
-        // The original Nitor item has two greyscale icon layers. The
-        // yellow default block is dyed at layer 0, leaving the glowing
-        // core layer 1 bright just like the BETA26 dual-layer icon.
-        event.register((stack, tintIndex) ->
-                        tintIndex == 0 ? 0xFFFFD64A : 0xFFFFFFFF,
-                ThaumcraftItems.NITOR_YELLOW.get());
+        // Original BETA26 greyscale flame layer is dyed per BlockNitor,
+        // while the bright white core is always un-tinted.
+        for (LegacyNitorColors.Variant variant : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(variant.modernDye()
+                    .toUpperCase(Locale.ROOT));
+            int rgba = 0xFF000000 | variant.particleRgb();
+            event.register((stack, tintIndex) ->
+                    tintIndex == 0 ? rgba : 0xFFFFFFFF,
+                    ThaumcraftItems.NITOR.get(dye).get());
+        }
 
         // TC6 crystals tint their original white translucent icon by the
         // one contained primal/compound Aspect, not a hard-coded color.

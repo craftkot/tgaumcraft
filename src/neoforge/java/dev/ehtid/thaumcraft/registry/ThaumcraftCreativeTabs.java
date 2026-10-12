@@ -42,7 +42,12 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TABLE_WOOD.get());
                         output.accept(ThaumcraftItems.RESEARCH_TABLE.get());
                         output.accept(ThaumcraftItems.CRUCIBLE.get());
-                        output.accept(ThaumcraftItems.NITOR_YELLOW.get());
+                        // All sixteen original dyed light/heater variants.
+                        for (var color : dev.ehtid.thaumcraft.port.core.LegacyNitorColors.variants()) {
+                            var dye = net.minecraft.world.item.DyeColor.valueOf(
+                                    color.modernDye().toUpperCase(java.util.Locale.ROOT));
+                            output.accept(ThaumcraftItems.NITOR.get(dye).get());
+                        }
                         output.accept(ThaumcraftItems.ARCANE_WORKBENCH.get());
                         output.accept(ThaumcraftItems.THAUMONOMICON.get());
                         output.accept(ThaumcraftItems.THAUMOMETER.get());

@@ -177,7 +177,7 @@ public final class CrucibleBlockEntity extends BlockEntity {
         // nitor blocks are not available yet, so do not fake them.
         boolean heater = below.is(Blocks.FIRE) || below.is(Blocks.SOUL_FIRE)
                 || below.is(Blocks.LAVA) || below.is(Blocks.MAGMA_BLOCK)
-                || below.is(ThaumcraftBlocks.NITOR_YELLOW.get());
+                || below.getBlock() instanceof dev.ehtid.thaumcraft.block.NitorBlock;
         int next = LegacyCrucibleHeat.next(tile.heat, tile.waterMb, heater);
         if (next != tile.heat) {
             boolean crossedBoiling = LegacyCrucibleHeat.boiling(next, tile.waterMb)

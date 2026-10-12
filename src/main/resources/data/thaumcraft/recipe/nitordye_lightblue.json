@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "group": "thaumcraft:nitorgroup",
+  "ingredients": [
+    {
+      "tag": "thaumcraft:nitor"
+    },
+    {
+      "item": "minecraft:light_blue_dye"
+    }
+  ],
+  "result": {
+    "id": "thaumcraft:nitor_lightblue",
+    "count": 1
+  }
+}

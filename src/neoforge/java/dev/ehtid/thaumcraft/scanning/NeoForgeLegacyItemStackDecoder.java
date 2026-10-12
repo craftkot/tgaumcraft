@@ -81,8 +81,14 @@ public final class NeoForgeLegacyItemStackDecoder {
             item = ThaumcraftItems.AMBER.get();
         } else if (originalId.equals("thaumcraft:quicksilver")) {
             item = ThaumcraftItems.QUICKSILVER.get();
-        } else if (originalId.equals("thaumcraft:nitor_yellow")) {
-            item = ThaumcraftItems.NITOR_YELLOW.get();
+        } else if (originalId.startsWith("thaumcraft:nitor_")
+                && dev.ehtid.thaumcraft.port.core.LegacyNitorColors.get(
+                        originalId.substring("thaumcraft:nitor_".length())) != null) {
+            var variant = dev.ehtid.thaumcraft.port.core.LegacyNitorColors.get(
+                    originalId.substring("thaumcraft:nitor_".length()));
+            var dye = net.minecraft.world.item.DyeColor.valueOf(
+                    variant.modernDye().toUpperCase(java.util.Locale.ROOT));
+            item = ThaumcraftItems.NITOR.get(dye).get();
         } else if (originalId.equals("thaumcraft:tallow")) {
             item = ThaumcraftItems.TALLOW.get();
         } else if (originalId.equals("thaumcraft:fabric")) {

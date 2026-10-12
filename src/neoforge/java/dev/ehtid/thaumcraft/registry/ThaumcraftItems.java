@@ -11,6 +11,12 @@ import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
+import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
+import net.minecraft.world.item.DyeColor;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Locale;
+import java.util.Map;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.IEventBus;
@@ -85,9 +91,22 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.CRUCIBLE, new Item.Properties());
 
-    public static final DeferredItem<BlockItem> NITOR_YELLOW =
-            ITEMS.registerSimpleBlockItem(
-                    ThaumcraftBlocks.NITOR_YELLOW, new Item.Properties());
+    /** Every BETA26 Nitor block has its OWN matching BlockItem. */
+    public static final Map<DyeColor, DeferredItem<BlockItem>> NITOR =
+            registerAllNitorItems();
+    public static final DeferredItem<BlockItem> NITOR_YELLOW = NITOR.get(DyeColor.YELLOW);
+
+    private static Map<DyeColor, DeferredItem<BlockItem>> registerAllNitorItems() {
+        Map<DyeColor, DeferredItem<BlockItem>> registered =
+                new EnumMap<>(DyeColor.class);
+        for (LegacyNitorColors.Variant color : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(color.modernDye().toUpperCase(Locale.ROOT));
+            registered.put(dye, ITEMS.registerSimpleBlockItem(
+                    ThaumcraftBlocks.NITOR.get(dye), new Item.Properties()));
+        }
+        if (registered.size() != 16) throw new IllegalStateException("Missing Nitor BlockItem");
+        return Collections.unmodifiableMap(registered);
+    }
 
     public static void register(IEventBus modBus) {
         ITEMS.register(modBus);
