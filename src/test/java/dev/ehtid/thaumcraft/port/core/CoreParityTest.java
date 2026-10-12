@@ -4746,7 +4746,8 @@ public final class CoreParityTest {
         isTrue(assigned != null);
         eq(2, assigned.length);
         isTrue(assigned[0] != assigned[1]);
-        eq("a", List.of("a", "b").get(assigned[1]));
+        eq(1, assigned[0]); // pedestal A satisfies required exact A
+        eq(0, assigned[1]); // pedestal B satisfies required A-or-B
         // Overlapping alternatives require augmenting-path reallocation,
         // not greedy take-first. Reversing pedestal order still matches.
         isTrue(LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION", a,

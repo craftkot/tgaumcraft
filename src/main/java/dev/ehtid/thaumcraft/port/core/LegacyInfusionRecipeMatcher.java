@@ -15,7 +15,7 @@ public final class LegacyInfusionRecipeMatcher {
     private LegacyInfusionRecipeMatcher() {}
 
     /**
-     * @return assignment required-ingredient-index -> supplied pedestal index,
+     * @return assignment supplied pedestal index -> required ingredient index,
      *         or null if any gate/ingredient fails.
      */
     public static <T> int[] match(PlayerKnowledgeData knowledge, String research,
@@ -41,10 +41,8 @@ public final class LegacyInfusionRecipeMatcher {
                     pedestalToIngredient, new boolean[size]))
                 return null;
         }
-        int[] ingredientToPedestal = new int[size];
-        for (int pedestal = 0; pedestal < size; pedestal++)
-            ingredientToPedestal[pedestalToIngredient[pedestal]] = pedestal;
-        return ingredientToPedestal;
+        // Forge RecipeMatcher.findMatches returns ret[inputIndex] = testIndex.
+        return pedestalToIngredient;
     }
 
     private static <T> boolean assign(int ingredient, List<T> supplied,
