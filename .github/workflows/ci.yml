@@ -335,6 +335,10 @@ jobs:
         with:
           gradle-version: '9.2.1'
 
+      - name: Verify original BETA26 infusion pedestal assets
+        shell: bash
+        run: python3 tools/verify_pedestal_assets.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

@@ -602,3 +602,6 @@ Next verify CI, client registration and item visual/interaction in world, then p
 
 ### 2026-10-12 original infusion matrix geometry and pedestal scan (no ritual)
 Audited original `TileInfusionMatrix.validLocation()` and `getSurroundings()` directly from BETA26 via javap. Pure `LegacyInfusionMatrixLayout` validates exactly **one central BlockPedestal at matrix offset (0,-2,0) plus four BlockPillar corners (+/-1,-2,+/-1)**. Surroundings scan preserves original x -8..8, z -8..8, original vertical loop -3..7 mapped to relative y +3..-7, **excluding entire vertical x=0,z=0 column**, in source order. Tests verify valid and invalid structure, inclusive edges, exact scan ordering and exclusion. This is preparation for real TileInfusionMatrix with genuine Arcane/Ancient/Eldritch pillars (NOT yet implemented), not a working infusion ritual. Avoid % increase from static core alone.
+
+### Pedestal source integrity CI
+Added a dedicated python verifier running in GitHub Actions. It compares all SIX pedestal-related 16x16 PNGs to the user's BETA26 JAR by fixed SHA-256, verifies three 16-state blockstate variants, original 3-element model geometry and linked textures, each original block drop, item models, EN/RU display names and presence of block/entity/renderer implementations. It cannot substitute an actual gameplay interaction; client test remains separate.
