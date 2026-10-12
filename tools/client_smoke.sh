@@ -229,6 +229,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/execute if block 0 151 8 minecraft:air run say ALUMENTUM_GLASS_DESTROYED'
   capture 18-alumentum-explosion-block-query
   echo 'CLIENT_SENT_ALUMENTUM_THROW=YES' | tee -a client-smoke-status.txt
+  # Original BETA26 Arcane Pedestal is a real world BlockEntity with one
+  # item slot and an actual rotating item renderer (no fake overlay).
+  send_chat '/setblock 2 149 2 thaumcraft:pedestal_arcane'
+  send_chat '/setblock 3 149 2 thaumcraft:pedestal_ancient'
+  send_chat '/setblock 4 149 2 thaumcraft:pedestal_eldritch'
+  send_chat '/data merge block 2 149 2 {Items:[{Slot:0b,id:"minecraft:diamond",count:1}]}'
+  send_chat '/data get block 2 149 2 Items'
+  sleep 3
+  capture 19-three-original-infusion-pedestals
+  echo 'CLIENT_SENT_PEDESTAL_WORLD_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

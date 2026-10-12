@@ -6,6 +6,8 @@ import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import dev.ehtid.thaumcraft.block.TableWoodBlock;
 import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import dev.ehtid.thaumcraft.block.NitorBlock;
+import dev.ehtid.thaumcraft.block.PedestalBlock;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
 import net.minecraft.world.item.DyeColor;
 import java.util.Collections;
@@ -52,6 +54,20 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of()
                     .destroyTime(2.5F).explosionResistance(10.0F)
                     .noOcclusion().sound(SoundType.STONE));
+
+    // All three original BETA26 infusion pedestals share TilePedestal.
+    public static final DeferredBlock<PedestalBlock> PEDESTAL_ARCANE = BLOCKS.registerBlock(
+            "pedestal_arcane",
+            props -> new PedestalBlock(props, LegacyInfusionPedestalLogic.Variant.ARCANE),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+    public static final DeferredBlock<PedestalBlock> PEDESTAL_ANCIENT = BLOCKS.registerBlock(
+            "pedestal_ancient",
+            props -> new PedestalBlock(props, LegacyInfusionPedestalLogic.Variant.ANCIENT),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+    public static final DeferredBlock<PedestalBlock> PEDESTAL_ELDRITCH = BLOCKS.registerBlock(
+            "pedestal_eldritch",
+            props -> new PedestalBlock(props, LegacyInfusionPedestalLogic.Variant.ELDRITCH),
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
 
     // BETA26 registers one separate BlockNitor for every EnumDyeColor.
     // The original names use silver/lightblue, not light_gray/light_blue.

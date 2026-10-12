@@ -223,5 +223,11 @@
   "block.thaumcraft.nitor_black": "Чёрный нитор",
   "item.thaumcraft.nitor_black": "Чёрный нитор",
   "item.thaumcraft.alumentum": "Алюментум",
-  "entity.thaumcraft.alumentum": "Алюментум"
+  "entity.thaumcraft.alumentum": "Алюментум",
+  "block.thaumcraft.pedestal_arcane": "Мистический пьедестал",
+  "item.thaumcraft.pedestal_arcane": "Мистический пьедестал",
+  "block.thaumcraft.pedestal_ancient": "Древний пьедестал",
+  "item.thaumcraft.pedestal_ancient": "Древний пьедестал",
+  "block.thaumcraft.pedestal_eldritch": "Потусторонний пьедестал",
+  "item.thaumcraft.pedestal_eldritch": "Потусторонний пьедестал"
 }

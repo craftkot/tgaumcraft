@@ -1,0 +1,52 @@
+{
+  "variants": {
+    "charge=0": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=1": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=2": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=3": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=4": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=5": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=6": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=7": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=8": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=9": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=10": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=11": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=12": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=13": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=14": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    },
+    "charge=15": {
+      "model": "thaumcraft:block/pedestal_ancient"
+    }
+  }
+}

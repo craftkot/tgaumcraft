@@ -42,6 +42,9 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TABLE_WOOD.get());
                         output.accept(ThaumcraftItems.RESEARCH_TABLE.get());
                         output.accept(ThaumcraftItems.CRUCIBLE.get());
+                        output.accept(ThaumcraftItems.PEDESTAL_ARCANE.get());
+                        output.accept(ThaumcraftItems.PEDESTAL_ANCIENT.get());
+                        output.accept(ThaumcraftItems.PEDESTAL_ELDRITCH.get());
                         // All sixteen original dyed light/heater variants.
                         for (var color : dev.ehtid.thaumcraft.port.core.LegacyNitorColors.variants()) {
                             var dye = net.minecraft.world.item.DyeColor.valueOf(

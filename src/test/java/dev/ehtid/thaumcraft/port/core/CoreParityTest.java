@@ -91,6 +91,7 @@ public final class CoreParityTest {
         testOriginalNitorDyeVariants();
         testOriginalAlumentumRecipeAndProjectileConstants();
         testOriginalInfusionRecipeMatcher();
+        testOriginalInfusionPedestalRules();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4766,6 +4767,28 @@ public final class CoreParityTest {
         eq(0, LegacyInfusionRecipeMatcher.match(knowledge, "INFUSION",
                 item -> true, "center", List.<String>of(),
                 List.<java.util.function.Predicate<String>>of()).length);
+    }
+
+    private static void testOriginalInfusionPedestalRules() {
+        eq(1, LegacyInfusionPedestalLogic.SLOT_COUNT);
+        eq(1, LegacyInfusionPedestalLogic.SLOT_LIMIT);
+        eq(0, LegacyInfusionPedestalLogic.MIN_CHARGE);
+        eq(15, LegacyInfusionPedestalLogic.MAX_CHARGE);
+        eq(0.0f, LegacyInfusionPedestalLogic.stabilizingStrength(
+                LegacyInfusionPedestalLogic.Variant.ARCANE));
+        eq(0.0f, LegacyInfusionPedestalLogic.stabilizingStrength(
+                LegacyInfusionPedestalLogic.Variant.ANCIENT));
+        eq(0.1f, LegacyInfusionPedestalLogic.stabilizingStrength(
+                LegacyInfusionPedestalLogic.Variant.ELDRITCH));
+        eq(0.1f, LegacyInfusionPedestalLogic.SYMMETRY_PENALTY);
+        isFalse(LegacyInfusionPedestalLogic.hasSymmetryPenalty(false, false));
+        isFalse(LegacyInfusionPedestalLogic.hasSymmetryPenalty(true, true));
+        isTrue(LegacyInfusionPedestalLogic.hasSymmetryPenalty(true, false));
+        isTrue(LegacyInfusionPedestalLogic.hasSymmetryPenalty(false, true));
+        isFalse(LegacyInfusionPedestalLogic.canInsert(false, 1));
+        isFalse(LegacyInfusionPedestalLogic.canInsert(true, 0));
+        isTrue(LegacyInfusionPedestalLogic.canInsert(true, 64));
+        isTrue(LegacyInfusionPedestalLogic.canInsert(true, 1));
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

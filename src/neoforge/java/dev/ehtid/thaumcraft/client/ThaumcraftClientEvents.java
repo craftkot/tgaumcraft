@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.ThaumcraftEntities;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.client.PedestalItemRenderer;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
@@ -30,6 +31,8 @@ public final class ThaumcraftClientEvents {
     public static void registerCrucibleRenderer(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(
                 ThaumcraftBlockEntities.CRUCIBLE.get(), CrucibleFluidRenderer::new);
+        event.registerBlockEntityRenderer(
+                ThaumcraftBlockEntities.PEDESTAL.get(), PedestalItemRenderer::new);
     }
 
     @SubscribeEvent

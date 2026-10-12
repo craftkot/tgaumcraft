@@ -223,5 +223,11 @@
   "block.thaumcraft.nitor_black": "Black Nitor",
   "item.thaumcraft.nitor_black": "Black Nitor",
   "item.thaumcraft.alumentum": "Alumentum",
-  "entity.thaumcraft.alumentum": "Alumentum"
+  "entity.thaumcraft.alumentum": "Alumentum",
+  "block.thaumcraft.pedestal_arcane": "Arcane Pedestal",
+  "item.thaumcraft.pedestal_arcane": "Arcane Pedestal",
+  "block.thaumcraft.pedestal_ancient": "Ancient Pedestal",
+  "item.thaumcraft.pedestal_ancient": "Ancient Pedestal",
+  "block.thaumcraft.pedestal_eldritch": "Eldritch Pedestal",
+  "item.thaumcraft.pedestal_eldritch": "Eldritch Pedestal"
 }

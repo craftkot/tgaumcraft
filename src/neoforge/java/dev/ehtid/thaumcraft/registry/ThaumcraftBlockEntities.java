@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.ResearchTableBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -31,6 +32,13 @@ public final class ThaumcraftBlockEntities {
             CRUCIBLE = TYPES.register("crucible",
             () -> BlockEntityType.Builder.of(CrucibleBlockEntity::new,
                     ThaumcraftBlocks.CRUCIBLE.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PedestalBlockEntity>>
+            PEDESTAL = TYPES.register("pedestal",
+            () -> BlockEntityType.Builder.of(PedestalBlockEntity::new,
+                    ThaumcraftBlocks.PEDESTAL_ARCANE.get(),
+                    ThaumcraftBlocks.PEDESTAL_ANCIENT.get(),
+                    ThaumcraftBlocks.PEDESTAL_ELDRITCH.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

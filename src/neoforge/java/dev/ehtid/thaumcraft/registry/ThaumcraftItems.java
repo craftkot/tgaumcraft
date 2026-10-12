@@ -96,6 +96,13 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> CRUCIBLE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.CRUCIBLE, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> PEDESTAL_ARCANE = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PEDESTAL_ARCANE, new Item.Properties());
+    public static final DeferredItem<BlockItem> PEDESTAL_ANCIENT = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PEDESTAL_ANCIENT, new Item.Properties());
+    public static final DeferredItem<BlockItem> PEDESTAL_ELDRITCH = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PEDESTAL_ELDRITCH, new Item.Properties());
+
     /** Every BETA26 Nitor block has its OWN matching BlockItem. */
     public static final Map<DyeColor, DeferredItem<BlockItem>> NITOR =
             registerAllNitorItems();
