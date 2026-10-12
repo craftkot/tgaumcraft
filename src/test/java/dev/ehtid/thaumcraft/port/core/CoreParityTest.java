@@ -4721,6 +4721,7 @@ public final class CoreParityTest {
                         .add(a.ENTROPY, 4), a));
         eq(1.1F, LegacyAlumentumCrucibleRecipe.EXPLOSION_POWER);
         eq(0.4F, LegacyAlumentumCrucibleRecipe.THROW_SPEED);
+        eq(0.75F, LegacyAlumentumCrucibleRecipe.ACTUAL_PROJECTILE_SPEED);
         eq(2.0F, LegacyAlumentumCrucibleRecipe.THROW_INACCURACY);
         eq(-5.0F, LegacyAlumentumCrucibleRecipe.THROW_PITCH_OFFSET);
     }

@@ -22,6 +22,13 @@ public final class AlumentumProjectile extends ThrowableItemProjectile {
     }
 
     @Override
+    public void shoot(double x, double y, double z, float velocity, float inaccuracy) {
+        // BETA26 EntityAlumentum.func_70186_c ignores velocity (the Item
+        // passes 0.4F) and calls EntityThrowable with 0.75F instead.
+        super.shoot(x, y, z, LegacyAlumentumCrucibleRecipe.ACTUAL_PROJECTILE_SPEED, inaccuracy);
+    }
+
+    @Override
     protected Item getDefaultItem() { return ThaumcraftItems.ALUMENTUM.get(); }
 
     @Override

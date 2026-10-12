@@ -7,6 +7,8 @@ public final class LegacyAlumentumCrucibleRecipe {
     public static final int SCORE = 25;
     // ItemAlumentum and EntityAlumentum, direct original BETA26 bytecode.
     public static final float THROW_SPEED = 0.4F;
+    // EntityAlumentum.shoot(x,y,z,velocity,inaccuracy) overrides incoming velocity.
+    public static final float ACTUAL_PROJECTILE_SPEED = 0.75F;
     public static final float THROW_INACCURACY = 2.0F;
     public static final float THROW_PITCH_OFFSET = -5.0F;
     public static final float EXPLOSION_POWER = 1.1F;
