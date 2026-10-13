@@ -98,6 +98,7 @@ public final class CoreParityTest {
         testOriginalInfusionStability();
         testOriginalInfusionCraftingStart();
         testOriginalInfusionEssentiaCycle();
+        testOriginalInfusionIngredientCycle();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -5035,6 +5036,58 @@ public final class CoreParityTest {
         eq(false, ready.checkSurroundings());
         eq(LegacyInfusionEssentiaCycle.Action.READY_FOR_INGREDIENTS,
                 LegacyInfusionEssentiaCycle.cycle(new AspectListData(), 0f, 0, null).action());
+    }
+
+    private static void testOriginalInfusionIngredientCycle() {
+        var required = List.of("b", "a");
+        var presented = List.of("a", "b");
+        var matching = (java.util.function.BiPredicate<String,String>) String::equals;
+        var containers = (java.util.function.Function<String,String>)
+                x -> "b".equals(x) ? "container_b" : null;
+        var first = LegacyInfusionIngredientCycle.cycle(
+                required, presented, 0, matching, containers);
+        eq(LegacyInfusionIngredientCycle.Action.SOURCE_EFFECT, first.action());
+        eq(5, first.nextCountdown());
+        eq(0, first.ingredientIndex());
+        eq(1, first.pedestalIndex()); // recipe order, not physical order
+        eq(required, first.remainingIngredients());
+        int count = first.nextCountdown();
+        for (int before = 5; before > 1; before--) {
+            var waiting = LegacyInfusionIngredientCycle.cycle(
+                    required, presented, count, matching, containers);
+            eq(LegacyInfusionIngredientCycle.Action.COUNTDOWN, waiting.action());
+            eq(before-1, waiting.nextCountdown());
+            eq(required, waiting.remainingIngredients());
+            count = waiting.nextCountdown();
+        }
+        var consumed = LegacyInfusionIngredientCycle.cycle(
+                required, presented, count, matching, containers);
+        eq(LegacyInfusionIngredientCycle.Action.CONSUME, consumed.action());
+        eq(0, consumed.nextCountdown());
+        eq(1, consumed.pedestalIndex());
+        eq("container_b", consumed.replacement());
+        eq(List.of("a"), consumed.remainingIngredients());
+        eq(List.of("b","a"), required); // never mutate requirements
+        eq(LegacyInfusionIngredientCycle.Action.SOURCE_EFFECT,
+                LegacyInfusionIngredientCycle.cycle(consumed.remainingIngredients(),
+                        presented, 0, matching, containers).action());
+        var simple = LegacyInfusionIngredientCycle.cycle(
+                List.of("a"), List.of("a"), 1, matching, containers);
+        eq(LegacyInfusionIngredientCycle.Action.CONSUME, simple.action());
+        eq(null, simple.replacement());
+        eq(List.of(),simple.remainingIngredients());
+        eq(LegacyInfusionIngredientCycle.Action.READY_TO_FINISH,
+                LegacyInfusionIngredientCycle.cycle(List.<String>of(),
+                        presented, 0, matching, containers).action());
+        eq(LegacyInfusionIngredientCycle.Action.NOT_FOUND,
+                LegacyInfusionIngredientCycle.cycle(List.of("missing"),
+                        presented, 5, matching, containers).action());
+        eq(5, LegacyInfusionIngredientCycle.cycle(List.of("missing"),
+                        presented, 5, matching, containers).nextCountdown());
+        eq(LegacyInfusionIngredientCycle.Action.NOT_FOUND,
+                LegacyInfusionIngredientCycle.cycle(List.of("b"),
+                        java.util.Arrays.asList((String)null, "a"), 0,
+                        matching, containers).action());
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
