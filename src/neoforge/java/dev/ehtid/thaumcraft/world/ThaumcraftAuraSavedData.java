@@ -121,6 +121,25 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         setDirty();
     }
 
+    /**
+     * Atomic all-or-nothing 10-unit crystal growth/spread transaction.
+     * A successful world growth MUST NOT be based on a partial aura drain.
+     * Missing chunks and insufficient units do not mutate persistence.
+     */
+    public boolean trySpendCrystalAura(BlockPos pos, boolean flux, float required) {
+        if (!Float.isFinite(required) || required <= 0.0F) return false;
+        long chunkKey = key(pos);
+        AuraChunk before = chunks.get(chunkKey);
+        if (before == null) return false;
+        float available = flux ? before.flux() : before.vis();
+        if (available < required) return false;
+        chunks.put(chunkKey, flux
+                ? new AuraChunk(before.base(), before.vis(), before.flux() - required)
+                : new AuraChunk(before.base(), before.vis() - required, before.flux()));
+        setDirty();
+        return true;
+    }
+
     /** Exact population boundary used by the future BETA26 aura generator. */
     public void putChunk(BlockPos pos, short base, float vis, float flux) {
         chunks.put(key(pos), new AuraChunk(base, finiteNonNegative(vis), finiteNonNegative(flux)));

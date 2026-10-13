@@ -110,8 +110,7 @@ public final class CrystalClusterBlock extends Block {
             return;
         }
         if(LegacyBlockCrystalGrowthRules.canGrow(s,pos.asLong(),available,aura.getBase(pos))) {
-            float drained=flux?aura.drainFlux(pos,10,false):aura.drainVis(pos,10,false);
-            if(drained>0) level.setBlock(pos,
+            if(aura.trySpendCrystalAura(pos,flux,10)) level.setBlock(pos,
                     state.setValue(SIZE,LegacyBlockCrystalGrowthRules.grow(s).size()),3);
             return;
         }
@@ -122,8 +121,7 @@ public final class CrystalClusterBlock extends Block {
         BlockState destination=level.getBlockState(other);
         if(!(destination.isAir()||destination.canBeReplaced())) return;
         if(random.nextInt(16)!=0||!touchesStone(level,other)) return;
-        float drained=flux?aura.drainFlux(pos,10,false):aura.drainVis(pos,10,false);
-        if(drained<=0) return;
+        if(!aura.trySpendCrystalAura(pos,flux,10)) return;
         var child=LegacyBlockCrystalGrowthRules.child(s,random.nextInt(6)==0);
         level.setBlock(other,defaultBlockState()
                 .setValue(SIZE,child.size())
