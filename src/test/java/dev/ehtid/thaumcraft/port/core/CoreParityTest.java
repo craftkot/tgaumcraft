@@ -5108,6 +5108,17 @@ public final class CoreParityTest {
         isFalse(output == completed); // original output is COPIED
         completed.add("modified");
         eq(2, output.size());
+        eq(25, LegacyInfusionFinishLogic.inheritedItemDamage(
+                50, 200, true, true, 0, 100, true, false));
+        eq(25, LegacyInfusionFinishLogic.inheritedItemDamage(
+                1, 3, true, true, 0, 75, true, false)); // truncated
+        eq(17, LegacyInfusionFinishLogic.inheritedItemDamage(
+                50, 200, true, true, 17, 100, true, true)); // already worn
+        eq(17, LegacyInfusionFinishLogic.inheritedItemDamage(
+                50, 200, true, true, 17, 100, false, false));
+        eq(100, LegacyInfusionFinishLogic.inheritedItemDamage(
+                50, 200, false, true, 0, 100, true, false)); // f starts at 1
+
         Map<String,String> before = new java.util.LinkedHashMap<>();
         before.put("old", "preserved");
         before.put("special", "previous");

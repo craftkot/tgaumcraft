@@ -47,6 +47,31 @@ public final class LegacyInfusionFinishLogic {
         return copy;
     }
 
+    /**
+     * BETA26 craftingFinish(ItemStack): preserve relative wear from an
+     * existing damaged central stack when the new tagged result isn't
+     * already damaged. This conditional deliberately mirrors the bytecode:
+     *
+     * if center.hasTagCompound && center.isItemDamaged:
+     *     f = centerDamage / centerMaxDamage
+     * if result.hasTagCompound && !result.isItemDamaged:
+     *     result.setDamage((int)(resultMaxDamage * f))
+     *
+     * No arbitrary item damage is applied when original conditions fail.
+     */
+    public static int inheritedItemDamage(int centerDamage, int centerMaxDamage,
+                                          boolean centerHasTag, boolean centerDamaged,
+                                          int resultDamage, int resultMaxDamage,
+                                          boolean resultHasTag, boolean resultDamaged) {
+        float fraction = 1.0F;
+        if (centerHasTag && centerDamaged && centerMaxDamage > 0)
+            fraction = (float)centerDamage / (float)centerMaxDamage;
+        if (resultHasTag && !resultDamaged) {
+            return (int)(resultMaxDamage * fraction);
+        }
+        return resultDamage;
+    }
+
     /** Original ItemStack.setTagInfo(label, originalNbtTag); overwrite key. */
     public static <K,V> Map<K,V> withTag(Map<K,V> current, K label, V nbtValue) {
         Objects.requireNonNull(current);

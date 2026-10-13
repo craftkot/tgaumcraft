@@ -670,3 +670,7 @@ Original JAR BETA26 `TileInfusionMatrix.craftingFinish(Object,String)` disassemb
 
 ### 2026-10-13 — server-side pedestal ingredient compare-and-swap
 Added real `PedestalBlockEntity.replaceInfusionIngredientIfUnchanged(ItemStack expected, ItemStack remainder)`. It rejects client/world-missing contexts, empty/multi-count expected stacks, multi-count remainder, and stale item identity/components; compares `ItemStack.isSameItemSameComponents` + count before ONE synchronized inventory write. Subsequent attempts with stale expected material fail, rather than consume a different item or duplicate outputs. This method is infrastructure, not a playable ritual; only the future validated recipe/cost transaction should call it. NeoForge build and server testing required on this commit. Keep ~86% completion.
+
+
+### 2026-10-13 — source conditional damage preservation on infusion output
+Audited BETA26 `TileInfusionMatrix.craftingFinish` bytecode offsets 46..132. The ItemStack output retains relative wear only under the original hasNBT/isDamaged predicates: when the central input is tagged+damaged, `f=(float)damage/(float)maxDamage`, otherwise f starts at 1. If the new output has a tag and is NOT already damaged, set its damage to `(int)(outputMaxDamage*f)`. Added deterministic `LegacyInfusionFinishLogic.inheritedItemDamage` plus CoreParity tests for ratio, truncation and branches; do not apply it blindly in live gameplay until the final output adapter is wired. No playable ritual yet.
