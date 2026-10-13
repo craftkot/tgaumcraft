@@ -97,6 +97,7 @@ public final class CoreParityTest {
         testOriginalInfusionMatrixIdle();
         testOriginalInfusionStability();
         testOriginalInfusionCraftingStart();
+        testOriginalInfusionEssentiaCycle();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4984,6 +4985,56 @@ public final class CoreParityTest {
                 new AspectListData().add(aspects.FIRE, 1), 0.5f).visSize());
         eq(25, LegacyInfusionStartPlanner.calculateEssentia(
                 new AspectListData().add(aspects.FIRE, 20), 1.25F).visSize());
+    }
+
+    private static void testOriginalInfusionEssentiaCycle() {
+        AspectRegistry a = new AspectRegistry();
+        AspectListData pending = new AspectListData()
+                .add(a.FIRE, 2).add(a.ENERGY, 1).add(a.ENTROPY, 0);
+        java.util.List<String> requests = new java.util.ArrayList<>();
+        var one = LegacyInfusionEssentiaCycle.cycle(pending, 3f, 7,
+                (aspect, range, delay) -> {
+                    requests.add(aspect.tag()+":"+range+":"+delay);
+                    return aspect.equals(a.ENERGY);
+                });
+        eq(LegacyInfusionEssentiaCycle.Action.DRAINED_ONE, one.action());
+        eq(List.of(a.FIRE.tag()+":12:7", a.ENERGY.tag()+":12:0"), requests);
+        eq(a.ENERGY, one.consumed());
+        eq(1, one.failedAttempts());
+        eq(2.75f, one.stability());
+        eq(false, one.checkSurroundings());
+        eq(2, one.remaining().getAmount(a.FIRE));
+        eq(0, one.remaining().getAmount(a.ENERGY)); // reduce leaves zero key
+        eq(3, one.remaining().size()); // including two zero-valued aspect entries
+        eq(1, pending.getAmount(a.ENERGY)); // input unmodified
+        one.remaining().add(a.FIRE, 1234);
+        eq(2, one.remaining().getAmount(a.FIRE)); // defensive result copy
+        var fail = LegacyInfusionEssentiaCycle.cycle(pending, 0f, 3,
+                (aspect,range,delay) -> false);
+        eq(LegacyInfusionEssentiaCycle.Action.FAILED_ALL, fail.action());
+        eq(-0.5f, fail.stability());
+        eq(2, fail.failedAttempts());
+        eq(true, fail.checkSurroundings());
+        eq(null, fail.consumed());
+        eq(3, fail.remaining().visSize());
+        var consumedLast = LegacyInfusionEssentiaCycle.cycle(
+                new AspectListData().add(a.FIRE, 1), 0f, 5,
+                (aspect, range, delay) -> {
+                    eq(0, delay);
+                    return true;
+                });
+        eq(0, consumedLast.remaining().visSize());
+        eq(1, consumedLast.remaining().size()); // zero entry intentionally retained
+        var ready = LegacyInfusionEssentiaCycle.cycle(consumedLast.remaining(),
+                -2f, 5, (aspect, range, delay) -> {
+                    throw new AssertionError("empty essence should not trigger drain");
+                });
+        eq(LegacyInfusionEssentiaCycle.Action.READY_FOR_INGREDIENTS, ready.action());
+        eq(-2f, ready.stability());
+        eq(0, ready.failedAttempts());
+        eq(false, ready.checkSurroundings());
+        eq(LegacyInfusionEssentiaCycle.Action.READY_FOR_INGREDIENTS,
+                LegacyInfusionEssentiaCycle.cycle(new AspectListData(), 0f, 0, null).action());
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
