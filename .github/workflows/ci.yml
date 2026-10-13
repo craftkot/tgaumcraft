@@ -25,8 +25,10 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
-          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java
+          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CoreParityTest | tee /tmp/core.txt
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalFarmerParityTest | tee /tmp/crystal-farmer.txt
+          grep -q "Crystal farmer BETA26 parity: OK" /tmp/crystal-farmer.txt
           grep -Eq 'Core parity tests: OK \(([4-9][0-9]{3}|[1-9][0-9]{4,}) assertions\)' /tmp/core.txt
 
       - name: Check FIRSTSTEPS loader sources
