@@ -41,6 +41,31 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
         return removeItemNoUpdate(0);
     }
 
+    /**
+     * Atomic server-only final step for a VERIFIED original infusion cycle.
+     * The caller must have already obtained the recipe/catalog match and
+     * debited its legitimate costs. A stale plan never removes a different
+     * item and cannot duplicate a result when invoked a second time.
+     *
+     * The complete ItemStack (item ID + data components + count) must still
+     * be identical to the snapshot taken before FX countdown.
+     * This does not create an infusion recipe or expose a GUI/button.
+     */
+    public boolean replaceInfusionIngredientIfUnchanged(ItemStack expected,
+                                                          ItemStack containerItem) {
+        if (level == null || level.isClientSide || expected == null
+                || expected.isEmpty() || expected.getCount() != 1)
+            return false;
+        if (containerItem == null || containerItem.getCount() > 1)
+            return false;
+        ItemStack now = items.get(0);
+        if (now.isEmpty() || now.getCount() != 1
+                || !ItemStack.isSameItemSameComponents(now, expected))
+            return false;
+        setItem(0, containerItem.copy()); // one atomic write + client sync
+        return true;
+    }
+
     /** Infusion writes are server authoritative; caller owns cost validation. */
     public void putFromInfusion(ItemStack ingredient) {
         if (level == null || level.isClientSide)

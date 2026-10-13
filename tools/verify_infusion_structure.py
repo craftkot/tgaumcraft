@@ -107,4 +107,9 @@ for lang in ("en_us","ru_ru"):
         for name in expected:
             assert d.get(f"{kind}.thaumcraft.{name}"),(lang,kind,name)
 
+# A stale side pedestal must not be silently overwritten by a future ritual.
+pedestal_source=Path("src/neoforge/java/dev/ehtid/thaumcraft/blockentity/PedestalBlockEntity.java").read_text()
+assert "replaceInfusionIngredientIfUnchanged" in pedestal_source
+assert "ItemStack.isSameItemSameComponents" in pedestal_source
+assert "expected.getCount() != 1" in pedestal_source
 print("Original OBJ geometry, all 3 pillar and 12 stone PNGs, 2-stone loot: OK; ritual pending")
