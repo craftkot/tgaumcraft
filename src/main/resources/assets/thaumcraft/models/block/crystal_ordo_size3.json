@@ -1,166 +1,23 @@
 {
-  "parent": "minecraft:block/block",
-  "ambientocclusion": false,
+  "loader": "neoforge:obj",
+  "model": "thaumcraft:models/block/crystal_source.obj",
+  "mtl_override": "thaumcraft:models/block/crystal_source.mtl",
+  "automatic_culling": false,
+  "flip_v": true,
+  "shade_quads": false,
+  "render_type": "minecraft:translucent",
   "textures": {
-    "all": "thaumcraft:block/crystal",
+    "crystal": "thaumcraft:block/crystal",
     "particle": "thaumcraft:block/crystal"
   },
-  "elements": [
-    {
-      "from": [
-        6,
-        0,
-        6
-      ],
-      "to": [
-        10,
-        11,
-        10
-      ],
-      "shade": false,
-      "faces": {
-        "up": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "down": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "north": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "south": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "west": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "east": {
-          "texture": "#all",
-          "tintindex": 0
-        }
-      }
-    },
-    {
-      "from": [
-        2,
-        0,
-        5
-      ],
-      "to": [
-        5,
-        8,
-        8
-      ],
-      "shade": false,
-      "faces": {
-        "up": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "down": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "north": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "south": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "west": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "east": {
-          "texture": "#all",
-          "tintindex": 0
-        }
-      }
-    },
-    {
-      "from": [
-        10,
-        0,
-        8
-      ],
-      "to": [
-        13,
-        10,
-        11
-      ],
-      "shade": false,
-      "faces": {
-        "up": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "down": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "north": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "south": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "west": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "east": {
-          "texture": "#all",
-          "tintindex": 0
-        }
-      }
-    },
-    {
-      "from": [
-        6,
-        0,
-        1
-      ],
-      "to": [
-        9,
-        7,
-        4
-      ],
-      "shade": false,
-      "faces": {
-        "up": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "down": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "north": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "south": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "west": {
-          "texture": "#all",
-          "tintindex": 0
-        },
-        "east": {
-          "texture": "#all",
-          "tintindex": 0
-        }
-      }
-    }
-  ]
+  "visibility": {
+    "s014": true,
+    "s015": true,
+    "s016": true,
+    "s017": true,
+    "s018": false,
+    "s019": false,
+    "s024": false,
+    "s026": false
+  }
 }

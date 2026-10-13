@@ -12,6 +12,11 @@ expected={
     "block/crystal.png": "606cfd0ca77a5c80366412c3207b08b55a57ff2d1860d7a252dc18e3c1163093",
     "item/crystal_planter.png": "7beb6d3e520eed694c5523d557044b589e8c2a2d970012e2ca2eb949ceeff0b4",
 }
+mesh=(asset/"models/block/crystal_source.obj").read_bytes()
+assert hashlib.sha256(mesh).hexdigest()=="8221ea1f3001ae7abb41f2f87a007c652b77cd138b2d29d707a06253faec23c6"
+assert sum(x.startswith(b"f ") for x in mesh.splitlines())==96
+assert sum(x.startswith(b"v ") for x in mesh.splitlines())==72
+assert "map_Kd #crystal" in (asset/"models/block/crystal_source.mtl").read_text()
 for file,digest in expected.items():
     content=(asset/"textures"/file).read_bytes()
     assert content[:8]==bytes.fromhex("89504e470d0a1a0a"),file
@@ -26,10 +31,15 @@ for tag in tags:
         f"thaumcraft:block/{name}_size{n}" for n in range(4) for g in range(1,5))
     for n in range(4):
         model=json.loads((asset/"models/block"/f"{name}_size{n}.json").read_text())
-        assert len(model["elements"])==n+1, name
-        assert model["textures"]["all"]=="thaumcraft:block/crystal"
-        assert all(all(face.get("tintindex")==0 for face in elem["faces"].values())
-                   for elem in model["elements"])
+        assert model["loader"]=="neoforge:obj"
+        assert model["model"]=="thaumcraft:models/block/crystal_source.obj"
+        assert model["mtl_override"]=="thaumcraft:models/block/crystal_source.mtl"
+        assert model["render_type"]=="minecraft:translucent"
+        assert model["flip_v"] is True
+        parts=model["visibility"]
+        groups=("s014","s015","s016","s017","s018","s019","s024","s026")
+        assert set(parts)==set(groups)
+        assert [part for part in groups if parts[part]]==list(groups[:n+1])
     item=json.loads((asset/"models/item"/f"{name}.json").read_text())
     assert item["textures"]["layer0"]=="thaumcraft:item/crystal_planter"
     loot=json.loads((data/f"{name}.json").read_text())
