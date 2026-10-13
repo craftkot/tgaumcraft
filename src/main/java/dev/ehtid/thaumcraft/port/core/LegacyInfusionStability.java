@@ -148,6 +148,40 @@ public final class LegacyInfusionStability {
         return Math.min(CAP, current + Math.max(0.1F, stabilityReplenish));
     }
 
+    /**
+     * BETA26 getModFromCurrentStability(): VERY_STABLE -> 5, STABLE -> 6,
+     * UNSTABLE -> 7, VERY_UNSTABLE -> 8. Yes, the original divides loss
+     * by a LARGER number as instability grows; preserve this original quirk.
+     */
+    public static float cycleLossModifier(float current, int cap) {
+        return switch (rating(current, cap)) {
+            case VERY_STABLE -> 5.0F;
+            case STABLE -> 6.0F;
+            case UNSTABLE -> 7.0F;
+            case VERY_UNSTABLE -> 8.0F;
+        };
+    }
+
+    /**
+     * Original TileInfusionMatrix.craftCycle first changes stability:
+     * current - nextFloat() * (recipeInstability/modifier) + replenish,
+     * clamped [-100, stabilityCap]. This does NOT fire instability events,
+     * consume essentia or complete the recipe; later runtime calls must.
+     */
+    public static float afterCraftCycle(float current, int recipeInstability,
+                                        float replenish, int cap, float randomNextFloat) {
+        if (!Float.isFinite(current) || !Float.isFinite(replenish)
+                || !Float.isFinite(randomNextFloat)
+                || randomNextFloat < 0 || randomNextFloat >= 1)
+            throw new IllegalArgumentException("Invalid cycle random/stability");
+        float loss = randomNextFloat * (recipeInstability / cycleLossModifier(current, cap));
+        float updated = current - loss;
+        updated += replenish;
+        if (updated < -100.0F) updated = -100.0F;
+        if (updated > cap) updated = cap;
+        return updated;
+    }
+
     public enum Rating { VERY_STABLE, STABLE, UNSTABLE, VERY_UNSTABLE }
     public static Rating rating(float stability, int cap) {
         if (stability > cap / 2) return Rating.VERY_STABLE;

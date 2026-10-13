@@ -4903,6 +4903,14 @@ public final class CoreParityTest {
         eq(-0.1f,LegacyInfusionStability.pedestalBalance(Map.of(at,filled,mirror,empty)).replenishment());
         eq(0.1f,LegacyInfusionStability.pedestalBalance(Map.of(at,filled,mirror,filled)).replenishment());
         eq(0.0f,LegacyInfusionStability.pedestalBalance(Map.of()).replenishment());
+        eq(5.0f,LegacyInfusionStability.cycleLossModifier(13,25));
+        eq(6.0f,LegacyInfusionStability.cycleLossModifier(0,25));
+        eq(7.0f,LegacyInfusionStability.cycleLossModifier(-1,25));
+        eq(8.0f,LegacyInfusionStability.cycleLossModifier(-25,25));
+        eq(12.0f,LegacyInfusionStability.afterCraftCycle(13,10,0,25,0.5f));
+        eq(0.2f,LegacyInfusionStability.afterCraftCycle(0,0,0.2f,25,0.5f));
+        eq(-100.0f,LegacyInfusionStability.afterCraftCycle(-99,100,0,25,0.9f));
+        eq(25.0f,LegacyInfusionStability.afterCraftCycle(24.9f,0,10,25,0f));
         eq(0.0f,LegacyInfusionStability.idleRecharge(0,4,true,false,5,0.2f));
         eq(0.2f,LegacyInfusionStability.idleRecharge(0,5,true,false,5,0.2f));
         eq(0.1f,LegacyInfusionStability.idleRecharge(0,5,true,false,5,-0.1f));
