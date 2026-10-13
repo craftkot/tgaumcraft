@@ -269,15 +269,24 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   echo 'CLIENT_SENT_INFUSION_STRUCTURE_TEST=YES' | tee -a client-smoke-status.txt
   # SOURCE BETA26: four eldritch corner pillars => +0.2/tick-recharge,
   # time 7, cost multiplier 1.05. Observe actual synced BE NBT in world.
-  send_chat '/setblock 2 149 9 thaumcraft:pillar_eldritch'
-  send_chat '/setblock 2 149 11 thaumcraft:pillar_eldritch'
-  send_chat '/setblock 4 149 9 thaumcraft:pillar_eldritch'
-  send_chat '/setblock 4 149 11 thaumcraft:pillar_eldritch'
-  send_chat '/data merge block 3 151 10 {active:1b,stability:0.0f}'
+  # A SEPARATE isolated 20-block-away site: previous smoke creates
+  # three unsymmetrical pedestals near x=3,z=10 that reduce stability.
+  # The original ring scan has radius 8 so these cannot interfere here.
+  send_chat '/forceload add 30 30'
+  send_chat '/setblock 30 149 30 thaumcraft:pedestal_arcane'
+  send_chat '/setblock 29 149 29 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 29 149 31 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 31 149 29 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 31 149 31 thaumcraft:pillar_eldritch'
+  send_chat '/setblock 30 151 30 thaumcraft:infusion_matrix'
+  send_chat '/data merge block 30 151 30 {active:1b,stability:0.0f}'
+  send_chat '/tp @p 30.5 154 24.5 0 28'
   sleep 7
-  send_chat '/data get block 3 151 10 stability'
-  send_chat '/data get block 3 151 10 stabilityReplenish'
-  send_chat '/data get block 3 151 10 cycleTime'
+  send_chat '/data get block 30 151 30 stability'
+  send_chat '/data get block 30 151 30 stabilityReplenish'
+  send_chat '/data get block 30 151 30 cycleTime'
+  send_chat '/execute if data block 30 151 30 {cycleTime:7} run say MATRIX_ELDRITCH_CYCLE_7_OK'
+  send_chat '/execute if data block 30 151 30 {stabilityReplenish:0.2f} run say MATRIX_ELDRITCH_REPLENISH_0_2_OK'
   capture 25-original-eldritch-stability-recharge
   echo 'CLIENT_SENT_ELDRITCH_STABILITY_TEST=YES' | tee -a client-smoke-status.txt
   # Source BETA26 BlockPillar.breakBlock yields exactly 2 corresponding

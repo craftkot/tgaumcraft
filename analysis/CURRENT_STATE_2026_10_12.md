@@ -32,3 +32,7 @@ After the original matrix invalidation screenshots 22–23, the real-client scri
 
 ## 2026-10-13 — запуск инфузии: проверка рецепта
 Добавлен source-derived pure-Java `LegacyInfusionStartPlanner`: проверяет структуру, центральный предмет, непустые боковые пьедесталы, исследования, взаимно-однозначное соответствие ингредиентов; считает аспекты с округлением вниз и минимумом множителя 0.5 по байткоду оригинала. CoreParity расширен. Пока нет интеграции с игровым рецептурным каталогом, гаунтлетом и расходом эссенции: НЕ утверждать, что инфузия готова. Проверить Actions нового HEAD. Оценка 86%.
+
+
+### 2026-10-13 isolated client stability regression
+The old real-client screenshot #25 showed `cycleTime=7` but approximately `stabilityReplenish=0.1`, NOT the predicted 0.2. The probable cause is other asymmetrically placed smoke-test pedestals within the original ±8 stabilizer scan. The revised smoke now builds a clean 4×Eldritch altar at (30,151,30), 20+ blocks from all earlier test pedestals, `/forceload`s chunk, sets `active=1,stability=0`, waits ~7s, inspects NBT and checks exact cycleTime=7 and stabilityReplenish=0.2 via `/execute if data ... run say MATRIX_ELDRITCH_..._OK`. **Must examine resulting authentic screenshot 25**, green run alone only confirms no crash. This test does not claim infusion ritual implementation.
