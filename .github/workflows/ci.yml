@@ -345,6 +345,13 @@ jobs:
         shell: bash
         run: python3 tools/verify_infusion_structure.py
 
+      - name: Verify source-era Crystal Farmer recipe runtime adapter
+        shell: bash
+        run: |
+          test -f src/neoforge/java/dev/ehtid/thaumcraft/crafting/CrystalFarmerInfusionAdapter.java
+          grep -q 'prepareInfusionStartFromWorld' src/neoforge/java/dev/ehtid/thaumcraft/crafting/CrystalFarmerInfusionAdapter.java
+          grep -q 'CrystalEssenceItem.legacyAspect' src/neoforge/java/dev/ehtid/thaumcraft/crafting/CrystalFarmerInfusionAdapter.java
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 
