@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Source integrity and non-fake gameplay guard for seven BETA26 BlockCrystals.
+
+This tests resources and source code, not a complete Minecraft world. Real
+client screenshots and server-side aura/loot behavior require separate checks.
+"""
+from pathlib import Path
+import hashlib, json
+asset=Path("src/main/resources/assets/thaumcraft")
+data=Path("src/main/resources/data/thaumcraft/loot_table/blocks")
+expected={
+    "block/crystal.png": "606cfd0ca77a5c80366412c3207b08b55a57ff2d1860d7a252dc18e3c1163093",
+    "item/crystal_planter.png": "7beb6d3e520eed694c5523d557044b589e8c2a2d970012e2ca2eb949ceeff0b4",
+}
+for file,digest in expected.items():
+    content=(asset/"textures"/file).read_bytes()
+    assert content[:8]==bytes.fromhex("89504e470d0a1a0a"),file
+    assert hashlib.sha256(content).hexdigest()==digest,file
+tags=("aer","ignis","aqua","terra","ordo","perditio","vitium")
+for tag in tags:
+    name="crystal_"+tag
+    states=json.loads((asset/"blockstates"/f"{name}.json").read_text())["variants"]
+    assert len(states)==16
+    assert set(states)=={f"size={n},gen={g}" for n in range(4) for g in range(1,5)}
+    assert all(states[f"size={n},gen={g}"]["model"]==
+        f"thaumcraft:block/{name}_size{n}" for n in range(4) for g in range(1,5))
+    for n in range(4):
+        model=json.loads((asset/"models/block"/f"{name}_size{n}.json").read_text())
+        assert len(model["elements"])==n+1, name
+        assert model["textures"]["all"]=="thaumcraft:block/crystal"
+        assert all(all(face.get("tintindex")==0 for face in elem["faces"].values())
+                   for elem in model["elements"])
+    item=json.loads((asset/"models/item"/f"{name}.json").read_text())
+    assert item["textures"]["layer0"]=="thaumcraft:item/crystal_planter"
+    loot=json.loads((data/f"{name}.json").read_text())
+    assert len(loot["pools"])==4
+    for size,pool in enumerate(loot["pools"]):
+        assert pool["conditions"][0]["block"]=="thaumcraft:"+name
+        assert pool["conditions"][0]["properties"]=={"size":str(size)}
+        entry=pool["entries"][0]
+        assert entry["name"]=="thaumcraft:crystal_essence"
+        assert entry["functions"][0]=={"function":"minecraft:set_count","count":size+1}
+        assert entry["functions"][1]["function"]=="minecraft:set_custom_data"
+        assert f'key:"{tag}"' in entry["functions"][1]["tag"]
+    for locale in ("en_us","ru_ru"):
+        lang=json.loads((asset/"lang"/f"{locale}.json").read_text())
+        assert lang["block.thaumcraft."+name]
+        assert lang["item.thaumcraft."+name]
+sources={
+"src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java":
+    ("LegacyBlockCrystalGrowthRules.canGrow","aura.drainFlux","aura.drainVis"),
+"src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraSavedData.java":
+    ("public float drainFlux","public float getFlux","public void polluteFlux")}
+for src,parts in sources.items():
+    code=Path(src).read_text()
+    for part in parts: assert part in code,(src,part)
+print("BETA26 crystal world assets: 7 variants, 16 states, source PNGs, aspect loot OK")

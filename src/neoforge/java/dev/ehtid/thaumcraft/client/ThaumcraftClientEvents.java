@@ -11,6 +11,9 @@ import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.client.PedestalItemRenderer;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
+import net.minecraft.world.item.BlockItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
 import net.minecraft.world.item.DyeColor;
@@ -46,6 +49,21 @@ public final class ThaumcraftClientEvents {
         event.register(ThaumcraftMenus.RESEARCH_TABLE.get(), ResearchTableScreen::new);
     }
 
+    /** BETA26 BlockCrystal paints its original uncolored mesh by Aspect. */
+    @SubscribeEvent
+    public static void registerCrystalBlockColorHandlers(RegisterColorHandlersEvent.Block event) {
+        AspectRegistry aspects = new AspectRegistry();
+        event.register((state, world, pos, tint) -> {
+            if (tint != 0 || !(state.getBlock() instanceof CrystalClusterBlock crystal))
+                return 0xFFFFFFFF;
+            var aspect = aspects.get(crystal.aspectTag());
+            return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
+        }, ThaumcraftBlocks.CRYSTAL_AER.get(), ThaumcraftBlocks.CRYSTAL_IGNIS.get(),
+           ThaumcraftBlocks.CRYSTAL_AQUA.get(), ThaumcraftBlocks.CRYSTAL_TERRA.get(),
+           ThaumcraftBlocks.CRYSTAL_ORDO.get(), ThaumcraftBlocks.CRYSTAL_PERDITIO.get(),
+           ThaumcraftBlocks.CRYSTAL_VITIUM.get());
+    }
+
     /** BETA26 phial overlay is tinted with its contained Aspect color. */
     @SubscribeEvent
     public static void registerItemColorHandlers(RegisterColorHandlersEvent.Item event) {
@@ -66,6 +84,19 @@ public final class ThaumcraftClientEvents {
             event.register((stack, tintIndex) ->
                     tintIndex == 0 ? rgba : 0xFFFFFFFF,
                     ThaumcraftItems.NITOR.get(dye).get());
+        }
+
+        // All original seven placer icons are dyed by their owning block Aspect.
+        for (var item : java.util.List.of(
+                ThaumcraftItems.CRYSTAL_AER.get(), ThaumcraftItems.CRYSTAL_IGNIS.get(),
+                ThaumcraftItems.CRYSTAL_AQUA.get(), ThaumcraftItems.CRYSTAL_TERRA.get(),
+                ThaumcraftItems.CRYSTAL_ORDO.get(), ThaumcraftItems.CRYSTAL_PERDITIO.get(),
+                ThaumcraftItems.CRYSTAL_VITIUM.get())) {
+            if (item.getBlock() instanceof CrystalClusterBlock crystal) {
+                var aspect = aspects.get(crystal.aspectTag());
+                final int color = aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
+                event.register((stack, tintIndex) -> tintIndex==0 ? color : 0xFFFFFFFF, item);
+            }
         }
 
         // TC6 crystals tint their original white translucent icon by the

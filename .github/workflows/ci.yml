@@ -354,6 +354,10 @@ jobs:
           grep -q 'prepareInfusionStartFromWorld' src/neoforge/java/dev/ehtid/thaumcraft/crafting/CrystalFarmerInfusionAdapter.java
           grep -q 'CrystalEssenceItem.legacyAspect' src/neoforge/java/dev/ehtid/thaumcraft/crafting/CrystalFarmerInfusionAdapter.java
 
+      - name: Verify original BlockCrystal registrations, textures and drops
+        shell: bash
+        run: python3 tools/verify_crystal_assets.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

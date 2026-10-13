@@ -81,6 +81,46 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         return chunk == null ? 0.0F : chunk.vis();
     }
 
+    public float getFlux(BlockPos pos) {
+        AuraChunk c = getChunk(pos);
+        return c == null ? 0.0F : c.flux();
+    }
+
+    public int getBase(BlockPos pos) {
+        AuraChunk c = getChunk(pos);
+        return c == null ? 0 : c.base();
+    }
+
+    /** AuraHelper.drainFlux: same per-chunk capping as Vis. */
+    public float drainFlux(BlockPos pos, float amount, boolean simulate) {
+        if (!Float.isFinite(amount) || amount <= 0.0F) return 0.0F;
+        long key = key(pos);
+        AuraChunk c = chunks.get(key);
+        if (c == null) return 0.0F;
+        float removed = Math.min(amount, c.flux());
+        if (!simulate) {
+            chunks.put(key, new AuraChunk(c.base(), c.vis(),
+                    Math.max(0.0F, c.flux()-removed)));
+            setDirty();
+        }
+        return removed;
+    }
+
+    public void addVis(BlockPos pos, float units) {
+        if (!Float.isFinite(units) || units <= 0) return;
+        modifyVis(pos, units, false); // unknown aura chunks stay unknown
+    }
+
+    /** BETA26 polluteAura adds flux, including at starved crystal sites. */
+    public void polluteFlux(BlockPos pos, float amount) {
+        if (!Float.isFinite(amount) || amount <= 0.0F) return;
+        long key=key(pos);
+        AuraChunk c=chunks.get(key);
+        if (c==null) return; // avoid manufactured aura on uninitialized chunks
+        chunks.put(key,new AuraChunk(c.base(),c.vis(),c.flux()+amount));
+        setDirty();
+    }
+
     /** Exact population boundary used by the future BETA26 aura generator. */
     public void putChunk(BlockPos pos, short base, float vis, float flux) {
         chunks.put(key(pos), new AuraChunk(base, finiteNonNegative(vis), finiteNonNegative(flux)));

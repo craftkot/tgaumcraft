@@ -243,5 +243,19 @@
   "block.thaumcraft.stone_ancient": "Ancient Stone",
   "item.thaumcraft.stone_ancient": "Ancient Stone",
   "block.thaumcraft.stone_eldritch_tile": "Eldritch Stone",
-  "item.thaumcraft.stone_eldritch_tile": "Eldritch Stone"
+  "item.thaumcraft.stone_eldritch_tile": "Eldritch Stone",
+  "block.thaumcraft.crystal_aer": "Air Crystal Cluster",
+  "item.thaumcraft.crystal_aer": "Air Crystal Cluster",
+  "block.thaumcraft.crystal_ignis": "Fire Crystal Cluster",
+  "item.thaumcraft.crystal_ignis": "Fire Crystal Cluster",
+  "block.thaumcraft.crystal_aqua": "Water Crystal Cluster",
+  "item.thaumcraft.crystal_aqua": "Water Crystal Cluster",
+  "block.thaumcraft.crystal_terra": "Earth Crystal Cluster",
+  "item.thaumcraft.crystal_terra": "Earth Crystal Cluster",
+  "block.thaumcraft.crystal_ordo": "Order Crystal Cluster",
+  "item.thaumcraft.crystal_ordo": "Order Crystal Cluster",
+  "block.thaumcraft.crystal_perditio": "Entropy Crystal Cluster",
+  "item.thaumcraft.crystal_perditio": "Entropy Crystal Cluster",
+  "block.thaumcraft.crystal_vitium": "Flux Crystal Cluster",
+  "item.thaumcraft.crystal_vitium": "Flux Crystal Cluster"
 }

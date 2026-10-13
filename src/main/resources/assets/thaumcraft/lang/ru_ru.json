@@ -243,5 +243,19 @@
   "block.thaumcraft.stone_ancient": "Древний камень",
   "item.thaumcraft.stone_ancient": "Древний камень",
   "block.thaumcraft.stone_eldritch_tile": "Потусторонний камень",
-  "item.thaumcraft.stone_eldritch_tile": "Потусторонний камень"
+  "item.thaumcraft.stone_eldritch_tile": "Потусторонний камень",
+  "block.thaumcraft.crystal_aer": "Кристалл воздуха",
+  "item.thaumcraft.crystal_aer": "Кристалл воздуха",
+  "block.thaumcraft.crystal_ignis": "Кристалл огня",
+  "item.thaumcraft.crystal_ignis": "Кристалл огня",
+  "block.thaumcraft.crystal_aqua": "Кристалл воды",
+  "item.thaumcraft.crystal_aqua": "Кристалл воды",
+  "block.thaumcraft.crystal_terra": "Кристалл земли",
+  "item.thaumcraft.crystal_terra": "Кристалл земли",
+  "block.thaumcraft.crystal_ordo": "Кристалл порядка",
+  "item.thaumcraft.crystal_ordo": "Кристалл порядка",
+  "block.thaumcraft.crystal_perditio": "Кристалл энтропии",
+  "item.thaumcraft.crystal_perditio": "Кристалл энтропии",
+  "block.thaumcraft.crystal_vitium": "Кристалл искажения",
+  "item.thaumcraft.crystal_vitium": "Кристалл искажения"
 }

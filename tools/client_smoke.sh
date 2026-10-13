@@ -303,6 +303,28 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/clear @p thaumcraft:stone_eldritch_tile 0'
   capture 24-original-stone-pillar-loot
   echo 'CLIENT_SENT_ORIGINAL_PILLAR_LOOT_TEST=YES' | tee -a client-smoke-status.txt
+  # Seven actual BETA26 crystal variants and persisted size/gen properties.
+  send_chat '/setblock 50 149 50 minecraft:stone'
+  send_chat '/setblock 50 150 50 thaumcraft:crystal_aer[size=0,gen=1]'
+  send_chat '/setblock 52 149 50 minecraft:stone'
+  send_chat '/setblock 52 150 50 thaumcraft:crystal_ignis[size=1,gen=2]'
+  send_chat '/setblock 54 149 50 minecraft:stone'
+  send_chat '/setblock 54 150 50 thaumcraft:crystal_aqua[size=2,gen=3]'
+  send_chat '/setblock 56 149 50 minecraft:stone'
+  send_chat '/setblock 56 150 50 thaumcraft:crystal_terra[size=3,gen=4]'
+  send_chat '/setblock 58 149 50 minecraft:stone'
+  send_chat '/setblock 58 150 50 thaumcraft:crystal_ordo[size=0,gen=1]'
+  send_chat '/setblock 60 149 50 minecraft:stone'
+  send_chat '/setblock 60 150 50 thaumcraft:crystal_perditio[size=1,gen=2]'
+  send_chat '/setblock 62 149 50 minecraft:stone'
+  send_chat '/setblock 62 150 50 thaumcraft:crystal_vitium[size=2,gen=3]'
+  send_chat '/tp @p 55 153 44 0 30'
+  sleep 3
+  capture 26-original-seven-world-crystals
+  send_chat '/loot give @p mine 50 150 50 minecraft:diamond_pickaxe'
+  send_chat '/clear @p thaumcraft:crystal_essence 0'
+  capture 27-crystal-essence-source-drop
+  echo 'CLIENT_SENT_CRYSTAL_WORLD_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt

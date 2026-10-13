@@ -120,6 +120,21 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> PILLAR_ELDRITCH = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.PILLAR_ELDRITCH, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> CRYSTAL_AER = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_AER, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_IGNIS = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_IGNIS, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_AQUA = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_AQUA, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_TERRA = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_TERRA, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_ORDO = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_ORDO, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_PERDITIO = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_PERDITIO, new Item.Properties());
+    public static final DeferredItem<BlockItem> CRYSTAL_VITIUM = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.CRYSTAL_VITIUM, new Item.Properties());
+
     /** Every BETA26 Nitor block has its OWN matching BlockItem. */
     public static final Map<DyeColor, DeferredItem<BlockItem>> NITOR =
             registerAllNitorItems();

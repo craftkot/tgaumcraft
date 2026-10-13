@@ -52,6 +52,13 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.STONE_ANCIENT.get());
                         output.accept(ThaumcraftItems.STONE_ELDRITCH_TILE.get());
                         output.accept(ThaumcraftItems.INFUSION_MATRIX.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_AER.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_IGNIS.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_AQUA.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_TERRA.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_ORDO.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_PERDITIO.get());
+                        output.accept(ThaumcraftItems.CRYSTAL_VITIUM.get());
                         // All sixteen original dyed light/heater variants.
                         for (var color : dev.ehtid.thaumcraft.port.core.LegacyNitorColors.variants()) {
                             var dye = net.minecraft.world.item.DyeColor.valueOf(

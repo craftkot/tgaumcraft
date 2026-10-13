@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
+import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
@@ -103,6 +104,36 @@ public final class ThaumcraftBlocks {
             "pillar_eldritch",
             props -> new InfusionPillarBlock(props, LegacyInfusionPillarLogic.Variant.ELDRITCH),
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    // Source BETA26 BlockCrystal: seven aspect-specific living world crystals.
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_AER = BLOCKS.registerBlock(
+            "crystal_aer", props -> new CrystalClusterBlock(props,"aer"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_IGNIS = BLOCKS.registerBlock(
+            "crystal_ignis", props -> new CrystalClusterBlock(props,"ignis"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_AQUA = BLOCKS.registerBlock(
+            "crystal_aqua", props -> new CrystalClusterBlock(props,"aqua"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_TERRA = BLOCKS.registerBlock(
+            "crystal_terra", props -> new CrystalClusterBlock(props,"terra"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_ORDO = BLOCKS.registerBlock(
+            "crystal_ordo", props -> new CrystalClusterBlock(props,"ordo"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_PERDITIO = BLOCKS.registerBlock(
+            "crystal_perditio", props -> new CrystalClusterBlock(props,"perditio"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
+    public static final DeferredBlock<CrystalClusterBlock> CRYSTAL_VITIUM = BLOCKS.registerBlock(
+            "crystal_vitium", props -> new CrystalClusterBlock(props,"vitium"),
+            BlockBehaviour.Properties.of().strength(0.25F).randomTicks()
+                    .noCollission().noOcclusion().lightLevel(state -> 1).sound(SoundType.GLASS));
 
     // BETA26 registers one separate BlockNitor for every EnumDyeColor.
     // The original names use silver/lightblue, not light_gray/light_blue.
