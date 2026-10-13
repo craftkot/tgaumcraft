@@ -64,4 +64,12 @@ sources={
 for src,parts in sources.items():
     code=Path(src).read_text()
     for part in parts: assert part in code,(src,part)
+# Regression guard against partial aura debit spawning a FULL crystal.
+cluster=Path("src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java").read_text()
+aura=Path("src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraSavedData.java").read_text()
+assert cluster.count("trySpendCrystalAura(pos,flux,10)") == 2
+assert "drained>0" not in cluster and "drained<=0" not in cluster
+assert "if (available < required) return false;" in aura
+assert "if (before == null) return false;" in aura
+assert "setDirty();" in aura
 print("BETA26 crystal world assets: 7 variants, 16 states, source PNGs, aspect loot OK")
