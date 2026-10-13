@@ -49,24 +49,24 @@ public final class LegacyInfusionFinishLogic {
 
     /**
      * BETA26 craftingFinish(ItemStack): preserve relative wear from an
-     * existing damaged central stack when the new tagged result isn't
+     * existing damaged central stack when the new damageable result isn't
      * already damaged. This conditional deliberately mirrors the bytecode:
      *
-     * if center.hasTagCompound && center.isItemDamaged:
+     * if center.isItemStackDamageable && center.isItemDamaged:
      *     f = centerDamage / centerMaxDamage
-     * if result.hasTagCompound && !result.isItemDamaged:
+     * if result.isItemStackDamageable && !result.isItemDamaged:
      *     result.setDamage((int)(resultMaxDamage * f))
      *
      * No arbitrary item damage is applied when original conditions fail.
      */
     public static int inheritedItemDamage(int centerDamage, int centerMaxDamage,
-                                          boolean centerHasTag, boolean centerDamaged,
+                                          boolean centerDamageable, boolean centerDamaged,
                                           int resultDamage, int resultMaxDamage,
-                                          boolean resultHasTag, boolean resultDamaged) {
+                                          boolean resultDamageable, boolean resultDamaged) {
         float fraction = 1.0F;
-        if (centerHasTag && centerDamaged && centerMaxDamage > 0)
+        if (centerDamageable && centerDamaged && centerMaxDamage > 0)
             fraction = (float)centerDamage / (float)centerMaxDamage;
-        if (resultHasTag && !resultDamaged) {
+        if (resultDamageable && !resultDamaged) {
             return (int)(resultMaxDamage * fraction);
         }
         return resultDamage;

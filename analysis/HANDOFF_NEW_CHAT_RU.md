@@ -674,3 +674,7 @@ Added real `PedestalBlockEntity.replaceInfusionIngredientIfUnchanged(ItemStack e
 
 ### 2026-10-13 — source conditional damage preservation on infusion output
 Audited BETA26 `TileInfusionMatrix.craftingFinish` bytecode offsets 46..132. The ItemStack output retains relative wear only under the original hasNBT/isDamaged predicates: when the central input is tagged+damaged, `f=(float)damage/(float)maxDamage`, otherwise f starts at 1. If the new output has a tag and is NOT already damaged, set its damage to `(int)(outputMaxDamage*f)`. Added deterministic `LegacyInfusionFinishLogic.inheritedItemDamage` plus CoreParity tests for ratio, truncation and branches; do not apply it blindly in live gameplay until the final output adapter is wired. No playable ritual yet.
+
+
+### 2026-10-13 — authoritative SRG mapping correction to wear branch
+Correction of the preceding note: `ItemStack.func_77984_f` is **isItemStackDamageable** (NOT hasTagCompound) and `func_77951_h` is isItemDamaged; confirmed against 1.12.2 MCP/Forge SRG mappings. The numeric `inheritedItemDamage` formula was already correct but its two boolean parameter names/docstrings were misleading; changed to `centerDamageable` and `resultDamageable`. Before wiring live ItemStack, call `isDamageableItem()` and `isDamaged()` (or exact 1.21 equivalents). Do not gate inherited durability by NBT presence. Original source bytes should override old narrative text.
