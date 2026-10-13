@@ -28,3 +28,7 @@ Source original BETA26 pillar.obj hash db048355f80d16b1c7cccbe53a17f139ab8e56aa9
 
 ### Source BETA26 live stability smoke (2026-10-12)
 After the original matrix invalidation screenshots 22–23, the real-client script now restores all four corner pillars as `pillar_eldritch`, sets `active=1, stability=0.0f`, waits seven seconds, queries actual `stability`, `stabilityReplenish` and `cycleTime` via integrated server `/data get block`, and takes real screenshot 25. Expected `stabilityReplenish=0.2`, `cycleTime=7`, stability increases; verify actual image/log independently, not implied by green workflow. No video before 90%.
+
+
+## 2026-10-13 — запуск инфузии: проверка рецепта
+Добавлен source-derived pure-Java `LegacyInfusionStartPlanner`: проверяет структуру, центральный предмет, непустые боковые пьедесталы, исследования, взаимно-однозначное соответствие ингредиентов; считает аспекты с округлением вниз и минимумом множителя 0.5 по байткоду оригинала. CoreParity расширен. Пока нет интеграции с игровым рецептурным каталогом, гаунтлетом и расходом эссенции: НЕ утверждать, что инфузия готова. Проверить Actions нового HEAD. Оценка 86%.

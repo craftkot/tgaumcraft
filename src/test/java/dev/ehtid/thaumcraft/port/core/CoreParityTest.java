@@ -96,6 +96,7 @@ public final class CoreParityTest {
         testOriginalInfusionPillars();
         testOriginalInfusionMatrixIdle();
         testOriginalInfusionStability();
+        testOriginalInfusionCraftingStart();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -4915,6 +4916,66 @@ public final class CoreParityTest {
         eq(LegacyInfusionStability.Rating.VERY_UNSTABLE,
                 LegacyInfusionStability.rating(-25,25));
     
+    }
+
+    private static void testOriginalInfusionCraftingStart() {
+        var aspects = new AspectRegistry();
+        var original = new AspectListData().add(aspects.FIRE, 13)
+                .add(aspects.ENERGY, 1).add(aspects.ENTROPY, 0);
+        var recipe = new LegacyInfusionStartPlanner.Recipe<String>(
+                "thaumcraft:infusion_test", "INFUSION@1", "center"::equals,
+                List.of(s -> s.equals("a") || s.equals("b"), "a"::equals),
+                original, 7);
+        PlayerKnowledgeData player = new PlayerKnowledgeData();
+        player.addResearch("INFUSION");
+        var supplied = List.of("a", "b");
+        eq(null, LegacyInfusionStartPlanner.prepare(false, true, "center",
+                supplied, player, recipe, 1.0F));
+        eq(null, LegacyInfusionStartPlanner.prepare(true, false, "center",
+                supplied, player, recipe, 1.0F));
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "center",
+                List.<String>of(), player, recipe, 1.0F));
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "wrong",
+                supplied, player, recipe, 1.0F));
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "center",
+                supplied, player, recipe, 1.0F)); // research stage too low
+        player.setResearchStage("INFUSION", 1);
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "center",
+                List.of("a", "c"), player, recipe, 1.0F));
+        var plan = LegacyInfusionStartPlanner.prepare(true, true, "center",
+                supplied, player, recipe, 0.1F);
+        isTrue(plan != null);
+        eq("thaumcraft:infusion_test", plan.recipeId());
+        eq(0.5F, plan.effectiveMultiplier());
+        eq(7, plan.instability());
+        eq(2, plan.occupiedSideItems().size());
+        eq(1, plan.ingredientIndices()[0]);
+        eq(0, plan.ingredientIndices()[1]);
+        var costs = plan.cost();
+        eq(6, costs.getAmount(aspects.FIRE)); // (int)(13*0.5) = 6
+        eq(0, costs.getAmount(aspects.ENERGY)); // 1*0.5 -> 0, omitted
+        eq(1, costs.size());
+        eq(13, original.getAmount(aspects.FIRE)); // never mutate source
+        eq(1, original.getAmount(aspects.ENERGY));
+        costs.add(aspects.FIRE, 1000);
+        eq(6, plan.cost().getAmount(aspects.FIRE)); // defensive copy
+        int[] mapping = plan.ingredientIndices();
+        mapping[0] = 999;
+        eq(1, plan.ingredientIndices()[0]); // defensive copy
+        var selected = LegacyInfusionStartPlanner.prepare(true, true, "center",
+                List.of("b", "a"), player, recipe, 1.25F);
+        eq(16, selected.cost().getAmount(aspects.FIRE));
+        eq(1, selected.cost().getAmount(aspects.ENERGY));
+        eq(0, selected.ingredientIndices()[0]);
+        eq(1, selected.ingredientIndices()[1]);
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "center",
+                supplied, player, recipe, Float.NaN));
+        eq(null, LegacyInfusionStartPlanner.prepare(true, true, "center",
+                supplied, player, recipe, Float.POSITIVE_INFINITY));
+        eq(0, LegacyInfusionStartPlanner.calculateEssentia(
+                new AspectListData().add(aspects.FIRE, 1), 0.5f).visSize());
+        eq(25, LegacyInfusionStartPlanner.calculateEssentia(
+                new AspectListData().add(aspects.FIRE, 20), 1.25F).visSize());
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
