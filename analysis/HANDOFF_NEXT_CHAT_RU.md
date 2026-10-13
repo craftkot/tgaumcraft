@@ -1,4 +1,7 @@
 # HANDOFF — Thaumcraft 6.1.BETA26 -> Minecraft 1.21.1 NeoForge — новый чат
+
+> **АКТУАЛЬНО НА 13.10.2026:** [короткая передача](HANDOFF_TRANSFER_2026_10_13.md) — читать первой после fresh-read `main`. Старые SHA и оценки ниже исторические. Последний базовый кодовый HEAD `2c56f66dd36e6f7a6a7dda352ccf0eae9addc058`, основная CI SUCCESS #38435467940; оценка ~86%.
+
 Дата фиксации: 2026-10-11. Язык пользователя: русский.
 Репозиторий: https://github.com/craftkot/tgaumcraft
 Ветка: main. Последний проверенный КОДОВЫЙ checkpoint: 5d85db4d6d2106c65874edfe0503b8dd71715be4.
