@@ -58,7 +58,7 @@ for tag in tags:
         assert lang["item.thaumcraft."+name]
 sources={
 "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java":
-    ("LegacyBlockCrystalGrowthRules.canGrow","aura.drainFlux","aura.drainVis"),
+    ("LegacyBlockCrystalGrowthRules.canGrow","aura.trySpendCrystalAura"),
 "src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraSavedData.java":
     ("public float drainFlux","public float getFlux","public void polluteFlux")}
 for src,parts in sources.items():
