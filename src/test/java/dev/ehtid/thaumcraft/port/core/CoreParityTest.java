@@ -99,6 +99,7 @@ public final class CoreParityTest {
         testOriginalInfusionCraftingStart();
         testOriginalInfusionEssentiaCycle();
         testOriginalInfusionIngredientCycle();
+        testOriginalInfusionCraftingFinish();
         System.out.println("Core parity tests: OK (" + assertions + " assertions)");
     }
 
@@ -5088,6 +5089,50 @@ public final class CoreParityTest {
                 LegacyInfusionIngredientCycle.cycle(List.of("b"),
                         java.util.Arrays.asList((String)null, "a"), 0,
                         matching, containers).action());
+    }
+
+    private static void testOriginalInfusionCraftingFinish() {
+        AspectRegistry aspects = new AspectRegistry();
+        AspectListData empty = new AspectListData().add(aspects.FIRE, 0);
+        isTrue(LegacyInfusionFinishLogic.ready(true, true, empty, List.of()));
+        isFalse(LegacyInfusionFinishLogic.ready(false, true, empty, List.of()));
+        isFalse(LegacyInfusionFinishLogic.ready(true, false, empty, List.of()));
+        isFalse(LegacyInfusionFinishLogic.ready(true, true,
+                new AspectListData().add(aspects.FIRE, 1), List.of()));
+        isFalse(LegacyInfusionFinishLogic.ready(true, true, empty, List.of("item")));
+        isFalse(LegacyInfusionFinishLogic.ready(true, true, null, List.of()));
+        var output = new java.util.ArrayList<>(List.of("original", "tag"));
+        var completed = LegacyInfusionFinishLogic.itemOutput(output,
+                original -> new java.util.ArrayList<>(original));
+        eq(output, completed);
+        isFalse(output == completed); // original output is COPIED
+        completed.add("modified");
+        eq(2, output.size());
+        Map<String,String> before = new java.util.LinkedHashMap<>();
+        before.put("old", "preserved");
+        before.put("special", "previous");
+        var after = LegacyInfusionFinishLogic.withTag(before,"special","new");
+        eq("preserved",after.get("old"));
+        eq("new",after.get("special"));
+        eq("previous",before.get("special")); // no mutation
+        var twice = LegacyInfusionFinishLogic.incrementEnchantment(
+                Map.of("thaumcraft:ench", 2, "minecraft:other", 5),
+                "thaumcraft:ench");
+        eq(3, twice.get("thaumcraft:ench"));
+        eq(5, twice.get("minecraft:other"));
+        var first = LegacyInfusionFinishLogic.incrementEnchantment(
+                Map.<String,Integer>of(), "thaumcraft:ench");
+        eq(1,first.get("thaumcraft:ench"));
+        var higher = LegacyInfusionFinishLogic.incrementEnchantment(
+                Map.of("thaumcraft:ench", 12), "thaumcraft:ench");
+        eq(13,higher.get("thaumcraft:ench")); // no fabricated cap
+        var clear = LegacyInfusionFinishLogic.clearedState();
+        isFalse(clear.crafting());
+        eq(0,clear.remainingEssentia().visSize());
+        eq(0,clear.recipeInstability());
+        isFalse(clear.recipeOutputPresent());
+        clear.remainingEssentia().add(aspects.FIRE, 100);
+        eq(0,clear.remainingEssentia().visSize());
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }
