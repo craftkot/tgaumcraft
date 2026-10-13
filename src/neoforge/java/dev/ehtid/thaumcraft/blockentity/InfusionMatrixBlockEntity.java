@@ -5,6 +5,9 @@ import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixLayout;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixIdle;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStability;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionStartPlanner;
+import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
+import net.minecraft.world.item.ItemStack;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -134,6 +137,38 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         stabilityReplenish = mods.replenish() + balance.replenishment();
         surroundingsInitialized = true;
         changedAndSync();
+    }
+
+    /**
+     * Read-only BETA26 craftingStart preflight over REAL world pedestals.
+     * No item/essentia is consumed and crafting stays false. Recipe MUST
+     * come from a verified original InfusionRecipe catalog; no synthetic
+     * placeholder recipe is registered or made player-accessible here.
+     *
+     * The central pedestal is at matrix Y-2; side components exclude empty
+     * pedestals and follow BETA26 [-8,8] scan order. Snapshots ensure the
+     * caller cannot alter actual pedestal stacks by modifying returned plan.
+     */
+    public LegacyInfusionStartPlanner.Prepared<ItemStack> prepareInfusionStartFromWorld(
+            PlayerKnowledgeData knowledge,
+            LegacyInfusionStartPlanner.Recipe<ItemStack> verifiedRecipe) {
+        if (level == null || level.isClientSide || !active || crafting
+                || !validLocation() || knowledge == null || verifiedRecipe == null)
+            return null;
+        if (!(level.getBlockEntity(worldPosition.below(2))
+                instanceof PedestalBlockEntity central))
+            return null;
+        ItemStack center = central.displayedItem();
+        if (center.isEmpty()) return null;
+        List<ItemStack> occupied = new ArrayList<>();
+        for (BlockPos where : nearbyPedestals()) {
+            if (level.getBlockEntity(where) instanceof PedestalBlockEntity tile) {
+                ItemStack item = tile.displayedItem();
+                if (!item.isEmpty()) occupied.add(item.copy());
+            }
+        }
+        return LegacyInfusionStartPlanner.prepare(true, true, center.copy(),
+                occupied, knowledge, verifiedRecipe, essentiaCostMult);
     }
 
     /**
