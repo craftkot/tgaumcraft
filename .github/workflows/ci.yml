@@ -25,7 +25,7 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
-          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java
+          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaJarParityTest.java
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CoreParityTest | tee /tmp/core.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalFarmerParityTest | tee /tmp/crystal-farmer.txt
           grep -q "Crystal farmer BETA26 parity: OK" /tmp/crystal-farmer.txt
@@ -33,6 +33,8 @@ jobs:
           grep -q "Crystal growth BETA26 parity: OK" /tmp/crystal-growth.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalMeshParityTest | tee /tmp/crystal-mesh.txt
           grep -q "CrystalModel seeded selection parity OK" /tmp/crystal-mesh.txt
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.EssentiaJarParityTest | tee /tmp/essentia-jar.txt
+          grep -q "BETA26 jar parity: OK" /tmp/essentia-jar.txt
           grep -Eq 'Core parity tests: OK \(([4-9][0-9]{3}|[1-9][0-9]{4,}) assertions\)' /tmp/core.txt
 
       - name: Verify source BETA26 Arcane Workbench block and item models
