@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.blockentity.ResearchTableBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.InfusionMatrixBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -45,6 +46,11 @@ public final class ThaumcraftBlockEntities {
             INFUSION_MATRIX = TYPES.register("infusion_matrix",
             () -> BlockEntityType.Builder.of(InfusionMatrixBlockEntity::new,
                     ThaumcraftBlocks.INFUSION_MATRIX.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssentiaJarBlockEntity>>
+            JAR_NORMAL = TYPES.register("jar_normal",
+            () -> BlockEntityType.Builder.of(EssentiaJarBlockEntity::new,
+                    ThaumcraftBlocks.JAR_NORMAL.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

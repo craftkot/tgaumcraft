@@ -257,5 +257,7 @@
   "block.thaumcraft.crystal_perditio": "Кристалл энтропии",
   "item.thaumcraft.crystal_perditio": "Кристалл энтропии",
   "block.thaumcraft.crystal_vitium": "Кристалл искажения",
-  "item.thaumcraft.crystal_vitium": "Кристалл искажения"
+  "item.thaumcraft.crystal_vitium": "Кристалл искажения",
+  "block.thaumcraft.jar_normal": "Банка эссенции",
+  "item.thaumcraft.jar_normal": "Банка эссенции"
 }

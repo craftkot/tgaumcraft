@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
+import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
 import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
@@ -78,6 +79,11 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<InfusionMatrixBlock> INFUSION_MATRIX = BLOCKS.registerBlock(
             "infusion_matrix", InfusionMatrixBlock::new,
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    /** BETA26 TileJarFillable, persisted world essentia. */
+    public static final DeferredBlock<EssentiaJarBlock> JAR_NORMAL = BLOCKS.registerBlock(
+            "jar_normal", EssentiaJarBlock::new,
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.GLASS));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.

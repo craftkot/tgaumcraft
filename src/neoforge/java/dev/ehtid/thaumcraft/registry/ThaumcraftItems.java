@@ -106,6 +106,9 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> INFUSION_MATRIX = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.INFUSION_MATRIX, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> JAR_NORMAL = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.JAR_NORMAL, new Item.Properties());
+
     public static final DeferredItem<BlockItem> STONE_ARCANE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.STONE_ARCANE, new Item.Properties());
     public static final DeferredItem<BlockItem> STONE_ANCIENT = ITEMS.registerSimpleBlockItem(

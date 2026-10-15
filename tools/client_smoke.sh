@@ -407,6 +407,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 31-original-crystal-server-conditions
   echo 'CLIENT_SENT_DAYLIGHT_AND_SIX_FACE_CRYSTAL_TEST=YES' | tee -a client-smoke-status.txt
 
+  # BETA26 jar: real block entity + source-shaped model. /data merge is
+  # an operator fixture, not proof of survival transport or infusion.
+  send_chat '/setblock 104 149 80 thaumcraft:jar_normal'
+  send_chat '/data merge block 104 149 80 {Aspect:"aer",AspectFilter:"aer",Amount:17s,facing:2b,blocked:0b}'
+  send_chat '/execute if data block 104 149 80 {Aspect:"aer",Amount:17s} run say JAR_NBT_17_AER_OK'
+  send_chat '/tp @p 104.5 152.5 73.5 0 28'
+  sleep 3
+  capture 32-original-jar-world-nbt
+  echo 'CLIENT_SENT_JAR_WORLD_NBT_TEST=YES' | tee -a client-smoke-status.txt
+
   # Quantify that the game camera sees new geometry; exact parity and
   # absence of checkerboard models still require screenshot inspection.
   # Before/after share camera/time and minimize ambient variation.
