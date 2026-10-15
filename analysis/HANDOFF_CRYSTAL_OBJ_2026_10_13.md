@@ -40,3 +40,11 @@ Verified original JAR SHA256 9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e2
 - CrystalClusterBlock.hasCrystalSupport uses exactly the same adjacent rock/sturdy predicate as canSurvive. SeededCrystalBakedModel collects every support face into NeoForge ModelData and emits independent source OBJ shard geometry for each active face. No synthetic geometry or generated placeholder items.
 - Commit 90ed549ca59bc2a792022bfaf919816ae46a0f13 implements six faces; subsequent tint guard keeps original Aspect coloration. Check latest main and CI/real-client smoke before claiming actual screenshots are source-exact.
 - Not yet confirmed visually: translucency/color/normal shading and original outline. Estimate remains ~86% until genuine in-game comparison.
+
+## 2026-10-15 — Actual Minecraft visual gameplay audit
+
+User explicitly requested real Minecraft gameplay verification, not merely compilation. Fresh HEAD at this stage: d3ffd2d7c69829feaa117310ca925b71921bc45c; latest CI #38750480305 success and client #38750114587 success (previous code HEAD 90ed549c).
+
+Inspection of actual embedded thumbnail screenshot #26 in client run #38750114587: seven stone pedestals/supports are visible against an ocean in dusk lighting; crystals are very small and cannot be visually validated or compared with original BETA26. #25 confirms actual in-game message MATRIX_ELDRITCH_REPLENISH_0_2_OK. A green process exit is not the same as full parity.
+
+Enhance tools/client_smoke.sh with a daylight/clear weather, fixed-camera, F1 HUD-hidden before/after crystal capture (#28 empty, #29 three same-size crystals at distinct position seeds), and separate #30 multi-face plus wall-only crystals with actual server-side conditional confirmations (#31). Existing core gameplay checks, first 27 screenshots and artifact upload preserved. Emit pixel-change metric (not a visual-parity claim). Client Actions must be triggered by the script change and by future crystal renderer code changes. Compare actual screenshots and errors after the run, then make fixes. Do not raise estimate above ~86% for testing alone or claim infusion works.

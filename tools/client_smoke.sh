@@ -324,6 +324,69 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/loot give @p mine 50 150 50 minecraft:diamond_pickaxe'
   send_chat '/clear @p thaumcraft:crystal_essence 0'
   capture 27-crystal-essence-source-drop
+
+  # DEDICATED VISUAL REGRESSION: previous crystal screenshots were shot
+  # against an ocean at dusk and could not prove any shard was rendered.
+  # Fix time/lighting, freeze the weather, isolate same-size crystals and
+  # capture before/after frames with the camera at exactly one position.
+  send_chat '/time set noon'
+  send_chat '/weather clear'
+  send_chat '/gamerule doDaylightCycle false'
+  send_chat '/gamerule doWeatherCycle false'
+  send_chat '/forceload add 80 80'
+  send_chat '/fill 78 149 80 82 149 80 minecraft:stone'
+  send_chat '/gamemode spectator'
+  send_chat '/tp @p 80.5 152.5 73.5 0 30'
+  sleep 5
+  xdotool key F1
+  sleep 2
+  capture 28-daylight-empty-crystal-test
+  xdotool key F1
+
+  # All source BETA26 Air crystals are size=3 / gen=4, while their
+  # position seeds differ. Screenshot 29 must differ from baseline 28
+  # by THREE actual crystal meshes, not placeholder colored rectangles.
+  send_chat '/setblock 78 150 80 thaumcraft:crystal_aer[size=3,gen=4]'
+  send_chat '/setblock 80 150 80 thaumcraft:crystal_aer[size=3,gen=4]'
+  send_chat '/setblock 82 150 80 thaumcraft:crystal_aer[size=3,gen=4]'
+  send_chat '/tp @p 80.5 152.5 73.5 0 30'
+  sleep 4
+  xdotool key F1
+  sleep 2
+  capture 29-daylight-original-position-seeded-crystals
+  xdotool key F1
+
+  # A second, physically separate build tests multi-face attachment:
+  # two side stones and a floor stone at one crystal site.
+  # The same source OBJ model must show 3 independently seeded sets of
+  # size+1 shards. Another crystal tests wall-only survival.
+  send_chat '/forceload add 96 80'
+  send_chat '/setblock 94 149 80 minecraft:stone'
+  send_chat '/setblock 93 150 80 minecraft:stone'
+  send_chat '/setblock 94 150 79 minecraft:stone'
+  send_chat '/setblock 94 150 80 thaumcraft:crystal_ignis[size=3,gen=4]'
+  send_chat '/setblock 98 150 80 minecraft:stone'
+  send_chat '/setblock 99 150 80 thaumcraft:crystal_aqua[size=2,gen=3]'
+  send_chat '/tp @p 96.5 153.0 73.5 0 28'
+  sleep 5
+  xdotool key F1
+  sleep 2
+  capture 30-daylight-multiface-and-wall-crystal
+  xdotool key F1
+  send_chat '/execute if block 94 150 80 thaumcraft:crystal_ignis[size=3,gen=4] run say CRYSTAL_MULTIFACE_PRESENT_OK'
+  send_chat '/execute if block 99 150 80 thaumcraft:crystal_aqua[size=2,gen=3] run say CRYSTAL_WALL_ONLY_PRESENT_OK'
+  capture 31-original-crystal-server-conditions
+  echo 'CLIENT_SENT_DAYLIGHT_AND_SIX_FACE_CRYSTAL_TEST=YES' | tee -a client-smoke-status.txt
+
+  # Quantify that the game camera sees new geometry; exact parity and
+  # absence of checkerboard models still require screenshot inspection.
+  # Before/after share camera/time and minimize ambient variation.
+  compare -metric AE -fuzz 8% \
+    client-smoke/screenshots/28-daylight-empty-crystal-test.png \
+    client-smoke/screenshots/29-daylight-original-position-seeded-crystals.png \
+    null: > client-smoke/crystal-image-diff.txt 2>&1 || true
+  echo -n 'REAL_CLIENT_CRYSTAL_BEFORE_AFTER_PIXEL_CHANGE=' | tee -a client-smoke-status.txt
+  cat client-smoke/crystal-image-diff.txt | tee -a client-smoke-status.txt
   echo 'CLIENT_SENT_CRYSTAL_WORLD_TEST=YES' | tee -a client-smoke-status.txt
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else

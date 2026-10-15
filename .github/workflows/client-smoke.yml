@@ -8,6 +8,9 @@ on:
       - 'tools/client_smoke.sh'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/CrucibleFluidRenderer.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientEvents.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/SeededCrystalBakedModel.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/CrystalModelEvents.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyCrystalMeshSelection.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/CrucibleBlockEntity.java'
       - 'src/main/resources/assets/thaumcraft/models/item/crucible.json'
       # Real projectile code/registration must also trigger genuine client testing.
