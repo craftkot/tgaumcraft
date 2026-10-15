@@ -74,7 +74,16 @@ assert "ModelResourceLocation.standalone(" in model_events
 assert "BlockModelShaper.stateToModelLocation(state)" in model_events
 assert "new SeededCrystalBakedModel(prior, parts)" in model_events
 assert "state.getSeed(pos)" in wrapper
-assert "LegacyCrystalMeshSelection.select(size, seed)" in wrapper
+assert "LegacyCrystalMeshSelection.selectForFace(size, seed, face)" in wrapper
+assert "LegacyCrystalMeshSelection.orient(face, p)" in wrapper
+assert "LegacyCrystalMeshSelection.orientNormal(face, n)" in wrapper
+assert "SUPPORT_FACES" in wrapper
+assert "CrystalClusterBlock.hasCrystalSupport" in wrapper
+assert "stride == 8" in wrapper
+source=Path("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyCrystalMeshSelection.java").read_text()
+assert all(f"{face}({offset})" in source for face,offset in
+    (("UP",0),("DOWN",5),("EAST",10),("WEST",15),("NORTH",20),("SOUTH",25)))
+assert "public static Point orient(Face face, Point p)" in source
 assert "originalModel.getQuads" in wrapper  # fallback on unavailable model data
 sources={
 "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java":

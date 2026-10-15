@@ -49,15 +49,19 @@ public final class CrystalClusterBlock extends Block {
         BlockState state=defaultBlockState();
         return state.canSurvive(ctx.getLevel(),ctx.getClickedPos())?state:null;
     }
+    /** World and renderer MUST use identical attached-face criteria. */
+    public static boolean hasCrystalSupport(BlockGetter level, BlockPos pos, Direction d) {
+        BlockPos side=pos.relative(d);
+        BlockState support=level.getBlockState(side);
+        return (support.is(BlockTags.BASE_STONE_OVERWORLD)
+                ||support.is(Blocks.COBBLESTONE)||support.is(Blocks.DEEPSLATE)
+                ||support.is(Blocks.STONE_BRICKS))
+                && support.isFaceSturdy(level,side,d.getOpposite());
+    }
+
     private static boolean touchesStone(LevelReader level,BlockPos pos) {
-        for(Direction d:Direction.values()) {
-            BlockPos side=pos.relative(d);
-            BlockState support=level.getBlockState(side);
-            if((support.is(BlockTags.BASE_STONE_OVERWORLD)
-                    ||support.is(Blocks.COBBLESTONE)||support.is(Blocks.DEEPSLATE)
-                    ||support.is(Blocks.STONE_BRICKS))
-                    && support.isFaceSturdy(level,side,d.getOpposite())) return true;
-        }
+        for(Direction d:Direction.values())
+            if(hasCrystalSupport(level,pos,d)) return true;
         return false;
     }
     @Override public boolean canSurvive(BlockState state,LevelReader world,BlockPos pos) {
