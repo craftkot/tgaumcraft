@@ -14,6 +14,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
 import dev.ehtid.thaumcraft.registry.ThaumcraftRecipes;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.SalisMundusTransformQueue;
+import dev.ehtid.thaumcraft.world.ThaumcraftAuraWorldEvents;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.NeoForge;
@@ -44,5 +45,6 @@ public final class ThaumcraftPort {
         NeoForge.EVENT_BUS.addListener(FirstStepsPlayerEvents::onCrafted);
         NeoForge.EVENT_BUS.addListener(SalisMundusTransformQueue::onServerTick);
         NeoForge.EVENT_BUS.addListener(SalisMundusTransformQueue::onServerStopped);
+        NeoForge.EVENT_BUS.addListener(ThaumcraftAuraWorldEvents::onServerTick);
     }
 }

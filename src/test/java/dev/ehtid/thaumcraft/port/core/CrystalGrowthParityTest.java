@@ -37,6 +37,17 @@ public final class CrystalGrowthParityTest {
     yes(LegacyBlockCrystalGrowthRules.spreadOffset(-1,1,1));
     no(LegacyBlockCrystalGrowthRules.spreadOffset(0,0,0));
     no(LegacyBlockCrystalGrowthRules.spreadOffset(0,2,0));
+    eq("PLAINS", LegacyModernBiomeCompatibility.originalConstant("minecraft:plains"));
+    eq("ICE_PLAINS", LegacyModernBiomeCompatibility.originalConstant("minecraft:snowy_plains"));
+    eq("HELL", LegacyModernBiomeCompatibility.originalConstant("minecraft:nether_wastes"));
+    eq(null, LegacyModernBiomeCompatibility.originalConstant("minecraft:cherry_grove"));
+    eq(null, LegacyModernBiomeCompatibility.originalConstant("modded:forest"));
+    eq(0.5F, LegacyModernBiomeCompatibility.auraModifier("modded:forest"));
+    eq(LegacyVanillaBiomeTypes.auraModifier("PLAINS"),
+        LegacyModernBiomeCompatibility.auraModifier("minecraft:plains"));
+    eq(LegacyVanillaBiomeTypes.auraModifier("OCEAN"),
+        LegacyModernBiomeCompatibility.auraModifier("minecraft:ocean"));
+    eq(150, AuraGenerationLogic.generatedBase(.3F,.3F,.3F,.3F,.3F,0.0D));
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
   }
   private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
