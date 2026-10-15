@@ -13,6 +13,10 @@ on:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyCrystalMeshSelection.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/CrucibleBlockEntity.java'
       - 'src/main/resources/assets/thaumcraft/models/item/crucible.json'
+      - 'src/main/resources/assets/thaumcraft/models/block/arcane_workbench.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/arcane_workbench.json'
+      - 'src/main/resources/assets/thaumcraft/blockstates/arcane_workbench.json'
+      - 'src/main/resources/assets/thaumcraft/textures/block/arcane_workbench_*'
       # Real projectile code/registration must also trigger genuine client testing.
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/AlumentumProjectile.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/AlumentumItem.java'

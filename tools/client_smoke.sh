@@ -158,6 +158,23 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/setblock 0 149 3 thaumcraft:crucible'
   sleep 5
   capture 08-actual-crucible-block
+  # Client-side regression for the original six-element BETA26 Arcane
+  # Workbench model and the registered BlockItem. Old real Minecraft logs
+  # reported missing thaumcraft:arcane_workbench# and its item model.
+  send_chat '/fill 10 148 5 13 148 8 minecraft:stone'
+  send_chat '/setblock 12 149 7 thaumcraft:arcane_workbench'
+  send_chat '/gamemode spectator'
+  send_chat '/tp @p 12.5 151.5 3.5 0 32'
+  sleep 3
+  capture 08a-source-arcane-workbench-world-model
+  send_chat '/gamemode creative'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:arcane_workbench 1'
+  xdotool key --clearmodifiers 1
+  sleep 3
+  capture 08b-source-arcane-workbench-item-model
+  send_chat '/tp @p 0.5 149 0.5 0 27'
+  echo 'CLIENT_SENT_ARCANE_WORKBENCH_RENDER_TEST=YES' | tee -a client-smoke-status.txt
+
   echo 'CLIENT_SENT_SETBLOCK=YES' | tee -a client-smoke-status.txt
 
   # Freeze the camera using vanilla spectator mode. A precisely identical

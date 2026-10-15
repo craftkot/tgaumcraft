@@ -35,6 +35,33 @@ jobs:
           grep -q "CrystalModel seeded selection parity OK" /tmp/crystal-mesh.txt
           grep -Eq 'Core parity tests: OK \(([4-9][0-9]{3}|[1-9][0-9]{4,}) assertions\)' /tmp/core.txt
 
+      - name: Verify source BETA26 Arcane Workbench block and item models
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, hashlib
+          from pathlib import Path
+          root=Path('src/main/resources/assets/thaumcraft')
+          states=json.loads((root/'blockstates/arcane_workbench.json').read_text())
+          assert states['variants']=={'':{'model':'thaumcraft:block/arcane_workbench'}}
+          model=json.loads((root/'models/block/arcane_workbench.json').read_text())
+          assert model['ambientocclusion'] is False
+          assert len(model['elements'])==6
+          assert model['elements'][0]['from']==[0,8,0]
+          assert model['elements'][0]['to']==[16,16,16]
+          assert model['elements'][-1]['from']==[0,0,0]
+          assert model['elements'][-1]['to']==[16,4,16]
+          assert json.loads((root/'models/item/arcane_workbench.json').read_text())['parent']=='thaumcraft:block/arcane_workbench'
+          expected={
+            'arcane_workbench_side':'45f376e6b7f4317a855133df4f4b196f0ef053113ebbe534643f21684c115207',
+            'arcane_workbench_top':'e4aa96a67d21b5a305911f0e81d8c196f1da1628411711157717199b012a9c17'
+          }
+          for name,digest in expected.items():
+            content=(root/'textures/block'/ (name+'.png')).read_bytes()
+            assert hashlib.sha256(content).hexdigest()==digest, name
+          print('Original BETA26 Arcane Workbench model and textures: OK')
+          PY
+
       - name: Check FIRSTSTEPS loader sources
         shell: bash
         run: |
