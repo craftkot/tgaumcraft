@@ -16,6 +16,8 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftEntities.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraSavedData.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyModernBiomeCompatibility.java'
       - 'src/main/resources/assets/thaumcraft/models/block/crystal_*'
       - 'src/main/resources/assets/thaumcraft/blockstates/crystal_*'
       - 'src/main/resources/assets/thaumcraft/textures/block/crystal.png'
