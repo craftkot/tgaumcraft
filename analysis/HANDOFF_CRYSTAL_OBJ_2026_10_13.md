@@ -13,3 +13,15 @@ Next: Inspect current Actions; fix any model parsing/render issues; complete per
 ## 2026-10-13 follow-up: original per-face seeded OBJ shard choice
 HEAD at start of this note: `e81305dcd7f3c34c5119342403c25998a5f1628a`.
 Original BETA26 `CrystalModel.getQuads` bytecode has SIX branches (UP/DOWN/EAST/WEST/NORTH/SOUTH). Each constructs the eight OBJ groups [s014,s015,s016,s017,s018,s019,s024,s026], shuffles with a *fresh* `new java.util.Random(seed)` via `Collections.shuffle`, picks exactly `size+1` shards and rotates them into the appropriate attached face. New pure core `LegacyCrystalMeshSelection.select(int,long)` exactly reproduces this Java seeded shuffle; new `CrystalMeshParityTest` validates known original Java Random sequences (seed 0, 42), growth sizes, deterministic repeat; CI executes it. The live NeoForge models currently use the original OBJ geometry but fixed first N groups; next step must wire this dynamic selection into the client model baker and restore per-face rotations. No video below 90%. Preserve honest 86% estimate. Recheck latest main and Actions first.
+
+## 2026-10-15: seeded OBJ shards now wired to NeoForge
+
+Commit 511844dd134d48fe55307038ddbe9641284cc88e:
+- Registered eight standalone NeoForge OBJ models, one group visible per model, retaining the byte-identical original crystal_source.obj.
+- Added CrystalModelEvents with ModelEvent.RegisterAdditional and ModifyBakingResult. Wraps all seven crystal types and each of their 16 BlockState variants.
+- Added SeededCrystalBakedModel: obtains position seed from BlockState.getSeed(BlockPos) through immutable ModelData and invokes existing exact LegacyCrystalMeshSelection.select(size, seed) for size+1 source shards. If world seed is absent the previous static baked model remains as fallback.
+- Expanded tools/verify_crystal_assets.py to validate the eight models and hook integrity.
+- Thaumcraft Port CI #38688544989 passed: source validation, core test, NeoForge build, dedicated server smoke and JAR upload.
+- Real-client test #38688545040 was in progress at time of note. Inspect actual client screenshots and logs before claiming color/shard visual parity.
+- Outstanding: original six support-face orientations, per-face rotations, and verified Aspect tint/lighting. The 2026-10-15 earlier real client screenshot #26 was dark and insufficient to judge shard fidelity.
+- Overall completion estimate stays ~86%.
