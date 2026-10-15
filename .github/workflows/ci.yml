@@ -387,6 +387,9 @@ jobs:
         shell: bash
         run: python3 tools/verify_crystal_assets.py
 
+      - name: Verify original scanner and Salis Mundus resources
+        run: python3 tools/verify_source_item_models.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

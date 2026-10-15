@@ -68,3 +68,16 @@ Run https://github.com/craftkot/tgaumcraft/actions/runs/38779831048 on commit 3a
 - No fatal client crash. Pre-existing missing workbench item/blockstate, Salis Mundus and Thaumometer model warnings remain in this 3a32d client log because the workbench repair was committed later.
 - Real source-exact Arcane Workbench geometry and textures plus item model were committed at `79d64fac710da3edf3f886a839fce12a7898e754`. Main CI `38781499183` passed. Separate genuine client run `38781499304` checks in-game screenshots #08a/#08b; inspect its final result/diagnostics before claiming the client-side fix.
 - Remaining missing models: salis_mundus and thaumometer (do not claim resolved). Next need inspect screen captures from 38781499304 and finish these missing source resources; then return to actual infusion crafting. Estimate of overall project still ~86%.
+
+## 2026-10-15 evening — recovered ORIGINAL scanner and Salis assets
+
+Fresh HEAD at start: dd318cb9af184e466e902c6ef1b216fa7eb22514. Source file is user-provided `/ThaumcraftPort/original_BETA26.jar`, SHA256 `9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f`. Earlier genuine Minecraft client #38781499304 completed SUCCESS; screenshot #08a shows actual Arcane Workbench block and #08b actual BlockItem (no more placeholder). Before this stage client logs named missing `thaumcraft:item/salis_mundus` and `thaumcraft:item/thaumometer`.
+
+Restored bytes EXACT from original BETA26 JAR to modern resource locations (never commit the entire original JAR):
+- `models/item/scanner.obj`: 56 original OBJ faces, SHA256 `6adbc3c4a4ec444e2b07c0bdde3566203158a660676187747f1c447a9e130f49`, Git blob `2db835f5e9437dc50f4ebf9d02e88636344855c6`.
+- `textures/item/scanner.png` SHA256 `6267ea1ede77e04f66e506a4ca997d795ee3d0c7be4009bd6ef49abd5ff6442b`.
+- `textures/item/scanscreen.png` SHA256 `68de90dafd6a72aed37166ac774017dbcf935215236c862b0c71056bc47c75f5`.
+- `textures/item/salis_mundus.png` SHA256 `2e193df6de2f3237d1ff54b04a66a9b0332429156912e19e11baadb5022e2514`, animation frametime 2. Modern Salis item uses `minecraft:item/generated` layer0.
+- `models/item/thaumometer.json` binds the untouched OBJ geometry to the two original PNGs via a NeoForge-adapted MTL `models/item/scanner.mtl`, `flip_v` and legacy-inspired context transforms. No fake icon, no replacement cube.
+- Added `tools/verify_source_item_models.py` to CI for exact source hashes and geometry, new real-client screens `08c` scanner-in-hand and `08d` Salis-in-hand, and a client-log missing-model error gate.
+- The client build and actual render still must pass after commit before claiming this fix is complete. If loader model fails inspect Github Actions client.log and latest.log. Test remaining model translucency and source GUI transforms by screenshots, then tackle unfinished infusion. Completion estimate held at ~86%.

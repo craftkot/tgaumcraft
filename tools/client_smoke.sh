@@ -172,6 +172,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool key --clearmodifiers 1
   sleep 3
   capture 08b-source-arcane-workbench-item-model
+
+  # Source BETA26 scanner: true 56-face OBJ with animated glass screen.
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'
+  xdotool key --clearmodifiers 1
+  sleep 3
+  capture 08c-original-scanner-obj-in-hand
+  # Salis Mundus must show the 16-frame original animated texture.
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:salis_mundus 1'
+  xdotool key --clearmodifiers 1
+  sleep 3
+  capture 08d-original-animated-salis-mundus-in-hand
+  echo 'CLIENT_SENT_ORIGINAL_SCANNER_AND_SALIS_RENDER_TEST=YES' | tee -a client-smoke-status.txt
   send_chat '/tp @p 0.5 149 0.5 0 27'
   echo 'CLIENT_SENT_ARCANE_WORKBENCH_RENDER_TEST=YES' | tee -a client-smoke-status.txt
 
@@ -414,6 +426,12 @@ if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "
   echo 'CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
   exit 1
 fi
+# Refuse misleading green runs where source item models were not loaded.
+if grep -Eiq "Unable to load model: 'thaumcraft:item/(salis_mundus|thaumometer)'|Failed to load model.*(scanner.obj|scanner.mtl)|Exception loading.*(scanner.obj|scanner.mtl)" client-smoke/client.log run/logs/latest.log 2>/dev/null; then
+  echo 'CLIENT_ORIGINAL_ITEM_MODEL_ERROR=YES' | tee -a client-smoke-status.txt
+  exit 1
+fi
+echo 'CLIENT_ORIGINAL_ITEM_MODELS_PRESENT=YES' | tee -a client-smoke-status.txt
 if [ "${CAPTURE_VIDEO:-0}" = "1" ]; then
 # SIGTERM FFmpeg gracefully so the MP4 is finalized and browser-playable.
 if [ -n "$VIDEO_PID" ]; then
