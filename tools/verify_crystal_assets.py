@@ -56,6 +56,26 @@ for tag in tags:
         lang=json.loads((asset/"lang"/f"{locale}.json").read_text())
         assert lang["block.thaumcraft."+name]
         assert lang["item.thaumcraft."+name]
+# Eight source OBJ groups must be baked separately and selected at
+# runtime using the ORIGINAL java.util.Random(seed) permutation.
+groups=("s014","s015","s016","s017","s018","s019","s024","s026")
+for target in groups:
+    shard=json.loads((asset/"models/block"/f"crystal_shard_{target}.json").read_text())
+    assert shard["loader"]=="neoforge:obj"
+    assert shard["model"]=="thaumcraft:models/block/crystal_source.obj"
+    assert shard["mtl_override"]=="thaumcraft:models/block/crystal_source.mtl"
+    assert shard["render_type"]=="minecraft:translucent"
+    assert shard["visibility"]=={group:(group==target) for group in groups}
+model_events=Path("src/neoforge/java/dev/ehtid/thaumcraft/client/CrystalModelEvents.java").read_text()
+wrapper=Path("src/neoforge/java/dev/ehtid/thaumcraft/client/SeededCrystalBakedModel.java").read_text()
+assert "ModelEvent.RegisterAdditional" in model_events
+assert "ModelEvent.ModifyBakingResult" in model_events
+assert "ModelResourceLocation.standalone(" in model_events
+assert "BlockModelShaper.stateToModelLocation(state)" in model_events
+assert "new SeededCrystalBakedModel(prior, parts)" in model_events
+assert "state.getSeed(pos)" in wrapper
+assert "LegacyCrystalMeshSelection.select(size, seed)" in wrapper
+assert "originalModel.getQuads" in wrapper  # fallback on unavailable model data
 sources={
 "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java":
     ("LegacyBlockCrystalGrowthRules.canGrow","aura.trySpendCrystalAura"),

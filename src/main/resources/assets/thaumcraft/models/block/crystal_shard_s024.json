@@ -1,0 +1,23 @@
+{
+  "loader": "neoforge:obj",
+  "model": "thaumcraft:models/block/crystal_source.obj",
+  "mtl_override": "thaumcraft:models/block/crystal_source.mtl",
+  "automatic_culling": false,
+  "flip_v": true,
+  "shade_quads": false,
+  "render_type": "minecraft:translucent",
+  "textures": {
+    "crystal": "thaumcraft:block/crystal",
+    "particle": "thaumcraft:block/crystal"
+  },
+  "visibility": {
+    "s014": false,
+    "s015": false,
+    "s016": false,
+    "s017": false,
+    "s018": false,
+    "s019": false,
+    "s024": true,
+    "s026": false
+  }
+}
