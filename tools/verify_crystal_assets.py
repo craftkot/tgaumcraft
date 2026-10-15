@@ -77,6 +77,7 @@ assert "state.getSeed(pos)" in wrapper
 assert "LegacyCrystalMeshSelection.selectForFace(size, seed, face)" in wrapper
 assert "LegacyCrystalMeshSelection.orient(face, p)" in wrapper
 assert "LegacyCrystalMeshSelection.orientNormal(face, n)" in wrapper
+assert "return new BakedQuad(pixels, 0," in wrapper # original CrystalModel sets tintIndex=0
 assert "SUPPORT_FACES" in wrapper
 assert "CrystalClusterBlock.hasCrystalSupport" in wrapper
 assert "stride == 8" in wrapper

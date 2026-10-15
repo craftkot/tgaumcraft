@@ -134,7 +134,7 @@ public final class SeededCrystalBakedModel extends BakedModelWrapper<BakedModel>
             normal = Direction.getNearest((float) rotated.x(),
                     (float) rotated.y(), (float) rotated.z());
         }
-        return new BakedQuad(pixels, original.getTintIndex(),
+        return new BakedQuad(pixels, 0, // BETA26 CrystalModel gives every MeshPart tintIndex=0
                 normal, original.getSprite(), original.isShade());
     }
 

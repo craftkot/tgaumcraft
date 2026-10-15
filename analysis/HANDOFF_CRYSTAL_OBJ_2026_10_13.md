@@ -25,3 +25,18 @@ Commit 511844dd134d48fe55307038ddbe9641284cc88e:
 - Real-client test #38688545040 was in progress at time of note. Inspect actual client screenshots and logs before claiming color/shard visual parity.
 - Outstanding: original six support-face orientations, per-face rotations, and verified Aspect tint/lighting. The 2026-10-15 earlier real client screenshot #26 was dark and insufficient to judge shard fidelity.
 - Overall completion estimate stays ~86%.
+
+## 2026-10-15 continuation: exact six support faces and original tint
+
+Verified original JAR SHA256 9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f using javap on:
+- thaumcraft.client.renderers.block.CrystalModel#getQuads: six independent branches UP/DOWN/EAST/WEST/NORTH/SOUTH, seed offsets respectively +0/+5/+10/+15/+20/+25, each fresh Collections.shuffle(new Random(seed+offset)), size+1 groups.
+- thaumcraft.client.lib.obj.MeshModel#rotate: angle around axis through origin, THEN vector translation (not origin/pivot).
+- Exact source transformations, matching original bytecode:
+  UP Rx(180)+(0,1,1); DOWN identity;
+  EAST Rx(90),Ry(270)+(1,1,0); WEST Rx(90),Ry(90)+(0,1,1);
+  NORTH Rx(90)+(0,1,0); SOUTH Rx(90),Ry(180)+(1,1,1).
+- CrystalModel constructor sets all original MeshPart.tintIndex=0. Modern NeoForge wrapper must override OBJ baked quad tint with index 0 to use the existing Aspect block color.
+- src/main/java/.../LegacyCrystalMeshSelection.java now contains original Face offsets plus pure vector orientation and normal rotation; CrystalMeshParityTest checks each face, seed, and coordinate transform.
+- CrystalClusterBlock.hasCrystalSupport uses exactly the same adjacent rock/sturdy predicate as canSurvive. SeededCrystalBakedModel collects every support face into NeoForge ModelData and emits independent source OBJ shard geometry for each active face. No synthetic geometry or generated placeholder items.
+- Commit 90ed549ca59bc2a792022bfaf919816ae46a0f13 implements six faces; subsequent tint guard keeps original Aspect coloration. Check latest main and CI/real-client smoke before claiming actual screenshots are source-exact.
+- Not yet confirmed visually: translucency/color/normal shading and original outline. Estimate remains ~86% until genuine in-game comparison.
