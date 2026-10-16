@@ -6,8 +6,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.DistExecutor;
 
 /**
  * Source-era Thaumonomicon item. The playable initial chapter is rendered
@@ -22,9 +20,15 @@ public final class ThaumonomiconItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide()) {
-            DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                    () -> dev.ehtid.thaumcraft.client.FirstStepsBookScreen::open);
+            ClientOnly.open();
         }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
+    /** This nested class is not loaded by the dedicated server JVM. */
+    private static final class ClientOnly {
+        static void open() {
+            dev.ehtid.thaumcraft.client.FirstStepsBookScreen.open();
+        }
+    }
+
 }

@@ -443,6 +443,27 @@ jobs:
       - name: Verify source BASIC caster and server-only infusion activation
         run: python3 tools/verify_source_caster.py
 
+      - name: Verify authentic Thaumonomicon chapter source art and server gate
+        run: |
+          python3 - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          root=Path('src/main/resources/assets/thaumcraft')
+          assert hashlib.sha256((root/'textures/gui/gui_researchbook.png').read_bytes()).hexdigest()=='4db8e4fad6eaf1fdf486374b9402ae26fed402a920aa939c9746f60545d5f4c8'
+          item=Path('src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java').read_text()
+          screen=Path('src/neoforge/java/dev/ehtid/thaumcraft/client/FirstStepsBookScreen.java').read_text()
+          gate=Path('src/main/java/dev/ehtid/thaumcraft/port/core/FirstStepsServerProgression.java').read_text()
+          assert 'ClientOnly.open()' in item and 'FirstStepsBookScreen.open()' in item
+          assert 'PacketDistributor.sendToServer(new FirstStepsProgressPayload' in screen
+          assert 'ThaumcraftPlayerAttachments.PLAYER_DATA' in screen
+          assert 'else if (!requisitesSatisfied(k))' in gate
+          for lang in ['en_us','ru_ru']:
+              words=json.loads((root/'lang'/f'{lang}.json').read_text())
+              for k in ['title','start','advance','workbench','thaumometer','finish','completed']:
+                  assert words.get('gui.thaumcraft.firststeps.'+k)
+          print('Original book art / synced research page / server-only progression: OK')
+          PY
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 
