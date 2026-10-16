@@ -464,6 +464,24 @@ jobs:
           print('Original book art / synced research page / server-only progression: OK')
           PY
 
+      - name: Verify original yellow Nitor theory option resolves to the real BlockItem
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          options=Path('src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftOptionPools.java').read_text()
+          bridge=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftOriginalOptionResolver.java').read_text()
+          items=Path('src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftItems.java').read_text()
+          blocks=Path('src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftBlocks.java').read_text()
+          assert 'color("BlocksTC.nitor", "YELLOW")' in options
+          assert '"BlocksTC.nitor".equals(option.historicalField())' in bridge
+          assert '"YELLOW".equals(option.variant())' in bridge
+          assert 'new ItemStack(ThaumcraftItems.NITOR.get(DyeColor.YELLOW).get())' in bridge
+          assert 'NITOR_YELLOW = NITOR.get(DyeColor.YELLOW)' in items
+          assert 'NITOR_YELLOW = NITOR.get(DyeColor.YELLOW)' in blocks
+          assert 'return ItemStack.EMPTY;' in bridge
+          print('BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem')
+          PY
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

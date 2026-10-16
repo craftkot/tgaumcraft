@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftOptionPools;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftVanillaOptionIds;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -45,8 +46,14 @@ public final class NeoForgeTheorycraftOriginalOptionResolver {
                 default -> ItemStack.EMPTY;
             };
         }
-        if (option.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_COLORED_BLOCK)
-            return ItemStack.EMPTY; // Yellow Nitor block not yet registered.
+        if (option.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_COLORED_BLOCK) {
+            // Original CardInfuse option is BlocksTC.nitor.get(YELLOW), which
+            // now exists as a REAL BlockItem, not a placeholder or reroll.
+            if ("BlocksTC.nitor".equals(option.historicalField())
+                    && "YELLOW".equals(option.variant()) && option.metadata() == -1)
+                return new ItemStack(ThaumcraftItems.NITOR.get(DyeColor.YELLOW).get());
+            return ItemStack.EMPTY;
+        }
 
         String targetId = LegacyTheorycraftVanillaOptionIds.modernId(option);
         if (targetId == null || option.metadata() != -1) return ItemStack.EMPTY;
