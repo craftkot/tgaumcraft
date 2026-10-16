@@ -206,6 +206,39 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 08g-firststeps-diamond-ore-repeat-scan
   echo 'CLIENT_SENT_FIRSTSTEPS_REAL_SCAN_REGRESSION=YES' | tee -a client-smoke-status.txt
 
+  # FIRSTSTEPS integration fixture, no NBT research grants: physically pick
+  # up a dropped Crystal Essence, sleep in a genuinely placed vanilla bed
+  # (triggers PlayerWakeUpEvent), then use Salis Mundus on bookshelf.
+  # The original two hidden flags must be granted by pickup/wake listeners.
+  send_chat '/difficulty peaceful'
+  send_chat '/fill 1 149 5 3 149 12 minecraft:stone'
+  send_chat '/tp @p 2.5 150 5.5 0 45'
+  send_chat '/summon minecraft:item 2.5 150 5.5 {Item:{id:"thaumcraft:crystal_essence",count:1}}'
+  sleep 4
+  capture 08h-firststeps-real-world-crystal-pickup
+  send_chat '/item replace entity @p hotbar.0 with minecraft:red_bed 1'
+  xdotool key --clearmodifiers 1
+  xdotool click 3
+  sleep 2
+  capture 08i-firststeps-real-bed-placed
+  send_chat '/clear @p minecraft:red_bed'
+  send_chat '/time set night'
+  xdotool click 3
+  sleep 6
+  capture 08j-firststeps-post-sleep-wake
+  send_chat '/setblock 2 151 12 minecraft:bookshelf'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:salis_mundus 1'
+  send_chat '/tp @p 2.5 150 8.5 0 0'
+  xdotool key --clearmodifiers 1
+  sleep 2
+  capture 08k-firststeps-real-bookshelf-before-salis
+  xdotool click 3
+  sleep 4
+  send_chat '/execute if block 2 151 12 minecraft:air run say FIRSTSTEPS_REAL_DREAM_SALIS_BOOKSHELF_OK'
+  capture 08l-firststeps-real-bookshelf-after-salis
+  echo 'CLIENT_SENT_FIRSTSTEPS_PICKUP_WAKE_SALIS_CHAIN=YES' | tee -a client-smoke-status.txt
+
+
   echo 'CLIENT_SENT_ORIGINAL_SCANNER_AND_SALIS_RENDER_TEST=YES' | tee -a client-smoke-status.txt
   send_chat '/tp @p 0.5 149 0.5 0 27'
   echo 'CLIENT_SENT_ARCANE_WORKBENCH_RENDER_TEST=YES' | tee -a client-smoke-status.txt
