@@ -3329,17 +3329,6 @@ public final class CoreParityTest {
         isFalse(RecipeMagicDustLogic.matches(java.util.List.of(dust.get(0),dust.get(1),dust.get(2),dust.get(3),dust.get(3),dust.get(5))));
         isTrue(RecipeMagicDustLogic.returnsContainer(B)); isTrue(RecipeMagicDustLogic.returnsContainer(F)); isFalse(RecipeMagicDustLogic.returnsContainer(R));
 
-        // A forged C2S packet used to pass checkRequisites=false and
-        // advance FIRSTSTEPS for free. Server must never trust this flag.
-        var serverService = new ResearchProgressionService(BuiltInResearchCatalog.create());
-        var serverWarp = new PlayerWarpData();
-        isFalse(gate.request(k, serverWarp, serverService, false, false, false).progressed());
-        isFalse(k.isResearchKnown("FIRSTSTEPS"));
-        k.addResearch("!gotthaumonomicon");
-        isTrue(gate.request(k, serverWarp, serverService, false, false, false).progressed());
-        eq(1, k.getResearchStage("FIRSTSTEPS"));
-        isFalse(gate.request(k, serverWarp, serverService, true, false, false).progressed());
-        eq(1, k.getResearchStage("FIRSTSTEPS"));
         k.addResearch("!gotthaumonomicon"); k.addResearch("FIRSTSTEPS"); k.setResearchStage("FIRSTSTEPS",1);
         eq(FirstStepsBootstrapLogic.DustTarget.ARCANE_WORKBENCH_BLOCK, FirstStepsBootstrapLogic.dustTarget(k,"minecraft:crafting_table"));
         ArcaneWorkbenchRuntime w=new ArcaneWorkbenchRuntime();
@@ -4381,6 +4370,19 @@ public final class CoreParityTest {
     private static void testFirstStepsServerProgression() {
         PlayerKnowledgeData k=new PlayerKnowledgeData(); FirstStepsServerProgression gate=new FirstStepsServerProgression();
         eq(-2,gate.requestedStageIndex(k)); isFalse(gate.requisitesSatisfied(k)); eq(405059183,FirstStepsServerProgression.ARCANE_WORKBENCH_CRAFT_HASH);
+        // A forged C2S packet used to pass checkRequisites=false and
+        // advance FIRSTSTEPS for free. Server must never trust this flag.
+        var serverService = new ResearchProgressionService(BuiltInResearchCatalog.create());
+        var serverWarp = new PlayerWarpData();
+        isFalse(gate.request(k, serverWarp, serverService, false, false, false).progressed());
+        isFalse(k.isResearchKnown("FIRSTSTEPS"));
+        k.addResearch("!gotdream");
+        k.addResearch("!gotthaumonomicon");
+        isTrue(gate.request(k, serverWarp, serverService, false, false, false).progressed());
+        eq(1, k.getResearchStage("FIRSTSTEPS"));
+        isFalse(gate.request(k, serverWarp, serverService, true, false, false).progressed());
+        eq(1, k.getResearchStage("FIRSTSTEPS"));
+
         k.addResearch("!gotthaumonomicon"); k.addResearch("FIRSTSTEPS"); k.setResearchStage("FIRSTSTEPS",1); eq(0,gate.requestedStageIndex(k)); isFalse(gate.requisitesSatisfied(k));
         k.addResearch(FirstStepsServerProgression.ARCANE_WORKBENCH_MARKER); isTrue(gate.requisitesSatisfied(k));
         k.setResearchStage("FIRSTSTEPS",2); isFalse(gate.requisitesSatisfied(k));
