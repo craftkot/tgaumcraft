@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftOptionPools;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftVanillaOptionIds;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -29,6 +30,10 @@ public final class NeoForgeTheorycraftOriginalOptionResolver {
         if (option == null) return ItemStack.EMPTY;
         if (option.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_ITEM) {
             return switch (option.historicalField()) {
+                case "ItemsTC.alumentum" ->
+                        new ItemStack(ThaumcraftItems.ALUMENTUM.get());
+                case "ItemsTC.ingots" -> option.metadata() == 0 || option.metadata() == 2
+                        ? ThaumcraftIngotItem.create(option.metadata()) : ItemStack.EMPTY;
                 case "ItemsTC.thaumometer" ->
                         new ItemStack(ThaumcraftItems.THAUMOMETER.get());
                 case "ItemsTC.salisMundus" ->

@@ -478,6 +478,10 @@ jobs:
           assert 'new ItemStack(ThaumcraftItems.NITOR.get(DyeColor.YELLOW).get())' in bridge
           assert 'NITOR_YELLOW = NITOR.get(DyeColor.YELLOW)' in items
           assert 'NITOR_YELLOW = NITOR.get(DyeColor.YELLOW)' in blocks
+          assert 'case "ItemsTC.alumentum"' in bridge
+          assert 'case "ItemsTC.ingots" -> option.metadata() == 0 || option.metadata() == 2' in bridge
+          assert 'ThaumcraftIngotItem.create(option.metadata())' in bridge
+          assert 'tc("ItemsTC.ingots", 0)' in options and 'tc("ItemsTC.ingots", 2)' in options
           assert 'return ItemStack.EMPTY;' in bridge
           print('BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem')
           PY
