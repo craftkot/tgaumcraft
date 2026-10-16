@@ -6,6 +6,9 @@ import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.BuiltInResearchCategories;
 import dev.ehtid.thaumcraft.port.core.LegacyObjectAspectTable;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftSourceVis;
+import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftActivationEffects;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftCardFields;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftRequiredItems;
@@ -80,14 +83,24 @@ public final class NeoForgeTheorycraftActivationStager {
                     tag.getCompound("stack"));
             if (original.isEmpty()) return null;
             String id = BuiltInRegistries.ITEM.getKey(original.getItem()).toString();
-            var knownAspects = LegacyObjectAspectTable.get(ASPECTS, id);
-            if (knownAspects.size() == 0) {
-                // This is NOT equivalent to BETA26's exception fallback.
-                // An aspect-less or dynamically tagged 1.12 item cannot
-                // safely inherit arbitrary rewards from this subset.
-                return null;
+            int originalMetadata = original.is(ThaumcraftItems.INGOT.get())
+                    ? ThaumcraftIngotItem.legacyMetadata(original) : 0;
+            // Exact source OreDictionary tag totals are independent of
+            // modern 1.21 item IDs: do NOT conflate brass and thaumium.
+            int sourceVis = LegacyTheorycraftSourceVis
+                    .explicitlyTaggedVisSize(id, originalMetadata);
+            if (sourceVis >= 0) {
+                visSize = sourceVis;
+            } else {
+                var knownAspects = LegacyObjectAspectTable.get(ASPECTS, id);
+                if (knownAspects.size() == 0) {
+                    // Source getObjectTags also generates unknown aspect
+                    // results from recipes. Until that graph is ported,
+                    // reject rather than awarding an invented Vis score.
+                    return null;
+                }
+                visSize = knownAspects.visSize();
             }
-            visSize = knownAspects.visSize();
         }
 
         // 1.21 RandomSource differs from java.util.Random, but these original

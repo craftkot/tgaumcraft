@@ -25,8 +25,10 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
-          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaJarParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaSourceOrderParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/InfusionRitualLedgerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerIngredientProgressTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerFinishCheckpointTest.java
+          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaJarParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaSourceOrderParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/InfusionRitualLedgerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerIngredientProgressTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerFinishCheckpointTest.java src/test/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftSourceVisParityTest.java
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CoreParityTest | tee /tmp/core.txt
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.LegacyTheorycraftSourceVisParityTest | tee /tmp/source-vis.txt
+          grep -q "Original BETA26 CardInfuse explicit ore-tag Vis: OK" /tmp/source-vis.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalFarmerParityTest | tee /tmp/crystal-farmer.txt
           grep -q "Crystal farmer BETA26 parity: OK" /tmp/crystal-farmer.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalGrowthParityTest | tee /tmp/crystal-growth.txt
@@ -495,6 +497,11 @@ jobs:
           assert 'NeoForgeLegacyItemStackDecoder.safeDecode(original)' in serialized
           assert 'ItemStack.isSameItemSameComponents(decoded, live)' in serialized
           assert 'ThaumcraftIngotItem.create(metadata)' in decoder
+          stager=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftActivationStager.java').read_text()
+          assert 'LegacyTheorycraftSourceVis' in stager
+          assert '.explicitlyTaggedVisSize(id, originalMetadata)' in stager
+          assert 'ThaumcraftIngotItem.legacyMetadata(original)' in stager
+          assert 'knownAspects.size() == 0' in stager
           assert 'originalId.equals("thaumcraft:alumentum")' in decoder
           assert 'originalId.startsWith("thaumcraft:nitor_")' in decoder
           print('BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem')
