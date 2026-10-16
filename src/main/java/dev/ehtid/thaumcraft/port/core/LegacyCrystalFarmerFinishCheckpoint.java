@@ -16,7 +16,7 @@ import java.util.Objects;
 public final class LegacyCrystalFarmerFinishCheckpoint {
     private LegacyCrystalFarmerFinishCheckpoint() {}
 
-    public enum Phase { WAITING, RESERVED, FINISHED }
+    public enum Phase { WAITING, RESERVED, STALLED, FINISHED }
 
     public record State(Phase phase) {
         public State { Objects.requireNonNull(phase); }
@@ -39,8 +39,18 @@ public final class LegacyCrystalFarmerFinishCheckpoint {
 
     public static State initial() { return new State(Phase.WAITING); }
 
+    /**
+     * Important: a saved RESERVED state is not permission to mint an output.
+     * A chunk may have saved its reservation before the center write;
+     * recovery must stop instead of guessing whether delivery happened.
+     * Source operators can inspect STALLED, but automation cannot replay it.
+     */
     public static State restore(String saved) {
-        try { return new State(Phase.valueOf(saved)); }
-        catch (RuntimeException bad) { throw new IllegalArgumentException("Bad finish phase",bad); }
+        try {
+            Phase state = Phase.valueOf(saved);
+            return new State(state == Phase.RESERVED ? Phase.STALLED : state);
+        } catch (RuntimeException bad) {
+            throw new IllegalArgumentException("Bad finish phase", bad);
+        }
     }
 }

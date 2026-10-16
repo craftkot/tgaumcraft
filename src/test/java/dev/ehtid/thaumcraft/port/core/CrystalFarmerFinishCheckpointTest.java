@@ -23,8 +23,12 @@ public final class CrystalFarmerFinishCheckpointTest {
         bad(()->reserved.reserve(true,true,true));
         bad(()->reserved.finishAfterActualCenterReplacement(false));
         var recovered=LegacyCrystalFarmerFinishCheckpoint.restore("RESERVED");
-        eq(reserved,recovered);
-        eq(true,recovered.mayPublishOneItem());
+        eq("STALLED", recovered.phase().name());
+        eq(false,recovered.mayPublishOneItem());
+        eq(false,recovered.canReserve());
+        bad(()->recovered.finishAfterActualCenterReplacement(true));
+        bad(()->recovered.reserve(true,true,true));
+        eq(recovered,LegacyCrystalFarmerFinishCheckpoint.restore("STALLED"));
         // Recovery never implicitly publishes an item. The real world bridge
         // must fail closed if RESERVED was already present at load.
         var finished=reserved.finishAfterActualCenterReplacement(true);
