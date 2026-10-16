@@ -260,5 +260,13 @@
   "item.thaumcraft.crystal_vitium": "Flux Crystal Cluster",
   "block.thaumcraft.jar_normal": "Essentia Jar",
   "item.thaumcraft.jar_normal": "Essentia Jar",
-  "item.thaumcraft.caster_basic": "Caster's Gauntlet"
+  "item.thaumcraft.caster_basic": "Caster's Gauntlet",
+  "gui.thaumcraft.firststeps.title": "Thaumonomicon — First Steps",
+  "gui.thaumcraft.firststeps.advance": "Continue research",
+  "gui.thaumcraft.firststeps.start": "You have discovered the Thaumonomicon. Begin your first steps in thaumaturgy.",
+  "gui.thaumcraft.firststeps.workbench": "Create your first Arcane Workbench using Salis Mundus on a Crafting Table. The discovery must be made in the world.",
+  "gui.thaumcraft.firststeps.thaumometer": "Craft a Thaumometer at the Arcane Workbench and make observations by scanning objects. At least one Basics observation is needed.",
+  "gui.thaumcraft.firststeps.observation": "Basics observations: %s",
+  "gui.thaumcraft.firststeps.finish": "You have the knowledge required to complete First Steps.",
+  "gui.thaumcraft.firststeps.completed": "The First Steps chapter has been completed. Other Thaumonomicon chapters will be restored in later porting stages."
 }

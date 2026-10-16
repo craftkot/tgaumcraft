@@ -238,6 +238,21 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 08l-firststeps-real-bookshelf-after-salis
   echo 'CLIENT_SENT_FIRSTSTEPS_PICKUP_WAKE_SALIS_CHAIN=YES' | tee -a client-smoke-status.txt
 
+  # Actual Thaumonomicon right-click: the source PNG opens the FIRSTSTEPS
+  # chapter and its button sends the existing server-validated C2S packet.
+  # Screen must also be readable in a fresh game with no research marker.
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumonomicon 1'
+  xdotool key --clearmodifiers 1
+  xdotool click 3
+  sleep 3
+  capture 08m-firststeps-original-researchbook-open
+  xdotool mousemove 512 527 click 1
+  sleep 4
+  capture 08n-firststeps-researchbook-server-synced-progression
+  xdotool key --clearmodifiers Escape
+  echo 'CLIENT_SENT_FIRSTSTEPS_THAUMONOMICON_GUI_TEST=YES' | tee -a client-smoke-status.txt
+
+
 
   echo 'CLIENT_SENT_ORIGINAL_SCANNER_AND_SALIS_RENDER_TEST=YES' | tee -a client-smoke-status.txt
   send_chat '/tp @p 0.5 149 0.5 0 27'

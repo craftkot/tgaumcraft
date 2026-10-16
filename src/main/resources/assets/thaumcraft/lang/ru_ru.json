@@ -260,5 +260,13 @@
   "item.thaumcraft.crystal_vitium": "Кристалл искажения",
   "block.thaumcraft.jar_normal": "Банка эссенции",
   "item.thaumcraft.jar_normal": "Банка эссенции",
-  "item.thaumcraft.caster_basic": "Перчатка заклинателя"
+  "item.thaumcraft.caster_basic": "Перчатка заклинателя",
+  "gui.thaumcraft.firststeps.title": "Таумономикон — Первые шаги",
+  "gui.thaumcraft.firststeps.advance": "Продолжить изучение",
+  "gui.thaumcraft.firststeps.start": "Ты получил Таумономикон. Начни первые шаги в тауматургии.",
+  "gui.thaumcraft.firststeps.workbench": "Создай магический верстак, применив Салис Мундус к обычному верстаку. Открытие должно произойти в игровом мире.",
+  "gui.thaumcraft.firststeps.thaumometer": "Создай таумометр на магическом верстаке и сканируй мир. Нужно хотя бы одно наблюдение категории «Основы».",
+  "gui.thaumcraft.firststeps.observation": "Наблюдения «Основы»: %s",
+  "gui.thaumcraft.firststeps.finish": "Все условия выполнены. Теперь можно завершить первые исследования.",
+  "gui.thaumcraft.firststeps.completed": "Глава «Первые шаги» завершена. Остальные разделы Таумономикона будут восстановлены на следующих этапах переноса."
 }

@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.item.AlumentumItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
+import dev.ehtid.thaumcraft.item.ThaumonomiconItem;
 import dev.ehtid.thaumcraft.item.BasicCasterItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
@@ -35,8 +36,8 @@ public final class ThaumcraftItems {
             "crystal_essence", CrystalEssenceItem::new, new Item.Properties());
     public static final DeferredItem<SalisMundusItem> SALIS_MUNDUS = ITEMS.registerItem(
             "salis_mundus", SalisMundusItem::new, new Item.Properties());
-    public static final DeferredItem<Item> THAUMONOMICON = ITEMS.registerSimpleItem(
-            "thaumonomicon", new Item.Properties().stacksTo(1));
+    public static final DeferredItem<ThaumonomiconItem> THAUMONOMICON = ITEMS.registerItem(
+            "thaumonomicon", ThaumonomiconItem::new, new Item.Properties().stacksTo(1));
     public static final DeferredItem<ThaumometerItem> THAUMOMETER = ITEMS.registerItem(
             "thaumometer", ThaumometerItem::new, new Item.Properties().stacksTo(1));
     /** Original BETA26 ItemCaster basic gauntlet: matrix caster interactions. */
