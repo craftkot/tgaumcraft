@@ -21,7 +21,16 @@ public final class FirstStepsServerProgression {
     public boolean noFlagsLatch(){ return noFlagsLatch; }
     public ResearchProgressionService.Result request(PlayerKnowledgeData k, PlayerWarpData w, ResearchProgressionService service, boolean packetExpectedKnown, boolean checkRequisites, boolean packetNoFlags){
         if(packetExpectedKnown!=k.isResearchKnown("FIRSTSTEPS")) return rejected();
-        if(checkRequisites&&!requisitesSatisfied(k)) return rejected();
+        // Client-supplied checkRequisites is a legacy UI hint, NOT a
+        // permission to skip server progression gates. The FIRSTSTEPS
+        // bootstrap is the sole exception: a player who actually acquired
+        // their Thaumonomicon can START stage 1 without a craft marker.
+        // Every subsequent stage must be authorized from server state.
+        if (!k.isResearchKnown("FIRSTSTEPS")) {
+            if (!k.isResearchKnown("!gotthaumonomicon")) return rejected();
+        } else if (!requisitesSatisfied(k)) {
+            return rejected();
+        }
         if(packetNoFlags) noFlagsLatch=true;
         var r=service.progress(k,w,"FIRSTSTEPS",false,true,noFlagsLatch,false,true);
         // BETA26 ResearchManager.noFlags is reset by a completed research path; siblings can therefore clear it indirectly.
