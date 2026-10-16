@@ -258,6 +258,41 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/tp @p 0.5 149 0.5 0 27'
   echo 'CLIENT_SENT_ARCANE_WORKBENCH_RENDER_TEST=YES' | tee -a client-smoke-status.txt
 
+  # REAL RESEARCH TABLE PLAYTHROUGH.  The original gui_research_table.png
+  # must open as a Minecraft inventory, not merely parse server classes.
+  # Fill the two ORIGINAL research-table container slots using integrated
+  # server commands; clicks below are physical X11 mouse events on the UI.
+  send_chat '/fill 5 148 1 8 148 6 minecraft:stone'
+  send_chat '/setblock 6 149 5 thaumcraft:research_table[facing=north]'
+  send_chat '/item replace block 6 149 5 container.0 with thaumcraft:scribing_tools 1'
+  send_chat '/item replace block 6 149 5 container.1 with minecraft:paper 32'
+  send_chat '/clear @p'
+  send_chat '/tp @p 6.5 149 2.5 0 24'
+  sleep 2
+  capture 37-original-research-table-before-opening
+  xdotool click 3
+  sleep 3
+  capture 38-original-research-table-live-gui-with-supplies
+  # At 1280x800 the 256x256 source GUI starts at (512,272).
+  # BETA26 create button (116,22) is server-authoritative: no
+  # client-side creation of a new TheorycraftData is permitted.
+  xdotool mousemove 682 303 click 1
+  sleep 4
+  capture 39-original-research-table-create-theory
+  # Original draw button (116,121); the server debits paper only
+  # if it can generate a playable set of genuine source cards.
+  xdotool mousemove 682 402 click 1
+  sleep 4
+  capture 40-original-research-table-draw-two-cards
+  # Choice 0 (77,97). A failed material preflight must not award
+  # free knowledge or consume inventory; the GUI remains usable.
+  xdotool mousemove 610 380 click 1
+  sleep 3
+  capture 41-original-research-table-activate-first-offer
+  xdotool key --clearmodifiers Escape
+  echo 'CLIENT_SENT_REAL_THEORYCRAFT_TABLE_INTERACTIONS=YES' | tee -a client-smoke-status.txt
+
+
   echo 'CLIENT_SENT_SETBLOCK=YES' | tee -a client-smoke-status.txt
 
   # Freeze the camera using vanilla spectator mode. A precisely identical
