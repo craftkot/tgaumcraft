@@ -41,3 +41,14 @@
 6. Это не оценка оставшегося времени: последние 41 балл содержат потенциально самые трудные системы и баги.
 
 **Пользователь велел остановить разработку до следующего сообщения. Этот документ — аудит статуса, не начало следующего этапа.**
+
+## 16.10.2026 — targeted FIRSTSTEPS/ScanGeneric closure work (not yet awarded +1)
+
+Latest implemented code commit `853ba31f6ee7833beec7fab17d3a553daae5ad0d`. MAIN CI `38889146646` SUCCESS (Java core parity, original source GUI SHA256, NeoForge build, dedicated-server start and JAR artifact). A real Minecraft client workflow `38889146656` must be inspected by screenshots and actual game observations separately. Earlier test artifacts `38887519964` / `38887894809` tested prior scan/bed/Salis interaction sequences.
+
+Three substantive fixes:
+1. `GenericScanKeyLogic.forModernItem`: 37 additional BETA26 metadata-bearing item identities (fish, both flower registries, six double plants, stonebrick, charcoal, golden apple, sponge, anvils and six skulls) no longer become duplicate new scan keys on 1.21. Future-only variants remain untouched. Covered in CoreParityTest.
+2. `FirstStepsServerProgression`: **security/legitimacy bug fixed**; the client's former `checkRequisites=false` did not enforce FIRSTSTEPS requisites server-side. All later stages now enforce actual craft markers and Basics observation regardless of packet hint. Initial bootstrap allows only genuinely obtained `!gotthaumonomicon` marker. Negative forged-packet and legitimate-start tests added.
+3. Thaumonomicon was formerly a nonfunctional bare Item. Now `ThaumonomiconItem` opens client-only `FirstStepsBookScreen` with byte-exact original BETA26 `gui_researchbook.png` SHA256 `4db8e4fad6eaf1fdf486374b9402ae26fed402a920aa939c9746f60545d5f4c8`, visible first-stage requirements and readable RU/EN, sending the already-server-validated FIRSTSTEPS C2S packet. This is a PLAYABLE starter chapter, not a full research browser for unrelated 148 research nodes (the latter belongs to the separate research/theory category). The original starting book texture has been added to GitHub; the full research browser is still an incomplete separate subsystem.
+
+Actual real-client smoke was extended with #08e–g vanilla diamond ore right-click scan, #08h–l crystal pickup/bed/wake/Salis bookshelf attempt and #08m–n in-game Thaumonomicon GUI/progression. **Need inspect real screenshots/diagnostics and confirm whether the vanilla bed was successfully placed, the dream flag earned and Salis transformed bookshelf**; a green CI alone does not prove these world actions. Do not raise FIRSTSTEPS 9/10 -> 10/10 nor whole-port 59 -> 60 until this is validated. Once proven, document exact run and award +1; otherwise fix the in-game defect first.
