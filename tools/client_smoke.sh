@@ -183,6 +183,29 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool key --clearmodifiers 1
   sleep 3
   capture 08d-original-animated-salis-mundus-in-hand
+
+  # First real FIRSTSTEPS/ScanGeneric integration: equip the actual
+  # Thaumometer, ray-trace an ORIGINAL diamond-ore target in the world,
+  # right-click twice, and save the action-bar feedback from both scans.
+  # The second click must not award the same keyed discovery twice.
+  send_chat '/forceload add 0 0'
+  send_chat '/fill -1 149 0 1 149 5 minecraft:stone'
+  send_chat '/setblock 0 151 3 minecraft:diamond_ore'
+  send_chat '/gamemode creative'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'
+  send_chat '/tp @p 0.5 150 0.5 0 0'
+  xdotool key --clearmodifiers 1
+  sleep 3
+  capture 08e-firststeps-diamond-ore-before-scan
+  xdotool click 3
+  sleep 1
+  capture 08f-firststeps-diamond-ore-first-actual-scan
+  sleep 2
+  xdotool click 3
+  sleep 1
+  capture 08g-firststeps-diamond-ore-repeat-scan
+  echo 'CLIENT_SENT_FIRSTSTEPS_REAL_SCAN_REGRESSION=YES' | tee -a client-smoke-status.txt
+
   echo 'CLIENT_SENT_ORIGINAL_SCANNER_AND_SALIS_RENDER_TEST=YES' | tee -a client-smoke-status.txt
   send_chat '/tp @p 0.5 149 0.5 0 27'
   echo 'CLIENT_SENT_ARCANE_WORKBENCH_RENDER_TEST=YES' | tee -a client-smoke-status.txt

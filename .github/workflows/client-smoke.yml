@@ -34,6 +34,13 @@ on:
       - 'src/main/resources/assets/thaumcraft/models/block/crystal_*'
       - 'src/main/resources/assets/thaumcraft/blockstates/crystal_*'
       - 'src/main/resources/assets/thaumcraft/textures/block/crystal.png'
+      # Any FIRSTSTEPS/Thaumometer path change requires actual in-world
+      # mouse-click scan regression, not only the loader-neutral core CI.
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/GenericScanKeyLogic.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/scanning/ThaumometerScanDispatcher.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/scanning/ThaumometerTargeting.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumometerItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/player/FirstStepsPlayerEvents.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/InfusionMatrixBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/BasicCasterItem.java'
       - 'src/main/resources/assets/thaumcraft/models/item/caster_*'

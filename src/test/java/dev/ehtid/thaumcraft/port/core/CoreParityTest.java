@@ -3446,6 +3446,43 @@ public final class CoreParityTest {
             eq("!minecraft:" + oldLeaves + oldMetadata,
                     GenericScanKeyLogic.forModernItem("minecraft:" + wood[metadata] + "_leaves", false, 0));
         }
+        // Item flattening in 1.13 must not create fictitious TC6 research
+        // identities. Verify every ORIGINAL 1.12 meta for these families.
+        String[][] preFlatteningVariants = {
+            {"cod","fish","0"}, {"salmon","fish","1"},
+            {"tropical_fish","fish","2"}, {"pufferfish","fish","3"},
+            {"cooked_cod","cooked_fish","0"}, {"cooked_salmon","cooked_fish","1"},
+            {"dandelion","yellow_flower","0"},
+            {"poppy","red_flower","0"}, {"blue_orchid","red_flower","1"},
+            {"allium","red_flower","2"}, {"azure_bluet","red_flower","3"},
+            {"red_tulip","red_flower","4"}, {"orange_tulip","red_flower","5"},
+            {"white_tulip","red_flower","6"}, {"pink_tulip","red_flower","7"},
+            {"oxeye_daisy","red_flower","8"},
+            {"sunflower","double_plant","0"}, {"lilac","double_plant","1"},
+            {"tall_grass","double_plant","2"}, {"large_fern","double_plant","3"},
+            {"rose_bush","double_plant","4"}, {"peony","double_plant","5"},
+            {"stone_bricks","stonebrick","0"}, {"mossy_stone_bricks","stonebrick","1"},
+            {"cracked_stone_bricks","stonebrick","2"}, {"chiseled_stone_bricks","stonebrick","3"},
+            {"charcoal","coal","1"}, {"enchanted_golden_apple","golden_apple","1"},
+            {"wet_sponge","sponge","1"}, {"chipped_anvil","anvil","1"},
+            {"damaged_anvil","anvil","2"},
+            {"skeleton_skull","skull","0"}, {"wither_skeleton_skull","skull","1"},
+            {"zombie_head","skull","2"}, {"player_head","skull","3"},
+            {"creeper_head","skull","4"}, {"dragon_head","skull","5"}
+        };
+        for (String[] variant : preFlatteningVariants) {
+            String result = GenericScanKeyLogic.forModernItem("minecraft:" + variant[0], false, 0);
+            eq("!minecraft:" + variant[1] + variant[2], result);
+            eq(result, GenericScanKeyLogic.forModernItem("minecraft:" + variant[0], false, 0));
+            eq(result, GenericScanKeyLogic.forItem("minecraft:" + variant[1], false,
+                    Integer.parseInt(variant[2])));
+        }
+        // Future-only variants are NOT aliases of any BETA26 scan object.
+        for (String future : new String[]{"piglin_head","bamboo_planks","cherry_sapling",
+                "sniffer_egg","mangrove_leaves","deepslate_bricks"}) {
+            eq("!minecraft:" + future + "0",
+                    GenericScanKeyLogic.forModernItem("minecraft:" + future, false, 0));
+        }
         eq("!minecraft:cherry_log0",
                 GenericScanKeyLogic.forModernItem("minecraft:cherry_log", false, 0));
         String[][] classicVariants = {

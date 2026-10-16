@@ -106,6 +106,60 @@ public final class GenericScanKeyLogic {
             return forItem("minecraft:" + oldVariant.substring(0, separator),
                     false, Integer.parseInt(oldVariant.substring(separator + 1)));
         }
+        // 1.13 item flattening removed the damage-value families below.
+        // Preserve the 1.12 ScanGeneric discovery identity so a player does
+        // not receive another research key for a renamed variant.
+        String legacyMetaVariant = switch (modernRegistryId) {
+            // ItemFishFood: fish 0..3, cooked_fish 0..1.
+            case "minecraft:cod" -> "fish|0";
+            case "minecraft:salmon" -> "fish|1";
+            case "minecraft:tropical_fish" -> "fish|2"; // old clownfish
+            case "minecraft:pufferfish" -> "fish|3";
+            case "minecraft:cooked_cod" -> "cooked_fish|0";
+            case "minecraft:cooked_salmon" -> "cooked_fish|1";
+            // Vanilla 1.12 red_flower metas 0..8 and yellow_flower meta 0.
+            case "minecraft:dandelion" -> "yellow_flower|0";
+            case "minecraft:poppy" -> "red_flower|0";
+            case "minecraft:blue_orchid" -> "red_flower|1";
+            case "minecraft:allium" -> "red_flower|2";
+            case "minecraft:azure_bluet" -> "red_flower|3";
+            case "minecraft:red_tulip" -> "red_flower|4";
+            case "minecraft:orange_tulip" -> "red_flower|5";
+            case "minecraft:white_tulip" -> "red_flower|6";
+            case "minecraft:pink_tulip" -> "red_flower|7";
+            case "minecraft:oxeye_daisy" -> "red_flower|8";
+            // Vanilla double_plant contained all six large flower/grass IDs.
+            case "minecraft:sunflower" -> "double_plant|0";
+            case "minecraft:lilac" -> "double_plant|1";
+            case "minecraft:tall_grass" -> "double_plant|2";
+            case "minecraft:large_fern" -> "double_plant|3";
+            case "minecraft:rose_bush" -> "double_plant|4";
+            case "minecraft:peony" -> "double_plant|5";
+            // Original stonebrick (singular) + variant damage metadata.
+            case "minecraft:stone_bricks" -> "stonebrick|0";
+            case "minecraft:mossy_stone_bricks" -> "stonebrick|1";
+            case "minecraft:cracked_stone_bricks" -> "stonebrick|2";
+            case "minecraft:chiseled_stone_bricks" -> "stonebrick|3";
+            // Metadata-bearing ItemCoal, golden_apple, block sponge and anvil.
+            case "minecraft:charcoal" -> "coal|1";
+            case "minecraft:enchanted_golden_apple" -> "golden_apple|1";
+            case "minecraft:wet_sponge" -> "sponge|1";
+            case "minecraft:chipped_anvil" -> "anvil|1";
+            case "minecraft:damaged_anvil" -> "anvil|2";
+            // Original 1.12 skull items shared ONE registry identity.
+            case "minecraft:skeleton_skull" -> "skull|0";
+            case "minecraft:wither_skeleton_skull" -> "skull|1";
+            case "minecraft:zombie_head" -> "skull|2";
+            case "minecraft:player_head" -> "skull|3";
+            case "minecraft:creeper_head" -> "skull|4";
+            case "minecraft:dragon_head" -> "skull|5";
+            default -> null;
+        };
+        if (legacyMetaVariant != null) {
+            int split = legacyMetaVariant.indexOf('|');
+            return forItem("minecraft:" + legacyMetaVariant.substring(0, split), false,
+                    Integer.parseInt(legacyMetaVariant.substring(split + 1)));
+        }
         // BETA26 bed ITEM has color metadata 0..15, using block-color order.
         // This is the inventory item key, independent of bed head/foot/facing.
         if (modernRegistryId.startsWith("minecraft:") && modernRegistryId.endsWith("_bed")) {
