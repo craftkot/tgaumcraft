@@ -36,7 +36,7 @@ public final class InfusionRitualLedgerParityTest {
         eq(10,checkpoint.paid());
         var stoppedAtAerZero = checkpoint;
         bad(()->stoppedAtAerZero.afterWorldDebit("aer"));
-        bad(()->checkpoint.afterWorldDebit("unknown"));
+        bad(()->stoppedAtAerZero.afterWorldDebit("unknown"));
         for (int i=0;i<10;i++) checkpoint=checkpoint.afterWorldDebit("vitreus");
         for (int i=0;i<5;i++) checkpoint=checkpoint.afterWorldDebit("vinculum");
         eq(true,checkpoint.readyForIngredients());
@@ -52,7 +52,7 @@ public final class InfusionRitualLedgerParityTest {
         bad(()->LegacyInfusionRitualLedger.restore(preCheckpoint.recipeId(),restoredOriginal,forged,10));
         bad(()->LegacyInfusionRitualLedger.restore(preCheckpoint.recipeId(),restoredOriginal,preCheckpoint.remaining(),11));
         forged.remove("vinculum");
-        bad(()->LegacyInfusionRitualLedger.restore(ledger.recipeId(),restoredOriginal,forged,10));
+        bad(()->LegacyInfusionRitualLedger.restore(preCheckpoint.recipeId(),restoredOriginal,forged,10));
         var mutableCopy = new LinkedHashMap<>(ledger.remaining());
         var immutable = LegacyInfusionRitualLedger.restore(ledger.recipeId(),
                 ledger.requested(),mutableCopy,ledger.paid());
