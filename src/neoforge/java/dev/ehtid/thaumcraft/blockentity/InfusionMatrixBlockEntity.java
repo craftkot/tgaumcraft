@@ -11,6 +11,7 @@ import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionRitualLedger;
 import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerIngredientProgress;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerFinishCheckpoint;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog;
 import dev.ehtid.thaumcraft.crafting.CrystalFarmerInfusionAdapter;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
@@ -57,6 +58,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private LegacyInfusionRitualLedger ritualLedger;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
     private LegacyCrystalFarmerIngredientProgress itemProgress;
+    private LegacyCrystalFarmerFinishCheckpoint.State finishCheckpoint =
+            LegacyCrystalFarmerFinishCheckpoint.initial();
     private boolean active;
     private boolean crafting;
     private float stability;
@@ -223,6 +226,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
         itemProgress = LegacyCrystalFarmerIngredientProgress.initial();
+        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         recipeInstability = preview.matching().instability();
         crafting = true;
         changedAndSync(); // checkpoint BEFORE any real jar is debited
@@ -346,6 +350,65 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         }
     }
 
+
+    /**
+     * BETA26 finish for the ONLY catalogued original infusion outputs:
+     * seven aspect-specific CrystalCluster BlockItems, one each. Source
+     * recipe matching, real jar payment and real pedestal removals must all
+     * have completed before this method can reserve an output.
+     *
+     * The matrix writes a one-use reservation BEFORE mutating the center.
+     * This forbids duplicate output on repeated ticks and on NBT reload.
+     * A crash between separate block-entity saves can lose the output;
+     * RESERVED deliberately never retries after reload (fail closed).
+     */
+    private void finishVerifiedCrystalFarmer() {
+        if (!(level instanceof ServerLevel) || !active || !crafting
+                || ritualLedger == null || !ritualLedger.readyForIngredients()
+                || itemProgress == null || !itemProgress.readyToFinish()
+                || !finishCheckpoint.canReserve() || !realInputsRemain())
+            return;
+        var recipe = LegacyInfusionCrystalFarmerCatalog.all().stream()
+                .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
+                .findFirst().orElse(null);
+        if (recipe == null) return;
+        // Only source-era crystal BlockItems, never an output parsed from
+        // user-controlled NBT or a new invented recipe.
+        net.minecraft.world.item.Item outputItem = switch (recipe.aspectTag()) {
+            case "aer" -> ThaumcraftItems.CRYSTAL_AER.get();
+            case "ignis" -> ThaumcraftItems.CRYSTAL_IGNIS.get();
+            case "aqua" -> ThaumcraftItems.CRYSTAL_AQUA.get();
+            case "terra" -> ThaumcraftItems.CRYSTAL_TERRA.get();
+            case "ordo" -> ThaumcraftItems.CRYSTAL_ORDO.get();
+            case "perditio" -> ThaumcraftItems.CRYSTAL_PERDITIO.get();
+            case "vitium" -> ThaumcraftItems.CRYSTAL_VITIUM.get();
+            default -> null;
+        };
+        if (outputItem == null) return;
+        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
+            return;
+        ItemStack expected = center.displayedItem().copy();
+        if (expected.getCount() != 1
+                || !expected.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
+                || !recipe.aspectTag().equals(CrystalEssenceItem.legacyAspect(expected)))
+            return;
+
+        // Reservation is checkpointed before the real central inventory
+        // write. Reloaded RESERVED may not publish anything automatically.
+        finishCheckpoint = finishCheckpoint.reserve(true,true,true);
+        changedAndSync();
+        if (!center.replaceInfusionIngredientIfUnchanged(
+                expected, new ItemStack(outputItem))) return;
+
+        finishCheckpoint = finishCheckpoint.finishAfterActualCenterReplacement(true);
+        crafting = false;
+        recipeInstability = 0;
+        ritualLedger = null;
+        itemProgress = null;
+        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+        changedAndSync();
+    }
+
     private void changedAndSync() {
         setChanged();
         if (level != null && !level.isClientSide)
@@ -367,6 +430,11 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 && tile.ritualLedger.readyForIngredients()
                 && tile.ticks % Math.max(1, tile.cycleTime) == 0)
             tile.advanceVerifiedCrystalFarmerIngredient();
+        if (tile.crafting && tile.ritualLedger != null
+                && tile.ritualLedger.readyForIngredients()
+                && tile.itemProgress != null && tile.itemProgress.readyToFinish()
+                && tile.ticks % Math.max(1, tile.cycleTime) == 0)
+            tile.finishVerifiedCrystalFarmer();
         // BETA26 initializes surrounding stabilizers once on world load.
         if (!tile.surroundingsInitialized && tile.validLocation())
             tile.refreshWorldStability();
@@ -420,6 +488,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             ritualLedger.remaining().forEach(remaining::putInt);
             pending.put("Initial", initial);
             pending.put("Remaining", remaining);
+            pending.putString("FinishPhase", finishCheckpoint.phase().name());
             if (itemProgress != null) {
                 pending.putInt("ConsumedItems", itemProgress.consumedMask());
                 pending.putInt("ItemCountdown", itemProgress.countdown());
@@ -465,6 +534,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     throw new IllegalArgumentException("Unknown original infusion recipe/aspect");
                 ritualLedger = LegacyInfusionRitualLedger.restore(
                         id, initialCosts, leftCosts, pending.getInt("Paid"));
+                if (pending.contains("FinishPhase", Tag.TAG_STRING))
+                    finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.restore(
+                            pending.getString("FinishPhase"));
+                if (finishCheckpoint.finished())
+                    throw new IllegalArgumentException("Completed ritual is not crafting");
+
                 if (pending.contains("ConsumedItems", Tag.TAG_INT)
                         && pending.contains("ItemCountdown", Tag.TAG_INT))
                     itemProgress = new LegacyCrystalFarmerIngredientProgress(
