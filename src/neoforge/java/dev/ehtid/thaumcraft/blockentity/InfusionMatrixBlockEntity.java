@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyInfusionEssentiaCycle;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionRitualLedger;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerIngredientProgress;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog;
 import dev.ehtid.thaumcraft.crafting.CrystalFarmerInfusionAdapter;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
@@ -54,6 +55,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private static final AspectRegistry SOURCE_ASPECTS = new AspectRegistry();
     /** Null unless a source-era, research-gated player recipe was verified. */
     private LegacyInfusionRitualLedger ritualLedger;
+    /** Source five-cycle per ingredient, persisted separately from paid essentia. */
+    private LegacyCrystalFarmerIngredientProgress itemProgress;
     private boolean active;
     private boolean crafting;
     private float stability;
@@ -219,6 +222,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (preview == null) return false;
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
+        itemProgress = LegacyCrystalFarmerIngredientProgress.initial();
         recipeInstability = preview.matching().instability();
         crafting = true;
         changedAndSync(); // checkpoint BEFORE any real jar is debited
@@ -245,7 +249,14 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             if (stack.is(Items.WHEAT_SEEDS)) seeds = true;
             if (stack.is(ThaumcraftItems.SALIS_MUNDUS.get())) salis = true;
         }
-        return seeds && salis;
+        // Once a real ingredient has been consumed, that same input must
+        // NOT be required again (or the ritual would be stuck forever).
+        // No progress state => legacy/corrupt crafting NBT is not eligible.
+        if (itemProgress == null) return seeds && salis;
+        return ((itemProgress.consumedMask()
+                & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) != 0 || seeds)
+                && ((itemProgress.consumedMask()
+                & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0 || salis);
     }
 
     /**
@@ -283,6 +294,58 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         return result;
     }
 
+
+    /**
+     * Real original five-cycle ingestion of the two verified BETA26
+     * Crystal Farmer ingredients. No recipe output is granted yet.
+     *
+     * A countdown only progresses while a matching actual ItemStack still
+     * sits on a loaded side pedestal. On the CONSUME cycle the pedestal is
+     * modified FIRST and the restart-safe mask is committed immediately
+     * afterwards. A crash between these steps can stall the ritual, but
+     * cannot grant an output or duplicate the consumed input.
+     */
+    private void advanceVerifiedCrystalFarmerIngredient() {
+        if (!(level instanceof ServerLevel) || !active || !crafting
+                || ritualLedger == null || !ritualLedger.readyForIngredients()
+                || itemProgress == null || itemProgress.readyToFinish()
+                || !realInputsRemain()) return;
+        int nextBit = itemProgress.nextIngredientBit();
+        PedestalBlockEntity chosen = null;
+        ItemStack captured = ItemStack.EMPTY;
+        for (BlockPos pos : nearbyPedestals()) {
+            if (!(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal))
+                continue;
+            ItemStack presented = pedestal.displayedItem();
+            if (presented.getCount() != 1) continue;
+            boolean matched = nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                    ? presented.is(Items.WHEAT_SEEDS)
+                    : presented.is(ThaumcraftItems.SALIS_MUNDUS.get());
+            if (matched) {
+                chosen = pedestal;
+                captured = presented.copy();
+                break;
+            }
+        }
+        if (chosen == null) return;
+        switch (itemProgress.nextAction()) {
+            case SOURCE_EFFECT, COUNTDOWN -> {
+                itemProgress = itemProgress.afterValidatedCountdown();
+                changedAndSync();
+            }
+            case CONSUME -> {
+                // Both original recipe inputs have no crafting remainder.
+                // Never consume without checking the original data components.
+                if (chosen.replaceInfusionIngredientIfUnchanged(
+                        captured, ItemStack.EMPTY)) {
+                    itemProgress = itemProgress.afterActualPedestalRemoval(nextBit);
+                    changedAndSync();
+                }
+            }
+            case READY -> { /* Remaining finish/output work is deliberately gated. */ }
+        }
+    }
+
     private void changedAndSync() {
         setChanged();
         if (level != null && !level.isClientSide)
@@ -300,6 +363,10 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 && !tile.ritualLedger.readyForIngredients()
                 && tile.ticks % Math.max(1, tile.cycleTime) == 0)
             tile.drainVerifiedInfusionEssentia();
+        if (tile.crafting && tile.ritualLedger != null
+                && tile.ritualLedger.readyForIngredients()
+                && tile.ticks % Math.max(1, tile.cycleTime) == 0)
+            tile.advanceVerifiedCrystalFarmerIngredient();
         // BETA26 initializes surrounding stabilizers once on world load.
         if (!tile.surroundingsInitialized && tile.validLocation())
             tile.refreshWorldStability();
@@ -353,6 +420,10 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             ritualLedger.remaining().forEach(remaining::putInt);
             pending.put("Initial", initial);
             pending.put("Remaining", remaining);
+            if (itemProgress != null) {
+                pending.putInt("ConsumedItems", itemProgress.consumedMask());
+                pending.putInt("ItemCountdown", itemProgress.countdown());
+            }
             tag.put("PortInfusionLedger", pending);
         }
         if (!originalRecipeData.isEmpty())
@@ -371,6 +442,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         countDelay = tag.contains("countDelay") ? tag.getInt("countDelay") : 5;
         surroundingsInitialized = false;
         ritualLedger = null;
+        itemProgress = null;
         if (crafting && tag.contains("PortInfusionLedger", Tag.TAG_COMPOUND)) {
             try {
                 CompoundTag pending = tag.getCompound("PortInfusionLedger");
@@ -393,10 +465,16 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     throw new IllegalArgumentException("Unknown original infusion recipe/aspect");
                 ritualLedger = LegacyInfusionRitualLedger.restore(
                         id, initialCosts, leftCosts, pending.getInt("Paid"));
+                if (pending.contains("ConsumedItems", Tag.TAG_INT)
+                        && pending.contains("ItemCountdown", Tag.TAG_INT))
+                    itemProgress = new LegacyCrystalFarmerIngredientProgress(
+                            pending.getInt("ConsumedItems"),
+                            pending.getInt("ItemCountdown"));
             } catch (IllegalArgumentException malformed) {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
                 ritualLedger = null;
+                itemProgress = null;
             }
         }
         if (tag.contains("OriginalInfusionRecipe", Tag.TAG_COMPOUND)) {
