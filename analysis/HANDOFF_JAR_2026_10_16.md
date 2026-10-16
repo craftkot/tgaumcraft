@@ -10,3 +10,9 @@ Added registered jar_normal Block, BlockItem, BlockEntity, creative entry, synce
 WARNING: jar source textures are not migrated in this stage; model uses vanilla glass as a temporary visual. No filled-item preservation on breaking yet, so stored essence would be lost. No EssentiaHandler network, no gauntlet activation and no actual infusion output. These are next tasks. Do not advertise jar as finished. Do not raise ~86% completion estimate without validated runtime evidence.
 
 After code commit inspect CI and real client. Next stage: preserve jar contents on break/placement, migrate exact original textures, then connect actual 12-block essentia source search and atomic debits.
+
+## 2026-10-16 03:00 MSK — filled jar drop preservation and filtered intake
+
+Previous HEAD `9053aacc821fd4270e397def36ec63226e3ad512`: main CI #38821465388 SUCCESS and genuine Minecraft client #38821465349 SUCCESS, including jar placement/NBT fixture screenshot #32. This confirms runtime load but not infusion or actual survival transfer.
+
+Fix: the live jar's addFromTransport now checks LegacyEssentiaJarLogic.accepts before low-level add, so a labeled jar refuses a mismatched aspect (the BETA26 low-level addToContainer intentionally does not enforce the label). Mining a filled jar now preserves its stored Aspect/AspectFilter/Amount/facing/blocked in the dropped item's vanilla minecraft:block_entity_data via BlockEntity.saveToItem, and vanilla BlockItem should restore on placement. Empty default jars keep ordinary loot. This is deliberately implemented in getDrops rather than onRemove to avoid a second drop and duplication. An automated real-client test now destroys a 17-Aer jar and checks the dropped item NBT component (screenshot #33). Check new CI and client run conclusions and actual test chat before claiming validated. No full EssentiaHandler network, survival source filling or ritual completion yet; estimate remains ~86%.

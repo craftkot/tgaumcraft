@@ -417,6 +417,14 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 32-original-jar-world-nbt
   echo 'CLIENT_SENT_JAR_WORLD_NBT_TEST=YES' | tee -a client-smoke-status.txt
 
+  # Survival-style block loot: destroy the ACTUAL filled jar and inspect
+  # its dropped BlockItem component. No /give of prefilled jars is involved.
+  send_chat '/setblock 104 149 80 air destroy'
+  sleep 3
+  send_chat '/execute if entity @e[type=minecraft:item,x=104,y=149,z=80,distance=..4,nbt={Item:{id:"thaumcraft:jar_normal",components:{"minecraft:block_entity_data":{Aspect:"aer",Amount:17s}}}}] run say JAR_DROP_PRESERVES_17_AER_OK'
+  capture 33-filled-jar-drop-nbt
+  echo 'CLIENT_SENT_JAR_DROP_PRESERVATION_TEST=YES' | tee -a client-smoke-status.txt
+
   # Quantify that the game camera sees new geometry; exact parity and
   # absence of checkerboard models still require screenshot inspection.
   # Before/after share camera/time and minimize ambient variation.

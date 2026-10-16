@@ -23,6 +23,10 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public LegacyEssentiaJarLogic.State snapshot() { return stored; }
     public int facing() { return facing; }
     public boolean blocked() { return blocked; }
+    /** True if the jar item must retain non-default BlockEntity state. */
+    public boolean hasStoredData() {
+        return stored.amount() > 0 || stored.filter() != null || blocked || facing != 2;
+    }
     public boolean isConnectable(Direction side) { return side == Direction.UP; }
     public int suction(Direction side) {
         return isConnectable(side) ? LegacyEssentiaJarLogic.suction(stored) : 0;
@@ -32,7 +36,8 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     }
     /** Caller must debit the returned amount from its actual source. */
     public int addFromTransport(String aspect, int offered, Direction side) {
-        if (level == null || level.isClientSide || !isConnectable(side)) return 0;
+        if (level == null || level.isClientSide || !isConnectable(side)
+                || !LegacyEssentiaJarLogic.accepts(stored, aspect)) return 0;
         var transfer = LegacyEssentiaJarLogic.add(stored, aspect, offered);
         if (transfer.transferred() > 0) updateStored(transfer.state());
         return transfer.transferred();
