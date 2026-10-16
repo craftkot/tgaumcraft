@@ -1,10 +1,10 @@
 {
   "ambientocclusion": false,
   "textures": {
-    "side": "minecraft:block/glass",
-    "bottom": "minecraft:block/glass",
-    "top": "minecraft:block/glass",
-    "particle": "minecraft:block/glass"
+    "side": "thaumcraft:block/jar_side",
+    "bottom": "thaumcraft:block/jar_bottom",
+    "top": "thaumcraft:block/jar_top",
+    "particle": "thaumcraft:block/jar_side"
   },
   "elements": [
     {
@@ -72,5 +72,68 @@
         }
       }
     }
-  ]
+  ],
+  "render_type": "minecraft:translucent",
+  "display": {
+    "gui": {
+      "rotation": [
+        30,
+        135,
+        0
+      ],
+      "translation": [
+        0,
+        1,
+        0
+      ],
+      "scale": [
+        0.75,
+        0.75,
+        0.75
+      ]
+    },
+    "fixed": {
+      "rotation": [
+        0,
+        90,
+        0
+      ],
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    },
+    "ground": {
+      "translation": [
+        0,
+        2,
+        0
+      ],
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    },
+    "thirdperson_lefthand": {
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    },
+    "thirdperson_righthand": {
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
+    }
+  }
 }

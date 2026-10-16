@@ -415,6 +415,15 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/tp @p 104.5 152.5 73.5 0 28'
   sleep 3
   capture 32-original-jar-world-nbt
+  # Source glass jar texture is translucent: capture actual in-world renderer
+  # with daylight and hidden HUD, not merely /data-merge confirmation.
+  send_chat '/time set noon'
+  send_chat '/weather clear'
+  sleep 2
+  xdotool key --clearmodifiers F1
+  sleep 2
+  capture 32a-original-jar-png-translucent-world
+  xdotool key --clearmodifiers F1
   echo 'CLIENT_SENT_JAR_WORLD_NBT_TEST=YES' | tee -a client-smoke-status.txt
 
   # Survival-style block loot: destroy the ACTUAL filled jar and inspect

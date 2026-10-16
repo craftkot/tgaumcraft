@@ -404,6 +404,9 @@ jobs:
           grep -q 'level.hasChunkAt' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
           grep -q 'LegacyInfusionEssentiaCycle.cycle' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
 
+      - name: Verify original BETA26 jar models and texture bytes
+        run: python3 tools/verify_jar_source_art.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 
