@@ -69,6 +69,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.ARCANE_WORKBENCH.get());
                         output.accept(ThaumcraftItems.THAUMONOMICON.get());
                         output.accept(ThaumcraftItems.THAUMOMETER.get());
+                        output.accept(ThaumcraftItems.CASTER_BASIC.get());
                         output.accept(ThaumcraftItems.SCRIBING_TOOLS.get());
                         output.accept(ThaumcraftItems.SALIS_MUNDUS.get());
                         output.accept(ThaumcraftItems.CRYSTAL_ESSENCE.get());

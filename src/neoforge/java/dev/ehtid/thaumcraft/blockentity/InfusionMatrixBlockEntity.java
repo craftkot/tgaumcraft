@@ -45,10 +45,11 @@ import java.util.List;
  * - the REAL world BlockPedestal/BlockPillar layout controls active status;
  * - invalid structures deactivate after the original 100-tick interval;
  * - original active/crafting/stability/recipeinst NBT keys survive saves;
- * - missing recipe, vis, instability and caster mechanics are NOT simulated.
+ * - BASIC caster can now activate the actual structure and request only
+ *   verified Crystal Farmer recipes; other caster foci are not yet ported.
  *
- * Activation is intentionally not exposed as an ordinary empty-hand click,
- * since BETA26 invokes this through IInteractWithCaster.
+ * Activation is intentionally not exposed as an ordinary empty-hand click;
+ * BETA26 invokes it from ItemCaster via IInteractWithCaster.
  */
 public final class InfusionMatrixBlockEntity extends BlockEntity {
     /** Cached jar sources belong to THIS matrix, never shared across dimensions. */
@@ -195,9 +196,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     }
 
     /**
-     * The future ORIGINAL caster gauntlet bridge should call this method,
-     * never a generic GUI button/empty-hand click. Recipe start needs the
-     * full original matching/material/aura transaction before enabling.
+     * Called only by original-style BasicCasterItem, never a generic GUI
+     * button/empty-hand click. On BETA26 the activation click costs no Vis.
      */
     public boolean tryActivateFromCaster() {
         if (level == null || level.isClientSide || active || !validLocation()) return false;
@@ -209,9 +209,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
 
 
     /**
-     * Prepared but NOT YET publicly exposed. A real source-era caster item
-     * must own the eventual call into this method. It is deliberately NOT
-     * triggered by right-clicking the matrix with an empty hand.
+     * Only the source-era BasicCasterItem can trigger this research-gated
+     * recipe start. It is never invoked by an empty hand or a generic GUI.
      *
      * The recipe has to match real pedestals, source aspect components and
      * player research at this very moment. Nothing is spent on start.

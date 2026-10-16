@@ -318,6 +318,34 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/execute if data block 30 151 30 {stabilityReplenish:0.2f} run say MATRIX_ELDRITCH_REPLENISH_0_2_OK'
   capture 25-original-eldritch-stability-recharge
   echo 'CLIENT_SENT_ELDRITCH_STABILITY_TEST=YES' | tee -a client-smoke-status.txt
+
+  # REAL PLAYER interaction: ItemCaster#onItemUseFirst -> matrix IInteractWithCaster.
+  # Unlike older /data merge fixtures this changes active through a genuine
+  # Minecraft mouse right-click while actually holding the BASIC GAUNTLET.
+  send_chat '/forceload add 130 130'
+  send_chat '/fill 128 149 125 132 149 134 minecraft:stone'
+  send_chat '/setblock 130 149 130 thaumcraft:pedestal_arcane'
+  send_chat '/setblock 129 149 129 thaumcraft:pillar_arcane'
+  send_chat '/setblock 129 149 131 thaumcraft:pillar_arcane'
+  send_chat '/setblock 131 149 129 thaumcraft:pillar_arcane'
+  send_chat '/setblock 131 149 131 thaumcraft:pillar_arcane'
+  send_chat '/setblock 130 151 130 thaumcraft:infusion_matrix'
+  send_chat '/gamemode creative'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:caster_basic 1'
+  send_chat '/tp @p 130.5 150 126.5 0 0'
+  xdotool key --clearmodifiers 1
+  sleep 2
+  capture 34-original-caster-gauntlet-aimed-matrix
+  xdotool click 3
+  sleep 5
+  send_chat '/execute if data block 130 151 130 {active:1b} run say CASTER_CLICK_ACTIVATED_MATRIX_OK'
+  capture 35-original-caster-activated-real-matrix
+  xdotool click 3
+  sleep 4
+  send_chat '/execute unless data block 130 151 130 {crafting:1b} run say CASTER_NO_UNVERIFIED_RECIPE_OK'
+  capture 36-caster-without-research-cannot-start-infusion
+  echo 'CLIENT_SENT_REAL_CASTER_ITEM_MATRIX_TEST=YES' | tee -a client-smoke-status.txt
+
   # Source BETA26 BlockPillar.breakBlock yields exactly 2 corresponding
   # BlockStoneTC materials, not the pillar itself. Vanilla /loot uses the
   # installed data pack loot tables, and /clear amount=0 only counts.

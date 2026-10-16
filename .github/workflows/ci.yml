@@ -440,6 +440,9 @@ jobs:
           grep -q 'tile.finishVerifiedCrystalFarmer()' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
           grep -q 'LegacyCrystalFarmerFinishCheckpoint.restore' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
 
+      - name: Verify source BASIC caster and server-only infusion activation
+        run: python3 tools/verify_source_caster.py
+
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
 

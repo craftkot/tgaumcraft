@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.item.AlumentumItem;
 import dev.ehtid.thaumcraft.item.SalisMundusItem;
 import dev.ehtid.thaumcraft.item.ThaumometerItem;
+import dev.ehtid.thaumcraft.item.BasicCasterItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
@@ -38,6 +39,9 @@ public final class ThaumcraftItems {
             "thaumonomicon", new Item.Properties().stacksTo(1));
     public static final DeferredItem<ThaumometerItem> THAUMOMETER = ITEMS.registerItem(
             "thaumometer", ThaumometerItem::new, new Item.Properties().stacksTo(1));
+    /** Original BETA26 ItemCaster basic gauntlet: matrix caster interactions. */
+    public static final DeferredItem<BasicCasterItem> CASTER_BASIC = ITEMS.registerItem(
+            "caster_basic", BasicCasterItem::new, new Item.Properties().stacksTo(1));
     // ScanSky uses a nonconsumable 100-durability scribing tool, one paper per
     // celestial observation, and one of thirteen BETA26 celestial notes.
     public static final DeferredItem<ScribingToolsItem> SCRIBING_TOOLS = ITEMS.registerItem(
