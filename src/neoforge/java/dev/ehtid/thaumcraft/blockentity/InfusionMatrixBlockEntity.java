@@ -6,6 +6,9 @@ import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixLayout;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixIdle;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStability;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStartPlanner;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionEssentiaCycle;
+import dev.ehtid.thaumcraft.port.core.AspectListData;
+import dev.ehtid.thaumcraft.crafting.InfusionJarSourceBridge;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import net.minecraft.world.item.ItemStack;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
@@ -37,6 +40,8 @@ import java.util.List;
  * since BETA26 invokes this through IInteractWithCaster.
  */
 public final class InfusionMatrixBlockEntity extends BlockEntity {
+    /** Cached jar sources belong to THIS matrix, never shared across dimensions. */
+    private final InfusionJarSourceBridge jarSources = new InfusionJarSourceBridge();
     private boolean active;
     private boolean crafting;
     private float stability;
@@ -182,6 +187,29 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         active = true;
         changedAndSync();
         return true;
+    }
+
+
+    /**
+     * Resource-backed ESSENTIA step for a future verified source-era recipe.
+     * This method is deliberately gated behind the real crafting state:
+     * the current mod still lacks a complete caster-start/recipe lifecycle.
+     *
+     * On success the nearest valid, loaded jar LOSES exactly one unit, and
+     * the returned result loses the same one unit from the requested cost.
+     * The caller must atomically persist the returned remaining costs once
+     * the genuine crafting lifecycle is connected. This method does not
+     * mutate pedestal inventories or create an output by itself.
+     */
+    public LegacyInfusionEssentiaCycle.Result drainRealJarEssentia(
+            AspectListData remainingCosts) {
+        if (!(level instanceof ServerLevel server) || !active || !crafting
+                || !validLocation() || remainingCosts == null)
+            return null;
+        return LegacyInfusionEssentiaCycle.cycle(remainingCosts, stability,
+                countDelay,
+                (aspect, range, delay) -> jarSources.drainOne(
+                        server, worldPosition, aspect.tag(), range, delay));
     }
 
     private void changedAndSync() {

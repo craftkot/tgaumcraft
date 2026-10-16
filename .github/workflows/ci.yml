@@ -25,7 +25,7 @@ jobs:
           rm -rf "$OUT"
           mkdir -p "$OUT"
           mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
-          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaJarParityTest.java
+          javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/CoreParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalFarmerParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/CrystalMeshParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaJarParityTest.java src/test/java/dev/ehtid/thaumcraft/port/core/EssentiaSourceOrderParityTest.java
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CoreParityTest | tee /tmp/core.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.CrystalFarmerParityTest | tee /tmp/crystal-farmer.txt
           grep -q "Crystal farmer BETA26 parity: OK" /tmp/crystal-farmer.txt
@@ -35,6 +35,9 @@ jobs:
           grep -q "CrystalModel seeded selection parity OK" /tmp/crystal-mesh.txt
           java -cp "$OUT" dev.ehtid.thaumcraft.port.core.EssentiaJarParityTest | tee /tmp/essentia-jar.txt
           grep -q "BETA26 jar parity: OK" /tmp/essentia-jar.txt
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.EssentiaSourceOrderParityTest | tee /tmp/essentia-order.txt
+          grep -q "BETA26 essentia source search parity: OK" /tmp/essentia-order.txt
+
           grep -Eq 'Core parity tests: OK \(([4-9][0-9]{3}|[1-9][0-9]{4,}) assertions\)' /tmp/core.txt
 
       - name: Verify source BETA26 Arcane Workbench block and item models
@@ -391,6 +394,15 @@ jobs:
 
       - name: Verify original scanner and Salis Mundus resources
         run: python3 tools/verify_source_item_models.py
+
+      - name: Verify resource-backed infusion jar bridge
+        shell: bash
+        run: |
+          grep -q 'LegacyEssentiaSourceOrder.nullFacing(range)' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
+          grep -q 'jar.takeForInfusion(aspect, 1)' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
+          grep -q 'jar.blocked()' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
+          grep -q 'level.hasChunkAt' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
+          grep -q 'LegacyInfusionEssentiaCycle.cycle' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
 
       - name: NeoForge build
         run: gradle build -x test --stacktrace --no-daemon
