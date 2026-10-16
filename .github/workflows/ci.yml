@@ -483,6 +483,20 @@ jobs:
           assert 'ThaumcraftIngotItem.create(option.metadata())' in bridge
           assert 'tc("ItemsTC.ingots", 0)' in options and 'tc("ItemsTC.ingots", 2)' in options
           assert 'return ItemStack.EMPTY;' in bridge
+          # A mapped ItemStack is useless if the card serializer rejects its
+          # original BETA26 id/metadata before its NBT reaches the table.
+          serialized=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftLegacyOptionNbt.java').read_text()
+          decoder=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeLegacyItemStackDecoder.java').read_text()
+          assert 'case "ItemsTC.alumentum" -> "thaumcraft:alumentum"' in serialized
+          assert 'case "ItemsTC.ingots" -> "thaumcraft:ingot"' in serialized
+          assert '"thaumcraft:nitor_yellow"' in serialized
+          assert '(option.metadata() == -1' in serialized
+          assert 'option.metadata() == 2' in serialized
+          assert 'NeoForgeLegacyItemStackDecoder.safeDecode(original)' in serialized
+          assert 'ItemStack.isSameItemSameComponents(decoded, live)' in serialized
+          assert 'ThaumcraftIngotItem.create(metadata)' in decoder
+          assert 'originalId.equals("thaumcraft:alumentum")' in decoder
+          assert 'originalId.startsWith("thaumcraft:nitor_")' in decoder
           print('BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem')
           PY
 

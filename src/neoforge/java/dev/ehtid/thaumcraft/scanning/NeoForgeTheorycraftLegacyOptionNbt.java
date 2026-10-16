@@ -25,6 +25,10 @@ public final class NeoForgeTheorycraftLegacyOptionNbt {
             case VANILLA_BLOCK, VANILLA_ITEM ->
                     LegacyTheorycraftVanillaOptionIds.modernId(option);
             case TC_ITEM -> switch (option.historicalField()) {
+                case "ItemsTC.alumentum" -> "thaumcraft:alumentum";
+                // Original CardInfuse chooses thaumium (meta 0) or brass
+                // (meta 2). Both are variants of ONE 1.12 registry item.
+                case "ItemsTC.ingots" -> "thaumcraft:ingot";
                 case "ItemsTC.thaumometer" -> "thaumcraft:thaumometer";
                 case "ItemsTC.salisMundus" -> "thaumcraft:salis_mundus";
                 case "ItemsTC.visResonator" -> "thaumcraft:vis_resonator";
@@ -33,7 +37,11 @@ public final class NeoForgeTheorycraftLegacyOptionNbt {
                 case "ItemsTC.fabric" -> "thaumcraft:fabric";
                 default -> null;
             };
-            case TC_COLORED_BLOCK -> null; // yellow Nitor is not yet ported.
+            case TC_COLORED_BLOCK ->
+                    "BlocksTC.nitor".equals(option.historicalField())
+                            && "YELLOW".equals(option.variant())
+                            && option.metadata() == -1
+                            ? "thaumcraft:nitor_yellow" : null;
         };
         if (legacyId == null) return null;
         if (legacyId.equals("minecraft:white_wool")) legacyId = "minecraft:wool";
@@ -41,7 +49,10 @@ public final class NeoForgeTheorycraftLegacyOptionNbt {
         CompoundTag original = new CompoundTag();
         original.putString("id", legacyId);
         original.putByte("Count", (byte) 1);
-        original.putShort("Damage", (short) 0);
+        // Damage remains the original 1.12 variant, never replaced by
+        // modern durability or stripped when reconstructing NBT.
+        original.putShort("Damage", (short) (option.metadata() == -1
+                ? 0 : option.metadata()));
         // Round-trip through our strict loader instead of silently writing
         // a modern stack that cannot later be activated/paid from inventory.
         ItemStack decoded = NeoForgeLegacyItemStackDecoder.safeDecode(original);
@@ -51,6 +62,12 @@ public final class NeoForgeTheorycraftLegacyOptionNbt {
     }
 
     private static boolean safeMetadata(LegacyTheorycraftOptionPools.Option option) {
-        return option.metadata() == -1 || option.metadata() == 0;
+        // Only the original ItemsTC.ingots[2] actually uses metadata 2;
+        // all other options must retain their original nonvariant identity.
+        return option.metadata() == -1
+                || option.metadata() == 0
+                || option.kind() == LegacyTheorycraftOptionPools.SourceKind.TC_ITEM
+                && "ItemsTC.ingots".equals(option.historicalField())
+                && option.metadata() == 2;
     }
 }
