@@ -502,6 +502,16 @@ jobs:
           assert '.explicitlyTaggedVisSize(id, originalMetadata)' in stager
           assert 'ThaumcraftIngotItem.legacyMetadata(original)' in stager
           assert 'knownAspects.size() == 0' in stager
+
+          seed=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftSeedIntegrity.java').read_text()
+          init=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftCardInitializer.java').read_text()
+          preflight=Path('src/neoforge/java/dev/ehtid/thaumcraft/scanning/NeoForgeTheorycraftActivationPreflight.java').read_text()
+          assert 'LegacyTheorycraftOptionPools.infusion(ASPECTS, seed)' in seed
+          assert 'LegacyTheorycraftOptionPools.artifice(seed)' in seed
+          assert '.equals(chosen.compoundAspect().tag())' in seed
+          assert 'expected.equals(data.getCompound("stack"))' in seed
+          assert 'NeoForgeTheorycraftSeedIntegrity.matches(result)' in init
+          assert 'NeoForgeTheorycraftSeedIntegrity.matches(selected)' in preflight
           assert 'originalId.equals("thaumcraft:alumentum")' in decoder
           assert 'originalId.startsWith("thaumcraft:nitor_")' in decoder
           print('BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem')

@@ -154,8 +154,11 @@ public final class NeoForgeTheorycraftCardInitializer {
             return null;
         // This flag is identity from the draw engine, not a license to skip
         // the original aidOnly / available-category / cost filtering.
-        return new LegacyTheorycraftChoiceNbt.Choice(
+        var result = new LegacyTheorycraftChoiceNbt.Choice(
                 key, fromAid, false, card, new CompoundTag());
+        // Self-check against the original selected-item array and aspect.
+        // Missing migrated item variants fail closed, without rerolling.
+        return NeoForgeTheorycraftSeedIntegrity.matches(result) ? result : null;
     }
 
     /**

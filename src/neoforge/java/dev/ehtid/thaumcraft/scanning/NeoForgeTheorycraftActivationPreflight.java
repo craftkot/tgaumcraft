@@ -42,6 +42,10 @@ public final class NeoForgeTheorycraftActivationPreflight {
         var choices = table.pendingChoices();
         if (index < 0 || index >= choices.size() || choices.size() > 3) return null;
         var selected = choices.get(index);
+        // A legacy ItemStack with the right NBT *shape* is not evidence
+        // that it was drawn by the original seed. Reject tampered saves
+        // before reading the player's inventory or promising any reward.
+        if (!NeoForgeTheorycraftSeedIntegrity.matches(selected)) return null;
 
         boolean valid = LegacyTheorycraftCardTagValidator.structurallyValid(
                 selected.key(), selected.cardNBT());
