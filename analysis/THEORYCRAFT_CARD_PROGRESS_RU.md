@@ -148,3 +148,7 @@ server markers и завершённого workflow — пока их нет, н
 для CI — более поздний run #38925752121 также закончился за секунды с
 `runner_id=0, steps=[]`. Нужно выяснить причину в аннотациях/биллинге
 GitHub владельца; редактирование Java не устранит внешний лимит.
+
+## 17 октября 2026 — защита исходных seed в алхимии и небесных карточках
+
+`LegacyTheorycraftSeedDataIntegrity` воспроизводит исходные seeded-выборы для CardConcentrate / CardChannel / CardReactions / CardSynthesis и двух записок CardCelestial. `NeoForgeTheorycraftSeedIntegrity.matches` теперь проверяет соответствие сохранённых `aspect`, `aspect1/2/3` и `md1/md2` исходному seed ДО активации и расхода ресурсов. Историческое поле `CardCelestial.cat` не вычисляется заново из текущей таблицы: оно зависело от состояния категорий в момент получения карточки. Новые 200-seed positive/negative parity assertions включены в `tools/run_core_parity.sh` для CircleCI. Это защита целостности, а не доказательство полного игрового сценария; теория 9/12, общий индекс 59/100 без изменения.

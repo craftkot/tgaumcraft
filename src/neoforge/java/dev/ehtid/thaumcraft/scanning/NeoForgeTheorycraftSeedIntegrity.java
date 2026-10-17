@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.scanning;
 
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftOptionPools;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftSeedDataIntegrity;
+import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 
@@ -24,15 +26,29 @@ public final class NeoForgeTheorycraftSeedIntegrity {
                 .structurallyValid(choice.key(), choice.cardNBT()))
             return false;
         String key = choice.key();
+        CompoundTag data = choice.cardNBT();
+        long seed = data.getLong("seed");
+        if (key.endsWith(".CardCelestial")) {
+            // Only the notes are seed-derived. Category comes from historic
+            // categoryTotals and is deliberately not recomputed here.
+            return LegacyTheorycraftSeedDataIntegrity.matchesCelestialNotes(
+                    seed, data.getInt("md1"), data.getInt("md2"));
+        }
+        if (key.endsWith(".CardConcentrate") || key.endsWith(".CardChannel")
+                || key.endsWith(".CardReactions") || key.endsWith(".CardSynthesis")) {
+            return LegacyTheorycraftSeedDataIntegrity.matchesAlchemy(
+                    key.substring(key.lastIndexOf('.') + 1), seed,
+                    Map.of("aspect", data.getString("aspect"),
+                           "aspect1", data.getString("aspect1"),
+                           "aspect2", data.getString("aspect2"),
+                           "aspect3", data.getString("aspect3")), ASPECTS);
+        }
         if (!(key.endsWith(".CardMindOverMatter")
                 || key.endsWith(".CardTinker") || key.endsWith(".CardInfuse")))
             return true;
-
-        CompoundTag data = choice.cardNBT();
         if (!data.contains("seed", Tag.TAG_LONG)
                 || !data.contains("stack", Tag.TAG_COMPOUND))
             return false;
-        long seed = data.getLong("seed");
         LegacyTheorycraftOptionPools.Option option;
         if (key.endsWith(".CardInfuse")) {
             if (!data.contains("aspect", Tag.TAG_STRING)) return false;

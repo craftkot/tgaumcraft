@@ -20,6 +20,7 @@ TESTS=(
   CrystalFarmerIngredientProgressTest
   CrystalFarmerFinishCheckpointTest
   LegacyTheorycraftSourceVisParityTest
+  LegacyTheorycraftSeedDataIntegrityParityTest
 )
 TEST_SOURCES=()
 for cls in "${TESTS[@]}"; do TEST_SOURCES+=("$TEST_ROOT/$cls.java"); done
@@ -43,5 +44,6 @@ InfusionRitualLedgerParityTest|BETA26 infusion ritual resource ledger: OK
 CrystalFarmerIngredientProgressTest|BETA26 Crystal Farmer ingredient countdown: OK
 CrystalFarmerFinishCheckpointTest|BETA26 Crystal Farmer finish reservation: OK
 LegacyTheorycraftSourceVisParityTest|Original BETA26 CardInfuse explicit ore-tag Vis: OK
+LegacyTheorycraftSeedDataIntegrityParityTest|BETA26 seeded alchemy and celestial card integrity: OK
 CHECKS
 echo CIRCLECI_THAUMCRAFT_CORE_PARITY_OK
