@@ -319,6 +319,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         session.addBonusDraws(prepared.remainingBonusDraws() - session.bonusDraws());
         session.setPlayer(player.getGameProfile().getName());
         setChanged();
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CARDS_DRAWN");
         return true;
     }
 
@@ -410,6 +411,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         if (!reward.isEmpty() && !player.getInventory().add(reward))
             player.drop(reward, false);
         ThaumcraftNetworking.sync(player);
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CARD_ACTIVATED");
         return true;
     }
 

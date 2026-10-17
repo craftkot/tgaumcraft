@@ -360,6 +360,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                     int cardY = topPos + CARD_Y;
                     if (mouseX >= cardX && mouseX < cardX + CARD_WIDTH
                             && mouseY >= cardY && mouseY < cardY + CARD_HEIGHT) {
+                        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_GUI_MOUSE_PRESSED");
                         minecraft.gameMode.handleInventoryButtonClick(menu.containerId, i + 4);
                         return true;
                     }
@@ -369,6 +370,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                     && mouseX < leftPos + DRAW_X + BUTTON_WIDTH
                     && mouseY >= topPos + DRAW_Y
                     && mouseY < topPos + DRAW_Y + BUTTON_HEIGHT) {
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_DRAW_GUI_MOUSE_PRESSED");
                 minecraft.gameMode.handleInventoryButtonClick(
                         menu.containerId, menu.bonusDraws() > 0 ? 3 : 2);
                 return true;

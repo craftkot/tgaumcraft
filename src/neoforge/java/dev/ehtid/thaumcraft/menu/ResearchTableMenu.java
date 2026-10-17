@@ -498,14 +498,22 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             if (researchTable.session() == null || researchTable.session().isComplete()
                     || researchTable.session().bonusDraws() <= 0 && buttonId == 3)
                 return false;
-            if (!researchTable.drawOriginalTheoryCards(serverPlayer, buttonId))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_DRAW_MENU_RECEIVED");
+            if (!researchTable.drawOriginalTheoryCards(serverPlayer, buttonId)) {
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_DRAW_MENU_REJECTED");
                 return false;
+            }
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_DRAW_MENU_ACCEPTED");
             broadcastChanges();
             return true;
         }
         if (buttonId >= 4 && buttonId <= 6) {
-            if (!researchTable.activateOriginalTheoryCard(serverPlayer, buttonId - 4))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_MENU_RECEIVED");
+            if (!researchTable.activateOriginalTheoryCard(serverPlayer, buttonId - 4)) {
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_MENU_REJECTED");
                 return false;
+            }
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_MENU_ACCEPTED");
             broadcastChanges();
             return true;
         }

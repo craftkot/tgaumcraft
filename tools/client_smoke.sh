@@ -395,7 +395,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 38-original-research-table-live-gui-with-supplies
   # Original GUI pixels, not Xvfb-root hard-coded coordinates.
   # Center of BETA26 create button at (116,22) with expanded 132x18 hitbox.
-  click_research_gui 140 31
+  # #48's rendered Create Theory button ends above root Y=211.
+  # Use a button-center point (local Y=25 => root Y=199), not its bottom edge.
+  click_research_gui 140 25
   sleep 4
   capture 39-original-research-table-create-theory
   # #44 never reached the genuine session. Record the mouse path failure
@@ -410,17 +412,33 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   if grep -Fq 'TC_SMOKE_TABLE_CREATE_GUI_MOUSE_PRESSED=YES' client-smoke/client.log; then
     echo 'TABLE_CREATE_MOUSE_BUTTON_HANDLER=YES' | tee -a client-smoke-status.txt
   fi
+  assert_smoke_event TABLE_CREATE_GUI_MOUSE_PRESSED
   assert_smoke_event TABLE_CREATE_MENU_RECEIVED
   assert_smoke_event TABLE_CREATE_MENU_ACCEPTED
   assert_smoke_event THEORY_CREATED
-  # Physical draw click at (116,121). Real server must debit one paper.
-  click_research_gui 140 130
+  # In #48 click y=130 mapped to root Y=409, just BELOW the real
+  # Draw 2 Cards button (ending near root Y=406). Target its interior.
+  click_research_gui 140 124
   sleep 4
   capture 40-original-research-table-draw-two-cards
+  assert_smoke_event TABLE_DRAW_GUI_MOUSE_PRESSED
+  assert_smoke_event TABLE_DRAW_MENU_RECEIVED
+  assert_smoke_event TABLE_DRAW_MENU_ACCEPTED
+  assert_smoke_event THEORY_CARDS_DRAWN
   # Choice #0 occupies (77..133,97..119); click safely inside it.
   click_research_gui 102 108
   sleep 3
   capture 41-original-research-table-activate-first-offer
+  assert_smoke_event TABLE_CARD_GUI_MOUSE_PRESSED
+  assert_smoke_event TABLE_CARD_MENU_RECEIVED
+  # Some cards need extra inventory materials/research and may correctly
+  # reject activation. Distinguish a real successful activation from a
+  # server-authoritative, valid preflight rejection; do not claim success.
+  if grep -Fq 'TC_SMOKE_TABLE_CARD_MENU_ACCEPTED=YES' client-smoke/client.log; then
+    assert_smoke_event THEORY_CARD_ACTIVATED
+  else
+    echo 'RESEARCH_CARD_ACTIVATION_REJECTED_OR_BLOCKED=YES' | tee -a client-smoke-status.txt
+  fi
   xdotool key --clearmodifiers Escape
   # Independent saved-block-entity evidence following physical clicks,
   # not a self-asserted PASS marker: screenshots #42-43 must show actual
