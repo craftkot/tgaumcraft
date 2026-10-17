@@ -330,6 +330,36 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
       echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
       exit 1
     fi
+    # Reverse mirror transfer: a live 12-Aer source jar BELOW the left
+    # mirror, and a 0-Aer but Aer-LABELLED sink jar near its distant partner.
+    # The partner faces NORTH so the sink jar below it does not passively
+    # pull from the source; only the NEW active reverse relay can pass.
+    send_chat '/forceload add 344 344'
+    send_chat '/forceload add 376 344'
+    send_chat '/fill 342 148 342 346 148 346 minecraft:stone'
+    send_chat '/fill 374 148 342 378 148 346 minecraft:stone'
+    send_chat '/setblock 344 149 344 thaumcraft:jar_normal'
+    send_chat '/setblock 376 149 344 thaumcraft:jar_normal'
+    send_chat '/setblock 344 150 344 thaumcraft:mirror_essentia[facing=down]'
+    send_chat '/setblock 376 150 344 thaumcraft:mirror_essentia[facing=north]'
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
+    send_chat '/data merge block 376 149 344 {AspectFilter:"aer",Amount:0s}'
+    send_chat '/data merge block 344 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:376,linkY:150,linkZ:344}'
+    send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:344,linkY:150,linkZ:344}'
+    send_chat '/tp @p 376.5 152.5 338.5 0 30'
+    capture 56-reverse-mirror-before
+    sleep 18
+    assert_smoke_event MIRROR_TO_REMOTE_JAR
+    assert_smoke_event MIRROR_REVERSE_TRANSFER
+    send_chat '/data get block 344 149 344'
+    capture 57-reverse-source-after-debit
+    send_chat '/data get block 376 149 344'
+    capture 58-reverse-sink-after-credit
+    send_chat '/execute unless data block 344 149 344 {Amount:12s} run say MIRROR_REVERSE_SOURCE_DECREASED'
+    send_chat '/execute unless data block 376 149 344 {Amount:0s} run say MIRROR_REVERSE_SINK_INCREASED'
+    capture 59-reverse-vanilla-nbt-assert
+    echo 'MIRROR_REVERSE_SOURCE_AND_SINK_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
+
     echo 'PASS: linked essentia mirrors transferred a physically debited jar unit' | tee -a client-smoke-status.txt
     exit 0
   fi
