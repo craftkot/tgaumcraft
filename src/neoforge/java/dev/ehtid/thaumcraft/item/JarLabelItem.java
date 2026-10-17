@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.AlembicBlockEntity;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.ChatFormatting;
@@ -65,8 +66,9 @@ public final class JarLabelItem extends Item {
     }
 
     @Override public InteractionResult useOn(UseOnContext context) {
-        if (!(context.getLevel().getBlockEntity(context.getClickedPos())
-                instanceof EssentiaJarBlockEntity jar)) return InteractionResult.PASS;
+        var target=context.getLevel().getBlockEntity(context.getClickedPos());
+        if (!(target instanceof EssentiaJarBlockEntity)
+                && !(target instanceof AlembicBlockEntity)) return InteractionResult.PASS;
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.PASS;
         if (!player.mayUseItemAt(context.getClickedPos(),
@@ -77,12 +79,22 @@ public final class JarLabelItem extends Item {
                 && selectedAspect(context.getItemInHand()) == null)
             return InteractionResult.PASS;
         String requested = selectedAspect(context.getItemInHand());
-        if (jar.snapshot().filter() != null
-                || (jar.snapshot().amount() == 0 && requested == null))
-            return InteractionResult.PASS;
-        if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
-        if (!jar.applyLabel(requested, player.getDirection().getOpposite()))
-            return InteractionResult.FAIL;
+        String requested = selectedAspect(context.getItemInHand());
+        if (target instanceof EssentiaJarBlockEntity jar) {
+            if (jar.snapshot().filter() != null
+                    || (jar.snapshot().amount() == 0 && requested == null))
+                return InteractionResult.PASS;
+            if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+            if (!jar.applyLabel(requested, player.getDirection().getOpposite()))
+                return InteractionResult.FAIL;
+        } else if (target instanceof AlembicBlockEntity alembic) {
+            if (alembic.snapshot().filter() != null
+                    || (alembic.snapshot().amount() == 0 && requested == null))
+                return InteractionResult.PASS;
+            if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+            if (!alembic.applyLabel(requested, context.getClickedFace()))
+                return InteractionResult.FAIL;
+        } else return InteractionResult.PASS;
         context.getItemInHand().shrink(1);
         player.getInventory().setChanged();
         return InteractionResult.SUCCESS;

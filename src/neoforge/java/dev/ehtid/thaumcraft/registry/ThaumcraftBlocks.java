@@ -13,6 +13,7 @@ import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
+import dev.ehtid.thaumcraft.block.AlembicBlock;
 import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
@@ -100,6 +101,12 @@ public final class ThaumcraftBlocks {
             "tube", EssentiaTubeBlock::new,
             BlockBehaviour.Properties.of().strength(0.5F,5.0F)
                     .noOcclusion().sound(SoundType.METAL));
+
+    /** Distillation vessel: BETA26 BlockAlembic. */
+    public static final DeferredBlock<AlembicBlock> ALEMBIC = BLOCKS.registerBlock(
+            "alembic", AlembicBlock::new,
+            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion()
+                    .sound(SoundType.WOOD));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.
