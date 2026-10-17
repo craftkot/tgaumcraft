@@ -29,7 +29,9 @@ public final class BrassBraceRecipe extends CustomRecipe {
                 ItemStack ingredient = input.getItem(x + y * 3);
                 if (x == 1 && y == 1) {
                     if (!ingredient.isEmpty()) return false;
-                } else if (x == 0 || x == 2) {
+                } else if ((x == 0 || x == 2) && (y == 0 || y == 2)) {
+                    // Only the four CORNERS are brass; middle left/right
+                    // must be sticks, per ConfigRecipes "NSN"/"S S"/"NSN".
                     if (ThaumcraftNuggetItem.legacyMetadata(ingredient) != 8) return false;
                 } else if (!ingredient.is(Items.STICK)) return false;
             }
