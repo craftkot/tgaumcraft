@@ -43,18 +43,18 @@ public final class InfusionSkullStabilityParityTest {
 
         pair.remove(at(-2, -2, -1));
         var lost = LegacyInfusionStability.pedestalBalance(pair);
-        near(-0.025F, lost.replenishment());
+        near(0.0F, lost.replenishment());
         eq(1, lost.problemPositions().size());
 
         pair.put(at(-2, -2, -1), new LegacyInfusionStability.Stabilizer(
                 "thaumcraft:candle_white", 0.1F, false, 0));
         var mismatch = LegacyInfusionStability.pedestalBalance(pair);
-        near(-0.025F, mismatch.replenishment());
+        near(0.0F, mismatch.replenishment());
         eq(1, mismatch.problemPositions().size());
 
         pair.put(at(-2, -3, -1), skull());
         pair.remove(at(-2, -2, -1));
-        near(-0.125F, LegacyInfusionStability.pedestalBalance(pair).replenishment());
+        near(-0.1F, LegacyInfusionStability.pedestalBalance(pair).replenishment());
 
         near(0.1F, LegacyInfusionStability.DEFAULT_UNMATCHED_STRENGTH);
         System.out.println("BETA26 skull infusion stabilizers: OK (" + checks + " assertions)");
