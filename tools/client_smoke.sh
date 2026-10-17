@@ -109,23 +109,37 @@ capture() {
   echo
 }
 
-# First-ever Minecraft dev run shows Accessibility/Narrator setup, not
-# Singleplayer. The Continue button is at physical (512,715) with the
-# fixed window on 1280x800 Xvfb; record actual screens at each step.
+# CircleCI machine job #11 demonstrated that the first screen was already
+# the TITLE SCREEN, not an Accessibility/Narrator dialog. The old two
+# blind clicks at root (512,716) and (512,308) clicked MULTIPLAYER, opening
+# "Caution: Third-Party Online Play" and never creating a local world.
+# Compute the center of the actual title-screen Singleplayer button
+# using the REAL Minecraft window, not the (larger) Xvfb desktop.
+# The real #11 title screenshot at 1024x768 showed that button at
+# window-local x≈512, y≈276, i.e. 36% of the window height. We force
+# guiScale:2 above and record clicks so the next job is auditable.
 capture 01-first-launch
 echo 'REAL_WINDOW_SCREENSHOT=YES' | tee -a client-smoke-status.txt
-xdotool mousemove 512 716 click 1
+xdotool key --clearmodifiers Escape || true
+sleep 2
+title_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+eval "$title_geometry"
+title_click_x=$((X + WIDTH / 2))
+title_click_y=$((Y + HEIGHT * 36 / 100))
+echo "TITLE_SINGLEPLAYER_CLICK=${title_click_x},${title_click_y} WINDOW=${WIDTH}x${HEIGHT}" \
+  | tee -a client-smoke-status.txt
+xdotool mousemove "$title_click_x" "$title_click_y" click 1
 sleep 8
-capture 02-after-accessibility
-xdotool mousemove 512 308 click 1
-sleep 8
-capture 03-after-singleplayer
-# After Singleplayer, with no saved worlds Minecraft opens
-# the CREATE WORLD form directly. Screenshots from CI run #471 verify
-# Allow Commands at x512,y430 and CREATE NEW WORLD at x275,y716.
+capture 02-after-singleplayer
+# A fresh dev client with no existing worlds can jump directly to the
+# Create World form. Previous runs located the commands button and Create
+# World control below. These later clicks are STILL subject to an actual
+# world-start assertion (no invented success based on screenshot capture).
 xdotool mousemove 512 433 click 1
 sleep 3
-capture 04-commands-enabled
+capture 03-world-create-commands
+
+capture 04-before-world-create
 
 # Optional milestone video; ordinary client regressions capture PNGs only.
 if [ "${CAPTURE_VIDEO:-0}" = "1" ]; then
@@ -607,6 +621,12 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   echo 'CLIENT_IN_WORLD_COMMANDS_SENT=YES' | tee -a client-smoke-status.txt
 else
   echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+  echo 'The client was launched, but this is NOT a confirmed integrated world.' \
+    | tee -a client-smoke-status.txt
+  echo 'Inspect 01/02/03/04/05 PNG artifacts to find blocked title/create screens.' \
+    | tee -a client-smoke-status.txt
+  echo 'Client startup diagnostics (last 120 lines):' | tee -a client-smoke-status.txt
+  tail -120 client-smoke/client.log | tee -a client-smoke-status.txt
   exit 1
 fi
 if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
