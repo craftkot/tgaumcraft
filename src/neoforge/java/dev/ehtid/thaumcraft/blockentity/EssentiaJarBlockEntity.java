@@ -21,7 +21,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /** Persistent server-side BETA26 jar. No passive essentia generation. */
-public final class EssentiaJarBlockEntity extends BlockEntity {
+public final class EssentiaJarBlockEntity extends BlockEntity implements EssentiaTransportPort {
+    private int transportTicks;
     private LegacyEssentiaJarLogic.State stored = LegacyEssentiaJarLogic.State.empty();
     private int facing = 2;
     private boolean blocked;
@@ -146,6 +147,73 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
         if (transfer.transferred() > 0) updateStored(transfer.state());
         return transfer.transferred();
     }
+    /** Original TileJarFillable.update() pulls one unit from the tile ABOVE
+     * every fifth server tick (void jars continue pulling when full).
+     * Only real loaded transport neighbours are eligible; no free essence.
+     */
+    public static void serverTick(net.minecraft.server.level.ServerLevel level,
+                                  BlockPos pos, BlockState state, EssentiaJarBlockEntity jar) {
+        if (++jar.transportTicks % 5 != 0 || jar.blocked
+                || (!jar.isVoidJar() && jar.stored.amount() >= LegacyEssentiaJarLogic.CAPACITY))
+            return;
+        if (!(level.getBlockEntity(pos.above()) instanceof EssentiaTransportPort above)
+                || !above.transportConnects(Direction.DOWN)
+                || !above.canTransportOutput(Direction.DOWN)) return;
+
+        int ownSuction = jar.suction(Direction.UP);
+        if (ownSuction <= above.transportSuction(Direction.DOWN)) return;
+        String aspect = jar.stored.filter() != null ? jar.stored.filter()
+                : jar.stored.amount() > 0 ? jar.stored.aspect() : null;
+        // BETA26 only consults the source essentia type when the unlabeled
+        // and empty jar has a stronger suction than the source.
+        if (aspect == null && above.transportAmount(Direction.DOWN) > 0
+                && ownSuction >= above.transportMinimumSuction())
+            aspect = above.transportAspect(Direction.DOWN);
+        if (aspect == null || above.transportAmount(Direction.DOWN) <= 0
+                || !aspect.equals(above.transportAspect(Direction.DOWN))
+                || !LegacyEssentiaJarLogic.accepts(jar.stored, aspect)
+                || (jar.stored.amount() > 0 && !aspect.equals(jar.stored.aspect())))
+            return;
+        if (!jar.isVoidJar() && jar.stored.amount() >= LegacyEssentiaJarLogic.CAPACITY)
+            return;
+        // Atomically debit source before granting one unit to the target.
+        // Both adapters use the same synchronous server-thread transaction.
+        if (above.takeTransport(aspect, 1, Direction.DOWN) == 1)
+            jar.addFromTransport(aspect, 1, Direction.UP);
+    }
+
+    @Override public boolean transportConnects(Direction face) {
+        return !blocked && isConnectable(face);
+    }
+    @Override public boolean canTransportInput(Direction face) {
+        return transportConnects(face);
+    }
+    @Override public boolean canTransportOutput(Direction face) {
+        return transportConnects(face);
+    }
+    @Override public int transportSuction(Direction face) {
+        return transportConnects(face) ? suction(face) : 0;
+    }
+    @Override public String transportSuctionAspect(Direction face) {
+        return transportConnects(face) ? suctionAspect(face) : null;
+    }
+    @Override public int transportMinimumSuction() {
+        return isVoidJar() ? LegacyVoidJarLogic.minimumSuction(stored)
+                : LegacyEssentiaJarLogic.minimumSuction(stored);
+    }
+    @Override public int transportAmount(Direction face) {
+        return transportConnects(face) ? stored.amount() : 0;
+    }
+    @Override public String transportAspect(Direction face) {
+        return transportConnects(face) ? stored.aspect() : null;
+    }
+    @Override public int takeTransport(String aspect,int amount,Direction face) {
+        return transportConnects(face) ? takeForTransport(aspect,amount,face) : 0;
+    }
+    @Override public int addTransport(String aspect,int amount,Direction face) {
+        return transportConnects(face) ? addFromTransport(aspect,amount,face) : 0;
+    }
+
     /** Source jar debit: one complete 10-unit phial, no partial withdrawal. */
     public boolean drawIntoPhial(String aspect, int amount) {
         if (level == null || level.isClientSide) return false;

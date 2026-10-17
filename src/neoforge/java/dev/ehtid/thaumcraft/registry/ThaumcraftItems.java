@@ -122,6 +122,9 @@ public final class ThaumcraftItems {
             "jar_void", properties -> new EssentiaJarItem(ThaumcraftBlocks.JAR_VOID.get(), properties),
             new Item.Properties());
 
+    public static final DeferredItem<BlockItem> TUBE = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE, new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());
