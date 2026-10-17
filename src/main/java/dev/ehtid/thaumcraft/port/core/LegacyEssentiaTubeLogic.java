@@ -77,6 +77,44 @@ public final class LegacyEssentiaTubeLogic {
                 tube.openMask(), tube.venting());
     }
 
+
+    public enum Variant { NORMAL, VALVE, FILTER, RESTRICT, ONEWAY }
+
+    /**
+     * BETA26 TileTubeFilter, TileTubeRestrict, TileTubeOneway override
+     * calculateSuction rather than changing core one-unit storage.
+     * Facing points toward input for directional suction; only the
+     * opposite face supplies suction to a one-way tube.
+     */
+    public static Tube calculateVariant(Tube tube, List<Neighbour> neighbours,
+                                        Variant variant, String filter, int facing) {
+        Objects.requireNonNull(variant);
+        int suction=0;
+        String suctionType=null;
+        for (Neighbour n : neighbours) {
+            if (!n.connectable() || !tube.open(n.side())) continue;
+            if (variant==Variant.ONEWAY && n.side()!=opposite(facing)) continue;
+            if (filter!=null && n.suctionAspect()!=null &&
+                    !filter.equals(n.suctionAspect())) continue;
+            if (filter==null && tube.amount()>0 && n.suctionAspect()!=null &&
+                    !n.suctionAspect().equals(tube.aspect())) continue;
+            if (n.suction()>suction+1) {
+                suction=variant==Variant.RESTRICT?n.suction()/2:n.suction()-1;
+                suctionType=n.suctionAspect()==null?filter:n.suctionAspect();
+            }
+        }
+        return new Tube(tube.aspect(),tube.amount(),suctionType,suction,
+                tube.openMask(),tube.venting());
+    }
+
+    /** Directional source path and non-consuming filter preflight. */
+    public static boolean canPullVariant(Tube tube, Neighbour source,
+                                          Variant variant, String filter, int facing) {
+        if (variant==Variant.ONEWAY && source.side()==opposite(facing))return false;
+        if (filter!=null && !filter.equals(source.essence()))return false;
+        return canPull(tube,source);
+    }
+
     /** TileTube.checkVenting: conflicting typed suction on adjacent port. */
     public static Tube checkVenting(Tube tube, List<Neighbour> neighbours) {
         if (tube.suction() == 0 || tube.venting() > 0) return tube;

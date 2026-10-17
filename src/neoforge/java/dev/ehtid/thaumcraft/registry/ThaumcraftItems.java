@@ -136,6 +136,15 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> SMELTER_VOID = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.SMELTER_VOID, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> TUBE_VALVE = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE_VALVE,new Item.Properties());
+    public static final DeferredItem<BlockItem> TUBE_FILTER = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE_FILTER,new Item.Properties());
+    public static final DeferredItem<BlockItem> TUBE_RESTRICT = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE_RESTRICT,new Item.Properties());
+    public static final DeferredItem<BlockItem> TUBE_ONEWAY = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE_ONEWAY,new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());

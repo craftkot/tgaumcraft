@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,6 +27,42 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
     private LegacyEssentiaTubeLogic.Tube stored = LegacyEssentiaTubeLogic.Tube.empty();
     private int count;
     private int facing = Direction.NORTH.get3DDataValue();
+    private String aspectFilter;
+    private boolean allowFlow = true;
+    private boolean wasPoweredLastTick;
+
+    private LegacyEssentiaTubeLogic.Variant variant(){
+        BlockState block=getBlockState();
+        if(block.is(ThaumcraftBlocks.TUBE_VALVE.get()))return LegacyEssentiaTubeLogic.Variant.VALVE;
+        if(block.is(ThaumcraftBlocks.TUBE_FILTER.get()))return LegacyEssentiaTubeLogic.Variant.FILTER;
+        if(block.is(ThaumcraftBlocks.TUBE_RESTRICT.get()))return LegacyEssentiaTubeLogic.Variant.RESTRICT;
+        if(block.is(ThaumcraftBlocks.TUBE_ONEWAY.get()))return LegacyEssentiaTubeLogic.Variant.ONEWAY;
+        return LegacyEssentiaTubeLogic.Variant.NORMAL;
+    }
+    public boolean hasFilter(){return aspectFilter!=null;}
+    public boolean applyFilter(String aspect) {
+        if(level==null||level.isClientSide()||variant()!=LegacyEssentiaTubeLogic.Variant.FILTER
+                ||aspectFilter!=null||aspect==null||aspect.isBlank())return false;
+        aspectFilter=aspect;setChanged();level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
+        return true;
+    }
+    public boolean clearFilter(){
+        if(level==null||level.isClientSide()||variant()!=LegacyEssentiaTubeLogic.Variant.FILTER
+                ||aspectFilter==null)return false;
+        aspectFilter=null;setChanged();level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
+        return true;
+    }
+    public boolean flipValve(){
+        if(level==null||level.isClientSide()||variant()!=LegacyEssentiaTubeLogic.Variant.VALVE)
+            return false;
+        allowFlow=!allowFlow;setChanged();level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
+        return true;
+    }
+    public boolean rotateFacing(){
+        if(level==null||level.isClientSide())return false;
+        facing=(facing+1)%6;setChanged();level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
+        return true;
+    }
     private static final int MAX_STORED_SUCTION = 32767;
 
     public EssentiaTubeBlockEntity(BlockPos pos, BlockState state) {
@@ -79,17 +116,34 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
 
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state,
                                   EssentiaTubeBlockEntity tile) {
+        if(tile.variant()==LegacyEssentiaTubeLogic.Variant.VALVE && tile.count%5==0){
+            boolean powered=level.hasNeighborSignal(pos);
+            if(powered!=tile.wasPoweredLastTick){
+                tile.wasPoweredLastTick=powered;
+                tile.allowFlow=!powered;
+                tile.setChanged();
+                level.sendBlockUpdated(pos,state,state,3);
+            }
+        }
         if (++tile.count % 2 == 0 || tile.count % 5 == 0) {
             if (tile.count % 2 == 0 && tile.stored.venting() == 0) {
                 var nearby = tile.neighbours();
-                tile.commit(LegacyEssentiaTubeLogic.checkVenting(
-                        LegacyEssentiaTubeLogic.calculateSuction(tile.stored, nearby), nearby));
+                if(tile.variant()==LegacyEssentiaTubeLogic.Variant.VALVE && !tile.allowFlow)
+                    tile.commit(new LegacyEssentiaTubeLogic.Tube(
+                            tile.stored.aspect(),tile.stored.amount(),null,0,
+                            tile.stored.openMask(),tile.stored.venting()));
+                else tile.commit(LegacyEssentiaTubeLogic.checkVenting(
+                        LegacyEssentiaTubeLogic.calculateVariant(tile.stored,nearby,
+                                tile.variant(),tile.aspectFilter,tile.facing),nearby));
             }
             if (tile.count % 5 == 0 && tile.stored.venting() == 0
                     && tile.stored.amount() == 0 && tile.stored.suction() > 0) {
                 var adjacent = tile.neighbours();
                 for (var next : adjacent) {
-                    if (!LegacyEssentiaTubeLogic.canPull(tile.stored, next)) continue;
+                    if (tile.variant()==LegacyEssentiaTubeLogic.Variant.VALVE&&!tile.allowFlow)
+                        continue;
+                    if (!LegacyEssentiaTubeLogic.canPullVariant(tile.stored,next,
+                            tile.variant(),tile.aspectFilter,tile.facing))continue;
                     Direction face = Direction.from3DDataValue(next.side());
                     if (!(level.getBlockEntity(pos.relative(face)) instanceof EssentiaTransportPort source))
                         continue;
@@ -110,12 +164,20 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
     }
 
     @Override public boolean transportConnects(Direction face) {
-        return face != null && stored.open(face.get3DDataValue());
+        return face != null && stored.open(face.get3DDataValue())
+                && !(variant()==LegacyEssentiaTubeLogic.Variant.VALVE
+                        && face.get3DDataValue()==facing);
     }
-    @Override public boolean canTransportInput(Direction face) { return transportConnects(face); }
-    @Override public boolean canTransportOutput(Direction face) { return transportConnects(face); }
+    @Override public boolean canTransportInput(Direction face) {
+        return transportConnects(face) &&
+                (variant()!=LegacyEssentiaTubeLogic.Variant.VALVE||allowFlow);
+    }
+    @Override public boolean canTransportOutput(Direction face) {
+        return transportConnects(face) &&
+                (variant()!=LegacyEssentiaTubeLogic.Variant.VALVE||allowFlow);
+    }
     @Override public int transportSuction(Direction face) {
-        return transportConnects(face) ? stored.suction() : 0;
+        return canTransportInput(face) ? stored.suction() : 0;
     }
     @Override public String transportSuctionAspect(Direction face) {
         return transportConnects(face) ? stored.suctionAspect() : null;
@@ -148,6 +210,9 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
         if (stored.aspect() != null) tag.putString("type", stored.aspect());
         tag.putInt("amount", stored.amount());
         if (stored.suctionAspect() != null) tag.putString("stype", stored.suctionAspect());
+        if (aspectFilter != null) tag.putString("AspectFilter",aspectFilter);
+        tag.putBoolean("flow",allowFlow);
+        tag.putBoolean("hadpower",wasPoweredLastTick);
         tag.putInt("samount", stored.suction());
         tag.putInt("side", facing);
         byte[] sides = new byte[6];
@@ -167,6 +232,10 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
             for(int i=0;i<6;i++) if(sides[i]!=0) openMask|=1<<i;
         }
         facing = Math.clamp(tag.getInt("side"),0,5);
+        aspectFilter=tag.contains("AspectFilter",Tag.TAG_STRING)
+                ?tag.getString("AspectFilter"):null;
+        allowFlow=!tag.contains("flow")||tag.getBoolean("flow");
+        wasPoweredLastTick=tag.getBoolean("hadpower");
         if (aspect == null || aspect.isBlank()) amount = 0;
         stored = new LegacyEssentiaTubeLogic.Tube(aspect, amount,
                 suctionAspect, suction, openMask, 0);

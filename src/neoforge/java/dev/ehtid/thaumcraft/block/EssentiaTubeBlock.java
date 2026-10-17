@@ -113,7 +113,8 @@ public final class EssentiaTubeBlock extends BaseEntityBlock {
         if(!player.mayInteract(pos)) return ItemInteractionResult.FAIL;
         if(!level.isClientSide()
                 && level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)
-            tube.toggleSide(hit.getDirection());
+            if(player.isShiftKeyDown())tube.rotateFacing();
+            else tube.toggleSide(hit.getDirection());
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 }

@@ -59,7 +59,11 @@ public final class ThaumcraftBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssentiaTubeBlockEntity>>
             TUBE = TYPES.register("tube",
             () -> BlockEntityType.Builder.of(EssentiaTubeBlockEntity::new,
-                    ThaumcraftBlocks.TUBE.get()).build(null));
+                    ThaumcraftBlocks.TUBE.get(),
+                    ThaumcraftBlocks.TUBE_VALVE.get(),
+                    ThaumcraftBlocks.TUBE_FILTER.get(),
+                    ThaumcraftBlocks.TUBE_RESTRICT.get(),
+                    ThaumcraftBlocks.TUBE_ONEWAY.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AlembicBlockEntity>>
             ALEMBIC = TYPES.register("alembic",

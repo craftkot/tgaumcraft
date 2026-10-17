@@ -128,6 +128,20 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of().strength(2.5F,10.0F).sound(SoundType.METAL)
                     .lightLevel(state -> state.getValue(SmelterBlock.LIT)?13:0));
 
+    /** BETA26 original tube subtypes using the same one-unit TileTube. */
+    public static final DeferredBlock<EssentiaTubeBlock> TUBE_VALVE = BLOCKS.registerBlock(
+            "tube_valve",EssentiaTubeBlock::new,
+            BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion().sound(SoundType.METAL));
+    public static final DeferredBlock<EssentiaTubeBlock> TUBE_FILTER = BLOCKS.registerBlock(
+            "tube_filter",EssentiaTubeBlock::new,
+            BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion().sound(SoundType.METAL));
+    public static final DeferredBlock<EssentiaTubeBlock> TUBE_RESTRICT = BLOCKS.registerBlock(
+            "tube_restrict",EssentiaTubeBlock::new,
+            BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion().sound(SoundType.METAL));
+    public static final DeferredBlock<EssentiaTubeBlock> TUBE_ONEWAY = BLOCKS.registerBlock(
+            "tube_oneway",EssentiaTubeBlock::new,
+            BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion().sound(SoundType.METAL));
+
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.
     public static final DeferredBlock<Block> STONE_ARCANE = BLOCKS.registerSimpleBlock(
