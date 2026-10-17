@@ -8,6 +8,10 @@ parameters:
   run_minecraft:
     type: boolean
     default: false
+  # Expensive NeoForge compile runs on demand; cheap core parity stays on all pushes.
+  run_compile:
+    type: boolean
+    default: false
 
 jobs:
   verify-connection:
@@ -30,6 +34,24 @@ jobs:
             python3 tools/verify_survival_loot_tables.py
             bash tools/run_core_parity.sh
             echo "CIRCLECI_THAUMCRAFT_REPOSITORY_CHECK_OK"
+  neoforge-compile:
+    docker:
+      - image: cimg/openjdk:21.0
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Compile full NeoForge 1.21.1 Java and bundled resources
+          no_output_timeout: 20m
+          command: |
+            set -euo pipefail
+            java -version
+            curl -fsSL --retry 3 -o /tmp/gradle.zip \
+              https://services.gradle.org/distributions/gradle-9.2.1-bin.zip
+            unzip -q /tmp/gradle.zip -d /tmp
+            /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
+              --max-workers=2 --stacktrace compileJava processResources
+            echo THAUMCRAFT_NEOFORGE_CLASSES_COMPILED_OK
   real-minecraft-client:
     machine:
       image: ubuntu-2404:current
@@ -78,6 +100,10 @@ workflows:
   connection-check:
     jobs:
       - verify-connection
+  neoforge-java-validation:
+    when: << pipeline.parameters.run_compile >>
+    jobs:
+      - neoforge-compile
   minecraft-visual-regression:
     when: << pipeline.parameters.run_minecraft >>
     jobs:
