@@ -21,6 +21,7 @@ TESTS=(
   LegacyEssentiaTubeParityTest
   LegacyEssentiaTubeRecipeTest
   LegacyTubeVariantParityTest
+  LegacyTubeBufferParityTest
   LegacyAlembicParityTest
   LegacySmelterParityTest
   AlchemyTransportCycleParityTest
@@ -57,6 +58,7 @@ InfusionSkullStabilityParityTest|BETA26 skull infusion stabilizers: OK
 LegacyEssentiaTubeParityTest|BETA26 essentia tube pressure and one-unit transfer: OK
 LegacyEssentiaTubeRecipeTest|BETA26 eight-tube arcane crafting: OK
 LegacyTubeVariantParityTest|BETA26 filter valve restrict oneway suction and direction: OK
+LegacyTubeBufferParityTest|BETA26 mixed essentia buffer, choke, and priority: OK
 LegacyAlembicParityTest|BETA26 alembic two-pass column and extraction: OK
 LegacySmelterParityTest|BETA26 smelter retention, speed and capacity: OK
 AlchemyTransportCycleParityTest|BETA26 smelter-alembic-tube-jar conservation: OK
