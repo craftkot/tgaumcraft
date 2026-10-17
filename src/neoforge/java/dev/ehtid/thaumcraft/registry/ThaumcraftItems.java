@@ -15,6 +15,7 @@ import dev.ehtid.thaumcraft.item.JarBraceItem;
 import dev.ehtid.thaumcraft.item.JarLabelItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
+import dev.ehtid.thaumcraft.item.EssentiaMirrorItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
@@ -122,6 +123,11 @@ public final class ThaumcraftItems {
 
     public static final DeferredItem<BlockItem> INFUSION_MATRIX = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.INFUSION_MATRIX, new Item.Properties());
+
+    public static final DeferredItem<EssentiaMirrorItem> MIRROR_ESSENTIA = ITEMS.registerItem(
+            "mirror_essentia",
+            properties -> new EssentiaMirrorItem(ThaumcraftBlocks.MIRROR_ESSENTIA.get(), properties),
+            new Item.Properties().stacksTo(1));
 
     public static final DeferredItem<EssentiaJarItem> JAR_NORMAL = ITEMS.registerItem(
             "jar_normal", properties -> new EssentiaJarItem(ThaumcraftBlocks.JAR_NORMAL.get(), properties),

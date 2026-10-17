@@ -12,6 +12,7 @@ import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
+import dev.ehtid.thaumcraft.block.EssentiaMirrorBlock;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
 import dev.ehtid.thaumcraft.block.EssentiaBufferBlock;
 import dev.ehtid.thaumcraft.block.AlembicBlock;
@@ -87,6 +88,12 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<InfusionMatrixBlock> INFUSION_MATRIX = BLOCKS.registerBlock(
             "infusion_matrix", InfusionMatrixBlock::new,
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.STONE));
+
+    /** BETA26 TileMirrorEssentia: persisted reciprocal cross-dimension link. */
+    public static final DeferredBlock<EssentiaMirrorBlock> MIRROR_ESSENTIA = BLOCKS.registerBlock(
+            "mirror_essentia", EssentiaMirrorBlock::new,
+            BlockBehaviour.Properties.of().strength(0.1F, 20.0F)
+                    .noOcclusion().sound(SoundType.GLASS));
 
     /** BETA26 TileJarFillable, persisted world essentia. */
     public static final DeferredBlock<EssentiaJarBlock> JAR_NORMAL = BLOCKS.registerBlock(

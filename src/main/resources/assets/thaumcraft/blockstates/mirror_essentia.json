@@ -1,0 +1,22 @@
+{
+  "variants": {
+    "facing=north": {
+      "model": "thaumcraft:block/mirror_essentia"
+    },
+    "facing=south": {
+      "model": "thaumcraft:block/mirror_essentia"
+    },
+    "facing=east": {
+      "model": "thaumcraft:block/mirror_essentia"
+    },
+    "facing=west": {
+      "model": "thaumcraft:block/mirror_essentia"
+    },
+    "facing=up": {
+      "model": "thaumcraft:block/mirror_essentia"
+    },
+    "facing=down": {
+      "model": "thaumcraft:block/mirror_essentia"
+    }
+  }
+}

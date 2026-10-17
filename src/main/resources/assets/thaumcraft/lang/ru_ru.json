@@ -317,5 +317,6 @@
   "block.thaumcraft.plank_silverwood": "Доски серебряного дерева",
   "block.thaumcraft.metal_alchemical": "Алхимическая конструкция",
   "block.thaumcraft.metal_alchemical_advanced": "Улучшенная алхимическая конструкция",
-  "item.thaumcraft.primordial_pearl": "Первородная жемчужина"
+  "item.thaumcraft.primordial_pearl": "Первородная жемчужина",
+  "block.thaumcraft.mirror_essentia": "Зеркало эссенции"
 }

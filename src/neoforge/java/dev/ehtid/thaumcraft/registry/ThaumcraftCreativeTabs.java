@@ -52,6 +52,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.STONE_ANCIENT.get());
                         output.accept(ThaumcraftItems.STONE_ELDRITCH_TILE.get());
                         output.accept(ThaumcraftItems.INFUSION_MATRIX.get());
+                        output.accept(ThaumcraftItems.MIRROR_ESSENTIA.get());
                         output.accept(ThaumcraftItems.JAR_NORMAL.get());
                         output.accept(ThaumcraftItems.JAR_VOID.get());
                         output.accept(ThaumcraftItems.TUBE.get());

@@ -317,5 +317,6 @@
   "block.thaumcraft.plank_silverwood": "Silverwood Planks",
   "block.thaumcraft.metal_alchemical": "Alchemical Construct",
   "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct",
-  "item.thaumcraft.primordial_pearl": "Primordial Pearl"
+  "item.thaumcraft.primordial_pearl": "Primordial Pearl",
+  "block.thaumcraft.mirror_essentia": "Essentia Mirror"
 }

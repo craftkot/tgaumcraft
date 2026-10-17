@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.InfusionMatrixBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.EssentiaMirrorBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaTubeBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaBufferBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.AlembicBlockEntity;
@@ -50,6 +51,11 @@ public final class ThaumcraftBlockEntities {
             INFUSION_MATRIX = TYPES.register("infusion_matrix",
             () -> BlockEntityType.Builder.of(InfusionMatrixBlockEntity::new,
                     ThaumcraftBlocks.INFUSION_MATRIX.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssentiaMirrorBlockEntity>>
+            MIRROR_ESSENTIA = TYPES.register("mirror_essentia",
+            () -> BlockEntityType.Builder.of(EssentiaMirrorBlockEntity::new,
+                    ThaumcraftBlocks.MIRROR_ESSENTIA.get()).build(null));
 
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssentiaJarBlockEntity>>
             JAR_NORMAL = TYPES.register("jar_normal",
