@@ -110,7 +110,7 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
      * Include the registered BlockEntity id, not a guessed legacy NBT id;
      * otherwise 1.21 silently discards the item component on placement.
      */
-    public boolean saveToItem(ItemStack drop, HolderLookup.Provider registries) {
+    public boolean writeJarDropData(ItemStack drop, HolderLookup.Provider registries) {
         if (drop.isEmpty() || !(drop.is(ThaumcraftItems.JAR_NORMAL.get())
                 || drop.is(ThaumcraftItems.JAR_VOID.get()))
                 || !hasStoredData()) return false;

@@ -42,7 +42,7 @@ public final class EssentiaBufferBlock extends EssentiaTubeBlock {
             Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit){
         if(!held.is(ThaumcraftItems.CASTER_BASIC.get()))
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
-        if(!player.mayInteract(pos))return ItemInteractionResult.FAIL;
+        if(!player.mayInteract(level, pos))return ItemInteractionResult.FAIL;
         if(!level.isClientSide()
                 &&level.getBlockEntity(pos) instanceof EssentiaBufferBlockEntity buffer){
             if(player.isShiftKeyDown())buffer.cycleChoke(hit.getDirection());

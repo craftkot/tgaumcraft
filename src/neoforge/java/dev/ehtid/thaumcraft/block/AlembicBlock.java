@@ -42,7 +42,7 @@ public final class AlembicBlock extends BaseEntityBlock {
             BlockPos pos,Player player,BlockHitResult hit) {
         if(!player.isShiftKeyDown())return InteractionResult.PASS;
         if(level.isClientSide())return InteractionResult.SUCCESS;
-        if(!player.mayInteract(pos))return InteractionResult.FAIL;
+        if(!player.mayInteract(level, pos))return InteractionResult.FAIL;
         if(!(level.getBlockEntity(pos) instanceof AlembicBlockEntity tile))
             return InteractionResult.PASS;
         if(tile.snapshot().filter()!=null

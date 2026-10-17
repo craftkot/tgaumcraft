@@ -109,7 +109,7 @@ public class EssentiaTubeBlock extends BaseEntityBlock {
     /** BETA26 BlockTube: valve right click, filter sneak to clear imprint. */
     @Override protected InteractionResult useWithoutItem(BlockState state,Level level,
             BlockPos pos,Player player,BlockHitResult hit) {
-        if(!player.mayInteract(pos))return InteractionResult.FAIL;
+        if(!player.mayInteract(level, pos))return InteractionResult.FAIL;
         if(!(level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube))
             return InteractionResult.PASS;
         if(state.is(ThaumcraftBlocks.TUBE_VALVE.get()) && !player.isShiftKeyDown()){
@@ -140,14 +140,14 @@ public class EssentiaTubeBlock extends BaseEntityBlock {
                 else if(held.is(ThaumcraftItems.CRYSTAL_ESSENCE.get()))
                     aspect=CrystalEssenceItem.legacyAspect(held);
                 if(aspect!=null&&!aspect.isBlank()){
-                    if(!player.mayInteract(pos))return ItemInteractionResult.FAIL;
+                    if(!player.mayInteract(level, pos))return ItemInteractionResult.FAIL;
                     if(!level.isClientSide())tube.applyFilter(aspect);
                     return ItemInteractionResult.sidedSuccess(level.isClientSide());
                 }
             }
             if(state.is(ThaumcraftBlocks.TUBE_VALVE.get())
                     &&!held.is(ThaumcraftItems.TUBE_VALVE.get())){
-                if(!player.mayInteract(pos))return ItemInteractionResult.FAIL;
+                if(!player.mayInteract(level, pos))return ItemInteractionResult.FAIL;
                 if(!level.isClientSide()
                         &&level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)
                     tube.flipValve();
@@ -155,7 +155,7 @@ public class EssentiaTubeBlock extends BaseEntityBlock {
             }
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
-        if(!player.mayInteract(pos)) return ItemInteractionResult.FAIL;
+        if(!player.mayInteract(level, pos)) return ItemInteractionResult.FAIL;
         if(!level.isClientSide()
                 && level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)
             if(player.isShiftKeyDown())tube.rotateFacing();

@@ -48,7 +48,7 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
                                                        Player player, BlockHitResult hit) {
   if (!player.isShiftKeyDown()) return InteractionResult.PASS;
   if (level.isClientSide) return InteractionResult.SUCCESS;
-  if (!player.mayInteract(pos)) return InteractionResult.FAIL;
+  if (!player.mayInteract(level, pos)) return InteractionResult.FAIL;
   if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar))
    return InteractionResult.PASS;
   if (jar.snapshot().filter() != null && jar.facing() == hit.getDirection().get3DDataValue()) {
@@ -80,7 +80,7 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
   if (blockEntity instanceof EssentiaJarBlockEntity jar && jar.hasStoredData()) {
    for (ItemStack stack : drops) {
     if (stack.is(this.asItem()) && jar.getLevel() != null
-            && jar.saveToItem(stack, jar.getLevel().registryAccess()))
+            && jar.writeJarDropData(stack, jar.getLevel().registryAccess()))
      dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("JAR_DROP_SAVED_COMPONENT");
    }
   }

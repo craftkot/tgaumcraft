@@ -79,7 +79,6 @@ public final class JarLabelItem extends Item {
                 && selectedAspect(context.getItemInHand()) == null)
             return InteractionResult.PASS;
         String requested = selectedAspect(context.getItemInHand());
-        String requested = selectedAspect(context.getItemInHand());
         if (target instanceof EssentiaJarBlockEntity jar) {
             if (jar.snapshot().filter() != null
                     || (jar.snapshot().amount() == 0 && requested == null))
