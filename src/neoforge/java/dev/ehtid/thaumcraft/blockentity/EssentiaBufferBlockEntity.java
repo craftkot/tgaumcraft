@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
+import dev.ehtid.thaumcraft.block.BellowsBlock;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
@@ -55,7 +56,12 @@ public final class EssentiaBufferBlockEntity extends BlockEntity implements Esse
     }
     public static void serverTick(ServerLevel server,BlockPos pos,BlockState block,
                                   EssentiaBufferBlockEntity buffer){
-        if(++buffer.ticks%5!=0||buffer.state.amount()>=LegacyTubeBufferLogic.CAPACITY)return;
+        buffer.ticks++;
+        if(buffer.ticks%20==0){
+            int attached=BellowsBlock.countActive(server,pos,Direction.values());
+            if(attached!=buffer.bellows){buffer.bellows=attached;buffer.sync();}
+        }
+        if(buffer.ticks%5!=0||buffer.state.amount()>=LegacyTubeBufferLogic.CAPACITY)return;
         // Original buffer is passive unless it can actually debit an adjacent
         // physical transport. One unit maximum per 5 ticks.
         for(Direction face:Direction.values()){

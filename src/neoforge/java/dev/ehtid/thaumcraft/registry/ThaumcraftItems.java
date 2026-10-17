@@ -148,6 +148,13 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> TUBE_BUFFER = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.TUBE_BUFFER,new Item.Properties());
 
+    public static final DeferredItem<BlockItem> BELLOWS = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.BELLOWS,new Item.Properties());
+    public static final DeferredItem<BlockItem> SMELTER_AUX = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.SMELTER_AUX,new Item.Properties());
+    public static final DeferredItem<BlockItem> SMELTER_VENT = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.SMELTER_VENT,new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());

@@ -15,6 +15,8 @@ import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
 import dev.ehtid.thaumcraft.block.EssentiaBufferBlock;
 import dev.ehtid.thaumcraft.block.AlembicBlock;
+import dev.ehtid.thaumcraft.block.BellowsBlock;
+import dev.ehtid.thaumcraft.block.SmelterAttachmentBlock;
 import dev.ehtid.thaumcraft.block.SmelterBlock;
 import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
@@ -148,6 +150,16 @@ public final class ThaumcraftBlocks {
             "tube_buffer",EssentiaBufferBlock::new,
             BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion()
                     .sound(SoundType.METAL));
+
+    public static final DeferredBlock<BellowsBlock> BELLOWS = BLOCKS.registerBlock(
+            "bellows",BellowsBlock::new,
+            BlockBehaviour.Properties.of().strength(1.0F).noOcclusion().sound(SoundType.WOOD));
+    public static final DeferredBlock<SmelterAttachmentBlock> SMELTER_AUX = BLOCKS.registerBlock(
+            "smelter_aux",SmelterAttachmentBlock::new,
+            BlockBehaviour.Properties.of().strength(1.0F,10.0F).noOcclusion().sound(SoundType.METAL));
+    public static final DeferredBlock<SmelterAttachmentBlock> SMELTER_VENT = BLOCKS.registerBlock(
+            "smelter_vent",SmelterAttachmentBlock::new,
+            BlockBehaviour.Properties.of().strength(1.0F,10.0F).noOcclusion().sound(SoundType.METAL));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.

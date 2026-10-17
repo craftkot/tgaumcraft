@@ -9,6 +9,9 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.block.SmelterBlock;
+import dev.ehtid.thaumcraft.block.BellowsBlock;
+import dev.ehtid.thaumcraft.block.SmelterAttachmentBlock;
+import net.minecraft.core.Direction;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -78,17 +81,47 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
         return input.isEmpty()?new AspectListData()
                 :ThaumometerScanDispatcher.aspectsForCrucibleItem(input);
     }
+    private int connectedBellows(){
+        if(level==null)return 0;
+        Direction front=getBlockState().getValue(SmelterBlock.FACING);
+        return BellowsBlock.countActive(level,worldPosition,
+                java.util.Arrays.stream(Direction.values())
+                    .filter(d->d.getAxis().isHorizontal()&&d!=front)
+                    .toArray(Direction[]::new));
+    }
+
+    /** BETA26 each correctly attached smelter_aux enables another
+     * one-unit distillation on a horizontal side per processing interval.
+     */
+    private void transferFromAuxiliary() {
+        if(level==null||storedVis()==0)return;
+        Direction front=getBlockState().getValue(SmelterBlock.FACING);
+        for(Direction side:Direction.Plane.HORIZONTAL) {
+            if(side==front)continue;
+            BlockPos auxPos=worldPosition.relative(side);
+            BlockState attachment=level.getBlockState(auxPos);
+            if(!attachment.is(ThaumcraftBlocks.SMELTER_AUX.get())
+                    ||attachment.getValue(SmelterAttachmentBlock.FACING)!=side.getOpposite())
+                continue;
+            transferOneToAlembic(auxPos);
+        }
+    }
+
     private boolean canSmelt(AspectListData input) {
         return input.size()>0 && LegacySmelterLogic.canHold(storedVis(),input.visSize());
     }
 
     /** Source TileAlembic.processAlembics scans one contiguous column upward. */
     private boolean transferOneToAlembic() {
+        return transferOneToAlembic(worldPosition);
+    }
+
+    private boolean transferOneToAlembic(BlockPos base) {
         if(level==null || aspects.visSize()==0)return false;
         List<AlembicBlockEntity> column=new ArrayList<>();
         List<LegacyAlembicLogic.State> states=new ArrayList<>();
         for(int depth=1;depth<=32;depth++) {
-            if(!(level.getBlockEntity(worldPosition.above(depth))
+            if(!(level.getBlockEntity(base.above(depth))
                     instanceof AlembicBlockEntity vessel))break;
             column.add(vessel);
             states.add(vessel.snapshot());
@@ -123,8 +156,23 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
             pollution+=result.polluted();
         }
         items.get(0).shrink(1);
-        if(pollution>0)ThaumcraftAuraSavedData.get(server)
-                .polluteFlux(worldPosition,pollution);
+        if(pollution>0){
+            int vented=0;
+            Direction front=getBlockState().getValue(SmelterBlock.FACING);
+            for(int i=0;i<pollution;i++){
+                for(Direction dir:Direction.Plane.HORIZONTAL){
+                    if(dir==front)continue;
+                    BlockState vent=server.getBlockState(worldPosition.relative(dir));
+                    if(vent.is(ThaumcraftBlocks.SMELTER_VENT.get())
+                            &&vent.getValue(SmelterAttachmentBlock.FACING)==dir.getOpposite()
+                            &&server.random.nextFloat()<0.333f){
+                        vented++;break;
+                    }
+                }
+            }
+            int flux=pollution-vented;
+            if(flux>0)ThaumcraftAuraSavedData.get(server).polluteFlux(worldPosition,flux);
+        }
         sync();
     }
 
@@ -137,8 +185,10 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
         // Deliberately fix that crash while retaining the 20% speedup.
         int interval=LegacySmelterLogic.outputInterval(tile.tier());
         if(tile.speedBoost)interval=Math.max(1,Math.round(interval*0.8f));
-        if(tile.ticks%interval==0 && tile.storedVis()>0)
+        if(tile.ticks%interval==0 && tile.storedVis()>0){
             tile.transferOneToAlembic();
+            tile.transferFromAuxiliary();
+        }
 
         AspectListData input=tile.currentInputTags();
         boolean canCook=tile.canSmelt(input);
@@ -159,7 +209,8 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
         if(state.getValue(SmelterBlock.LIT)!=active)
             server.setBlock(pos,state.setValue(SmelterBlock.LIT,active),3);
         if(active && canCook) {
-            tile.cookTarget=Math.max(1,LegacySmelterLogic.smeltTime(input.visSize(),0));
+            tile.cookTarget=Math.max(1,LegacySmelterLogic.smeltTime(
+                    input.visSize(),tile.connectedBellows()));
             tile.cookTime++;
             if(tile.cookTime>=tile.cookTarget) {
                 tile.cookTime=0;
