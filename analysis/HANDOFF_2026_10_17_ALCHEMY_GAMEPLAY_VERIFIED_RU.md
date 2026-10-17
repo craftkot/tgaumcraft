@@ -98,3 +98,11 @@
 - `30fd536`: экономный `run_compile.default=false` восстановлен; новые обычные пуши не гоняют сервер. `#168` и `#170` Core-success.
 - Ближайший этап: если `#169` красный — починить compilation; если зелёный — добавить реальный клиентский smoke связанной пары/банок, затем безопасную удалённую операцию приёма `addTransport` с атомарными preflight/debit/credit, отдельно NBT/reload, инфузионный рецепт и текстуры. Базовый процент проекта 59/100 требует новой полной оценки; не повышать только из-за Core parity.
 
+
+## Дополнение — Mirror physical gameplay smoke #174
+- Полная NeoForge compilation + JAR + startup **#169 SUCCESS** (https://circleci.com/gh/craftkot/tgaumcraft/169), включает `3359dfd` с физическим зеркальным дебетом.
+- `bba96e7`: отдельная ветвь `THAUMCRAFT_MIRROR_SMOKE=1` в `tools/client_smoke.sh`; два связанных зеркала в интегрированном мире, дальняя банка с 12 Aer, локальная пустая банка, обязательные серверные события `TC_SMOKE_MIRROR_REMOTE_DEBIT` и `TC_SMOKE_MIRROR_TO_JAR`, скриншоты + ванильный NBT запрос. **Важно: это проверка реального Java транспорта, не доказанный survival craft/restart.**
+- `533ac23`: временно активирован real Minecraft client #174 (https://circleci.com/gh/craftkot/tgaumcraft/174), с `THAUMCRAFT_ALCHEMY_SMOKE=0`, `THAUMCRAFT_MIRROR_SMOKE=1`; на момент записи **PENDING**, не называть пройденным.
+- `666af1c`: `run_minecraft.default=false` восстановлен, обычная проверка сборки не запускает дорогой клиент.
+- `c9200d1`: BETA26 `BlockMirror.dropMirror` поведение перенесено: при добыче связанного `mirror_essentia` её единственный разрешённый loot-table предмет получает сохранённые `linkDim/linkX/linkY/linkZ` через `minecraft:custom_data`; оригинальная логика `setPlacedBy` может восстановить ссылку при повторной установке. **Новые изменения после #174: эта конкретная обработка выпадающего предмета не проходила full NeoForge compile/client test.**
+- Приоритет следующего подхода: проверить **#174**, если ошибка — править исходя из снимков и логов (не утверждать «сеть упала» без доказательств); затем full NeoForge compile для `c9200d1`, настоящий loot test зеркала, NBT/reload; и только затем расширение двустороннего переноса, remote sink preflight, текстур и инфузионного рецепта.
