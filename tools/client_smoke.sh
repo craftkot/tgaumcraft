@@ -190,6 +190,30 @@ echo "WORLD_ALLOW_COMMANDS_CLICK=${world_command_x},${world_command_y} WINDOW=${
 xdotool mousemove "$world_command_x" "$world_command_y" click 1
 sleep 3
 capture 03-world-create-commands
+
+# CI #56: the world spawned in SURVIVAL / NORMAL and a zombie killed Dev
+# while the old script slept for 110 seconds BEFORE its first /gamemode.
+# Game-tab buttons in the actual #56 screenshot (1024x768 window):
+# Game Mode centre ~window y=200, Difficulty centre ~window y=255.
+# Vanilla 1.21 cycles Survival -> Hardcore -> Creative (two clicks),
+# Normal -> Hard -> Peaceful (two clicks). Set both BEFORE world creation.
+# Creative prevents player damage; Peaceful despawns hostile mobs. The
+# level.dat verifier below independently confirms the real game settings.
+world_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+eval "$world_geometry"
+mode_x=$((X + WIDTH / 2))
+mode_y=$((Y + HEIGHT * 260 / 1000))
+difficulty_y=$((Y + HEIGHT * 340 / 1000))
+xdotool mousemove "$mode_x" "$mode_y" click 1
+sleep 1
+xdotool click 1
+sleep 1
+xdotool mousemove "$mode_x" "$difficulty_y" click 1
+sleep 1
+xdotool click 1
+sleep 2
+echo "WORLD_SAFE_CREATE_GAME_MODE_CLICKS=2 DIFFICULTY_CLICKS=2" | tee -a client-smoke-status.txt
+capture 03a-safe-creative-peaceful-before-world-create
 capture 04-before-world-create
 
 # Optional milestone video; ordinary client regressions capture PNGs only.
@@ -218,7 +242,23 @@ create_world_x=$((X + WIDTH * 34 / 100))
 create_world_y=$((Y + HEIGHT * 93 / 100))
 echo "CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y}" | tee -a client-smoke-status.txt
 xdotool mousemove "$create_world_x" "$create_world_y" click 1
-sleep 110
+# Wait only until the real integrated server announces player login, not an
+# arbitrary 110 seconds of SURVIVAL gameplay with no protective commands.
+# A delayed generation still gets a generous bounded deadline.
+world_started=0
+for _ in $(seq 1 150); do
+  if grep -Fq 'Dev joined the game' client-smoke/client.log; then
+    world_started=1
+    break
+  fi
+  sleep 2
+done
+if [ "$world_started" -ne 1 ]; then
+  echo 'INTEGRATED_WORLD_PLAYER_LOGIN=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+  tail -80 client-smoke/client.log >&2
+  exit 1
+fi
+sleep 6
 capture 05-after-world-start
 # Hard gate: starting an integrated server does NOT prove that the client
 # received operator commands. Audit the real world level.dat before issuing
@@ -236,7 +276,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     xdotool key --clearmodifiers Return
     sleep 4
   }
+  # The initial world is already creative + peaceful, as established
+  # from its actual level.dat above; no unprotected survival waiting.
   send_chat '/gamemode creative'
+  send_chat '/difficulty peaceful'
   send_chat '/give @p thaumcraft:crucible'
   capture 06-crucible-in-hand
 
