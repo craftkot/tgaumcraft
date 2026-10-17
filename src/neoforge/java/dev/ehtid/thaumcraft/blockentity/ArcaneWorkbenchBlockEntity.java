@@ -10,6 +10,7 @@ import net.minecraft.world.item.component.CustomData;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -222,6 +223,42 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         for(int slot:new int[]{1,3,4,5,7})items.get(slot).shrink(1);
         if(cost>0)setVis(getVis()-cost);
         else setChanged();
+        return true;
+    }
+
+    private static final TagKey<Item> COMMON_BRASS_PLATES=TagKey.create(
+            Registries.ITEM,ResourceLocation.fromNamespaceAndPath("c","plates/brass"));
+    private static final TagKey<Item> COMMON_COBBLESTONE=TagKey.create(
+            Registries.ITEM,ResourceLocation.fromNamespaceAndPath("c","cobblestones"));
+
+    /** BETA26 BCB / SFS / SSS smelter pattern; every slot is occupied. */
+    public boolean matchesBasicSmelterPattern(){
+        boolean[] brass=new boolean[9],crucible=new boolean[9],
+                  furnace=new boolean[9],cobble=new boolean[9];
+        for(int i=0;i<9;i++){
+            ItemStack stack=items.get(i);
+            brass[i]=PlateItem.legacyMetadata(stack)==0||stack.is(COMMON_BRASS_PLATES);
+            crucible[i]=stack.is(ThaumcraftItems.CRUCIBLE.get());
+            furnace[i]=stack.is(Items.FURNACE);
+            cobble[i]=stack.is(Items.COBBLESTONE)||stack.is(COMMON_COBBLESTONE);
+        }
+        return LegacySmelterArcaneRecipe.matches(brass,crucible,furnace,cobble);
+    }
+
+    public boolean canCraftBasicSmelter(PlayerKnowledgeData knowledge,float discount){
+        return matchesBasicSmelterPattern()
+                &&knowledge.isResearchKnown(LegacySmelterArcaneRecipe.RESEARCH)
+                &&!items.get(LegacySmelterArcaneRecipe.IGNIS_SLOT).isEmpty()
+                &&canPlaceItem(LegacySmelterArcaneRecipe.IGNIS_SLOT,
+                        items.get(LegacySmelterArcaneRecipe.IGNIS_SLOT))
+                &&getVis()>=Math.max(0,LegacySmelterArcaneRecipe.discountedVis(discount));
+    }
+    public boolean craftBasicSmelter(PlayerKnowledgeData knowledge,float discount){
+        if(!canCraftBasicSmelter(knowledge,discount))return false;
+        int cost=LegacySmelterArcaneRecipe.discountedVis(discount);
+        for(int i=0;i<9;i++)items.get(i).shrink(1);
+        items.get(LegacySmelterArcaneRecipe.IGNIS_SLOT).shrink(1);
+        if(cost>0)setVis(getVis()-cost);else setChanged();
         return true;
     }
 

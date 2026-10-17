@@ -23,6 +23,7 @@ TESTS=(
   LegacyAlembicParityTest
   LegacySmelterParityTest
   AlchemyTransportCycleParityTest
+  LegacySmelterArcaneRecipeTest
   PhialJarExchangeTest
   EssentiaSourceOrderParityTest
   InfusionRitualLedgerParityTest
@@ -57,6 +58,7 @@ LegacyEssentiaTubeRecipeTest|BETA26 eight-tube arcane crafting: OK
 LegacyAlembicParityTest|BETA26 alembic two-pass column and extraction: OK
 LegacySmelterParityTest|BETA26 smelter retention, speed and capacity: OK
 AlchemyTransportCycleParityTest|BETA26 smelter-alembic-tube-jar conservation: OK
+LegacySmelterArcaneRecipeTest|BETA26 basic smelter arcane crafting: OK
 PhialJarExchangeTest|BETA26 phial/jar conservation: OK
 EssentiaSourceOrderParityTest|BETA26 essentia source search parity: OK
 InfusionRitualLedgerParityTest|BETA26 infusion ritual resource ledger: OK

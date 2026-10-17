@@ -108,6 +108,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_VIS;
                 if (workbench.matchesEssentiaTubePattern())
                     return dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.BASE_VIS;
+                if (workbench.matchesBasicSmelterPattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.BASE_VIS;
                 return 0;
             }
 
@@ -127,6 +129,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
                 if (workbench.matchesVoidJarPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_CRYSTAL_MASK;
+                if (workbench.matchesBasicSmelterPattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.CRYSTAL_MASK;
                 return 0;
             }
             @Override public void set(int ignored) { }
@@ -189,12 +193,28 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+    private boolean canCraftBasicSmelter(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        return wb.canCraftBasicSmelter(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount);
+    }
+    private boolean craftBasicSmelter(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        if(!wb.craftBasicSmelter(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount))
+            return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
                 || canCraftVoidJar(player, totalDiscount)
-                || canCraftEssentiaTubes(player,totalDiscount);
+                || canCraftEssentiaTubes(player,totalDiscount)
+                || canCraftBasicSmelter(player,totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -255,6 +275,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 && craftEssentiaTubes(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.TUBE.get(),
                     dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT);
+        if(expected.is(ThaumcraftItems.SMELTER_BASIC.get())
+                &&craftBasicSmelter(player,totalDiscount))
+            return new ItemStack(ThaumcraftItems.SMELTER_BASIC.get());
         return ItemStack.EMPTY;
     }
 
@@ -271,6 +294,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         else if (owner instanceof ServerPlayer sp && canCraftEssentiaTubes(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.TUBE.get(),
                     dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT));
+        else if(owner instanceof ServerPlayer sp&&canCraftBasicSmelter(sp,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_BASIC.get()));
         else result.setItem(0, ItemStack.EMPTY);
     }
 
