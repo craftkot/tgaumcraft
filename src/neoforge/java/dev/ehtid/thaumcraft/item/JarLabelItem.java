@@ -45,6 +45,12 @@ public final class JarLabelItem extends Item {
         return stack;
     }
 
+    public static boolean isBlank(ItemStack stack) {
+        if (stack == null || !stack.is(ThaumcraftItems.JAR_LABEL.get())) return false;
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null || data.isEmpty() || !data.copyTag().contains("Aspects");
+    }
+
     public static String selectedAspect(ItemStack stack) {
         if (stack == null || !stack.is(ThaumcraftItems.JAR_LABEL.get())) return null;
         CustomData custom = stack.get(DataComponents.CUSTOM_DATA);
