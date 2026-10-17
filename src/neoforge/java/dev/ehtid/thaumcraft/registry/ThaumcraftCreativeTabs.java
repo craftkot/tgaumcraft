@@ -68,6 +68,11 @@ public final class ThaumcraftCreativeTabs {
                                     color.modernDye().toUpperCase(java.util.Locale.ROOT));
                             output.accept(ThaumcraftItems.NITOR.get(dye).get());
                         }
+                        for (var color : dev.ehtid.thaumcraft.port.core.LegacyNitorColors.variants()) {
+                            var dye = net.minecraft.world.item.DyeColor.valueOf(
+                                    color.modernDye().toUpperCase(java.util.Locale.ROOT));
+                            output.accept(ThaumcraftItems.CANDLES.get(dye).get());
+                        }
                         output.accept(ThaumcraftItems.ARCANE_WORKBENCH.get());
                         output.accept(ThaumcraftItems.THAUMONOMICON.get());
                         output.accept(ThaumcraftItems.THAUMOMETER.get());

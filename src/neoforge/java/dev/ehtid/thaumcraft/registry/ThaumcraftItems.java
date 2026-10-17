@@ -160,6 +160,19 @@ public final class ThaumcraftItems {
             registerAllNitorItems();
     public static final DeferredItem<BlockItem> NITOR_YELLOW = NITOR.get(DyeColor.YELLOW);
 
+    public static final Map<DyeColor, DeferredItem<BlockItem>> CANDLES = registerCandleItems();
+    public static final DeferredItem<BlockItem> CANDLE_WHITE = CANDLES.get(DyeColor.WHITE);
+    private static Map<DyeColor, DeferredItem<BlockItem>> registerCandleItems() {
+        Map<DyeColor, DeferredItem<BlockItem>> map = new EnumMap<>(DyeColor.class);
+        for (LegacyNitorColors.Variant variant : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(variant.modernDye().toUpperCase(Locale.ROOT));
+            map.put(dye, ITEMS.registerSimpleBlockItem(
+                    ThaumcraftBlocks.CANDLES.get(dye), new Item.Properties()));
+        }
+        if (map.size() != 16) throw new IllegalStateException("Missing candle items");
+        return Collections.unmodifiableMap(map);
+    }
+
     private static Map<DyeColor, DeferredItem<BlockItem>> registerAllNitorItems() {
         Map<DyeColor, DeferredItem<BlockItem>> registered =
                 new EnumMap<>(DyeColor.class);

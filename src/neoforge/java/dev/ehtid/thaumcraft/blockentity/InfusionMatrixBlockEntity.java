@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
+import dev.ehtid.thaumcraft.block.TallowCandleBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixLayout;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixIdle;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStability;
@@ -152,6 +153,23 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     BuiltInRegistries.BLOCK.getKey(block).toString(),
                     pedestal.getStabilizationAmount(), occupied,
                     pedestal.getSymmetryPenalty()));
+        }
+        // BETA26 getSurroundings scans X/Z -8..8, matrix Y-7..Y+3.
+        // Existing pair balancer implements original opposite symmetry and
+        // diminishing returns for each identical colored candle block.
+        for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
+            if (dx == 0 && dz == 0) continue;
+            for (int dy = -7; dy <= 3; dy++) {
+                var at = worldPosition.offset(dx, dy, dz);
+                if (!level.hasChunkAt(at)) continue;
+                var block = level.getBlockState(at).getBlock();
+                if (block instanceof TallowCandleBlock candle) {
+                    ring.put(new LegacyInfusionMatrixLayout.Offset(dx, dy, dz),
+                            new LegacyInfusionStability.Stabilizer(
+                                    BuiltInRegistries.BLOCK.getKey(block).toString(),
+                                    candle.getStabilizationAmount(), false, 0.0F));
+                }
+            }
         }
         mods = LegacyInfusionStability.withPedestals(mods,ancients,eldritch);
         var balance = LegacyInfusionStability.pedestalBalance(ring);

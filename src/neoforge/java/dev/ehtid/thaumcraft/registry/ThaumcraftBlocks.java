@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.block.ResearchTableBlock;
 import dev.ehtid.thaumcraft.block.TableWoodBlock;
 import dev.ehtid.thaumcraft.block.CrucibleBlock;
 import dev.ehtid.thaumcraft.block.NitorBlock;
+import dev.ehtid.thaumcraft.block.TallowCandleBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
@@ -147,6 +148,24 @@ public final class ThaumcraftBlocks {
     // The original names use silver/lightblue, not light_gray/light_blue.
     public static final Map<DyeColor, DeferredBlock<NitorBlock>> NITOR =
             registerAllNitorVariants();
+
+    /** All 16 original candle variants, 14-light and +0.1 altar stabilization. */
+    public static final Map<DyeColor, DeferredBlock<TallowCandleBlock>> CANDLES =
+            registerAllCandleVariants();
+    public static final DeferredBlock<TallowCandleBlock> CANDLE_WHITE = CANDLES.get(DyeColor.WHITE);
+    private static Map<DyeColor, DeferredBlock<TallowCandleBlock>> registerAllCandleVariants() {
+        Map<DyeColor, DeferredBlock<TallowCandleBlock>> map = new EnumMap<>(DyeColor.class);
+        for (LegacyNitorColors.Variant variant : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(variant.modernDye().toUpperCase(Locale.ROOT));
+            map.put(dye, BLOCKS.registerBlock("candle_" + variant.legacy(),
+                    props -> new TallowCandleBlock(props, variant.particleRgb()),
+                    BlockBehaviour.Properties.of().strength(0.1F)
+                            .lightLevel(state -> 14).mapColor(dye.getMapColor())
+                            .noCollission().noOcclusion().sound(SoundType.WOOL)));
+        }
+        if (map.size() != 16) throw new IllegalStateException("Missing candle");
+        return Collections.unmodifiableMap(map);
+    }
 
     // Preserve the existing production/recipe identifier and Java field.
     public static final DeferredBlock<NitorBlock> NITOR_YELLOW = NITOR.get(DyeColor.YELLOW);

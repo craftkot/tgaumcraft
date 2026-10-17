@@ -279,5 +279,21 @@
   "item.thaumcraft.thaumometer": "Таумометр",
   "item.thaumcraft.jar_brace": "Скоба для магического сосуда",
   "item.thaumcraft.label": "Этикетка для магического сосуда",
-  "item.thaumcraft.label.filled": "Этикетка: %s"
+  "item.thaumcraft.label.filled": "Этикетка: %s",
+  "block.thaumcraft.candle_black": "Чёрная сальная свеча",
+  "block.thaumcraft.candle_blue": "Синяя сальная свеча",
+  "block.thaumcraft.candle_brown": "Коричневая сальная свеча",
+  "block.thaumcraft.candle_cyan": "Бирюзовая сальная свеча",
+  "block.thaumcraft.candle_gray": "Серая сальная свеча",
+  "block.thaumcraft.candle_green": "Зелёная сальная свеча",
+  "block.thaumcraft.candle_lightblue": "Голубая сальная свеча",
+  "block.thaumcraft.candle_lime": "Лаймовая сальная свеча",
+  "block.thaumcraft.candle_magenta": "Пурпурная сальная свеча",
+  "block.thaumcraft.candle_orange": "Оранжевая сальная свеча",
+  "block.thaumcraft.candle_pink": "Розовая сальная свеча",
+  "block.thaumcraft.candle_purple": "Фиолетовая сальная свеча",
+  "block.thaumcraft.candle_red": "Красная сальная свеча",
+  "block.thaumcraft.candle_silver": "Светло-серая сальная свеча",
+  "block.thaumcraft.candle_white": "Белая сальная свеча",
+  "block.thaumcraft.candle_yellow": "Жёлтая сальная свеча"
 }

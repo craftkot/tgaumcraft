@@ -12,6 +12,7 @@ import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.client.PedestalItemRenderer;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
+import dev.ehtid.thaumcraft.block.TallowCandleBlock;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import net.minecraft.world.item.BlockItem;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
@@ -64,6 +65,15 @@ public final class ThaumcraftClientEvents {
            ThaumcraftBlocks.CRYSTAL_VITIUM.get());
     }
 
+    @SubscribeEvent
+    public static void registerCandleBlockColors(RegisterColorHandlersEvent.Block event) {
+        var candles = ThaumcraftBlocks.CANDLES.values().stream()
+                .map(holder -> holder.get()).toArray(net.minecraft.world.level.block.Block[]::new);
+        event.register((state, world, pos, tint) ->
+                        tint == 0 && state.getBlock() instanceof TallowCandleBlock candle
+                                ? 0xFF000000 | candle.waxRgb() : 0xFFFFFFFF, candles);
+    }
+
     /** BETA26 phial overlay is tinted with its contained Aspect color. */
     @SubscribeEvent
     public static void registerItemColorHandlers(RegisterColorHandlersEvent.Item event) {
@@ -75,6 +85,13 @@ public final class ThaumcraftClientEvents {
             return aspect == null ? 0xFFFFFFFF : (0xFF000000 | aspect.color());
         }, ThaumcraftItems.PHIAL.get());
 
+        // Wax tinted to the original dye; wick texture remains untinted.
+        for (LegacyNitorColors.Variant color : LegacyNitorColors.variants()) {
+            DyeColor dye = DyeColor.valueOf(color.modernDye().toUpperCase(Locale.ROOT));
+            int rgba = 0xFF000000 | color.particleRgb();
+            event.register((stack, tint) -> tint == 0 ? rgba : 0xFFFFFFFF,
+                    ThaumcraftItems.CANDLES.get(dye).get());
+        }
         // Original BETA26 greyscale flame layer is dyed per BlockNitor,
         // while the bright white core is always un-tinted.
         for (LegacyNitorColors.Variant variant : LegacyNitorColors.variants()) {

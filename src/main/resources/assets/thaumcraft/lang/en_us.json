@@ -279,5 +279,21 @@
   "item.thaumcraft.thaumometer": "Thaumometer",
   "item.thaumcraft.jar_brace": "Jar Brace",
   "item.thaumcraft.label": "Jar Label",
-  "item.thaumcraft.label.filled": "%s Jar Label"
+  "item.thaumcraft.label.filled": "%s Jar Label",
+  "block.thaumcraft.candle_black": "Black Tallow Candle",
+  "block.thaumcraft.candle_blue": "Blue Tallow Candle",
+  "block.thaumcraft.candle_brown": "Brown Tallow Candle",
+  "block.thaumcraft.candle_cyan": "Cyan Tallow Candle",
+  "block.thaumcraft.candle_gray": "Gray Tallow Candle",
+  "block.thaumcraft.candle_green": "Green Tallow Candle",
+  "block.thaumcraft.candle_lightblue": "Light Blue Tallow Candle",
+  "block.thaumcraft.candle_lime": "Lime Tallow Candle",
+  "block.thaumcraft.candle_magenta": "Magenta Tallow Candle",
+  "block.thaumcraft.candle_orange": "Orange Tallow Candle",
+  "block.thaumcraft.candle_pink": "Pink Tallow Candle",
+  "block.thaumcraft.candle_purple": "Purple Tallow Candle",
+  "block.thaumcraft.candle_red": "Red Tallow Candle",
+  "block.thaumcraft.candle_silver": "Light Gray Tallow Candle",
+  "block.thaumcraft.candle_white": "White Tallow Candle",
+  "block.thaumcraft.candle_yellow": "Yellow Tallow Candle"
 }
