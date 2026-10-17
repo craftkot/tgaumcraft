@@ -5,11 +5,15 @@ import dev.ehtid.thaumcraft.blockentity.EssentiaTransportPort;
 import dev.ehtid.thaumcraft.blockentity.EssentiaTubeBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
+import net.minecraft.world.InteractionResult;
+import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -102,14 +106,55 @@ public final class EssentiaTubeBlock extends BaseEntityBlock {
         for(Direction dir:Direction.values()) updateConnections(level,pos.relative(dir));
     }
 
+    /** BETA26 BlockTube: valve right click, filter sneak to clear imprint. */
+    @Override protected InteractionResult useWithoutItem(BlockState state,Level level,
+            BlockPos pos,Player player,BlockHitResult hit) {
+        if(!player.mayInteract(pos))return InteractionResult.FAIL;
+        if(!(level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube))
+            return InteractionResult.PASS;
+        if(state.is(ThaumcraftBlocks.TUBE_VALVE.get()) && !player.isShiftKeyDown()){
+            if(!level.isClientSide())tube.flipValve();
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+        if(state.is(ThaumcraftBlocks.TUBE_FILTER.get()) && player.isShiftKeyDown()
+                && tube.hasFilter()){
+            if(!level.isClientSide())tube.clearFilter();
+            return InteractionResult.sidedSuccess(level.isClientSide());
+        }
+        return InteractionResult.PASS;
+    }
+
     /** The caster configures a specific face. Unlike a free manual inventory
      * action this keeps BETA26 tube-side interaction on the magic gauntlet.
      * Full original sub-cuboid hit tracing is a later client enhancement.
      */
     @Override protected ItemInteractionResult useItemOn(ItemStack held,BlockState state,
             Level level,BlockPos pos,Player player,InteractionHand hand,BlockHitResult hit) {
-        if(!held.is(ThaumcraftItems.CASTER_BASIC.get()))
+        if(!held.is(ThaumcraftItems.CASTER_BASIC.get())){
+            if(state.is(ThaumcraftBlocks.TUBE_FILTER.get())
+                    &&level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube
+                    &&!tube.hasFilter()){
+                String aspect=null;
+                if(held.is(ThaumcraftItems.PHIAL.get()))
+                    aspect=PhialItem.containedAspect(held);
+                else if(held.is(ThaumcraftItems.CRYSTAL_ESSENCE.get()))
+                    aspect=CrystalEssenceItem.legacyAspect(held);
+                if(aspect!=null&&!aspect.isBlank()){
+                    if(!player.mayInteract(pos))return ItemInteractionResult.FAIL;
+                    if(!level.isClientSide())tube.applyFilter(aspect);
+                    return ItemInteractionResult.sidedSuccess(level.isClientSide());
+                }
+            }
+            if(state.is(ThaumcraftBlocks.TUBE_VALVE.get())
+                    &&!held.is(ThaumcraftItems.TUBE_VALVE.get())){
+                if(!player.mayInteract(pos))return ItemInteractionResult.FAIL;
+                if(!level.isClientSide()
+                        &&level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)
+                    tube.flipValve();
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            }
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        }
         if(!player.mayInteract(pos)) return ItemInteractionResult.FAIL;
         if(!level.isClientSide()
                 && level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)

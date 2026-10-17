@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.blockentity;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
+import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -42,7 +43,8 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
     public boolean hasFilter(){return aspectFilter!=null;}
     public boolean applyFilter(String aspect) {
         if(level==null||level.isClientSide()||variant()!=LegacyEssentiaTubeLogic.Variant.FILTER
-                ||aspectFilter!=null||aspect==null||aspect.isBlank())return false;
+                ||aspectFilter!=null||aspect==null||new AspectRegistry().get(aspect)==null)
+            return false;
         aspectFilter=aspect;setChanged();level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
         return true;
     }
