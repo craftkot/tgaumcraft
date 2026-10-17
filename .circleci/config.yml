@@ -68,8 +68,8 @@ jobs:
             mkdir -p run
             echo 'eula=true' > run/eula.txt
             # Server smoke is bound to localhost on CI; no external players.
-            printf 'server-ip=127.0.0.1\\nserver-port=25585\\nonline-mode=false\\n' > run/server.properties
-            setsid /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \\
+            printf 'server-ip=127.0.0.1\nserver-port=25585\nonline-mode=false\n' > run/server.properties
+            setsid /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
               --max-workers=2 runServer > compile-audit/server.log 2>&1 &
             spid=$!
             trap 'kill -TERM -- "-$spid" 2>/dev/null || true; wait "$spid" 2>/dev/null || true' EXIT
