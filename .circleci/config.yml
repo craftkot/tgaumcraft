@@ -1,0 +1,79 @@
+# CircleCI alternative to GitHub-hosted Actions (blocked by account billing).
+# CircleCI GitHub App project + push trigger must be enabled in CircleCI UI.
+# Cheap connectivity/asset job on every push; actual Minecraft only when
+# a pipeline is triggered with run_minecraft=true to preserve free credits.
+version: 2.1
+
+parameters:
+  run_minecraft:
+    type: boolean
+    default: false
+
+jobs:
+  verify-connection:
+    docker:
+      - image: cimg/openjdk:21.0
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Validate Java and original source resources
+          command: |
+            java -version
+            python3 --version
+            bash -n tools/client_smoke.sh
+            python3 tools/verify_crystal_assets.py
+            python3 tools/verify_source_item_models.py
+            echo "CIRCLECI_THAUMCRAFT_REPOSITORY_CHECK_OK"
+  real-minecraft-client:
+    machine:
+      image: ubuntu-2404:current
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Install Java 21, Gradle 9.2.1 and virtual graphics
+          command: |
+            set -euo pipefail
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+              openjdk-21-jdk-headless unzip curl \
+              xvfb x11-utils xdotool openbox mesa-utils \
+              libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
+            sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java
+            curl -fsSL --retry 3 -o /tmp/gradle.zip \
+              https://services.gradle.org/distributions/gradle-9.2.1-bin.zip
+            sudo unzip -q /tmp/gradle.zip -d /opt
+            echo 'export PATH=/opt/gradle-9.2.1/bin:$PATH' >> "$BASH_ENV"
+            java -version
+      - run:
+          name: Play Minecraft 1.21.1 NeoForge and record real screenshots
+          no_output_timeout: 25m
+          command: |
+            set -euo pipefail
+            export CAPTURE_VIDEO=0
+            bash tools/client_smoke.sh
+      - store_artifacts:
+          path: client-smoke/screenshots
+          destination: minecraft/screenshots
+      - store_artifacts:
+          path: client-smoke/client.log
+          destination: minecraft/client.log
+      - store_artifacts:
+          path: client-smoke-status.txt
+          destination: minecraft/status.txt
+      - store_artifacts:
+          path: client-smoke/renderer.txt
+          destination: minecraft/renderer.txt
+      - store_artifacts:
+          path: run/logs/latest.log
+          destination: minecraft/latest.log
+
+workflows:
+  connection-check:
+    jobs:
+      - verify-connection
+  minecraft-visual-regression:
+    when: << pipeline.parameters.run_minecraft >>
+    jobs:
+      - real-minecraft-client
