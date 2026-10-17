@@ -27,6 +27,7 @@ jobs:
             python3 tools/verify_crystal_assets.py
             python3 tools/verify_source_item_models.py
             python3 tools/test_starter_item_localization.py
+            python3 tools/verify_survival_loot_tables.py
             bash tools/run_core_parity.sh
             echo "CIRCLECI_THAUMCRAFT_REPOSITORY_CHECK_OK"
   real-minecraft-client:
