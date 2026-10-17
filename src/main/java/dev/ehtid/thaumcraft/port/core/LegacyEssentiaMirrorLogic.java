@@ -62,6 +62,21 @@ public final class LegacyEssentiaMirrorLogic {
                 && partnerFound && partnerCanTransfer;
     }
 
+
+    /**
+     * A mirror is just a relay. Preflight requires one existing unit in a
+     * real non-mirror remote source and an exact aspect match if requested.
+     */
+    public static boolean mayRelayDebit(int requestedAmount, boolean reciprocalLink,
+                                         boolean remoteChunkLoaded, boolean realSource,
+                                         String availableAspect, int availableAmount,
+                                         String requestedAspect) {
+        return canTransfer(requestedAmount, reciprocalLink, remoteChunkLoaded, realSource)
+                && availableAspect != null && !availableAspect.isBlank()
+                && availableAmount > 0
+                && (requestedAspect == null || requestedAspect.equals(availableAspect));
+    }
+
     /** Source TileMirrorEssentia: decaying retry backoff 40,60,...600. */
     public static int nextLinkCheckInterval(int current, boolean validLink) {
         if (validLink) return LINK_RETRY_START;

@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaMirrorLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaSourceOrder;
+import dev.ehtid.thaumcraft.block.EssentiaMirrorBlock;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -17,16 +21,120 @@ import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * BETA26 TileMirrorEssentia world-side link and instability persistence.
- * No transport endpoints are exposed until a real remote transaction bridge
- * exists: core link state alone must not fabricate or delete essentia.
+ * Transport is implemented as an exact remote debit on the server thread:
+ * no fabricated buffer and no forced chunk loads. Mirror input is not yet
+ * implemented; rejecting it is safer than a partial remote credit.
  */
-public final class EssentiaMirrorBlockEntity extends BlockEntity {
+public final class EssentiaMirrorBlockEntity extends BlockEntity implements EssentiaTransportPort {
     private String linkDimension;
     private BlockPos linkPosition;
     private boolean linked;
     private int instability;
     private long ticks;
     private int nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
+    /** A one-tick memo for remote source discovery, never authoritative for debit. */
+    private long sourceScanTick=Long.MIN_VALUE;
+    private RemoteSource cachedSource;
+
+    private record RemoteSource(ServerLevel world, BlockPos pos,
+                                EssentiaTransportPort port, Direction face) {}
+
+    /** Only the mirror's exposed face connects to the local pipe network. */
+    @Override public boolean transportConnects(Direction face) {
+        return face != null && getBlockState().getValue(EssentiaMirrorBlock.FACING) == face;
+    }
+
+    @Override public boolean canTransportOutput(Direction face) {
+        return transportConnects(face) && hasValidLink();
+    }
+
+    /** No external push until two-phase remote sink crediting is implemented. */
+    @Override public boolean canTransportInput(Direction face) { return false; }
+    @Override public int transportSuction(Direction face) { return 0; }
+    @Override public String transportSuctionAspect(Direction face) { return null; }
+    @Override public int transportMinimumSuction() { return 0; }
+
+    private boolean stillValidSource(RemoteSource candidate, String aspect) {
+        if(candidate == null || !candidate.world().hasChunkAt(candidate.pos())
+                || candidate.world().getBlockEntity(candidate.pos()) != candidate.port())
+            return false;
+        EssentiaTransportPort port=candidate.port();
+        Direction side=candidate.face();
+        String current=port.transportAspect(side);
+        return port.transportConnects(side) && port.canTransportOutput(side)
+                && LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,
+                        !(port instanceof EssentiaMirrorBlockEntity),
+                        current,port.transportAmount(side),aspect);
+    }
+
+    /**
+     * Original EssentiaHandler range 8 ordered by squared distance.
+     * Only loaded actual BlockEntities qualify; mirror-to-mirror relay is
+     * deliberately forbidden to eliminate recursive loops and double debit.
+     */
+    private RemoteSource remoteSource(String requestedAspect) {
+        if(!(level instanceof ServerLevel local) || !hasValidLink())return null;
+        EssentiaMirrorBlockEntity remoteMirror=partnerLoaded(local);
+        if(remoteMirror==null || !(remoteMirror.level instanceof ServerLevel remote))return null;
+        long tick=local.getGameTime();
+        if(sourceScanTick==tick) {
+            if(stillValidSource(cachedSource,requestedAspect))return cachedSource;
+            if(cachedSource==null && requestedAspect==null)return null;
+        }
+        sourceScanTick=tick;
+        cachedSource=null;
+        for(var offset:LegacyEssentiaSourceOrder.nullFacing(LegacyEssentiaMirrorLogic.SEARCH_RANGE)) {
+            BlockPos target=remoteMirror.worldPosition.offset(offset.x(),offset.y(),offset.z());
+            if(!remote.hasChunkAt(target))continue;
+            BlockEntity tile=remote.getBlockEntity(target);
+            if(!(tile instanceof EssentiaTransportPort port)
+                    || tile instanceof EssentiaMirrorBlockEntity)continue;
+            for(Direction side:Direction.values()) {
+                var candidate=new RemoteSource(remote,target,port,side);
+                if(stillValidSource(candidate,requestedAspect)) {
+                    cachedSource=candidate;
+                    return candidate;
+                }
+            }
+        }
+        return null;
+    }
+
+    @Override public int transportAmount(Direction face) {
+        return canTransportOutput(face) && remoteSource(null)!=null ? 1 : 0;
+    }
+
+    @Override public String transportAspect(Direction face) {
+        if(!canTransportOutput(face))return null;
+        RemoteSource source=remoteSource(null);
+        return source==null?null:source.port().transportAspect(source.face());
+    }
+
+    /**
+     * Called by a real local tube/jar which will credit its buffer only if
+     * this method returns 1. The remote source is debited exactly once.
+     */
+    @Override public int takeTransport(String aspect,int amount,Direction face) {
+        if(!(level instanceof ServerLevel local)
+                ||!canTransportOutput(face)||amount!=1||aspect==null)return 0;
+        RemoteSource source=remoteSource(aspect);
+        if(!stillValidSource(source,aspect))return 0;
+        // No local or remote state is changed until the real source returns 1.
+        if(source.port().takeTransport(aspect,1,source.face())!=1)return 0;
+        EssentiaMirrorBlockEntity partner=partnerLoaded(local);
+        if(partner!=null && hasValidLink()) {
+            instability=LegacyEssentiaMirrorLogic.afterTransfer(instability,1,true);
+            partner.instability=LegacyEssentiaMirrorLogic.afterTransfer(partner.instability,1,true);
+            setChanged();
+            partner.setChanged();
+        }
+        cachedSource=null;
+        sourceScanTick=Long.MIN_VALUE;
+        return 1;
+    }
+
+    @Override public int addTransport(String aspect,int amount,Direction face) {return 0;}
+
 
     public EssentiaMirrorBlockEntity(BlockPos pos,BlockState state) {
         super(ThaumcraftBlockEntities.MIRROR_ESSENTIA.get(),pos,state);

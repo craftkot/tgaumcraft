@@ -28,7 +28,16 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,false,false));
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,true,true));
 
-        eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
+        eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",64,"aqua"));
+        eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,null));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,"ignis"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(2,true,true,true,"aqua",2,"aqua"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,false,true,"aqua",1,"aqua"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,false,"aqua",1,"aqua"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,false,true,true,"aqua",1,"aqua"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,null,1,"aqua"));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",0,"aqua"));
+                eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
         eq(8,LegacyEssentiaMirrorLogic.SEARCH_RANGE);
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));
         for(int count:new int[]{0,2,10})
