@@ -300,5 +300,7 @@
   "block.thaumcraft.tube": "Essentia Tube",
   "block.thaumcraft.alembic": "Arcane Alembic",
   "block.thaumcraft.smelter_basic": "Essentia Smelter",
-  "container.thaumcraft.smelter": "Essentia Smelter"
+  "container.thaumcraft.smelter": "Essentia Smelter",
+  "block.thaumcraft.smelter_thaumium": "Thaumium Essentia Smelter",
+  "block.thaumcraft.smelter_void": "Void Essentia Smelter"
 }
