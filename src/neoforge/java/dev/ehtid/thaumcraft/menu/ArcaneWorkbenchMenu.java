@@ -10,6 +10,8 @@ import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe.Kind;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes.Upgrade;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
@@ -124,6 +126,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 if (workbench.matchesAlchemyFilterPattern()) return LegacyAlchemyFilterArcaneRecipe.VIS;
                 if (workbench.matchesFilteredTubePattern()) return LegacyTubeFilterArcaneRecipe.VIS;
                 if (workbench.matchesAlchemyConstructPattern()) return LegacyAlchemyConstructArcaneRecipe.VIS;
+                if (workbench.matchesUpgradedSmelterPattern(Kind.THAUMIUM)) return Kind.THAUMIUM.vis;
+                if (workbench.matchesUpgradedSmelterPattern(Kind.VOID)) return Kind.VOID.vis;
                 if (workbench.matchesBasicSmelterPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.BASE_VIS;
                 return 0;
@@ -153,6 +157,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return LegacyAlembicArcaneRecipe.CRYSTAL_MASK;
                 if (workbench.matchesAlchemyConstructPattern())
                     return LegacyAlchemyConstructArcaneRecipe.CRYSTAL_MASK;
+                if (workbench.matchesUpgradedSmelterPattern(Kind.THAUMIUM)
+                        || workbench.matchesUpgradedSmelterPattern(Kind.VOID))
+                    return LegacyUpgradedSmelterArcaneRecipe.CRYSTAL_MASK;
                 if (workbench.matchesAlchemyFilterPattern())
                     return LegacyAlchemyFilterArcaneRecipe.CRYSTAL_MASK;
                 if (workbench.matchesBasicSmelterPattern())
@@ -364,6 +371,21 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+    private boolean canCraftUpgradedSmelter(ServerPlayer player,Kind kind,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        return wb.canCraftUpgradedSmelter(kind,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount);
+    }
+
+    private boolean craftUpgradedSmelter(ServerPlayer player,Kind kind,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        if(!wb.craftUpgradedSmelter(kind,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount))return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
@@ -377,7 +399,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 || canCraftAlembic(player,totalDiscount)
                 || canCraftAlchemyFilter(player,totalDiscount)
                 || canCraftFilteredTube(player,totalDiscount)
-                || canCraftAlchemyConstruct(player,totalDiscount);
+                || canCraftAlchemyConstruct(player,totalDiscount)
+                || canCraftUpgradedSmelter(player,Kind.THAUMIUM,totalDiscount)
+                || canCraftUpgradedSmelter(player,Kind.VOID,totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -443,6 +467,12 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if(expected.is(ThaumcraftItems.TUBE_FILTER.get())
                 &&craftFilteredTube(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.TUBE_FILTER.get());
+        if(expected.is(ThaumcraftItems.SMELTER_THAUMIUM.get())
+                &&craftUpgradedSmelter(player,Kind.THAUMIUM,totalDiscount))
+            return new ItemStack(ThaumcraftItems.SMELTER_THAUMIUM.get());
+        if(expected.is(ThaumcraftItems.SMELTER_VOID.get())
+                &&craftUpgradedSmelter(player,Kind.VOID,totalDiscount))
+            return new ItemStack(ThaumcraftItems.SMELTER_VOID.get());
         if(expected.is(ThaumcraftItems.METAL_ALCHEMICAL.get())
                 &&craftAlchemyConstruct(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL.get(),
@@ -483,6 +513,10 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             result.setItem(0,tubeUpgradeOutput(wb.selectedTubeUpgrade()));
         else if(owner instanceof ServerPlayer sp&&canCraftFilteredTube(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.TUBE_FILTER.get()));
+        else if(owner instanceof ServerPlayer sp&&canCraftUpgradedSmelter(sp,Kind.THAUMIUM,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_THAUMIUM.get()));
+        else if(owner instanceof ServerPlayer sp&&canCraftUpgradedSmelter(sp,Kind.VOID,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_VOID.get()));
         else if(owner instanceof ServerPlayer sp&&canCraftAlchemyConstruct(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL.get(),
                     LegacyAlchemyConstructArcaneRecipe.OUTPUT));

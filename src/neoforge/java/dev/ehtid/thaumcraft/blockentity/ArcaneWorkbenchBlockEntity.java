@@ -17,6 +17,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -239,6 +240,46 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+    /** Original BETA26 Thaumium/Void EssentiaSmelter upgrades BFB / IGI / III. */
+    public boolean matchesUpgradedSmelterPattern(LegacyUpgradedSmelterArcaneRecipe.Kind kind) {
+        if(kind==null)return false;
+        boolean[] brass=new boolean[9],basic=new boolean[9],
+                  plates=new boolean[9],construct=new boolean[9];
+        final int legacyPlate=kind==LegacyUpgradedSmelterArcaneRecipe.Kind.THAUMIUM?2:3;
+        final var material=kind==LegacyUpgradedSmelterArcaneRecipe.Kind.THAUMIUM
+                ?ThaumcraftItems.METAL_ALCHEMICAL.get()
+                :ThaumcraftItems.METAL_ALCHEMICAL_ADVANCED.get();
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            brass[slot]=PlateItem.legacyMetadata(stack)==0||stack.is(COMMON_BRASS_PLATES);
+            basic[slot]=stack.is(ThaumcraftItems.SMELTER_BASIC.get());
+            plates[slot]=PlateItem.legacyMetadata(stack)==legacyPlate;
+            construct[slot]=stack.is(material);
+        }
+        return LegacyUpgradedSmelterArcaneRecipe.matches(brass,basic,plates,construct);
+    }
+
+    public boolean canCraftUpgradedSmelter(LegacyUpgradedSmelterArcaneRecipe.Kind kind,
+                                           PlayerKnowledgeData knowledge,float discount) {
+        if(kind==null||!matchesUpgradedSmelterPattern(kind)
+                ||!knowledge.isResearchKnown(kind.research))return false;
+        ItemStack ignis=items.get(LegacyUpgradedSmelterArcaneRecipe.IGNIS_SLOT);
+        return ignis.getCount()>=kind.ignisCrystals
+                &&canPlaceItem(LegacyUpgradedSmelterArcaneRecipe.IGNIS_SLOT,ignis)
+                &&getVis()>=Math.max(0,LegacyUpgradedSmelterArcaneRecipe.discountedVis(kind,discount));
+    }
+
+    public boolean craftUpgradedSmelter(LegacyUpgradedSmelterArcaneRecipe.Kind kind,
+                                        PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftUpgradedSmelter(kind,knowledge,discount))return false;
+        int vis=LegacyUpgradedSmelterArcaneRecipe.discountedVis(kind,discount);
+        for(int slot=0;slot<9;slot++)items.get(slot).shrink(1);
+        items.get(LegacyUpgradedSmelterArcaneRecipe.IGNIS_SLOT).shrink(kind.ignisCrystals);
+        if(vis>0)setVis(getVis()-vis);
+        else setChanged();
+        return true;
+    }
 
     /** Original two-output TUBES alchemical construct recipe IVI / TWT / IVI. */
     public boolean matchesAlchemyConstructPattern() {
