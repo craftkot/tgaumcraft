@@ -297,7 +297,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     local attempt
     for attempt in $(seq 1 "$retries"); do
       send_chat "/execute if loaded ${x} ${y} ${z} run say ${marker}"
-      if grep -F '[CHAT]' client-smoke/client.log | grep -Fq "${marker}"; then
+      if grep -Eq "\\[CHAT\\].*${marker}" client-smoke/client.log; then
         echo "MIRROR_CHUNK_READY=${label} attempts=${attempt}" | tee -a client-smoke-status.txt
         return 0
       fi
@@ -313,7 +313,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     local x="$1" y="$2" z="$3" label="$4"
     local marker="TC_FIXTURE_BLOCK_PLACED_${label}"
     send_chat "/execute if block ${x} ${y} ${z} thaumcraft:mirror_essentia run say ${marker}"
-    if ! grep -F '[CHAT]' client-smoke/client.log | grep -Fq "${marker}"; then
+    if ! grep -Eq "\\[CHAT\\].*${marker}" client-smoke/client.log; then
       echo "MIRROR_SETUP_FAILED=BLOCK_MISSING label=${label} pos=${x},${y},${z}" |
         tee -a client-smoke-status.txt
       tail -70 client-smoke/client.log >&2
