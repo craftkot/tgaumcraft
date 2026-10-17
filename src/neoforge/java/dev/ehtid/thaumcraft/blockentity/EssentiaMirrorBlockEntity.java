@@ -178,7 +178,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
     /** Preserve the original BETA26 BlockMirrorItem coordinates when harvested. */
     public boolean writeLinkedItem(ItemStack drop) {
         if(drop.isEmpty()||!drop.is(ThaumcraftItems.MIRROR_ESSENTIA.get())
-                ||!linked||linkDimension==null||linkPosition==null)return false;
+                ||linkDimension==null||linkPosition==null)return false;
         CompoundTag tag=new CompoundTag();
         tag.putString("linkDim",linkDimension);
         tag.putInt("linkX",linkPosition.getX());
@@ -215,29 +215,56 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         return level instanceof ServerLevel && !hasValidLink();
     }
 
-    /** Existing mirror must be loaded and not validly paired with someone else. */
+    /**
+     * A linked mirror item may be placed while the other chunk is unloaded.
+     * Keep the address pending in NBT and reconnect when both ends are back.
+     * Never hijack a remote mirror that is still linked to another endpoint.
+     */
     public boolean linkTo(String dimension,BlockPos position) {
         if(!(level instanceof ServerLevel server)||dimension==null||position==null)return false;
         ResourceLocation id=ResourceLocation.tryParse(dimension);
         if(id==null)return false;
         ServerLevel dest=server.getServer().getLevel(ResourceKey.create(Registries.DIMENSION,id));
-        if(dest==null||!dest.hasChunkAt(position))return false;
-        if(!(dest.getBlockEntity(position) instanceof EssentiaMirrorBlockEntity target))return false;
+        if(dest==null)return false;
         var self=endpoint(server,worldPosition);
         var other=endpoint(dest,position);
-        if(!LegacyEssentiaMirrorLogic.canRestore(self,other,true,true,target.hasValidLink()))
-            return false;
-        // The source mirror must not already belong to a valid different pair.
-        if(hasValidLink())return false;
+        if(!LegacyEssentiaMirrorLogic.canRememberDestination(self,other,true)
+                ||hasValidLink())return false;
+        if(!dest.hasChunkAt(position)) {
+            setPendingLink(other);
+            return true;
+        }
+        if(!(dest.getBlockEntity(position) instanceof EssentiaMirrorBlockEntity target)) {
+            setPendingLink(other);
+            return true;
+        }
+        if(target.hasValidLink())return false;
+        var previous=target.link();
+        if(target.linked && previous.destination()!=null
+                && !self.equals(previous.destination()))return false;
         setLink(other);
         target.setLink(self);
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_LINK_RESTORED");
         return true;
+    }
+
+    private void setPendingLink(LegacyEssentiaMirrorLogic.Endpoint target) {
+        linkDimension=target.dimension();
+        linkPosition=new BlockPos(target.x(),target.y(),target.z());
+        linked=false;
+        cachedSource=null;
+        sourceScanTick=Long.MIN_VALUE;
+        setChanged();
+        if(level!=null&&!level.isClientSide())
+            level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
     }
 
     private void setLink(LegacyEssentiaMirrorLogic.Endpoint target) {
         linkDimension=target.dimension();
         linkPosition=new BlockPos(target.x(),target.y(),target.z());
         linked=true;
+        cachedSource=null;
+        sourceScanTick=Long.MIN_VALUE;
         setChanged();
         if(level!=null&&!level.isClientSide())
             level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
@@ -252,9 +279,22 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
             tile.instability=result.value();
             tile.setChanged();
         }
-        if(tile.ticks%tile.nextCheck==0)
+        if(tile.ticks%tile.nextCheck==0) {
+            boolean valid=tile.hasValidLink();
+            // Only ask for a previously known, loaded destination. Neither
+            // restore nor validity polling is permitted to force-load chunks.
+            if(!valid && tile.linkDimension!=null && tile.linkPosition!=null) {
+                ResourceLocation id=ResourceLocation.tryParse(tile.linkDimension);
+                ServerLevel dest=id==null?null:server.getServer().getLevel(
+                        ResourceKey.create(Registries.DIMENSION,id));
+                if(dest!=null && dest.hasChunkAt(tile.linkPosition)) {
+                    tile.linkTo(tile.linkDimension,tile.linkPosition);
+                    valid=tile.hasValidLink();
+                }
+            }
             tile.nextCheck=LegacyEssentiaMirrorLogic.nextLinkCheckInterval(
-                    tile.nextCheck,tile.hasValidLink());
+                    tile.nextCheck,valid);
+        }
     }
 
     @Override protected void saveAdditional(CompoundTag tag,HolderLookup.Provider registries) {

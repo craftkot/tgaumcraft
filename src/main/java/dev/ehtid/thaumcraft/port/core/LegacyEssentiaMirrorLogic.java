@@ -33,6 +33,12 @@ public final class LegacyEssentiaMirrorLogic {
 
     public record Link(Endpoint destination, boolean linked) {}
 
+    /** Preserve a destination for a placed mirror whose target chunk is still unloaded. */
+    public static boolean canRememberDestination(Endpoint self, Endpoint desired,
+                                                 boolean dimensionKnown) {
+        return dimensionKnown && self != null && desired != null && !self.equals(desired);
+    }
+
     /** TileMirrorEssentia.isLinkValidSimple: both ends point at each other. */
     public static boolean reciprocal(Endpoint self, Link selfLink,
                                      Endpoint other, Link otherLink,

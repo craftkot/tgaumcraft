@@ -22,6 +22,11 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false, LegacyEssentiaMirrorLogic.reciprocal(a,new LegacyEssentiaMirrorLogic.Link(a,true),
                 a,new LegacyEssentiaMirrorLogic.Link(a,true),true));
         eq(false, LegacyEssentiaMirrorLogic.reciprocal(a,null,b,bToA,true));
+        eq(true, LegacyEssentiaMirrorLogic.canRememberDestination(a,b,true));
+        eq(false, LegacyEssentiaMirrorLogic.canRememberDestination(a,a,true));
+        eq(false, LegacyEssentiaMirrorLogic.canRememberDestination(a,b,false));
+        eq(false, LegacyEssentiaMirrorLogic.canRememberDestination(null,b,true));
+        eq(false, LegacyEssentiaMirrorLogic.canRememberDestination(a,null,true));
         eq(true, LegacyEssentiaMirrorLogic.canRestore(a,b,true,true,false));
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,a,true,true,false));
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,false,true,false));
