@@ -477,7 +477,12 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
             // after selecting a drawn card it keeps lastDraw and clears
             // the choices. Never silently restart an active theory.
             if (researchTable.session() != null) {
-                if (!researchTable.keepSelectedTheoryCard(serverPlayer)) return false;
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_KEEP_MENU_RECEIVED");
+                if (!researchTable.keepSelectedTheoryCard(serverPlayer)) {
+                    dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_KEEP_MENU_REJECTED");
+                    return false;
+                }
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CARD_KEEP_MENU_ACCEPTED");
                 broadcastChanges();
                 return true;
             }

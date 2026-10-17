@@ -113,6 +113,19 @@ activate_firststeps_advance() {
   echo 'FIRSTSTEPS_BOOK_ADVANCE_INPUT=TAB_ENTER' | tee -a client-smoke-status.txt
 }
 
+assert_smoke_event_count() {
+  local key=$1 minimum=$2 actual
+  actual="$(grep -Fc "TC_SMOKE_${key}=YES" client-smoke/client.log || true)"
+  if [ "$actual" -lt "$minimum" ]; then
+    echo "REAL_GAMEPLAY_MILESTONE_COUNT_MISSING=${key} expected>=${minimum} actual=${actual}" \
+      | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  fi
+  echo "REAL_GAMEPLAY_MILESTONE_COUNT_CONFIRMED=${key} actual=${actual}" \
+    | tee -a client-smoke-status.txt
+}
+
 assert_smoke_event() {
   local key=$1
   if ! grep -Fq "TC_SMOKE_${key}=YES" client-smoke/client.log; then
@@ -448,7 +461,27 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool click 3
   sleep 3
   capture 43-research-table-reopened-from-world
+  # The first selected original CardChoice must still be stored in the SAME
+  # existing table session after closing and reopening its menu. The only
+  # visible Keep Selected Card action uses the legacy menu button ID=1.
+  # This cannot pass if the table silently restarts an empty theory.
+  click_research_gui 140 124
+  sleep 3
+  capture 43a-research-table-selected-card-kept-after-reopen
+  assert_smoke_event TABLE_CARD_KEEP_MENU_RECEIVED
+  assert_smoke_event TABLE_CARD_KEEP_MENU_ACCEPTED
+  assert_smoke_event THEORY_CARD_KEPT
+  # Repeating the real two-card draw in this saved session exercises the
+  # original lastDraw/savedCards ledger and a SECOND paid paper debit.
+  click_research_gui 140 124
+  sleep 4
+  capture 43b-research-table-second-draw-after-keep
+  assert_smoke_event_count TABLE_DRAW_GUI_MOUSE_PRESSED 2
+  assert_smoke_event_count TABLE_DRAW_MENU_ACCEPTED 2
+  assert_smoke_event_count THEORY_CARDS_DRAWN 2
   xdotool key --clearmodifiers Escape
+  send_chat '/data get block 6 149 5 note'
+  capture 43c-research-table-second-draw-saved-nbt
   echo 'CLIENT_SENT_REAL_THEORYCRAFT_TABLE_INTERACTIONS=YES' | tee -a client-smoke-status.txt
 
 
