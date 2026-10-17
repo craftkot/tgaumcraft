@@ -28,13 +28,20 @@ public final class FirstStepsPlayerEvents {
             case "thaumcraft:thaumonomicon" -> FirstStepsBootstrapLogic.onThaumonomiconPickup(knowledge);
             default -> false;
         };
-        if (changed) ThaumcraftNetworking.sync(player);
+        if (changed) {
+            if ("thaumcraft:crystal_essence".equals(id)) dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("CRYSTAL_PICKUP");
+            if ("thaumcraft:thaumonomicon".equals(id)) dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("BOOK_PICKUP");
+            ThaumcraftNetworking.sync(player);
+        }
     }
 
     public static void onWake(PlayerWakeUpEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
-        if (FirstStepsBootstrapLogic.onWake(knowledge)) ThaumcraftNetworking.sync(player);
+        if (FirstStepsBootstrapLogic.onWake(knowledge)) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("WAKE_UNLOCK");
+            ThaumcraftNetworking.sync(player);
+        }
     }
 
     /** BETA26 records the arcane-workbench craft hash when the transformed result is crafted. */

@@ -183,6 +183,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         LegacyTheorycraftChoiceNbt.writeLastDraw(originalSessionNbt, chosen);
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CREATED");
         return true;
     }
 
@@ -537,6 +538,11 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         items.set(slot, stack);
         if (stack.getCount() > getMaxStackSize()) stack.setCount(getMaxStackSize());
         setChanged();
+        if (slot == 0 && stack.is(ThaumcraftItems.SCRIBING_TOOLS.get())) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_SCRIBING_TOOLS_INSERTED");
+        } else if (slot == 1 && stack.is(Items.PAPER)) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_PAPER_INSERTED");
+        }
     }
     @Override public boolean canPlaceItem(int slot, ItemStack stack) {
         return switch (slot) {

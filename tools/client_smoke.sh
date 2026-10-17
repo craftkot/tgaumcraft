@@ -15,6 +15,8 @@ export DISPLAY=:99
 export LIBGL_ALWAYS_SOFTWARE=1
 export MESA_LOADER_DRIVER_OVERRIDE=llvmpipe
 export ALSOFT_DRIVERS=null
+# Game-server probes emit tagged lines only in this opt-in, CI-only process.
+export THAUMCRAFT_SMOKE=1
 export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
@@ -111,6 +113,17 @@ click_firststeps_advance() {
   echo "FIRSTSTEPS_BOOK_ADVANCE_CLICK=${sx},${sy} WINDOW=${WIDTH}x${HEIGHT}" \
       | tee -a client-smoke-status.txt
   xdotool mousemove "$sx" "$sy" click 1
+}
+
+assert_smoke_event() {
+  local key=$1
+  if ! grep -Fq "TC_SMOKE_${key}=YES" client-smoke/client.log; then
+    echo "REAL_GAMEPLAY_MILESTONE_MISSING=${key}" | tee -a client-smoke-status.txt
+    echo "Most recent game log:" >&2
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  fi
+  echo "REAL_GAMEPLAY_MILESTONE_CONFIRMED=${key}" | tee -a client-smoke-status.txt
 }
 
 capture() {
@@ -289,6 +302,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/summon minecraft:item 2.5 150 5.5 {Item:{id:"thaumcraft:crystal_essence",count:1}}'
   sleep 4
   capture 08h-firststeps-real-world-crystal-pickup
+  assert_smoke_event CRYSTAL_PICKUP
   send_chat '/item replace entity @p hotbar.0 with minecraft:red_bed 1'
   xdotool key --clearmodifiers 1
   xdotool click 3
@@ -299,6 +313,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool click 3
   sleep 6
   capture 08j-firststeps-post-sleep-wake
+  assert_smoke_event WAKE_UNLOCK
   send_chat '/setblock 2 151 12 minecraft:bookshelf'
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:salis_mundus 1'
   send_chat '/tp @p 2.5 150 8.5 0 0'
@@ -309,6 +324,8 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 4
   send_chat '/execute if block 2 151 12 minecraft:air run say FIRSTSTEPS_REAL_DREAM_SALIS_BOOKSHELF_OK'
   capture 08l-firststeps-real-bookshelf-after-salis
+  assert_smoke_event BOOKSHELF_SALIS_USED
+  assert_smoke_event BOOKSHELF_TRANSFORMED
   # A /give or /item replace does not invoke ItemEntityPickupEvent.Post and
   # therefore does not grant the server !gotthaumonomicon marker. The original
   # Salis swapper produces a REAL dropped book at the shelf position: look for
@@ -317,6 +334,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/tp @p 2.5 151 12.5 0 0'
   sleep 4
   capture 08l1-firststeps-real-thaumonomicon-pickup
+  assert_smoke_event BOOK_PICKUP
   echo 'CLIENT_SENT_FIRSTSTEPS_PICKUP_WAKE_SALIS_CHAIN=YES' | tee -a client-smoke-status.txt
 
   # Actually using the book opens the playable FIRSTSTEPS chapter. Using
@@ -330,6 +348,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   click_firststeps_advance
   sleep 4
   capture 08n-firststeps-researchbook-server-synced-progression
+  assert_smoke_event FIRSTSTEPS_STAGE_ADVANCED
   xdotool key --clearmodifiers Escape
   echo 'CLIENT_SENT_FIRSTSTEPS_THAUMONOMICON_GUI_TEST=YES' | tee -a client-smoke-status.txt
 
@@ -347,6 +366,8 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   send_chat '/setblock 6 149 5 thaumcraft:research_table[facing=north]'
   send_chat '/item replace block 6 149 5 container.0 with thaumcraft:scribing_tools 1'
   send_chat '/item replace block 6 149 5 container.1 with minecraft:paper 32'
+  assert_smoke_event TABLE_SCRIBING_TOOLS_INSERTED
+  assert_smoke_event TABLE_PAPER_INSERTED
   send_chat '/clear @p'
   send_chat '/tp @p 6.5 149 2.5 0 24'
   sleep 2
@@ -359,6 +380,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   click_research_gui 140 31
   sleep 4
   capture 39-original-research-table-create-theory
+  assert_smoke_event THEORY_CREATED
   # Physical draw click at (116,121). Real server must debit one paper.
   click_research_gui 140 130
   sleep 4

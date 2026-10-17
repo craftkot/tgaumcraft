@@ -56,7 +56,10 @@ public final class SalisMundusTransformQueue {
             if (player == null || !level.mayInteract(player, pending.pos())) continue;
 
             switch (pending.target()) {
-                case THAUMONOMICON_ITEM -> transformToThaumonomicon(level, pending.pos());
+                case THAUMONOMICON_ITEM -> {
+                    transformToThaumonomicon(level, pending.pos());
+                    dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("BOOKSHELF_TRANSFORMED");
+                }
                 case ARCANE_WORKBENCH_BLOCK -> level.setBlock(pending.pos(),
                         ThaumcraftBlocks.ARCANE_WORKBENCH.get().defaultBlockState(), 3);
                 case CRUCIBLE_BLOCK -> level.setBlock(pending.pos(),

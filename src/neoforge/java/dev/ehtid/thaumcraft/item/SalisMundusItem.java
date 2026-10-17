@@ -45,6 +45,9 @@ public final class SalisMundusItem extends Item {
             }
             SalisMundusTransformQueue.schedule(level, context.getClickedPos(), level.getBlockState(context.getClickedPos()),
                     serverPlayer, target);
+            if (target == FirstStepsBootstrapLogic.DustTarget.THAUMONOMICON_ITEM) {
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("BOOKSHELF_SALIS_USED");
+            }
         }
         return InteractionResult.SUCCESS;
     }

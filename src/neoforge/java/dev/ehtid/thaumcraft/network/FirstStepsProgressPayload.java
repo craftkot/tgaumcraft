@@ -33,6 +33,7 @@ public record FirstStepsProgressPayload(boolean expectedKnown, boolean checkRequ
         ResearchProgressionService service = new ResearchProgressionService(BuiltInResearchCatalog.create());
         var result = gate.request(data.knowledge(), data.warp(), service,
                 payload.expectedKnown(), payload.checkRequisites(), payload.noFlags());
+        if (result.progressed()) dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_STAGE_ADVANCED");
         if (result.progressed() && result.requestSync()) ThaumcraftNetworking.sync(player);
         if (result.progressed() && result.xpAward() > 0) player.giveExperiencePoints(result.xpAward());
     }
