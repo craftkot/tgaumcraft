@@ -83,6 +83,21 @@ public final class LegacyEssentiaMirrorLogic {
                 && (requestedAspect == null || requestedAspect.equals(availableAspect));
     }
 
+    /**
+     * Reverse relay is allowed only if the destination has space for exactly
+     * one real unit and its pull pressure exceeds the source pressure.
+     */
+    public static boolean mayRelayCredit(int amount, boolean reciprocalLink,
+                                         boolean remoteChunkLoaded, boolean safeSink,
+                                         boolean acceptsAspect, String aspect,
+                                         int sourceAmount, int sourceSuction,
+                                         int destinationSuction) {
+        return canTransfer(amount,reciprocalLink,remoteChunkLoaded,safeSink)
+                && acceptsAspect && aspect!=null && !aspect.isBlank()
+                && sourceAmount>0 && sourceSuction>=0
+                && destinationSuction>sourceSuction;
+    }
+
     /** Source TileMirrorEssentia: decaying retry backoff 40,60,...600. */
     public static int nextLinkCheckInterval(int current, boolean validLink) {
         if (validLink) return LINK_RETRY_START;

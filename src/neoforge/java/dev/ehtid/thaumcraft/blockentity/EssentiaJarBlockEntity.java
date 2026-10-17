@@ -147,6 +147,34 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
         if (transfer.transferred() > 0) updateStored(transfer.state());
         return transfer.transferred();
     }
+    /**
+     * Safe remote mirror credit path. Compute the exact one-unit destination
+     * state BEFORE touching the source, then debit via the synchronous
+     * server-thread callback and commit that already-validated state.
+     * Normal jars only; void overflow must never silently destroy a relay unit.
+     */
+    public boolean canReceiveMirror(String aspect) {
+        if(!(level instanceof ServerLevel)||blocked||isVoidJar()
+                ||aspect==null||aspect.isBlank())return false;
+        return LegacyEssentiaJarLogic.add(stored,aspect,1).transferred()==1;
+    }
+
+    public boolean canReceiveAnyMirror() {
+        return level instanceof ServerLevel&&!blocked&&!isVoidJar()
+                &&stored.amount()<LegacyEssentiaJarLogic.CAPACITY;
+    }
+
+    public boolean receiveOneFromMirror(String aspect,java.util.function.BooleanSupplier debitOnce) {
+        if(debitOnce==null||!canReceiveMirror(aspect))return false;
+        // Nobody can mutate a block entity between these two synchronous
+        // operations on the server thread: no event loop yield or scheduler.
+        var plan=LegacyEssentiaJarLogic.add(stored,aspect,1);
+        if(plan.transferred()!=1||!debitOnce.getAsBoolean())return false;
+        updateStored(plan.state());
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_TO_REMOTE_JAR");
+        return true;
+    }
+
     /** Original TileJarFillable.update() pulls one unit from the tile ABOVE
      * every fifth server tick (void jars continue pulling when full).
      * Only real loaded transport neighbours are eligible; no free essence.

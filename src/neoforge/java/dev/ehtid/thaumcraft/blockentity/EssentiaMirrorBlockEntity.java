@@ -42,6 +42,8 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
 
     private record RemoteSource(ServerLevel world, BlockPos pos,
                                 EssentiaTransportPort port, Direction face) {}
+    private record RemoteSink(ServerLevel world, BlockPos pos,
+                              EssentiaJarBlockEntity jar) {}
 
     /** Only the mirror's exposed face connects to the local pipe network. */
     @Override public boolean transportConnects(Direction face) {
@@ -52,9 +54,19 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         return transportConnects(face) && hasValidLink();
     }
 
-    /** No external push until two-phase remote sink crediting is implemented. */
+    /** Active pull controls remote credit: no unsafe arbitrary push endpoint. */
     @Override public boolean canTransportInput(Direction face) { return false; }
-    @Override public int transportSuction(Direction face) { return 0; }
+
+    /**
+     * Advertise actual distant jar suction to adjacent tubes so that the
+     * tube can collect one unit from its local source. Nothing is credited
+     * until the mirror's server tick performs an authenticated debit.
+     */
+    @Override public int transportSuction(Direction face) {
+        if(!transportConnects(face))return 0;
+        RemoteSink sink=remoteSink(null);
+        return sink==null?0:sink.jar().transportSuction(Direction.UP);
+    }
     @Override public String transportSuctionAspect(Direction face) { return null; }
     @Override public int transportMinimumSuction() { return 0; }
 
@@ -102,6 +114,70 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
             }
         }
         return null;
+    }
+
+    /**
+     * Original EssentiaHandler.addEssentia(range=8, ignoreMirror=true).
+     * This first secure adapter supports ordinary non-void jars as sinks.
+     * The actual sink block is checked again before any source debit.
+     */
+    private RemoteSink remoteSink(String aspect) {
+        if(!(level instanceof ServerLevel local)||!hasValidLink())return null;
+        EssentiaMirrorBlockEntity partner=partnerLoaded(local);
+        if(partner==null||!(partner.level instanceof ServerLevel remote))return null;
+        for(var offset:LegacyEssentiaSourceOrder.nullFacing(
+                LegacyEssentiaMirrorLogic.SEARCH_RANGE)) {
+            BlockPos target=partner.worldPosition.offset(
+                    offset.x(),offset.y(),offset.z());
+            if(!remote.hasChunkAt(target))continue;
+            if(remote.getBlockEntity(target) instanceof EssentiaJarBlockEntity jar
+                    &&(aspect==null?jar.canReceiveAnyMirror():jar.canReceiveMirror(aspect)))
+                return new RemoteSink(remote,target,jar);
+        }
+        return null;
+    }
+
+    /**
+     * One-way active pull into a remote jar. A mirror cannot recursively
+     * source from another mirror or from its own selected remote jar.
+     * All checks and the debit+credit occur on the same server thread.
+     */
+    private void pullOneToRemoteJar(ServerLevel local) {
+        if(!hasValidLink())return;
+        Direction outward=getBlockState().getValue(EssentiaMirrorBlock.FACING);
+        BlockPos sourcePos=worldPosition.relative(outward);
+        if(!local.hasChunkAt(sourcePos))return;
+        BlockEntity entity=local.getBlockEntity(sourcePos);
+        if(!(entity instanceof EssentiaTransportPort source)
+                ||entity instanceof EssentiaMirrorBlockEntity)return;
+        Direction sourceFace=outward.getOpposite();
+        if(!source.transportConnects(sourceFace)
+                ||!source.canTransportOutput(sourceFace)
+                ||source.transportAmount(sourceFace)<1)return;
+        String aspect=source.transportAspect(sourceFace);
+        if(aspect==null)return;
+        RemoteSink sink=remoteSink(aspect);
+        if(sink==null||!sink.world().hasChunkAt(sink.pos())
+                ||sink.world().getBlockEntity(sink.pos())!=sink.jar()
+                ||sink.jar()==entity)return;
+        int sourceSuction=source.transportSuction(sourceFace);
+        int destinationSuction=sink.jar().transportSuction(Direction.UP);
+        if(!LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                sink.jar().canReceiveMirror(aspect),aspect,
+                source.transportAmount(sourceFace),sourceSuction,destinationSuction)
+                ||source.transportMinimumSuction()>destinationSuction)return;
+        if(!sink.jar().receiveOneFromMirror(aspect,
+                () -> source.takeTransport(aspect,1,sourceFace)==1))return;
+        // The source was physically debited and remote jar credited.
+        instability=LegacyEssentiaMirrorLogic.afterTransfer(instability,1,true);
+        EssentiaMirrorBlockEntity partner=partnerLoaded(local);
+        if(partner!=null&&hasValidLink()) {
+            partner.instability=LegacyEssentiaMirrorLogic.afterTransfer(
+                    partner.instability,1,true);
+            partner.setChanged();
+        }
+        setChanged();
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_REVERSE_TRANSFER");
     }
 
     @Override public int transportAmount(Direction face) {
@@ -272,6 +348,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
 
     public static void serverTick(ServerLevel server,BlockPos pos,EssentiaMirrorBlockEntity tile) {
         tile.ticks++;
+        if(tile.ticks%5==0)tile.pullOneToRemoteJar(server);
         var result=LegacyEssentiaMirrorLogic.checkInstability(tile.instability,tile.ticks);
         if(result.emittedFlux()>0)ThaumcraftAuraSavedData.get(server)
                 .polluteFlux(pos,result.emittedFlux());
