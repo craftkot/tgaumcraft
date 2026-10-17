@@ -13,6 +13,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -232,6 +233,40 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+
+    /** Original WFW / SBS / WFW alembic recipe, preserving thaumcraft items. */
+    public boolean matchesAlembicPattern() {
+        boolean[] wood=new boolean[9],filter=new boolean[9],
+                  brass=new boolean[9],bucket=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            wood[slot]=stack.is(ThaumcraftItems.PLANK_GREATWOOD.get());
+            filter[slot]=stack.is(ThaumcraftItems.FILTER.get());
+            brass[slot]=PlateItem.legacyMetadata(stack)==0||stack.is(COMMON_BRASS_PLATES);
+            bucket[slot]=stack.is(Items.BUCKET);
+        }
+        return LegacyAlembicArcaneRecipe.matches(wood,filter,brass,bucket);
+    }
+
+    public boolean canCraftAlembic(PlayerKnowledgeData knowledge,float discount) {
+        ItemStack aqua=items.get(LegacyAlembicArcaneRecipe.AQUA_SLOT);
+        return matchesAlembicPattern()
+                &&knowledge.isResearchKnown(LegacyAlembicArcaneRecipe.RESEARCH)
+                &&!aqua.isEmpty()&&canPlaceItem(LegacyAlembicArcaneRecipe.AQUA_SLOT,aqua)
+                &&getVis()>=Math.max(0,LegacyAlembicArcaneRecipe.discountedVis(discount));
+    }
+
+    /** All conditions are checked before the inventory and aura debit. */
+    public boolean craftAlembic(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftAlembic(knowledge,discount))return false;
+        int cost=LegacyAlembicArcaneRecipe.discountedVis(discount);
+        for(int slot=0;slot<9;slot++)items.get(slot).shrink(1);
+        items.get(LegacyAlembicArcaneRecipe.AQUA_SLOT).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** Source ConfigRecipes TubeBuffer: PVP / TWT / PRP on the paid arcane bench. */
     public boolean matchesTubeBufferPattern() {
