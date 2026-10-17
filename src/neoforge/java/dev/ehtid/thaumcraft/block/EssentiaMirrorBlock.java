@@ -64,6 +64,17 @@ public final class EssentiaMirrorBlock extends BaseEntityBlock {
                         EssentiaMirrorBlockEntity.serverTick(server,pos,tile);
                 });
     }
+    /** Disconnect the partner only on actual replacement/destruction, not
+     * on merely asking for loot (e.g. /loot without removing this mirror).
+     */
+    @Override protected void onRemove(BlockState previous,Level level,BlockPos pos,
+                                       BlockState replacement,boolean moving) {
+        if(previous.getBlock()!=replacement.getBlock()&&!level.isClientSide()
+                &&level.getBlockEntity(pos) instanceof EssentiaMirrorBlockEntity mirror)
+            mirror.disconnectOnRemoval();
+        super.onRemove(previous,level,pos,replacement,moving);
+    }
+
     /** BETA26 BlockMirror.dropMirror preserves the partner address on its dropped item.
      * Never manufacture a drop: only modify the drops approved by the loot table. */
     @Override protected List<ItemStack> getDrops(BlockState state,LootParams.Builder params) {

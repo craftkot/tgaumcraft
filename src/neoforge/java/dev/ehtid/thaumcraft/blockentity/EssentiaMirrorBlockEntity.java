@@ -154,6 +154,27 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
                 link(),endpoint((ServerLevel)other.level,other.worldPosition),other.link(),true);
     }
 
+    /**
+     * Original BlockMirror.dropMirror invalidates the other endpoint.
+     * Preserve the old destination coordinates on the broken mirror's
+     * item, but mark its partner unlinked so another item can bind it.
+     *
+     * No cross-dimension chunk loading; unloading does not delete NBT.
+     */
+    public void disconnectOnRemoval() {
+        if(!(level instanceof ServerLevel server)||!linked)return;
+        EssentiaMirrorBlockEntity partner=partnerLoaded(server);
+        if(partner==null||!(partner.level instanceof ServerLevel remote)
+                ||!LegacyEssentiaMirrorLogic.reciprocal(
+                        endpoint(server,worldPosition),link(),
+                        endpoint(remote,partner.worldPosition),partner.link(),true))return;
+        partner.linked=false;
+        partner.setChanged();
+        remote.sendBlockUpdated(partner.worldPosition,
+                partner.getBlockState(),partner.getBlockState(),3);
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_PARTNER_LINK_INVALIDATED");
+    }
+
     /** Preserve the original BETA26 BlockMirrorItem coordinates when harvested. */
     public boolean writeLinkedItem(ItemStack drop) {
         if(drop.isEmpty()||!drop.is(ThaumcraftItems.MIRROR_ESSENTIA.get())
@@ -164,6 +185,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         tag.putInt("linkY",linkPosition.getY());
         tag.putInt("linkZ",linkPosition.getZ());
         drop.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_LINKED_LOOT_DATA");
         return true;
     }
 

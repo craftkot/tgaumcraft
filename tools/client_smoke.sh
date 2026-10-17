@@ -314,6 +314,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
     capture 53-mirror-transport-vanilla-world-nbt
     echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
+    # A real /setblock destroy must use Block#getDrops and onRemove.
+    # The first marker requires a real loot ItemStack CUSTOM_DATA write;
+    # the second requires a reciprocal partner BlockEntity being invalidated.
+    send_chat '/setblock 280 150 248 minecraft:air destroy'
+    sleep 2
+    assert_smoke_event MIRROR_LINKED_LOOT_DATA
+    assert_smoke_event MIRROR_PARTNER_LINK_INVALIDATED
+    send_chat '/data get block 248 150 248'
+    capture 54-mirror-partner-unlinked-after-destruction
+    # Query for the actual linked drop, not a synthetic /give item.
+    send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_LINKED_ITEM_COMPONENT_FOUND'
+    capture 55-linked-mirror-loot-custom-data
     if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
       echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
       exit 1
