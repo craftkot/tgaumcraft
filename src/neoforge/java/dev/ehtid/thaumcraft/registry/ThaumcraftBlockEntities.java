@@ -69,7 +69,9 @@ public final class ThaumcraftBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelterBlockEntity>>
             SMELTER_BASIC = TYPES.register("smelter_basic",
             () -> BlockEntityType.Builder.of(SmelterBlockEntity::new,
-                    ThaumcraftBlocks.SMELTER_BASIC.get()).build(null));
+                    ThaumcraftBlocks.SMELTER_BASIC.get(),
+                    ThaumcraftBlocks.SMELTER_THAUMIUM.get(),
+                    ThaumcraftBlocks.SMELTER_VOID.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

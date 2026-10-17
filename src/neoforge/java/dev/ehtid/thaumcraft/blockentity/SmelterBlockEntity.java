@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyAlembicLogic;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.block.SmelterBlock;
 import dev.ehtid.thaumcraft.scanning.ThaumometerScanDispatcher;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
@@ -47,7 +48,14 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
     private int cookTarget=100;
     private int ticks;
     private boolean speedBoost;
-    private LegacySmelterLogic.Tier tier=LegacySmelterLogic.Tier.BASIC;
+    /** Source TileSmelter.getType checks the actual block variant. */
+    private LegacySmelterLogic.Tier tier() {
+        if (getBlockState().is(ThaumcraftBlocks.SMELTER_THAUMIUM.get()))
+            return LegacySmelterLogic.Tier.THAUMIUM;
+        if (getBlockState().is(ThaumcraftBlocks.SMELTER_VOID.get()))
+            return LegacySmelterLogic.Tier.VOID;
+        return LegacySmelterLogic.Tier.BASIC;
+    }
 
     public SmelterBlockEntity(BlockPos pos,BlockState state) {
         super(ThaumcraftBlockEntities.SMELTER_BASIC.get(),pos,state);
@@ -109,7 +117,7 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
             if(amount<=0)continue;
             float[] draws=new float[amount];
             for(int i=0;i<amount;i++)draws[i]=server.random.nextFloat();
-            var result=LegacySmelterLogic.processUnits(tier,
+            var result=LegacySmelterLogic.processUnits(tier(),
                     "vitium".equals(aspect.tag()),draws);
             if(result.stored()>0)aspects.add(aspect,result.stored());
             pollution+=result.polluted();
@@ -127,7 +135,7 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
         // BETA26 basic transfers once every 15 ticks. The original
         // speed-boost source had int-cast 0.8 -> zero (division by zero).
         // Deliberately fix that crash while retaining the 20% speedup.
-        int interval=LegacySmelterLogic.outputInterval(tile.tier);
+        int interval=LegacySmelterLogic.outputInterval(tile.tier());
         if(tile.speedBoost)interval=Math.max(1,Math.round(interval*0.8f));
         if(tile.ticks%interval==0 && tile.storedVis()>0)
             tile.transferOneToAlembic();

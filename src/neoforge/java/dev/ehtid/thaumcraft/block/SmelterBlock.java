@@ -28,7 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.item.context.BlockPlaceContext;
 
-/** BETA26 basic essentia smelter, original 80% extraction efficiency. */
+/** BETA26 base/thaumium/void furnace share original TileSmelter semantics. */
 public final class SmelterBlock extends BaseEntityBlock {
     public static final MapCodec<SmelterBlock> CODEC=simpleCodec(SmelterBlock::new);
     public static final DirectionProperty FACING=BlockStateProperties.HORIZONTAL_FACING;

@@ -116,6 +116,18 @@ public final class ThaumcraftBlocks {
                     .sound(SoundType.METAL)
                     .lightLevel(state -> state.getValue(SmelterBlock.LIT)?13:0));
 
+    /** Original BETA26 90% yield, 10-tick thaumium furnace. */
+    public static final DeferredBlock<SmelterBlock> SMELTER_THAUMIUM = BLOCKS.registerBlock(
+            "smelter_thaumium", SmelterBlock::new,
+            BlockBehaviour.Properties.of().strength(2.5F,10.0F).sound(SoundType.METAL)
+                    .lightLevel(state -> state.getValue(SmelterBlock.LIT)?13:0));
+
+    /** Original BETA26 95% yield, 15-tick void furnace. */
+    public static final DeferredBlock<SmelterBlock> SMELTER_VOID = BLOCKS.registerBlock(
+            "smelter_void", SmelterBlock::new,
+            BlockBehaviour.Properties.of().strength(2.5F,10.0F).sound(SoundType.METAL)
+                    .lightLevel(state -> state.getValue(SmelterBlock.LIT)?13:0));
+
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.
     public static final DeferredBlock<Block> STONE_ARCANE = BLOCKS.registerSimpleBlock(
