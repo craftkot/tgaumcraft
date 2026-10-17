@@ -72,6 +72,40 @@ public final class LegacyInfusionRitualLedger {
         return new LegacyInfusionRitualLedger(verifiedRecipe, initial, current, paid);
     }
 
+    /**
+     * World-save restoration for the seven actually registered BETA26
+     * Crystal Farmer rituals. Accounting consistency alone is insufficient:
+     * an NBT payload could otherwise replace the real recipe price with a
+     * smaller internally consistent (or entirely unrelated) aspect map.
+     *
+     * The multiplier is snapshotted at the START of the ritual, not taken
+     * from a newly scanned set of stabilizers during reload.
+     */
+    public static LegacyInfusionRitualLedger restoreVerifiedCrystalFarmer(
+            String recipeId, Map<String,Integer> initial,
+            Map<String,Integer> current, int paid, float startMultiplier) {
+        if (!Float.isFinite(startMultiplier) || startMultiplier < 0.5F)
+            throw new IllegalArgumentException("Invalid original infusion cost multiplier");
+        LegacyInfusionCrystalFarmerCatalog.Recipe recipe = null;
+        for (var candidate : LegacyInfusionCrystalFarmerCatalog.all()) {
+            if (candidate.legacyId().equals(recipeId)) {
+                recipe = candidate;
+                break;
+            }
+        }
+        if (recipe == null)
+            throw new IllegalArgumentException("Unregistered original infusion recipe");
+        var expected = LegacyInfusionStartPlanner.calculateEssentia(
+                LegacyInfusionCrystalFarmerCatalog.essentia(recipe, new AspectRegistry()),
+                startMultiplier);
+        var expectedCosts = new LinkedHashMap<String,Integer>();
+        for (AspectData aspect : expected.getAspects())
+            expectedCosts.put(aspect.tag(), expected.getAmount(aspect));
+        if (!expectedCosts.equals(initial))
+            throw new IllegalArgumentException("Saved infusion price differs from real recipe");
+        return restore(recipeId, initial, current, paid);
+    }
+
     public String recipeId() { return recipeId; }
     public Map<String,Integer> requested() { return requested; }
     public Map<String,Integer> remaining() { return remaining; }
