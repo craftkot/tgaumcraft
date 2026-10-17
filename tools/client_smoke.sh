@@ -150,14 +150,22 @@ echo "TITLE_SINGLEPLAYER_CLICK=${title_click_x},${title_click_y} WINDOW=${WIDTH}
 xdotool mousemove "$title_click_x" "$title_click_y" click 1
 sleep 8
 capture 02-after-singleplayer
-# A fresh dev client with no existing worlds can jump directly to the
-# Create World form. Previous runs located the commands button and Create
-# World control below. These later clicks are STILL subject to an actual
-# world-start assertion (no invented success based on screenshot capture).
-xdotool mousemove 512 433 click 1
+# CircleCI #24 generated a real world but with "Allow Commands: OFF".
+# The obsolete root click (512,433) missed the actual game-tab toggle;
+# all following /give, /setblock and /tp were denied while the script still
+# emitted misleading CLIENT_SENT_* success-like status. The source screenshot
+# at 1024x768 places the toggle CENTER at window-local x=512, y≈311.
+# Convert to live-window pixels. The NEXT screenshot must show ON and the
+# world-level NBT probe below MUST independently reject OFF.
+world_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+eval "$world_geometry"
+world_command_x=$((X + WIDTH / 2))
+world_command_y=$((Y + HEIGHT * 405 / 1000))
+echo "WORLD_ALLOW_COMMANDS_CLICK=${world_command_x},${world_command_y} WINDOW=${WIDTH}x${HEIGHT} ROOT=${X},${Y}" \
+  | tee -a client-smoke-status.txt
+xdotool mousemove "$world_command_x" "$world_command_y" click 1
 sleep 3
 capture 03-world-create-commands
-
 capture 04-before-world-create
 
 # Optional milestone video; ordinary client regressions capture PNGs only.
@@ -178,9 +186,21 @@ kill -0 "$VIDEO_PID"
 echo 'CLIENT_SCREEN_RECORDING_STARTED=YES' | tee -a client-smoke-status.txt
 fi
 
-xdotool mousemove 275 716 click 1
+# Centre of the actual 1.21 Create New World button (left bottom of
+# the 1024x768 Minecraft WINDOW, not the 1280x800 Xvfb desktop).
+world_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+eval "$world_geometry"
+create_world_x=$((X + WIDTH * 34 / 100))
+create_world_y=$((Y + HEIGHT * 93 / 100))
+echo "CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y}" | tee -a client-smoke-status.txt
+xdotool mousemove "$create_world_x" "$create_world_y" click 1
 sleep 110
 capture 05-after-world-start
+# Hard gate: starting an integrated server does NOT prove that the client
+# received operator commands. Audit the real world level.dat before issuing
+# ANY scripted cheats. This is a genuine vanilla 1.21 game setting persisted
+# by the game itself, not a status echo from our test.
+python3 tools/assert_client_world_commands.py run/saves | tee -a client-smoke-status.txt
 if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Preparing spawn area|Joining world' client-smoke/client.log; then
   echo 'INTEGRATED_WORLD_START_LOG=YES' | tee -a client-smoke-status.txt
   # Actual interactive world commands, typed through the real Minecraft
