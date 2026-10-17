@@ -44,6 +44,8 @@ public final class CrystalFarmerIngredientProgressTest {
         var done = snapshot;
         rejected(()->done.afterActualPedestalRemoval(1));
         rejected(()->done.afterValidatedCountdown());
+        rejected(()->new LegacyCrystalFarmerIngredientProgress(2,0));
+        rejected(()->new LegacyCrystalFarmerIngredientProgress(2,5));
         rejected(()->new LegacyCrystalFarmerIngredientProgress(4,0));
         rejected(()->new LegacyCrystalFarmerIngredientProgress(3,1));
         rejected(()->new LegacyCrystalFarmerIngredientProgress(0,-1));
