@@ -29,6 +29,7 @@ TESTS=(
   LegacyAlchemyConstructArcaneRecipeTest
   LegacyUpgradedSmelterArcaneRecipeTest
   LegacyAdvancedAlchemyConstructArcaneRecipeTest
+  LegacySmelterAttachmentArcaneRecipeTest
   LegacyTubeVariantParityTest
   LegacyTubeBufferParityTest
   LegacyAlembicParityTest
@@ -75,6 +76,7 @@ LegacyTubeFilterArcaneRecipeTest|BETA26 filtered tube arcane crafting: OK
 LegacyAlchemyConstructArcaneRecipeTest|BETA26 alchemical construct arcane crafting: OK
 LegacyUpgradedSmelterArcaneRecipeTest|BETA26 upgraded smelter arcane crafting: OK
 LegacyAdvancedAlchemyConstructArcaneRecipeTest|BETA26 advanced alchemical construct arcane crafting: OK
+LegacySmelterAttachmentArcaneRecipeTest|BETA26 smelter attachment arcane crafting: OK
 LegacyTubeVariantParityTest|BETA26 filter valve restrict oneway suction and direction: OK
 LegacyTubeBufferParityTest|BETA26 mixed essentia buffer, choke, and priority: OK
 LegacyAlembicParityTest|BETA26 alembic two-pass column and extraction: OK

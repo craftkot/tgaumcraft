@@ -12,6 +12,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAdvancedAlchemyConstructArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacySmelterAttachmentArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe.Kind;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes.Upgrade;
@@ -122,6 +123,10 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 if (workbench.selectedTubeUpgrade() != null)
                     return LegacyEssentiaTubeUpgradeRecipes.VIS;
                 if (workbench.matchesBellowsPattern()) return LegacyBellowsArcaneRecipe.VIS;
+                if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.AUX))
+                    return LegacySmelterAttachmentArcaneRecipe.Kind.AUX.vis;
+                if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.VENT))
+                    return LegacySmelterAttachmentArcaneRecipe.Kind.VENT.vis;
                 if (workbench.matchesTubeBufferPattern()) return LegacyTubeBufferArcaneRecipe.BASE_VIS;
                 if (workbench.matchesAlembicPattern()) return LegacyAlembicArcaneRecipe.VIS;
                 if (workbench.matchesAlchemyFilterPattern()) return LegacyAlchemyFilterArcaneRecipe.VIS;
@@ -156,6 +161,10 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 if (upgrade != null) return upgrade.crystalMask;
                 if (workbench.matchesBellowsPattern())
                     return LegacyBellowsArcaneRecipe.CRYSTAL_MASK;
+                if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.AUX))
+                    return LegacySmelterAttachmentArcaneRecipe.Kind.AUX.crystalMask;
+                if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.VENT))
+                    return LegacySmelterAttachmentArcaneRecipe.Kind.VENT.crystalMask;
                 if (workbench.matchesAlembicPattern())
                     return LegacyAlembicArcaneRecipe.CRYSTAL_MASK;
                 if (workbench.matchesAlchemyConstructPattern())
@@ -408,6 +417,25 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+
+    private boolean canCraftSmelterAttachment(ServerPlayer player,
+                    LegacySmelterAttachmentArcaneRecipe.Kind kind, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player)) return false;
+        return wb.canCraftSmelterAttachment(kind,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
+    }
+
+    private boolean craftSmelterAttachment(ServerPlayer player,
+                    LegacySmelterAttachmentArcaneRecipe.Kind kind, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player)) return false;
+        if (!wb.craftSmelterAttachment(kind,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount))
+            return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
@@ -417,6 +445,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 || canCraftBasicSmelter(player,totalDiscount)
                 || canCraftTubeUpgrade(player,totalDiscount)
                 || canCraftBellows(player,totalDiscount)
+                || canCraftSmelterAttachment(player,LegacySmelterAttachmentArcaneRecipe.Kind.AUX,totalDiscount)
+                || canCraftSmelterAttachment(player,LegacySmelterAttachmentArcaneRecipe.Kind.VENT,totalDiscount)
                 || canCraftTubeBuffer(player,totalDiscount)
                 || canCraftAlembic(player,totalDiscount)
                 || canCraftAlchemyFilter(player,totalDiscount)
@@ -512,6 +542,12 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if (expected.is(ThaumcraftItems.TUBE_BUFFER.get())
                 && craftTubeBuffer(player, totalDiscount))
             return new ItemStack(ThaumcraftItems.TUBE_BUFFER.get());
+        if(expected.is(ThaumcraftItems.SMELTER_AUX.get())
+                &&craftSmelterAttachment(player,LegacySmelterAttachmentArcaneRecipe.Kind.AUX,totalDiscount))
+            return new ItemStack(ThaumcraftItems.SMELTER_AUX.get());
+        if(expected.is(ThaumcraftItems.SMELTER_VENT.get())
+                &&craftSmelterAttachment(player,LegacySmelterAttachmentArcaneRecipe.Kind.VENT,totalDiscount))
+            return new ItemStack(ThaumcraftItems.SMELTER_VENT.get());
         if(expected.is(ThaumcraftItems.BELLOWS.get())
                 &&craftBellows(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.BELLOWS.get());
@@ -554,6 +590,12 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             result.setItem(0,new ItemStack(ThaumcraftItems.ALEMBIC.get()));
         else if (owner instanceof ServerPlayer sp && canCraftTubeBuffer(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.TUBE_BUFFER.get()));
+        else if(owner instanceof ServerPlayer sp
+                &&canCraftSmelterAttachment(sp,LegacySmelterAttachmentArcaneRecipe.Kind.AUX,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_AUX.get()));
+        else if(owner instanceof ServerPlayer sp
+                &&canCraftSmelterAttachment(sp,LegacySmelterAttachmentArcaneRecipe.Kind.VENT,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_VENT.get()));
         else if(owner instanceof ServerPlayer sp&&canCraftBellows(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.BELLOWS.get()));
         else if(owner instanceof ServerPlayer sp&&canCraftBasicSmelter(sp,0.0F))

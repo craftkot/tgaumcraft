@@ -19,6 +19,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAdvancedAlchemyConstructArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacySmelterAttachmentArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -242,6 +243,59 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+
+    /** BETA26 SmelterAux and SmelterVent use the original shaped matrices. */
+    public boolean matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind kind) {
+        if (kind == null) return false;
+        boolean[] wood = new boolean[9], tube = new boolean[9],
+                  brass = new boolean[9], iron = new boolean[9],
+                  construct = new boolean[9], bellows = new boolean[9],
+                  filter = new boolean[9];
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = items.get(slot);
+            wood[slot] = stack.is(ThaumcraftItems.PLANK_GREATWOOD.get());
+            tube[slot] = stack.is(ThaumcraftItems.TUBE_FILTER.get());
+            brass[slot] = PlateItem.legacyMetadata(stack) == 0 || stack.is(COMMON_BRASS_PLATES);
+            iron[slot] = isIronPlate(stack);
+            construct[slot] = stack.is(ThaumcraftItems.METAL_ALCHEMICAL.get());
+            bellows[slot] = stack.is(ThaumcraftItems.BELLOWS.get());
+            filter[slot] = stack.is(ThaumcraftItems.FILTER.get());
+        }
+        return LegacySmelterAttachmentArcaneRecipe.matches(
+                kind, wood, tube, brass, iron, construct, bellows, filter);
+    }
+
+    public boolean canCraftSmelterAttachment(LegacySmelterAttachmentArcaneRecipe.Kind kind,
+                                             PlayerKnowledgeData knowledge, float discount) {
+        if (kind == null || !matchesSmelterAttachmentPattern(kind)
+                || !knowledge.isResearchKnown(kind.research)) return false;
+        for (int slot : new int[]{LegacySmelterAttachmentArcaneRecipe.AER_SLOT,
+                                  LegacySmelterAttachmentArcaneRecipe.TERRA_SLOT}) {
+            if ((kind.crystalMask & (1 << (slot - ArcaneWorkbenchRuntime.CRAFT_SLOTS))) == 0)
+                continue;
+            ItemStack stack = items.get(slot);
+            if (stack.isEmpty() || !canPlaceItem(slot, stack)) return false;
+        }
+        return getVis() >= Math.max(0,
+                LegacySmelterAttachmentArcaneRecipe.discountedVis(kind, discount));
+    }
+
+    /** Server commits all nine inputs and crystals only after every check. */
+    public boolean craftSmelterAttachment(LegacySmelterAttachmentArcaneRecipe.Kind kind,
+                                          PlayerKnowledgeData knowledge, float discount) {
+        if (!canCraftSmelterAttachment(kind, knowledge, discount)) return false;
+        final int cost = LegacySmelterAttachmentArcaneRecipe.discountedVis(kind, discount);
+        for (int slot = 0; slot < 9; slot++) items.get(slot).shrink(1);
+        for (int slot : new int[]{LegacySmelterAttachmentArcaneRecipe.AER_SLOT,
+                                  LegacySmelterAttachmentArcaneRecipe.TERRA_SLOT}) {
+            if ((kind.crystalMask & (1 << (slot - ArcaneWorkbenchRuntime.CRAFT_SLOTS))) != 0)
+                items.get(slot).shrink(1);
+        }
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
+        return true;
+    }
 
     /** Original BETA26 AdvAlchemyConstruct " A " / "VPV" / " A ". */
     public boolean matchesAdvancedAlchemyConstructPattern() {
