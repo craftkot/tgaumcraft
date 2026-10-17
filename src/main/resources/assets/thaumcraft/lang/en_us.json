@@ -302,5 +302,9 @@
   "block.thaumcraft.smelter_basic": "Essentia Smelter",
   "container.thaumcraft.smelter": "Essentia Smelter",
   "block.thaumcraft.smelter_thaumium": "Thaumium Essentia Smelter",
-  "block.thaumcraft.smelter_void": "Void Essentia Smelter"
+  "block.thaumcraft.smelter_void": "Void Essentia Smelter",
+  "block.thaumcraft.tube_valve": "Essentia Valve",
+  "block.thaumcraft.tube_filter": "Essentia Filter",
+  "block.thaumcraft.tube_restrict": "Restrictive Essentia Tube",
+  "block.thaumcraft.tube_oneway": "One-way Essentia Tube"
 }

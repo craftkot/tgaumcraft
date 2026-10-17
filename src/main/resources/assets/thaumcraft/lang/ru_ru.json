@@ -302,5 +302,9 @@
   "block.thaumcraft.smelter_basic": "Алхимическая печь",
   "container.thaumcraft.smelter": "Алхимическая печь",
   "block.thaumcraft.smelter_thaumium": "Таумиевая алхимическая печь",
-  "block.thaumcraft.smelter_void": "Пустотная алхимическая печь"
+  "block.thaumcraft.smelter_void": "Пустотная алхимическая печь",
+  "block.thaumcraft.tube_valve": "Клапан эссенции",
+  "block.thaumcraft.tube_filter": "Фильтр эссенции",
+  "block.thaumcraft.tube_restrict": "Ограничительная труба эссенции",
+  "block.thaumcraft.tube_oneway": "Односторонняя труба эссенции"
 }
