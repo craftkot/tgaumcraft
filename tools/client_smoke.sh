@@ -288,30 +288,30 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # /data NBT fixture, the two mandatory Java markers below fire only when
   # actual source.takeTransport and recipient.addFromTransport both succeed.
   if [ "${THAUMCRAFT_MIRROR_SMOKE:-0}" = "1" ]; then
-    send_chat '/forceload add 240 240'
-    send_chat '/forceload add 280 240'
-    send_chat '/fill 238 148 237 242 148 242 minecraft:stone'
-    send_chat '/fill 278 148 237 282 148 242 minecraft:stone'
-    send_chat '/setblock 240 149 239 thaumcraft:jar_normal'
-    send_chat '/setblock 240 150 240 thaumcraft:mirror_essentia[facing=north]'
-    send_chat '/setblock 280 150 240 thaumcraft:mirror_essentia[facing=down]'
-    send_chat '/setblock 280 149 240 thaumcraft:jar_normal'
-    send_chat '/data merge block 240 149 239 {Aspect:"aer",Amount:12s}'
-    send_chat '/data merge block 240 150 240 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:240}'
-    send_chat '/data merge block 280 150 240 {linked:1b,linkDim:"minecraft:overworld",linkX:240,linkY:150,linkZ:240}'
-    send_chat '/tp @p 280.5 152.5 234.5 0 30'
+    send_chat '/forceload add 248 248'
+    send_chat '/forceload add 280 248'
+    send_chat '/fill 246 148 245 250 148 250 minecraft:stone'
+    send_chat '/fill 278 148 245 282 148 250 minecraft:stone'
+    send_chat '/setblock 248 149 247 thaumcraft:jar_normal'
+    send_chat '/setblock 248 150 248 thaumcraft:mirror_essentia[facing=north]'
+    send_chat '/setblock 280 150 248 thaumcraft:mirror_essentia[facing=down]'
+    send_chat '/setblock 280 149 248 thaumcraft:jar_normal'
+    send_chat '/data merge block 248 149 247 {Aspect:"aer",Amount:12s}'
+    send_chat '/data merge block 248 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:248}'
+    send_chat '/data merge block 280 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}'
+    send_chat '/tp @p 280.5 152.5 242.5 0 30'
     capture 50-linked-essentia-mirrors-world
     sleep 20
     assert_smoke_event MIRROR_REMOTE_DEBIT
     assert_smoke_event MIRROR_TO_JAR
-    send_chat '/data get block 240 149 239'
+    send_chat '/data get block 248 149 247'
     capture 51-mirror-source-jar-after-debit
-    send_chat '/data get block 280 149 240'
+    send_chat '/data get block 280 149 248'
     capture 52-mirror-receiver-jar-after-credit
     # These conditions are independent of the custom smoke markers and
     # guarantee both physical source debit and actual recipient credit.
-    send_chat '/execute unless data block 240 149 239 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
-    send_chat '/execute unless data block 280 149 240 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
+    send_chat '/execute unless data block 248 149 247 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
+    send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
     capture 53-mirror-transport-vanilla-world-nbt
     echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
     if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
