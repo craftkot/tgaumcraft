@@ -282,6 +282,46 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # TileSmelter, emits essentia, which flows into alembic, tube and jar.
   # Four independent server-thread markers are REQUIRED; decorative
   # /setblock commands and /data NBT alone cannot pass this test.
+
+  # Linked ESSENTIA MIRROR smoke: two loaded world BlockEntities and a
+  # genuine one-unit debit from an existing 12-Aer source jar. Unlike a
+  # /data NBT fixture, the two mandatory Java markers below fire only when
+  # actual source.takeTransport and recipient.addFromTransport both succeed.
+  if [ "${THAUMCRAFT_MIRROR_SMOKE:-0}" = "1" ]; then
+    send_chat '/forceload add 240 240'
+    send_chat '/forceload add 280 240'
+    send_chat '/fill 238 148 237 242 148 242 minecraft:stone'
+    send_chat '/fill 278 148 237 282 148 242 minecraft:stone'
+    send_chat '/setblock 240 149 239 thaumcraft:jar_normal'
+    send_chat '/setblock 240 150 240 thaumcraft:mirror_essentia[facing=north]'
+    send_chat '/setblock 280 150 240 thaumcraft:mirror_essentia[facing=down]'
+    send_chat '/setblock 280 149 240 thaumcraft:jar_normal'
+    send_chat '/data merge block 240 149 239 {Aspect:"aer",Amount:12s}'
+    send_chat '/data merge block 240 150 240 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:240}'
+    send_chat '/data merge block 280 150 240 {linked:1b,linkDim:"minecraft:overworld",linkX:240,linkY:150,linkZ:240}'
+    send_chat '/tp @p 280.5 152.5 234.5 0 30'
+    capture 50-linked-essentia-mirrors-world
+    sleep 20
+    assert_smoke_event MIRROR_REMOTE_DEBIT
+    assert_smoke_event MIRROR_TO_JAR
+    send_chat '/data get block 240 149 239'
+    capture 51-mirror-source-jar-after-debit
+    send_chat '/data get block 280 149 240'
+    capture 52-mirror-receiver-jar-after-credit
+    # These conditions are independent of the custom smoke markers and
+    # guarantee both physical source debit and actual recipient credit.
+    send_chat '/execute unless data block 240 149 239 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
+    send_chat '/execute unless data block 280 149 240 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
+    capture 53-mirror-transport-vanilla-world-nbt
+    echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
+    if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
+      echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    echo 'PASS: linked essentia mirrors transferred a physically debited jar unit' | tee -a client-smoke-status.txt
+    exit 0
+  fi
+
   if [ "${THAUMCRAFT_ALCHEMY_SMOKE:-0}" = "1" ]; then
     send_chat '/forceload add 240 240'
     send_chat '/fill 238 148 237 243 148 242 minecraft:stone'

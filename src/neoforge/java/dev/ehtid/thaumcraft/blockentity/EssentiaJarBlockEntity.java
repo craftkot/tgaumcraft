@@ -182,6 +182,8 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
             int accepted=jar.addFromTransport(aspect, 1, Direction.UP);
             if (accepted==1 && above instanceof EssentiaTubeBlockEntity)
                 dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TUBE_TO_JAR");
+            if (accepted==1 && above instanceof EssentiaMirrorBlockEntity)
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_TO_JAR");
         }
     }
 

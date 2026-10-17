@@ -121,6 +121,8 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         if(!stillValidSource(source,aspect))return 0;
         // No local or remote state is changed until the real source returns 1.
         if(source.port().takeTransport(aspect,1,source.face())!=1)return 0;
+        // This marker is emitted only after an actual remote BlockEntity debit.
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_REMOTE_DEBIT");
         EssentiaMirrorBlockEntity partner=partnerLoaded(local);
         if(partner!=null && hasValidLink()) {
             instability=LegacyEssentiaMirrorLogic.afterTransfer(instability,1,true);
