@@ -1,1 +1,1 @@
-{"parent":"thaumcraft:block/tube_core"}
+{"parent":"minecraft:item/generated","textures":{"layer0":"thaumcraft:item/tube_normal"}}
