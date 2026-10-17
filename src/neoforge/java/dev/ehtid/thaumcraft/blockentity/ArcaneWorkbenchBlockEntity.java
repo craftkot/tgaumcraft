@@ -16,6 +16,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -238,6 +239,45 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+    /** Original two-output TUBES alchemical construct recipe IVI / TWT / IVI. */
+    public boolean matchesAlchemyConstructPattern() {
+        boolean[] iron=new boolean[9],valve=new boolean[9],
+                  tube=new boolean[9],wood=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            iron[slot]=isIronPlate(stack);
+            valve[slot]=stack.is(ThaumcraftItems.TUBE_VALVE.get());
+            tube[slot]=stack.is(ThaumcraftItems.TUBE.get());
+            wood[slot]=stack.is(ThaumcraftItems.PLANK_GREATWOOD.get());
+        }
+        return LegacyAlchemyConstructArcaneRecipe.matches(iron,valve,tube,wood);
+    }
+
+    public boolean canCraftAlchemyConstruct(PlayerKnowledgeData knowledge,float discount) {
+        if(!matchesAlchemyConstructPattern()
+                ||!knowledge.isResearchKnown(LegacyAlchemyConstructArcaneRecipe.RESEARCH))return false;
+        for(int crystal:new int[]{LegacyAlchemyConstructArcaneRecipe.AQUA_SLOT,
+                    LegacyAlchemyConstructArcaneRecipe.ORDO_SLOT,
+                    LegacyAlchemyConstructArcaneRecipe.PERDITIO_SLOT}) {
+            ItemStack stack=items.get(crystal);
+            if(stack.isEmpty()||!canPlaceItem(crystal,stack))return false;
+        }
+        return getVis()>=Math.max(0,LegacyAlchemyConstructArcaneRecipe.discountedVis(discount));
+    }
+
+    public boolean craftAlchemyConstruct(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftAlchemyConstruct(knowledge,discount))return false;
+        int cost=LegacyAlchemyConstructArcaneRecipe.discountedVis(discount);
+        for(int slot=0;slot<9;slot++)items.get(slot).shrink(1);
+        for(int crystal:new int[]{LegacyAlchemyConstructArcaneRecipe.AQUA_SLOT,
+                    LegacyAlchemyConstructArcaneRecipe.ORDO_SLOT,
+                    LegacyAlchemyConstructArcaneRecipe.PERDITIO_SLOT})
+            items.get(crystal).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** Shapeless BETA26 TubeFilter: one tube and one manufactured filter. */
     private int[] filteredTubeInputs() {
