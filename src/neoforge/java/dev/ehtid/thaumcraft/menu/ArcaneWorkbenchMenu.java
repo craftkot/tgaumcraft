@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes.Upgrade;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
@@ -120,6 +121,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 if (workbench.matchesTubeBufferPattern()) return LegacyTubeBufferArcaneRecipe.BASE_VIS;
                 if (workbench.matchesAlembicPattern()) return LegacyAlembicArcaneRecipe.VIS;
                 if (workbench.matchesAlchemyFilterPattern()) return LegacyAlchemyFilterArcaneRecipe.VIS;
+                if (workbench.matchesFilteredTubePattern()) return LegacyTubeFilterArcaneRecipe.VIS;
                 if (workbench.matchesBasicSmelterPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.BASE_VIS;
                 return 0;
@@ -326,6 +328,23 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+
+    private boolean canCraftFilteredTube(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        return wb.canCraftFilteredTube(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount);
+    }
+
+    private boolean craftFilteredTube(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        if(!wb.craftFilteredTube(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount))
+            return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
@@ -337,7 +356,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 || canCraftBellows(player,totalDiscount)
                 || canCraftTubeBuffer(player,totalDiscount)
                 || canCraftAlembic(player,totalDiscount)
-                || canCraftAlchemyFilter(player,totalDiscount);
+                || canCraftAlchemyFilter(player,totalDiscount)
+                || canCraftFilteredTube(player,totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -400,6 +420,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT);
         ItemStack upgrade = craftTubeUpgrade(player,expected,totalDiscount);
         if(!upgrade.isEmpty())return upgrade;
+        if(expected.is(ThaumcraftItems.TUBE_FILTER.get())
+                &&craftFilteredTube(player,totalDiscount))
+            return new ItemStack(ThaumcraftItems.TUBE_FILTER.get());
         if(expected.is(ThaumcraftItems.FILTER.get())
                 &&craftAlchemyFilter(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.FILTER.get(),LegacyAlchemyFilterArcaneRecipe.OUTPUT);
@@ -434,6 +457,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         else if(owner instanceof ServerPlayer sp&&canCraftTubeUpgrade(sp,0.0F)
                 &&bench instanceof ArcaneWorkbenchBlockEntity wb)
             result.setItem(0,tubeUpgradeOutput(wb.selectedTubeUpgrade()));
+        else if(owner instanceof ServerPlayer sp&&canCraftFilteredTube(sp,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.TUBE_FILTER.get()));
         else if(owner instanceof ServerPlayer sp&&canCraftAlchemyFilter(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.FILTER.get(),LegacyAlchemyFilterArcaneRecipe.OUTPUT));
         else if (owner instanceof ServerPlayer sp && canCraftAlembic(sp,0.0F))

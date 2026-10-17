@@ -15,6 +15,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -236,6 +237,38 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+
+    /** Shapeless BETA26 TubeFilter: one tube and one manufactured filter. */
+    private int[] filteredTubeInputs() {
+        boolean[] tubes=new boolean[9],filters=new boolean[9],occupied=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            tubes[slot]=stack.is(ThaumcraftItems.TUBE.get());
+            filters[slot]=stack.is(ThaumcraftItems.FILTER.get());
+            occupied[slot]=!stack.isEmpty();
+        }
+        return LegacyTubeFilterArcaneRecipe.inputSlots(tubes,filters,occupied);
+    }
+
+    public boolean matchesFilteredTubePattern() { return filteredTubeInputs()!=null; }
+
+    public boolean canCraftFilteredTube(PlayerKnowledgeData knowledge,float discount) {
+        return matchesFilteredTubePattern()
+                &&knowledge.isResearchKnown(LegacyTubeFilterArcaneRecipe.RESEARCH)
+                &&getVis()>=Math.max(0,LegacyTubeFilterArcaneRecipe.discountedVis(discount));
+    }
+
+    public boolean craftFilteredTube(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftFilteredTube(knowledge,discount))return false;
+        int[] inputs=filteredTubeInputs();
+        if(inputs==null)return false;
+        int cost=LegacyTubeFilterArcaneRecipe.discountedVis(discount);
+        for(int slot:inputs)items.get(slot).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** BETA26 Filter: a horizontal 3x1 arcane recipe in any crafting grid row. */
     private int[] filterInputSlots() {

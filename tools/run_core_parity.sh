@@ -25,6 +25,7 @@ TESTS=(
   LegacyTubeBufferArcaneRecipeTest
   LegacyAlembicArcaneRecipeTest
   LegacyAlchemyFilterArcaneRecipeTest
+  LegacyTubeFilterArcaneRecipeTest
   LegacyTubeVariantParityTest
   LegacyTubeBufferParityTest
   LegacyAlembicParityTest
@@ -67,6 +68,7 @@ LegacyBellowsArcaneRecipeTest|BETA26 bellows arcane crafting: OK
 LegacyTubeBufferArcaneRecipeTest|BETA26 essentia buffer arcane crafting: OK
 LegacyAlembicArcaneRecipeTest|BETA26 alembic arcane crafting: OK
 LegacyAlchemyFilterArcaneRecipeTest|BETA26 alchemy filter arcane crafting: OK
+LegacyTubeFilterArcaneRecipeTest|BETA26 filtered tube arcane crafting: OK
 LegacyTubeVariantParityTest|BETA26 filter valve restrict oneway suction and direction: OK
 LegacyTubeBufferParityTest|BETA26 mixed essentia buffer, choke, and priority: OK
 LegacyAlembicParityTest|BETA26 alembic two-pass column and extraction: OK
