@@ -13,6 +13,7 @@ import dev.ehtid.thaumcraft.block.InfusionMatrixBlock;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
+import dev.ehtid.thaumcraft.block.EssentiaBufferBlock;
 import dev.ehtid.thaumcraft.block.AlembicBlock;
 import dev.ehtid.thaumcraft.block.SmelterBlock;
 import net.minecraft.world.level.block.Block;
@@ -141,6 +142,12 @@ public final class ThaumcraftBlocks {
     public static final DeferredBlock<EssentiaTubeBlock> TUBE_ONEWAY = BLOCKS.registerBlock(
             "tube_oneway",EssentiaTubeBlock::new,
             BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion().sound(SoundType.METAL));
+
+    /** Original mixed-aspect 10-unit pipe buffer. */
+    public static final DeferredBlock<EssentiaBufferBlock> TUBE_BUFFER = BLOCKS.registerBlock(
+            "tube_buffer",EssentiaBufferBlock::new,
+            BlockBehaviour.Properties.of().strength(0.5F,5.0F).noOcclusion()
+                    .sound(SoundType.METAL));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.

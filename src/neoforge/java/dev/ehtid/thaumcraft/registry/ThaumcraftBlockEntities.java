@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.blockentity.InfusionMatrixBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaTubeBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.EssentiaBufferBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.AlembicBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.SmelterBlockEntity;
 import net.minecraft.core.registries.Registries;
@@ -76,6 +77,11 @@ public final class ThaumcraftBlockEntities {
                     ThaumcraftBlocks.SMELTER_BASIC.get(),
                     ThaumcraftBlocks.SMELTER_THAUMIUM.get(),
                     ThaumcraftBlocks.SMELTER_VOID.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>,BlockEntityType<EssentiaBufferBlockEntity>>
+            TUBE_BUFFER = TYPES.register("tube_buffer",
+            () -> BlockEntityType.Builder.of(EssentiaBufferBlockEntity::new,
+                    ThaumcraftBlocks.TUBE_BUFFER.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

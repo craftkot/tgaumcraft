@@ -59,6 +59,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TUBE_FILTER.get());
                         output.accept(ThaumcraftItems.TUBE_RESTRICT.get());
                         output.accept(ThaumcraftItems.TUBE_ONEWAY.get());
+                        output.accept(ThaumcraftItems.TUBE_BUFFER.get());
                         output.accept(ThaumcraftItems.ALEMBIC.get());
                         output.accept(ThaumcraftItems.SMELTER_BASIC.get());
                         output.accept(ThaumcraftItems.SMELTER_THAUMIUM.get());

@@ -145,6 +145,9 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> TUBE_ONEWAY = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.TUBE_ONEWAY,new Item.Properties());
 
+    public static final DeferredItem<BlockItem> TUBE_BUFFER = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.TUBE_BUFFER,new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());

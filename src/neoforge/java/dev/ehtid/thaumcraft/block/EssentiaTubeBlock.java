@@ -34,7 +34,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** Original BETA26 tube connections: six face-specific multipart arms. */
-public final class EssentiaTubeBlock extends BaseEntityBlock {
+public class EssentiaTubeBlock extends BaseEntityBlock {
     public static final MapCodec<EssentiaTubeBlock> CODEC = simpleCodec(EssentiaTubeBlock::new);
     public static final BooleanProperty DOWN = BooleanProperty.create("down");
     public static final BooleanProperty UP = BooleanProperty.create("up");
@@ -82,7 +82,7 @@ public final class EssentiaTubeBlock extends BaseEntityBlock {
 
     public static void updateConnections(Level level,BlockPos pos) {
         if(level.isClientSide() || !(level.getBlockState(pos).getBlock() instanceof EssentiaTubeBlock)
-                || !(level.getBlockEntity(pos) instanceof EssentiaTubeBlockEntity tube)) return;
+                || !(level.getBlockEntity(pos) instanceof EssentiaTransportPort tube)) return;
         BlockState initial=level.getBlockState(pos);
         BlockState next=initial;
         for(Direction dir:Direction.values()) {
