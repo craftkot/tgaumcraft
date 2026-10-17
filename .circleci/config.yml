@@ -47,17 +47,23 @@ jobs:
           name: Compile full NeoForge 1.21.1 Java and bundled resources
           no_output_timeout: 20m
           command: |
+            # Preserve the *entire* setup and Gradle command transcript.
+            # Prior #94/#103 failures could happen before the Gradle tee
+            # and store_artifacts was not configured for failure.
+            mkdir -p compile-audit
+            exec > >(tee compile-audit/neoforge-compile.log) 2>&1
             set -euo pipefail
+            echo "NEOFORGE_COMPILE_BEGIN=$(date -u +%FT%TZ)"
             java -version
-            curl -fsSL --retry 3 -o /tmp/gradle.zip \
+            curl -fsSL --retry 3 --retry-all-errors \
+              -o /tmp/gradle.zip \
               https://services.gradle.org/distributions/gradle-9.2.1-bin.zip
             unzip -q /tmp/gradle.zip -d /tmp
-            mkdir -p compile-audit
             /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
-              --max-workers=2 --stacktrace compileJava processResources \
-              2>&1 | tee compile-audit/neoforge-compile.log
+              --max-workers=2 --stacktrace compileJava processResources
             echo THAUMCRAFT_NEOFORGE_CLASSES_COMPILED_OK
       - store_artifacts:
+          when: always
           path: compile-audit/neoforge-compile.log
           destination: neoforge/compile.log
   real-minecraft-client:
