@@ -155,7 +155,7 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
      */
     public boolean canReceiveMirror(String aspect) {
         if(!(level instanceof ServerLevel)||blocked||isVoidJar()
-                ||aspect==null||aspect.isBlank())return false;
+                ||!LegacyEssentiaJarLogic.accepts(stored,aspect))return false;
         return LegacyEssentiaJarLogic.add(stored,aspect,1).transferred()==1;
     }
 

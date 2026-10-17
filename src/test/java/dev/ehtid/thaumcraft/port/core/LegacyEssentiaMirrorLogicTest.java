@@ -42,6 +42,14 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,false,true,true,"aqua",1,"aqua"));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,null,1,"aqua"));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",0,"aqua"));
+                // BETA26 low-level add() deliberately ignores a jar label. The
+        // mirror world adapter must validate accepts() separately.
+        var aerLabel = new LegacyEssentiaJarLogic.State(null,"aer",0);
+        eq(true,LegacyEssentiaJarLogic.accepts(aerLabel,"aer"));
+        eq(false,LegacyEssentiaJarLogic.accepts(aerLabel,"ignis"));
+        eq(1,LegacyEssentiaJarLogic.add(aerLabel,"ignis",1).transferred());
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                LegacyEssentiaJarLogic.accepts(aerLabel,"ignis"),"ignis",1,32,64));
                 eq(true,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,32,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,64,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",0,0,64));
