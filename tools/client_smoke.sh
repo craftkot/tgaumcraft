@@ -115,9 +115,12 @@ capture() {
 # "Caution: Third-Party Online Play" and never creating a local world.
 # Compute the center of the actual title-screen Singleplayer button
 # using the REAL Minecraft window, not the (larger) Xvfb desktop.
-# The real #11 title screenshot at 1024x768 showed that button at
-# window-local x≈512, y≈276, i.e. 36% of the window height. We force
-# guiScale:2 above and record clicks so the next job is auditable.
+# The #16 evidence proves the title GUI's Singleplayer button occupies
+# root pixels around x=512, y=263..295 (thumbnail: x≈160,y≈85).
+# Previous x=513,y=296 landed on its LOWER EDGE, so the screen did not
+# change; next (512,433) accidentally opened the Mods screen. With this
+# window's Y≈20 and HEIGHT=768, 33% is safely INSIDE the button, not
+# on its lower border. Record the exact click for further real-run audits.
 capture 01-first-launch
 echo 'REAL_WINDOW_SCREENSHOT=YES' | tee -a client-smoke-status.txt
 xdotool key --clearmodifiers Escape || true
@@ -125,8 +128,8 @@ sleep 2
 title_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
 eval "$title_geometry"
 title_click_x=$((X + WIDTH / 2))
-title_click_y=$((Y + HEIGHT * 36 / 100))
-echo "TITLE_SINGLEPLAYER_CLICK=${title_click_x},${title_click_y} WINDOW=${WIDTH}x${HEIGHT}" \
+title_click_y=$((Y + HEIGHT * 33 / 100))
+echo "TITLE_SINGLEPLAYER_CLICK=${title_click_x},${title_click_y} WINDOW=${WIDTH}x${HEIGHT} ROOT=${X},${Y}" \
   | tee -a client-smoke-status.txt
 xdotool mousemove "$title_click_x" "$title_click_y" click 1
 sleep 8
