@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyPhialJarExchange;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -41,6 +42,27 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
         var transfer = LegacyEssentiaJarLogic.add(stored, aspect, offered);
         if (transfer.transferred() > 0) updateStored(transfer.state());
         return transfer.transferred();
+    }
+    /** Source jar debit: one complete 10-unit phial, no partial withdrawal. */
+    public boolean drawIntoPhial(String aspect, int amount) {
+        if (level == null || level.isClientSide) return false;
+        var transfer = LegacyPhialJarExchange.withdraw(stored, aspect, amount);
+        if (transfer.transferred() != amount) return false;
+        updateStored(transfer.state());
+        return true;
+    }
+    /** Preflight for the item-side manual transfer; no jar mutation. */
+    public boolean canReceivePhial(String aspect, int amount) {
+        return LegacyPhialJarExchange.deposit(stored, aspect, amount)
+                .transferred() == amount;
+    }
+    /** Server-only all-or-nothing deposit; transport UP rule is irrelevant to a held phial. */
+    public boolean receivePhial(String aspect, int amount) {
+        if (level == null || level.isClientSide) return false;
+        var transfer = LegacyPhialJarExchange.deposit(stored, aspect, amount);
+        if (transfer.transferred() != amount) return false;
+        updateStored(transfer.state());
+        return true;
     }
     /** No partial debit. Caller must have verified recipe and world state. */
     public boolean takeForInfusion(String aspect, int amount) {

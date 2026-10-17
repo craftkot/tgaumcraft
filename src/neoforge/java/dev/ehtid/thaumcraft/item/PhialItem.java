@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
+import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.UseOnContext;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
@@ -86,6 +90,59 @@ public final class PhialItem extends Item {
         if (containedAspect(stack) == null) return 0;
         return stack.get(DataComponents.CUSTOM_DATA).copyTag()
                 .getList("Aspects", Tag.TAG_COMPOUND).getCompound(0).getInt("amount");
+    }
+
+    /**
+     * One genuine glass phial transfers EXACTLY ten essentia from a jar.
+     * A filled/part-filled phial may return its recorded 1..10 units.
+     * The server debits the real jar BEFORE exchanging one held item; a
+     * partially filled target, mismatched aspect or blocked label cannot
+     * create/discard essentia. Creative players also exchange one bottle
+     * rather than producing free essentia from an inexhaustible full one.
+     */
+    @Override
+    public InteractionResult useOn(UseOnContext context) {
+        if (!(context.getLevel().getBlockEntity(context.getClickedPos())
+                instanceof EssentiaJarBlockEntity jar)) return InteractionResult.PASS;
+        Player player = context.getPlayer();
+        if (player == null || context.getItemInHand().isEmpty()) return InteractionResult.PASS;
+        String phialAspect = containedAspect(context.getItemInHand());
+        int phialAmount = containedAmount(context.getItemInHand());
+
+        if (phialAspect == null) {
+            var current = jar.snapshot();
+            if (current.aspect() == null || current.amount() < CAPACITY)
+                return InteractionResult.PASS;
+            if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+            if (!jar.drawIntoPhial(current.aspect(), CAPACITY))
+                return InteractionResult.FAIL;
+            exchangeOne(player, context.getHand(), filledPhial(current.aspect()));
+            return InteractionResult.SUCCESS;
+        }
+
+        if (phialAmount <= 0 || !jar.canReceivePhial(phialAspect, phialAmount))
+            return InteractionResult.PASS;
+        if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+        if (!jar.receivePhial(phialAspect, phialAmount))
+            return InteractionResult.FAIL;
+        exchangeOne(player, context.getHand(), emptyPhial());
+        return InteractionResult.SUCCESS;
+    }
+
+    private static void exchangeOne(Player player, net.minecraft.world.InteractionHand hand,
+                                    ItemStack replacement) {
+        ItemStack held = player.getItemInHand(hand);
+        // A single bottle stays in its original hotbar/offhand slot.
+        if (held.getCount() == 1) {
+            player.setItemInHand(hand, replacement);
+        } else {
+            held.shrink(1);
+            // For stacked bottles put the exchanged item into an inventory
+            // slot; if full, drop it in the world rather than destroy it.
+            if (!player.getInventory().add(replacement))
+                player.drop(replacement, false);
+        }
+        player.getInventory().setChanged();
     }
 
     @Override
