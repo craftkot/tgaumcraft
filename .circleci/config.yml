@@ -22,6 +22,7 @@ jobs:
             java -version
             python3 --version
             bash -n tools/client_smoke.sh
+            bash tools/test_minecraft_gui_coordinates.sh
             python3 tools/verify_crystal_assets.py
             python3 tools/verify_source_item_models.py
             bash tools/run_core_parity.sh

@@ -4,6 +4,12 @@ set -Eeuo pipefail
 # REAL Minecraft client under virtual X11/Mesa. Screenshots are of the
 # executing game, not examples downloaded from the web.
 mkdir -p client-smoke/screenshots run
+# Fix the physical-to-logical mouse transform. The old smoke assumed the
+# entire 1280x800 Xvfb desktop was the game viewport, yet forcibly resized
+# Minecraft to 1024x768; it could click OUTSIDE the research table.
+# Scale=2 keeps RU text readable and lets relative GUI coordinates be exact.
+printf 'guiScale:2\n' > run/options.txt
+source tools/minecraft_gui_coordinates.sh
 : > client-smoke-status.txt
 export DISPLAY=:99
 export LIBGL_ALWAYS_SOFTWARE=1
@@ -76,6 +82,20 @@ xdotool windowmove "$WIN" 0 0 || true
 xdotool windowsize "$WIN" 1024 768 || true
 xdotool mousemove 20 20
 sleep 35
+
+# The ResearchTableScreen is exactly 256x256 GUI pixels. Translate
+# its local button coordinates through the REAL live game-window geometry,
+# never the larger virtual desktop or an unverified 1280x800 assumption.
+click_research_gui() {
+  local local_x=$1 local_y=$2 geometry sx sy
+  geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+  eval "$geometry"
+  read -r sx sy < <(minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" \
+      2 256 256 "$local_x" "$local_y")
+  echo "RESEARCH_GUI_ACTUAL_CLICK=${local_x},${local_y}->${sx},${sy} WINDOW=${WIDTH}x${HEIGHT}" \
+      | tee -a client-smoke-status.txt
+  xdotool mousemove "$sx" "$sy" click 1
+}
 
 capture() {
   name="$1"
@@ -273,22 +293,28 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool click 3
   sleep 3
   capture 38-original-research-table-live-gui-with-supplies
-  # At 1280x800 the 256x256 source GUI starts at (512,272).
-  # BETA26 create button (116,22) is server-authoritative: no
-  # client-side creation of a new TheorycraftData is permitted.
-  xdotool mousemove 682 303 click 1
+  # Original GUI pixels, not Xvfb-root hard-coded coordinates.
+  # Center of BETA26 create button at (116,22) with expanded 132x18 hitbox.
+  click_research_gui 140 31
   sleep 4
   capture 39-original-research-table-create-theory
-  # Original draw button (116,121); the server debits paper only
-  # if it can generate a playable set of genuine source cards.
-  xdotool mousemove 682 402 click 1
+  # Physical draw click at (116,121). Real server must debit one paper.
+  click_research_gui 140 130
   sleep 4
   capture 40-original-research-table-draw-two-cards
-  # Choice 0 (77,97). A failed material preflight must not award
-  # free knowledge or consume inventory; the GUI remains usable.
-  xdotool mousemove 610 380 click 1
+  # Choice #0 occupies (77..133,97..119); click safely inside it.
+  click_research_gui 102 108
   sleep 3
   capture 41-original-research-table-activate-first-offer
+  xdotool key --clearmodifiers Escape
+  # Independent saved-block-entity evidence following physical clicks,
+  # not a self-asserted PASS marker: screenshots #42-43 must show actual
+  # note, original cardChoices/ink/paper, and the real GUI after re-open.
+  send_chat '/data get block 6 149 5 note'
+  capture 42-research-table-server-saved-nbt
+  xdotool click 3
+  sleep 3
+  capture 43-research-table-reopened-from-world
   xdotool key --clearmodifiers Escape
   echo 'CLIENT_SENT_REAL_THEORYCRAFT_TABLE_INTERACTIONS=YES' | tee -a client-smoke-status.txt
 
