@@ -183,7 +183,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         LegacyTheorycraftChoiceNbt.writeLastDraw(originalSessionNbt, chosen);
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
-        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CREATED");
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CARD_KEPT");
         return true;
     }
 
@@ -251,6 +251,7 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         originalSessionNbt = new CompoundTag();
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CREATED");
         return true;
     }
 

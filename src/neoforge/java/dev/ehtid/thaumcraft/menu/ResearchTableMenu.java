@@ -481,8 +481,13 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
                 broadcastChanges();
                 return true;
             }
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CREATE_MENU_RECEIVED");
             if (!researchTable.startNewTheory(serverPlayer,
-                    new java.util.HashSet<>(selectedAidKeys))) return false;
+                    new java.util.HashSet<>(selectedAidKeys))) {
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CREATE_MENU_REJECTED");
+                return false;
+            }
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CREATE_MENU_ACCEPTED");
             selectedAidKeys.clear();
             broadcastChanges();
             return true;

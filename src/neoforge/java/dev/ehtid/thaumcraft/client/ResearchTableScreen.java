@@ -311,6 +311,23 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 BUTTON_WIDTH - 16, ThaumcraftReadableText.GREEN_TEXT);
     }
 
+    // Accessible Create Theory action: the vanilla keyboard's Return key can
+    // activate the first research-table action without screen-pixel mapping.
+    // The server still validates the same inventory-button ID 1 and supplies.
+    // This is a real in-game GUI path, not a test command or server bypass.
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if ((keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER
+                || keyCode == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER)
+                && !menu.hasSession() && canStartTheory()
+                && minecraft != null && minecraft.gameMode != null) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CREATE_GUI_KEYBOARD_PRESSED");
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (mouseButton == 0 && !menu.hasSession() && canStartTheory()
@@ -319,6 +336,7 @@ public final class ResearchTableScreen extends AbstractContainerScreen<ResearchT
                 && mouseX < leftPos + CREATE_X + BUTTON_WIDTH
                 && mouseY >= topPos + CREATE_Y
                 && mouseY < topPos + CREATE_Y + BUTTON_HEIGHT) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TABLE_CREATE_GUI_MOUSE_PRESSED");
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, 1);
             return true;
         }

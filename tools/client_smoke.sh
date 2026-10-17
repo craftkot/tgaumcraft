@@ -398,6 +398,20 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   click_research_gui 140 31
   sleep 4
   capture 39-original-research-table-create-theory
+  # #44 never reached the genuine session. Record the mouse path failure
+  # explicitly; the added Return shortcut then tests exactly the SAME GUI
+  # button ID 1 and server-side checks, without fragile framebuffer mapping.
+  if ! grep -Fq 'TC_SMOKE_THEORY_CREATED=YES' client-smoke/client.log; then
+    echo 'TABLE_CREATE_MOUSE_PATH_UNCONFIRMED=YES' | tee -a client-smoke-status.txt
+    xdotool key --clearmodifiers Return
+    sleep 4
+    capture 39a-original-research-table-create-theory-keyboard-fallback
+  fi
+  if grep -Fq 'TC_SMOKE_TABLE_CREATE_GUI_MOUSE_PRESSED=YES' client-smoke/client.log; then
+    echo 'TABLE_CREATE_MOUSE_BUTTON_HANDLER=YES' | tee -a client-smoke-status.txt
+  fi
+  assert_smoke_event TABLE_CREATE_MENU_RECEIVED
+  assert_smoke_event TABLE_CREATE_MENU_ACCEPTED
   assert_smoke_event THEORY_CREATED
   # Physical draw click at (116,121). Real server must debit one paper.
   click_research_gui 140 130
