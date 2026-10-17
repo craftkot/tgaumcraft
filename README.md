@@ -1,3 +1,6 @@
+> **Главный актуальный план проекта:** [🧭 ROADMAP_RU.md — дорожная карта с 🟢/🟡/🔴 статусами](ROADMAP_RU.md).
+> Новые чаты/агенты должны следовать текущему 🟡 этапу дорожной карты, а не старым Stage 9 / handoff планам. См. [AGENTS.md](AGENTS.md).
+>
 # Thaumcraft 6.1.BETA26 -> Minecraft 1.21.1 NeoForge port (Stage 9)
 
 This workspace is a compatibility-first reconstruction from the supplied original JAR.
