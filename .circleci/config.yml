@@ -7,7 +7,7 @@ version: 2.1
 parameters:
   run_minecraft:
     type: boolean
-    default: true
+    default: false
   # Expensive NeoForge compile runs on demand; cheap core parity stays on all pushes.
   run_compile:
     type: boolean
