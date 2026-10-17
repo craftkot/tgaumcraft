@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyPhialJarExchange;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
+import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
@@ -29,6 +30,34 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public LegacyEssentiaJarLogic.State snapshot() { return stored; }
     public int facing() { return facing; }
     public boolean blocked() { return blocked; }
+
+    /**
+     * Original BlockJar#applyLabel: unfilled label learns the jar's current
+     * aspect; a pre-typed label can label an empty jar. The filter blocks
+     * mixing and persists with a mined jar.
+     */
+    public boolean applyLabel(String requested, net.minecraft.core.Direction labelSide) {
+        if (level == null || level.isClientSide || stored.filter() != null
+                || labelSide == null || !labelSide.getAxis().isHorizontal())
+            return false;
+        String chosen = stored.amount() > 0 ? stored.aspect() : requested;
+        if (chosen == null || new AspectRegistry().get(chosen) == null)
+            return false;
+        facing = labelSide.get3DDataValue();
+        updateStored(new LegacyEssentiaJarLogic.State(
+                stored.aspect(), chosen, stored.amount()));
+        return true;
+    }
+
+    /** Source: shift-right-click on label-facing side tears off a blank one. */
+    public boolean removeLabel(net.minecraft.core.Direction side) {
+        if (level == null || level.isClientSide || stored.filter() == null
+                || side == null || facing != side.get3DDataValue())
+            return false;
+        updateStored(new LegacyEssentiaJarLogic.State(
+                stored.aspect(), null, stored.amount()));
+        return true;
+    }
 
     /** Original BlockJar: a consumed jar brace locks the glass jar once. */
     public boolean applyBrace() {

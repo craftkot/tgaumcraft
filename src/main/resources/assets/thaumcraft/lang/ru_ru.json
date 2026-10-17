@@ -277,5 +277,7 @@
   "item.thaumcraft.salis_mundus": "Салис Мундус",
   "item.thaumcraft.thaumonomicon": "Таумономикон",
   "item.thaumcraft.thaumometer": "Таумометр",
-  "item.thaumcraft.jar_brace": "Скоба для магического сосуда"
+  "item.thaumcraft.jar_brace": "Скоба для магического сосуда",
+  "item.thaumcraft.label": "Этикетка для магического сосуда",
+  "item.thaumcraft.label.filled": "Этикетка: %s"
 }

@@ -11,6 +11,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -37,6 +39,14 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
   if (!player.mayInteract(pos)) return InteractionResult.FAIL;
   if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar))
    return InteractionResult.PASS;
+  if (jar.snapshot().filter() != null && jar.facing() == hit.getDirection().get3DDataValue()) {
+   if (!jar.removeLabel(hit.getDirection())) return InteractionResult.FAIL;
+   // Real BETA26 BlockJar returns a blank label; it is not magically
+   // erased when detached from the glass.
+   level.addFreshEntity(new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 0.5,
+      pos.getZ() + 0.5, new ItemStack(ThaumcraftItems.JAR_LABEL.get())));
+   return InteractionResult.SUCCESS;
+  }
   return jar.emptyByHand() ? InteractionResult.SUCCESS : InteractionResult.PASS;
  }
  /** Vanilla comparator semantics, sourced from BETA26 BlockJar. */

@@ -277,5 +277,7 @@
   "item.thaumcraft.salis_mundus": "Salis Mundus",
   "item.thaumcraft.thaumonomicon": "Thaumonomicon",
   "item.thaumcraft.thaumometer": "Thaumometer",
-  "item.thaumcraft.jar_brace": "Jar Brace"
+  "item.thaumcraft.jar_brace": "Jar Brace",
+  "item.thaumcraft.label": "Jar Label",
+  "item.thaumcraft.label.filled": "%s Jar Label"
 }

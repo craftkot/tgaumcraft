@@ -12,6 +12,7 @@ import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
 import dev.ehtid.thaumcraft.item.EssentiaJarItem;
 import dev.ehtid.thaumcraft.item.JarBraceItem;
+import dev.ehtid.thaumcraft.item.JarLabelItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
@@ -120,6 +121,10 @@ public final class ThaumcraftItems {
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());
+
+    /** Original ItemLabel: empty and one-aspect filtered NBT variants. */
+    public static final DeferredItem<JarLabelItem> JAR_LABEL = ITEMS.registerItem(
+            "label", JarLabelItem::new, new Item.Properties());
 
     public static final DeferredItem<BlockItem> STONE_ARCANE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.STONE_ARCANE, new Item.Properties());
