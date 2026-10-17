@@ -7,7 +7,7 @@ version: 2.1
 parameters:
   run_minecraft:
     type: boolean
-    default: false
+    default: true
 
 jobs:
   verify-connection:
