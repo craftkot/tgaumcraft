@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.blockentity;
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
 import dev.ehtid.thaumcraft.block.TallowCandleBlock;
+import net.minecraft.world.level.block.AbstractSkullBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixLayout;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixIdle;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStability;
@@ -155,8 +156,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     pedestal.getSymmetryPenalty()));
         }
         // BETA26 getSurroundings scans X/Z -8..8, matrix Y-7..Y+3.
-        // Existing pair balancer implements original opposite symmetry and
-        // diminishing returns for each identical colored candle block.
+        // Original BETA26 also counts vanilla Blocks.SKULL as a stabilizer
+        // (strength 0.1); in 1.21 skull types are separate registered blocks,
+        // but source SKULL had one shared block id across all six metadata
+        // variants. Treat all modern skull/head variants as the same source
+        // stabilizer key, including wall skulls, regardless of rotation.
+        // Existing balancer applies opposite symmetry and diminishing returns.
         for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
             if (dx == 0 && dz == 0) continue;
             for (int dy = -7; dy <= 3; dy++) {
@@ -168,6 +173,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                             new LegacyInfusionStability.Stabilizer(
                                     BuiltInRegistries.BLOCK.getKey(block).toString(),
                                     candle.getStabilizationAmount(), false, 0.0F));
+                } else if (block instanceof AbstractSkullBlock) {
+                    ring.put(new LegacyInfusionMatrixLayout.Offset(dx, dy, dz),
+                            new LegacyInfusionStability.Stabilizer(
+                                    "minecraft:skull",
+                                    LegacyInfusionStability.DEFAULT_UNMATCHED_STRENGTH,
+                                    false, 0.0F));
                 }
             }
         }
