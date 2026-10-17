@@ -178,8 +178,11 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
             return;
         // Atomically debit source before granting one unit to the target.
         // Both adapters use the same synchronous server-thread transaction.
-        if (above.takeTransport(aspect, 1, Direction.DOWN) == 1)
-            jar.addFromTransport(aspect, 1, Direction.UP);
+        if (above.takeTransport(aspect, 1, Direction.DOWN) == 1) {
+            int accepted=jar.addFromTransport(aspect, 1, Direction.UP);
+            if (accepted==1 && above instanceof EssentiaTubeBlockEntity)
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TUBE_TO_JAR");
+        }
     }
 
     @Override public boolean transportConnects(Direction face) {

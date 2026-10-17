@@ -278,6 +278,39 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   }
   # The initial world is already creative + peaceful, as established
   # from its actual level.dat above; no unprotected survival waiting.
+  # Focused alchemy-only regression: actual item + coal enters a real
+  # TileSmelter, emits essentia, which flows into alembic, tube and jar.
+  # Four independent server-thread markers are REQUIRED; decorative
+  # /setblock commands and /data NBT alone cannot pass this test.
+  if [ "${THAUMCRAFT_ALCHEMY_SMOKE:-0}" = "1" ]; then
+    send_chat '/forceload add 240 240'
+    send_chat '/fill 238 148 237 243 148 242 minecraft:stone'
+    send_chat '/setblock 240 149 240 thaumcraft:smelter_basic[facing=north,lit=false]'
+    send_chat '/setblock 240 150 240 thaumcraft:alembic'
+    send_chat '/setblock 241 150 240 thaumcraft:tube'
+    send_chat '/setblock 241 149 240 thaumcraft:jar_normal'
+    send_chat '/tp @p 241.5 151.5 235.5 0 30'
+    capture 40-alchemy-before-fuel
+    send_chat '/data merge block 240 149 240 {Items:[{Slot:0b,id:"minecraft:cobblestone",count:8},{Slot:1b,id:"minecraft:coal",count:2}]}'
+    # The input is a real ItemStack, never preloaded artificial essentia.
+    # Source BETA26 cobblestone is 5 Terra + 1 Perditio.
+    sleep 55
+    capture 41-alchemy-smelter-to-jar
+    assert_smoke_event SMELTER_ITEM_CONSUMED
+    assert_smoke_event SMELTER_TO_ALEMBIC
+    assert_smoke_event ALEMBIC_TO_TUBE
+    assert_smoke_event TUBE_TO_JAR
+    send_chat '/data get block 241 149 240'
+    capture 42-alchemy-jar-nbt-after-physical-transport
+    echo 'ALCHEMY_PHYSICAL_SMELTER_ALEMBIC_TUBE_JAR=YES' | tee -a client-smoke-status.txt
+    if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
+      echo ALCHEMY_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    echo 'PASS: real Minecraft alchemy chain with 4 server debit/transfer markers' | tee -a client-smoke-status.txt
+    exit 0
+  fi
+
   send_chat '/gamemode creative'
   send_chat '/difficulty peaceful'
   send_chat '/give @p thaumcraft:crucible'

@@ -156,6 +156,8 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
                     if (source.takeTransport(aspect, 1, face.getOpposite()) == 1) {
                         tile.commit(LegacyEssentiaTubeLogic.acceptOne(tile.stored, aspect,
                                 face.get3DDataValue()));
+                        if (source instanceof AlembicBlockEntity)
+                            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("ALEMBIC_TO_TUBE");
                         break;
                     }
                 }

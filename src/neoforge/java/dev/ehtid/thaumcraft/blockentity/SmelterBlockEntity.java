@@ -133,6 +133,7 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
             if(!plan.accepted())continue;
             if(column.get(plan.acceptedAt()).acceptFromSmelter(aspect.tag())) {
                 aspects.remove(aspect,1);
+                dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SMELTER_TO_ALEMBIC");
                 sync();
                 return true;
             }
@@ -156,6 +157,7 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
             pollution+=result.polluted();
         }
         items.get(0).shrink(1);
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SMELTER_ITEM_CONSUMED");
         if(pollution>0){
             int vented=0;
             Direction front=getBlockState().getValue(SmelterBlock.FACING);
