@@ -26,6 +26,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import java.util.List;
 import net.minecraft.server.level.ServerLevel;
 
 /** BETA26 Essentia Mirror block: six face mounting directions, linked item placement. */
@@ -61,6 +64,18 @@ public final class EssentiaMirrorBlock extends BaseEntityBlock {
                         EssentiaMirrorBlockEntity.serverTick(server,pos,tile);
                 });
     }
+    /** BETA26 BlockMirror.dropMirror preserves the partner address on its dropped item.
+     * Never manufacture a drop: only modify the drops approved by the loot table. */
+    @Override protected List<ItemStack> getDrops(BlockState state,LootParams.Builder params) {
+        List<ItemStack> drops=super.getDrops(state,params);
+        BlockEntity saved=params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if(saved instanceof EssentiaMirrorBlockEntity mirror) {
+            for(ItemStack stack:drops)
+                if(stack.is(this.asItem()))mirror.writeLinkedItem(stack);
+        }
+        return drops;
+    }
+
     @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state,
                                       LivingEntity entity, ItemStack item) {
         super.setPlacedBy(level,pos,state,entity,item);

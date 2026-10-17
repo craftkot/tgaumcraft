@@ -4,6 +4,10 @@ import dev.ehtid.thaumcraft.port.core.LegacyEssentiaMirrorLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaSourceOrder;
 import dev.ehtid.thaumcraft.block.EssentiaMirrorBlock;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
@@ -148,6 +152,19 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         if(other==null)return false;
         return LegacyEssentiaMirrorLogic.reciprocal(endpoint(server,worldPosition),
                 link(),endpoint((ServerLevel)other.level,other.worldPosition),other.link(),true);
+    }
+
+    /** Preserve the original BETA26 BlockMirrorItem coordinates when harvested. */
+    public boolean writeLinkedItem(ItemStack drop) {
+        if(drop.isEmpty()||!drop.is(ThaumcraftItems.MIRROR_ESSENTIA.get())
+                ||!linked||linkDimension==null||linkPosition==null)return false;
+        CompoundTag tag=new CompoundTag();
+        tag.putString("linkDim",linkDimension);
+        tag.putInt("linkX",linkPosition.getX());
+        tag.putInt("linkY",linkPosition.getY());
+        tag.putInt("linkZ",linkPosition.getZ());
+        drop.set(DataComponents.CUSTOM_DATA,CustomData.of(tag));
+        return true;
     }
 
     public LegacyEssentiaMirrorLogic.Link link() {
