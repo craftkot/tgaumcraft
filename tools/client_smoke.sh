@@ -339,7 +339,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # Salis swapper produces a REAL dropped book at the shelf position: look for
   # that item and move the player onto it to fire the actual pickup listener.
   send_chat '/execute if entity @e[type=minecraft:item,x=2,y=151,z=12,distance=..3,nbt={Item:{id:"thaumcraft:thaumonomicon"}}] run say FIRSTSTEPS_REAL_BOOK_DROPPED_OK'
-  send_chat '/tp @p 2.5 151 12.5 0 0'
+  # The genuine dropped book has gravity and lands ON the y=149 stone
+  # platform, with the entity near y=150. CI #36 incorrectly teleported
+  # creative-mode Dev to feet y=151, a full block above its actual position;
+  # creative flight can keep the player suspended out of pickup range.
+  # Spawn level with its landing surface and WALK through the item.
+  send_chat '/tp @p 2.5 150 11.5 0 0'
+  sleep 1
+  xdotool keydown --clearmodifiers w
+  sleep 0.25
+  xdotool keyup w
   sleep 4
   capture 08l1-firststeps-real-thaumonomicon-pickup
   assert_smoke_event BOOK_PICKUP
