@@ -270,5 +270,11 @@
   "gui.thaumcraft.firststeps.finish": "Все условия выполнены. Теперь можно завершить первые исследования.",
   "gui.thaumcraft.firststeps.completed": "Глава «Первые шаги» завершена. Остальные разделы Таумономикона будут восстановлены на следующих этапах переноса.",
   "item.thaumcraft.jar.contents": "Эссенция: %s (%s/250)",
-  "item.thaumcraft.jar.filter": "Фильтр: %s"
+  "item.thaumcraft.jar.filter": "Фильтр: %s",
+  "item.thaumcraft.crystal_essence": "Кристалл вис",
+  "item.thaumcraft.crystal_essence.named": "Кристалл вис: %s",
+  "item.thaumcraft.crystal_essence.content": "%s: %s вис",
+  "item.thaumcraft.salis_mundus": "Салис Мундус",
+  "item.thaumcraft.thaumonomicon": "Таумономикон",
+  "item.thaumcraft.thaumometer": "Таумометр"
 }

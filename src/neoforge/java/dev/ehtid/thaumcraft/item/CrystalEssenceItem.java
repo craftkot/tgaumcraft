@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
+import dev.ehtid.thaumcraft.port.core.AspectData;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.TooltipFlag;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.LegacyContainedAspectTags;
 import net.minecraft.core.component.DataComponents;
@@ -27,6 +31,35 @@ public final class CrystalEssenceItem extends Item {
 
     public CrystalEssenceItem(Properties properties) {
         super(properties);
+    }
+
+    /**
+     * Restore readable BETA26 aspect identity for actual crystals. The
+     * stored Aspects NBT remains authoritative; the client never chooses a
+     * type or uses its tooltip to determine any recipe cost.
+     */
+    @Override
+    public Component getName(ItemStack stack) {
+        String aspect = legacyAspect(stack);
+        if (aspect == null || !BUILTIN_ASPECT_TAGS.contains(aspect))
+            return super.getName(stack);
+        return Component.translatable("item.thaumcraft.crystal_essence.named",
+                Component.translatable("tc.aspect." + aspect));
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, TooltipContext context,
+                                List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        AspectRegistry registry = new AspectRegistry();
+        var contents = legacyContainedAspects(stack, registry);
+        for (AspectData aspect : contents.getAspectsSortedByName()) {
+            int amount = contents.getAmount(aspect);
+            if (amount > 0)
+                tooltip.add(Component.translatable("item.thaumcraft.crystal_essence.content",
+                        Component.translatable("tc.aspect." + aspect.tag()), amount)
+                        .withStyle(ChatFormatting.AQUA));
+        }
     }
 
     @Override

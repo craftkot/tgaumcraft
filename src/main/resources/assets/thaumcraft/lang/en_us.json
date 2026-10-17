@@ -270,5 +270,11 @@
   "gui.thaumcraft.firststeps.finish": "You have the knowledge required to complete First Steps.",
   "gui.thaumcraft.firststeps.completed": "The First Steps chapter has been completed. Other Thaumonomicon chapters will be restored in later porting stages.",
   "item.thaumcraft.jar.contents": "Essentia: %s (%s/250)",
-  "item.thaumcraft.jar.filter": "Filter: %s"
+  "item.thaumcraft.jar.filter": "Filter: %s",
+  "item.thaumcraft.crystal_essence": "Vis Crystal",
+  "item.thaumcraft.crystal_essence.named": "%s Vis Crystal",
+  "item.thaumcraft.crystal_essence.content": "%s: %s vis",
+  "item.thaumcraft.salis_mundus": "Salis Mundus",
+  "item.thaumcraft.thaumonomicon": "Thaumonomicon",
+  "item.thaumcraft.thaumometer": "Thaumometer"
 }
