@@ -283,6 +283,11 @@ public final class ResearchTableMenu extends AbstractContainerMenu {
 
     private static NeoForgeTheorycraftMaterialResolver.Resolved resolvedRequirements(
             String key, dev.ehtid.thaumcraft.scanning.LegacyTheorycraftChoiceNbt.Choice choice) {
+        // Show no actionable ingredient ghost slots for a corrupt, forged
+        // seed-derived CardChoice. Activation already rejects these NBT
+        // records; preview must not suggest the forged cost is legitimate.
+        if (!dev.ehtid.thaumcraft.scanning.NeoForgeTheorycraftSeedIntegrity
+                .matches(choice)) return null;
         int expected = LegacyTheorycraftRequiredItems.requiredItemCount(key);
         if (expected == 0) return new NeoForgeTheorycraftMaterialResolver.Resolved(
                 java.util.List.of(), new boolean[0]);
