@@ -283,13 +283,58 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # Four independent server-thread markers are REQUIRED; decorative
   # /setblock commands and /data NBT alone cannot pass this test.
 
+  
+  # GitHub CircleCI #209: the original script placed blocks 500+ blocks
+  # away from natural spawn BEFORE /tp had generated the region. Commands
+  # returned "That position is not loaded"; no mirror existed in the world.
+  # Never mistake a failed world fixture for a transport-code regression.
+  #
+  # The server-originated /say probe can only appear after execute's loaded
+  # predicate is true. The client's typed command is not a PASS signal.
+  wait_for_mirror_chunk() {
+    local x="$1" y="$2" z="$3" label="$4" retries="${MIRROR_CHUNK_RETRIES:-20}"
+    local marker="TC_FIXTURE_CHUNK_READY_${label}"
+    local attempt
+    for attempt in $(seq 1 "$retries"); do
+      send_chat "/execute if loaded ${x} ${y} ${z} run say ${marker}"
+      if grep -F '[CHAT]' client-smoke/client.log | grep -Fq "${marker}"; then
+        echo "MIRROR_CHUNK_READY=${label} attempts=${attempt}" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 2
+    done
+    echo "MIRROR_SETUP_FAILED=CHUNK_NOT_LOADED label=${label} pos=${x},${y},${z}" |
+      tee -a client-smoke-status.txt
+    tail -70 client-smoke/client.log >&2
+    exit 1
+  }
+
+  assert_mirror_placed() {
+    local x="$1" y="$2" z="$3" label="$4"
+    local marker="TC_FIXTURE_BLOCK_PLACED_${label}"
+    send_chat "/execute if block ${x} ${y} ${z} thaumcraft:mirror_essentia run say ${marker}"
+    if ! grep -F '[CHAT]' client-smoke/client.log | grep -Fq "${marker}"; then
+      echo "MIRROR_SETUP_FAILED=BLOCK_MISSING label=${label} pos=${x},${y},${z}" |
+        tee -a client-smoke-status.txt
+      tail -70 client-smoke/client.log >&2
+      exit 1
+    fi
+    echo "MIRROR_BLOCK_PLACED=${label}" | tee -a client-smoke-status.txt
+  }
+
   # Linked ESSENTIA MIRROR smoke: two loaded world BlockEntities and a
   # genuine one-unit debit from an existing 12-Aer source jar. Unlike a
   # /data NBT fixture, the two mandatory Java markers below fire only when
   # actual source.takeTransport and recipient.addFromTransport both succeed.
   if [ "${THAUMCRAFT_MIRROR_SMOKE:-0}" = "1" ]; then
+    # Preload the new test area *before* placing any fixture blocks. By
+    # placing the player halfway between the two endpoints we get normal
+    # generation of both chunks, independent of a delayed /forceload job.
+    send_chat '/tp @p 264.5 153 248.5 0 30'
     send_chat '/forceload add 248 248'
     send_chat '/forceload add 280 248'
+    wait_for_mirror_chunk 248 150 248 SOURCE
+    wait_for_mirror_chunk 280 150 248 RECEIVER
     send_chat '/fill 246 148 245 250 148 250 minecraft:stone'
     send_chat '/fill 278 148 245 282 148 250 minecraft:stone'
     send_chat '/setblock 248 149 247 thaumcraft:jar_normal'
@@ -299,7 +344,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/data merge block 248 149 247 {Aspect:"aer",Amount:12s}'
     send_chat '/data merge block 248 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:248}'
     send_chat '/data merge block 280 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}'
+    assert_mirror_placed 248 150 248 SOURCE
+    assert_mirror_placed 280 150 248 RECEIVER
     send_chat '/tp @p 280.5 152.5 242.5 0 30'
+    sleep 6
     capture 50-linked-essentia-mirrors-world
     sleep 20
     assert_smoke_event MIRROR_REMOTE_DEBIT
@@ -334,8 +382,11 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     # mirror, and a 0-Aer but Aer-LABELLED sink jar near its distant partner.
     # The partner faces NORTH so the sink jar below it does not passively
     # pull from the source; only the NEW active reverse relay can pass.
+    send_chat '/tp @p 360.5 153 344.5 0 30'
     send_chat '/forceload add 344 344'
     send_chat '/forceload add 376 344'
+    wait_for_mirror_chunk 344 150 344 REVERSE_SOURCE
+    wait_for_mirror_chunk 376 150 344 REVERSE_RECEIVER
     send_chat '/fill 342 148 342 346 148 346 minecraft:stone'
     send_chat '/fill 374 148 342 378 148 346 minecraft:stone'
     send_chat '/setblock 344 149 344 thaumcraft:jar_normal'
@@ -346,7 +397,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/data merge block 376 149 344 {AspectFilter:"aer",Amount:0s}'
     send_chat '/data merge block 344 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:376,linkY:150,linkZ:344}'
     send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:344,linkY:150,linkZ:344}'
+    assert_mirror_placed 344 150 344 REVERSE_SOURCE
+    assert_mirror_placed 376 150 344 REVERSE_RECEIVER
     send_chat '/tp @p 376.5 152.5 338.5 0 30'
+    sleep 6
     capture 56-reverse-mirror-before
     sleep 18
     assert_smoke_event MIRROR_TO_REMOTE_JAR
