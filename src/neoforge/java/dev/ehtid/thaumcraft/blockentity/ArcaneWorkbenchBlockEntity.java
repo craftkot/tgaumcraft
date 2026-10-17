@@ -241,8 +241,10 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
             ItemStack stack = items.get(slot);
             // Empty original ItemPhial metadata=0 has no essentia NBT.
             // Filled or corrupt/custom phials must not be consumed as empty ones.
+            var phialModel = stack.get(DataComponents.CUSTOM_MODEL_DATA);
             phial[slot] = stack.is(ThaumcraftItems.PHIAL.get())
-                    && !stack.has(DataComponents.CUSTOM_DATA);
+                    && !stack.has(DataComponents.CUSTOM_DATA)
+                    && (phialModel == null || phialModel.equals(new net.minecraft.world.item.component.CustomModelData(0)));
             valve[slot] = stack.is(ThaumcraftItems.TUBE_VALVE.get());
             tube[slot] = stack.is(ThaumcraftItems.TUBE.get());
             iron[slot] = isIronPlate(stack);
