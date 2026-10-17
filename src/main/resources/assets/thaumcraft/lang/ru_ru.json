@@ -306,5 +306,6 @@
   "block.thaumcraft.tube_valve": "Клапан эссенции",
   "block.thaumcraft.tube_filter": "Фильтр эссенции",
   "block.thaumcraft.tube_restrict": "Ограничительная труба эссенции",
-  "block.thaumcraft.tube_oneway": "Односторонняя труба эссенции"
+  "block.thaumcraft.tube_oneway": "Односторонняя труба эссенции",
+  "block.thaumcraft.tube_buffer": "Буфер эссенции"
 }
