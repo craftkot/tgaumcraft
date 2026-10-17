@@ -98,6 +98,18 @@ public final class LegacyEssentiaMirrorLogic {
                 && destinationSuction>sourceSuction;
     }
 
+    /**
+     * A connected jar must not immediately pull back the very unit this
+     * mirror is actively relaying into a stronger-suction remote jar.
+     * Applies ONLY to a confirmed local source and real remote sink.
+     */
+    public static boolean suppressReturnOutput(boolean sourceHasUnit,
+                                               boolean remoteSinkAccepts,
+                                               int sourceSuction, int sinkSuction) {
+        return sourceHasUnit && remoteSinkAccepts
+                && sourceSuction>=0 && sinkSuction>sourceSuction;
+    }
+
     /** Source TileMirrorEssentia: decaying retry backoff 40,60,...600. */
     public static int nextLinkCheckInterval(int current, boolean validLink) {
         if (validLink) return LINK_RETRY_START;

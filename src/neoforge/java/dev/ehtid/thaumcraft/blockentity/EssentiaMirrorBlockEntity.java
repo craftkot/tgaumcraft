@@ -51,7 +51,27 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
     }
 
     @Override public boolean canTransportOutput(Direction face) {
-        return transportConnects(face) && hasValidLink();
+        return transportConnects(face) && hasValidLink() && !activeReverseSource();
+    }
+
+    /** Suppress passive return flow from a local jar we are transferring out. */
+    private boolean activeReverseSource() {
+        if(!(level instanceof ServerLevel local) || !hasValidLink())return false;
+        Direction front=getBlockState().getValue(EssentiaMirrorBlock.FACING);
+        BlockPos localPos=worldPosition.relative(front);
+        if(!local.hasChunkAt(localPos))return false;
+        BlockEntity entity=local.getBlockEntity(localPos);
+        if(!(entity instanceof EssentiaTransportPort port)
+                ||entity instanceof EssentiaMirrorBlockEntity)return false;
+        Direction inward=front.getOpposite();
+        if(!port.transportConnects(inward)||!port.canTransportOutput(inward)
+                ||port.transportAmount(inward)<=0)return false;
+        String aspect=port.transportAspect(inward);
+        if(aspect==null)return false;
+        RemoteSink dest=remoteSink(aspect);
+        return dest!=null && LegacyEssentiaMirrorLogic.suppressReturnOutput(
+                true,dest.jar().canReceiveMirror(aspect),
+                port.transportSuction(inward),dest.jar().transportSuction(Direction.UP));
     }
 
     /** Active pull controls remote credit: no unsafe arbitrary push endpoint. */
