@@ -19,6 +19,9 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
 
     public LegacyCrystalFarmerIngredientProgress {
         if ((consumedMask & ~ALL) != 0 || consumedMask < 0
+                // Source order is seeds first, Salis Mundus second.
+                // A saved mask containing only Salis would skip a real cost.
+                || consumedMask == SALIS_BIT
                 || countdown < 0 || countdown > ORIGINAL_COUNTDOWN
                 || (consumedMask == ALL && countdown != 0))
             throw new IllegalArgumentException("Invalid original ingredient progress");
