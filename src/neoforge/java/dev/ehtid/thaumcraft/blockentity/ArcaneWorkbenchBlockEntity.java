@@ -11,6 +11,8 @@ import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
+import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
+import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -227,6 +229,39 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         return true;
     }
 
+
+
+    /** Original BELLOWS shaped arcane craft, with mirrored pattern. */
+    public boolean matchesBellowsPattern() {
+        boolean[] plank=new boolean[9],leather=new boolean[9],
+                  iron=new boolean[9],empty=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            plank[slot]=stack.is(ItemTags.PLANKS);
+            leather[slot]=stack.is(Items.LEATHER);
+            iron[slot]=stack.is(Items.IRON_INGOT);
+            empty[slot]=stack.isEmpty();
+        }
+        return LegacyBellowsArcaneRecipe.matches(plank,leather,iron,empty);
+    }
+
+    public boolean canCraftBellows(PlayerKnowledgeData knowledge,float discount) {
+        ItemStack aer=items.get(LegacyBellowsArcaneRecipe.CRYSTAL_SLOT);
+        return matchesBellowsPattern()
+                &&knowledge.isResearchKnown(LegacyBellowsArcaneRecipe.RESEARCH)
+                &&!aer.isEmpty()&&canPlaceItem(LegacyBellowsArcaneRecipe.CRYSTAL_SLOT,aer)
+                &&getVis()>=Math.max(0,LegacyBellowsArcaneRecipe.discountedVis(discount));
+    }
+
+    public boolean craftBellows(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftBellows(knowledge,discount))return false;
+        for(int slot=0;slot<9;slot++)if(!items.get(slot).isEmpty())items.get(slot).shrink(1);
+        items.get(LegacyBellowsArcaneRecipe.CRYSTAL_SLOT).shrink(1);
+        int cost=LegacyBellowsArcaneRecipe.discountedVis(discount);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** BETA26 TubeValve, TubeRestrict and TubeOneway remain true arcane recipes. */
     private int[] tubeUpgradeInputs(LegacyEssentiaTubeUpgradeRecipes.Upgrade kind) {
