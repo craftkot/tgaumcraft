@@ -1,3 +1,5 @@
+> **ИСТОРИЧЕСКИЙ ДОКУМЕНТ.** Прежняя цифра **27%** ниже не является текущей оценкой. Действующий критерий и статус: [ROADMAP_RU.md](ROADMAP_RU.md), [фиксированный аудит 59/100](analysis/PROGRESS_AUDIT_2026_10_16.md). Не использовать этот файл вместо новых правил веток.
+
 # GitHub migration
 
 This repository is the working source tree for the Thaumcraft 6.1.BETA26 -> Minecraft 1.21.1 NeoForge port.
