@@ -124,3 +124,8 @@
 - Повторная полная сборка **#194**, https://circleci.com/gh/craftkot/tgaumcraft/194, статус при записи **PENDING**. Когда будет SUCCESS, повторить игровой #189 с исправленным HEAD, только затем говорить об обратной передаче как подтверждённой Minecraft gameplay.
 - `c2a5f68` и `bce19a3` восстановили on-demand Compile/Client CircleCI defaults=false.
 - Pending mirror linkage `843ecfb` только Core Parity подтверждено; real restart/chunk-unload link recovery не проверен. Отдельно: reverse relay имеет потенциально дорогой поиск remote jar в радиусе 8 блоков; оптимизировать/кэшировать при нагрузке.
+
+## Дополнение: mirror suction type / статус сборки
+- `a5c8c9e`: исправлен `EssentiaMirrorBlockEntity.transportSuctionAspect`: теперь зеркало отдает соседней трубе реальный `suctionAspect` найденной удалённой банки, чтобы трубы не тянули неподходящие аспекты по фильтрованной зеркальной линии. Изменение **пока НЕ прошло полную сборку/клиент**, Core CI вызван push.
+- Повторная полная NeoForge-сборка после missing `ServerLevel` import и label fix **#194** (https://circleci.com/gh/craftkot/tgaumcraft/194): состояние при записи **SUCCESS**; она НЕ включает последующий `a5c8c9e`.
+- **Не заявлять об успешной обратной передаче в игре:** предыдущая клиентская CI #189 упала вместе с full compile #188; новый клиент запускать лишь после зелёной сборки исправленного кода. Старое направление удалённый источник → местная банка подтверждено #174 и #181.
