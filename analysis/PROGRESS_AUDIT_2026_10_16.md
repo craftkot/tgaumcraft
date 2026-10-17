@@ -154,3 +154,22 @@ Fixed `tools/client_smoke.sh` to click actual Allow Commands button using live w
 ## 17.10.2026 — контроль оригинального узора BrassBrace
 
 В исходной `ConfigRecipes.java` узор `NSN/S S/NSN` означает **4** латунных самородка по четырём углам и **4** палочки по четырём средним боковым позициям. Исправлен старый `BrassBraceRecipe`, ранее по ошибке требовавший 6 самородков + 2 палочки. Продолжает использоваться проверка metadata=8, исключающая другие 10 вариантов самородков. Реальный крафт ожидает проверки полного NeoForge.
+
+## 17.10.2026 — Essentia Tube, Void Jar and original arcane recipes (follow-up)
+
+New additions on `main`:
+- `4c6cf8d` — original void-jar overflow/suction core, with parity checks.
+- `8c6d177` — jar_void block, saved contents, source-era textures and phial sink.
+- `d5dea62` — research/Vis-gated WardedJar (5 Vis) and JarVoid (50 Vis + Perditio) Arcane Workbench crafting; original jar NBT preserved on conversion.
+- `d7dbfa6`, `7a7ea59` — skulls as paired, diminishing-return infusion stabilizers.
+- `2a9e3fb` — original TileTube core pressure, one-essentia buffer, vent/conflict checks and 6-sided toggling.
+- `5117492` — server world transport ports, tube block/block entity, original connected arms, NBT, jar 5-tick suction.
+- `d37d0c9` — original TUBES recipe: 10 Vis, research gate, quicksilver nugget/iron plates/glass block/brass nugget, eight tube output.
+- `ad66a1b` — original tube inventory sprite.
+- `b2ca362` — source PNG Git blob identity and tube model geometry guard.
+
+Observed CI: core/assets CircleCI #87-91 SUCCESS, #93 SUCCESS, #95 SUCCESS, #96 SUCCESS. Re-run `neoforge-compile` #94 FAILED on `955d21d` (after tube source/recipe/sprite; before the separate source asset-guard). Failure details are UNKNOWN through the available GitHub commit status; `compile-audit/neoforge-compile.log` was configured as a CircleCI artifact in `c73a670`, but a failed download/pre-execution phase may leave no artifact. Do not assign a Java cause without the actual log.
+
+Build `run_compile` was reset to false immediately after #94 started, in `ef8c6e4`. An earlier real Minecraft smoke #63 tests older code. **None of these new tube/void-jar commits have verified NeoForge compilation or actual gameplay.** The transport system is PARTIAL: furnace, alembic, full tube network variants (valve, filter, buffer, restriction, oneway), mirror essentia, complete world tests remain missing.
+
+**Audited rating unchanged: 59/100**, by permanent 100-point rubric. Do not inflate for source parity, CI core green, assets or untested systems. Before updating status: obtain #94 compiler error/Gradle log, correct the exact failure, and run new game transport scenario with real server-side essentia debit and deposition.
