@@ -189,3 +189,15 @@ Fresh-read HEAD `49f951a` (новые smelter tiers, 5 вариантов тру
 В `76d3b21` исправлен CircleCI `neoforge-compile`: запись **всего** stdout/stderr подготовки окружения, curl Gradle и собственно `compileJava processResources` в `compile-audit/neoforge-compile.log` с `store_artifacts: when: always`. До этого tee начинался лишь при компиляции; при более раннем обрыве лог мог отсутствовать. Диагностический запуск включён `f478daa`; **#124 verify-connection SUCCESS, #125 neoforge-compile FAILURE**. Сам текст `neoforge/compile.log` из приватной CircleCI не удалось получить через имеющееся GitHub подключение. **НЕ объявлять причиной Java, сетевую загрузку или Gradle без артефакта.** Опция дорогостоящих сборок возвращена на `run_compile=false` коммитом `5ae9154`; дешёвая CI #126 SUCCESS.
 
 Следующий технический шаг: скачать из CircleCI #125 артефакт `neoforge/compile.log` либо скопировать лог падающего шага; найти первую строку `error:`, `FAILURE:`, `Could not` или `Exception`, а затем исправить и повторно прогнать compile. Без журнала нельзя гарантировать исправление. Оценка мода по шкале предыдущего аудита **59/100**, новая алхимия всё ещё не прошла NeoForge compile/gameplay.
+
+## 17.10.2026 — снят блокер полной компиляции NeoForge
+
+Пользователь прислал реальный лог `build_125_step_102_container_0.txt` для CircleCI #125. Java 21, Gradle 9.2.1 и Minecraft/NeoForge скачались штатно; `compileJava` завершился ровно **10 errors / 6 warnings**:
+
+- 8 вызовов `player.mayInteract(pos)` не совместимы с 1.21.1 (`mayInteract(Level, BlockPos)`);
+- `EssentiaJarBlockEntity.saveToItem(ItemStack, Provider)` конфликтовал с унаследованным `BlockEntity.saveToItem` (`boolean` против `void`), переименован в `writeJarDropData`, вызов в `EssentiaJarBlock` обновлён;
+- повторное объявление `String requested` в `JarLabelItem.useOn`.
+
+Все 10 исправлены коммитом **`5a376a7`** (семь Java-файлов). Запуск `d222d71` включил однократный полный CI; **CircleCI #129 verify-connection SUCCESS, #130 neoforge-compile SUCCESS** (`compileJava processResources`). Это первая проверенная *актуальная* компиляция после переноса новых алхимических механизмов, НЕ игровой запуск и НЕ подтверждение работы цепочки эссенции. Постоянный опциональный режим `run_compile=false` восстановлен `cb11898`.
+
+**Следующий этап:** `jar`/сервер и реальный Minecraft smoke для обновлённой алхимии. Больше не писать, что текущий NeoForge compile не прошёл. Общий рейтинг готовности оставлен 59/100 до игрового аудита.
