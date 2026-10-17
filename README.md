@@ -1,5 +1,5 @@
 > **Главный актуальный план проекта:** [🧭 ROADMAP_RU.md — дорожная карта с 🟢/🟡/🔴 статусами](ROADMAP_RU.md).
-> Новые чаты/агенты должны следовать текущему 🟡 этапу дорожной карты, а не старым Stage 9 / handoff планам. См. [AGENTS.md](AGENTS.md).
+> Параллельные чаты работают только в своих ветках — [feature/alchemy](../../tree/feature/alchemy), [feature/research](../../tree/feature/research), [feature/infusion](../../tree/feature/infusion); основной план и правила: [AGENTS.md](AGENTS.md) и [порядок параллельной работы](analysis/PARALLEL_WORKFLOW_RU.md).
 >
 # Thaumcraft 6.1.BETA26 -> Minecraft 1.21.1 NeoForge port (Stage 9)
 
