@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.item.BasicCasterItem;
 import dev.ehtid.thaumcraft.item.CelestialNotesItem;
 import dev.ehtid.thaumcraft.item.ScribingToolsItem;
 import dev.ehtid.thaumcraft.item.PhialItem;
+import dev.ehtid.thaumcraft.item.EssentiaJarItem;
 import dev.ehtid.thaumcraft.item.CurioItem;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftIngotItem;
@@ -111,8 +112,9 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> INFUSION_MATRIX = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.INFUSION_MATRIX, new Item.Properties());
 
-    public static final DeferredItem<BlockItem> JAR_NORMAL = ITEMS.registerSimpleBlockItem(
-            ThaumcraftBlocks.JAR_NORMAL, new Item.Properties());
+    public static final DeferredItem<EssentiaJarItem> JAR_NORMAL = ITEMS.registerItem(
+            "jar_normal", properties -> new EssentiaJarItem(ThaumcraftBlocks.JAR_NORMAL.get(), properties),
+            new Item.Properties());
 
     public static final DeferredItem<BlockItem> STONE_ARCANE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.STONE_ARCANE, new Item.Properties());

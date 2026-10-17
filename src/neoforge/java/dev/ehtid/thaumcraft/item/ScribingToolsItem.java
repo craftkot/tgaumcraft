@@ -27,6 +27,9 @@ public final class ScribingToolsItem extends Item {
         if (level.isClientSide()) return InteractionResult.SUCCESS;
         Player player = context.getPlayer();
         if (player == null) return InteractionResult.PASS;
+        if (!player.mayUseItemAt(context.getClickedPos(),
+                context.getClickedFace(), context.getItemInHand()))
+            return InteractionResult.FAIL;
 
         BlockState upgraded = ThaumcraftBlocks.RESEARCH_TABLE.get()
                 .defaultBlockState()
@@ -34,8 +37,13 @@ public final class ScribingToolsItem extends Item {
         if (!level.setBlock(context.getClickedPos(), upgraded, 3))
             return InteractionResult.FAIL;
 
-        if (!(level.getBlockEntity(context.getClickedPos()) instanceof ResearchTableBlockEntity table))
+        if (!(level.getBlockEntity(context.getClickedPos()) instanceof ResearchTableBlockEntity table)) {
+            // A failed block-entity attachment must never eat the original
+            // wooden table or the player's tool. Restore the block before
+            // returning; nothing has left the held ItemStack yet.
+            level.setBlock(context.getClickedPos(), existing, 3);
             return InteractionResult.FAIL;
+        }
 
         ItemStack tool = player.getItemInHand(context.getHand());
         table.setItem(ResearchTableBlockEntity.SCRIBING_SLOT, tool.copy());

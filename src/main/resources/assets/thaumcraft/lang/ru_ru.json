@@ -268,5 +268,7 @@
   "gui.thaumcraft.firststeps.thaumometer": "Создай таумометр на магическом верстаке и сканируй мир. Нужно хотя бы одно наблюдение категории «Основы».",
   "gui.thaumcraft.firststeps.observation": "Наблюдения «Основы»: %s",
   "gui.thaumcraft.firststeps.finish": "Все условия выполнены. Теперь можно завершить первые исследования.",
-  "gui.thaumcraft.firststeps.completed": "Глава «Первые шаги» завершена. Остальные разделы Таумономикона будут восстановлены на следующих этапах переноса."
+  "gui.thaumcraft.firststeps.completed": "Глава «Первые шаги» завершена. Остальные разделы Таумономикона будут восстановлены на следующих этапах переноса.",
+  "item.thaumcraft.jar.contents": "Эссенция: %s (%s/250)",
+  "item.thaumcraft.jar.filter": "Фильтр: %s"
 }

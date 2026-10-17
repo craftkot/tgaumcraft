@@ -268,5 +268,7 @@
   "gui.thaumcraft.firststeps.thaumometer": "Craft a Thaumometer at the Arcane Workbench and make observations by scanning objects. At least one Basics observation is needed.",
   "gui.thaumcraft.firststeps.observation": "Basics observations: %s",
   "gui.thaumcraft.firststeps.finish": "You have the knowledge required to complete First Steps.",
-  "gui.thaumcraft.firststeps.completed": "The First Steps chapter has been completed. Other Thaumonomicon chapters will be restored in later porting stages."
+  "gui.thaumcraft.firststeps.completed": "The First Steps chapter has been completed. Other Thaumonomicon chapters will be restored in later porting stages.",
+  "item.thaumcraft.jar.contents": "Essentia: %s (%s/250)",
+  "item.thaumcraft.jar.filter": "Filter: %s"
 }
