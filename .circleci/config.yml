@@ -7,9 +7,7 @@ version: 2.1
 parameters:
   run_minecraft:
     type: boolean
-    # One-off GUI regression after fixing X11 coordinates in b35c402a.
-    # Follow up by returning the default to false.
-    default: true
+    default: false
 
 jobs:
   verify-connection:
