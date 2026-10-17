@@ -11,7 +11,7 @@ parameters:
   # Expensive NeoForge compile runs on demand; cheap core parity stays on all pushes.
   run_compile:
     type: boolean
-    default: false
+    default: true
 
 jobs:
   verify-connection:
