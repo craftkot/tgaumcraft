@@ -59,6 +59,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private static final AspectRegistry SOURCE_ASPECTS = new AspectRegistry();
     /** Null unless a source-era, research-gated player recipe was verified. */
     private LegacyInfusionRitualLedger ritualLedger;
+    /** Original cost multiplier frozen when the player starts this ritual. */
+    private float ritualStartCostMultiplier = 1.0F;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
     private LegacyCrystalFarmerIngredientProgress itemProgress;
     private LegacyCrystalFarmerFinishCheckpoint.State finishCheckpoint =
@@ -253,6 +255,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (preview == null) return false;
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
+        ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
         itemProgress = LegacyCrystalFarmerIngredientProgress.initial();
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         recipeInstability = preview.matching().instability();
@@ -510,6 +513,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             CompoundTag pending = new CompoundTag();
             pending.putString("Recipe", ritualLedger.recipeId());
             pending.putInt("Paid", ritualLedger.paid());
+            pending.putFloat("RecipeCostMult", ritualStartCostMultiplier);
             CompoundTag initial = new CompoundTag();
             CompoundTag remaining = new CompoundTag();
             ritualLedger.requested().forEach(initial::putInt);
@@ -540,9 +544,30 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         surroundingsInitialized = false;
         ritualLedger = null;
         itemProgress = null;
+        ritualStartCostMultiplier = 1.0F;
+        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+        // An old/corrupt 'crafting:1' without a verified ledger cannot craft.
+        if (crafting && !tag.contains("PortInfusionLedger", Tag.TAG_COMPOUND))
+            crafting = false;
         if (crafting && tag.contains("PortInfusionLedger", Tag.TAG_COMPOUND)) {
             try {
                 CompoundTag pending = tag.getCompound("PortInfusionLedger");
+                if (!pending.contains("Initial", Tag.TAG_COMPOUND)
+                        || !pending.contains("Remaining", Tag.TAG_COMPOUND)
+                        || !pending.contains("Recipe", Tag.TAG_STRING)
+                        || !pending.contains("Paid", Tag.TAG_INT)
+                        || !pending.contains("ConsumedItems", Tag.TAG_INT)
+                        || !pending.contains("ItemCountdown", Tag.TAG_INT)
+                        || !pending.contains("FinishPhase", Tag.TAG_STRING))
+                    throw new IllegalArgumentException("Incomplete original infusion checkpoint");
+                // Legacy checkpoints did not contain a frozen multiplier; use
+                // their saved costMult only for migration, and still require
+                // exact equality to the source recipe's calculated costs.
+                if (pending.contains("RecipeCostMult")
+                        && !pending.contains("RecipeCostMult", Tag.TAG_FLOAT))
+                    throw new IllegalArgumentException("Invalid saved recipe multiplier");
+                ritualStartCostMultiplier = pending.contains("RecipeCostMult")
+                        ? pending.getFloat("RecipeCostMult") : essentiaCostMult;
                 CompoundTag original = pending.getCompound("Initial");
                 CompoundTag remaining = pending.getCompound("Remaining");
                 var initialCosts = new java.util.LinkedHashMap<String,Integer>();
@@ -556,28 +581,26 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     leftCosts.put(name, remaining.getInt(name));
                 }
                 String id = pending.getString("Recipe");
-                if (LegacyInfusionCrystalFarmerCatalog.all().stream()
-                        .noneMatch(r -> r.legacyId().equals(id))
-                        || initialCosts.keySet().stream().anyMatch(n -> SOURCE_ASPECTS.get(n) == null))
-                    throw new IllegalArgumentException("Unknown original infusion recipe/aspect");
-                ritualLedger = LegacyInfusionRitualLedger.restore(
-                        id, initialCosts, leftCosts, pending.getInt("Paid"));
-                if (pending.contains("FinishPhase", Tag.TAG_STRING))
-                    finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.restore(
-                            pending.getString("FinishPhase"));
+                ritualLedger = LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        id, initialCosts, leftCosts, pending.getInt("Paid"),
+                        ritualStartCostMultiplier);
+                finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.restore(
+                        pending.getString("FinishPhase"));
                 if (finishCheckpoint.finished())
                     throw new IllegalArgumentException("Completed ritual is not crafting");
 
-                if (pending.contains("ConsumedItems", Tag.TAG_INT)
-                        && pending.contains("ItemCountdown", Tag.TAG_INT))
-                    itemProgress = new LegacyCrystalFarmerIngredientProgress(
-                            pending.getInt("ConsumedItems"),
-                            pending.getInt("ItemCountdown"));
+                itemProgress = new LegacyCrystalFarmerIngredientProgress(
+                        pending.getInt("ConsumedItems"),
+                        pending.getInt("ItemCountdown"));
+                if (itemProgress.consumedMask() != 0
+                        && !ritualLedger.readyForIngredients())
+                    throw new IllegalArgumentException("Items consumed before full essence payment");
             } catch (IllegalArgumentException malformed) {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
                 ritualLedger = null;
                 itemProgress = null;
+                finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
             }
         }
         if (tag.contains("OriginalInfusionRecipe", Tag.TAG_COMPOUND)) {
