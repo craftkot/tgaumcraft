@@ -12,6 +12,7 @@ import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -230,6 +231,41 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
     }
 
 
+
+
+    /** Source ConfigRecipes TubeBuffer: PVP / TWT / PRP on the paid arcane bench. */
+    public boolean matchesTubeBufferPattern() {
+        boolean[] phial = new boolean[9], valve = new boolean[9],
+                  tube = new boolean[9], iron = new boolean[9], restrict = new boolean[9];
+        for (int slot = 0; slot < 9; slot++) {
+            ItemStack stack = items.get(slot);
+            // Empty original ItemPhial metadata=0 has no essentia NBT.
+            // Filled or corrupt/custom phials must not be consumed as empty ones.
+            phial[slot] = stack.is(ThaumcraftItems.PHIAL.get())
+                    && !stack.has(DataComponents.CUSTOM_DATA);
+            valve[slot] = stack.is(ThaumcraftItems.TUBE_VALVE.get());
+            tube[slot] = stack.is(ThaumcraftItems.TUBE.get());
+            iron[slot] = isIronPlate(stack);
+            restrict[slot] = stack.is(ThaumcraftItems.TUBE_RESTRICT.get());
+        }
+        return LegacyTubeBufferArcaneRecipe.matches(phial, valve, tube, iron, restrict);
+    }
+
+    public boolean canCraftTubeBuffer(PlayerKnowledgeData knowledge, float discount) {
+        return matchesTubeBufferPattern()
+                && knowledge.isResearchKnown(LegacyTubeBufferArcaneRecipe.RESEARCH)
+                && getVis() >= Math.max(0, LegacyTubeBufferArcaneRecipe.discountedVis(discount));
+    }
+
+    /** Nine distinct inputs, no crystals; craft commits only after every gate. */
+    public boolean craftTubeBuffer(PlayerKnowledgeData knowledge, float discount) {
+        if (!canCraftTubeBuffer(knowledge, discount)) return false;
+        int cost = LegacyTubeBufferArcaneRecipe.discountedVis(discount);
+        for (int slot = 0; slot < 9; slot++) items.get(slot).shrink(1);
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
+        return true;
+    }
 
     /** Original BELLOWS shaped arcane craft, with mirrored pattern. */
     public boolean matchesBellowsPattern() {
