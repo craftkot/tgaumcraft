@@ -14,6 +14,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -234,6 +235,44 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+
+    /** BETA26 Filter: a horizontal 3x1 arcane recipe in any crafting grid row. */
+    private int[] filterInputSlots() {
+        boolean[] gold=new boolean[9],silverwood=new boolean[9],occupied=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            gold[slot]=stack.is(Items.GOLD_INGOT);
+            silverwood[slot]=stack.is(ThaumcraftItems.PLANK_SILVERWOOD.get());
+            occupied[slot]=!stack.isEmpty();
+        }
+        return LegacyAlchemyFilterArcaneRecipe.inputSlots(gold,silverwood,occupied);
+    }
+
+    public boolean matchesAlchemyFilterPattern() {
+        return filterInputSlots()!=null;
+    }
+
+    public boolean canCraftAlchemyFilter(PlayerKnowledgeData knowledge,float discount) {
+        ItemStack aqua=items.get(LegacyAlchemyFilterArcaneRecipe.AQUA_SLOT);
+        return filterInputSlots()!=null
+                &&knowledge.isResearchKnown(LegacyAlchemyFilterArcaneRecipe.RESEARCH)
+                &&!aqua.isEmpty()&&canPlaceItem(LegacyAlchemyFilterArcaneRecipe.AQUA_SLOT,aqua)
+                &&getVis()>=Math.max(0,LegacyAlchemyFilterArcaneRecipe.discountedVis(discount));
+    }
+
+    /** Debit only after all research, crystal, vis and shaped-input checks. */
+    public boolean craftAlchemyFilter(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftAlchemyFilter(knowledge,discount))return false;
+        int[] slots=filterInputSlots();
+        if(slots==null)return false;
+        int cost=LegacyAlchemyFilterArcaneRecipe.discountedVis(discount);
+        for(int slot:slots)items.get(slot).shrink(1);
+        items.get(LegacyAlchemyFilterArcaneRecipe.AQUA_SLOT).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** Original WFW / SBS / WFW alembic recipe, preserving thaumcraft items. */
     public boolean matchesAlembicPattern() {
