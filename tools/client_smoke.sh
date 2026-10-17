@@ -310,8 +310,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   capture 08i-firststeps-real-bed-placed
   send_chat '/clear @p minecraft:red_bed'
   send_chat '/time set night'
+  # CircleCI #32 confirmed the bed was physically placed, but the old
+  # 45-degree downward look intersected the STONE below its foot, not the
+  # bed collision. The (2.5,150,5.5) eye is ~1.62m above its feet: at
+  # ~2.5m distance a 22-degree look targets the bed mattress, not the
+  # platform. Reorient AFTER placing, with the camera aimed at the bed.
+  send_chat '/tp @p 2.5 150 5.5 0 22'
+  sleep 2
+  capture 08i1-firststeps-bed-targeted-at-night
   xdotool click 3
-  sleep 6
+  sleep 9
   capture 08j-firststeps-post-sleep-wake
   assert_smoke_event WAKE_UNLOCK
   send_chat '/setblock 2 151 12 minecraft:bookshelf'
