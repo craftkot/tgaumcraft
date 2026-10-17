@@ -22,7 +22,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-/** BETA26 normal jar, original geometry bounds. */
+/** BETA26 normal and void jars, original shared geometry bounds. */
 public final class EssentiaJarBlock extends BaseEntityBlock {
  public static final MapCodec<EssentiaJarBlock> CODEC = simpleCodec(EssentiaJarBlock::new);
  private static final VoxelShape SHAPE = box(3,0,3,13,12,13);

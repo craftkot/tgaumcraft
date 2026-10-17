@@ -118,6 +118,10 @@ public final class ThaumcraftItems {
             "jar_normal", properties -> new EssentiaJarItem(ThaumcraftBlocks.JAR_NORMAL.get(), properties),
             new Item.Properties());
 
+    public static final DeferredItem<EssentiaJarItem> JAR_VOID = ITEMS.registerItem(
+            "jar_void", properties -> new EssentiaJarItem(ThaumcraftBlocks.JAR_VOID.get(), properties),
+            new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());

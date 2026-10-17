@@ -88,6 +88,12 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of().strength(0.3F, 20.0F)
                     .noOcclusion().sound(SoundType.GLASS));
 
+    /** Original BETA26 void jar: same glass outline, different suction/overflow. */
+    public static final DeferredBlock<EssentiaJarBlock> JAR_VOID = BLOCKS.registerBlock(
+            "jar_void", EssentiaJarBlock::new,
+            BlockBehaviour.Properties.of().strength(0.3F, 20.0F)
+                    .noOcclusion().sound(SoundType.GLASS));
+
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.
     public static final DeferredBlock<Block> STONE_ARCANE = BLOCKS.registerSimpleBlock(

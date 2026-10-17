@@ -50,7 +50,8 @@ public final class ThaumcraftBlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EssentiaJarBlockEntity>>
             JAR_NORMAL = TYPES.register("jar_normal",
             () -> BlockEntityType.Builder.of(EssentiaJarBlockEntity::new,
-                    ThaumcraftBlocks.JAR_NORMAL.get()).build(null));
+                    ThaumcraftBlocks.JAR_NORMAL.get(),
+                    ThaumcraftBlocks.JAR_VOID.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

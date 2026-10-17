@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyVoidJarLogic;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.port.core.LegacyPhialJarExchange;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
@@ -30,6 +32,17 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public LegacyEssentiaJarLogic.State snapshot() { return stored; }
     public int facing() { return facing; }
     public boolean blocked() { return blocked; }
+    /** Original TileJarFillableVoid, not a normal jar renamed for display. */
+    public boolean isVoidJar() {
+        return getBlockState().is(ThaumcraftBlocks.JAR_VOID.get());
+    }
+    private void voidJarOverflow(int destroyed) {
+        if (destroyed > 0 && level instanceof net.minecraft.server.level.ServerLevel server
+                && server.random.nextInt(250) == 0) {
+            dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData.get(server)
+                    .polluteFlux(worldPosition, 1);
+        }
+    }
     /** Source IEssentiaTransport#isBlocked; a braced jar refuses pipe IO. */
     public boolean isBlocked() { return blocked; }
 
@@ -97,7 +110,8 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
      * otherwise 1.21 silently discards the item component on placement.
      */
     public boolean saveToItem(ItemStack drop, HolderLookup.Provider registries) {
-        if (drop.isEmpty() || !drop.is(ThaumcraftItems.JAR_NORMAL.get())
+        if (drop.isEmpty() || !(drop.is(ThaumcraftItems.JAR_NORMAL.get())
+                || drop.is(ThaumcraftItems.JAR_VOID.get()))
                 || !hasStoredData()) return false;
         CompoundTag tag = new CompoundTag();
         saveAdditional(tag, registries);
@@ -108,7 +122,9 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     }
     public boolean isConnectable(Direction side) { return side == Direction.UP; }
     public int suction(Direction side) {
-        return isConnectable(side) ? LegacyEssentiaJarLogic.suction(stored) : 0;
+        if (!isConnectable(side)) return 0;
+        return isVoidJar() ? LegacyVoidJarLogic.suction(stored)
+                : LegacyEssentiaJarLogic.suction(stored);
     }
     public String suctionAspect(Direction side) {
         return isConnectable(side) ? LegacyEssentiaJarLogic.suctionAspect(stored) : null;
@@ -117,6 +133,15 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public int addFromTransport(String aspect, int offered, Direction side) {
         if (level == null || level.isClientSide || blocked || !isConnectable(side)
                 || !LegacyEssentiaJarLogic.accepts(stored, aspect)) return 0;
+        if (isVoidJar()) {
+            var transfer = LegacyVoidJarLogic.add(stored, aspect, offered);
+            if (transfer.consumed() > 0) {
+                if (!transfer.state().equals(stored)) updateStored(transfer.state());
+                // The source makes ONE 1/250 roll per overflowing addToContainer call.
+                voidJarOverflow(transfer.destroyed());
+            }
+            return transfer.consumed();
+        }
         var transfer = LegacyEssentiaJarLogic.add(stored, aspect, offered);
         if (transfer.transferred() > 0) updateStored(transfer.state());
         return transfer.transferred();
@@ -131,12 +156,25 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     }
     /** Preflight for the item-side manual transfer; no jar mutation. */
     public boolean canReceivePhial(String aspect, int amount) {
+        if (isVoidJar()) {
+            return amount > 0 && amount <= 10
+                    && LegacyEssentiaJarLogic.accepts(stored, aspect)
+                    && (stored.amount() == 0 || aspect.equals(stored.aspect()));
+        }
         return LegacyPhialJarExchange.deposit(stored, aspect, amount)
                 .transferred() == amount;
     }
     /** Server-only all-or-nothing deposit; transport UP rule is irrelevant to a held phial. */
     public boolean receivePhial(String aspect, int amount) {
-        if (level == null || level.isClientSide) return false;
+        if (level == null || level.isClientSide || !canReceivePhial(aspect, amount))
+            return false;
+        if (isVoidJar()) {
+            var transfer = LegacyVoidJarLogic.add(stored, aspect, amount);
+            if (transfer.consumed() != amount) return false;
+            if (!transfer.state().equals(stored)) updateStored(transfer.state());
+            voidJarOverflow(transfer.destroyed());
+            return true;
+        }
         var transfer = LegacyPhialJarExchange.deposit(stored, aspect, amount);
         if (transfer.transferred() != amount) return false;
         updateStored(transfer.state());
