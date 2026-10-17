@@ -99,20 +99,18 @@ click_research_gui() {
   xdotool mousemove "$sx" "$sy" click 1
 }
 
-# BETA26 research book atlas is 512x356 (NOT the 256x256 ResearchTable GUI).
-# FirstStepsBookScreen bounds: x+183..328, y+311..331; click the exact
-# centre in unscaled GUI coordinates, translated from the live window.
-# Historical CI smoke mistakenly used (512,527), which was in the TEXT area,
-# so the stage-advance server packet was never exercised.
-click_firststeps_advance() {
-  local geometry sx sy
-  geometry="$(xdotool getwindowgeometry --shell "$WIN")"
-  eval "$geometry"
-  read -r sx sy < <(minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" \
-      2 512 356 255 321)
-  echo "FIRSTSTEPS_BOOK_ADVANCE_CLICK=${sx},${sy} WINDOW=${WIDTH}x${HEIGHT}" \
-      | tee -a client-smoke-status.txt
-  xdotool mousemove "$sx" "$sy" click 1
+# The FIRSTSTEPS screen has exactly one focusable widget: its advance
+# button. Real #40 showed the book texture/button spanning different root
+# pixels than xdotool's 1024x768 window geometry suggested, so the computed
+# click (512,691) hit the PAGE, not the button. Keyboard navigation is a
+# real GUI action, independent of framebuffer/window-size disagreement:
+# Tab focuses the only Button, Return invokes its actual onPress callback.
+# The C2S and server-stage probes below prove the result, not the keystrokes.
+activate_firststeps_advance() {
+  xdotool key --clearmodifiers Tab
+  sleep 1
+  xdotool key --clearmodifiers Return
+  echo 'FIRSTSTEPS_BOOK_ADVANCE_INPUT=TAB_ENTER' | tee -a client-smoke-status.txt
 }
 
 assert_smoke_event() {
@@ -362,9 +360,12 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   xdotool click 3
   sleep 3
   capture 08m-firststeps-original-researchbook-open
-  click_firststeps_advance
+  activate_firststeps_advance
   sleep 4
   capture 08n-firststeps-researchbook-server-synced-progression
+  assert_smoke_event FIRSTSTEPS_GUI_BUTTON_PRESSED
+  assert_smoke_event FIRSTSTEPS_GUI_GATE_ACCEPTED
+  assert_smoke_event FIRSTSTEPS_C2S_RECEIVED
   assert_smoke_event FIRSTSTEPS_STAGE_ADVANCED
   xdotool key --clearmodifiers Escape
   echo 'CLIENT_SENT_FIRSTSTEPS_THAUMONOMICON_GUI_TEST=YES' | tee -a client-smoke-status.txt

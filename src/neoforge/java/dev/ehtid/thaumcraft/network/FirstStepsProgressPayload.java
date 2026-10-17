@@ -31,9 +31,14 @@ public record FirstStepsProgressPayload(boolean expectedKnown, boolean checkRequ
         PlayerThaumcraftData data = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
         FirstStepsServerProgression gate = new FirstStepsServerProgression();
         ResearchProgressionService service = new ResearchProgressionService(BuiltInResearchCatalog.create());
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_C2S_RECEIVED");
         var result = gate.request(data.knowledge(), data.warp(), service,
                 payload.expectedKnown(), payload.checkRequisites(), payload.noFlags());
-        if (result.progressed()) dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_STAGE_ADVANCED");
+        if (result.progressed()) {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_STAGE_ADVANCED");
+        } else {
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_C2S_REJECTED");
+        }
         if (result.progressed() && result.requestSync()) ThaumcraftNetworking.sync(player);
         if (result.progressed() && result.xpAward() > 0) player.giveExperiencePoints(result.xpAward());
     }

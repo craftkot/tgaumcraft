@@ -59,8 +59,13 @@ public final class FirstStepsBookScreen extends Screen {
         advanceButton = Button.builder(
                 Component.translatable("gui.thaumcraft.firststeps.advance"),
                 button -> {
+                    dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_GUI_BUTTON_PRESSED");
                     PlayerKnowledgeData data = knowledge();
-                    if (data == null || !mayAdvance(data)) return;
+                    if (data == null || !mayAdvance(data)) {
+                        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_GUI_GATE_BLOCKED");
+                        return;
+                    }
+                    dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("FIRSTSTEPS_GUI_GATE_ACCEPTED");
                     PacketDistributor.sendToServer(new FirstStepsProgressPayload(
                             data.isResearchKnown("FIRSTSTEPS"), true, false));
                     button.active = false; // wait for the authoritative sync
