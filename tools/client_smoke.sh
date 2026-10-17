@@ -97,6 +97,22 @@ click_research_gui() {
   xdotool mousemove "$sx" "$sy" click 1
 }
 
+# BETA26 research book atlas is 512x356 (NOT the 256x256 ResearchTable GUI).
+# FirstStepsBookScreen bounds: x+183..328, y+311..331; click the exact
+# centre in unscaled GUI coordinates, translated from the live window.
+# Historical CI smoke mistakenly used (512,527), which was in the TEXT area,
+# so the stage-advance server packet was never exercised.
+click_firststeps_advance() {
+  local geometry sx sy
+  geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+  eval "$geometry"
+  read -r sx sy < <(minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" \
+      2 512 356 255 321)
+  echo "FIRSTSTEPS_BOOK_ADVANCE_CLICK=${sx},${sy} WINDOW=${WIDTH}x${HEIGHT}" \
+      | tee -a client-smoke-status.txt
+  xdotool mousemove "$sx" "$sy" click 1
+}
+
 capture() {
   name="$1"
   import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
@@ -273,17 +289,25 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 4
   send_chat '/execute if block 2 151 12 minecraft:air run say FIRSTSTEPS_REAL_DREAM_SALIS_BOOKSHELF_OK'
   capture 08l-firststeps-real-bookshelf-after-salis
+  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post and
+  # therefore does not grant the server !gotthaumonomicon marker. The original
+  # Salis swapper produces a REAL dropped book at the shelf position: look for
+  # that item and move the player onto it to fire the actual pickup listener.
+  send_chat '/execute if entity @e[type=minecraft:item,x=2,y=151,z=12,distance=..3,nbt={Item:{id:"thaumcraft:thaumonomicon"}}] run say FIRSTSTEPS_REAL_BOOK_DROPPED_OK'
+  send_chat '/tp @p 2.5 151 12.5 0 0'
+  sleep 4
+  capture 08l1-firststeps-real-thaumonomicon-pickup
   echo 'CLIENT_SENT_FIRSTSTEPS_PICKUP_WAKE_SALIS_CHAIN=YES' | tee -a client-smoke-status.txt
 
-  # Actual Thaumonomicon right-click: the source PNG opens the FIRSTSTEPS
-  # chapter and its button sends the existing server-validated C2S packet.
-  # Screen must also be readable in a fresh game with no research marker.
+  # Actually using the book opens the playable FIRSTSTEPS chapter. Using
+  # /item replace only equips it; the critical !gotthaumonomicon permission
+  # must have been obtained from the prior real-world item pickup.
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumonomicon 1'
   xdotool key --clearmodifiers 1
   xdotool click 3
   sleep 3
   capture 08m-firststeps-original-researchbook-open
-  xdotool mousemove 512 527 click 1
+  click_firststeps_advance
   sleep 4
   capture 08n-firststeps-researchbook-server-synced-progression
   xdotool key --clearmodifiers Escape
