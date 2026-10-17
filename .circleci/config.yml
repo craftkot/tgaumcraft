@@ -49,9 +49,14 @@ jobs:
             curl -fsSL --retry 3 -o /tmp/gradle.zip \
               https://services.gradle.org/distributions/gradle-9.2.1-bin.zip
             unzip -q /tmp/gradle.zip -d /tmp
+            mkdir -p compile-audit
             /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
-              --max-workers=2 --stacktrace compileJava processResources
+              --max-workers=2 --stacktrace compileJava processResources \
+              2>&1 | tee compile-audit/neoforge-compile.log
             echo THAUMCRAFT_NEOFORGE_CLASSES_COMPILED_OK
+      - store_artifacts:
+          path: compile-audit/neoforge-compile.log
+          destination: neoforge/compile.log
   real-minecraft-client:
     machine:
       image: ubuntu-2404:current
