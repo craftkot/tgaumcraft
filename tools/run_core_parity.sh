@@ -15,6 +15,7 @@ TESTS=(
   CrystalGrowthParityTest
   CrystalMeshParityTest
   EssentiaJarParityTest
+  LegacyVoidJarParityTest
   PhialJarExchangeTest
   EssentiaSourceOrderParityTest
   InfusionRitualLedgerParityTest
@@ -41,6 +42,7 @@ CrystalFarmerParityTest|Crystal farmer BETA26 parity: OK
 CrystalGrowthParityTest|Crystal growth BETA26 parity: OK
 CrystalMeshParityTest|CrystalModel seeded selection parity OK
 EssentiaJarParityTest|BETA26 jar parity: OK
+LegacyVoidJarParityTest|BETA26 void jar parity: OK
 PhialJarExchangeTest|BETA26 phial/jar conservation: OK
 EssentiaSourceOrderParityTest|BETA26 essentia source search parity: OK
 InfusionRitualLedgerParityTest|BETA26 infusion ritual resource ledger: OK
