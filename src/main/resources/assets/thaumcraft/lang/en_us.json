@@ -307,5 +307,8 @@
   "block.thaumcraft.tube_filter": "Essentia Filter",
   "block.thaumcraft.tube_restrict": "Restrictive Essentia Tube",
   "block.thaumcraft.tube_oneway": "One-way Essentia Tube",
-  "block.thaumcraft.tube_buffer": "Essentia Tube Buffer"
+  "block.thaumcraft.tube_buffer": "Essentia Tube Buffer",
+  "block.thaumcraft.bellows": "Arcane Bellows",
+  "block.thaumcraft.smelter_aux": "Auxiliary Essentia Smelter",
+  "block.thaumcraft.smelter_vent": "Smelter Vent"
 }
