@@ -19,6 +19,7 @@ import dev.ehtid.thaumcraft.block.BellowsBlock;
 import dev.ehtid.thaumcraft.block.SmelterAttachmentBlock;
 import dev.ehtid.thaumcraft.block.SmelterBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RotatedPillarBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
@@ -105,6 +106,14 @@ public final class ThaumcraftBlocks {
             "tube", EssentiaTubeBlock::new,
             BlockBehaviour.Properties.of().strength(0.5F,5.0F)
                     .noOcclusion().sound(SoundType.METAL));
+
+    /** BETA26 Silverwood log and plank identifiers, used by Filter. */
+    public static final DeferredBlock<RotatedPillarBlock> LOG_SILVERWOOD = BLOCKS.registerBlock(
+            "log_silverwood", RotatedPillarBlock::new,
+            BlockBehaviour.Properties.of().strength(2.0F).sound(SoundType.WOOD));
+    public static final DeferredBlock<Block> PLANK_SILVERWOOD = BLOCKS.registerSimpleBlock(
+            "plank_silverwood",
+            BlockBehaviour.Properties.of().strength(2.0F, 3.0F).sound(SoundType.WOOD));
 
     /** BETA26 greatwood boards: an actual wood block, not vanilla planks. */
     public static final DeferredBlock<Block> PLANK_GREATWOOD = BLOCKS.registerSimpleBlock(

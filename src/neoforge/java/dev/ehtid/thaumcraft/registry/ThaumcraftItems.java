@@ -129,6 +129,11 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> TUBE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.TUBE, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> LOG_SILVERWOOD = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.LOG_SILVERWOOD, new Item.Properties());
+    public static final DeferredItem<BlockItem> PLANK_SILVERWOOD = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PLANK_SILVERWOOD, new Item.Properties());
+
     public static final DeferredItem<BlockItem> PLANK_GREATWOOD = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.PLANK_GREATWOOD, new Item.Properties());
 

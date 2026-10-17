@@ -60,6 +60,8 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TUBE_RESTRICT.get());
                         output.accept(ThaumcraftItems.TUBE_ONEWAY.get());
                         output.accept(ThaumcraftItems.TUBE_BUFFER.get());
+                        output.accept(ThaumcraftItems.LOG_SILVERWOOD.get());
+                        output.accept(ThaumcraftItems.PLANK_SILVERWOOD.get());
                         output.accept(ThaumcraftItems.PLANK_GREATWOOD.get());
                         output.accept(ThaumcraftItems.ALEMBIC.get());
                         output.accept(ThaumcraftItems.SMELTER_BASIC.get());

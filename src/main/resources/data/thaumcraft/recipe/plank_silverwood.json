@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "thaumcraft:plank_silverwood",
+  "pattern": [
+    "W"
+  ],
+  "key": {
+    "W": {
+      "item": "thaumcraft:log_silverwood"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:plank_silverwood",
+    "count": 4
+  }
+}

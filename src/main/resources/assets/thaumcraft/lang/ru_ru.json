@@ -312,5 +312,7 @@
   "block.thaumcraft.smelter_aux": "Вспомогательная печная насадка",
   "block.thaumcraft.smelter_vent": "Печной вентиляционный канал",
   "block.thaumcraft.plank_greatwood": "Доски великого дерева",
-  "item.thaumcraft.filter": "Фильтр эссенции"
+  "item.thaumcraft.filter": "Фильтр эссенции",
+  "block.thaumcraft.log_silverwood": "Бревно серебряного дерева",
+  "block.thaumcraft.plank_silverwood": "Доски серебряного дерева"
 }
