@@ -18,6 +18,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeFilterArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyConstructArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyUpgradedSmelterArcaneRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyAdvancedAlchemyConstructArcaneRecipe;
 import net.minecraft.tags.ItemTags;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
@@ -240,6 +241,57 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
 
 
 
+
+
+    /** Original BETA26 AdvAlchemyConstruct " A " / "VPV" / " A ". */
+    public boolean matchesAdvancedAlchemyConstructPattern() {
+        boolean[] constructs=new boolean[9],voidPlates=new boolean[9],
+                  pearls=new boolean[9],occupied=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            constructs[slot]=stack.is(ThaumcraftItems.METAL_ALCHEMICAL.get());
+            voidPlates[slot]=PlateItem.legacyMetadata(stack)==3;
+            pearls[slot]=stack.is(ThaumcraftItems.PRIMORDIAL_PEARL.get())
+                    && stack.getCount()==1
+                    && stack.getDamageValue()>=0 && stack.getDamageValue()<8;
+            occupied[slot]=!stack.isEmpty();
+        }
+        return LegacyAdvancedAlchemyConstructArcaneRecipe.matches(
+                constructs,voidPlates,pearls,occupied);
+    }
+
+    public boolean canCraftAdvancedAlchemyConstruct(PlayerKnowledgeData knowledge,float discount) {
+        if(!matchesAdvancedAlchemyConstructPattern()
+                ||!knowledge.isResearchKnown(LegacyAdvancedAlchemyConstructArcaneRecipe.RESEARCH))
+            return false;
+        for(int crystal:new int[]{LegacyAdvancedAlchemyConstructArcaneRecipe.IGNIS_SLOT,
+                    LegacyAdvancedAlchemyConstructArcaneRecipe.TERRA_SLOT}) {
+            ItemStack stack=items.get(crystal);
+            if(stack.isEmpty()||!canPlaceItem(crystal,stack))return false;
+        }
+        return getVis()>=Math.max(0,LegacyAdvancedAlchemyConstructArcaneRecipe.discountedVis(discount));
+    }
+
+    /** Pearl becomes worn by one BETA26 stage; final (seventh damage) stage is consumed. */
+    public boolean craftAdvancedAlchemyConstruct(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftAdvancedAlchemyConstruct(knowledge,discount))return false;
+        final int cost=LegacyAdvancedAlchemyConstructArcaneRecipe.discountedVis(discount);
+        ItemStack pearl=items.get(4);
+        int nextDamage=LegacyAdvancedAlchemyConstructArcaneRecipe.pearlRemainderDamage(
+                pearl.getDamageValue());
+        ItemStack remainingPearl=ItemStack.EMPTY;
+        if(nextDamage>=0) {
+            remainingPearl=pearl.copy();
+            remainingPearl.setDamageValue(nextDamage);
+        }
+        for(int slot:new int[]{1,3,5,7})items.get(slot).shrink(1);
+        items.set(4,remainingPearl);
+        items.get(LegacyAdvancedAlchemyConstructArcaneRecipe.IGNIS_SLOT).shrink(1);
+        items.get(LegacyAdvancedAlchemyConstructArcaneRecipe.TERRA_SLOT).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
 
     /** Original BETA26 Thaumium/Void EssentiaSmelter upgrades BFB / IGI / III. */
     public boolean matchesUpgradedSmelterPattern(LegacyUpgradedSmelterArcaneRecipe.Kind kind) {

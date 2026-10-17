@@ -73,6 +73,11 @@ public final class ThaumcraftItems {
     public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
             "fabric", new Item.Properties());
 
+    /** Original primordial pearl has eight crafting stages (damage 0..7). */
+    public static final DeferredItem<Item> PRIMORDIAL_PEARL = ITEMS.registerSimpleItem(
+            "primordial_pearl",
+            new Item.Properties().durability(8).rarity(net.minecraft.world.item.Rarity.UNCOMMON));
+
     /** BETA26 ItemsTC.filter: distinct alchemical filter crafting ingredient. */
     public static final DeferredItem<Item> FILTER = ITEMS.registerSimpleItem(
             "filter", new Item.Properties());

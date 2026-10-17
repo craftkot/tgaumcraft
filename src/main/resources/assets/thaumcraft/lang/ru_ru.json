@@ -316,5 +316,6 @@
   "block.thaumcraft.log_silverwood": "Бревно серебряного дерева",
   "block.thaumcraft.plank_silverwood": "Доски серебряного дерева",
   "block.thaumcraft.metal_alchemical": "Алхимическая конструкция",
-  "block.thaumcraft.metal_alchemical_advanced": "Улучшенная алхимическая конструкция"
+  "block.thaumcraft.metal_alchemical_advanced": "Улучшенная алхимическая конструкция",
+  "item.thaumcraft.primordial_pearl": "Первородная жемчужина"
 }

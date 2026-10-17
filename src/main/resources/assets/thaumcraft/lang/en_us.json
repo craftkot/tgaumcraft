@@ -316,5 +316,6 @@
   "block.thaumcraft.log_silverwood": "Silverwood Log",
   "block.thaumcraft.plank_silverwood": "Silverwood Planks",
   "block.thaumcraft.metal_alchemical": "Alchemical Construct",
-  "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct"
+  "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct",
+  "item.thaumcraft.primordial_pearl": "Primordial Pearl"
 }
