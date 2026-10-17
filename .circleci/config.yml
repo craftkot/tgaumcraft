@@ -130,7 +130,7 @@ jobs:
                 echo SERVER_SMOKE_CRASH_DETECTED=YES
                 break
               fi
-              if grep -Eq 'Done \\([^)]*\\)!' server-audit/server.log; then
+              if grep -Fq 'Done (' server-audit/server.log; then
                 ready=1
                 break
               fi
@@ -155,11 +155,9 @@ jobs:
             }
             echo THAUMCRAFT_DEDICATED_SERVER_READY=YES
       - store_artifacts:
-          when: always
           path: server-audit
           destination: server-audit
       - store_artifacts:
-          when: on_success
           path: build/libs
           destination: distributable-jars
   real-minecraft-client:
