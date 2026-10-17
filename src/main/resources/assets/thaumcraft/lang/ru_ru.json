@@ -276,5 +276,6 @@
   "item.thaumcraft.crystal_essence.content": "%s: %s вис",
   "item.thaumcraft.salis_mundus": "Салис Мундус",
   "item.thaumcraft.thaumonomicon": "Таумономикон",
-  "item.thaumcraft.thaumometer": "Таумометр"
+  "item.thaumcraft.thaumometer": "Таумометр",
+  "item.thaumcraft.jar_brace": "Скоба для магического сосуда"
 }

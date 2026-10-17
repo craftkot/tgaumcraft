@@ -29,6 +29,31 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public LegacyEssentiaJarLogic.State snapshot() { return stored; }
     public int facing() { return facing; }
     public boolean blocked() { return blocked; }
+
+    /** Original BlockJar: a consumed jar brace locks the glass jar once. */
+    public boolean applyBrace() {
+        if (level == null || level.isClientSide || blocked) return false;
+        blocked = true;
+        setChanged();
+        level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        return true;
+    }
+
+    /**
+     * Original BlockJar sneaking + empty-hand interaction:
+     * pour any contents into the local aura as flux and clear the jar.
+     * Existing aspect labels remain attached and restrict future contents.
+     * A void operation does not add flux or change inventory.
+     */
+    public boolean emptyByHand() {
+        if (!(level instanceof net.minecraft.server.level.ServerLevel server)
+                || stored.amount() <= 0) return false;
+        int spilled = stored.amount();
+        dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData.get(server)
+                .polluteFlux(worldPosition, spilled);
+        updateStored(new LegacyEssentiaJarLogic.State(null, stored.filter(), 0));
+        return true;
+    }
     /** True if the jar item must retain non-default BlockEntity state. */
     public boolean hasStoredData() {
         return stored.amount() > 0 || stored.filter() != null || blocked || facing != 2;

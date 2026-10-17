@@ -6,6 +6,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import java.util.List;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -24,6 +29,16 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
  @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
  @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
  @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new EssentiaJarBlockEntity(pos, state); }
+ /** BETA26 sneak + empty hand: release jar contents into the aura as flux. */
+ @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                                       Player player, BlockHitResult hit) {
+  if (!player.isShiftKeyDown()) return InteractionResult.PASS;
+  if (level.isClientSide) return InteractionResult.SUCCESS;
+  if (!player.mayInteract(pos)) return InteractionResult.FAIL;
+  if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar))
+   return InteractionResult.PASS;
+  return jar.emptyByHand() ? InteractionResult.SUCCESS : InteractionResult.PASS;
+ }
  /** Vanilla comparator semantics, sourced from BETA26 BlockJar. */
  @Override protected boolean hasAnalogOutputSignal(BlockState state) { return true; }
  @Override protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
@@ -46,6 +61,11 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
             && jar.saveToItem(stack, jar.getLevel().registryAccess()))
      dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("JAR_DROP_SAVED_COMPONENT");
    }
+  }
+  if (blockEntity instanceof EssentiaJarBlockEntity jar && jar.blocked()
+        && drops.stream().anyMatch(stack -> stack.is(this.asItem()))) {
+   // Source BlockJar#spawnFilledJar returns the iron brace as a separate item.
+   drops.add(new ItemStack(ThaumcraftItems.JAR_BRACE.get()));
   }
   return drops;
  }
