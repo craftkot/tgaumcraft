@@ -7,6 +7,7 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import java.util.List;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -23,6 +24,13 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
  @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
  @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
  @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new EssentiaJarBlockEntity(pos, state); }
+ /** Vanilla comparator semantics, sourced from BETA26 BlockJar. */
+ @Override protected boolean hasAnalogOutputSignal(BlockState state) { return true; }
+ @Override protected int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
+  return level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar
+    ? dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic.comparatorOutput(jar.snapshot())
+    : 0;
+ }
  /**
   * A filled jar must not silently delete its essentia when mined.
   * Keep vanilla loot conditions (silk touch, explosions, creative mode), and

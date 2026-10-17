@@ -92,6 +92,17 @@ public final class LegacyEssentiaJarLogic {
                 jar.filter(), left), requested);
     }
 
+    /**
+     * Exact source BlockJar#getComparatorInputOverride: a nonempty 250-unit
+     * jar emits 1..15 based on floor(14 * amount/250) + 1, and an empty jar
+     * emits zero. Labels and blocked state do NOT alter this signal.
+     */
+    public static int comparatorOutput(State jar) {
+        Objects.requireNonNull(jar);
+        if (jar.amount() == 0) return 0;
+        return (jar.amount() * 14) / CAPACITY + 1;
+    }
+
     /** The original jar exposes its transport connection only on UP. */
     public static boolean connectsOnTop(int directionIndex) {
         // Vanilla 1.12 EnumFacing.UP index 1, NeoForge Direction.UP index 1.

@@ -100,8 +100,12 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     private void updateStored(LegacyEssentiaJarLogic.State next) {
         stored = next;
         setChanged();
-        if (level != null && !level.isClientSide)
+        if (level != null && !level.isClientSide) {
             level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            // A comparator facing this jar must update when phials, transport
+            // or infusion change its amount, not only when the block breaks.
+            level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+        }
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();

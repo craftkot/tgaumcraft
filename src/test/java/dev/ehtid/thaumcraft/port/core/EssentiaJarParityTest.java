@@ -58,6 +58,18 @@ public final class EssentiaJarParityTest {
         eq(0,LegacyEssentiaJarLogic.add(half,"ignis",1).transferred());
         eq(0,LegacyEssentiaJarLogic.add(empty,"aer",-100).transferred());
         eq(0,LegacyEssentiaJarLogic.take(half,"terra",-1).transferred());
+        eq(0, LegacyEssentiaJarLogic.comparatorOutput(empty));
+        eq(1, LegacyEssentiaJarLogic.comparatorOutput(
+                new LegacyEssentiaJarLogic.State("aer", null, 1)));
+        eq(1, LegacyEssentiaJarLogic.comparatorOutput(
+                new LegacyEssentiaJarLogic.State("aer", null, 17)));
+        eq(2, LegacyEssentiaJarLogic.comparatorOutput(
+                new LegacyEssentiaJarLogic.State("aer", null, 18)));
+        eq(8, LegacyEssentiaJarLogic.comparatorOutput(
+                new LegacyEssentiaJarLogic.State("aer", "ignis", 125)));
+        eq(14, LegacyEssentiaJarLogic.comparatorOutput(
+                new LegacyEssentiaJarLogic.State("aer", null, 249)));
+        eq(15, LegacyEssentiaJarLogic.comparatorOutput(fill.state()));
         no(LegacyEssentiaJarLogic.connectsOnTop(0));
         yes(LegacyEssentiaJarLogic.connectsOnTop(1));
         no(LegacyEssentiaJarLogic.connectsOnTop(2));
