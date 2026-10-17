@@ -4,6 +4,8 @@ import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes.Upgrade;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.server.level.ServerPlayer;
 import dev.ehtid.thaumcraft.registry.ThaumcraftMenus;
@@ -108,6 +110,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_VIS;
                 if (workbench.matchesEssentiaTubePattern())
                     return dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.BASE_VIS;
+                if (workbench.selectedTubeUpgrade() != null)
+                    return LegacyEssentiaTubeUpgradeRecipes.VIS;
                 if (workbench.matchesBasicSmelterPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.BASE_VIS;
                 return 0;
@@ -129,6 +133,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
                 if (workbench.matchesVoidJarPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_CRYSTAL_MASK;
+                Upgrade upgrade = workbench.selectedTubeUpgrade();
+                if (upgrade != null) return upgrade.crystalMask;
                 if (workbench.matchesBasicSmelterPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe.CRYSTAL_MASK;
                 return 0;
@@ -208,13 +214,45 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+
+    private boolean canCraftTubeUpgrade(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))return false;
+        Upgrade upgrade=wb.selectedTubeUpgrade();
+        return upgrade!=null&&wb.canCraftTubeUpgrade(upgrade,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount);
+    }
+
+    private static ItemStack tubeUpgradeOutput(Upgrade type) {
+        return switch(type) {
+            case VALVE -> new ItemStack(ThaumcraftItems.TUBE_VALVE.get());
+            case RESTRICT -> new ItemStack(ThaumcraftItems.TUBE_RESTRICT.get());
+            case ONEWAY -> new ItemStack(ThaumcraftItems.TUBE_ONEWAY.get());
+        };
+    }
+
+    private ItemStack craftTubeUpgrade(ServerPlayer player,ItemStack expected,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))
+            return ItemStack.EMPTY;
+        Upgrade type=wb.selectedTubeUpgrade();
+        if(type==null)return ItemStack.EMPTY;
+        ItemStack output=tubeUpgradeOutput(type);
+        if(!ItemStack.isSameItemSameComponents(expected,output)
+                ||!wb.craftTubeUpgrade(type,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount))
+            return ItemStack.EMPTY;
+        refreshResult();
+        broadcastChanges();
+        return output;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
                 || canCraftVoidJar(player, totalDiscount)
                 || canCraftEssentiaTubes(player,totalDiscount)
-                || canCraftBasicSmelter(player,totalDiscount);
+                || canCraftBasicSmelter(player,totalDiscount)
+                || canCraftTubeUpgrade(player,totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -275,6 +313,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 && craftEssentiaTubes(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.TUBE.get(),
                     dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT);
+        ItemStack upgrade = craftTubeUpgrade(player,expected,totalDiscount);
+        if(!upgrade.isEmpty())return upgrade;
         if(expected.is(ThaumcraftItems.SMELTER_BASIC.get())
                 &&craftBasicSmelter(player,totalDiscount))
             return new ItemStack(ThaumcraftItems.SMELTER_BASIC.get());
@@ -294,6 +334,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         else if (owner instanceof ServerPlayer sp && canCraftEssentiaTubes(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.TUBE.get(),
                     dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT));
+        else if(owner instanceof ServerPlayer sp&&canCraftTubeUpgrade(sp,0.0F)
+                &&bench instanceof ArcaneWorkbenchBlockEntity wb)
+            result.setItem(0,tubeUpgradeOutput(wb.selectedTubeUpgrade()));
         else if(owner instanceof ServerPlayer sp&&canCraftBasicSmelter(sp,0.0F))
             result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_BASIC.get()));
         else result.setItem(0, ItemStack.EMPTY);

@@ -10,6 +10,7 @@ import net.minecraft.world.item.component.CustomData;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeUpgradeRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacySmelterArcaneRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -221,6 +222,62 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         if(!canCraftEssentiaTubes(knowledge,discount))return false;
         int cost=LegacyEssentiaTubeRecipe.discountedVis(discount);
         for(int slot:new int[]{1,3,4,5,7})items.get(slot).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
+    }
+
+
+    /** BETA26 TubeValve, TubeRestrict and TubeOneway remain true arcane recipes. */
+    private int[] tubeUpgradeInputs(LegacyEssentiaTubeUpgradeRecipes.Upgrade kind) {
+        boolean[] tube=new boolean[9],lever=new boolean[9],occupied=new boolean[9];
+        for(int i=0;i<9;i++) {
+            ItemStack stack=items.get(i);
+            occupied[i]=!stack.isEmpty();
+            tube[i]=stack.is(ThaumcraftItems.TUBE.get());
+            lever[i]=stack.is(Items.LEVER);
+        }
+        return LegacyEssentiaTubeUpgradeRecipes.match(kind,tube,lever,occupied);
+    }
+
+    public boolean matchesTubeUpgradePattern(LegacyEssentiaTubeUpgradeRecipes.Upgrade kind) {
+        return tubeUpgradeInputs(kind)!=null;
+    }
+
+    /** The plain tube has two possible crystal upgrades; active crystal selects output. */
+    public LegacyEssentiaTubeUpgradeRecipes.Upgrade selectedTubeUpgrade() {
+        var valve=LegacyEssentiaTubeUpgradeRecipes.Upgrade.VALVE;
+        if(matchesTubeUpgradePattern(valve))return valve;
+        var restrict=LegacyEssentiaTubeUpgradeRecipes.Upgrade.RESTRICT;
+        if(!matchesTubeUpgradePattern(restrict))return null;
+        var oneway=LegacyEssentiaTubeUpgradeRecipes.Upgrade.ONEWAY;
+        ItemStack terra=items.get(restrict.crystalSlot),aqua=items.get(oneway.crystalSlot);
+        if(!terra.isEmpty()&&canPlaceItem(restrict.crystalSlot,terra))return restrict;
+        if(!aqua.isEmpty()&&canPlaceItem(oneway.crystalSlot,aqua))return oneway;
+        return null;
+    }
+
+    public boolean canCraftTubeUpgrade(LegacyEssentiaTubeUpgradeRecipes.Upgrade kind,
+                                       PlayerKnowledgeData knowledge,float discount) {
+        if(kind==null||kind!=selectedTubeUpgrade()
+                ||!knowledge.isResearchKnown(LegacyEssentiaTubeUpgradeRecipes.RESEARCH))return false;
+        if(kind.crystalSlot>=0) {
+            ItemStack stack=items.get(kind.crystalSlot);
+            if(stack.isEmpty()||!canPlaceItem(kind.crystalSlot,stack))return false;
+        }
+        return getVis()>=Math.max(0,LegacyEssentiaTubeUpgradeRecipes.discountedVis(discount));
+    }
+
+    /** Validates all conditions before debiting vis or shrinking inventory. */
+    public boolean craftTubeUpgrade(LegacyEssentiaTubeUpgradeRecipes.Upgrade kind,
+                                    PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftTubeUpgrade(kind,knowledge,discount))return false;
+        int[] slots=tubeUpgradeInputs(kind);
+        if(slots==null)return false;
+        items.get(slots[0]).shrink(1);
+        if(slots[1]>=0)items.get(slots[1]).shrink(1);
+        if(kind.crystalSlot>=0)items.get(kind.crystalSlot).shrink(1);
+        int cost=LegacyEssentiaTubeUpgradeRecipes.discountedVis(discount);
         if(cost>0)setVis(getVis()-cost);
         else setChanged();
         return true;
