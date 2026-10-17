@@ -33,6 +33,7 @@ jobs:
             python3 tools/test_starter_item_localization.py
             python3 tools/verify_survival_loot_tables.py
             python3 tools/verify_tube_source_art.py
+            python3 tools/verify_alumentum_fuel_source.py
             bash tools/run_core_parity.sh
             echo "CIRCLECI_THAUMCRAFT_REPOSITORY_CHECK_OK"
   neoforge-compile:
