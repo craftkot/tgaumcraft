@@ -5,6 +5,12 @@ import dev.ehtid.thaumcraft.blockentity.SmelterBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.BlockHitResult;
+import dev.ehtid.thaumcraft.menu.SmelterMenu;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Containers;
 import net.minecraft.world.level.BlockGetter;
@@ -52,6 +58,17 @@ public final class SmelterBlock extends BaseEntityBlock {
                         SmelterBlockEntity.serverTick(server,pos,actual,tile);
                 });
     }
+    /** BETA26 right-click opens the two-slot furnace inventory. */
+    @Override protected InteractionResult useWithoutItem(BlockState state,Level level,
+            BlockPos pos,Player player,BlockHitResult hit) {
+        if(!level.isClientSide() && !player.isShiftKeyDown()
+                && level.getBlockEntity(pos) instanceof SmelterBlockEntity tile)
+            player.openMenu(new SimpleMenuProvider(
+                    (id,inventory,viewer)->new SmelterMenu(id,inventory,tile),
+                    Component.translatable("container.thaumcraft.smelter")));
+        return InteractionResult.sidedSuccess(level.isClientSide());
+    }
+
     @Override protected void onRemove(BlockState state,Level level,BlockPos pos,
                                       BlockState next,boolean moving){
         if(!state.is(next.getBlock())){

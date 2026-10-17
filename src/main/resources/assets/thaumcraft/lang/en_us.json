@@ -299,5 +299,6 @@
   "block.thaumcraft.jar_void": "Void Jar",
   "block.thaumcraft.tube": "Essentia Tube",
   "block.thaumcraft.alembic": "Arcane Alembic",
-  "block.thaumcraft.smelter_basic": "Essentia Smelter"
+  "block.thaumcraft.smelter_basic": "Essentia Smelter",
+  "container.thaumcraft.smelter": "Essentia Smelter"
 }

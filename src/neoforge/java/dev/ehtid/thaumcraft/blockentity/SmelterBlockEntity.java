@@ -55,6 +55,7 @@ public final class SmelterBlockEntity extends BlockEntity implements Container {
 
     public int storedVis() {return aspects.visSize();}
     public int burnTime() {return burnTime;}
+    public int currentFuelBurnTime() {return currentBurnTime;}
     public int cookTime() {return cookTime;}
     public int cookTarget() {return cookTarget;}
     public AspectListData storedAspects() {return aspects.copy();}

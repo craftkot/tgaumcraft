@@ -48,6 +48,7 @@ public final class ThaumcraftClientEvents {
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ThaumcraftMenus.ARCANE_WORKBENCH.get(), ArcaneWorkbenchScreen::new);
         event.register(ThaumcraftMenus.RESEARCH_TABLE.get(), ResearchTableScreen::new);
+        event.register(ThaumcraftMenus.SMELTER_BASIC.get(), SmelterScreen::new);
     }
 
     /** BETA26 BlockCrystal paints its original uncolored mesh by Aspect. */
