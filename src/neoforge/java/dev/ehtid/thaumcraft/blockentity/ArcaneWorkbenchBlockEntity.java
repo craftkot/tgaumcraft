@@ -8,6 +8,8 @@ import dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.component.CustomData;
 import dev.ehtid.thaumcraft.item.PlateItem;
+import dev.ehtid.thaumcraft.item.ThaumcraftNuggetItem;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -182,6 +184,45 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
         if (cost > 0) setVis(getVis() - cost);
         else setChanged();
         return output;
+    }
+
+    // BETA26 original eight-tube arcane recipe (not ordinary 3x3 crafting).
+    private static final TagKey<Item> COMMON_GLASS_BLOCKS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "glass_blocks"));
+    private static final TagKey<Item> FORGE_GLASS_BLOCKS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("forge", "glass"));
+    private static final TagKey<Item> COMMON_IRON_PLATES = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "plates/iron"));
+
+    public boolean matchesEssentiaTubePattern() {
+        boolean[] quicksilver=new boolean[9], iron=new boolean[9],
+                  glass=new boolean[9], brass=new boolean[9], empty=new boolean[9];
+        for(int slot=0;slot<9;slot++) {
+            ItemStack stack=items.get(slot);
+            int nugget=ThaumcraftNuggetItem.legacyMetadata(stack);
+            quicksilver[slot]=nugget==LegacyEssentiaTubeRecipe.QUICKSILVER_NUGGET_META;
+            brass[slot]=nugget==LegacyEssentiaTubeRecipe.BRASS_NUGGET_META;
+            iron[slot]=isIronPlate(stack) || stack.is(COMMON_IRON_PLATES);
+            glass[slot]=stack.is(Items.GLASS) || stack.is(COMMON_GLASS_BLOCKS)
+                    || stack.is(FORGE_GLASS_BLOCKS);
+            empty[slot]=stack.isEmpty();
+        }
+        return LegacyEssentiaTubeRecipe.matches(quicksilver,iron,glass,brass,empty);
+    }
+
+    public boolean canCraftEssentiaTubes(PlayerKnowledgeData knowledge,float discount) {
+        return matchesEssentiaTubePattern()
+                && knowledge.isResearchKnown(LegacyEssentiaTubeRecipe.RESEARCH)
+                && getVis() >= Math.max(0, LegacyEssentiaTubeRecipe.discountedVis(discount));
+    }
+
+    public boolean craftEssentiaTubes(PlayerKnowledgeData knowledge,float discount) {
+        if(!canCraftEssentiaTubes(knowledge,discount))return false;
+        int cost=LegacyEssentiaTubeRecipe.discountedVis(discount);
+        for(int slot:new int[]{1,3,4,5,7})items.get(slot).shrink(1);
+        if(cost>0)setVis(getVis()-cost);
+        else setChanged();
+        return true;
     }
 
     public boolean matchesThaumometerPattern() {

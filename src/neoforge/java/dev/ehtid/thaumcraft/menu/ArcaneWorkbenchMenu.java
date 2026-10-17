@@ -106,6 +106,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.NORMAL_VIS;
                 if (workbench.matchesVoidJarPattern())
                     return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_VIS;
+                if (workbench.matchesEssentiaTubePattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.BASE_VIS;
                 return 0;
             }
 
@@ -169,11 +171,30 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
     }
 
+    private boolean canCraftEssentiaTubes(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))
+            return false;
+        return wb.canCraftEssentiaTubes(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount);
+    }
+
+    private boolean craftEssentiaTubes(ServerPlayer player,float discount) {
+        if(!(bench instanceof ArcaneWorkbenchBlockEntity wb)||!stillValid(player))
+            return false;
+        if(!wb.craftEssentiaTubes(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(),discount))
+            return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
-                || canCraftVoidJar(player, totalDiscount);
+                || canCraftVoidJar(player, totalDiscount)
+                || canCraftEssentiaTubes(player,totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -230,6 +251,10 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             return new ItemStack(ThaumcraftItems.JAR_NORMAL.get());
         if (expected.is(ThaumcraftItems.JAR_VOID.get()))
             return craftVoidJar(player, totalDiscount);
+        if (expected.is(ThaumcraftItems.TUBE.get())
+                && craftEssentiaTubes(player,totalDiscount))
+            return new ItemStack(ThaumcraftItems.TUBE.get(),
+                    dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT);
         return ItemStack.EMPTY;
     }
 
@@ -243,6 +268,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         else if (owner instanceof ServerPlayer sp && canCraftVoidJar(sp, 0.0F)
                 && bench instanceof ArcaneWorkbenchBlockEntity wb)
             result.setItem(0, wb.previewVoidJar());
+        else if (owner instanceof ServerPlayer sp && canCraftEssentiaTubes(sp,0.0F))
+            result.setItem(0,new ItemStack(ThaumcraftItems.TUBE.get(),
+                    dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT));
         else result.setItem(0, ItemStack.EMPTY);
     }
 

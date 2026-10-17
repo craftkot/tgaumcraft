@@ -19,6 +19,7 @@ TESTS=(
   LegacyWardedJarRecipeParityTest
   InfusionSkullStabilityParityTest
   LegacyEssentiaTubeParityTest
+  LegacyEssentiaTubeRecipeTest
   PhialJarExchangeTest
   EssentiaSourceOrderParityTest
   InfusionRitualLedgerParityTest
@@ -49,6 +50,7 @@ LegacyVoidJarParityTest|BETA26 void jar parity: OK
 LegacyWardedJarRecipeParityTest|BETA26 warded/void jar arcane recipes: OK
 InfusionSkullStabilityParityTest|BETA26 skull infusion stabilizers: OK
 LegacyEssentiaTubeParityTest|BETA26 essentia tube pressure and one-unit transfer: OK
+LegacyEssentiaTubeRecipeTest|BETA26 eight-tube arcane crafting: OK
 PhialJarExchangeTest|BETA26 phial/jar conservation: OK
 EssentiaSourceOrderParityTest|BETA26 essentia source search parity: OK
 InfusionRitualLedgerParityTest|BETA26 infusion ritual resource ledger: OK
