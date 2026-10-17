@@ -46,6 +46,22 @@ public final class NeoForgeTheorycraftActivationPreflight {
         // that it was drawn by the original seed. Reject tampered saves
         // before reading the player's inventory or promising any reward.
         if (!NeoForgeTheorycraftSeedIntegrity.matches(selected)) return null;
+        // These four cards additionally store an initialization-time category
+        // or value derived from the theory's current totals. Until a card is
+        // activated those totals cannot legitimately change via the table.
+        // Reject stale/forged state before inventory, XP or supplies are read.
+        String name = selected.key().substring(selected.key().lastIndexOf('.') + 1);
+        if (session != null && (name.equals("CardInspired")
+                || name.equals("CardNotation") || name.equals("CardReject")
+                || name.equals("CardCelestial"))) {
+            var data = selected.cardNBT();
+            if (!dev.ehtid.thaumcraft.port.core.LegacyTheorycraftSessionFieldIntegrity.matches(
+                    name, data.getLong("seed"),
+                    java.util.Map.of("cat", data.getString("cat"),
+                            "cat1", data.getString("cat1"),
+                            "cat2", data.getString("cat2")),
+                    java.util.Map.of("amt", data.getInt("amt")), session)) return null;
+        }
 
         boolean valid = LegacyTheorycraftCardTagValidator.structurallyValid(
                 selected.key(), selected.cardNBT());
