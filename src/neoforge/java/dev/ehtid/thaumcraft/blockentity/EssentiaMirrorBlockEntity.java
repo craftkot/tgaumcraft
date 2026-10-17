@@ -67,7 +67,16 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         RemoteSink sink=remoteSink(null);
         return sink==null?0:sink.jar().transportSuction(Direction.UP);
     }
-    @Override public String transportSuctionAspect(Direction face) { return null; }
+    /**
+     * Mirror the distant jar's label/type as well as its suction. Without
+     * this an adjacent filtered tube might pull an incompatible aspect
+     * and become permanently blocked in the one-unit buffer.
+     */
+    @Override public String transportSuctionAspect(Direction face) {
+        if(!transportConnects(face))return null;
+        RemoteSink sink=remoteSink(null);
+        return sink==null?null:sink.jar().transportSuctionAspect(Direction.UP);
+    }
     @Override public int transportMinimumSuction() { return 0; }
 
     private boolean stillValidSource(RemoteSource candidate, String aspect) {
