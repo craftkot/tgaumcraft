@@ -4,6 +4,9 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
 import dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic;
 import dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
 import dev.ehtid.thaumcraft.item.PlateItem;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -86,6 +89,101 @@ public final class ArcaneWorkbenchBlockEntity extends BlockEntity implements Con
      * BETA26 findMatchingArcaneRecipe() exposes recipe cost before vis/crystal/research
      * gates are applied to the actual result slot.
      */
+    // Source ConfigRecipes: both WARDEDJARS recipes are paid arcane crafts.
+    private static final TagKey<Item> VANILLA_GLASS_PANES = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("minecraft", "glass_panes"));
+    private static final TagKey<Item> COMMON_GLASS_PANES = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "glass_panes"));
+    private static final TagKey<Item> WOODEN_SLABS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("minecraft", "wooden_slabs"));
+    private static final TagKey<Item> COMMON_WOODEN_SLABS = TagKey.create(
+            Registries.ITEM, ResourceLocation.fromNamespaceAndPath("c", "slabs/wooden"));
+
+    /** Original GWG/G G/GGG, seven panes and one wooden slab. */
+    public boolean matchesWardedJarPattern() {
+        boolean[] glass = new boolean[9], slab = new boolean[9], empty = new boolean[9];
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = items.get(i);
+            glass[i] = stack.is(Items.GLASS_PANE) || stack.is(VANILLA_GLASS_PANES)
+                    || stack.is(COMMON_GLASS_PANES);
+            slab[i] = stack.is(WOODEN_SLABS) || stack.is(COMMON_WOODEN_SLABS);
+            empty[i] = stack.isEmpty();
+        }
+        return LegacyWardedJarRecipes.normalPattern(glass, slab, empty);
+    }
+
+    /** Original ShapedArcaneVoidJar: one ordinary jar anywhere in the grid. */
+    private int voidJarInput() {
+        boolean[] occupied = new boolean[9], jar = new boolean[9];
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = items.get(i);
+            occupied[i] = !stack.isEmpty();
+            jar[i] = stack.is(ThaumcraftItems.JAR_NORMAL.get());
+        }
+        return LegacyWardedJarRecipes.voidJarSlot(occupied, jar);
+    }
+
+    public boolean matchesVoidJarPattern() { return voidJarInput() >= 0; }
+
+    public boolean canCraftWardedJar(PlayerKnowledgeData knowledge, float discount) {
+        return matchesWardedJarPattern()
+                && knowledge.isResearchKnown(LegacyWardedJarRecipes.RESEARCH)
+                && getVis() >= Math.max(0, LegacyWardedJarRecipes.discountedVis(
+                LegacyWardedJarRecipes.NORMAL_VIS, discount));
+    }
+
+    public boolean craftWardedJar(PlayerKnowledgeData knowledge, float discount) {
+        if (!canCraftWardedJar(knowledge, discount)) return false;
+        int cost = LegacyWardedJarRecipes.discountedVis(
+                LegacyWardedJarRecipes.NORMAL_VIS, discount);
+        for (int i = 0; i < 9; i++) if (i != 4) items.get(i).shrink(1);
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
+        return true;
+    }
+
+    public boolean canCraftVoidJar(PlayerKnowledgeData knowledge, float discount) {
+        int input = voidJarInput();
+        return input >= 0
+                && knowledge.isResearchKnown(LegacyWardedJarRecipes.RESEARCH)
+                && !items.get(LegacyWardedJarRecipes.VOID_CRYSTAL_SLOT).isEmpty()
+                && canPlaceItem(LegacyWardedJarRecipes.VOID_CRYSTAL_SLOT,
+                        items.get(LegacyWardedJarRecipes.VOID_CRYSTAL_SLOT))
+                && getVis() >= Math.max(0, LegacyWardedJarRecipes.discountedVis(
+                LegacyWardedJarRecipes.VOID_VIS, discount));
+    }
+
+    /**
+     * ShapedArcaneVoidJar.getCraftingResult retains the input jar's saved
+     * contents/filter instead of creating an empty jar. The original 1.12 NBT
+     * is represented by the modern minecraft:block_entity_data component.
+     * This preview is never allowed to consume ingredients or vis.
+     */
+    public ItemStack previewVoidJar() {
+        int input = voidJarInput();
+        if (input < 0) return ItemStack.EMPTY;
+        ItemStack crafted = new ItemStack(ThaumcraftItems.JAR_VOID.get());
+        CustomData saved = items.get(input).get(DataComponents.BLOCK_ENTITY_DATA);
+        if (saved != null && !saved.isEmpty())
+            crafted.set(DataComponents.BLOCK_ENTITY_DATA, saved);
+        return crafted;
+    }
+
+    /** Atomic server-side debit; caller uses the precomputed NBT-aware output. */
+    public ItemStack craftVoidJar(PlayerKnowledgeData knowledge, float discount) {
+        if (!canCraftVoidJar(knowledge, discount)) return ItemStack.EMPTY;
+        int input = voidJarInput();
+        if (input < 0) return ItemStack.EMPTY;
+        ItemStack output = previewVoidJar();
+        int cost = LegacyWardedJarRecipes.discountedVis(
+                LegacyWardedJarRecipes.VOID_VIS, discount);
+        items.get(input).shrink(1);
+        items.get(LegacyWardedJarRecipes.VOID_CRYSTAL_SLOT).shrink(1);
+        if (cost > 0) setVis(getVis() - cost);
+        else setChanged();
+        return output;
+    }
+
     public boolean matchesThaumometerPattern() {
         for (int slot = 0; slot < ArcaneWorkbenchRuntime.CRAFT_SLOTS; slot++) {
             ItemStack stack = items.get(slot);

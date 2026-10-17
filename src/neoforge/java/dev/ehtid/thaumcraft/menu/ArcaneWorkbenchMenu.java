@@ -102,6 +102,10 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic.BASE_VIS;
                 if (workbench.matchesVisResonatorPattern())
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.BASE_VIS;
+                if (workbench.matchesWardedJarPattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.NORMAL_VIS;
+                if (workbench.matchesVoidJarPattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_VIS;
                 return 0;
             }
 
@@ -119,6 +123,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 if (workbench.matchesThaumometerPattern()) return 0b111111;
                 if (workbench.matchesVisResonatorPattern())
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
+                if (workbench.matchesVoidJarPattern())
+                    return dev.ehtid.thaumcraft.port.core.LegacyWardedJarRecipes.VOID_CRYSTAL_MASK;
                 return 0;
             }
             @Override public void set(int ignored) { }
@@ -151,9 +157,23 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), totalDiscount);
     }
 
+    private boolean canCraftWardedJar(ServerPlayer player, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player)) return false;
+        return wb.canCraftWardedJar(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
+    }
+
+    private boolean canCraftVoidJar(ServerPlayer player, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player)) return false;
+        return wb.canCraftVoidJar(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
+    }
+
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
         return canCraftThaumometer(player, totalDiscount)
-                || canCraftVisResonator(player, totalDiscount);
+                || canCraftVisResonator(player, totalDiscount)
+                || canCraftWardedJar(player, totalDiscount)
+                || canCraftVoidJar(player, totalDiscount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -178,6 +198,25 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return true;
     }
 
+    private boolean craftWardedJar(ServerPlayer player, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player)) return false;
+        if (!wb.craftWardedJar(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount))
+            return false;
+        refreshResult();
+        broadcastChanges();
+        return true;
+    }
+
+    private ItemStack craftVoidJar(ServerPlayer player, float discount) {
+        if (!(bench instanceof ArcaneWorkbenchBlockEntity wb) || !stillValid(player))
+            return ItemStack.EMPTY;
+        ItemStack output = wb.craftVoidJar(
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
+        if (!output.isEmpty()) { refreshResult(); broadcastChanges(); }
+        return output;
+    }
+
     private ItemStack craftSelectedRecipe(ServerPlayer player, ItemStack expected,
                                           float totalDiscount) {
         if (expected.is(ThaumcraftItems.THAUMOMETER.get())
@@ -186,6 +225,11 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         if (expected.is(ThaumcraftItems.VIS_RESONATOR.get())
                 && craftVisResonator(player, totalDiscount))
             return new ItemStack(ThaumcraftItems.VIS_RESONATOR.get());
+        if (expected.is(ThaumcraftItems.JAR_NORMAL.get())
+                && craftWardedJar(player, totalDiscount))
+            return new ItemStack(ThaumcraftItems.JAR_NORMAL.get());
+        if (expected.is(ThaumcraftItems.JAR_VOID.get()))
+            return craftVoidJar(player, totalDiscount);
         return ItemStack.EMPTY;
     }
 
@@ -194,6 +238,11 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
         else if (owner instanceof ServerPlayer sp && canCraftVisResonator(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.VIS_RESONATOR.get()));
+        else if (owner instanceof ServerPlayer sp && canCraftWardedJar(sp, 0.0F))
+            result.setItem(0, new ItemStack(ThaumcraftItems.JAR_NORMAL.get()));
+        else if (owner instanceof ServerPlayer sp && canCraftVoidJar(sp, 0.0F)
+                && bench instanceof ArcaneWorkbenchBlockEntity wb)
+            result.setItem(0, wb.previewVoidJar());
         else result.setItem(0, ItemStack.EMPTY);
     }
 
