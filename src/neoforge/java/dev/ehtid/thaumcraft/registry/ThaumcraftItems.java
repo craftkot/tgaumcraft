@@ -128,6 +128,9 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ALEMBIC, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> SMELTER_BASIC = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.SMELTER_BASIC, new Item.Properties());
+
     /** Original ItemsTC.jarBrace: applied once and recovered when jar breaks. */
     public static final DeferredItem<JarBraceItem> JAR_BRACE = ITEMS.registerItem(
             "jar_brace", JarBraceItem::new, new Item.Properties());

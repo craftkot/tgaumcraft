@@ -14,6 +14,7 @@ import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import dev.ehtid.thaumcraft.block.EssentiaJarBlock;
 import dev.ehtid.thaumcraft.block.EssentiaTubeBlock;
 import dev.ehtid.thaumcraft.block.AlembicBlock;
+import dev.ehtid.thaumcraft.block.SmelterBlock;
 import net.minecraft.world.level.block.Block;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPillarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalLogic;
@@ -107,6 +108,13 @@ public final class ThaumcraftBlocks {
             "alembic", AlembicBlock::new,
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion()
                     .sound(SoundType.WOOD));
+
+    /** BETA26 basic essentia furnace, live fuel and distillation. */
+    public static final DeferredBlock<SmelterBlock> SMELTER_BASIC = BLOCKS.registerBlock(
+            "smelter_basic", SmelterBlock::new,
+            BlockBehaviour.Properties.of().strength(2.5F,10.0F)
+                    .sound(SoundType.METAL)
+                    .lightLevel(state -> state.getValue(SmelterBlock.LIT)?13:0));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.

@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.EssentiaTubeBlockEntity;
 import dev.ehtid.thaumcraft.blockentity.AlembicBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.SmelterBlockEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
@@ -64,6 +65,11 @@ public final class ThaumcraftBlockEntities {
             ALEMBIC = TYPES.register("alembic",
             () -> BlockEntityType.Builder.of(AlembicBlockEntity::new,
                     ThaumcraftBlocks.ALEMBIC.get()).build(null));
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmelterBlockEntity>>
+            SMELTER_BASIC = TYPES.register("smelter_basic",
+            () -> BlockEntityType.Builder.of(SmelterBlockEntity::new,
+                    ThaumcraftBlocks.SMELTER_BASIC.get()).build(null));
 
     public static void register(IEventBus modBus) {
         TYPES.register(modBus);

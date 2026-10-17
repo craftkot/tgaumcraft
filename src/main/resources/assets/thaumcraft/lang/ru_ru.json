@@ -298,5 +298,6 @@
   "block.thaumcraft.candle_yellow": "Жёлтая сальная свеча",
   "block.thaumcraft.jar_void": "Пустотная банка",
   "block.thaumcraft.tube": "Трубка эссенции",
-  "block.thaumcraft.alembic": "Перегонный куб"
+  "block.thaumcraft.alembic": "Перегонный куб",
+  "block.thaumcraft.smelter_basic": "Алхимическая печь"
 }

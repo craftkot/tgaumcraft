@@ -298,5 +298,6 @@
   "block.thaumcraft.candle_yellow": "Yellow Tallow Candle",
   "block.thaumcraft.jar_void": "Void Jar",
   "block.thaumcraft.tube": "Essentia Tube",
-  "block.thaumcraft.alembic": "Arcane Alembic"
+  "block.thaumcraft.alembic": "Arcane Alembic",
+  "block.thaumcraft.smelter_basic": "Essentia Smelter"
 }
