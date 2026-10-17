@@ -310,5 +310,7 @@
   "block.thaumcraft.tube_buffer": "Буфер эссенции",
   "block.thaumcraft.bellows": "Магические мехи",
   "block.thaumcraft.smelter_aux": "Вспомогательная печная насадка",
-  "block.thaumcraft.smelter_vent": "Печной вентиляционный канал"
+  "block.thaumcraft.smelter_vent": "Печной вентиляционный канал",
+  "block.thaumcraft.plank_greatwood": "Доски великого дерева",
+  "item.thaumcraft.filter": "Фильтр эссенции"
 }

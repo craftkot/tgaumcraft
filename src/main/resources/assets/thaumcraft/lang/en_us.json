@@ -310,5 +310,7 @@
   "block.thaumcraft.tube_buffer": "Essentia Tube Buffer",
   "block.thaumcraft.bellows": "Arcane Bellows",
   "block.thaumcraft.smelter_aux": "Auxiliary Essentia Smelter",
-  "block.thaumcraft.smelter_vent": "Smelter Vent"
+  "block.thaumcraft.smelter_vent": "Smelter Vent",
+  "block.thaumcraft.plank_greatwood": "Greatwood Planks",
+  "item.thaumcraft.filter": "Essentia Filter"
 }

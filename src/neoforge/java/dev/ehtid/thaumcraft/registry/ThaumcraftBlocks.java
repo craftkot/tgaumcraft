@@ -106,6 +106,11 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of().strength(0.5F,5.0F)
                     .noOcclusion().sound(SoundType.METAL));
 
+    /** BETA26 greatwood boards: an actual wood block, not vanilla planks. */
+    public static final DeferredBlock<Block> PLANK_GREATWOOD = BLOCKS.registerSimpleBlock(
+            "plank_greatwood",
+            BlockBehaviour.Properties.of().strength(2.0F, 3.0F).sound(SoundType.WOOD));
+
     /** Distillation vessel: BETA26 BlockAlembic. */
     public static final DeferredBlock<AlembicBlock> ALEMBIC = BLOCKS.registerBlock(
             "alembic", AlembicBlock::new,

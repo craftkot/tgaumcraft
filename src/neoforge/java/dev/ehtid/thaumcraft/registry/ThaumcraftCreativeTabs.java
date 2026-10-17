@@ -60,6 +60,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.TUBE_RESTRICT.get());
                         output.accept(ThaumcraftItems.TUBE_ONEWAY.get());
                         output.accept(ThaumcraftItems.TUBE_BUFFER.get());
+                        output.accept(ThaumcraftItems.PLANK_GREATWOOD.get());
                         output.accept(ThaumcraftItems.ALEMBIC.get());
                         output.accept(ThaumcraftItems.SMELTER_BASIC.get());
                         output.accept(ThaumcraftItems.SMELTER_THAUMIUM.get());
@@ -101,6 +102,7 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.AMBER.get());
                         output.accept(ThaumcraftItems.QUICKSILVER.get());
                         output.accept(ThaumcraftItems.FABRIC.get());
+                        output.accept(ThaumcraftItems.FILTER.get());
                         output.accept(ThaumcraftItems.TALLOW.get());
                         output.accept(ThaumcraftItems.ALUMENTUM.get());
                         // Original eleven nugget variants, incl. quartz sliver

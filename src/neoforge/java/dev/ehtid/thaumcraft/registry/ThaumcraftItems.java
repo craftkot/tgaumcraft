@@ -73,6 +73,10 @@ public final class ThaumcraftItems {
     public static final DeferredItem<Item> FABRIC = ITEMS.registerSimpleItem(
             "fabric", new Item.Properties());
 
+    /** BETA26 ItemsTC.filter: distinct alchemical filter crafting ingredient. */
+    public static final DeferredItem<Item> FILTER = ITEMS.registerSimpleItem(
+            "filter", new Item.Properties());
+
     // Original throwable explosive, not an inert ingredient.
     public static final DeferredItem<AlumentumItem> ALUMENTUM = ITEMS.registerItem(
             "alumentum", AlumentumItem::new, new Item.Properties().stacksTo(64));
@@ -124,6 +128,9 @@ public final class ThaumcraftItems {
 
     public static final DeferredItem<BlockItem> TUBE = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.TUBE, new Item.Properties());
+
+    public static final DeferredItem<BlockItem> PLANK_GREATWOOD = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.PLANK_GREATWOOD, new Item.Properties());
 
     public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ALEMBIC, new Item.Properties());
