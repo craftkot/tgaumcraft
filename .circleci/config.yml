@@ -8,6 +8,9 @@ parameters:
   run_minecraft:
     type: boolean
     default: false
+  run_package_server:
+    type: boolean
+    default: true
   # Expensive NeoForge compile runs on demand; cheap core parity stays on all pushes.
   run_compile:
     type: boolean
@@ -66,6 +69,99 @@ jobs:
           when: always
           path: compile-audit/neoforge-compile.log
           destination: neoforge/compile.log
+  # Opt-in end-to-end packaging check, after java source compile succeeds.
+  # Generates a distributable JAR and boots an actual dedicated server.
+  neoforge-package-server:
+    docker:
+      - image: cimg/openjdk:21.0
+    resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Build distributable NeoForge JAR
+          no_output_timeout: 20m
+          command: |
+            mkdir -p server-audit
+            exec > >(tee server-audit/build.log) 2>&1
+            set -euo pipefail
+            echo "JAR_BUILD_START=$(date -u +%FT%TZ)"
+            java -version
+            curl -fsSL --retry 3 --retry-all-errors \
+              -o /tmp/gradle.zip \
+              https://services.gradle.org/distributions/gradle-9.2.1-bin.zip
+            unzip -q /tmp/gradle.zip -d /tmp
+            /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
+              --max-workers=2 build -x test
+            test -n "$(find build/libs -maxdepth 1 -name '*.jar' -print -quit)"
+            for jar in build/libs/*.jar; do
+              test -s "$jar"
+              unzip -t "$jar" | tail -1
+              sha256sum "$jar"
+            done
+            echo THAUMCRAFT_NEOFORGE_JAR_PACKAGED_OK
+      - run:
+          name: Launch real NeoForge dedicated server and assert READY
+          no_output_timeout: 20m
+          command: |
+            set -Eeuo pipefail
+            mkdir -p run server-audit
+            echo 'eula=true' > run/eula.txt
+            # CI probes never bind a public listener.
+            cat > run/server.properties <<'PROPERTIES'
+            online-mode=false
+            server-ip=127.0.0.1
+            server-port=25585
+            max-players=1
+            spawn-protection=0
+            PROPERTIES
+            export JAVA_TOOL_OPTIONS="-Djava.awt.headless=true"
+            setsid /tmp/gradle-9.2.1/bin/gradle --no-daemon --console=plain \
+              --max-workers=2 runServer > server-audit/server.log 2>&1 &
+            server_pid=$!
+            cleanup() {
+              kill -TERM -- "-$server_pid" 2>/dev/null || true
+              kill "$server_pid" 2>/dev/null || true
+              wait "$server_pid" 2>/dev/null || true
+            }
+            trap cleanup EXIT
+            ready=0
+            for attempt in $(seq 1 240); do
+              if grep -Eiq 'Exception in server tick loop|Failed to start the minecraft server|Mod loading has failed|Crash report|Exception in thread "main"' server-audit/server.log; then
+                echo SERVER_SMOKE_CRASH_DETECTED=YES
+                break
+              fi
+              if grep -Eq 'Done \\([^)]*\\)!' server-audit/server.log; then
+                ready=1
+                break
+              fi
+              if ! kill -0 "$server_pid" 2>/dev/null; then
+                echo SERVER_SMOKE_EXITED_PREMATURELY=YES
+                break
+              fi
+              if (( attempt % 15 == 0 )); then
+                echo "SERVER_SMOKE_WAIT_SECONDS=$attempt"
+                tail -6 server-audit/server.log || true
+              fi
+              sleep 1
+            done
+            tail -80 server-audit/server.log || true
+            if [[ "$ready" -ne 1 ]]; then
+              echo THAUMCRAFT_DEDICATED_SERVER_READY=NO
+              exit 1
+            fi
+            grep -Fq 'NeoForge' server-audit/server.log || {
+              echo 'NeoForge marker missing from server log'
+              exit 1
+            }
+            echo THAUMCRAFT_DEDICATED_SERVER_READY=YES
+      - store_artifacts:
+          when: always
+          path: server-audit
+          destination: server-audit
+      - store_artifacts:
+          when: on_success
+          path: build/libs
+          destination: distributable-jars
   real-minecraft-client:
     machine:
       image: ubuntu-2404:current
@@ -118,6 +214,10 @@ workflows:
     when: << pipeline.parameters.run_compile >>
     jobs:
       - neoforge-compile
+  neoforge-jar-server-smoke:
+    when: << pipeline.parameters.run_package_server >>
+    jobs:
+      - neoforge-package-server
   minecraft-visual-regression:
     when: << pipeline.parameters.run_minecraft >>
     jobs:
