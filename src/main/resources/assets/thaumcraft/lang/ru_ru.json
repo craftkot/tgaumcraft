@@ -314,5 +314,7 @@
   "block.thaumcraft.plank_greatwood": "Доски великого дерева",
   "item.thaumcraft.filter": "Фильтр эссенции",
   "block.thaumcraft.log_silverwood": "Бревно серебряного дерева",
-  "block.thaumcraft.plank_silverwood": "Доски серебряного дерева"
+  "block.thaumcraft.plank_silverwood": "Доски серебряного дерева",
+  "block.thaumcraft.metal_alchemical": "Алхимическая конструкция",
+  "block.thaumcraft.metal_alchemical_advanced": "Улучшенная алхимическая конструкция"
 }

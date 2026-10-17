@@ -64,6 +64,8 @@ public final class ThaumcraftCreativeTabs {
                         output.accept(ThaumcraftItems.PLANK_SILVERWOOD.get());
                         output.accept(ThaumcraftItems.PLANK_GREATWOOD.get());
                         output.accept(ThaumcraftItems.ALEMBIC.get());
+                        output.accept(ThaumcraftItems.METAL_ALCHEMICAL.get());
+                        output.accept(ThaumcraftItems.METAL_ALCHEMICAL_ADVANCED.get());
                         output.accept(ThaumcraftItems.SMELTER_BASIC.get());
                         output.accept(ThaumcraftItems.SMELTER_THAUMIUM.get());
                         output.accept(ThaumcraftItems.SMELTER_VOID.get());

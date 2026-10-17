@@ -314,5 +314,7 @@
   "block.thaumcraft.plank_greatwood": "Greatwood Planks",
   "item.thaumcraft.filter": "Essentia Filter",
   "block.thaumcraft.log_silverwood": "Silverwood Log",
-  "block.thaumcraft.plank_silverwood": "Silverwood Planks"
+  "block.thaumcraft.plank_silverwood": "Silverwood Planks",
+  "block.thaumcraft.metal_alchemical": "Alchemical Construct",
+  "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct"
 }

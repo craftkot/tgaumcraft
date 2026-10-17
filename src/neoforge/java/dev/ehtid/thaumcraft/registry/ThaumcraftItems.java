@@ -140,6 +140,11 @@ public final class ThaumcraftItems {
     public static final DeferredItem<BlockItem> ALEMBIC = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.ALEMBIC, new Item.Properties());
 
+    public static final DeferredItem<BlockItem> METAL_ALCHEMICAL = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.METAL_ALCHEMICAL, new Item.Properties());
+    public static final DeferredItem<BlockItem> METAL_ALCHEMICAL_ADVANCED = ITEMS.registerSimpleBlockItem(
+            ThaumcraftBlocks.METAL_ALCHEMICAL_ADVANCED, new Item.Properties());
+
     public static final DeferredItem<BlockItem> SMELTER_BASIC = ITEMS.registerSimpleBlockItem(
             ThaumcraftBlocks.SMELTER_BASIC, new Item.Properties());
 

@@ -126,6 +126,14 @@ public final class ThaumcraftBlocks {
             BlockBehaviour.Properties.of().strength(2.5F).noOcclusion()
                     .sound(SoundType.WOOD));
 
+    /** Original BETA26 BlockMetalTC material blocks for alchemical machines. */
+    public static final DeferredBlock<Block> METAL_ALCHEMICAL = BLOCKS.registerSimpleBlock(
+            "metal_alchemical",
+            BlockBehaviour.Properties.of().strength(3.0F, 10.0F).sound(SoundType.METAL));
+    public static final DeferredBlock<Block> METAL_ALCHEMICAL_ADVANCED = BLOCKS.registerSimpleBlock(
+            "metal_alchemical_advanced",
+            BlockBehaviour.Properties.of().strength(3.0F, 10.0F).sound(SoundType.METAL));
+
     /** BETA26 basic essentia furnace, live fuel and distillation. */
     public static final DeferredBlock<SmelterBlock> SMELTER_BASIC = BLOCKS.registerBlock(
             "smelter_basic", SmelterBlock::new,
