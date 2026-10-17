@@ -83,7 +83,9 @@ public final class ThaumcraftBlocks {
     /** BETA26 TileJarFillable, persisted world essentia. */
     public static final DeferredBlock<EssentiaJarBlock> JAR_NORMAL = BLOCKS.registerBlock(
             "jar_normal", EssentiaJarBlock::new,
-            BlockBehaviour.Properties.of().strength(2.5F).noOcclusion().sound(SoundType.GLASS));
+            // Source BlockJar: hardness 0.3, inherited device resistance 20.
+            BlockBehaviour.Properties.of().strength(0.3F, 20.0F)
+                    .noOcclusion().sound(SoundType.GLASS));
 
     // Actual BlockStoneTC materials (2.0 hardness, 10.0 resistance).
     // Pillars source drops two of these, rather than the pillar itself.
@@ -158,7 +160,8 @@ public final class ThaumcraftBlocks {
                     props -> new NitorBlock(props, color.particleRgb()),
                     BlockBehaviour.Properties.of().strength(0.1f)
                             .lightLevel(state -> 15)
-                            .noCollission().noOcclusion().sound(SoundType.GLASS));
+                            .mapColor(dye.getMapColor())
+                            .noCollission().noOcclusion().sound(SoundType.WOOL));
             registered.put(dye, entry);
         }
         if (registered.size() != 16) throw new IllegalStateException("Missing original Nitor color");

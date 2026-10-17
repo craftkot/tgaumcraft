@@ -30,6 +30,8 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     public LegacyEssentiaJarLogic.State snapshot() { return stored; }
     public int facing() { return facing; }
     public boolean blocked() { return blocked; }
+    /** Source IEssentiaTransport#isBlocked; a braced jar refuses pipe IO. */
+    public boolean isBlocked() { return blocked; }
 
     /**
      * Original BlockJar#applyLabel: unfilled label learns the jar's current
@@ -113,7 +115,7 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     }
     /** Caller must debit the returned amount from its actual source. */
     public int addFromTransport(String aspect, int offered, Direction side) {
-        if (level == null || level.isClientSide || !isConnectable(side)
+        if (level == null || level.isClientSide || blocked || !isConnectable(side)
                 || !LegacyEssentiaJarLogic.accepts(stored, aspect)) return 0;
         var transfer = LegacyEssentiaJarLogic.add(stored, aspect, offered);
         if (transfer.transferred() > 0) updateStored(transfer.state());
@@ -149,7 +151,7 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
         return true;
     }
     public int takeForTransport(String aspect, int amount, Direction side) {
-        return isConnectable(side) && takeForInfusion(aspect, amount) ? amount : 0;
+        return !blocked && isConnectable(side) && takeForInfusion(aspect, amount) ? amount : 0;
     }
     private void updateStored(LegacyEssentiaJarLogic.State next) {
         stored = next;

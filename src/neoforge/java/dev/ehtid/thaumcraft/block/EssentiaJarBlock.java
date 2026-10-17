@@ -25,7 +25,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /** BETA26 normal jar, original geometry bounds. */
 public final class EssentiaJarBlock extends BaseEntityBlock {
  public static final MapCodec<EssentiaJarBlock> CODEC = simpleCodec(EssentiaJarBlock::new);
- private static final VoxelShape SHAPE = box(3,0,3,13,14,13);
+ private static final VoxelShape SHAPE = box(3,0,3,13,12,13);
  public EssentiaJarBlock(BlockBehaviour.Properties props) { super(props); }
  @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
  @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
