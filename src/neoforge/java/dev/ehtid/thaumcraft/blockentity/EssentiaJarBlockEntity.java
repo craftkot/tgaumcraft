@@ -4,6 +4,11 @@ import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyPhialJarExchange;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -27,6 +32,23 @@ public final class EssentiaJarBlockEntity extends BlockEntity {
     /** True if the jar item must retain non-default BlockEntity state. */
     public boolean hasStoredData() {
         return stored.amount() > 0 || stored.filter() != null || blocked || facing != 2;
+    }
+
+    /**
+     * Called only by the genuine block loot path. Vanilla BlockItem applies
+     * minecraft:block_entity_data when this exact jar is subsequently placed.
+     * Include the registered BlockEntity id, not a guessed legacy NBT id;
+     * otherwise 1.21 silently discards the item component on placement.
+     */
+    public boolean saveToItem(ItemStack drop, HolderLookup.Provider registries) {
+        if (drop.isEmpty() || !drop.is(ThaumcraftItems.JAR_NORMAL.get())
+                || !hasStoredData()) return false;
+        CompoundTag tag = new CompoundTag();
+        saveAdditional(tag, registries);
+        tag.putString("id",
+                BuiltInRegistries.BLOCK_ENTITY_TYPE.getKey(getType()).toString());
+        drop.set(DataComponents.BLOCK_ENTITY_DATA, CustomData.of(tag));
+        return true;
     }
     public boolean isConnectable(Direction side) { return side == Direction.UP; }
     public int suction(Direction side) {

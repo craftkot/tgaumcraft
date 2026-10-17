@@ -34,8 +34,9 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
   BlockEntity blockEntity = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
   if (blockEntity instanceof EssentiaJarBlockEntity jar && jar.hasStoredData()) {
    for (ItemStack stack : drops) {
-    if (stack.is(this.asItem()) && jar.getLevel() != null)
-     jar.saveToItem(stack, jar.getLevel().registryAccess());
+    if (stack.is(this.asItem()) && jar.getLevel() != null
+            && jar.saveToItem(stack, jar.getLevel().registryAccess()))
+     dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("JAR_DROP_SAVED_COMPONENT");
    }
   }
   return drops;

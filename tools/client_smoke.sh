@@ -801,7 +801,34 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   sleep 3
   send_chat '/execute if entity @e[type=minecraft:item,x=104,y=149,z=80,distance=..4,nbt={Item:{id:"thaumcraft:jar_normal",components:{"minecraft:block_entity_data":{Aspect:"aer",Amount:17s}}}}] run say JAR_DROP_PRESERVES_17_AER_OK'
   capture 33-filled-jar-drop-nbt
+  # Unlike the historical test this MUST reach genuine Java block loot
+  # conversion; merely executing /setblock ... destroy is not proof.
+  assert_smoke_event JAR_DROP_SAVED_COMPONENT
   echo 'CLIENT_SENT_JAR_DROP_PRESERVATION_TEST=YES' | tee -a client-smoke-status.txt
+
+  # Live phial integration (not synthetic jar-to-jar data merging):
+  # interact with a real 25-Aer jar using the actual empty glass bottle,
+  # then re-use the filled bottle to return its contents. Both operations
+  # are backed by item.useOn and atomic jar BlockEntity writes.
+  send_chat '/fill 103 148 76 107 148 82 minecraft:stone'
+  send_chat '/setblock 105 149 80 thaumcraft:jar_normal'
+  send_chat '/data merge block 105 149 80 {Aspect:"aer",Amount:25s}'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:phial 1'
+  send_chat '/tp @p 105.5 149 76.5 0 15'
+  xdotool key --clearmodifiers 1
+  sleep 2
+  capture 33a-jar-phial-before-transfer
+  xdotool click 3
+  sleep 3
+  assert_smoke_event PHIAL_JAR_WITHDRAWN
+  send_chat '/execute if data block 105 149 80 {Aspect:"aer",Amount:15s} run say REAL_PHIAL_JAR_15_AER_OK'
+  capture 33b-jar-phial-after-withdrawal
+  xdotool click 3
+  sleep 3
+  assert_smoke_event PHIAL_JAR_DEPOSITED
+  send_chat '/execute if data block 105 149 80 {Aspect:"aer",Amount:25s} run say REAL_PHIAL_JAR_RETURNED_25_AER_OK'
+  capture 33c-jar-phial-after-deposit
+  echo 'CLIENT_SENT_PHIAL_JAR_REAL_TWO_WAY_TRANSFER=YES' | tee -a client-smoke-status.txt
 
   # Quantify that the game camera sees new geometry; exact parity and
   # absence of checkerboard models still require screenshot inspection.

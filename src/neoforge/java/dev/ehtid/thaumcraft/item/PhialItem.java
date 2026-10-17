@@ -106,6 +106,15 @@ public final class PhialItem extends Item {
                 instanceof EssentiaJarBlockEntity jar)) return InteractionResult.PASS;
         Player player = context.getPlayer();
         if (player == null || context.getItemInHand().isEmpty()) return InteractionResult.PASS;
+        if (!player.mayUseItemAt(context.getClickedPos(),
+                context.getClickedFace(), context.getItemInHand()))
+            return InteractionResult.FAIL;
+        // Bad legacy Aspects NBT must not silently turn a corrupted or
+        // add-on phial into an empty bottle that can extract 10 new units.
+        CustomData legacyPayload = context.getItemInHand().get(DataComponents.CUSTOM_DATA);
+        if (legacyPayload != null && legacyPayload.copyTag().contains("Aspects")
+                && containedAspect(context.getItemInHand()) == null)
+            return InteractionResult.PASS;
         String phialAspect = containedAspect(context.getItemInHand());
         int phialAmount = containedAmount(context.getItemInHand());
 
@@ -117,6 +126,7 @@ public final class PhialItem extends Item {
             if (!jar.drawIntoPhial(current.aspect(), CAPACITY))
                 return InteractionResult.FAIL;
             exchangeOne(player, context.getHand(), filledPhial(current.aspect()));
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("PHIAL_JAR_WITHDRAWN");
             return InteractionResult.SUCCESS;
         }
 
@@ -126,6 +136,7 @@ public final class PhialItem extends Item {
         if (!jar.receivePhial(phialAspect, phialAmount))
             return InteractionResult.FAIL;
         exchangeOne(player, context.getHand(), emptyPhial());
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("PHIAL_JAR_DEPOSITED");
         return InteractionResult.SUCCESS;
     }
 
