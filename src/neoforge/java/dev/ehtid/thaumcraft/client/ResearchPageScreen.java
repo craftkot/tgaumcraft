@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyResearchPages;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.port.core.ResearchBrowserModel;
 import dev.ehtid.thaumcraft.port.core.ResearchPageVisibility;
+import dev.ehtid.thaumcraft.port.core.ResearchAddendumVisibility;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -91,6 +92,18 @@ public final class ResearchPageScreen extends Screen {
             lines.add(Component.literal("Source warp: " + stage.warp()));
         for (String recipe : stage.recipeIds())
             lines.add(Component.literal("Recipe ID: " + recipe));
+
+        // BETA26 addenda are part of completed research pages, not new
+        // stages. Only the server's PAGE flag + EACH completed source
+        // prerequisite can reveal a specific original addendum.
+        var data = knowledge();
+        if (data != null && safeIndex == page.stages().size() - 1) {
+            for (var addon : ResearchAddendumVisibility.visible(page, data, CATALOG)) {
+                lines.add(Component.literal("Addendum: " + addon.textKey()));
+                for (String recipe : addon.recipeIds())
+                    lines.add(Component.literal("Addendum recipe: " + recipe));
+            }
+        }
         return List.copyOf(lines);
     }
 
