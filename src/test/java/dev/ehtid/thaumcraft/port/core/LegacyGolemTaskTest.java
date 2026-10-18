@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
+import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
 import dev.ehtid.thaumcraft.port.core.golem.SealArea;
 import dev.ehtid.thaumcraft.port.core.golem.TaskBoard;
 import dev.ehtid.thaumcraft.port.core.golem.TaskSelection;
@@ -372,6 +373,22 @@ public final class LegacyGolemTaskTest {
         eq((byte)0xa5, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xa7,false));
         eq((byte)0xff, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xff,true));
         eq((byte)0xfd, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xff,false));
+        // Original dyeBlack..dyeWhite mapping, and its effect on real seal eligibility.
+        for (int legacy = 0; legacy < 16; legacy++) {
+            byte color = GolemColorRules.fromLegacyDyeIndex(legacy);
+            eq(color, GolemColorRules.fromModernDyeId(15 - legacy));
+            eq(true, TaskSelection.colorMatches(color, color));
+            eq(true, TaskSelection.colorMatches(color, (byte) 0));
+            eq(true, TaskSelection.colorMatches((byte) 0, color));
+            eq(false, TaskSelection.colorMatches(color, (byte) (color == 16 ? 1 : color + 1)));
+        }
+        eq((byte) 16, GolemColorRules.fromLegacyDyeIndex(0)); // dyeBlack
+        eq((byte) 15, GolemColorRules.fromLegacyDyeIndex(1)); // dyeRed
+        eq((byte) 1, GolemColorRules.fromLegacyDyeIndex(15)); // dyeWhite
+        rejects(IllegalArgumentException.class, () -> GolemColorRules.fromLegacyDyeIndex(-1));
+        rejects(IllegalArgumentException.class, () -> GolemColorRules.fromLegacyDyeIndex(16));
+        rejects(IllegalArgumentException.class, () -> GolemColorRules.fromModernDyeId(-1));
+        rejects(IllegalArgumentException.class, () -> GolemColorRules.fromModernDyeId(16));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();
