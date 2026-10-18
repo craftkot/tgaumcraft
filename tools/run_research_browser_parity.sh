@@ -6,5 +6,8 @@ OUT=build/research-browser-classes
 mkdir -p "$OUT"
 mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
 javac --release 21 -d "$OUT" "${CORE_SOURCES[@]}" \
-  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserModelTest.java
+  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserModelTest.java \
+  src/main/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserPagination.java \
+  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserPaginationTest.java
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchBrowserModelTest
+java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchBrowserPaginationTest

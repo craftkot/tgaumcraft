@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.BuiltInResearchCategories;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.port.core.ResearchBrowserModel;
+import dev.ehtid.thaumcraft.port.core.ResearchBrowserPagination;
 import dev.ehtid.thaumcraft.port.core.ResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.ResearchCategoryRegistry;
 import net.minecraft.client.Minecraft;
@@ -40,7 +41,7 @@ public final class ResearchIndexScreen extends Screen {
     private int page;
 
     public ResearchIndexScreen(Screen parent) {
-        super(Component.literal("Thaumonomicon"));
+        super(Component.translatable("item.thaumcraft.thaumonomicon"));
         this.parent = parent;
     }
 
@@ -58,6 +59,9 @@ public final class ResearchIndexScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        // Screen.init is called again on resize: old button objects must
+        // not leak into the new list or exceed the seven category slots.
+        categoryButtons.clear();
         int x = (width - BOOK_W) / 2, y = (height - BOOK_H) / 2;
         var categories = ResearchBrowserModel.categories(
                 knowledge() == null ? new PlayerKnowledgeData() : knowledge(), CATALOG, CATEGORIES);
@@ -94,11 +98,15 @@ public final class ResearchIndexScreen extends Screen {
             var category = categories.get(i);
             categoryButtons.get(i).active = category.unlocked();
         }
-        int total = currentEntries().size();
-        int last = Math.max(0, (total - 1) / PAGE_SIZE);
-        page = Math.min(page, last);
-        if (previousPage != null) previousPage.active = page > 0;
-        if (nextPage != null) nextPage.active = page < last;
+        var entries = currentEntries();
+        var viewport = ResearchBrowserPagination.of(entries.size(), page, PAGE_SIZE);
+        page = viewport.index();
+        // A research could disappear after a fresh server sync (or switching
+        // categories). Do not keep a stale selection of an invisible entry.
+        if (selectedEntry != null && entries.stream().noneMatch(
+                entry -> entry.key().equals(selectedEntry))) selectedEntry = null;
+        if (previousPage != null) previousPage.active = viewport.hasPrevious();
+        if (nextPage != null) nextPage.active = viewport.hasNext();
     }
 
     @Override
@@ -117,8 +125,9 @@ public final class ResearchIndexScreen extends Screen {
                 x + 226, y + 44, 0x49321E, false);
 
         var entries = currentEntries();
-        int offset = page * PAGE_SIZE;
-        for (int i = 0; i < PAGE_SIZE && offset + i < entries.size(); i++) {
+        var viewport = ResearchBrowserPagination.of(entries.size(), page, PAGE_SIZE);
+        int offset = viewport.fromIndex();
+        for (int i = 0; i < viewport.visibleCount(); i++) {
             var entry = entries.get(offset + i);
             int rowY = y + 65 + i * 23;
             boolean selected = entry.key().equals(selectedEntry);
@@ -141,7 +150,7 @@ public final class ResearchIndexScreen extends Screen {
             }
         }
         graphics.drawString(font, (page + 1) + "/"
-                + Math.max(1, (entries.size() + PAGE_SIZE - 1) / PAGE_SIZE),
+                + viewport.pageCount(),
                 x + 310, y + 314, 0x49321E, false);
         super.render(graphics, mouseX, mouseY, delta);
     }
@@ -152,9 +161,10 @@ public final class ResearchIndexScreen extends Screen {
             int x = (width - BOOK_W) / 2, y = (height - BOOK_H) / 2;
             if (mouseX >= x + 221 && mouseX < x + 456 && mouseY >= y + 63
                     && mouseY < y + 63 + PAGE_SIZE * 23) {
-                int index = (int) (mouseY - (y + 63)) / 23 + page * PAGE_SIZE;
                 var entries = currentEntries();
-                if (index >= 0 && index < entries.size()) {
+                var viewport = ResearchBrowserPagination.of(entries.size(), page, PAGE_SIZE);
+                int index = viewport.entryIndexAtRow((int) (mouseY - (y + 63)) / 23);
+                if (index >= 0) {
                     selectedEntry = entries.get(index).key();
                     return true;
                 }

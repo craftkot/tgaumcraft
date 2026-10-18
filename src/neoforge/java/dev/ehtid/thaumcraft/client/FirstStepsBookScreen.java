@@ -73,7 +73,7 @@ public final class FirstStepsBookScreen extends Screen {
                     button.active = false; // wait for the authoritative sync
                 }).bounds(x + 183, y + 311, 145, 20).build();
         addRenderableWidget(advanceButton);
-        browseButton = Button.builder(Component.literal("Research"),
+        browseButton = Button.builder(Component.translatable("item.thaumcraft.thaumonomicon"),
                 button -> Minecraft.getInstance().setScreen(new ResearchIndexScreen(this)))
                 .bounds(x + 344, y + 311, 133, 20).build();
         addRenderableWidget(browseButton);
