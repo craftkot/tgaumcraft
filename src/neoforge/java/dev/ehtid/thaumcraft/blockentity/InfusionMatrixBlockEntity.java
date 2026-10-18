@@ -369,7 +369,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 && originalSalisInput.getCount() == 1
                 && (!seedStack.isEmpty()
                         ? ItemStack.isSameItemSameComponents(seedStack, originalSeedInput)
-                        : itemProgress.consumedMask() % 2 == 1)
+                        : (itemProgress.consumedMask()
+                                & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) != 0)
                 && (!salisStack.isEmpty()
                         ? ItemStack.isSameItemSameComponents(salisStack, originalSalisInput)
                         : (itemProgress.consumedMask()
