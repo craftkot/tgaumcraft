@@ -287,6 +287,17 @@ source_before + golem_before + destination_before + world_items_before
 
 ### Проверенный результат 18.10.2026
 
-Core: 6 материалов, 18 частей, 19 traits, упаковка/валидация, характеристики и начальный расход сборки; 34 808 construction и 922 task assertions. Полный прежний Core runner с новыми тестами PASS. Начисление XP пока только исследовано, серверной прогрессии ранга нет.
+Core: 6 материалов, 18 частей, 19 traits, упаковка/валидация, характеристики и начальный расход сборки; 34 808 construction и 922 task assertions. Полный прежний Core runner с новыми тестами PASS. В первом подходе начисление XP было только исследовано; продолжение ниже подключает подтверждённый Fill XP.
 
 Runtime: стандартный деревянный голем, placer/owner, исходные 16 HP/2 armor/.3 movement и 1.2 navigation multiplier, руки, NBT, возврат домой, регенерация 1 HP/100 ticks, сбор через persisted Pickup seal → exclusive TaskBoard → живую навигацию. Клиентский animated renderer временный. Всё 8 серверных GameTests PASS; отдельные write/read запуски dedicated server подтвердили холодное сохранение и отсутствие копии груза. Подробности и невыполненные проверки: [протокол](GOLEM_VALIDATION_2026_10_18.md).
+
+
+### M10.4 — подтверждённый маршрут в контейнер
+
+`GolemSeals.Type` разделяет PICKUP/FILL в общем per-level SavedData; существующий TaskBoard обслуживает оба типа целей. Fill создаёт block task раз в20 ticks и новое доступное задание при старте старого. `GolemFillGoal` использует priority4 и AIGotoBlock thresholds, поэтому Pickup3 и Home5 сохраняют исходный порядок.
+
+`GolemContainers` получает sided `Capabilities.ItemHandler.BLOCK` без кеширования через переустановку блока. Vanilla chest/barrel/furnace обслуживаются их штатными NeoForge capabilities. Назначение требует simulate room-for-some; завершение использует actual remainder, а не обещанный simulate count. Остаток возвращается в руки; компоненты и max stack limits определяет настоящий handler. При отсутствии handler исходный Fill выбрасывает предмет на выбранной грани; unloaded destination/вторая половина сундука этим случаем не считаются.
+
+После положительного actual transfer начисляется1 SMART XP, только сервером; порог `(rank+1)^2*1000`, один rank за вызов и cap10. Это не выдача XP для Pickup или головы BASIC. В переносе намеренно нет XP за нулевой фактический перенос, даже если нестабильный handler предварительно обещал место.
+
+Сохраняется прежняя узкая поверхность: empty blacklist, неизменяемые через GUI defaults, стандартный деревянный placer, временные item icons. UI/настройки, `pexist`/limits/whitelist и redstone ещё не реализованы. Точные игровые проверки и инструкции перезапуска: [протокол](GOLEM_VALIDATION_2026_10_18.md), текущий статус: [журнал](lanes/golems.md).

@@ -105,3 +105,6 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 Итоговый JAR M10.4: `build/libs/thaumcraft-6.1.BETA26-port.stage9.jar`, SHA256 `f0f0fd66c33bf71e48341db09087efa51e45986ea561adf5590f5329efeb059a`.
 
 Коммит этого шага — реальная Fill/container механика и 7 новых GameTests; последующие коммиты отдельно выделяют restart fixtures и общие EN/RU ключи.
+
+- `1117c6a` — единые typed seals, Fill AI, sided containers, actual remainder/SMART XP и 15 GameTests PASS.
+- Следующий коммит — cold restart сценарий Fill и протокол доказательств; WRITE/READ PASS.

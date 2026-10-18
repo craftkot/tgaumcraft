@@ -72,3 +72,30 @@ Runtime placer принимает пока **только стандартную
 Стоимость подтверждённой базовой конструкции реализована в `GolemAssembly`: 3 Greatwood planks + 2 Simple Arcane Mechanism + 1 Clockwork Mind (`mind@0`). Это расчёт ингредиентов в Core, не выдача результата/рецепт и не готовый пресс. Остальные стоимости и начисление rank XP оставлены явными пробелами.
 
 Финальный JAR: `build/libs/thaumcraft-6.1.BETA26-port.stage9.jar`, SHA256 `ba5234d8b666aedb9626b2b2b98576345a53d0851872e1332a9de1df8caf80ff`. Java/runtime дерево для этих результатов соответствует `2d6e66d` плюс последующие изменения документации. Добавление Core стоимости базовой сборки не меняло уже прошедшие восемь игровых сценариев; после него повторены полный Core и incremental full build.
+
+
+## Дополнение M10.4 — Fill
+
+Новые правила сверены с `SealFill`, `AIGotoBlock` и `EntityThaumcraftGolem.addRankXp` того же официального JAR. Повторный полный Core runner прошёл; NeoForge compile/build прошли. Набор расширен до15 GameTests (8прежних+7новых):
+
+1. Actual ground item → живое движение голема → настоящий chest, с conservation на каждом tick и сохранением custom name.
+2. Два работающих голема и только5 свободных мест: destination+hands сохраняют79 diamonds, ровно5 перенесены.
+3. Handler обещает принять10 на simulate, реально принимает2: у голема остаются8; разные item components не сливаются.
+4. Реальная furnace capability: raw iron не входит снизу, входит сверху; coal входит сбоку.
+5. Container заполнен после выбора задания, seal удалён или lease перенаправлен на другую грань: груз остаётся прежним.
+6. Исходный fallback без container создаёт один ItemEntity; повторный callback не повторяет предмет/XP; Fill1XP повышает SMART999→rank1/XP0 без бесплатного лечения.
+7. Typed seal NBT и zero restored reservations; producer/adapter не загружают удалённый chunk.
+
+Первый запуск: `All 15 required tests passed`, 4.171s внутри игрового набора, 1m10s полный Gradle запуск. После добавления строгой привязки lease к грани проведён отдельный финальный запуск, **PASS: все 15 required, 4.837 s / полный запуск 51 s**.
+
+Холодный перезапуск нового Fill-сценария: **WRITE+READ PASS**. Проверены одна сущность,37 именованных iron ingots, сохранение PICKUP и FILL, owner/props/home/XP/color/health,11gold в barrel, отсутствие старых leases и копии груза. Свежий fixture — `build/golem-fill-restart`; старый `build/golem-restart` не трогается. EULA/server.properties создаются так же, как в предыдущем сценарии.
+
+```bash
+gradle --init-script tools/golems.gradle build -x test runGolemGameTest
+gradle --init-script tools/golems.gradle -PgolemRestartScenario=fill -PgolemRestartPhase=write runGolemRestart
+gradle --init-script tools/golems.gradle -PgolemRestartScenario=fill -PgolemRestartPhase=read runGolemRestart
+```
+
+Логи сессии: `/workspace/reference/golems-fill-{core,compile,gametest,final,restart-write,restart-read}.log`. Подготовленные зависимости позволяют `--offline`; в чистой среде они сначала должны быть загружены штатным Gradle способом. Полная внешняя compatibility с чужими inventory mods, клиент, live chunk unloading и аварийный power loss не проверялись.
+
+JAR M10.4 SHA256 `f0f0fd66c33bf71e48341db09087efa51e45986ea561adf5590f5329efeb059a`; ZIP CRC PASS. Последующие изменения касаются документации.

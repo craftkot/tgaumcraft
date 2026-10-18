@@ -11,8 +11,10 @@ allprojects {
             }
             neo.runs.create('golemRestart') {
                 server()
-                gameDirectory = project.layout.buildDirectory.dir('golem-restart')
+                def scenario = project.findProperty('golemRestartScenario') ?: ''
+                gameDirectory = project.layout.buildDirectory.dir(scenario == 'fill' ? 'golem-fill-restart' : 'golem-restart')
                 systemProperty 'thaumcraft.golemRestartPhase', project.findProperty('golemRestartPhase') ?: ''
+                systemProperty 'thaumcraft.golemRestartScenario', scenario
             }
         }
     }

@@ -27,6 +27,7 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
+    private static final boolean FILL_SCENARIO = "fill".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final UUID GOLEM_ID = UUID.fromString("671c5d1c-8533-490b-9ac2-e06c973d0d10");
     private static final UUID OWNER_ID = UUID.fromString("712b8f88-92c3-4bee-a3d8-53e8248ac89d");
     private static final BlockPos HOME = new BlockPos(8, 120, 8);
@@ -81,6 +82,15 @@ public final class GolemRestartProbe {
         require(golem.holdItem(cargo()).isEmpty(), "Cargo fits");
         require(level.addFreshEntity(golem), "Entity accepted");
         require(GolemSeals.get(level).place(HOME.below(), Direction.UP, OWNER_ID), "Seal placed");
+        if (FILL_SCENARIO) {
+            var pos = HOME.offset(3, -1, 0);
+            level.setBlockAndUpdate(pos, Blocks.BARREL.defaultBlockState());
+            require(GolemSeals.get(level).place(pos, Direction.UP, OWNER_ID, GolemSeals.Type.FILL), "Fill seal placed");
+            var handler = dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level,
+                    new GolemSeals.SealKey(pos, Direction.UP));
+            require(handler != null && handler.insertItem(0, new ItemStack(Items.GOLD_INGOT, 11), false).isEmpty(),
+                    "Actual persistent destination populated");
+        }
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
 
@@ -96,7 +106,16 @@ public final class GolemRestartProbe {
         require(ItemStack.matches(cargo(), golem.getMainHandItem()) && golem.getOffhandItem().isEmpty(),
                 "Exact cargo count and components restored once");
         require(GolemSeals.get(level).contains(HOME.below(), Direction.UP), "Seal restored");
-        require(GolemSeals.get(level).pendingTasks() == 0 && !golem.hasWorkTask(), "No stale work replayed");
+        require(GolemSeals.get(level).reservedTasks() == 0 && !golem.hasWorkTask(), "No stale work replayed");
+        if (FILL_SCENARIO) {
+            var pos = HOME.offset(3, -1, 0);
+            require(GolemSeals.get(level).all().stream().anyMatch(seal -> seal.key().pos().equals(pos)
+                    && seal.type() == GolemSeals.Type.FILL && seal.owner().equals(OWNER_ID)), "Fill type and owner restored");
+            var handler = dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level,
+                    new GolemSeals.SealKey(pos, Direction.UP));
+            require(handler != null && ItemStack.matches(handler.getStackInSlot(0), new ItemStack(Items.GOLD_INGOT, 11)),
+                    "Destination contents restored once");
+        }
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
         require(workers == 1, "Exactly one restored worker");
