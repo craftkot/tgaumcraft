@@ -423,6 +423,73 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     }
 
 
+    /** Exact catalogued Crystal Farmer BlockItem, never a saved-NBT output. */
+    private static net.minecraft.world.item.Item crystalFarmerOutput(String aspect) {
+        return switch (aspect) {
+            case "aer" -> ThaumcraftItems.CRYSTAL_AER.get();
+            case "ignis" -> ThaumcraftItems.CRYSTAL_IGNIS.get();
+            case "aqua" -> ThaumcraftItems.CRYSTAL_AQUA.get();
+            case "terra" -> ThaumcraftItems.CRYSTAL_TERRA.get();
+            case "ordo" -> ThaumcraftItems.CRYSTAL_ORDO.get();
+            case "perditio" -> ThaumcraftItems.CRYSTAL_PERDITIO.get();
+            case "vitium" -> ThaumcraftItems.CRYSTAL_VITIUM.get();
+            default -> null;
+        };
+    }
+
+    /** Clears only accounting after the result is already on the pedestal. */
+    private void clearCompletedCrystalFarmer() {
+        crafting = false;
+        recipeInstability = 0;
+        ritualLedger = null;
+        itemProgress = null;
+        seedsPedestal = null;
+        salisPedestal = null;
+        ritualStartCostMultiplier = 1.0F;
+        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+        changedAndSync();
+    }
+
+    /**
+     * Crash window: matrix saved RESERVED but central pedestal already saved
+     * its genuine BlockItem output. Restoring RESERVED yields STALLED, so
+     * NEVER call craftingFinish again. We can ACK the existing output only
+     * after checking the paid ledger, consumed mask, fixed side positions and
+     * the exact center result in the real loaded world.
+     *
+     * Otherwise leave STALLED untouched for manual recovery. No items,
+     * essentia, or world chunks are generated/loaded by this method.
+     */
+    private void acknowledgeRecoveredCrystalFarmerOutput() {
+        if (!(level instanceof ServerLevel) || !active || !crafting
+                || ritualLedger == null || !ritualLedger.readyForIngredients()
+                || itemProgress == null || !itemProgress.readyToFinish()
+                || finishCheckpoint.phase() != LegacyCrystalFarmerFinishCheckpoint.Phase.STALLED
+                || !validLocation() || !trackedPedestalsValid()
+                || !level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
+                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seeds)
+                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salis)
+                || !seeds.displayedItem().isEmpty()
+                || !salis.displayedItem().isEmpty()
+                || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
+            return;
+        var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
+                .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
+                .findFirst().orElse(null);
+        if (spec == null) return;
+        net.minecraft.world.item.Item expected = crystalFarmerOutput(spec.aspectTag());
+        ItemStack present = center.displayedItem();
+        if (expected == null || present.getCount() != 1 || !present.is(expected))
+            return;
+        var ack = finishCheckpoint.acknowledgeAlreadyPublished(
+                ritualLedger.readyForIngredients(),
+                itemProgress.readyToFinish(), true);
+        if (!ack.finished()) return;
+        finishCheckpoint = ack;
+        clearCompletedCrystalFarmer();
+        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SAVED_OUTPUT_ACKNOWLEDGED");
+    }
+
     /**
      * BETA26 finish for the ONLY catalogued original infusion outputs:
      * seven aspect-specific CrystalCluster BlockItems, one each. Source
@@ -446,16 +513,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (recipe == null) return;
         // Only source-era crystal BlockItems, never an output parsed from
         // user-controlled NBT or a new invented recipe.
-        net.minecraft.world.item.Item outputItem = switch (recipe.aspectTag()) {
-            case "aer" -> ThaumcraftItems.CRYSTAL_AER.get();
-            case "ignis" -> ThaumcraftItems.CRYSTAL_IGNIS.get();
-            case "aqua" -> ThaumcraftItems.CRYSTAL_AQUA.get();
-            case "terra" -> ThaumcraftItems.CRYSTAL_TERRA.get();
-            case "ordo" -> ThaumcraftItems.CRYSTAL_ORDO.get();
-            case "perditio" -> ThaumcraftItems.CRYSTAL_PERDITIO.get();
-            case "vitium" -> ThaumcraftItems.CRYSTAL_VITIUM.get();
-            default -> null;
-        };
+        net.minecraft.world.item.Item outputItem = crystalFarmerOutput(recipe.aspectTag());
         if (outputItem == null) return;
         if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
             return;
@@ -473,14 +531,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 expected, new ItemStack(outputItem))) return;
 
         finishCheckpoint = finishCheckpoint.finishAfterActualCenterReplacement(true);
-        crafting = false;
-        recipeInstability = 0;
-        ritualLedger = null;
-        itemProgress = null;
-        seedsPedestal = null;
-        salisPedestal = null;
-        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
-        changedAndSync();
+        clearCompletedCrystalFarmer();
         ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED");
     }
 
@@ -493,6 +544,11 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state,
                                   InfusionMatrixBlockEntity tile) {
         tile.ticks++;
+        // Restored RESERVED is STALLED. Acknowledge ONLY a pre-existing,
+        // fully paid output; never call the original finish a second time.
+        if (tile.crafting && tile.finishCheckpoint.phase()
+                == LegacyCrystalFarmerFinishCheckpoint.Phase.STALLED)
+            tile.acknowledgeRecoveredCrystalFarmerOutput();
         // Source stage: one REAL unit at most per original matrix craft cycle.
         // A legacy 'crafting:1' tag without our verified checkpoint never
         // drains resources. After essence reaches zero, wait for the future
