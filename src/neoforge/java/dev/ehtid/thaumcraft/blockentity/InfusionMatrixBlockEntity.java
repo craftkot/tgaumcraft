@@ -676,6 +676,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         itemProgress = null;
         seedsPedestal = null;
         salisPedestal = null;
+        originalCentralInput = ItemStack.EMPTY;
         ritualStartCostMultiplier = 1.0F;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         // An old/corrupt 'crafting:1' without a verified ledger cannot craft.
