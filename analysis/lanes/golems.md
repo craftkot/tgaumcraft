@@ -158,3 +158,13 @@ Runtime M10.6: **Core PASS**, **NeoForge build +26/26 required GameTests PASS** 
 - `a9a0b8b` —6 EN/RU labels на язык.
 - Финальный cold READ **assertions PASS** (52s, `golems-controls-restart-read-ready.log`) на том же сохранённом мире после явной готовности entity chunk. Восстановлены один UUID, cargo37 с components, обе печати/фильтры, barrel11gold и все priority/color/lock/redstone. Нет stale leases/копии груза. Повторный build PASS, JAR CRC PASS/SHA256 `4c961fa3e0bddb549659f12ac4ee62cc4d66655f5c9af925b7ace3483e1be692`.
 - Этот заключительный test commit выделяет isolated controls restart и readiness barrier; предыдущие fixtures не удалены. Общие registry/build.gradle/CI/Core runner не менялись. Draft PR #3 обновляется без merge, обычный push только собственной ветки.
+
+## M10.7 — survival-рецепты печатей, 19.10.2026
+
+Fresh main `a4280834`, feature HEAD `375fc14`, CI #370 SUCCESS; clean tree. Работа одним агентом, только feature/golems. Официальный ConfigRecipes подтверждает arcane Blank3 (CONTROLSEALS,20vis,Aer1,clay+tallow+red dye+Nitor); Pickup/Fill — crucible conversions за10Desiderium/10Aversio и blank1. Core/adapter/module остаются lane-local; необходимая минимальная интеграция в2 общих файла выделяется отдельно. Существующий Nitor tag переиспользуется без изменения.
+
+Core runner PASS (включая tagged aspect identity bridging). Первый compile выявил только неверное имя null-player test entrypoint (`dissolve`, не двухаргументный attemptSmelt); исправлен. В server tests добавлены реальное растворение crystals, три server output/cost/resource сценария и откат при rejected ItemEntity spawn. Финальный build/GameTests запущен; фактический исход ниже. Прогресс research не выдаётся автоматически; полная survival-цепочка Press/MINDCLOCKWORK остаётся зависимостью.
+
+Финальный M10.7: **Core runner PASS**, construction34808 / task+filter+recipe948 assertions; **full NeoForge build и29/29 required GameTests PASS** (`golems-recipes-complete.log`,6.071s/40s). Новый menu test сначала неверно пытался заменить Aer на запрещённый Ignis через setItem: существующий slot корректно отклонил замену, оставив Aer. Fixture теперь очищает slot и отдельно проверяет изменение components уже вставленного crystal. Production crystal validator ради теста не менялся. Оба crucible tests, включая реальное растворение20 crystals и отменённый spawn, PASS. JAR CRC PASS/SHA256 `58ab307537568653113f35a05d9116e39282368541f785a9318dedf89e05c342`.
+
+Первый commit выделяет чистые Core rules, lane-local adapter/blank registration/model и Core assertions. Следующий — необходимые hooks в2 общих файлах и3 server GameTests; затем отдельно EN/RU и протокол. Общий runner/Gradle/CI/research data/регистры не меняются.

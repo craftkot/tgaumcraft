@@ -337,6 +337,35 @@ public final class LegacyGolemTaskTest {
         eq(10, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, true, 1, 99));
         eq(10, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, Integer.MAX_VALUE, 0));
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(0, false, 12, 0));
+        var sealGrid = new ArrayList<>(java.util.Collections.nCopies(9,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Ingredient.EMPTY));
+        var ingredients = dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Ingredient.values();
+        for (int i=1;i<=4;i++) sealGrid.set(i*2-1, ingredients[i]);
+        eq(true, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.matchesBlank(sealGrid));
+        sealGrid.set(0, ingredients[1]);
+        eq(false, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.matchesBlank(sealGrid));
+        var registry = new AspectRegistry();
+        var stored = new AspectListData().add(registry.DESIRE, 10).add(registry.AVERSION, 10);
+        var knowledge = new PlayerKnowledgeData();
+        eq(null, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(knowledge, stored, registry));
+        knowledge.addResearch("SEALSTORE");
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.FILL,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(knowledge, stored, registry));
+        knowledge.addResearch("SEALCOLLECT");
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(knowledge, stored, registry));
+        var afterSeal = dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP, registry);
+        eq(0, afterSeal.getAmount(registry.DESIRE)); eq(10, afterSeal.getAmount(registry.AVERSION));
+        eq(10, stored.getAmount(registry.DESIRE));
+        var anotherRegistry = new AspectRegistry();
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(knowledge, stored, anotherRegistry));
+        var mixed = stored.copy().add(anotherRegistry.DESIRE, 5);
+        var paid = dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(mixed,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP, anotherRegistry);
+        eq(5L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(paid, "desiderium"));
+        eq(15L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(mixed, "desiderium"));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();
