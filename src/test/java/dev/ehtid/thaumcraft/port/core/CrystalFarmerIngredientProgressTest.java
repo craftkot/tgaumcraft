@@ -38,7 +38,21 @@ public final class CrystalFarmerIngredientProgressTest {
         eq(1, fromSavedReceipt.consumedMask());
         eq(0, fromSavedReceipt.countdown());
         rejected(()->fromSavedReceipt.afterSavedPedestalReceipt(1, true, true));
-        rejected(()->beforeStart.afterSavedPedestalReceipt(1, true, true));
+        // A stale matrix may have saved the 0..5 countdown before the
+        // real pedestal saved its empty slot + UUID receipt. Any earlier
+        // countdown is recoverable, never just the final 1 -> 0 tick.
+        for (int staleCountdown = 0; staleCountdown <= 5; staleCountdown++) {
+            var stale = new LegacyCrystalFarmerIngredientProgress(0, staleCountdown);
+            var acknowledged = stale.afterSavedPedestalReceipt(1, true, true);
+            eq(1, acknowledged.consumedMask());
+            eq(0, acknowledged.countdown());
+            rejected(()->acknowledged.afterSavedPedestalReceipt(1, true, true));
+            var staleSecond = new LegacyCrystalFarmerIngredientProgress(1, staleCountdown);
+            var secondAck = staleSecond.afterSavedPedestalReceipt(2, true, true);
+            eq(3, secondAck.consumedMask());
+            eq(true, secondAck.readyToFinish());
+            rejected(()->secondAck.afterSavedPedestalReceipt(2, true, true));
+        }
         state = state.afterActualPedestalRemoval(1);
         eq(state,fromSavedReceipt);
         eq(1,state.consumedMask());
