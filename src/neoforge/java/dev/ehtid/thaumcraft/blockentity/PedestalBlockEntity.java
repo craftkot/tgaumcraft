@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerPedestalReceipt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -23,8 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class PedestalBlockEntity extends BlockEntity implements Container {
     private final NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /** Receipt is saved atomically WITH the emptied pedestal slot. */
-    private UUID infusionRemovalRitual;
-    private int infusionRemovalBit;
+    private LegacyCrystalFarmerPedestalReceipt infusionRemovalReceipt;
 
     public PedestalBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.PEDESTAL.get(), pos, state);
@@ -88,21 +88,20 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
                 || !ItemStack.isSameItemSameComponents(now, expected))
             return false;
         items.set(0, ItemStack.EMPTY);
-        infusionRemovalRitual = ritualId;
-        infusionRemovalBit = ingredientBit;
+        infusionRemovalReceipt = new LegacyCrystalFarmerPedestalReceipt(
+                ritualId, ingredientBit);
         changedAndSync();
         return true;
     }
 
     public boolean hasInfusionRemovalReceipt(UUID ritualId, int ingredientBit) {
-        return ritualId != null && items.get(0).isEmpty()
-                && ritualId.equals(infusionRemovalRitual)
-                && ingredientBit == infusionRemovalBit;
+        return infusionRemovalReceipt != null
+                && infusionRemovalReceipt.provesSavedRemoval(
+                        ritualId, ingredientBit, items.get(0).isEmpty());
     }
 
     private void clearInfusionRemovalReceipt() {
-        infusionRemovalRitual = null;
-        infusionRemovalBit = 0;
+        infusionRemovalReceipt = null;
     }
 
     /** Infusion writes are server authoritative; caller owns cost validation. */
@@ -180,10 +179,9 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
-        if (infusionRemovalRitual != null && items.get(0).isEmpty()
-                && (infusionRemovalBit == 1 || infusionRemovalBit == 2)) {
-            tag.putUUID("PortInfusionRemovalRitual", infusionRemovalRitual);
-            tag.putInt("PortInfusionRemovalBit", infusionRemovalBit);
+        if (infusionRemovalReceipt != null && items.get(0).isEmpty()) {
+            tag.putUUID("PortInfusionRemovalRitual", infusionRemovalReceipt.ritualId());
+            tag.putInt("PortInfusionRemovalBit", infusionRemovalReceipt.ingredientBit());
         }
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
@@ -200,8 +198,8 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
             int bit = tag.getInt("PortInfusionRemovalBit");
             if (bit == 1 || bit == 2) {
                 try {
-                    infusionRemovalRitual = tag.getUUID("PortInfusionRemovalRitual");
-                    infusionRemovalBit = bit;
+                    infusionRemovalReceipt = new LegacyCrystalFarmerPedestalReceipt(
+                            tag.getUUID("PortInfusionRemovalRitual"), bit);
                 } catch (IllegalArgumentException malformed) {
                     clearInfusionRemovalReceipt();
                 }
