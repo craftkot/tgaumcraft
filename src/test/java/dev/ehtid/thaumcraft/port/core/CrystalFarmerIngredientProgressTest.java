@@ -17,6 +17,9 @@ public final class CrystalFarmerIngredientProgressTest {
         var state = LegacyCrystalFarmerIngredientProgress.initial();
         eq(1, state.nextIngredientBit());
         eq(true, state.matchesLivePedestals(true, true));
+        eq(true, state.matchesSavedReceipts(false, false));
+        eq(false, state.matchesSavedReceipts(true, false));
+        eq(false, state.matchesSavedReceipts(false, true));
         eq(false, state.matchesLivePedestals(false, true));
         eq(false, state.matchesLivePedestals(true, false));
         eq(LegacyCrystalFarmerIngredientProgress.Action.SOURCE_EFFECT,state.nextAction());
@@ -57,6 +60,9 @@ public final class CrystalFarmerIngredientProgressTest {
         eq(state,fromSavedReceipt);
         eq(1,state.consumedMask());
         eq(true,state.matchesLivePedestals(false, true));
+        eq(true,state.matchesSavedReceipts(true, false));
+        eq(false,state.matchesSavedReceipts(false, false));
+        eq(false,state.matchesSavedReceipts(true, true));
         eq(false,state.matchesLivePedestals(true, true)); // matrix newer than pedestal
         eq(false,state.matchesLivePedestals(false, false)); // Salis vanished without debit
         eq(2,state.nextIngredientBit());
@@ -75,6 +81,10 @@ public final class CrystalFarmerIngredientProgressTest {
         eq(true,snapshot.readyToFinish());
         eq(3,snapshot.consumedMask());
         eq(true,snapshot.matchesLivePedestals(false, false));
+        eq(true,snapshot.matchesSavedReceipts(true, true));
+        eq(false,snapshot.matchesSavedReceipts(false, true));
+        eq(false,snapshot.matchesSavedReceipts(true, false));
+        eq(false,snapshot.matchesSavedReceipts(false, false));
         eq(false,snapshot.matchesLivePedestals(true, false)); // crash restored seeds
         eq(false,snapshot.matchesLivePedestals(false, true)); // crash restored Salis
         eq(false,snapshot.matchesLivePedestals(true, true));
