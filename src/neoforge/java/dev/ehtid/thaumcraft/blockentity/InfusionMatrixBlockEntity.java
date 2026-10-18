@@ -71,6 +71,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private BlockPos salisPedestal;
     /** Original actual center ItemStack, including every data component. */
     private ItemStack originalCentralInput = ItemStack.EMPTY;
+    /** Two original one-item side stacks, preserving data components and order. */
+    private ItemStack originalSeedInput = ItemStack.EMPTY;
+    private ItemStack originalSalisInput = ItemStack.EMPTY;
     private LegacyCrystalFarmerFinishCheckpoint.State finishCheckpoint =
             LegacyCrystalFarmerFinishCheckpoint.initial();
     private boolean active;
@@ -285,16 +288,27 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         }
         if (matchedSeeds == null || matchedSalis == null
                 || matchedSeeds.equals(matchedSalis)) return false;
-        seedsPedestal = matchedSeeds;
-        salisPedestal = matchedSalis;
         if (!(level.getBlockEntity(worldPosition.below(2))
-                instanceof PedestalBlockEntity originalCenter)) return false;
+                instanceof PedestalBlockEntity originalCenter)
+                || !(level.getBlockEntity(matchedSeeds) instanceof PedestalBlockEntity originalSeeds)
+                || !(level.getBlockEntity(matchedSalis) instanceof PedestalBlockEntity originalSalis))
+            return false;
         ItemStack capturedCenter = originalCenter.displayedItem().copy();
+        ItemStack capturedSeeds = originalSeeds.displayedItem().copy();
+        ItemStack capturedSalis = originalSalis.displayedItem().copy();
         if (capturedCenter.getCount() != 1
                 || !capturedCenter.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
                 || !preview.recipe().aspectTag().equals(
-                        CrystalEssenceItem.legacyAspect(capturedCenter))) return false;
+                        CrystalEssenceItem.legacyAspect(capturedCenter))
+                || capturedSeeds.getCount() != 1 || !capturedSeeds.is(Items.WHEAT_SEEDS)
+                || capturedSalis.getCount() != 1
+                || !capturedSalis.is(ThaumcraftItems.SALIS_MUNDUS.get()))
+            return false;
+        seedsPedestal = matchedSeeds;
+        salisPedestal = matchedSalis;
         originalCentralInput = capturedCenter;
+        originalSeedInput = capturedSeeds;
+        originalSalisInput = capturedSalis;
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
         ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
@@ -350,7 +364,16 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || (!salisStack.isEmpty() && (salisStack.getCount() != 1
                         || !salisStack.is(ThaumcraftItems.SALIS_MUNDUS.get()))))
             return false;
-        return itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty());
+        return itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty())
+                && originalSeedInput.getCount() == 1
+                && originalSalisInput.getCount() == 1
+                && (!seedStack.isEmpty()
+                        ? ItemStack.isSameItemSameComponents(seedStack, originalSeedInput)
+                        : itemProgress.consumedMask() % 2 == 1)
+                && (!salisStack.isEmpty()
+                        ? ItemStack.isSameItemSameComponents(salisStack, originalSalisInput)
+                        : (itemProgress.consumedMask()
+                                & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0);
     }
 
     /**
@@ -463,8 +486,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         seedsPedestal = null;
         salisPedestal = null;
         originalCentralInput = ItemStack.EMPTY;
+        originalSeedInput = ItemStack.EMPTY;
+        originalSalisInput = ItemStack.EMPTY;
         ritualStartCostMultiplier = 1.0F;
         originalCentralInput = ItemStack.EMPTY;
+        originalSeedInput = ItemStack.EMPTY;
+        originalSalisInput = ItemStack.EMPTY;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         changedAndSync();
     }
@@ -647,6 +674,14 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 ContainerHelper.saveAllItems(savedInput, slot, lookup);
                 pending.put("OriginalCenterInput", savedInput);
             }
+            if (!originalSeedInput.isEmpty() && !originalSalisInput.isEmpty()) {
+                var sideSlots = NonNullList.withSize(2, ItemStack.EMPTY);
+                sideSlots.set(0, originalSeedInput.copy());
+                sideSlots.set(1, originalSalisInput.copy());
+                CompoundTag savedSides = new CompoundTag();
+                ContainerHelper.saveAllItems(savedSides, sideSlots, lookup);
+                pending.put("OriginalSideInputs", savedSides);
+            }
             if (trackedPedestalsValid()) {
                 pending.putLong("SeedsPedestal", seedsPedestal.asLong());
                 pending.putLong("SalisPedestal", salisPedestal.asLong());
@@ -693,6 +728,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         || !pending.contains("ItemCountdown", Tag.TAG_INT)
                         || !pending.contains("FinishPhase", Tag.TAG_STRING)
                         || !pending.contains("OriginalCenterInput", Tag.TAG_COMPOUND)
+                        || !pending.contains("OriginalSideInputs", Tag.TAG_COMPOUND)
                         || !pending.contains("SeedsPedestal", Tag.TAG_LONG)
                         || !pending.contains("SalisPedestal", Tag.TAG_LONG))
                     throw new IllegalArgumentException("Incomplete original infusion checkpoint");
@@ -742,6 +778,16 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 ContainerHelper.loadAllItems(
                         pending.getCompound("OriginalCenterInput"), centerSlot, lookup);
                 originalCentralInput = centerSlot.get(0).copy();
+                var sideSlots = NonNullList.withSize(2, ItemStack.EMPTY);
+                ContainerHelper.loadAllItems(
+                        pending.getCompound("OriginalSideInputs"), sideSlots, lookup);
+                originalSeedInput = sideSlots.get(0).copy();
+                originalSalisInput = sideSlots.get(1).copy();
+                if (originalSeedInput.getCount() != 1
+                        || !originalSeedInput.is(Items.WHEAT_SEEDS)
+                        || originalSalisInput.getCount() != 1
+                        || !originalSalisInput.is(ThaumcraftItems.SALIS_MUNDUS.get()))
+                    throw new IllegalArgumentException("Invalid original side ingredient snapshots");
                 var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
                         .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
                         .findFirst().orElse(null);
@@ -760,6 +806,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 seedsPedestal = null;
                 salisPedestal = null;
                 originalCentralInput = ItemStack.EMPTY;
+                originalSeedInput = ItemStack.EMPTY;
+                originalSalisInput = ItemStack.EMPTY;
                 finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
             }
         }
