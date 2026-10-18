@@ -750,6 +750,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         || !spec.aspectTag().equals(
                                 CrystalEssenceItem.legacyAspect(originalCentralInput)))
                     throw new IllegalArgumentException("Original central crystal snapshot differs from recipe");
+                if (recipeInstability != spec.instability())
+                    throw new IllegalArgumentException("Saved infusion instability differs from original recipe");
             } catch (IllegalArgumentException malformed) {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
