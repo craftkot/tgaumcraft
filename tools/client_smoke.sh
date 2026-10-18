@@ -455,6 +455,17 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' FULL_SOURCE_UNCHANGED
     capture 61-reverse-full-sink-rejected
 
+    # Boundary: 249 -> 250 must consume exactly ONE actual source unit
+    # and the full destination must then refuse a second debit.
+    send_chat '/data merge block 376 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:249s}'
+    sleep 10
+    assert_mirror_world_nbt 376 149 344 '{Aspect:"aer",Amount:250s}' BOUNDARY_SINK_249_TO_250
+    assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:11s}' BOUNDARY_SOURCE_12_TO_11
+    sleep 10
+    assert_mirror_world_nbt 376 149 344 '{Amount:250s}' BOUNDARY_SINK_STAYS_FULL
+    assert_mirror_world_nbt 344 149 344 '{Amount:11s}' BOUNDARY_SOURCE_STOPS_AFTER_ONE
+    capture 61a-reverse-249-to-250-exactly-one
+
     # 3) Empty source FIRST, while destination is full, before emptying it.
     # Prevent a legitimate transfer occurring during intermediate setup.
     send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:0s}'

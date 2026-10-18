@@ -68,6 +68,8 @@ public final class LegacyEssentiaMirrorLogicTest {
         // authoritative conservation. Reject false positive/no-op/duplication.
         eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,1));
         eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(1,0,63,64));
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,
+                LegacyEssentiaJarLogic.CAPACITY-1,LegacyEssentiaJarLogic.CAPACITY));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,12,0,1));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,2));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,10,0,1));
