@@ -69,6 +69,22 @@ public final class CrystalFarmerIngredientProgressTest {
         rejected(()->new LegacyCrystalFarmerIngredientProgress(3,1));
         rejected(()->new LegacyCrystalFarmerIngredientProgress(0,-1));
         rejected(()->new LegacyCrystalFarmerIngredientProgress(1,6));
+        // Recovery requires an exact receipt in the SAME saved pedestal,
+        // not merely an empty slot or a matching item type.
+        var a = java.util.UUID.fromString("93c2dbf0-41e3-49b8-a224-0a315dbc0b42");
+        var b = java.util.UUID.fromString("a0ab9d33-a1f0-4344-b3bb-baf772cab284");
+        var seedReceipt = new LegacyCrystalFarmerPedestalReceipt(a, 1);
+        eq(true, seedReceipt.provesSavedRemoval(a, 1, true));
+        eq(false, seedReceipt.provesSavedRemoval(a, 1, false));
+        eq(false, seedReceipt.provesSavedRemoval(b, 1, true));
+        eq(false, seedReceipt.provesSavedRemoval(null, 1, true));
+        eq(false, seedReceipt.provesSavedRemoval(a, 2, true));
+        var salisReceipt = new LegacyCrystalFarmerPedestalReceipt(a, 2);
+        eq(true, salisReceipt.provesSavedRemoval(a, 2, true));
+        eq(false, salisReceipt.provesSavedRemoval(a, 1, true));
+        rejected(()->new LegacyCrystalFarmerPedestalReceipt(null, 1));
+        rejected(()->new LegacyCrystalFarmerPedestalReceipt(a, 0));
+        rejected(()->new LegacyCrystalFarmerPedestalReceipt(a, 3));
         System.out.println("BETA26 Crystal Farmer ingredient countdown: OK ("+checks+" assertions)");
     }
 }
