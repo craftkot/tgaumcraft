@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.port.core.ResearchBrowserModel;
 import dev.ehtid.thaumcraft.port.core.ResearchBrowserPagination;
 import dev.ehtid.thaumcraft.port.core.LegacyResearchLayout;
+import dev.ehtid.thaumcraft.port.core.LegacyResearchPages;
 import dev.ehtid.thaumcraft.port.core.ResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.ResearchCategoryRegistry;
 import net.minecraft.client.Minecraft;
@@ -42,7 +43,7 @@ public final class ResearchIndexScreen extends Screen {
     private static final int GRAPH_RIGHT = 464, GRAPH_BOTTOM = 281;
     private final Screen parent;
     private final List<Button> categoryButtons = new ArrayList<>();
-    private Button previousPage, nextPage, viewToggle;
+    private Button previousPage, nextPage, viewToggle, readPage;
     private final List<Button> panButtons = new ArrayList<>();
     private boolean graphView = true;
     private int graphPanX, graphPanY;
@@ -98,6 +99,11 @@ public final class ResearchIndexScreen extends Screen {
         }).bounds(x + 398, y + 308, 35, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose())
                 .bounds(x + 41, y + 307, 150, 20).build());
+        readPage = addRenderableWidget(Button.builder(Component.literal("Read page"), b -> {
+            if (selectedEntry != null && currentEntries().stream().anyMatch(
+                    e -> e.key().equals(selectedEntry)))
+                minecraft.setScreen(new ResearchPageScreen(this, selectedEntry));
+        }).bounds(x + 41, y + 283, 150, 19).build());
         viewToggle = addRenderableWidget(Button.builder(
                 Component.literal(graphView ? "List" : "Tree"), b -> {
                     graphView = !graphView;
@@ -144,6 +150,9 @@ public final class ResearchIndexScreen extends Screen {
         if (viewToggle != null)
             viewToggle.setMessage(Component.literal(graphView ? "List" : "Tree"));
         for (Button pan : panButtons) pan.visible = graphView;
+        if (readPage != null) readPage.active = selectedEntry != null
+                && LegacyResearchPages.get(selectedEntry) != null
+                && entries.stream().anyMatch(e -> e.key().equals(selectedEntry));
     }
 
     @Override
