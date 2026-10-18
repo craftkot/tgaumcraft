@@ -38,3 +38,9 @@
 - В реальном `EssentiaMirrorBlockEntity` после успешной транзакции снимаются фактические значения реальных BlockEntity (источник и получатель) **без изменения механики**; только тогда отправляются smoke-маркеры `MIRROR_REVERSE_UNIT_CONSERVED` и `MIRROR_REVERSE_FIRST_UNIT_12_11_0_1`. Для прямого дебета — `MIRROR_SOURCE_FIRST_UNIT_12_TO_11`.
 - Тест клиента теперь **обязателен** к этим событиям: иначе прежние `/execute ... run say` были лишь выведены, но не проверены. Старые заверения о независимой NBT-проверке преувеличивали факт: команды NBT оставлены лишь как визуальная диагностика.
 - **Следующее:** нужeн новый реальный Minecraft smoke для этого SHA; текущий M04.1/M04.2 остаётся 🟡/🔴 до настоящего успеха, без преждевременного отметки зелёным.
+
+## Прогон 18.10 — повторный full NeoForge + Minecraft после новых инвариантов
+- `01c215f` — Core logic + 8 проверок + авторитетные маркеры первой транзакции в `EssentiaMirrorBlockEntity` и обязательные клиентские assert; быстрый [CI #237 SUCCESS](https://circleci.com/gh/craftkot/tgaumcraft/237).
+- `6dd35de` — **одноразовая** активизация `run_compile=true`, `run_minecraft=true`, `THAUMCRAFT_MIRROR_SMOKE=1` в feature/alchemy. Проверки: [full NeoForge #240](https://circleci.com/gh/craftkot/tgaumcraft/240), [real Minecraft #241](https://circleci.com/gh/craftkot/tgaumcraft/241). **На момент записи оба PENDING**. Не объявлять их успешными без live commit status.
+- `3170739` — возврат `.circleci/config.yml` к `run_compile=false`, `run_minecraft=false`, обычному alchemy smoke. Все эти изменения остались только в `feature/alchemy`; `main`, `feature/research`, `feature/infusion` не изменялись.
+- Не угадывать причину [#220 FAILURE](https://circleci.com/gh/craftkot/tgaumcraft/220): нужна полная `client.log` / CircleCI job output, если #241 тоже не пройдёт. Важный следующий пункт — исследование реального лога и отрицательные случаи M04.2. Никаких merge в `main`.
