@@ -43,6 +43,11 @@ public final class CrystalFarmerParityTest {
                     true,true,tags[i],supplied,user,matcher,1.0f);
             check(ready!=null);
             eq(recipe.legacyId(),ready.recipeId());
+            // Physical occupied-pedestal order is Salis then Seeds; the
+            // matcher records input index -> required ingredient index.
+            // These indices are used to persist exact source pedestals.
+            eq(1,ready.ingredientIndices()[0]);
+            eq(0,ready.ingredientIndices()[1]);
             eq(25,ready.cost().visSize());
             eq(recipe.instability(),ready.instability());
             eq(null,LegacyInfusionStartPlanner.prepare(
