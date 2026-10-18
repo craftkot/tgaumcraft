@@ -64,6 +64,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private float ritualStartCostMultiplier = 1.0F;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
     private LegacyCrystalFarmerIngredientProgress itemProgress;
+    /** Exact real pedestal positions verified at start; never a newly found replacement. */
+    private BlockPos seedsPedestal;
+    private BlockPos salisPedestal;
     private LegacyCrystalFarmerFinishCheckpoint.State finishCheckpoint =
             LegacyCrystalFarmerFinishCheckpoint.initial();
     private boolean active;
@@ -259,6 +262,27 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         var preview = CrystalFarmerInfusionAdapter.prepare(this, knowledge);
         if (preview == null) return false;
+        // RecipeMatcher assigns occupied pedestal index -> recipe ingredient
+        // index. Preserve that actual physical identity through NBT reload:
+        // scanning for ANY replacement input later would permit free output.
+        List<BlockPos> occupiedPositions = new ArrayList<>();
+        for (BlockPos pos : nearbyPedestals()) {
+            if (level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal
+                    && pedestal.isOccupied())
+                occupiedPositions.add(pos.immutable());
+        }
+        int[] assignment = preview.matching().ingredientIndices();
+        if (occupiedPositions.size() != 2 || assignment.length != 2) return false;
+        BlockPos matchedSeeds = null, matchedSalis = null;
+        for (int i = 0; i < assignment.length; i++) {
+            if (assignment[i] == 0) matchedSeeds = occupiedPositions.get(i);
+            else if (assignment[i] == 1) matchedSalis = occupiedPositions.get(i);
+            else return false;
+        }
+        if (matchedSeeds == null || matchedSalis == null
+                || matchedSeeds.equals(matchedSalis)) return false;
+        seedsPedestal = matchedSeeds;
+        salisPedestal = matchedSalis;
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
         ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
@@ -269,6 +293,21 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         changedAndSync(); // checkpoint BEFORE any real jar is debited
         ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_RESEARCH_GATED_START");
         return true;
+    }
+
+    private boolean trackedPedestalsValid() {
+        if (seedsPedestal == null || salisPedestal == null
+                || seedsPedestal.equals(salisPedestal)) return false;
+        return isTrackedSidePosition(seedsPedestal)
+                && isTrackedSidePosition(salisPedestal);
+    }
+
+    private boolean isTrackedSidePosition(BlockPos where) {
+        return LegacyInfusionMatrixLayout.withinScanVolume(
+                new LegacyInfusionMatrixLayout.Offset(
+                        where.getX() - worldPosition.getX(),
+                        where.getY() - worldPosition.getY(),
+                        where.getZ() - worldPosition.getZ()));
     }
 
     /** A moved/removed center or missing side item must pause debit, never grant output. */
@@ -283,20 +322,20 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || !center.displayedItem().is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
                 || !spec.aspectTag().equals(CrystalEssenceItem.legacyAspect(center.displayedItem())))
             return false;
-        boolean seeds = false, salis = false;
-        for (BlockPos pos : nearbyPedestals()) {
-            if (!(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal)) continue;
-            ItemStack stack = pedestal.displayedItem();
-            if (stack.getCount() != 1) continue;
-            if (stack.is(Items.WHEAT_SEEDS)) seeds = true;
-            if (stack.is(ThaumcraftItems.SALIS_MUNDUS.get())) salis = true;
-        }
-        // A persisted consumed mask without the matching real pedestal
-        // removal is not proof that the item was paid. Cross-chunk saves
-        // can restore the matrix and pedestal at different checkpoints;
-        // pause instead of granting a second copy of the recipe output.
-        if (itemProgress == null) return false;
-        return itemProgress.matchesLivePedestals(seeds, salis);
+        // Do not force-load a vanished side chunk. A consumed input MUST
+        // still be absent at its originally assigned pedestal after reload.
+        if (itemProgress == null || !trackedPedestalsValid()
+                || !level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
+                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seedTile)
+                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salisTile))
+            return false;
+        ItemStack seedStack = seedTile.displayedItem();
+        ItemStack salisStack = salisTile.displayedItem();
+        if ((!seedStack.isEmpty() && (seedStack.getCount() != 1 || !seedStack.is(Items.WHEAT_SEEDS)))
+                || (!salisStack.isEmpty() && (salisStack.getCount() != 1
+                        || !salisStack.is(ThaumcraftItems.SALIS_MUNDUS.get()))))
+            return false;
+        return itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty());
     }
 
     /**
@@ -353,23 +392,15 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || itemProgress == null || itemProgress.readyToFinish()
                 || !realInputsRemain()) return;
         int nextBit = itemProgress.nextIngredientBit();
-        PedestalBlockEntity chosen = null;
-        ItemStack captured = ItemStack.EMPTY;
-        for (BlockPos pos : nearbyPedestals()) {
-            if (!(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal))
-                continue;
-            ItemStack presented = pedestal.displayedItem();
-            if (presented.getCount() != 1) continue;
-            boolean matched = nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                    ? presented.is(Items.WHEAT_SEEDS)
-                    : presented.is(ThaumcraftItems.SALIS_MUNDUS.get());
-            if (matched) {
-                chosen = pedestal;
-                captured = presented.copy();
-                break;
-            }
-        }
-        if (chosen == null) return;
+        BlockPos assigned = nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? seedsPedestal : salisPedestal;
+        if (assigned == null || !level.hasChunkAt(assigned)
+                || !(level.getBlockEntity(assigned) instanceof PedestalBlockEntity chosen))
+            return;
+        ItemStack captured = chosen.displayedItem().copy();
+        if (captured.getCount() != 1 || !(nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? captured.is(Items.WHEAT_SEEDS)
+                : captured.is(ThaumcraftItems.SALIS_MUNDUS.get()))) return;
         switch (itemProgress.nextAction()) {
             case SOURCE_EFFECT, COUNTDOWN -> {
                 itemProgress = itemProgress.afterValidatedCountdown();
@@ -446,6 +477,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         recipeInstability = 0;
         ritualLedger = null;
         itemProgress = null;
+        seedsPedestal = null;
+        salisPedestal = null;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         changedAndSync();
         ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED");
@@ -532,6 +565,10 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             pending.put("Initial", initial);
             pending.put("Remaining", remaining);
             pending.putString("FinishPhase", finishCheckpoint.phase().name());
+            if (trackedPedestalsValid()) {
+                pending.putLong("SeedsPedestal", seedsPedestal.asLong());
+                pending.putLong("SalisPedestal", salisPedestal.asLong());
+            }
             if (itemProgress != null) {
                 pending.putInt("ConsumedItems", itemProgress.consumedMask());
                 pending.putInt("ItemCountdown", itemProgress.countdown());
@@ -555,6 +592,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         surroundingsInitialized = false;
         ritualLedger = null;
         itemProgress = null;
+        seedsPedestal = null;
+        salisPedestal = null;
         ritualStartCostMultiplier = 1.0F;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         // An old/corrupt 'crafting:1' without a verified ledger cannot craft.
@@ -569,7 +608,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         || !pending.contains("Paid", Tag.TAG_INT)
                         || !pending.contains("ConsumedItems", Tag.TAG_INT)
                         || !pending.contains("ItemCountdown", Tag.TAG_INT)
-                        || !pending.contains("FinishPhase", Tag.TAG_STRING))
+                        || !pending.contains("FinishPhase", Tag.TAG_STRING)
+                        || !pending.contains("SeedsPedestal", Tag.TAG_LONG)
+                        || !pending.contains("SalisPedestal", Tag.TAG_LONG))
                     throw new IllegalArgumentException("Incomplete original infusion checkpoint");
                 // Legacy checkpoints did not contain a frozen multiplier; use
                 // their saved costMult only for migration, and still require
@@ -606,11 +647,17 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 if (itemProgress.consumedMask() != 0
                         && !ritualLedger.readyForIngredients())
                     throw new IllegalArgumentException("Items consumed before full essence payment");
+                seedsPedestal = BlockPos.of(pending.getLong("SeedsPedestal"));
+                salisPedestal = BlockPos.of(pending.getLong("SalisPedestal"));
+                if (!trackedPedestalsValid())
+                    throw new IllegalArgumentException("Invalid persisted side pedestal positions");
             } catch (IllegalArgumentException malformed) {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
                 ritualLedger = null;
                 itemProgress = null;
+                seedsPedestal = null;
+                salisPedestal = null;
                 finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
             }
         }
