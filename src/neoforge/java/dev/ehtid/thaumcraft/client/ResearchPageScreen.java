@@ -15,6 +15,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public final class ResearchPageScreen extends Screen {
             BuiltInResearchCategories.create(new AspectRegistry());
     private static final int BOOK_W = 512, BOOK_H = 356;
     private static final int LINES_ON_PAGE = 12;
+    private static final int TEXT_WIDTH = 398;
     private final Screen parent;
     private final String researchKey;
     private final LegacyResearchPages.Page page;
@@ -107,6 +109,17 @@ public final class ResearchPageScreen extends Screen {
         return List.copyOf(lines);
     }
 
+    /** Wrap actual lore once translations are installed; do not truncate source
+     * item SNBT/knowledge/recipe requirements into a single unreadable row.
+     * Font.split preserves formatted Minecraft text and works for long tokens.
+     */
+    private List<FormattedCharSequence> wrappedLines() {
+        ArrayList<FormattedCharSequence> wrapped = new ArrayList<>();
+        for (Component component : detailLines())
+            wrapped.addAll(font.split(component, TEXT_WIDTH));
+        return List.copyOf(wrapped);
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -139,7 +152,7 @@ public final class ResearchPageScreen extends Screen {
         stageIndex = ResearchPageVisibility.clampRequestedStage(stageIndex, allowed);
         if (earlier != null) earlier.active = allowed >= 0 && stageIndex > 0;
         if (later != null) later.active = allowed >= 0 && stageIndex < allowed;
-        int longest = Math.max(0, detailLines().size() - LINES_ON_PAGE);
+        int longest = Math.max(0, wrappedLines().size() - LINES_ON_PAGE);
         scroll = Math.max(0, Math.min(scroll, longest));
         if (scrollUp != null) scrollUp.active = scroll > 0;
         if (scrollDown != null) scrollDown.active = scroll < longest;
@@ -167,10 +180,9 @@ public final class ResearchPageScreen extends Screen {
                     + page.stages().size(), x + 348, y + 29, 0x49321E, false);
         else
             graphics.drawString(font, "Undiscovered", x + 335, y + 29, 0x49321E, false);
-        var lines = detailLines();
+        var lines = wrappedLines();
         for (int i = 0; i < LINES_ON_PAGE && scroll + i < lines.size(); i++) {
-            String line = lines.get(scroll + i).getString();
-            graphics.drawString(font, font.plainSubstrByWidth(line, 398),
+            graphics.drawString(font, lines.get(scroll + i),
                     x + 56, y + 81 + i * 18, 0x35271B, false);
         }
         super.render(graphics, mouseX, mouseY, delta);
