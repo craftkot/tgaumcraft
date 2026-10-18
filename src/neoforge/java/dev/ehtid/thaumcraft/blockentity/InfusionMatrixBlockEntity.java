@@ -291,14 +291,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             if (stack.is(Items.WHEAT_SEEDS)) seeds = true;
             if (stack.is(ThaumcraftItems.SALIS_MUNDUS.get())) salis = true;
         }
-        // Once a real ingredient has been consumed, that same input must
-        // NOT be required again (or the ritual would be stuck forever).
-        // No progress state => legacy/corrupt crafting NBT is not eligible.
-        if (itemProgress == null) return seeds && salis;
-        return ((itemProgress.consumedMask()
-                & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) != 0 || seeds)
-                && ((itemProgress.consumedMask()
-                & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0 || salis);
+        // A persisted consumed mask without the matching real pedestal
+        // removal is not proof that the item was paid. Cross-chunk saves
+        // can restore the matrix and pedestal at different checkpoints;
+        // pause instead of granting a second copy of the recipe output.
+        if (itemProgress == null) return false;
+        return itemProgress.matchesLivePedestals(seeds, salis);
     }
 
     /**
