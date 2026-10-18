@@ -27,7 +27,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean CONTROLS_SCENARIO = "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean BELL_SCENARIO = "bell".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean CONTROLS_SCENARIO = BELL_SCENARIO || "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILTER_SCENARIO = CONTROLS_SCENARIO || "filter".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILL_SCENARIO = FILTER_SCENARIO || "fill".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final UUID GOLEM_ID = UUID.fromString("671c5d1c-8533-490b-9ac2-e06c973d0d10");
@@ -111,6 +112,7 @@ public final class GolemRestartProbe {
             require(data.configureControls(data.get(new GolemSeals.SealKey(HOME.below(), Direction.UP)), OWNER_ID, -5, 16, true, true), "Pickup controls stored");
             require(data.configureControls(data.get(new GolemSeals.SealKey(HOME.offset(3,-1,0), Direction.UP)), OWNER_ID, 5, 6, true, false), "Fill controls stored");
         }
+        if (BELL_SCENARIO) golem.setFollowingOwner(true);
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
 
@@ -151,6 +153,7 @@ public final class GolemRestartProbe {
             require(pickup.priority()==-5 && pickup.color()==16 && pickup.locked() && pickup.redstone(), "Pickup controls restored");
             require(fill.priority()==5 && fill.color()==6 && fill.locked() && !fill.redstone(), "Fill controls restored");
         }
+        if (BELL_SCENARIO) require(golem.isFollowingOwner(), "Original following FLAGS bit restored");
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
         require(workers == 1, "Exactly one restored worker");
