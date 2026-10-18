@@ -295,7 +295,15 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     local x="$1" y="$2" z="$3" label="$4" retries="${MIRROR_CHUNK_RETRIES:-20}"
     local marker="TC_FIXTURE_CHUNK_READY_${label}"
     local attempt
+    # CI #241: the remote chunk [17,15] was marked force-loaded, but the
+    # source [15,15] had NO server confirmation. One /forceload typed under
+    # busy world-generation is not reliable. Re-issue it until the actual
+    # /execute if loaded check succeeds; NEVER fake a readiness marker.
     for attempt in $(seq 1 "$retries"); do
+      xdotool windowactivate --sync "$WIN" || true
+      echo "MIRROR_CHUNK_ATTEMPT=${label}:${attempt} block=${x},${y},${z}" |
+        tee -a client-smoke-status.txt
+      send_chat "/forceload add ${x} ${z}"
       send_chat "/execute if loaded ${x} ${y} ${z} run say ${marker}"
       if grep -Eq "\\[CHAT\\].*${marker}" client-smoke/client.log; then
         echo "MIRROR_CHUNK_READY=${label} attempts=${attempt}" | tee -a client-smoke-status.txt
@@ -305,6 +313,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     done
     echo "MIRROR_SETUP_FAILED=CHUNK_NOT_LOADED label=${label} pos=${x},${y},${z}" |
       tee -a client-smoke-status.txt
+    grep -E 'Forced|force loaded|TC_FIXTURE_CHUNK_READY|That position is not loaded|Unknown or incomplete command' client-smoke/client.log | tail -35 >&2 || true
     tail -70 client-smoke/client.log >&2
     exit 1
   }
@@ -344,14 +353,12 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # /data NBT fixture, the two mandatory Java markers below fire only when
   # actual source.takeTransport and recipient.addFromTransport both succeed.
   if [ "${THAUMCRAFT_MIRROR_SMOKE:-0}" = "1" ]; then
-    # Preload the new test area *before* placing any fixture blocks. By
-    # placing the player halfway between the two endpoints we get normal
-    # generation of both chunks, independent of a delayed /forceload job.
-    send_chat '/tp @p 264.5 153 248.5 0 30'
-    send_chat '/forceload add 248 248'
-    send_chat '/forceload add 280 248'
+    # First load BOTH chunks from the existing spawn area. Teleportation
+    # before generation (CI #241) competes with force-load and can drop chat
+    # commands while the integrated server is overloaded.
     wait_for_mirror_chunk 248 150 248 SOURCE
     wait_for_mirror_chunk 280 150 248 RECEIVER
+    send_chat '/tp @p 264.5 153 248.5 0 30'
     send_chat '/fill 246 148 245 250 148 250 minecraft:stone'
     send_chat '/fill 278 148 245 282 148 250 minecraft:stone'
     send_chat '/setblock 248 149 247 thaumcraft:jar_normal'
@@ -402,11 +409,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     # mirror, and a 0-Aer but Aer-LABELLED sink jar near its distant partner.
     # The partner faces NORTH so the sink jar below it does not passively
     # pull from the source; only the NEW active reverse relay can pass.
-    send_chat '/tp @p 360.5 153 344.5 0 30'
-    send_chat '/forceload add 344 344'
-    send_chat '/forceload add 376 344'
     wait_for_mirror_chunk 344 150 344 REVERSE_SOURCE
     wait_for_mirror_chunk 376 150 344 REVERSE_RECEIVER
+    send_chat '/tp @p 360.5 153 344.5 0 30'
     send_chat '/fill 342 148 342 346 148 346 minecraft:stone'
     send_chat '/fill 374 148 342 378 148 346 minecraft:stone'
     send_chat '/setblock 344 149 344 thaumcraft:jar_normal'
