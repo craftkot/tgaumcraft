@@ -351,13 +351,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 50-linked-essentia-mirrors-world
     sleep 20
     assert_smoke_event MIRROR_REMOTE_DEBIT
+    assert_smoke_event MIRROR_SOURCE_FIRST_UNIT_12_TO_11
     assert_smoke_event MIRROR_TO_JAR
     send_chat '/data get block 248 149 247'
     capture 51-mirror-source-jar-after-debit
     send_chat '/data get block 280 149 248'
     capture 52-mirror-receiver-jar-after-credit
-    # These conditions are independent of the custom smoke markers and
-    # guarantee both physical source debit and actual recipient credit.
+    # Secondary vanilla NBT queries are VISUAL EVIDENCE ONLY.
+    # The authoritative strict assertions above are actual Java server-side
+    # before/after marks. Do not treat the next /execute commands as tests
+    # unless their world replies are explicitly checked.
     send_chat '/execute unless data block 248 149 247 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
     send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
     capture 53-mirror-transport-vanilla-world-nbt
@@ -405,6 +408,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     sleep 18
     assert_smoke_event MIRROR_TO_REMOTE_JAR
     assert_smoke_event MIRROR_REVERSE_TRANSFER
+    # M04.2: these independent Minecraft BlockEntity snapshots establish
+    # a real first-unit 12->11 debit and 0->1 credit in ONE server tick.
+    assert_smoke_event MIRROR_REVERSE_UNIT_CONSERVED
+    assert_smoke_event MIRROR_REVERSE_FIRST_UNIT_12_11_0_1
     send_chat '/data get block 344 149 344'
     capture 57-reverse-source-after-debit
     send_chat '/data get block 376 149 344'

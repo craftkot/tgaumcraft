@@ -195,8 +195,22 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
                 sink.jar().canReceiveMirror(aspect),aspect,
                 source.transportAmount(sourceFace),sourceSuction,destinationSuction)
                 ||source.transportMinimumSuction()>destinationSuction)return;
+        int sourceBefore=source.transportAmount(sourceFace);
+        int sinkBefore=sink.jar().snapshot().amount();
         if(!sink.jar().receiveOneFromMirror(aspect,
                 () -> source.takeTransport(aspect,1,sourceFace)==1))return;
+        // A live server-thread audit: the transport port and the remote
+        // BlockEntity must BOTH have changed by precisely one unit. This is
+        // diagnostic only; do not fabricate, replenish or re-credit items.
+        int sourceAfter=source.transportAmount(sourceFace);
+        int sinkAfter=sink.jar().snapshot().amount();
+        if(LegacyEssentiaMirrorLogic.conservedOneUnit(
+                sourceBefore,sourceAfter,sinkBefore,sinkAfter))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_REVERSE_UNIT_CONSERVED");
+        if(sourceBefore==12 && sourceAfter==11 && sinkBefore==0 && sinkAfter==1)
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_REVERSE_FIRST_UNIT_12_11_0_1");
         // The source was physically debited and remote jar credited.
         instability=LegacyEssentiaMirrorLogic.afterTransfer(instability,1,true);
         EssentiaMirrorBlockEntity partner=partnerLoaded(local);
@@ -229,7 +243,14 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         RemoteSource source=remoteSource(aspect);
         if(!stillValidSource(source,aspect))return 0;
         // No local or remote state is changed until the real source returns 1.
+        int sourceBefore=source.port().transportAmount(source.face());
         if(source.port().takeTransport(aspect,1,source.face())!=1)return 0;
+        int sourceAfter=source.port().transportAmount(source.face());
+        // Preserve an independent before/after assertion for the fixture's
+        // initial 12 Aer. The recipient's jar credit has its own server mark.
+        if(sourceBefore==12 && sourceAfter==11)
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_SOURCE_FIRST_UNIT_12_TO_11");
         // This marker is emitted only after an actual remote BlockEntity debit.
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_REMOTE_DEBIT");
         EssentiaMirrorBlockEntity partner=partnerLoaded(local);

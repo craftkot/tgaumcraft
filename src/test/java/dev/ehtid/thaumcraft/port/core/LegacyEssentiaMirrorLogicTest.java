@@ -64,6 +64,16 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(2,true,true,true,true,"aer",2,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,null,1,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,false,true,true,true,"aer",1,0,64));
+        // Only a live one-unit debit AND matching sink credit constitutes
+        // authoritative conservation. Reject false positive/no-op/duplication.
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,1));
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(1,0,63,64));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,12,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,2));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,10,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(0,-1,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,-1,0));
         eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
         eq(8,LegacyEssentiaMirrorLogic.SEARCH_RANGE);
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));

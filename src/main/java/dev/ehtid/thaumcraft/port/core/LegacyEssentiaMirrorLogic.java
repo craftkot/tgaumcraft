@@ -110,6 +110,20 @@ public final class LegacyEssentiaMirrorLogic {
                 && sourceSuction>=0 && sinkSuction>sourceSuction;
     }
 
+    /**
+     * Post-commit audit for one real essentia unit. Useful in a Minecraft
+     * smoke: a callback's success alone cannot prove that BOTH endpoints
+     * changed by precisely one with no extra credit or duplicated debit.
+     * Numbers must be read from the live source/recipient AFTER commit.
+     * This method never changes the world and cannot substitute for it.
+     */
+    public static boolean conservedOneUnit(int sourceBefore, int sourceAfter,
+                                           int sinkBefore, int sinkAfter) {
+        return sourceBefore > 0 && sinkBefore >= 0
+                && sourceAfter == sourceBefore - 1
+                && sinkAfter == sinkBefore + 1;
+    }
+
     /** Source TileMirrorEssentia: decaying retry backoff 40,60,...600. */
     public static int nextLinkCheckInterval(int current, boolean validLink) {
         if (validLink) return LINK_RETRY_START;
