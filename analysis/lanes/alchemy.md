@@ -90,3 +90,8 @@
 - [#311](https://circleci.com/gh/craftkot/tgaumcraft/311) — **SUCCESS** Core на `ccff459`; exhaustively сверены 19×18×19 координат с `LegacyEssentiaSourceOrder.nullFacing(8)`.
 - **M04.4 остаётся незакрытым:** игровая reload/relink/chunk-unload проба ещё не пройдена. **M04.1/M04.2** также ожидают настоящий успешный клиент. Не путать результат compile и клиентского smoke.
 - **Следующее точное действие:** разобрать полный log неудавшегося [client #273](https://circleci.com/gh/craftkot/tgaumcraft/273) (пользовательский `build_273_step_103_container_0.txt`), не угадывать причину, починить fixture либо механику по факту и выполнить real Minecraft тест на `feature/alchemy`. Чужие ветки и `main` не трогать.
+
+## 18.10.2026 — M04.3: банка не читает отсутствующий соседний чанк
+- Полная NeoForge [#302](https://circleci.com/gh/craftkot/tgaumcraft/302) — SUCCESS для исправленного `EssentiaMirrorBlockEntity` и проверок кэша M04.4; exhaustive Core [#311](https://circleci.com/gh/craftkot/tgaumcraft/311) — SUCCESS.
+- Выявлена смежная дыра в уже существующем `EssentiaJarBlockEntity.serverTick`: каждые 5 серверных тиков банка без `hasChunkAt` читала `level.getBlockEntity(pos.above())` для всасывания, в отличие от уже исправленной трубы. Теперь перед `getBlockEntity` проверяет `level.hasChunkAt(sourcePos)` и не пытается загружать соседний чанк. Никаких изменений состава эссенции или правил давлений, клиентская проверка ещё нужна.
+- Нужно повторить полный NeoForge compile и сопоставить результат. Это работа только направления алхимии. Не делать merge.
