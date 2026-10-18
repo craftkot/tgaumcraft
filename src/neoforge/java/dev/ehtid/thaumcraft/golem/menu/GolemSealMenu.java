@@ -24,6 +24,9 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final DataSlot limitLow = DataSlot.standalone();
     private final DataSlot limitHigh = DataSlot.standalone();
 
+    private final DataSlot priority = DataSlot.standalone(), color = DataSlot.standalone();
+    private final DataSlot locked = DataSlot.standalone(), redstone = DataSlot.standalone();
+
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
 
     public GolemSealMenu(int id, Inventory inventory, ServerLevel level, GolemSeals.Seal seal) {
@@ -36,12 +39,13 @@ public final class GolemSealMenu extends AbstractContainerMenu {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++)
-            addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 104 + row * 18));
-        for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 8 + col * 18, 162));
+            addSlot(new Slot(inventory, col + row * 9 + 9, 8 + col * 18, 190 + row * 18));
+        for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 8 + col * 18, 248));
         addDataSlot(blacklist);
         addDataSlot(fill);
         addDataSlot(limitLow);
         addDataSlot(limitHigh);
+        addDataSlot(priority); addDataSlot(color); addDataSlot(locked); addDataSlot(redstone);
         refresh();
     }
 
@@ -61,10 +65,17 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public boolean hasLimit() { return fill.get() != 0 && !blacklist(); }
     public int limit() { return (limitLow.get() & 0xffff) | (limitHigh.get() & 0x7fff) << 16; }
 
+    public int priority() { return priority.get(); }
+    public int color() { return color.get(); }
+    public boolean locked() { return locked.get() != 0; }
+    public boolean redstone() { return redstone.get() != 0; }
+
     private void refresh() {
         var seal = current();
         if (seal == null) return;
         ghost.setItem(0, seal.filter().item());
+        priority.set(seal.priority()); color.set(seal.color());
+        locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
         fill.set(seal.type() == GolemSeals.Type.FILL ? 1 : 0);
         limitLow.set(seal.filter().limit() & 0xffff);
@@ -105,7 +116,16 @@ public final class GolemSealMenu extends AbstractContainerMenu {
 
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
-        var policy = current().filter();
+        var seal = current();
+        if (id == 25 || id == 26 || id == 27 || id == 28 || id >= 80 && id <= 83) {
+            int nextPriority = seal.priority() + (id == 80 ? -1 : id == 81 ? 1 : 0);
+            int nextColor = seal.color() + (id == 82 ? -1 : id == 83 ? 1 : 0);
+            boolean result = GolemSeals.get(level).configureControls(expected, player.getUUID(), nextPriority, nextColor,
+                    id == 25 || id != 26 && seal.locked(), id == 27 || id != 28 && seal.redstone());
+            if (result) broadcastChanges();
+            return result;
+        }
+        var policy = seal.filter();
         if (id == 0) setFilter(player, new SealFilter(policy.item(), !policy.blacklist(), policy.limit()));
         else if (id == 5) setFilter(player, new SealFilter(ItemStack.EMPTY, policy.blacklist(), policy.limit()));
         else if (hasLimit() && id >= 1 && id <= 4) {

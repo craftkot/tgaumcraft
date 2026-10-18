@@ -139,3 +139,13 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 - `279aa72` — отдельный filter restart fixture и протокол, WRITE/READ PASS.
 - Последний малый integration commit M10.5: только7 новых menu EN/RU ключей на язык и эта запись; JSON валиден. Локализации уже присутствовали в прошедшем полном build/22 tests и JAR с указанным SHA. Ни один общий registry/build.gradle/CI/Core runner не менялся в этом продолжении.
 - Draft PR: https://github.com/craftkot/tgaumcraft/pull/3 (main), не объединять автоматически. Коммиты этого продолжения следуют за `7114949`; итоговый HEAD — commit с menu translations, `git rev-parse feature/golems`. Отправка одним обычным fast-forward push, без rewrite/merge/force.
+
+## M10.6 — управление печатями, 19.10.2026
+
+- Fresh main `a4280834`, feature HEAD `2ad3e2e`, clean tree; CI #369 SUCCESS. Продолжение одним агентом в собственной ветке; общая карта/регистры/CI/runner не меняются.
+- Подтверждены оригинальные bounds, action IDs и redstone support/outward semantics по официальному BETA26 javap. Код подключает сохранение/меню/producer/claim/completion; изменение control settings отменяет прежние leases. UUID owner-lock использует документированную корректировку исходного bug.
+- Подготовлены4 новых GameTest: bounds/menu authority/NBT/no forced chunks; owner/color/Pickup support power; Fill outward power/default ignore/late cancellation/resume; реальный выбор по priority. Тяжёлые проверки выполняются после реализации; фактические итоги ниже.
+
+Core runner Java21 PASS (`golems-controls-core.log`). Первый server suite нашёл2 неверных ожидания новых tests: `reservedTasks()==0` немедленно после suspend. Исходная TaskBoard сохраняет reserved flag до tickSecond cleanup; это не работающий lease. Tests исправлены на проверку конкретного target/fillTarget, сохранности груза и невозможности воскресить старый lease даже после signal-off. Core/production semantics ради счётчика не менялись. Финальный повтор включает также guard незагруженного signal-neighborhood.
+
+Runtime M10.6: **Core PASS**, **NeoForge build +26/26 required GameTests PASS** (`golems-controls-verified.log`, 8.299s сценариев /44s полного запуска). Новый unloaded-neighborhood assertion присутствует в скомпилированном test class и выполнен в этом прогоне. JAR ZIP CRC PASS, SHA256 `3a0a897241ffef524971ac106336d2361f10b5cd2416675c48f45eb240f27435`. Этот commit содержит control service/menu/redstone и4 новых GameTests с дизайном; cold probe и6 EN/RU ключей на язык выделяются далее. WRITE запущен в новом isolated fixture; итог cold read фиксируется после реальных assertions.
