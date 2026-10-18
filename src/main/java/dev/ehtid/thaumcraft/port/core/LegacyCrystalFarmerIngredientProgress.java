@@ -106,6 +106,38 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
         return new LegacyCrystalFarmerIngredientProgress(consumedMask | itemBit, 0);
     }
 
+    /**
+     * Restore a matrix saved before one OR BOTH real pedestal removals.
+     * Callers must derive receipts from the two original live pedestals
+     * using the matching ritual UUID and expected ingredient bit; a valid
+     * receipt already implies that the real slot is empty.
+     *
+     * The only legal next states are:
+     * - seeds receipt + untouched original Salis -> seeds consumed;
+     * - seeds receipt + Salis receipt -> both consumed;
+     * - already-paid seeds + both receipts -> Salis consumed.
+     * Never treat a bare empty pedestal as payment.
+     */
+    public LegacyCrystalFarmerIngredientProgress afterSavedWorldReceipts(
+            boolean seedReceiptMatches, boolean salisReceiptMatches,
+            boolean originalSalisStillPresent) {
+        if (readyToFinish())
+            throw new IllegalStateException("No remaining side ingredient");
+        if (nextIngredientBit() == SEEDS_BIT) {
+            if (!seedReceiptMatches
+                    || (salisReceiptMatches == originalSalisStillPresent))
+                throw new IllegalStateException("Contradictory saved side receipts");
+            var afterSeeds = afterSavedPedestalReceipt(SEEDS_BIT, true, true);
+            return salisReceiptMatches
+                    ? afterSeeds.afterSavedPedestalReceipt(SALIS_BIT, true, true)
+                    : afterSeeds;
+        }
+        if (!seedReceiptMatches || !salisReceiptMatches
+                || originalSalisStillPresent)
+            throw new IllegalStateException("Missing original saved item receipt");
+        return afterSavedPedestalReceipt(SALIS_BIT, true, true);
+    }
+
     /** Commit after a real pedestal emptied successfully; never before. */
     public LegacyCrystalFarmerIngredientProgress afterActualPedestalRemoval(int itemBit) {
         if (itemBit != nextIngredientBit() || nextAction() != Action.CONSUME)
