@@ -102,7 +102,7 @@ public final class ResearchIndexScreen extends Screen {
                 Component.literal(graphView ? "List" : "Tree"), b -> {
                     graphView = !graphView;
                     updateButtons();
-                }).bounds(x + 395, y + 307, 67, 20).build());
+                }).bounds(x + 395, y + 284, 67, 20).build());
         panButtons.clear();
         addPanButton(x + 225, y + 307, "<", -3, 0);
         addPanButton(x + 265, y + 307, ">", 3, 0);
@@ -185,7 +185,7 @@ public final class ResearchIndexScreen extends Screen {
                     .findFirst().orElse(null);
             if (selected != null && !selected.parents().isEmpty()) {
                 String parents = String.join(", ", selected.parents());
-                graphics.drawString(font, font.plainSubstrByWidth(parents, 222),
+                graphics.drawString(font, font.plainSubstrByWidth(parents, 160),
                         x + 226, y + 291, 0x49321E, false);
             }
         }
@@ -250,7 +250,7 @@ public final class ResearchIndexScreen extends Screen {
                         : selected.known() ? selected.stage() + "/"
                         + selected.stageCount() : "?";
                 graphics.drawString(font, font.plainSubstrByWidth(
-                                selected.key() + "  " + status, 235),
+                                selected.key() + "  " + status, 160),
                         left + GRAPH_LEFT + 4, top + GRAPH_BOTTOM + 9, 0x49321E, false);
             }
         }
