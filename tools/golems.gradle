@@ -1,0 +1,19 @@
+// Optional M10 test runs. Load with gradle --init-script tools/golems.gradle.
+// Keeps the shared build/CI configuration unchanged for parallel work lanes.
+allprojects {
+    afterEvaluate { project ->
+        def neo = project.extensions.findByName('neoForge')
+        if (neo != null) {
+            neo.runs.create('golemGameTest') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-gametest')
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft'
+            }
+            neo.runs.create('golemRestart') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('golem-restart')
+                systemProperty 'thaumcraft.golemRestartPhase', project.findProperty('golemRestartPhase') ?: ''
+            }
+        }
+    }
+}
