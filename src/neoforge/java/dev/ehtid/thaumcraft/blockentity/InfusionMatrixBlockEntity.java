@@ -346,16 +346,16 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      * transition instead of losing already-consumed materials.
      *
      * Only the originally matched side position, a matching ritual UUID,
-     * the original 5-cycle countdown at CONSUME, full essentia payment, and
-     * all other unconsumed inputs permit acknowledgement. No new item or
-     * additional debit is performed.
+     * verified full essentia payment and the expected opposite pedestal
+     * permit acknowledgement. The matrix may have saved any earlier 0..5
+     * countdown; the receipt proves removal regardless of that stale timer.
+     * No new item or additional debit is performed.
      */
     private void recoverSavedSideItemDebit() {
         if (!(level instanceof ServerLevel) || !active || !crafting
                 || !finishCheckpoint.canReserve() || activeInfusionRitual == null
                 || ritualLedger == null || !ritualLedger.readyForIngredients()
                 || itemProgress == null || itemProgress.readyToFinish()
-                || itemProgress.nextAction() != LegacyCrystalFarmerIngredientProgress.Action.CONSUME
                 || !validLocation() || !trackedPedestalsValid()
                 || originalCentralInput.isEmpty())
             return;
