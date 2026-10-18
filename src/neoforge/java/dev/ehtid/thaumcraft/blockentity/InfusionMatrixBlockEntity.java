@@ -415,7 +415,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || (!salisStack.isEmpty() && (salisStack.getCount() != 1
                         || !salisStack.is(ThaumcraftItems.SALIS_MUNDUS.get()))))
             return false;
-        return itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty())
+        return activeInfusionRitual != null
+                && itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty())
+                && itemProgress.matchesSavedReceipts(
+                        seedTile.hasInfusionRemovalReceipt(activeInfusionRitual,
+                                LegacyCrystalFarmerIngredientProgress.SEEDS_BIT),
+                        salisTile.hasInfusionRemovalReceipt(activeInfusionRitual,
+                                LegacyCrystalFarmerIngredientProgress.SALIS_BIT))
                 && originalSeedInput.getCount() == 1
                 && originalSalisInput.getCount() == 1
                 && (!seedStack.isEmpty()
@@ -570,6 +576,11 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salis)
                 || !seeds.displayedItem().isEmpty()
                 || !salis.displayedItem().isEmpty()
+                || activeInfusionRitual == null
+                || !seeds.hasInfusionRemovalReceipt(activeInfusionRitual,
+                        LegacyCrystalFarmerIngredientProgress.SEEDS_BIT)
+                || !salis.hasInfusionRemovalReceipt(activeInfusionRitual,
+                        LegacyCrystalFarmerIngredientProgress.SALIS_BIT)
                 || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
             return;
         var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
