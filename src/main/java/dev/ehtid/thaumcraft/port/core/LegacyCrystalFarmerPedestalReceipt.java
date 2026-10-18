@@ -1,6 +1,5 @@
 package dev.ehtid.thaumcraft.port.core;
 
-import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -13,7 +12,8 @@ import java.util.UUID;
  */
 public record LegacyCrystalFarmerPedestalReceipt(UUID ritualId, int ingredientBit) {
     public LegacyCrystalFarmerPedestalReceipt {
-        Objects.requireNonNull(ritualId, "ritualId");
+        if (ritualId == null)
+            throw new IllegalArgumentException("Missing ritual id");
         if (ingredientBit != LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
                 && ingredientBit != LegacyCrystalFarmerIngredientProgress.SALIS_BIT)
             throw new IllegalArgumentException("Unknown side ingredient");
