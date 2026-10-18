@@ -15,15 +15,23 @@ public final class CrystalFarmerFinishCheckpointTest {
     public static void main(String[] args) {
         var original=LegacyCrystalFarmerFinishCheckpoint.initial();
         eq("WAITING",original.phase().name());
+        eq(true,original.consistentWithPaidProgress(false,false));
+        eq(true,original.consistentWithPaidProgress(true,true));
         bad(()->original.reserve(false,true,true));
         bad(()->original.reserve(true,false,true));
         bad(()->original.reserve(true,true,false));
         var reserved=original.reserve(true,true,true);
         eq("RESERVED",reserved.phase().name());
+        eq(false,reserved.consistentWithPaidProgress(false,true));
+        eq(false,reserved.consistentWithPaidProgress(true,false));
+        eq(true,reserved.consistentWithPaidProgress(true,true));
         bad(()->reserved.reserve(true,true,true));
         bad(()->reserved.finishAfterActualCenterReplacement(false));
         var recovered=LegacyCrystalFarmerFinishCheckpoint.restore("RESERVED");
         eq("STALLED", recovered.phase().name());
+        eq(false,recovered.consistentWithPaidProgress(false,true));
+        eq(false,recovered.consistentWithPaidProgress(true,false));
+        eq(true,recovered.consistentWithPaidProgress(true,true));
         eq(false,recovered.mayPublishOneItem());
         eq(false,recovered.canReserve());
         bad(()->recovered.finishAfterActualCenterReplacement(true));
