@@ -36,6 +36,30 @@ public final class ResearchBrowserModel {
                 || knowledge.isResearchComplete(category.researchKey(), catalog);
     }
 
+    /** Parent names are also gated: an undiscovered hidden parent is secret. */
+    private static List<String> visibleParents(ResearchEntryData child,
+                                               PlayerKnowledgeData knowledge,
+                                               ResearchCatalog catalog,
+                                               ResearchCategoryRegistry categories) {
+        ArrayList<String> visible = new ArrayList<>();
+        for (String raw : child.parentsStripped()) {
+            // Expressions are prerequisites, not concrete graph vertices.
+            if (raw.contains("&&") || raw.contains("||")) continue;
+            String parentKey = raw.split("@", 2)[0];
+            ResearchEntryData parent = catalog.get(parentKey);
+            if (parent == null) continue; // includes internal !scan / flag keys
+            ResearchCategoryData parentCategory = categories.get(parent.categoryKey());
+            if (parentCategory == null
+                    || !categoryUnlocked(parentCategory, knowledge, catalog))
+                continue;
+            boolean known = knowledge.isResearchKnown(parentKey);
+            if (known || (!parent.hasMeta(ResearchMeta.HIDDEN)
+                    && ResearchRequisites.hasRequisites(knowledge, catalog, parentKey)))
+                visible.add(raw);
+        }
+        return List.copyOf(visible);
+    }
+
     /** Do not leak unknown hidden research or chapters gated by parents. */
     public static List<Entry> entries(String categoryKey, PlayerKnowledgeData knowledge,
                                       ResearchCatalog catalog,
@@ -59,7 +83,7 @@ public final class ResearchBrowserModel {
             int stage = known ? knowledge.getResearchStage(entry.key()) : -1;
             result.add(new Entry(entry.key(), stage, entry.stageCount(),
                     known, known && knowledge.isResearchComplete(entry.key(), catalog),
-                    entry.parentsStripped()));
+                    visibleParents(entry, knowledge, catalog, categories)));
         }
         return List.copyOf(result);
     }

@@ -46,6 +46,17 @@ public final class ResearchBrowserModelTest {
         }
         check(knowledge.getResearchList().equals(java.util.Set.of("!gotthaumonomicon")),
                 "read-only browser must never mutate player research");
+        for (var entry : basics) {
+            for (String parent : entry.parents()) {
+                String parentKey = parent.split("@", 2)[0];
+                var source = catalog.get(parentKey);
+                check(source != null, "never leak internal scan/flag prerequisite strings");
+                check(!source.hasMeta(ResearchMeta.HIDDEN)
+                                || knowledge.isResearchKnown(parentKey),
+                        "never reveal a still-hidden parent research identity");
+            }
+        }
+
 
         // A known HIDDEN research stays visible even when its metadata
         // requests hiding from players who have not discovered it.
@@ -64,6 +75,18 @@ public final class ResearchBrowserModelTest {
                 knowledge, catalog), "uncompleted unlock remains gated");
         check(ResearchBrowserModel.entries("ALCHEMY", knowledge, catalog, categories).isEmpty(),
                 "category still hidden with unrelated known research");
+        knowledge.addResearch("UNLOCKALCHEMY");
+        check(!ResearchBrowserModel.categoryUnlocked(categories.get("ALCHEMY"),
+                knowledge, catalog), "merely knowing unlock research is insufficient");
+        knowledge.setResearchStage("UNLOCKALCHEMY",
+                catalog.stageCount("UNLOCKALCHEMY") + 1);
+        check(ResearchBrowserModel.categoryUnlocked(categories.get("ALCHEMY"),
+                knowledge, catalog), "completed source unlock must open Alchemy");
+        var alchemy = ResearchBrowserModel.entries("ALCHEMY", knowledge, catalog, categories);
+        check(!alchemy.isEmpty(), "unlocked Alchemy has valid source entries");
+        check(alchemy.stream().noneMatch(e -> catalog.get(e.key()).hasMeta(ResearchMeta.HIDDEN)
+                        && !e.known()), "hidden unknown Alchemy research remains secret");
+
         check(ResearchBrowserModel.categories(knowledge, catalog, categories)
                         .stream().map(ResearchBrowserModel.Category::key)
                         .toList().equals(List.of("BASICS", "AUROMANCY", "ALCHEMY",
