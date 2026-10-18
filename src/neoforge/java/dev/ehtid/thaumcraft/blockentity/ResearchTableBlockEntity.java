@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.blockentity;
 import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.LegacyResearchTableData;
 import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftInspiration;
+import dev.ehtid.thaumcraft.port.core.LegacyTheorycraftAidCards;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.scanning.LegacyResearchTableNbt;
@@ -41,6 +42,16 @@ import java.util.Set;
 public final class ResearchTableBlockEntity extends BlockEntity implements Container {
     public static final int SCRIBING_SLOT = 0;
     public static final int PAPER_SLOT = 1;
+    private static final String M07_ALCHEMY_AID =
+            "thaumcraft.common.lib.research.theorycraft.AidBasicAlchemy";
+    private static final String M07_INFUSION_AID =
+            "thaumcraft.common.lib.research.theorycraft.AidBasicInfusion";
+
+    /** Never treat normal-pool cards as a confirmed aid-assisted draw. */
+    private static boolean fromOriginalAid(
+            LegacyTheorycraftChoiceNbt.Choice choice, String aid) {
+        return choice.fromAid() && LegacyTheorycraftAidCards.forAid(aid).contains(choice.key());
+    }
     private final NonNullList<ItemStack> items =
             NonNullList.withSize(2, ItemStack.EMPTY);
     private LegacyResearchTableData session;
@@ -252,6 +263,15 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         LegacyTheorycraftChoiceNbt.writeChoices(originalSessionNbt, java.util.List.of());
         setChanged();
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CREATED");
+        // These proof markers fire only after the server validates that the
+        // selected aid is STILL present in the real world and initializes
+        // its original three-card pool at the original inspiration cost.
+        if (aids.contains(M07_ALCHEMY_AID))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_ALCHEMY_AID_THEORY_CREATED");
+        if (aids.contains(M07_INFUSION_AID))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_INFUSION_AID_THEORY_CREATED");
         return true;
     }
 
@@ -320,6 +340,14 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
         session.setPlayer(player.getGameProfile().getName());
         setChanged();
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CARDS_DRAWN");
+        // This is a confirmed, paper-paid ORIGINAL aid draw, not merely a
+        // normal card coincidentally sharing the same class/appearance.
+        if (prepared.choices().stream().anyMatch(c -> fromOriginalAid(c, M07_ALCHEMY_AID)))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_ALCHEMY_AID_CARD_DRAWN");
+        if (prepared.choices().stream().anyMatch(c -> fromOriginalAid(c, M07_INFUSION_AID)))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_INFUSION_AID_CARD_DRAWN");
         return true;
     }
 
@@ -412,6 +440,14 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
             player.drop(reward, false);
         ThaumcraftNetworking.sync(player);
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("THEORY_CARD_ACTIVATED");
+        // Emit only AFTER authoritative ingredient/ink/XP debits, effects,
+        // selected-row save and player sync have all committed successfully.
+        if (fromOriginalAid(choice, M07_ALCHEMY_AID))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_ALCHEMY_AID_CARD_ACTIVATED");
+        if (fromOriginalAid(choice, M07_INFUSION_AID))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "M07_INFUSION_AID_CARD_ACTIVATED");
         return true;
     }
 
