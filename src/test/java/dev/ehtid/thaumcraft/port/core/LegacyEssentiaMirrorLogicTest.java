@@ -57,6 +57,9 @@ public final class LegacyEssentiaMirrorLogicTest {
                 LegacyEssentiaJarLogic.accepts(aerLabel,"ignis"),"ignis",1,32,64));
                 eq(true,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,32,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,64,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,
+                "aer",12,LegacyEssentiaJarLogic.FILTERED_SUCTION,
+                LegacyEssentiaJarLogic.UNFILTERED_SUCTION));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",0,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,false,"aer",1,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,false,true,"aer",1,0,64));

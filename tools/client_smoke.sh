@@ -480,7 +480,23 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     assert_mirror_world_nbt 376 149 344 '{Amount:0s}' EMPTY_SOURCE_RECEIVER_UNCHANGED
     capture 62-reverse-empty-source-rejected
 
-    # 4) Break reciprocity. The partner now remembers an unrelated distant
+    # 4) Pressure gate, with real jars: label the source Aer (64 suction)
+    # and leave the destination UNFILTERED (32 suction). The stronger
+    # local source must NOT lose anything to a weaker remote sink.
+    # Set sink to 0 first while the source is empty to avoid a setup race.
+    send_chat '/data merge block 376 149 344 {AspectFilter:"",Amount:0s}'
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:12s}'
+    sleep 10
+    assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",AspectFilter:"aer",Amount:12s}' LOW_SUCTION_SOURCE_UNCHANGED
+    assert_mirror_world_nbt 376 149 344 '{Amount:0s}' LOW_SUCTION_SINK_UNCHANGED
+    capture 62a-reverse-reject-remote-lower-suction
+
+    # Reset source to empty before restoring the Aer-labelled destination
+    # for the invalid-link case, so setup itself cannot debit any essence.
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:0s}'
+    send_chat '/data merge block 376 149 344 {AspectFilter:"aer",Amount:0s}'
+
+    # 5) Break reciprocity. The partner now remembers an unrelated distant
     # unloaded position, preventing normal link-retry from restoring it.
     send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:99999,linkY:150,linkZ:344}'
     send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
@@ -492,7 +508,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
 
     echo 'MIRROR_NEGATIVE_WORLD_REGRESSIONS_ALL_CONFIRMED=YES' | tee -a client-smoke-status.txt
 
-    echo 'PASS: real mirror debit/credit, plus incompatible/full/empty/unlinked rejection' | tee -a client-smoke-status.txt
+    echo 'PASS: real mirror debit/credit, plus incompatible/full/empty/low-suction/unlinked rejection' | tee -a client-smoke-status.txt
     exit 0
   fi
 
