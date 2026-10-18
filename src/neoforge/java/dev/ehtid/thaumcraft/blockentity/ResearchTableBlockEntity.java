@@ -280,9 +280,9 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
      * initialized, their historical NBT preserved, and original aid/normal
      * pools sampled without replacing missing source materials.
      *
-     * This method is intentionally NOT reachable from ResearchTableMenu yet:
-     * activation and its 33 real card effects must be fully wired before
-     * exposing a paper-consuming draw to players.
+     * Called by live menu buttons 2/3; one paper is charged for a successful
+     * draw and the original CardChoice NBT is saved. All 33 classes are modeled,
+     * but gameplay of every branch is not yet established.
      */
     public boolean drawOriginalTheoryCards(ServerPlayer player, int requestedCards) {
         if (level == null || level.isClientSide || session == null
@@ -361,8 +361,8 @@ public final class ResearchTableBlockEntity extends BlockEntity implements Conta
      * server main thread performs the remainder without asynchronous calls;
      * client-supplied NBT, card IDs, costs and rewards are never trusted.
      *
-     * This does not imply the draw/select GUI is complete. Call this from
-     * the menu only when the complete research-card interaction is exposed.
+     * Called by live menu buttons 4..6. This payment path exists, but the
+     * gameplay behavior of every source card remains to be verified.
      */
     public boolean activateOriginalTheoryCard(ServerPlayer player, int index) {
         if (level == null || level.isClientSide || session == null
