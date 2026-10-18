@@ -340,5 +340,8 @@
   "menu.thaumcraft.golem_seal.public": "Any owner",
   "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: pause on signal",
   "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: ignore",
-  "item.thaumcraft.seal_blank": "Blank Control Seal"
+  "item.thaumcraft.seal_blank": "Blank Control Seal",
+  "item.thaumcraft.golem_bell": "Golemancer’s Bell",
+  "message.thaumcraft.golem.follow": "Golem: follow",
+  "message.thaumcraft.golem.stay": "Golem: work here"
 }

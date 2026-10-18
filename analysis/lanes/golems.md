@@ -189,3 +189,8 @@ Core runner PASS (6 дополнительных FLAGS assertions). Первый
 
 - `73f8043` — Bell recipe/commands/follow/seal management +4 server GameTests,33/33 PASS.
 - Cold Bell: **WRITE/READ assertions PASS** (1m22s/40s), два процесса на одном новом мире. Восстановлены один golem UUID, cargo37/components, все прежние entity/filter/controls и follow bit2, без duplicate cargo или stale reservations. Этот commit выделяет restart fixture и протокол; предыдущие миры не удалялись и не перезаписывались.
+
+- `5ca4a61` — isolated Bell cold-restart scenario/evidence, WRITE+READ PASS.
+- Заключительный малый integration commit: только3 Bell EN/RU keys на язык и журнал; JSON валиден, ключи уже присутствовали в прошедшем full build/JAR. Общие регистры/алхимия/верстак/CI/research data/runner не менялись в M10.8.
+- Следующий конкретный этап — исходная раскраска големов dyes для работы с цветными печатями; затем области/advanced filters и Empty/Provide/Stock. Полный Press/assembly/research, GOLEMLOGISTICS GUI/overlay, farming, flying/combat и исходный визуал остаются открыты. Не объявлять M10 завершённым,59/100 не менять.
+- Draft PR #3 →main обновляется без merge. Финальный HEAD — commit локализаций Bell (`git rev-parse feature/golems`), обычный fast-forward push только своей ветки. Архитектура/протокол/журнал актуализированы; клиент и перечисленные edge scenarios не проверены.

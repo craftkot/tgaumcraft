@@ -340,5 +340,8 @@
   "menu.thaumcraft.golem_seal.public": "Любой владелец",
   "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: остановка",
   "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: игнорировать",
-  "item.thaumcraft.seal_blank": "Пустая печать управления"
+  "item.thaumcraft.seal_blank": "Пустая печать управления",
+  "item.thaumcraft.golem_bell": "Колокольчик големов",
+  "message.thaumcraft.golem.follow": "Голем: следовать",
+  "message.thaumcraft.golem.stay": "Голем: работать здесь"
 }
