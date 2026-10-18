@@ -32,6 +32,8 @@ public final class GolemModule {
             "golem", GolemPlacerItem::new, new Item.Properties());
     public static final DeferredItem<GolemSealItem> PICKUP_SEAL = ITEMS.registerItem(
             "seal_pickup", GolemSealItem::new, new Item.Properties());
+    public static final DeferredItem<GolemSealItem> FILL_SEAL = ITEMS.registerItem(
+            "seal_fill", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.FILL), new Item.Properties());
 
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
@@ -48,6 +50,7 @@ public final class GolemModule {
         if (event.getTab() == ThaumcraftCreativeTabs.MAIN.get()) {
             event.accept(GolemPlacerItem.stack(GolemDesign.defaultWood(), 0));
             event.accept(PICKUP_SEAL.get());
+            event.accept(FILL_SEAL.get());
         }
     }
 

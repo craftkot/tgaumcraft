@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.golem.ai.GolemHomeGoal;
+import dev.ehtid.thaumcraft.golem.ai.GolemFillGoal;
 import dev.ehtid.thaumcraft.golem.ai.GolemPickupGoal;
 import dev.ehtid.thaumcraft.item.GolemPlacerItem;
 import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
@@ -44,6 +45,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     private int rankXp;
     private Long invalidDesign;
     private GolemPickupGoal pickupGoal;
+    private GolemFillGoal fillGoal;
 
     public ThaumcraftGolem(EntityType<? extends ThaumcraftGolem> type, Level level) {
         super(type, level);
@@ -75,6 +77,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
     protected void registerGoals() {
         pickupGoal = new GolemPickupGoal(this);
         goalSelector.addGoal(3, pickupGoal);
+        fillGoal = new GolemFillGoal(this);
+        goalSelector.addGoal(4, fillGoal);
         goalSelector.addGoal(5, new GolemHomeGoal(this));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -86,6 +90,19 @@ public final class ThaumcraftGolem extends PathfinderMob {
     public void setGolemColor(byte color) { entityData.set(COLOR, color); }
     public BlockPos home() { return home; }
     public int rankXp() { return rankXp; }
+    /** BETA26 addRankXp: server-only SMART, one rank per call, maximum ten. */
+    public void addRankXp(int amount) {
+        GolemDesign current = design();
+        if (level().isClientSide || amount <= 0 || !current.hasTrait(GolemTrait.SMART) || current.rank() >= 10) return;
+        long xp = (long) rankXp + amount;
+        int threshold = (current.rank() + 1) * (current.rank() + 1) * 1000;
+        if (xp >= threshold) {
+            xp -= threshold;
+            entityData.set(DESIGN, current.withRank(current.rank() + 1).toLong());
+            applyDesign();
+        }
+        rankXp = (int) Math.min(Integer.MAX_VALUE, xp);
+    }
     public boolean hasWorkTask() { return entityData.get(WORKING); }
     public void setWorking(boolean working) { entityData.set(WORKING, working); }
 
@@ -234,6 +251,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     public void remove(RemovalReason reason) {
         if (pickupGoal != null && !level().isClientSide) pickupGoal.stop();
+        if (fillGoal != null && !level().isClientSide) fillGoal.stop();
         super.remove(reason);
     }
 }

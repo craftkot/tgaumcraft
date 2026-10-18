@@ -30,7 +30,7 @@
 
 Task/Seal Core: standalone JDK21 тесты агента прошли 922 assertions; общий runner будет подключён отдельной минимальной правкой. Написаны Entity, placer, home goal, isolated registry module, pickup seal/task goal и provisional animated renderer. Архитектура: `analysis/GOLEM_SYSTEM_DESIGN_RU.md`. Полная первая компиляция дошла до javac, обнаружила отсутствующие ещё не сохранённые construction-модели и final API `canBreatheUnderwater`; последний заменён на NeoForge fluid extension. Это рабочий неуспешный проход, не PASS.
 
-## Проверенные результаты текущего дерева
+## Промежуточные результаты первого подхода (история)
 
 - Существующий `bash tools/run_core_parity.sh` до добавления construction/test entries: PASS, включая прежние подсистемы.
 - NeoForge `compileJava processResources`: **PASS** (38 s), JDK21/Gradle9.2.1/NeoForge21.1.250.
@@ -51,7 +51,7 @@ Task/Seal Core: standalone JDK21 тесты агента прошли 922 assert
 
 Отдельный integration commit: одна строка `GolemModule.register(modBus)` в `ThaumcraftPort`; по 5 новых EN/RU ключей; два теста в существующем Core runner (4 строки). Основные регистры, Gradle build/properties, CI, дорожная карта и другие ветки не менялись. Opt-in `tools/golems.gradle` добавляет только два тестовых запуска M10.
 
-## Оставшиеся границы / продолжение
+## Остаток после первого подхода (история)
 
 Не перенесены: Golem Press и survival производство; остальные assembly costs и начисление XP; Fill/Empty/Provide/Stock, capability bridge контейнеров и сельское хозяйство; bell, фильтры/конфигурация и GUI печатей; боевые/летающие/специальные части и полный исходный визуал. Runtime placer допускает только default wood; полный каталог частей пока Core.
 
@@ -73,3 +73,35 @@ Task/Seal Core: standalone JDK21 тесты агента прошли 922 assert
 Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `feature/golems → main`. Не объединён. Все локальные commits сохранены обычными commits; публикация — обычный fast-forward push без force. Точный текущий HEAD смотреть в истории PR/ветки (`git rev-parse HEAD`); этот финальный служебный коммит добавляет только ссылку на PR.
 
 Продолжение: читать main и этот журнал, не перезапускать исследование/тяжёлые проверки без новых изменений. Следующий код — Fill/container adapter и полноценный цикл в контейнер. Для Core использовать существующий runner, для игровых regression — optional `--init-script tools/golems.gradle runGolemGameTest`; cold restart команды и границы описаны в протоколе.
+
+
+## M10.4 — Pickup → голем → контейнер (продолжение)
+
+База подхода `e7333e9`. Свежая main по-прежнему `a4280834`; последние CircleCI проверки своей ветки: #366 SUCCESS. Прочитаны актуальные правила/карта и прежние findings, повторного поиска исходников не проводилось. Новые агенты не запускались.
+
+Подтверждение: официальный BETA26 `SealFill.tickSeal/onTaskStarted/onTaskCompletion/canGolemPerformTask`, `AIGotoBlock`, `EntityThaumcraftGolem.addRankXp` из ранее проверенного JAR. Исходные defaults: empty blacklist, meta/NBT true, ore/mod/exist false; запрещён CLUMSY; block task раз в 20 ticks и successor при резервировании. Никаких новых придуманных фильтров/рецептов.
+
+Реализовано:
+- Единое SavedData и TaskBoard для PICKUP/FILL, одна печать любого типа на грань. Старый формат pickup сохраняется; тип Fill переживает NBT. Задачи и leases не сохраняются.
+- `GolemFillGoal` priority4 между pickup3/home5: подход к блоку, исходный reach4, перепрокладка/детур, ограничение1000 ticks, возврат к работе после отмены.
+- `GolemContainers`: NeoForge sided ItemHandler, исходный first-carried-stack, simulation перед назначением и фактический remainder при завершении; остаток возвращается в руку. Capability разрешается заново у цели; нет принудительной загрузки support/face/double-chest partner.
+- Отсутствие handler на существующем блоке: исходный реальный ItemEntity около выбранной грани; отсутствие загруженного chunk не считается world-drop целью.
+- Удалённая/заполненная цель и старая резервация не отнимают груз. Токен связан также с измерением и конкретной гранью печати, его нельзя перенаправить.
+- Fill даёт 1 XP только после фактического переноса. SMART/server-only, `(rank+1)^2*1000`, максимум один rank за вызов, cap10; обновление характеристик не лечит бесплатно. Для default wood XP не начисляется.
+- `seal_fill` зарегистрирован в собственном GolemModule/Creative, типизированный GolemSealItem проверяет владельца и тип при снятии; временная vanilla hopper иконка. Общие регистры/Gradle/CI не менялись; общие файлы — только 3 новых EN/RU ключа на язык.
+
+Проверки этого подхода:
+- Полный Core runner PASS, прежние construction34808/tasks922 и все остальные тесты.
+- Full NeoForge compile/resources и `build -x test` PASS.
+- Первый server GameTest: **все15 required PASS** (8 предыдущих+7 новых), 4.171s игровых сценариев; полный запуск1m10s.
+- После review добавлена отрицательная проверка перенаправления валидного lease на другую грань. Финальный GameTest/build: **все 15 required PASS**, 4.837 s набора / 51 s полный запуск; JAR ZIP CRC без ошибок.
+- Новый отдельный мир `build/golem-fill-restart`: WRITE и READ assertions **PASS**, два полных процесса dedicated server. Восстановлены один golem UUID, точный именованный груз37, обе печати PICKUP/FILL и владелец, 11gold в barrel; нет stale reservations и duplicate ground cargo.
+- Старый тестовый мир не удалялся и не перезаписывался; новый сценарий выбирается `-PgolemRestartScenario=fill`.
+
+Остаток: настраиваемые filters/limits/pexist/redstone/GUI; Empty/Provide/Stock; farming; Golem Press/остальные component costs; специальные части/бой/полёт и исходный визуал. Runtime placer по-прежнему только default wood. Клиент, настоящий live chunk unload/reload и crash-atomicity не проверены. 59/100 и полный статус M10 не пересчитываются.
+
+Следующий конкретный этап: конфигурация Fill/Pickup (фильтр, лимит количества, цвет/приоритет/redstone) с проверкой server authority и обычный survival-способ получения печатей. Затем Empty/Provide по точному BETA26, без изменения чужих направлений.
+
+Итоговый JAR M10.4: `build/libs/thaumcraft-6.1.BETA26-port.stage9.jar`, SHA256 `f0f0fd66c33bf71e48341db09087efa51e45986ea561adf5590f5329efeb059a`.
+
+Коммит этого шага — реальная Fill/container механика и 7 новых GameTests; последующие коммиты отдельно выделяют restart fixtures и общие EN/RU ключи.

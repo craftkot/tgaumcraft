@@ -13,8 +13,14 @@ import net.minecraft.world.item.context.UseOnContext;
 
 /** Places the first pickup seal; settings and bell interactions are separate work. */
 public final class GolemSealItem extends Item {
+    private final GolemSeals.Type type;
     public GolemSealItem(Properties properties) {
+        this(properties, GolemSeals.Type.PICKUP);
+    }
+
+    public GolemSealItem(Properties properties, GolemSeals.Type type) {
         super(properties);
+        this.type = type;
     }
 
     @Override
@@ -38,19 +44,23 @@ public final class GolemSealItem extends Item {
         }
         GolemSeals seals = GolemSeals.get(level);
         if (player.isShiftKeyDown()) {
-            if (!seals.remove(support, face, player.getUUID())) return InteractionResult.FAIL;
+            if (!seals.remove(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
             ItemStack returned = new ItemStack(this);
             if (!player.addItem(returned)) player.drop(returned, false);
             player.displayClientMessage(Component.translatable(
-                    "message.thaumcraft.golem.seal.removed"), true);
+                    message("removed")), true);
         } else {
-            if (!seals.place(support, face, player.getUUID())) return InteractionResult.FAIL;
+            if (!seals.place(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
             if (!player.getAbilities().instabuild) held.shrink(1);
             player.displayClientMessage(Component.translatable(
-                    "message.thaumcraft.golem.seal.placed",
+                    message("placed"),
                     adjacent.getX(), adjacent.getY(), adjacent.getZ()), true);
         }
         player.getInventory().setChanged();
         return InteractionResult.CONSUME;
+    }
+
+    private String message(String action) {
+        return "message.thaumcraft.golem.seal." + (type == GolemSeals.Type.FILL ? "fill." : "") + action;
     }
 }

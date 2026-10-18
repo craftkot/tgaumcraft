@@ -88,7 +88,7 @@ public final class GolemPickupGoal extends Goal {
     }
 
     private double speed() {
-        // The default wood/basic construction has source navigation multiplier1.
+        // The default wood construction has LIGHT: source navigation multiplier 1.2.
         // Use derived source stats for all future registered constructions.
         return golem.design().stats().moveSpeedMultiplier();
     }
