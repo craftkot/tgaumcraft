@@ -111,3 +111,13 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 
 - `f8ee53f` — отдельный Fill restart fixture и документация.
 - Финальный малый integration commit этого подхода — только 3 EN/RU ключа на язык и эта запись; основные регистры/CI/Gradle не меняются. Draft PR остаётся #3, merge не разрешён.
+
+## M10.5 — текущий срез filters/limits/menu, 18.10.2026
+
+- Продолжение от `7114949`; fresh main `a4280834` не изменился. CI исходного HEAD CircleCI #367 SUCCESS; Draft PR #3 остаётся открытым.
+- Работа одним агентом в `feature/golems`, без изменения main/чужих веток/общих регистров/CI/build.gradle.
+- Проверены оригинальные basic filter, whitelist stock cap, zero=unlimited, first matching hand. Обнаружен и явно сохранён BETA26 дефект ground count: непустые stacks пропускаются; строгий общий запас гарантируется только в container adapter.
+- Реализованы чистые Core rules, копируемый immutable runtime filter, persisted Items/Sizes/bl, отмена устаревших tasks при редактировании, instance token для stale menu. Минимальное owner menu использует vanilla packets, ghost count1 и split integer DataSlots; новый клиентский экран — собственный временный визуал.
+- Core runner PASS (`golems-filter-core.log`), NeoForge compileJava PASS Java21 (`golems-filter-compile.log`). Полный build и expanded dedicated GameTests запущены; ниже записывается фактический исход.
+
+Первый малый коммит M10.5 выделяет `SealFilterRules` и 15 новых Core assertions в существующий `LegacyGolemTaskTest` (всего937). Общий runner не изменялся. Все Core suites PASS Java21. Runtime/menu/restart изменения находятся в следующем коммите после реальных серверных проверок.

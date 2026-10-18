@@ -322,6 +322,21 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        for (boolean blacklist : List.of(false, true)) {
+            for (boolean present : List.of(false, true)) {
+                for (boolean matches : List.of(false, true)) {
+                    eq(blacklist ? !present || !matches : present && matches,
+                            dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.accepts(blacklist, present, matches));
+                }
+            }
+        }
+        eq(7, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, 12, 5));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, 12, 12));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, 12, Long.MAX_VALUE));
+        eq(10, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, 0, 99));
+        eq(10, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, true, 1, 99));
+        eq(10, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(10, false, Integer.MAX_VALUE, 0));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.transferable(0, false, 12, 0));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();
