@@ -131,7 +131,11 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 
 Следующий runtime commit содержит фильтры, меню и 7 новых GameTests + дизайн; отдельные следующие коммиты выделяют cold-restart fixture/протокол и только7 EN/RU ключей на язык. Cold WRITE запущен в новом `build/golem-filter-restart`; результат не предполагается заранее. Общие регистры/runner/CI/Gradle не менялись.
 
-- `d907402` — persisted filters, server menu, строгая привязка Pickup lease к UUID/grani, контейнерный Fill cap и 22/22 GameTests PASS.
+- `d907402` — persisted filters, server menu, строгая привязка Pickup lease к UUID и грани, контейнерный Fill cap и 22/22 GameTests PASS.
 - Cold filter-сценарий: **WRITE+READ assertions PASS** (1m2s/44s, логи `golems-filter-restart-write.log` и `golems-filter-restart-read.log`). Новый отдельный мир; один работник с cargo37, обе печати, barrel11gold и named ghost/modes/int70000 восстановлены без stale leases/копии груза. Этот commit выделяет только restart fixture и протокол.
 - Дизайн A–F и протокол актуализированы. Следующий конкретный этап: исходные color/priority/owner-lock и redstone настройки печатей с server authority, затем survival-рецепты/исследования и Empty/Provide. Полный Golem Press/стоимости всех частей, farming, Bell, advanced flags/pexist и исходный визуал остаются открыты. Runtime placer пока только default wood.
 - Графический клиент, live chunk unloading, внешние inventory mods и crash atomicity не проверены. M10 целиком не закрыт, общая оценка59/100 не изменяется.
+
+- `279aa72` — отдельный filter restart fixture и протокол, WRITE/READ PASS.
+- Последний малый integration commit M10.5: только7 новых menu EN/RU ключей на язык и эта запись; JSON валиден. Локализации уже присутствовали в прошедшем полном build/22 tests и JAR с указанным SHA. Ни один общий registry/build.gradle/CI/Core runner не менялся в этом продолжении.
+- Draft PR: https://github.com/craftkot/tgaumcraft/pull/3 (main), не объединять автоматически. Коммиты этого продолжения следуют за `7114949`; итоговый HEAD — commit с menu translations, `git rev-parse feature/golems`. Отправка одним обычным fast-forward push, без rewrite/merge/force.
