@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.golem.inventory;
 
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals.SealKey;
+import dev.ehtid.thaumcraft.golem.seal.SealFilter;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -12,7 +13,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
-/** BETA26 SealFill default empty blacklist, projected onto sided NeoForge item capabilities. */
+/** BETA26 SealFill basic strict filter, projected onto sided NeoForge item capabilities. */
 public final class GolemContainers {
     private GolemContainers() {}
 
@@ -29,46 +30,81 @@ public final class GolemContainers {
         return loaded(level, key) ? level.getCapability(Capabilities.ItemHandler.BLOCK, key.pos(), key.face()) : null;
     }
 
-    private static EquipmentSlot firstSlot(ThaumcraftGolem golem) {
-        if (!golem.getMainHandItem().isEmpty()) return EquipmentSlot.MAINHAND;
-        return golem.design().stats().carrySlots() > 1 && !golem.getOffhandItem().isEmpty()
+    private static EquipmentSlot firstSlot(ThaumcraftGolem golem, SealFilter filter) {
+        if (filter.accepts(golem.getMainHandItem())) return EquipmentSlot.MAINHAND;
+        return golem.design().stats().carrySlots() > 1 && filter.accepts(golem.getOffhandItem())
                 ? EquipmentSlot.OFFHAND : null;
     }
 
+    private static int amount(IItemHandler target, ItemStack carried, SealFilter filter) {
+        long existing = 0;
+        if (target != null && !filter.blacklist() && filter.limit() > 0) {
+            for (int i = 0; i < target.getSlots(); i++) {
+                ItemStack stack = target.getStackInSlot(i);
+                if (ItemStack.isSameItemSameComponents(carried, stack)) existing += stack.getCount();
+            }
+        }
+        // BETA26 countStackInWorld skips nonempty stacks (verified bytecode).
+        // Preserve that source defect for no-handler drops: size limits each drop,
+        // not accumulated ground stock. Do not advertise a ground-stock guarantee.
+        return filter.transferable(carried, existing);
+    }
+
     public static boolean canDeposit(ServerLevel level, ThaumcraftGolem golem, SealKey key) {
+        return canDeposit(level, golem, key, SealFilter.defaults());
+    }
+
+    public static boolean canDeposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) {
         if (!loaded(level, key)) return false;
-        EquipmentSlot slot = firstSlot(golem);
+        EquipmentSlot slot = firstSlot(golem, filter);
         if (slot == null) return false;
         ItemStack stack = golem.getItemBySlot(slot);
         IItemHandler target = handler(level, key);
-        return target == null || ItemHandlerHelper.insertItemStacked(target, stack.copy(), true).getCount() < stack.getCount();
+        int amount = amount(target, stack, filter);
+        if (amount <= 0) return false;
+        return target == null || ItemHandlerHelper.insertItemStacked(target, stack.copyWithCount(amount), true).getCount() < amount;
     }
 
     /** Actual remainder, not simulate's estimate, determines how much leaves the golem. */
     public static int insertCarried(ThaumcraftGolem golem, IItemHandler target) {
+        return insertCarried(golem, target, SealFilter.defaults());
+    }
+
+    public static int insertCarried(ThaumcraftGolem golem, IItemHandler target, SealFilter filter) {
         if (golem.level().isClientSide) return 0;
-        EquipmentSlot slot = firstSlot(golem);
+        EquipmentSlot slot = firstSlot(golem, filter);
         if (slot == null) return 0;
-        ItemStack extracted = golem.getItemBySlot(slot).copy();
-        golem.setItemSlot(slot, ItemStack.EMPTY);
+        ItemStack original = golem.getItemBySlot(slot).copy();
+        int requested = amount(target, original, filter); // Fresh count at actual completion, after other workers.
+        if (requested <= 0) return 0;
+        ItemStack retained = original.copy();
+        ItemStack extracted = retained.split(requested);
+        golem.setItemSlot(slot, retained);
         ItemStack remainder = ItemHandlerHelper.insertItemStacked(target, extracted.copy(), false);
-        golem.setItemSlot(slot, remainder.copy());
-        return extracted.getCount() - remainder.getCount();
+        // EMPTY is a singleton: when everything was extracted, use a copy with the exact new count.
+        golem.setItemSlot(slot, original.copyWithCount(original.getCount() - requested + remainder.getCount()));
+        return requested - remainder.getCount();
     }
 
     public static int deposit(ServerLevel level, ThaumcraftGolem golem, SealKey key) {
+        return deposit(level, golem, key, SealFilter.defaults());
+    }
+
+    public static int deposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) {
         if (!loaded(level, key)) return 0;
         IItemHandler target = handler(level, key); // Re-resolve at completion; do not cache a removed container.
-        if (target != null) return insertCarried(golem, target);
-        EquipmentSlot slot = firstSlot(golem);
+        if (target != null) return insertCarried(golem, target, filter);
+        EquipmentSlot slot = firstSlot(golem, filter);
         if (slot == null) return 0;
-        ItemStack stack = golem.getItemBySlot(slot).copy();
+        ItemStack original = golem.getItemBySlot(slot).copy();
+        int requested = amount(null, original, filter);
+        if (requested <= 0) return 0;
         ItemEntity drop = new ItemEntity(level, key.pos().getX() + .5 + key.face().getStepX(),
                 key.pos().getY() + .5 + key.face().getStepY(),
-                key.pos().getZ() + .5 + key.face().getStepZ(), stack);
+                key.pos().getZ() + .5 + key.face().getStepZ(), original.copyWithCount(requested));
         drop.setDeltaMovement(drop.getDeltaMovement().multiply(.2, .5, .2));
         if (!level.addFreshEntity(drop)) return 0;
-        golem.setItemSlot(slot, ItemStack.EMPTY);
-        return stack.getCount();
+        golem.setItemSlot(slot, original.copyWithCount(original.getCount() - requested));
+        return requested;
     }
 }

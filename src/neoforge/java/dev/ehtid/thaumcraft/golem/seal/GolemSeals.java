@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 /**
  * BETA26 pickup seal -> ephemeral task board -> golem goal bridge.
  *
- * Only the original empty blacklist filter is enabled in this first slice.
+ * Basic one-slot filters use the original default strict matching mode.
  * Seals persist; task leases and numeric entity IDs deliberately do not survive
  * restart. Modern UUID target identity, exclusive leases and copied ItemStacks
  * prevent stale reservations and sharing a mutable ground stack with equipment.
@@ -60,7 +60,12 @@ public final class GolemSeals extends SavedData {
         public SealKey { pos = pos.immutable(); }
     }
 
-    public record Seal(SealKey key, UUID owner, byte priority, byte color, boolean locked, Type type) {}
+    public record Seal(SealKey key, UUID owner, byte priority, byte color, boolean locked, Type type,
+                       SealFilter filter, UUID instanceId) {
+        public Seal(SealKey key, UUID owner, byte priority, byte color, boolean locked, Type type) {
+            this(key, owner, priority, color, locked, type, SealFilter.defaults(), UUID.randomUUID());
+        }
+    }
 
     public record Assignment(TaskBoard.Lease lease, UUID targetId, SealKey seal) {}
     public record FillAssignment(TaskBoard.Lease lease, SealKey seal) {}
@@ -124,6 +129,23 @@ public final class GolemSeals extends SavedData {
         return seal != null && seal.type() == expectedType && remove(pos, face, owner);
     }
 
+    public Seal get(SealKey key) { return seals.get(key); }
+
+    /** Instance token prevents a stale menu from editing a replacement at the same face. */
+    public boolean configure(Seal expected, UUID owner, SealFilter filter) {
+        Seal current = expected == null ? null : seals.get(expected.key());
+        if (current == null || !current.instanceId().equals(expected.instanceId()) || !current.owner().equals(owner))
+            return false;
+        seals.put(current.key(), new Seal(current.key(), current.owner(), current.priority(), current.color(),
+                current.locked(), current.type(), java.util.Objects.requireNonNull(filter), current.instanceId()));
+        watchedFillTasks.remove(current.key());
+        for (var entry : new ArrayList<>(taskSeals.entrySet())) {
+            if (entry.getValue().equals(current.key())) suspend(entry.getKey());
+        }
+        setDirty();
+        return true;
+    }
+
     public List<Seal> all() {
         return List.copyOf(seals.values());
     }
@@ -171,7 +193,7 @@ public final class GolemSeals extends SavedData {
             if (Math.floorMod(level.getGameTime() + phase++, 5) != 0) continue;
             for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, bounds(seal.key()),
                     entity -> entity.isAlive() && entity.onGround() && !entity.hasPickUpDelay()
-                            && !entity.getItem().isEmpty())) {
+                            && seal.filter().accepts(entity.getItem()))) {
                 if (!level.hasChunkAt(item.blockPosition()) || itemTasks.containsKey(item.getUUID())) continue;
                 int id = allocateTaskId();
                 GolemTask task = GolemTask.entity(id, corePos(seal.key()), item.getUUID());
@@ -222,7 +244,7 @@ public final class GolemSeals extends SavedData {
         if (retryAfter.getOrDefault(task.getId(), Map.of()).getOrDefault(golem.getUUID(), 0L)
                 > level.getGameTime()) return false;
         ItemEntity item = item(level, task.getEntityId());
-        if (item == null || !item.isAlive() || item.getItem().isEmpty()
+        if (item == null || !item.isAlive() || !seal.filter().accepts(item.getItem())
                 || !level.hasChunkAt(item.blockPosition()) || golem.canCarryAmount(item.getItem()) <= 0)
             return false;
         double range = golem.design().hasTrait(GolemTrait.SCOUT) ? 48 : 32;
@@ -230,10 +252,12 @@ public final class GolemSeals extends SavedData {
     }
 
     public ItemEntity target(ServerLevel level, ThaumcraftGolem golem, Assignment assignment) {
-        if (!assignment.lease().owner().equals(golem.getUUID())) return null;
+        if (golem.level() != level || !assignment.lease().owner().equals(golem.getUUID())
+                || !assignment.seal().equals(taskSeals.get(assignment.lease().taskId()))) return null;
         GolemTask task = board.task(assignment.lease()).orElse(null);
         Seal seal = seals.get(assignment.seal());
-        return task != null && seal != null && eligible(level, golem, task, seal)
+        return task != null && assignment.targetId().equals(task.getEntityId())
+                && seal != null && eligible(level, golem, task, seal)
                 ? item(level, assignment.targetId()) : null;
     }
 
@@ -305,7 +329,7 @@ public final class GolemSeals extends SavedData {
                 && retryAfter.getOrDefault(task.getId(), Map.of()).getOrDefault(golem.getUUID(), 0L) <= level.getGameTime()
                 && golem.home().distSqr(seal.key().pos()) < (double) golem.design().stats().homeRadius()
                         * golem.design().stats().homeRadius()
-                && GolemContainers.canDeposit(level, golem, seal.key());
+                && GolemContainers.canDeposit(level, golem, seal.key(), seal.filter());
     }
 
     public SealKey fillTarget(ServerLevel level, ThaumcraftGolem golem, FillAssignment assignment) {
@@ -320,7 +344,7 @@ public final class GolemSeals extends SavedData {
         SealKey target = fillTarget(level, golem, assignment);
         if (target == null || golem.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(target.pos())) > 4)
             return false;
-        int moved = GolemContainers.deposit(level, golem, target);
+        int moved = GolemContainers.deposit(level, golem, target, seals.get(target).filter());
         board.complete(assignment.lease(), true);
         board.suspend(assignment.lease());
         forget(assignment.lease().taskId());
@@ -389,7 +413,7 @@ public final class GolemSeals extends SavedData {
             try {
                 data.seals.putIfAbsent(key, new Seal(key, UUID.fromString(row.getString("owner")),
                         row.getByte("priority"), row.getByte("color"), row.getBoolean("locked"),
-                        FILL_KEY.equals(typeKey) ? Type.FILL : Type.PICKUP));
+                        FILL_KEY.equals(typeKey) ? Type.FILL : Type.PICKUP, SealFilter.load(row, registries), UUID.randomUUID()));
             } catch (IllegalArgumentException ignored) {
                 // Invalid external data must not become a seal owned by everybody.
             }
@@ -409,9 +433,8 @@ public final class GolemSeals extends SavedData {
             row.putByte("priority", seal.priority());
             row.putByte("color", seal.color());
             row.putBoolean("locked", seal.locked());
-            // Fixed BETA26 constructor default only: configurable filters, area,
-            // redstone and UI are intentionally deferred, not silently ignored.
-            row.putBoolean("bl", true);
+            seal.filter().save(row, registries);
+            // Area/redstone configuration remains deferred.
             row.putLong("area", new BlockPos(seal.key().face().getStepX() == 0 ? 3 : 1,
                     seal.key().face().getStepY() == 0 ? 3 : 1,
                     seal.key().face().getStepZ() == 0 ? 3 : 1).asLong());

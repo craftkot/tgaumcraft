@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals;
+import dev.ehtid.thaumcraft.golem.menu.GolemSealMenu;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -11,7 +13,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 
-/** Places the first pickup seal; settings and bell interactions are separate work. */
+/** Places/removes basic seals; re-use an owned face to open its filter menu. Bell remains separate work. */
 public final class GolemSealItem extends Item {
     private final GolemSeals.Type type;
     public GolemSealItem(Properties properties) {
@@ -50,6 +52,16 @@ public final class GolemSealItem extends Item {
             player.displayClientMessage(Component.translatable(
                     message("removed")), true);
         } else {
+            var existing = seals.get(new GolemSeals.SealKey(support, face));
+            if (existing != null) {
+                if (existing.type() != type || !existing.owner().equals(player.getUUID())) return InteractionResult.FAIL;
+                var menu = new GolemSealMenu(0, player.getInventory(), level, existing);
+                if (!menu.stillValid(player)) return InteractionResult.FAIL;
+                player.openMenu(new SimpleMenuProvider((id, inventory, viewer) ->
+                        new GolemSealMenu(id, inventory, level, existing),
+                        Component.translatable("menu.thaumcraft.golem_seal.title")));
+                return InteractionResult.CONSUME;
+            }
             if (!seals.place(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
             if (!player.getAbilities().instabuild) held.shrink(1);
             player.displayClientMessage(Component.translatable(

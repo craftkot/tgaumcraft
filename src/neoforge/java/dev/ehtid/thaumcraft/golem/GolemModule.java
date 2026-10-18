@@ -10,6 +10,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.flag.FeatureFlags;
+import dev.ehtid.thaumcraft.golem.menu.GolemSealMenu;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -25,6 +28,10 @@ public final class GolemModule {
             DeferredRegister.create(Registries.ENTITY_TYPE, ThaumcraftPort.MOD_ID);
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ThaumcraftPort.MOD_ID);
 
+    private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<MenuType<?>, MenuType<GolemSealMenu>> SEAL_MENU = MENUS.register(
+            "golem_seal", () -> new MenuType<>(GolemSealMenu::new, FeatureFlags.VANILLA_SET));
+
     public static final DeferredHolder<EntityType<?>, EntityType<ThaumcraftGolem>> GOLEM = ENTITIES.register(
             "golem", () -> EntityType.Builder.of(ThaumcraftGolem::new, MobCategory.CREATURE)
                     .sized(0.4F, 0.9F).eyeHeight(0.7F).clientTrackingRange(8).build("thaumcraft:golem"));
@@ -38,6 +45,7 @@ public final class GolemModule {
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
         ITEMS.register(bus);
+        MENUS.register(bus);
         bus.addListener(GolemModule::attributes);
         bus.addListener(GolemModule::creativeContents);
     }

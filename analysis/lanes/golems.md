@@ -121,3 +121,12 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 - Core runner PASS (`golems-filter-core.log`), NeoForge compileJava PASS Java21 (`golems-filter-compile.log`). Полный build и expanded dedicated GameTests запущены; ниже записывается фактический исход.
 
 Первый малый коммит M10.5 выделяет `SealFilterRules` и 15 новых Core assertions в существующий `LegacyGolemTaskTest` (всего937). Общий runner не изменялся. Все Core suites PASS Java21. Runtime/menu/restart изменения находятся в следующем коммите после реальных серверных проверок.
+
+- `138961d` — Core filter rules +15 assertions; 937 task assertions и весь runner PASS.
+- Начальный expanded server suite: 21/21 PASS, полный build PASS. Дополнительно введён 22-й автономный filtered AI cycle. Он выявил исчезновение запрещённого ItemEntity при сохранности всех17 переносимых предметов; проверки не ослаблялись. Диагностика фиксирует remove stack для установления причины; окончательный исход ниже.
+
+Диагностика 22-го теста установила точный вызов удаления: `GameTestInfo.succeed` → discard ItemEntities, затем последний `onEachTick` того же тика. Механика сохранила17, финальные assert cap12/remainder5 уже проходили. Исправлена только последовательность теста: `startSequence().thenIdle(200).thenExecute(...).thenSucceed()` завершает его после tick callbacks. Временный tracing удалён, проверки не ослаблены. Диагностические неуспешные запуски сохранены вне Git (`golems-filter-{reviewed,diagnostic,final-fixtures,removal-trace}.log`); источник подтверждён stacktrace, а не предположением о merge или потере груза.
+
+Финальный runtime результат M10.5 (`golems-filter-verified.log`): **все22 required GameTests PASS**, 6.425s набора /45s полный `build -x test runGolemGameTest`; Java21 NeoForge21.1.250. Проверены обе политики, full AI cycle, свежий stock budget двух workers, components/HAULER/actual remainder, stale/redirected leases, server menu authority/ghost, backward-compatible NBT. JAR ZIP CRC PASS, SHA256 `c6a08efca9d5216f5c8a65394a2748f53a88d9236ec53b57f5bc21236987343b`.
+
+Следующий runtime commit содержит фильтры, меню и 7 новых GameTests + дизайн; отдельные следующие коммиты выделяют cold-restart fixture/протокол и только7 EN/RU ключей на язык. Cold WRITE запущен в новом `build/golem-filter-restart`; результат не предполагается заранее. Общие регистры/runner/CI/Gradle не менялись.
