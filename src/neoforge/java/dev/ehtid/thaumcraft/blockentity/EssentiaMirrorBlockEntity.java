@@ -38,6 +38,8 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
     private int nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
     /** A one-tick memo for remote source discovery, never authoritative for debit. */
     private long sourceScanTick=Long.MIN_VALUE;
+    /** Immutable endpoint key of the reciprocal mirror used for that scan. */
+    private LegacyEssentiaMirrorLogic.Endpoint sourceScanPartner;
     private RemoteSource cachedSource;
 
     private record RemoteSource(ServerLevel world, BlockPos pos,
@@ -122,7 +124,9 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         EssentiaMirrorBlockEntity remoteMirror=partnerLoaded(local);
         if(remoteMirror==null || !(remoteMirror.level instanceof ServerLevel remote))return null;
         long tick=local.getGameTime();
-        if(sourceScanTick==tick) {
+        var currentPartner=endpoint(remote,remoteMirror.worldPosition);
+        if(LegacyEssentiaMirrorLogic.sameSourceScan(
+                sourceScanPartner,currentPartner,sourceScanTick,tick)) {
             // A previously discovered BlockEntity may still exist even after
             // the reciprocal mirror address changes via restored/merged NBT.
             // Never consume it unless it is in this CURRENT partner's world
@@ -138,6 +142,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
             if(cachedSource==null && requestedAspect==null)return null;
         }
         sourceScanTick=tick;
+        sourceScanPartner=currentPartner;
         cachedSource=null;
         for(var offset:LegacyEssentiaSourceOrder.nullFacing(LegacyEssentiaMirrorLogic.SEARCH_RANGE)) {
             BlockPos target=remoteMirror.worldPosition.offset(offset.x(),offset.y(),offset.z());
@@ -273,6 +278,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         }
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         return 1;
     }
 
@@ -391,6 +397,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         linked=false;
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         setChanged();
         if(level!=null&&!level.isClientSide())
             level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
@@ -402,6 +409,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         linked=true;
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         setChanged();
         if(level!=null&&!level.isClientSide())
             level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
@@ -461,6 +469,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         // could have been removed, moved or re-linked between loads.
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
     }
 

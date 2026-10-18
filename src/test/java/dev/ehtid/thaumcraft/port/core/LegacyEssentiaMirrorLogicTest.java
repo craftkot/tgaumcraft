@@ -33,6 +33,20 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,false,false));
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,true,true));
 
+        // A scan from another (even nearby) mirror or dimension must never
+        // serve a new link just because its previous source is still loaded.
+        var nearbyB = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:the_nether",-49,90,7);
+        var overworldB = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:overworld",-50,90,7);
+        eq(true,LegacyEssentiaMirrorLogic.sameSourceScan(b,b,123L,123L));
+        eq(true,LegacyEssentiaMirrorLogic.sameSourceScan(b,
+                new LegacyEssentiaMirrorLogic.Endpoint("minecraft:the_nether",-50,90,7),
+                123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,nearbyB,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,overworldB,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,b,123L,124L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(null,b,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,null,123L,123L));
+
         eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",64,"aqua"));
         eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,null));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,"ignis"));

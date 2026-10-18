@@ -48,6 +48,19 @@ public final class LegacyEssentiaMirrorLogic {
 
     public record Link(Endpoint destination, boolean linked) {}
 
+    /**
+     * Cache hits are valid ONLY for the specific reciprocal partner whose
+     * source box was scanned on this same local server tick. Two distinct
+     * mirrors can have overlapping 8-block search regions, so "in range"
+     * is necessary but insufficient to reuse another partner's result.
+     */
+    public static boolean sameSourceScan(Endpoint scannedPartner,
+                                         Endpoint currentPartner,
+                                         long scannedTick, long currentTick) {
+        return scannedPartner != null && scannedPartner.equals(currentPartner)
+                && scannedTick == currentTick;
+    }
+
     /** Preserve a destination for a placed mirror whose target chunk is still unloaded. */
     public static boolean canRememberDestination(Endpoint self, Endpoint desired,
                                                  boolean dimensionKnown) {
