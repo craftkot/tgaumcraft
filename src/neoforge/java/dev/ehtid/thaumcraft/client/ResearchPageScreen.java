@@ -10,6 +10,7 @@ import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.port.core.ResearchBrowserModel;
 import dev.ehtid.thaumcraft.port.core.ResearchPageVisibility;
 import dev.ehtid.thaumcraft.port.core.ResearchAddendumVisibility;
+import dev.ehtid.thaumcraft.port.core.ResearchKnowledgeRequirementStatus;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -80,10 +81,11 @@ public final class ResearchPageScreen extends Screen {
         // their actual translation keys until real BETA26 translations arrive.
         lines.add(Component.translatable(stage.textKey()));
         lines.add(Component.literal("Source text key: " + stage.textKey()));
+        var data = knowledge();
         for (String key : stage.requiredKnowledge())
-            lines.add(Component.literal("Knowledge: " + key));
+            lines.add(knowledgeRequirement("Knowledge", key, data));
         for (String key : stage.auramKnowledge())
-            lines.add(Component.literal("Auram knowledge: " + key));
+            lines.add(knowledgeRequirement("Auram knowledge", key, data));
         for (String item : stage.requiredItemSpecs())
             lines.add(Component.literal("Item spec: " + item));
         for (String craft : stage.craftIds())
@@ -98,7 +100,6 @@ public final class ResearchPageScreen extends Screen {
         // BETA26 addenda are part of completed research pages, not new
         // stages. Only the server's PAGE flag + EACH completed source
         // prerequisite can reveal a specific original addendum.
-        var data = knowledge();
         if (data != null && safeIndex == page.stages().size() - 1) {
             for (var addon : ResearchAddendumVisibility.visible(page, data, CATALOG)) {
                 lines.add(Component.literal("Addendum: " + addon.textKey()));
@@ -107,6 +108,16 @@ public final class ResearchPageScreen extends Screen {
             }
         }
         return List.copyOf(lines);
+    }
+
+    private Component knowledgeRequirement(String label, String key, PlayerKnowledgeData data) {
+        if (data == null) return Component.literal(label + ": " + key);
+        var current = ResearchKnowledgeRequirementStatus.inspect(key, data, CATEGORIES);
+        if (current == null) return Component.literal(label + ": " + key);
+        return Component.literal(label + ": " + current.type() + " "
+                + current.category() + " " + current.currentLevels() + "/"
+                + current.requiredLevels()
+                + (current.satisfied() ? " [OK]" : " [NEEDED]"));
     }
 
     /** Wrap actual lore once translations are installed; do not truncate source
