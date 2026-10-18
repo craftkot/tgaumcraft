@@ -333,5 +333,11 @@
   "menu.thaumcraft.golem_seal.blacklist": "Blacklist",
   "menu.thaumcraft.golem_seal.whitelist": "Whitelist",
   "menu.thaumcraft.golem_seal.unlimited": "unlimited",
-  "menu.thaumcraft.golem_seal.limit": "Stock: %s"
+  "menu.thaumcraft.golem_seal.limit": "Stock: %s",
+  "menu.thaumcraft.golem_seal.priority": "Priority: %s",
+  "menu.thaumcraft.golem_seal.color": "Color: %s",
+  "menu.thaumcraft.golem_seal.locked": "Owner only",
+  "menu.thaumcraft.golem_seal.public": "Any owner",
+  "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: pause on signal",
+  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: ignore"
 }

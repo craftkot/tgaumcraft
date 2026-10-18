@@ -333,5 +333,11 @@
   "menu.thaumcraft.golem_seal.blacklist": "Чёрный список",
   "menu.thaumcraft.golem_seal.whitelist": "Белый список",
   "menu.thaumcraft.golem_seal.unlimited": "без лимита",
-  "menu.thaumcraft.golem_seal.limit": "Запас: %s"
+  "menu.thaumcraft.golem_seal.limit": "Запас: %s",
+  "menu.thaumcraft.golem_seal.priority": "Приоритет: %s",
+  "menu.thaumcraft.golem_seal.color": "Цвет: %s",
+  "menu.thaumcraft.golem_seal.locked": "Только владелец",
+  "menu.thaumcraft.golem_seal.public": "Любой владелец",
+  "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: остановка",
+  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: игнорировать"
 }
