@@ -116,7 +116,7 @@ public final class LegacyResearchPages {
                         new Stage("research.ESSENTIASMELTER.stage.2", List.of(), List.of("thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'vacuos'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'lux'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'motus'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'gelum'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'vitreus'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'metallum'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'victus'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'mortuus'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'potentia'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'permutatio'}]}"), List.of(), List.of(), List.of(), List.of(), 0),
                         new Stage("research.ESSENTIASMELTER.stage.3", List.of("thaumcraft:EssentiaSmelter"), List.of(), List.of("thaumcraft:smelter_basic"), List.of("OBSERVATION;ALCHEMY;1", "THEORY;ALCHEMY;1"), List.of(), List.of(), 0),
                         new Stage("research.ESSENTIASMELTER.stage.4", List.of("thaumcraft:EssentiaSmelter", "thaumcraft:Alembic"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.ESSENTIASMELTER.bellows\", List.of(), List.of(\"BELLOWS\"))")));
+                List.of(new Addendum("research.ESSENTIASMELTER.bellows", List.of(), List.of("BELLOWS")))));
         put(dest, new Page("WARDEDJARS", "research.WARDEDJARS.title",
                 List.of(new Stage("research.WARDEDJARS.stage.1", List.of("thaumcraft:WardedJar", "thaumcraft:JarVoid", "thaumcraft:BrassBrace", "thaumcraft:JarLabel", "thaumcraft:JarLabelEssence"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
                 List.of()));
@@ -177,7 +177,7 @@ public final class LegacyResearchPages {
         put(dest, new Page("INFERNALFURNACE", "research.INFERNALFURNACE.title",
                 List.of(new Stage("research.INFERNALFURNACE.stage.1", List.of(), List.of("minecraft:obsidian", "minecraft:nether_brick", "minecraft:blaze_rod"), List.of(), List.of("OBSERVATION;ARTIFICE;1"), List.of(), List.of("!ignis", "m_hellandback"), 0),
                         new Stage("research.INFERNALFURNACE.stage.2", List.of("thaumcraft:infernalfurnace", "thaumcraft:triplemeattreatfake"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.INFERNALFURNACE.bellows\", List.of(), List.of(\"BELLOWS\"))")));
+                List.of(new Addendum("research.INFERNALFURNACE.bellows", List.of(), List.of("BELLOWS")))));
         put(dest, new Page("BELLOWS", "research.BELLOWS.title",
                 List.of(new Stage("research.BELLOWS.stage.1", List.of(), List.of("thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aer'}]}"), List.of(), List.of("OBSERVATION;GOLEMANCY;1"), List.of(), List.of(), 0),
                         new Stage("research.BELLOWS.stage.2", List.of("thaumcraft:Bellows"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
@@ -355,16 +355,16 @@ public final class LegacyResearchPages {
         put(dest, new Page("FLUX", "research.FLUX.title",
                 List.of(new Stage("research.FLUX.stage.1", List.of(), List.of(), List.of(), List.of(), List.of(), List.of("f_toomuchflux"), 0),
                         new Stage("research.FLUX.stage.1", List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.FLUX.stage.2\", List.of(), List.of(\"f_toomuchflux\"))")));
+                List.of(new Addendum("research.FLUX.stage.2", List.of(), List.of("f_toomuchflux")))));
         put(dest, new Page("WARP", "research.WARP.title",
                 List.of(new Stage("research.WARP.stage.1", List.of("thaumcraft:sanitychecker"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
                 List.of()));
         put(dest, new Page("ORE", "research.ORE.title",
                 List.of(new Stage("research.ORE.stage.1", List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.ORE.amber\", List.of(), List.of(\"!OREAMBER\"))", "new Addendum(\"research.ORE.cinnabar\", List.of(), List.of(\"!ORECINNABAR\"))", "new Addendum(\"research.ORE.crystal\", List.of(), List.of(\"!ORECRYSTAL\"))")));
+                List.of(new Addendum("research.ORE.amber", List.of(), List.of("!OREAMBER")), new Addendum("research.ORE.cinnabar", List.of(), List.of("!ORECINNABAR")), new Addendum("research.ORE.crystal", List.of(), List.of("!ORECRYSTAL")))));
         put(dest, new Page("PLANTS", "research.PLANTS.title",
                 List.of(new Stage("research.PLANTS.stage.1", List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.PLANTS.greatwood\", List.of(), List.of(\"!PLANTWOOD\"))", "new Addendum(\"research.PLANTS.silverwood\", List.of(), List.of(\"!PLANTWOOD\"))", "new Addendum(\"research.PLANTS.cinderpearl\", List.of(), List.of(\"!PLANTCINDERPEARL\"))", "new Addendum(\"research.PLANTS.shimmerleaf\", List.of(), List.of(\"!PLANTSHIMMERLEAF\"))", "new Addendum(\"research.PLANTS.vishroom\", List.of(), List.of(\"!PLANTVISHROOM\"))")));
+                List.of(new Addendum("research.PLANTS.greatwood", List.of(), List.of("!PLANTWOOD")), new Addendum("research.PLANTS.silverwood", List.of(), List.of("!PLANTWOOD")), new Addendum("research.PLANTS.cinderpearl", List.of(), List.of("!PLANTCINDERPEARL")), new Addendum("research.PLANTS.shimmerleaf", List.of(), List.of("!PLANTSHIMMERLEAF")), new Addendum("research.PLANTS.vishroom", List.of(), List.of("!PLANTVISHROOM")))));
         put(dest, new Page("CRYSTALFARMER", "research.CRYSTALFARMER.title",
                 List.of(new Stage("research.CRYSTALFARMER.stage.1", List.of(), List.of("thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aer'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'terra'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ignis'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'aqua'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'ordo'}]}", "thaumcraft:crystal_essence;1;0;{Aspects:[{amount:1,key:'perditio'}]}"), List.of(), List.of("OBSERVATION;AUROMANCY;1", "OBSERVATION;BASICS;1"), List.of(), List.of(), 0),
                         new Stage("research.CRYSTALFARMER.stage.2", List.of("thaumcraft:CrystalClusterAir", "thaumcraft:CrystalClusterFire", "thaumcraft:CrystalClusterWater", "thaumcraft:CrystalClusterEarth", "thaumcraft:CrystalClusterOrder", "thaumcraft:CrystalClusterEntropy", "thaumcraft:CrystalClusterFlux"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
@@ -525,14 +525,14 @@ public final class LegacyResearchPages {
                 List.of()));
         put(dest, new Page("SEALCOLLECT", "research.SEALCOLLECT.title",
                 List.of(new Stage("research.SEALCOLLECT.stage.1", List.of("thaumcraft:SealCollect"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.SEALCOLLECT.stage.ADV\", List.of(\"thaumcraft:SealCollectAdv\"), List.of(\"MINDBIOTHAUMIC\"))")));
+                List.of(new Addendum("research.SEALCOLLECT.stage.ADV", List.of("thaumcraft:SealCollectAdv"), List.of("MINDBIOTHAUMIC")))));
         put(dest, new Page("SEALSTORE", "research.SEALSTORE.title",
                 List.of(new Stage("research.SEALSTORE.stage.1", List.of("thaumcraft:SealStore"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.SEALSTORE.stage.ADV\", List.of(\"thaumcraft:SealStoreAdv\"), List.of(\"MINDBIOTHAUMIC\"))")));
+                List.of(new Addendum("research.SEALSTORE.stage.ADV", List.of("thaumcraft:SealStoreAdv"), List.of("MINDBIOTHAUMIC")))));
         put(dest, new Page("SEALEMPTY", "research.SEALEMPTY.title",
                 List.of(new Stage("research.SEALEMPTY.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!vacuos"), 0),
                         new Stage("research.SEALEMPTY.stage.2", List.of("thaumcraft:SealEmpty"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.SEALEMPTY.stage.ADV\", List.of(\"thaumcraft:SealEmptyAdv\"), List.of(\"MINDBIOTHAUMIC\"))")));
+                List.of(new Addendum("research.SEALEMPTY.stage.ADV", List.of("thaumcraft:SealEmptyAdv"), List.of("MINDBIOTHAUMIC")))));
         put(dest, new Page("SEALPROVIDE", "research.SEALPROVIDE.title",
                 List.of(new Stage("research.SEALPROVIDE.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!desiderium"), 0),
                         new Stage("research.SEALPROVIDE.stage.2", List.of("thaumcraft:SealProvide"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
@@ -544,7 +544,7 @@ public final class LegacyResearchPages {
         put(dest, new Page("SEALGUARD", "research.SEALGUARD.title",
                 List.of(new Stage("research.SEALGUARD.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!mortuus"), 0),
                         new Stage("research.SEALGUARD.stage.2", List.of("thaumcraft:SealGuard", "thaumcraft:modaggression"), List.of(), List.of(), List.of(), List.of(), List.of(), 1)),
-                List.of("new Addendum(\"research.SEALGUARD.stage.ADV\", List.of(\"thaumcraft:SealGuardAdv\"), List.of(\"MINDBIOTHAUMIC\"))")));
+                List.of(new Addendum("research.SEALGUARD.stage.ADV", List.of("thaumcraft:SealGuardAdv"), List.of("MINDBIOTHAUMIC")))));
         put(dest, new Page("SEALBUTCHER", "research.SEALBUTCHER.title",
                 List.of(new Stage("research.SEALBUTCHER.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!bestia"), 0),
                         new Stage("research.SEALBUTCHER.stage.2", List.of("thaumcraft:SealButcher"), List.of(), List.of(), List.of(), List.of(), List.of(), 1)),
@@ -560,7 +560,7 @@ public final class LegacyResearchPages {
         put(dest, new Page("SEALBREAK", "research.SEALBREAK.title",
                 List.of(new Stage("research.SEALBREAK.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!perditio"), 0),
                         new Stage("research.SEALBREAK.stage.2", List.of("thaumcraft:SealBreak"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
-                List.of("new Addendum(\"research.SEALBREAK.stage.ADV\", List.of(\"thaumcraft:SealBreakAdv\"), List.of(\"MINDBIOTHAUMIC\"))")));
+                List.of(new Addendum("research.SEALBREAK.stage.ADV", List.of("thaumcraft:SealBreakAdv"), List.of("MINDBIOTHAUMIC")))));
         put(dest, new Page("SEALLUMBER", "research.SEALLUMBER.title",
                 List.of(new Stage("research.SEALLUMBER.stage.1", List.of(), List.of(), List.of(), List.of("THEORY;GOLEMANCY;1"), List.of(), List.of("!herba"), 0),
                         new Stage("research.SEALLUMBER.stage.2", List.of("thaumcraft:SealLumber"), List.of(), List.of(), List.of(), List.of(), List.of(), 0)),
