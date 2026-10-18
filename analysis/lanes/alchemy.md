@@ -83,3 +83,10 @@
 - Следующий шаг: Core CI + full NeoForge компиляция этого изменения. #273 FAILURE без пользовательского лога не трактовать как поломку mirror-transport. Только `feature/alchemy`, без merge.
 
 - После первичных граничных проверок добавлено exhaustive Core-сравнение оптимизации `inPartnerSearchBox` с реально используемым `LegacyEssentiaSourceOrder.nullFacing(8)` во всех 19×18×19 позициях. Это защищает от ошибки смещения диапазона (-8..+7 по Y) и непреднамеренного исключения реальных BETA26 источников. Minecraft-тест этим не заменяется.
+
+### Подтверждения CI для M04.4 и остаток
+- [#298](https://circleci.com/gh/craftkot/tgaumcraft/298) — **SUCCESS** на `e056bb7` (Core; reset cache + геометрия).
+- [#302](https://circleci.com/gh/craftkot/tgaumcraft/302) — **SUCCESS** полная NeoForge-компиляция на `5396678` (тот же код M04.4); `27aa060` возвращает `run_compile=false`.
+- [#311](https://circleci.com/gh/craftkot/tgaumcraft/311) — **SUCCESS** Core на `ccff459`; exhaustively сверены 19×18×19 координат с `LegacyEssentiaSourceOrder.nullFacing(8)`.
+- **M04.4 остаётся незакрытым:** игровая reload/relink/chunk-unload проба ещё не пройдена. **M04.1/M04.2** также ожидают настоящий успешный клиент. Не путать результат compile и клиентского smoke.
+- **Следующее точное действие:** разобрать полный log неудавшегося [client #273](https://circleci.com/gh/craftkot/tgaumcraft/273) (пользовательский `build_273_step_103_container_0.txt`), не угадывать причину, починить fixture либо механику по факту и выполнить real Minecraft тест на `feature/alchemy`. Чужие ветки и `main` не трогать.
