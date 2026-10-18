@@ -17,6 +17,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerFinishCheckpoint;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog;
 import dev.ehtid.thaumcraft.crafting.CrystalFarmerInfusionAdapter;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.server.level.ServerPlayer;
@@ -266,6 +267,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         recipeInstability = preview.matching().instability();
         crafting = true;
         changedAndSync(); // checkpoint BEFORE any real jar is debited
+        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_RESEARCH_GATED_START");
         return true;
     }
 
@@ -324,6 +326,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (result.action() == LegacyInfusionEssentiaCycle.Action.DRAINED_ONE) {
             // Only a successful REAL jar debit may advance the checkpoint.
             ritualLedger = ritualLedger.afterWorldDebit(result.consumed().tag());
+            if (ritualLedger.readyForIngredients())
+                ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID");
         }
         if (result.action() == LegacyInfusionEssentiaCycle.Action.FAILED_ALL)
             surroundingsInitialized = false;
@@ -380,6 +384,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         captured, ItemStack.EMPTY)) {
                     itemProgress = itemProgress.afterActualPedestalRemoval(nextBit);
                     changedAndSync();
+                    ThaumcraftSmokeAudit.mark(nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                            ? "INFUSION_CRYSTAL_SEEDS_REMOVED"
+                            : "INFUSION_CRYSTAL_SALIS_REMOVED");
                 }
             }
             case READY -> { /* Remaining finish/output work is deliberately gated. */ }
@@ -443,6 +450,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         itemProgress = null;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         changedAndSync();
+        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED");
     }
 
     private void changedAndSync() {
