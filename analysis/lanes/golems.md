@@ -13,6 +13,7 @@
 ## Подход и коммиты
 
 1. `bfced89` — журнал начала M10 и проверенная база.
+2. `933c2e4` — исходная модель Task/SealArea, server TaskBoard с leases и 922 содержательными проверками (root повторил standalone запуск: PASS).
 
 ## Проверки
 
@@ -28,3 +29,32 @@
 ## Рабочие заметки после bfced89
 
 Task/Seal Core: standalone JDK21 тесты агента прошли 922 assertions; общий runner будет подключён отдельной минимальной правкой. Написаны Entity, placer, home goal, isolated registry module, pickup seal/task goal и provisional animated renderer. Архитектура: `analysis/GOLEM_SYSTEM_DESIGN_RU.md`. Полная первая компиляция дошла до javac, обнаружила отсутствующие ещё не сохранённые construction-модели и final API `canBreatheUnderwater`; последний заменён на NeoForge fluid extension. Это рабочий неуспешный проход, не PASS.
+
+## Проверенные результаты текущего дерева
+
+- Существующий `bash tools/run_core_parity.sh` до добавления construction/test entries: PASS, включая прежние подсистемы.
+- NeoForge `compileJava processResources`: **PASS** (38 s), JDK21/Gradle9.2.1/NeoForge21.1.250.
+- Настоящий GameTestServer: **все 8 required tests PASS** (18.10.2026 12:08 UTC): placer/атрибуты, движение домой, cargo conservation/components, NBT+quarantine, два работника/один pickup, cancellation, death cargo, owner reclaim. Журнал вне git: `/workspace/reference/golems-gametest.log`, строка `All 8 required tests passed`.
+- Прежние asset/loot/localization guards: PASS.
+- Cold restart write/read запущен отдельно, итог ещё не получен. Клиент не запускался; Xvfb/xdotool отсутствуют.
+
+## Итог Core и серверных проверок
+
+- 6 материалов, 18 частей, 19 traits; derived stats, packed roundtrip и явная валидация. Golden и exhaustive construction tests: **34 808 assertions PASS**.
+- Начальная сборка: `GolemAssembly` подтверждает 3 Greatwood plank + 2 mechanism_simple + 1 mind@0; остальные конфигурации дают явный UnsupportedOperationException вместо выдуманной цены. Начисление rank XP пока не реализовано.
+- Полный `bash tools/run_core_parity.sh` с новыми construction/tasks entries: **PASS**, все прежние тесты также проходят.
+- Отдельные настоящие dedicated server: WRITE assertions OK и READ assertions OK после полного shutdown/restart одного мира; один UUID, owner/home/props/XP/color/health, exact 37 named iron ingots, persisted seal, без duplicate ground cargo и stale tasks.
+- `build -x test` PASS, JAR создан; финальный incremental build после добавления costs проверяется перед публикацией.
+- Полный протокол: `analysis/GOLEM_VALIDATION_2026_10_18.md`. Логи сессии: `/workspace/reference/golems-{core-final,compile,gametest,restart-write,restart-read,build-final}.log` (за пределами Git).
+
+## Общие изменения для координатора
+
+Отдельный integration commit: одна строка `GolemModule.register(modBus)` в `ThaumcraftPort`; по 5 новых EN/RU ключей; два теста в существующем Core runner (4 строки). Основные регистры, Gradle build/properties, CI, дорожная карта и другие ветки не менялись. Opt-in `tools/golems.gradle` добавляет только два тестовых запуска M10.
+
+## Оставшиеся границы / продолжение
+
+Не перенесены: Golem Press и survival производство; остальные assembly costs и начисление XP; Fill/Empty/Provide/Stock, capability bridge контейнеров и сельское хозяйство; bell, фильтры/конфигурация и GUI печатей; боевые/летающие/специальные части и полный исходный визуал. Runtime placer допускает только default wood; полный каталог частей пока Core.
+
+Не проверены: клиент (нет подготовленного Xvfb/xdotool), отдельный live chunk unload/reload, аварийное отключение посреди переноса. Не считать штатный рестарт crash-atomicity. Следующий независимый игровой шаг: BETA26 Fill → NeoForge ItemHandler и настоящий Pickup→golem→chest цикл с conservation при частичном заполнении/выгрузке. Параллельно подготовить полные component costs перед Golem Press.
+
+Готовность всего M10 не объявляется; рейтинг 59/100 не повышается. Draft PR → main обязателен, merge не выполняется.
