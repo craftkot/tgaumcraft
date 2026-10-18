@@ -171,3 +171,8 @@ Core runner PASS (включая tagged aspect identity bridging). Первый 
 
 - `8f93441` — pure seal recipes, adapter/blank item/model и11 новых Core assertions; весь runner PASS.
 - Этот integration commit затрагивает только ArcaneWorkbenchMenu (preview/20vis/Aer mask, оплаченный batch и commit validation) и CrucibleBlockEntity (branch, exact debit, rejected-spawn rollback), плюс3 lane-local GameTests. Зависит от8f93441; итоговое дерево прошло29/29. Для координатора: применять вместе с recipe adapter, остальные алхимические ветки/рецепты/heat/регистры не переписывались.
+
+- `c64f491` — минимальная интеграция arcane/crucible и3 server GameTests,29/29 PASS.
+- Заключительный малый commit: только1 EN/RU blank-item label на язык, протокол проверок и журнал. Локализации/модель присутствовали в прошедшем full build/JAR. Холодный restart в этом срезе не повторяется (новых форматов сохранения нет); клиент и recipe-book/Thaumonomicon display не проверены.
+- Остаток: полный Press/стоимости частей/research progression, Bell/раскраска/области/advanced filters, Empty/Provide/Stock, farming и специальные части/исходный визуал. Следующий конкретный этап — исходный Golem Bell: рецепт и серверное управление, если подтверждены source dependencies. M10 целиком не закрыт,59/100 без изменений.
+- Draft PR #3 →main остаётся draft; обычный push только feature/golems. Обновлённая архитектура и evidence находятся в GOLEM_SYSTEM_DESIGN_RU.md и GOLEM_VALIDATION_2026_10_18.md. Рабочее дерево после коммитов должно быть clean; merge/force/rebase не выполнялись.

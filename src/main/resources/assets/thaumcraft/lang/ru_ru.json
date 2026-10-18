@@ -339,5 +339,6 @@
   "menu.thaumcraft.golem_seal.locked": "Только владелец",
   "menu.thaumcraft.golem_seal.public": "Любой владелец",
   "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: остановка",
-  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: игнорировать"
+  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: игнорировать",
+  "item.thaumcraft.seal_blank": "Пустая печать управления"
 }

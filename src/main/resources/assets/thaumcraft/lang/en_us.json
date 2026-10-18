@@ -339,5 +339,6 @@
   "menu.thaumcraft.golem_seal.locked": "Owner only",
   "menu.thaumcraft.golem_seal.public": "Any owner",
   "menu.thaumcraft.golem_seal.redstone_stop": "Redstone: pause on signal",
-  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: ignore"
+  "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: ignore",
+  "item.thaumcraft.seal_blank": "Blank Control Seal"
 }
