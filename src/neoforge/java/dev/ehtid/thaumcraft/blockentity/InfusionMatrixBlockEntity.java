@@ -95,6 +95,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (level == null) return false;
         return LegacyInfusionMatrixLayout.validLocation(at -> {
             BlockPos where = worldPosition.offset(at.x(), at.y(), at.z());
+            // Matrix ticks must never synchronously load a missing chunk.
+            if (!level.hasChunkAt(where)) return LegacyInfusionMatrixLayout.Part.OTHER;
             var block = level.getBlockState(where).getBlock();
             if (block instanceof PedestalBlock)
                 return LegacyInfusionMatrixLayout.Part.PEDESTAL;
@@ -107,12 +109,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     /** Surroundings scan preserves original [-8,8] x/z and [-7,3] y limits. */
     public List<BlockPos> nearbyPedestals() {
         if (level == null) return List.of();
-        return LegacyInfusionMatrixLayout.scanPedestals(at ->
-                level.getBlockState(worldPosition.offset(at.x(), at.y(), at.z()))
-                        .getBlock() instanceof PedestalBlock
-                        ? LegacyInfusionMatrixLayout.Part.PEDESTAL
-                        : LegacyInfusionMatrixLayout.Part.OTHER)
-                .stream().map(at -> worldPosition.offset(at.x(), at.y(), at.z()))
+        return LegacyInfusionMatrixLayout.scanPedestals(at -> {
+            BlockPos where = worldPosition.offset(at.x(), at.y(), at.z());
+            if (!level.hasChunkAt(where)) return LegacyInfusionMatrixLayout.Part.OTHER;
+            return level.getBlockState(where).getBlock() instanceof PedestalBlock
+                    ? LegacyInfusionMatrixLayout.Part.PEDESTAL
+                    : LegacyInfusionMatrixLayout.Part.OTHER;
+        }).stream().map(at -> worldPosition.offset(at.x(), at.y(), at.z()))
                 .toList();
     }
 
@@ -140,11 +143,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         int eldritch = 0;
         Map<LegacyInfusionMatrixLayout.Offset, LegacyInfusionStability.Stabilizer>
                 ring = new HashMap<>();
-        for (var offset : LegacyInfusionMatrixLayout.scanPedestals(where ->
-                level.getBlockState(worldPosition.offset(where.x(),where.y(),where.z()))
-                        .getBlock() instanceof PedestalBlock
-                        ? LegacyInfusionMatrixLayout.Part.PEDESTAL
-                        : LegacyInfusionMatrixLayout.Part.OTHER)) {
+        for (var offset : LegacyInfusionMatrixLayout.scanPedestals(where -> {
+            BlockPos at = worldPosition.offset(where.x(),where.y(),where.z());
+            if (!level.hasChunkAt(at)) return LegacyInfusionMatrixLayout.Part.OTHER;
+            return level.getBlockState(at).getBlock() instanceof PedestalBlock
+                    ? LegacyInfusionMatrixLayout.Part.PEDESTAL
+                    : LegacyInfusionMatrixLayout.Part.OTHER;
+        })) {
             var worldAt = worldPosition.offset(offset.x(),offset.y(),offset.z());
             var block = level.getBlockState(worldAt).getBlock();
             if (!(block instanceof PedestalBlock pedestal)) continue;
