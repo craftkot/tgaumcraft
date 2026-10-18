@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.entity;
 import dev.ehtid.thaumcraft.golem.ai.GolemHomeGoal;
 import dev.ehtid.thaumcraft.golem.ai.GolemFollowOwnerGoal;
 import dev.ehtid.thaumcraft.golem.GolemModule;
+import dev.ehtid.thaumcraft.golem.GolemDyes;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBellRules;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import net.minecraft.network.chat.Component;
@@ -249,6 +250,24 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!isAlive() || isRemoved()) return InteractionResult.FAIL;
+        if (!player.isShiftKeyDown()) {
+            ItemStack held = player.getItemInHand(hand);
+            byte color = GolemDyes.color(held);
+            if (color != 0) {
+                if (!player.getUUID().equals(ownerId()) || player.level() != level() || !player.isAlive()
+                        || player.isSpectator() || player.distanceToSqr(this) > 25 || invalidDesign != null)
+                    return InteractionResult.FAIL;
+                if (level().isClientSide) return InteractionResult.SUCCESS;
+                setGolemColor(color);
+                // BETA26 consumes one even in creative or when applying the existing color again.
+                held.shrink(1);
+                playSound(SoundEvents.DYE_USE, 1, 1);
+                player.swing(hand, true);
+                // Original dye interaction does not directly cancel work. Every task callback
+                // rechecks current color; an incompatible goal releases its lease on its next tick.
+                return InteractionResult.CONSUME;
+            }
+        }
         if (!player.isShiftKeyDown() && player.getItemInHand(hand).is(GolemModule.GOLEM_BELL.get())) {
             if (!player.getUUID().equals(ownerId()) || player.distanceToSqr(this) > 25 || invalidDesign != null)
                 return InteractionResult.FAIL;
