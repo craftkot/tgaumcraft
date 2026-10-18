@@ -31,7 +31,16 @@ public final class CrystalFarmerIngredientProgressTest {
         var pending = state;
         rejected(()->pending.afterValidatedCountdown());
         rejected(()->pending.afterActualPedestalRemoval(2));
+        rejected(()->pending.afterSavedPedestalReceipt(1, false, true));
+        rejected(()->pending.afterSavedPedestalReceipt(1, true, false));
+        rejected(()->pending.afterSavedPedestalReceipt(2, true, true));
+        var fromSavedReceipt = pending.afterSavedPedestalReceipt(1, true, true);
+        eq(1, fromSavedReceipt.consumedMask());
+        eq(0, fromSavedReceipt.countdown());
+        rejected(()->fromSavedReceipt.afterSavedPedestalReceipt(1, true, true));
+        rejected(()->beforeStart.afterSavedPedestalReceipt(1, true, true));
         state = state.afterActualPedestalRemoval(1);
+        eq(state,fromSavedReceipt);
         eq(1,state.consumedMask());
         eq(true,state.matchesLivePedestals(false, true));
         eq(false,state.matchesLivePedestals(true, true)); // matrix newer than pedestal
