@@ -322,6 +322,23 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     echo "MIRROR_BLOCK_PLACED=${label}" | tee -a client-smoke-status.txt
   }
 
+
+  # An authoritative world NBT assertion, not a chat command echo:
+  # /say runs ONLY when the server has matched the loaded BlockEntity tag.
+  assert_mirror_world_nbt() {
+    local x="$1" y="$2" z="$3" snbt="$4" label="$5"
+    local marker="TC_MIRROR_WORLD_NBT_${label}"
+    send_chat "/execute if data block ${x} ${y} ${z} ${snbt} run say ${marker}"
+    if ! grep -Eq "\\[CHAT\\].*${marker}" client-smoke/client.log; then
+      echo "MIRROR_WORLD_NBT_ASSERT_FAILED=${label} pos=${x},${y},${z} expected=${snbt}" |
+        tee -a client-smoke-status.txt
+      send_chat "/data get block ${x} ${y} ${z}"
+      tail -90 client-smoke/client.log >&2
+      exit 1
+    fi
+    echo "MIRROR_WORLD_NBT_ASSERT_OK=${label}" | tee -a client-smoke-status.txt
+  }
+
   # Linked ESSENTIA MIRROR smoke: two loaded world BlockEntities and a
   # genuine one-unit debit from an existing 12-Aer source jar. Unlike a
   # /data NBT fixture, the two mandatory Java markers below fire only when
@@ -421,7 +438,45 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 59-reverse-vanilla-nbt-assert
     echo 'MIRROR_REVERSE_SOURCE_AND_SINK_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
 
-    echo 'PASS: linked essentia mirrors transferred a physically debited jar unit' | tee -a client-smoke-status.txt
+
+    # M04.2: use live JAR/MIRROR BlockEntities, not synthetic successes.
+    # 1) Incompatible label: prevent legitimate input BEFORE replenishment.
+    send_chat '/data merge block 376 149 344 {AspectFilter:"ignis",Amount:0s}'
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
+    sleep 10
+    assert_mirror_world_nbt 376 149 344 '{AspectFilter:"ignis",Amount:0s}' WRONG_ASPECT_RECEIVER
+    assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' WRONG_ASPECT_SOURCE_UNCHANGED
+    capture 60-reverse-incompatible-aspect-rejected
+
+    # 2) A full sink must not swallow a 65th unit or debit the source.
+    send_chat '/data merge block 376 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:64s}'
+    sleep 10
+    assert_mirror_world_nbt 376 149 344 '{Aspect:"aer",Amount:64s}' FULL_RECEIVER_UNCHANGED
+    assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' FULL_SOURCE_UNCHANGED
+    capture 61-reverse-full-sink-rejected
+
+    # 3) Empty source FIRST, while destination is full, before emptying it.
+    # Prevent a legitimate transfer occurring during intermediate setup.
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:0s}'
+    send_chat '/data merge block 376 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:0s}'
+    sleep 10
+    assert_mirror_world_nbt 344 149 344 '{Amount:0s}' EMPTY_SOURCE_UNCHANGED
+    assert_mirror_world_nbt 376 149 344 '{Amount:0s}' EMPTY_SOURCE_RECEIVER_UNCHANGED
+    capture 62-reverse-empty-source-rejected
+
+    # 4) Break reciprocity. The partner now remembers an unrelated distant
+    # unloaded position, preventing normal link-retry from restoring it.
+    send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:99999,linkY:150,linkZ:344}'
+    send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
+    sleep 10
+    assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' INVALID_LINK_SOURCE_UNCHANGED
+    assert_mirror_world_nbt 376 149 344 '{Amount:0s}' INVALID_LINK_RECEIVER_UNCHANGED
+    assert_mirror_world_nbt 376 150 344 '{linkX:99999}' INVALID_LINK_ADDRESS_PERSISTED
+    capture 63-reverse-invalid-link-rejected
+
+    echo 'MIRROR_NEGATIVE_WORLD_REGRESSIONS_ALL_CONFIRMED=YES' | tee -a client-smoke-status.txt
+
+    echo 'PASS: real mirror debit/credit, plus incompatible/full/empty/unlinked rejection' | tee -a client-smoke-status.txt
     exit 0
   fi
 

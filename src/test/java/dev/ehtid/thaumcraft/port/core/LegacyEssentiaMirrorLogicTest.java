@@ -74,6 +74,22 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,0));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(0,-1,0,1));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,-1,0));
+        // Aligned with live negative mirror world scenarios: a mismatched
+        // filter or full jar never qualifies for a one-unit credit.
+        var wrongAspect = new LegacyEssentiaJarLogic.State(null,"ignis",0);
+        var fullAer = new LegacyEssentiaJarLogic.State("aer","aer",64);
+        eq(false,LegacyEssentiaJarLogic.accepts(wrongAspect,"aer"));
+        eq(0,LegacyEssentiaJarLogic.add(fullAer,"aer",1).transferred());
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                LegacyEssentiaJarLogic.accepts(wrongAspect,"aer"),"aer",12,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                LegacyEssentiaJarLogic.add(fullAer,"aer",1).transferred()==1,
+                "aer",12,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                true,"aer",0,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,false,true,true,
+                true,"aer",12,0,64));
+
         eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
         eq(8,LegacyEssentiaMirrorLogic.SEARCH_RANGE);
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));

@@ -44,3 +44,9 @@
 - `6dd35de` — **одноразовая** активизация `run_compile=true`, `run_minecraft=true`, `THAUMCRAFT_MIRROR_SMOKE=1` в feature/alchemy. Проверки: [full NeoForge #240](https://circleci.com/gh/craftkot/tgaumcraft/240), [real Minecraft #241](https://circleci.com/gh/craftkot/tgaumcraft/241). **На момент записи оба PENDING**. Не объявлять их успешными без live commit status.
 - `3170739` — возврат `.circleci/config.yml` к `run_compile=false`, `run_minecraft=false`, обычному alchemy smoke. Все эти изменения остались только в `feature/alchemy`; `main`, `feature/research`, `feature/infusion` не изменялись.
 - Не угадывать причину [#220 FAILURE](https://circleci.com/gh/craftkot/tgaumcraft/220): нужна полная `client.log` / CircleCI job output, если #241 тоже не пройдёт. Важный следующий пункт — исследование реального лога и отрицательные случаи M04.2. Никаких merge в `main`.
+
+## 18.10.2026 — отрицательные игровые проверки M04.2
+- [#240](https://circleci.com/gh/craftkot/tgaumcraft/240) — **SUCCESS**, полная NeoForge-сборка предыдущего изменения. [#241](https://circleci.com/gh/craftkot/tgaumcraft/241) — **PENDING** при подготовке, она запущена до добавления новых отрицательных тестов.
+- После живого подтверждения обратной 12→11/0→1 транзакции `tools/client_smoke.sh` выполняет в **реальном мире** четыре отрицательных прогона на тех же блоках: не тот аспект, полная банка 64/64, пустой источник, невзаимная связь. Данные мирного NBT проверяются через `/execute if data block ... run say`, обязательный ответ сервера в [CHAT]. Скриншоты 60–63. Ошибка проверки останавливает тест, а не порождает ложный PASS.
+- К `LegacyEssentiaMirrorLogicTest` добавлено **шесть** отрицательных Core-проверок по тем же условиям. Игрового подтверждения новых случаев пока **НЕТ**.
+- M04 остаётся 🟡, M04.2 требует отдельного реального Minecraft прогона на SHA с этими проверками. Ни одна чужая ветка не изменена.
