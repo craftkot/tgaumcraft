@@ -1,6 +1,12 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.golem.ai.GolemHomeGoal;
+import dev.ehtid.thaumcraft.golem.ai.GolemFollowOwnerGoal;
+import dev.ehtid.thaumcraft.golem.GolemModule;
+import dev.ehtid.thaumcraft.port.core.golem.GolemBellRules;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
 import dev.ehtid.thaumcraft.golem.ai.GolemFillGoal;
 import dev.ehtid.thaumcraft.golem.ai.GolemPickupGoal;
 import dev.ehtid.thaumcraft.item.GolemPlacerItem;
@@ -28,7 +34,7 @@ import net.minecraft.world.level.Level;
 import java.util.Optional;
 import java.util.UUID;
 
-/** First ground worker adapter. Combat, flying parts and bell commands are separate M10 slices. */
+/** First ground worker adapter. Combat and flying parts are separate M10 slices. */
 public final class ThaumcraftGolem extends PathfinderMob {
     private static final EntityDataAccessor<Long> DESIGN = SynchedEntityData.defineId(
             ThaumcraftGolem.class, EntityDataSerializers.LONG);
@@ -46,6 +52,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     private Long invalidDesign;
     private GolemPickupGoal pickupGoal;
     private GolemFillGoal fillGoal;
+    private GolemFollowOwnerGoal followGoal;
 
     public ThaumcraftGolem(EntityType<? extends ThaumcraftGolem> type, Level level) {
         super(type, level);
@@ -79,6 +86,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
         goalSelector.addGoal(3, pickupGoal);
         fillGoal = new GolemFillGoal(this);
         goalSelector.addGoal(4, fillGoal);
+        followGoal = new GolemFollowOwnerGoal(this);
+        goalSelector.addGoal(4, followGoal);
         goalSelector.addGoal(5, new GolemHomeGoal(this));
         goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8));
         goalSelector.addGoal(9, new RandomLookAroundGoal(this));
@@ -105,6 +114,17 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
     public boolean hasWorkTask() { return entityData.get(WORKING); }
     public void setWorking(boolean working) { entityData.set(WORKING, working); }
+    public boolean isFollowingOwner() { return GolemBellRules.following(entityData.get(FLAGS)); }
+    public void setFollowingOwner(boolean following) {
+        if (level().isClientSide || isFollowingOwner() == following || invalidDesign != null) return;
+        if (pickupGoal != null) pickupGoal.stop();
+        if (fillGoal != null) fillGoal.stop();
+        if (followGoal != null) followGoal.stop();
+        getNavigation().stop();
+        setWorking(false);
+        entityData.set(FLAGS, GolemBellRules.following(entityData.get(FLAGS), following));
+        if (!following) home = blockPosition().immutable();
+    }
 
     public void initialize(GolemDesign design, UUID owner, BlockPos home, int xp) {
         entityData.set(DESIGN, design.toLong());
@@ -229,6 +249,18 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         if (!isAlive() || isRemoved()) return InteractionResult.FAIL;
+        if (!player.isShiftKeyDown() && player.getItemInHand(hand).is(GolemModule.GOLEM_BELL.get())) {
+            if (!player.getUUID().equals(ownerId()) || player.distanceToSqr(this) > 25 || invalidDesign != null)
+                return InteractionResult.FAIL;
+            if (level().isClientSide) return InteractionResult.SUCCESS;
+            if (!player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().isResearchKnown(GolemBellRules.RESEARCH))
+                return InteractionResult.PASS;
+            setFollowingOwner(!isFollowingOwner());
+            playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 1, 1);
+            player.displayClientMessage(Component.translatable("message.thaumcraft.golem." + (isFollowingOwner() ? "follow" : "stay")), true);
+            player.swing(hand, true);
+            return InteractionResult.CONSUME;
+        }
         if (!player.isShiftKeyDown() || hand != InteractionHand.MAIN_HAND || !player.getUUID().equals(ownerId())
                 || player.getItemInHand(hand).is(net.minecraft.world.item.Items.NAME_TAG))
             return super.mobInteract(player, hand);
@@ -252,6 +284,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     public void remove(RemovalReason reason) {
         if (pickupGoal != null && !level().isClientSide) pickupGoal.stop();
         if (fillGoal != null && !level().isClientSide) fillGoal.stop();
+        if (followGoal != null && !level().isClientSide) followGoal.stop();
         super.remove(reason);
     }
 }

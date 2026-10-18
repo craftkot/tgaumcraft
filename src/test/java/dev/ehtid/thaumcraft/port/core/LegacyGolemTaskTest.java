@@ -366,6 +366,12 @@ public final class LegacyGolemTaskTest {
                 dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP, anotherRegistry);
         eq(5L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(paid, "desiderium"));
         eq(15L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(mixed, "desiderium"));
+        eq(false, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)1));
+        eq(true, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)2));
+        eq((byte)0xa7, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xa5,true));
+        eq((byte)0xa5, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xa7,false));
+        eq((byte)0xff, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xff,true));
+        eq((byte)0xfd, dev.ehtid.thaumcraft.port.core.golem.GolemBellRules.following((byte)0xff,false));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();

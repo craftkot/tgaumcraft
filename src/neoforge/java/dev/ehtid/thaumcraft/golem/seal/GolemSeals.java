@@ -158,6 +158,13 @@ public final class GolemSeals extends SavedData {
         return true;
     }
 
+    public boolean remove(Seal expected, UUID owner) {
+        Seal current = expected == null ? null : seals.get(expected.key());
+        if (current == null || !current.instanceId().equals(expected.instanceId()) || !current.owner().equals(owner)) return false;
+        removeSeal(current.key());
+        return true;
+    }
+
     public List<Seal> all() {
         return List.copyOf(seals.values());
     }
@@ -246,7 +253,7 @@ public final class GolemSeals extends SavedData {
     }
 
     private boolean eligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
-        if (!golem.isAlive() || golem.isRemoved() || task.isSuspended() || task.isCompleted()
+        if (golem.isFollowingOwner() || !golem.isAlive() || golem.isRemoved() || task.isSuspended() || task.isCompleted()
                 || !targets.containsKey(task.getId())
                 || !level.hasChunkAt(seal.key().pos()) || level.isEmptyBlock(seal.key().pos()) || stopped(level, seal)
                 || golem.design().hasTrait(GolemTrait.CLUMSY)) return false;
@@ -334,7 +341,7 @@ public final class GolemSeals extends SavedData {
     }
 
     private boolean fillEligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
-        return seal.type() == Type.FILL && !stopped(level, seal) && golem.isAlive() && !golem.isRemoved()
+        return !golem.isFollowingOwner() && seal.type() == Type.FILL && !stopped(level, seal) && golem.isAlive() && !golem.isRemoved()
                 && !task.isSuspended() && !task.isCompleted() && taskSeals.containsKey(task.getId())
                 && !golem.design().hasTrait(GolemTrait.CLUMSY)
                 && (!seal.locked() || seal.owner().equals(golem.ownerId()))

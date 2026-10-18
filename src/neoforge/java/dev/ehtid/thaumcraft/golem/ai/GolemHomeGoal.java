@@ -20,7 +20,7 @@ public final class GolemHomeGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (golem.hasWorkTask()) return false;
+        if (golem.isFollowingOwner() || golem.hasWorkTask()) return false;
         if (idleCounter-- > 0) return false;
         idleCounter = 50;
         double distance = golem.distanceToSqr(Vec3.atCenterOf(golem.home()));
@@ -38,7 +38,7 @@ public final class GolemHomeGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return !golem.hasWorkTask() && !golem.getNavigation().isDone()
+        return !golem.isFollowingOwner() && !golem.hasWorkTask() && !golem.getNavigation().isDone()
                 && golem.distanceToSqr(Vec3.atCenterOf(golem.home())) > 3;
     }
 
