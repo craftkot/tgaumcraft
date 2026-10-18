@@ -21,6 +21,16 @@ public final class LegacyCrystalFarmerFinishCheckpoint {
     public record State(Phase phase) {
         public State { Objects.requireNonNull(phase); }
         public boolean canReserve() { return phase == Phase.WAITING; }
+
+        /**
+         * A checkpoint after reservation cannot legitimately have unpaid
+         * essentia or outstanding pedestal ingredients. Reject corrupted
+         * saves before they can debit more world resources.
+         */
+        public boolean consistentWithPaidProgress(boolean allEssentiaPaid,
+                                                  boolean allInputsConsumed) {
+            return phase == Phase.WAITING || (allEssentiaPaid && allInputsConsumed);
+        }
         public boolean mayPublishOneItem() { return phase == Phase.RESERVED; }
         public boolean finished() { return phase == Phase.FINISHED; }
 
