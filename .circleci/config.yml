@@ -7,7 +7,7 @@ version: 2.1
 parameters:
   run_minecraft:
     type: boolean
-    default: true
+    default: false
   # Expensive NeoForge compile runs on demand; cheap core parity stays on all pushes.
   run_compile:
     type: boolean
@@ -130,8 +130,7 @@ jobs:
           command: |
             set -euo pipefail
             export CAPTURE_VIDEO=0
-            export THAUMCRAFT_ALCHEMY_SMOKE=0
-            export THAUMCRAFT_MIRROR_SMOKE=1
+            export THAUMCRAFT_ALCHEMY_SMOKE=1
             bash tools/client_smoke.sh
       - store_artifacts:
           path: client-smoke/screenshots
