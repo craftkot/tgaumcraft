@@ -27,7 +27,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean FILTER_SCENARIO = "filter".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean CONTROLS_SCENARIO = "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean FILTER_SCENARIO = CONTROLS_SCENARIO || "filter".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILL_SCENARIO = FILTER_SCENARIO || "fill".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final UUID GOLEM_ID = UUID.fromString("671c5d1c-8533-490b-9ac2-e06c973d0d10");
     private static final UUID OWNER_ID = UUID.fromString("712b8f88-92c3-4bee-a3d8-53e8248ac89d");
@@ -45,13 +46,19 @@ public final class GolemRestartProbe {
         ticks = 0;
         checked = false;
         active.overworld().setChunkForced(0, 0, true); // Test fixture only; production seals never force-load.
+        active.overworld().getChunk(0, 0); // A persisted forced flag alone may not initiate entity loading yet.
     }
 
     @SubscribeEvent
     public static void tick(ServerTickEvent.Post event) {
         if (active != event.getServer() || checked || ++ticks < 60) return;
+        var level = active.overworld();
+        boolean ready = level.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(0, 0))
+                && level.isPositionEntityTicking(HOME);
+        if (!ready && ticks < 600) return; // Bound asynchronous entity loading, never retry a failed assertion.
         checked = true;
         try {
+            require(ready, "Fixture chunk and persisted entities loaded within 600 ticks");
             if (PHASE.equals("write")) write();
             else read();
             LogUtils.getLogger().info("GOLEM_RESTART_{}_ASSERTIONS_OK", PHASE.toUpperCase(java.util.Locale.ROOT));
@@ -99,6 +106,11 @@ public final class GolemRestartProbe {
             require(data.configure(pickup, OWNER_ID, new dev.ehtid.thaumcraft.golem.seal.SealFilter(cargo(), true, 0)), "Pickup filter stored");
             require(data.configure(fill, OWNER_ID, new dev.ehtid.thaumcraft.golem.seal.SealFilter(cargo(), false, 70000)), "Fill stock cap stored");
         }
+        if (CONTROLS_SCENARIO) {
+            var data = GolemSeals.get(level);
+            require(data.configureControls(data.get(new GolemSeals.SealKey(HOME.below(), Direction.UP)), OWNER_ID, -5, 16, true, true), "Pickup controls stored");
+            require(data.configureControls(data.get(new GolemSeals.SealKey(HOME.offset(3,-1,0), Direction.UP)), OWNER_ID, 5, 6, true, false), "Fill controls stored");
+        }
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
 
@@ -131,6 +143,13 @@ public final class GolemRestartProbe {
             require(pickup.blacklist() && !pickup.accepts(cargo()) && pickup.item().getCount() == 1, "Blacklist and ghost restored");
             require(!fill.blacklist() && fill.limit() == 70000 && fill.accepts(cargo())
                     && ItemStack.isSameItemSameComponents(fill.item(), cargo()), "Whitelist, components and integer limit restored");
+        }
+        if (CONTROLS_SCENARIO) {
+            var data = GolemSeals.get(level);
+            var pickup = data.get(new GolemSeals.SealKey(HOME.below(), Direction.UP));
+            var fill = data.get(new GolemSeals.SealKey(HOME.offset(3,-1,0), Direction.UP));
+            require(pickup.priority()==-5 && pickup.color()==16 && pickup.locked() && pickup.redstone(), "Pickup controls restored");
+            require(fill.priority()==5 && fill.color()==6 && fill.locked() && !fill.redstone(), "Fill controls restored");
         }
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
