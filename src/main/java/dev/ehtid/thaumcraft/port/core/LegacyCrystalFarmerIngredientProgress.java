@@ -76,6 +76,19 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
         };
     }
 
+    /**
+     * When the real pedestal already SAVED both an empty slot and a
+     * matching ritual-specific debit receipt, but the matrix retained the
+     * countdown=1 checkpoint, acknowledge that same removal exactly once.
+     * Neither a merely empty slot nor a foreign/stale receipt is payment.
+     */
+    public LegacyCrystalFarmerIngredientProgress afterSavedPedestalReceipt(
+            int itemBit, boolean exactRitualReceipt, boolean originalSlotEmpty) {
+        if (!exactRitualReceipt || !originalSlotEmpty)
+            throw new IllegalStateException("Unverified persisted pedestal removal");
+        return afterActualPedestalRemoval(itemBit);
+    }
+
     /** Commit after a real pedestal emptied successfully; never before. */
     public LegacyCrystalFarmerIngredientProgress afterActualPedestalRemoval(int itemBit) {
         if (itemBit != nextIngredientBit() || nextAction() != Action.CONSUME)
