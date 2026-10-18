@@ -52,6 +52,11 @@ public final class CrystalFarmerIngredientProgressTest {
         eq(state,snapshot); // round-trip NBT primitives
         for(int i=0;i<5;i++) snapshot = snapshot.afterValidatedCountdown();
         eq(LegacyCrystalFarmerIngredientProgress.Action.CONSUME,snapshot.nextAction());
+        var pendingSalis = snapshot;
+        rejected(()->pendingSalis.afterSavedPedestalReceipt(1, true, true));
+        rejected(()->pendingSalis.afterSavedPedestalReceipt(2, false, true));
+        rejected(()->pendingSalis.afterSavedPedestalReceipt(2, true, false));
+        eq(3, pendingSalis.afterSavedPedestalReceipt(2, true, true).consumedMask());
         snapshot = snapshot.afterActualPedestalRemoval(2);
         eq(true,snapshot.readyToFinish());
         eq(3,snapshot.consumedMask());
