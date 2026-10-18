@@ -44,7 +44,7 @@ Task/Seal Core: standalone JDK21 тесты агента прошли 922 assert
 - Начальная сборка: `GolemAssembly` подтверждает 3 Greatwood plank + 2 mechanism_simple + 1 mind@0; остальные конфигурации дают явный UnsupportedOperationException вместо выдуманной цены. Начисление rank XP пока не реализовано.
 - Полный `bash tools/run_core_parity.sh` с новыми construction/tasks entries: **PASS**, все прежние тесты также проходят.
 - Отдельные настоящие dedicated server: WRITE assertions OK и READ assertions OK после полного shutdown/restart одного мира; один UUID, owner/home/props/XP/color/health, exact 37 named iron ingots, persisted seal, без duplicate ground cargo и stale tasks.
-- `build -x test` PASS, JAR создан; финальный incremental build после добавления costs проверяется перед публикацией.
+- `build -x test` PASS, JAR создан; финальный incremental build после добавления costs: **PASS**, 11 s, JAR ZIP CRC без ошибок.
 - Полный протокол: `analysis/GOLEM_VALIDATION_2026_10_18.md`. Логи сессии: `/workspace/reference/golems-{core-final,compile,gametest,restart-write,restart-read,build-final}.log` (за пределами Git).
 
 ## Общие изменения для координатора
@@ -62,4 +62,8 @@ Task/Seal Core: standalone JDK21 тесты агента прошли 922 assert
 3. `6097041` — Core catalog/stats/traits/packed design, подтверждённая начальная стоимость и construction tests. Полный Core PASS.
 4. `c6fbc05` — server entity, home/pickup AI, persisted seals, placer, provisional renderer и 8 настоящих GameTests + cold restart probe (все соответствующие runtime проверки PASS).
 
-5. Следующий небольшой integration commit — одна точка регистрации модуля, симметричные EN/RU ключи и подключение двух настоящих Core-тестов в существующий runner.
+5. `2d6e66d` — небольшой integration commit: одна точка регистрации модуля, симметричные EN/RU ключи и подключение двух настоящих Core-тестов в существующий runner.
+
+6. Документационный коммит — архитектура A–F, аудит базы, отдельный протокол реальных проверок и итоговые границы. `main` перед публикацией повторно проверена: по-прежнему `a4280834`; удалённой feature/golems перед первым push нет.
+
+Тестовые итоги относятся к Java/runtime дереву `2d6e66d` (позднее меняется только документация). JAR SHA256 `ba5234d8b666aedb9626b2b2b98576345a53d0851872e1332a9de1df8caf80ff`. Подробные команды воспроизведения находятся в протоколе.
