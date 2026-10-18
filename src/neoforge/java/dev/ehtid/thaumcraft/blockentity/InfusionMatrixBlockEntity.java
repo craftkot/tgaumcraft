@@ -44,6 +44,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Foundation of the original BETA26 TileInfusionMatrix:
@@ -62,6 +63,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private static final AspectRegistry SOURCE_ASPECTS = new AspectRegistry();
     /** Null unless a source-era, research-gated player recipe was verified. */
     private LegacyInfusionRitualLedger ritualLedger;
+    /** Unique physical payment identity, saved with the matrix ledger. */
+    private UUID activeInfusionRitual;
     /** Original cost multiplier frozen when the player starts this ritual. */
     private float ritualStartCostMultiplier = 1.0F;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
@@ -311,6 +314,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         originalSalisInput = capturedSalis;
         ritualLedger = LegacyInfusionRitualLedger.begin(
                 preview.recipe().legacyId(), preview.matching().cost());
+        activeInfusionRitual = UUID.randomUUID();
         ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
         itemProgress = LegacyCrystalFarmerIngredientProgress.initial();
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
@@ -334,6 +338,53 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         where.getX() - worldPosition.getX(),
                         where.getY() - worldPosition.getY(),
                         where.getZ() - worldPosition.getZ()));
+    }
+
+    /**
+     * A pedestal can save its EMPTY slot and exact receipt before the matrix
+     * saves the resulting ingredient mask. Restore precisely this one missed
+     * transition instead of losing already-consumed materials.
+     *
+     * Only the originally matched side position, a matching ritual UUID,
+     * the original 5-cycle countdown at CONSUME, full essentia payment, and
+     * all other unconsumed inputs permit acknowledgement. No new item or
+     * additional debit is performed.
+     */
+    private void recoverSavedSideItemDebit() {
+        if (!(level instanceof ServerLevel) || !active || !crafting
+                || !finishCheckpoint.canReserve() || activeInfusionRitual == null
+                || ritualLedger == null || !ritualLedger.readyForIngredients()
+                || itemProgress == null || itemProgress.readyToFinish()
+                || itemProgress.nextAction() != LegacyCrystalFarmerIngredientProgress.Action.CONSUME
+                || !validLocation() || !trackedPedestalsValid()
+                || originalCentralInput.isEmpty())
+            return;
+        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)
+                || !ItemStack.isSameItemSameComponents(
+                        center.displayedItem(), originalCentralInput))
+            return;
+        int bit = itemProgress.nextIngredientBit();
+        BlockPos consumedPos = bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? seedsPedestal : salisPedestal;
+        BlockPos otherPos = bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? salisPedestal : seedsPedestal;
+        if (!level.hasChunkAt(consumedPos) || !level.hasChunkAt(otherPos)
+                || !(level.getBlockEntity(consumedPos) instanceof PedestalBlockEntity consumed)
+                || !(level.getBlockEntity(otherPos) instanceof PedestalBlockEntity other)
+                || !consumed.hasInfusionRemovalReceipt(activeInfusionRitual, bit))
+            return;
+        // Seed removal is first; Salis must still be the original stack.
+        // Salis removal is second; seed removal must have its own receipt.
+        if (bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? !ItemStack.isSameItemSameComponents(other.displayedItem(), originalSalisInput)
+                : !other.hasInfusionRemovalReceipt(activeInfusionRitual,
+                        LegacyCrystalFarmerIngredientProgress.SEEDS_BIT))
+            return;
+        itemProgress = itemProgress.afterSavedPedestalReceipt(bit, true, true);
+        changedAndSync();
+        ThaumcraftSmokeAudit.mark(bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                ? "INFUSION_CRYSTAL_SEEDS_DEBIT_RECOVERED"
+                : "INFUSION_CRYSTAL_SALIS_DEBIT_RECOVERED");
     }
 
     /** A moved/removed center or missing side item must pause debit, never grant output. */
@@ -450,8 +501,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             case CONSUME -> {
                 // Both original recipe inputs have no crafting remainder.
                 // Never consume without checking the original data components.
-                if (chosen.replaceInfusionIngredientIfUnchanged(
-                        captured, ItemStack.EMPTY)) {
+                if (chosen.consumeInfusionIngredientWithReceipt(
+                        captured, activeInfusionRitual, nextBit)) {
                     itemProgress = itemProgress.afterActualPedestalRemoval(nextBit);
                     changedAndSync();
                     ThaumcraftSmokeAudit.mark(nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
@@ -483,6 +534,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         crafting = false;
         recipeInstability = 0;
         ritualLedger = null;
+        activeInfusionRitual = null;
         itemProgress = null;
         seedsPedestal = null;
         salisPedestal = null;
@@ -591,6 +643,10 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state,
                                   InfusionMatrixBlockEntity tile) {
         tile.ticks++;
+        if (tile.crafting && tile.itemProgress != null
+                && tile.ritualLedger != null
+                && tile.ritualLedger.readyForIngredients())
+            tile.recoverSavedSideItemDebit();
         // Restored RESERVED is STALLED. Acknowledge ONLY a pre-existing,
         // fully paid output; never call the original finish a second time.
         if (tile.crafting && tile.finishCheckpoint.phase()
@@ -659,6 +715,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (crafting && ritualLedger != null) {
             CompoundTag pending = new CompoundTag();
             pending.putString("Recipe", ritualLedger.recipeId());
+            if (activeInfusionRitual != null)
+                pending.putUUID("RitualId", activeInfusionRitual);
             pending.putInt("Paid", ritualLedger.paid());
             pending.putFloat("RecipeCostMult", ritualStartCostMultiplier);
             CompoundTag initial = new CompoundTag();
@@ -709,6 +767,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         countDelay = tag.contains("countDelay") ? tag.getInt("countDelay") : 5;
         surroundingsInitialized = false;
         ritualLedger = null;
+        activeInfusionRitual = null;
         itemProgress = null;
         seedsPedestal = null;
         salisPedestal = null;
@@ -724,6 +783,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 if (!pending.contains("Initial", Tag.TAG_COMPOUND)
                         || !pending.contains("Remaining", Tag.TAG_COMPOUND)
                         || !pending.contains("Recipe", Tag.TAG_STRING)
+                        || !pending.contains("RitualId", Tag.TAG_INT_ARRAY)
                         || !pending.contains("Paid", Tag.TAG_INT)
                         || !pending.contains("ConsumedItems", Tag.TAG_INT)
                         || !pending.contains("ItemCountdown", Tag.TAG_INT)
@@ -754,6 +814,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     leftCosts.put(name, remaining.getInt(name));
                 }
                 String id = pending.getString("Recipe");
+                activeInfusionRitual = pending.getUUID("RitualId");
                 ritualLedger = LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
                         id, initialCosts, leftCosts, pending.getInt("Paid"),
                         ritualStartCostMultiplier);
@@ -803,6 +864,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
                 ritualLedger = null;
+                activeInfusionRitual = null;
                 itemProgress = null;
                 seedsPedestal = null;
                 salisPedestal = null;
