@@ -56,6 +56,18 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
                 && (((consumedMask & SALIS_BIT) == 0) == salisPresent);
     }
 
+    /**
+     * The matrix's paid mask is never sufficient evidence on its own:
+     * a separately saved pedestal may be empty for an unrelated reason,
+     * or have an OLD receipt from another ritual. Every consumed input
+     * must have its own current ritual UUID receipt in the live pedestal.
+     */
+    public boolean matchesSavedReceipts(boolean seedReceiptMatches,
+                                        boolean salisReceiptMatches) {
+        return (((consumedMask & SEEDS_BIT) != 0) == seedReceiptMatches)
+                && (((consumedMask & SALIS_BIT) != 0) == salisReceiptMatches);
+    }
+
     public boolean readyToFinish() { return consumedMask == ALL; }
 
     public Action nextAction() {
