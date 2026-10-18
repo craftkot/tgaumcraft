@@ -114,6 +114,29 @@ public final class CrystalFarmerIngredientProgressTest {
         rejected(()->new LegacyCrystalFarmerPedestalReceipt(null, 1));
         rejected(()->new LegacyCrystalFarmerPedestalReceipt(a, 0));
         rejected(()->new LegacyCrystalFarmerPedestalReceipt(a, 3));
+        // Nonatomic world save: both original pedestals committed their
+        // matching receipts, but matrix restored an arbitrary old countdown.
+        // This must recover BOTH consumed bits or stall forever.
+        for (int staleCountdown = 0; staleCountdown <= 5; staleCountdown++) {
+            var old = new LegacyCrystalFarmerIngredientProgress(0, staleCountdown);
+            var twoPaid = old.afterSavedWorldReceipts(true, true, false);
+            eq(3, twoPaid.consumedMask());
+            eq(true, twoPaid.readyToFinish());
+            eq(true, twoPaid.matchesLivePedestals(false, false));
+            eq(true, twoPaid.matchesSavedReceipts(true, true));
+            rejected(()->twoPaid.afterSavedWorldReceipts(true, true, false));
+            var seedPaid = old.afterSavedWorldReceipts(true, false, true);
+            eq(1, seedPaid.consumedMask());
+            eq(0, seedPaid.countdown());
+            eq(3, seedPaid.afterSavedWorldReceipts(true, true, false).consumedMask());
+            rejected(()->old.afterSavedWorldReceipts(false, true, false));
+            rejected(()->old.afterSavedWorldReceipts(true, true, true));
+            rejected(()->old.afterSavedWorldReceipts(true, false, false));
+            rejected(()->old.afterSavedWorldReceipts(false, false, true));
+            rejected(()->seedPaid.afterSavedWorldReceipts(false, true, false));
+            rejected(()->seedPaid.afterSavedWorldReceipts(true, false, false));
+            rejected(()->seedPaid.afterSavedWorldReceipts(true, true, true));
+        }
         System.out.println("BETA26 Crystal Farmer ingredient countdown: OK ("+checks+" assertions)");
     }
 }
