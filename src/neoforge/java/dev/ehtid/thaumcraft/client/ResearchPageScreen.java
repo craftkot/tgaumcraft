@@ -68,7 +68,10 @@ public final class ResearchPageScreen extends Screen {
         int allowed = allowedStage();
         if (page == null || allowed < 0) return List.of(
                 Component.literal("Research not discovered. Page contents are hidden."));
-        var stage = page.stages().get(stageIndex);
+        // Synchronization may revoke stages between tick and render. Recheck
+        // the current bound at the actual point of disclosure.
+        int safeIndex = ResearchPageVisibility.clampRequestedStage(stageIndex, allowed);
+        var stage = page.stages().get(safeIndex);
         ArrayList<Component> lines = new ArrayList<>();
         // The source research translations have not yet been shipped. Render
         // their actual translation keys until real BETA26 translations arrive.
@@ -141,12 +144,13 @@ public final class ResearchPageScreen extends Screen {
         int x = (width - BOOK_W) / 2, y = (height - BOOK_H) / 2;
         graphics.blit(BOOK, x, y, 0, 0, BOOK_W, BOOK_H, 512, 512);
         var node = LegacyResearchLayout.get(researchKey);
-        graphics.drawString(font, node == null ? title
+        int allowed = allowedStage();
+        // Do not disclose a now-locked title after a multiplayer resync.
+        graphics.drawString(font, node == null || allowed < 0 ? title
                 : Component.translatable(node.titleKey()),
                 x + 47, y + 29, 0x49321E, false);
-        int allowed = allowedStage();
         if (allowed >= 0)
-            graphics.drawString(font, "Stage " + (stageIndex + 1) + "/"
+            graphics.drawString(font, "Stage " + (ResearchPageVisibility.clampRequestedStage(stageIndex, allowed) + 1) + "/"
                     + page.stages().size(), x + 348, y + 29, 0x49321E, false);
         else
             graphics.drawString(font, "Undiscovered", x + 335, y + 29, 0x49321E, false);
