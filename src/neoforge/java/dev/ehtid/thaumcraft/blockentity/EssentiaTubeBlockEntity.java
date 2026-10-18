@@ -85,10 +85,15 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
     public boolean toggleSide(Direction face) {
         if (level == null || level.isClientSide() || face == null) return false;
         commit(stored.toggle(face.get3DDataValue()));
-        if (level.getBlockEntity(worldPosition.relative(face)) instanceof EssentiaTubeBlockEntity tube)
+        BlockPos adjacent = worldPosition.relative(face);
+        // A valve/tool interaction on a chunk border must not generate or
+        // force-load its unloaded neighbour merely to adjust a side flag.
+        if (level.hasChunkAt(adjacent)
+                && level.getBlockEntity(adjacent) instanceof EssentiaTubeBlockEntity tube)
             tube.setSide(face.getOpposite(), stored.open(face.get3DDataValue()));
         EssentiaTubeBlock.updateConnections(level, worldPosition);
-        EssentiaTubeBlock.updateConnections(level, worldPosition.relative(face));
+        if (level.hasChunkAt(adjacent))
+            EssentiaTubeBlock.updateConnections(level, adjacent);
         return true;
     }
 
@@ -104,7 +109,12 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
         if (level == null) return neighbours;
         for (Direction dir : Direction.values()) {
             if (!transportConnects(dir)) continue;
-            if (!(level.getBlockEntity(worldPosition.relative(dir)) instanceof EssentiaTransportPort port)
+            BlockPos adjacent = worldPosition.relative(dir);
+            // Mirror relays already refuse unloaded source/sink chunks.
+            // Do the same for *every* tube neighbour: getBlockEntity is not
+            // a chunk-presence test and may request world data at the border.
+            if (!level.hasChunkAt(adjacent)) continue;
+            if (!(level.getBlockEntity(adjacent) instanceof EssentiaTransportPort port)
                     || !port.transportConnects(dir.getOpposite())) continue;
             Direction face = dir.getOpposite();
             neighbours.add(new LegacyEssentiaTubeLogic.Neighbour(
@@ -147,7 +157,12 @@ public final class EssentiaTubeBlockEntity extends BlockEntity implements Essent
                     if (!LegacyEssentiaTubeLogic.canPullVariant(tile.stored,next,
                             tile.variant(),tile.aspectFilter,tile.facing))continue;
                     Direction face = Direction.from3DDataValue(next.side());
-                    if (!(level.getBlockEntity(pos.relative(face)) instanceof EssentiaTransportPort source))
+                    BlockPos sourcePos = pos.relative(face);
+                    // Do not wake an unloaded chunk during the final,
+                    // authoritative server-thread debit; neighbours() may
+                    // have observed it as loaded earlier in this tick.
+                    if (!level.hasChunkAt(sourcePos)) continue;
+                    if (!(level.getBlockEntity(sourcePos) instanceof EssentiaTransportPort source))
                         continue;
                     if (!source.transportConnects(face.getOpposite())) continue;
                     String aspect = next.essence();
