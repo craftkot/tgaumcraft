@@ -363,28 +363,34 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || !ItemStack.isSameItemSameComponents(
                         center.displayedItem(), originalCentralInput))
             return;
-        int bit = itemProgress.nextIngredientBit();
-        BlockPos consumedPos = bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? seedsPedestal : salisPedestal;
-        BlockPos otherPos = bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? salisPedestal : seedsPedestal;
-        if (!level.hasChunkAt(consumedPos) || !level.hasChunkAt(otherPos)
-                || !(level.getBlockEntity(consumedPos) instanceof PedestalBlockEntity consumed)
-                || !(level.getBlockEntity(otherPos) instanceof PedestalBlockEntity other)
-                || !consumed.hasInfusionRemovalReceipt(activeInfusionRitual, bit))
+        if (!level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
+                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seeds)
+                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salis))
             return;
-        // Seed removal is first; Salis must still be the original stack.
-        // Salis removal is second; seed removal must have its own receipt.
-        if (bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? !ItemStack.isSameItemSameComponents(other.displayedItem(), originalSalisInput)
-                : !other.hasInfusionRemovalReceipt(activeInfusionRitual,
-                        LegacyCrystalFarmerIngredientProgress.SEEDS_BIT))
+        boolean seedReceipt = seeds.hasInfusionRemovalReceipt(activeInfusionRitual,
+                LegacyCrystalFarmerIngredientProgress.SEEDS_BIT);
+        boolean salisReceipt = salis.hasInfusionRemovalReceipt(activeInfusionRitual,
+                LegacyCrystalFarmerIngredientProgress.SALIS_BIT);
+        boolean untouchedSalis = ItemStack.isSameItemSameComponents(
+                salis.displayedItem(), originalSalisInput);
+        int earlierMask = itemProgress.consumedMask();
+        // Only the original UUID receipts may advance persisted progress.
+        // A matrix that saved BEFORE both pedestal debits may skip from
+        // mask=0 straight to mask=3, but NEVER consume either input twice.
+        if ((earlierMask == 0 && (!seedReceipt
+                || (salisReceipt == untouchedSalis)))
+                || (earlierMask == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
+                && (!seedReceipt || !salisReceipt || untouchedSalis)))
             return;
-        itemProgress = itemProgress.afterSavedPedestalReceipt(bit, true, true);
+        itemProgress = itemProgress.afterSavedWorldReceipts(
+                seedReceipt, salisReceipt, untouchedSalis);
         changedAndSync();
-        ThaumcraftSmokeAudit.mark(bit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? "INFUSION_CRYSTAL_SEEDS_DEBIT_RECOVERED"
-                : "INFUSION_CRYSTAL_SALIS_DEBIT_RECOVERED");
+        if ((earlierMask & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) == 0)
+            ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SEEDS_DEBIT_RECOVERED");
+        if ((earlierMask & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) == 0
+                && (itemProgress.consumedMask()
+                    & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0)
+            ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SALIS_DEBIT_RECOVERED");
     }
 
     /** A moved/removed center or missing side item must pause debit, never grant output. */
