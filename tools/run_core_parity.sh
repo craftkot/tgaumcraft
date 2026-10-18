@@ -11,6 +11,8 @@ mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -n
 TEST_ROOT=src/test/java/dev/ehtid/thaumcraft/port/core
 TESTS=(
   CoreParityTest
+  LegacyGolemConstructionTest
+  LegacyGolemTaskTest
   CrystalFarmerParityTest
   CrystalGrowthParityTest
   CrystalMeshParityTest
@@ -59,6 +61,8 @@ while IFS='|' read -r cls expected; do
   }
 done <<'CHECKS'
 CoreParityTest|Core parity tests: OK (
+LegacyGolemConstructionTest|BETA26 golem construction: OK
+LegacyGolemTaskTest|BETA26 golem task rules, six-face seal areas and exclusive server leases: OK
 CrystalFarmerParityTest|Crystal farmer BETA26 parity: OK
 CrystalGrowthParityTest|Crystal growth BETA26 parity: OK
 CrystalMeshParityTest|CrystalModel seeded selection parity OK

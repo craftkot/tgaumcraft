@@ -318,5 +318,10 @@
   "block.thaumcraft.metal_alchemical": "Alchemical Construct",
   "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct",
   "item.thaumcraft.primordial_pearl": "Primordial Pearl",
-  "block.thaumcraft.mirror_essentia": "Essentia Mirror"
+  "block.thaumcraft.mirror_essentia": "Essentia Mirror",
+  "entity.thaumcraft.golem": "Thaumcraft Golem",
+  "item.thaumcraft.golem": "Wooden Golem",
+  "item.thaumcraft.seal_pickup": "Seal: Collect",
+  "message.thaumcraft.golem.seal.placed": "Collect seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.removed": "Collect seal removed"
 }

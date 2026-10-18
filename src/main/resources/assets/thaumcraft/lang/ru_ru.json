@@ -318,5 +318,10 @@
   "block.thaumcraft.metal_alchemical": "Алхимическая конструкция",
   "block.thaumcraft.metal_alchemical_advanced": "Улучшенная алхимическая конструкция",
   "item.thaumcraft.primordial_pearl": "Первородная жемчужина",
-  "block.thaumcraft.mirror_essentia": "Зеркало эссенции"
+  "block.thaumcraft.mirror_essentia": "Зеркало эссенции",
+  "entity.thaumcraft.golem": "Голем Таумкрафта",
+  "item.thaumcraft.golem": "Деревянный голем",
+  "item.thaumcraft.seal_pickup": "Печать: сбор",
+  "message.thaumcraft.golem.seal.placed": "Печать сбора установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.removed": "Печать сбора снята"
 }
