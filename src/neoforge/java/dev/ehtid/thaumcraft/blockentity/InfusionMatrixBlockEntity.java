@@ -348,6 +348,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      */
     public LegacyInfusionEssentiaCycle.Result drainVerifiedInfusionEssentia() {
         if (!(level instanceof ServerLevel server) || !active || !crafting
+                || !finishCheckpoint.canReserve()
                 || ritualLedger == null || !realInputsRemain()
                 || ritualLedger.readyForIngredients()) return null;
         AspectListData remaining = new AspectListData();
@@ -388,6 +389,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      */
     private void advanceVerifiedCrystalFarmerIngredient() {
         if (!(level instanceof ServerLevel) || !active || !crafting
+                || !finishCheckpoint.canReserve()
                 || ritualLedger == null || !ritualLedger.readyForIngredients()
                 || itemProgress == null || itemProgress.readyToFinish()
                 || !realInputsRemain()) return;
@@ -703,6 +705,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 if (itemProgress.consumedMask() != 0
                         && !ritualLedger.readyForIngredients())
                     throw new IllegalArgumentException("Items consumed before full essence payment");
+                if (!finishCheckpoint.consistentWithPaidProgress(
+                        ritualLedger.readyForIngredients(), itemProgress.readyToFinish()))
+                    throw new IllegalArgumentException("Reserved result with unpaid inputs");
                 seedsPedestal = BlockPos.of(pending.getLong("SeedsPedestal"));
                 salisPedestal = BlockPos.of(pending.getLong("SalisPedestal"));
                 if (!trackedPedestalsValid())
