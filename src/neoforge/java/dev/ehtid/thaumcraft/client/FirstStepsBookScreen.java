@@ -19,7 +19,8 @@ import net.neoforged.neoforge.network.PacketDistributor;
  * Uses the actual original BETA26 research book PNG (512x512 atlas), with
  * readable text instead of original half-size glyphs. Future chapters need
  * the full ResearchBrowser implementation; this page intentionally cannot
- * approve progress for arbitrary research keys.
+ * approve progress for arbitrary research keys. The read-only category
+ * index can be opened separately; it never sends a progression packet.
  */
 public final class FirstStepsBookScreen extends Screen {
     private static final ResourceLocation ORIGINAL_BOOK =
@@ -29,6 +30,7 @@ public final class FirstStepsBookScreen extends Screen {
     private static final int HEIGHT = 356;
 
     private Button advanceButton;
+    private Button browseButton;
 
     public FirstStepsBookScreen() {
         super(Component.translatable("gui.thaumcraft.firststeps.title"));
@@ -71,6 +73,10 @@ public final class FirstStepsBookScreen extends Screen {
                     button.active = false; // wait for the authoritative sync
                 }).bounds(x + 183, y + 311, 145, 20).build();
         addRenderableWidget(advanceButton);
+        browseButton = Button.builder(Component.literal("Research"),
+                button -> Minecraft.getInstance().setScreen(new ResearchIndexScreen(this)))
+                .bounds(x + 344, y + 311, 133, 20).build();
+        addRenderableWidget(browseButton);
     }
 
     @Override

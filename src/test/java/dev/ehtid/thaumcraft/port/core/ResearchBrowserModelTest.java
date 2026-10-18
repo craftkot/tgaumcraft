@@ -14,6 +14,9 @@ public final class ResearchBrowserModelTest {
         var catalog = BuiltInResearchCatalog.create();
         var categories = BuiltInResearchCategories.create(new AspectRegistry());
         var knowledge = new PlayerKnowledgeData();
+        // In survival the player can open this UI only after owning the
+        // Thaumonomicon. The original bootstrap marker is therefore present.
+        knowledge.addResearch("!gotthaumonomicon");
 
         check(catalog.size() == 148, "must display the actual 148-node catalog");
         check(categories.size() == 7, "seven original BETA26 research categories");
@@ -41,7 +44,7 @@ public final class ResearchBrowserModelTest {
             check(ResearchRequisites.hasRequisites(knowledge, catalog, entry.key()),
                     "unknown parent-gated nodes must not be exposed");
         }
-        check(knowledge.getResearchList().isEmpty(),
+        check(knowledge.getResearchList().equals(java.util.Set.of("!gotthaumonomicon")),
                 "read-only browser must never mutate player research");
 
         // A known HIDDEN research stays visible even when its metadata
