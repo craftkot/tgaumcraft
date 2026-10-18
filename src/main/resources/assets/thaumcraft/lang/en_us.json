@@ -323,5 +323,8 @@
   "item.thaumcraft.golem": "Wooden Golem",
   "item.thaumcraft.seal_pickup": "Seal: Collect",
   "message.thaumcraft.golem.seal.placed": "Collect seal placed: %s, %s, %s",
-  "message.thaumcraft.golem.seal.removed": "Collect seal removed"
+  "message.thaumcraft.golem.seal.removed": "Collect seal removed",
+  "item.thaumcraft.seal_fill": "Seal: Fill",
+  "message.thaumcraft.golem.seal.fill.placed": "Fill seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.fill.removed": "Fill seal removed"
 }

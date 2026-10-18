@@ -323,5 +323,8 @@
   "item.thaumcraft.golem": "Деревянный голем",
   "item.thaumcraft.seal_pickup": "Печать: сбор",
   "message.thaumcraft.golem.seal.placed": "Печать сбора установлена: %s, %s, %s",
-  "message.thaumcraft.golem.seal.removed": "Печать сбора снята"
+  "message.thaumcraft.golem.seal.removed": "Печать сбора снята",
+  "item.thaumcraft.seal_fill": "Печать: наполнение",
+  "message.thaumcraft.golem.seal.fill.placed": "Печать наполнения установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.fill.removed": "Печать наполнения снята"
 }

@@ -108,3 +108,6 @@ Draft PR **[#3](https://github.com/craftkot/tgaumcraft/pull/3)** создан `f
 
 - `1117c6a` — единые typed seals, Fill AI, sided containers, actual remainder/SMART XP и 15 GameTests PASS.
 - Следующий коммит — cold restart сценарий Fill и протокол доказательств; WRITE/READ PASS.
+
+- `f8ee53f` — отдельный Fill restart fixture и документация.
+- Финальный малый integration commit этого подхода — только 3 EN/RU ключа на язык и эта запись; основные регистры/CI/Gradle не меняются. Draft PR остаётся #3, merge не разрешён.
