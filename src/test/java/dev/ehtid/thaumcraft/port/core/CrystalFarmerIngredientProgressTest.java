@@ -16,6 +16,9 @@ public final class CrystalFarmerIngredientProgressTest {
     public static void main(String[] args) {
         var state = LegacyCrystalFarmerIngredientProgress.initial();
         eq(1, state.nextIngredientBit());
+        eq(true, state.matchesLivePedestals(true, true));
+        eq(false, state.matchesLivePedestals(false, true));
+        eq(false, state.matchesLivePedestals(true, false));
         eq(LegacyCrystalFarmerIngredientProgress.Action.SOURCE_EFFECT,state.nextAction());
         var beforeStart = state;
         rejected(()->beforeStart.afterActualPedestalRemoval(1));
@@ -30,6 +33,9 @@ public final class CrystalFarmerIngredientProgressTest {
         rejected(()->pending.afterActualPedestalRemoval(2));
         state = state.afterActualPedestalRemoval(1);
         eq(1,state.consumedMask());
+        eq(true,state.matchesLivePedestals(false, true));
+        eq(false,state.matchesLivePedestals(true, true)); // matrix newer than pedestal
+        eq(false,state.matchesLivePedestals(false, false)); // Salis vanished without debit
         eq(2,state.nextIngredientBit());
         eq(0,state.countdown());
         var snapshot = new LegacyCrystalFarmerIngredientProgress(
@@ -40,6 +46,10 @@ public final class CrystalFarmerIngredientProgressTest {
         snapshot = snapshot.afterActualPedestalRemoval(2);
         eq(true,snapshot.readyToFinish());
         eq(3,snapshot.consumedMask());
+        eq(true,snapshot.matchesLivePedestals(false, false));
+        eq(false,snapshot.matchesLivePedestals(true, false)); // crash restored seeds
+        eq(false,snapshot.matchesLivePedestals(false, true)); // crash restored Salis
+        eq(false,snapshot.matchesLivePedestals(true, true));
         eq(LegacyCrystalFarmerIngredientProgress.Action.READY,snapshot.nextAction());
         var done = snapshot;
         rejected(()->done.afterActualPedestalRemoval(1));
