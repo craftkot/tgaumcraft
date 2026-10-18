@@ -5,6 +5,9 @@ import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
 import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
+import dev.ehtid.thaumcraft.golem.crafting.GolemSealCrafting;
+import dev.ehtid.thaumcraft.golem.GolemModule;
+import dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlembicArcaneRecipe;
 import dev.ehtid.thaumcraft.port.core.LegacyAlchemyFilterArcaneRecipe;
@@ -61,7 +64,16 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         bench.startOpen(inventory.player);
         addSlot(new Slot(result, 0, 160, 64) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
+            @Override public java.util.Optional<ItemStack> tryRemove(int amount, int maximum, Player player) {
+                if (getItem().is(GolemModule.BLANK_SEAL.get())) {
+                    if (amount <= 0 || maximum < getItem().getCount()) return java.util.Optional.empty();
+                    amount = getItem().getCount(); // Paid batch: partial cursor space cannot split a recipe output.
+                }
+                return super.tryRemove(amount, maximum, player);
+            }
             @Override public boolean mayPickup(Player player) {
+                if (player instanceof ServerPlayer sp && getItem().is(GolemModule.BLANK_SEAL.get()))
+                    return GolemSealCrafting.canCraftBlank(bench, sp, 0.0F);
                 if (player instanceof ServerPlayer sp) return canCraftCurrentRecipe(sp, 0.0F);
                 return !result.getItem(0).isEmpty();
             }
@@ -122,6 +134,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.BASE_VIS;
                 if (workbench.selectedTubeUpgrade() != null)
                     return LegacyEssentiaTubeUpgradeRecipes.VIS;
+                if (GolemSealCrafting.matchesBlank(bench)) return GolemSealRecipes.VIS;
                 if (workbench.matchesBellowsPattern()) return LegacyBellowsArcaneRecipe.VIS;
                 if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.AUX))
                     return LegacySmelterAttachmentArcaneRecipe.Kind.AUX.vis;
@@ -152,6 +165,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return new DataSlot() {
             @Override public int get() {
                 if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                if (GolemSealCrafting.matchesBlank(bench)) return 1;
                 if (workbench.matchesThaumometerPattern()) return 0b111111;
                 if (workbench.matchesVisResonatorPattern())
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
@@ -437,7 +451,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
-        return canCraftThaumometer(player, totalDiscount)
+        return GolemSealCrafting.canCraftBlank(bench, player, totalDiscount)
+                || canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
                 || canCraftVoidJar(player, totalDiscount)
@@ -500,6 +515,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
 
     private ItemStack craftSelectedRecipe(ServerPlayer player, ItemStack expected,
                                           float totalDiscount) {
+        if (expected.is(GolemModule.BLANK_SEAL.get()) && GolemSealCrafting.craftBlank(bench, player, totalDiscount))
+            return new ItemStack(GolemModule.BLANK_SEAL.get(), GolemSealRecipes.BLANK_OUTPUT);
         if (expected.is(ThaumcraftItems.THAUMOMETER.get())
                 && craftThaumometer(player, totalDiscount))
             return new ItemStack(ThaumcraftItems.THAUMOMETER.get());
@@ -558,7 +575,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private void refreshResult() {
-        if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
+        if (owner instanceof ServerPlayer sp && GolemSealCrafting.canCraftBlank(bench, sp, 0.0F))
+            result.setItem(0, new ItemStack(GolemModule.BLANK_SEAL.get(), GolemSealRecipes.BLANK_OUTPUT));
+        else if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
         else if (owner instanceof ServerPlayer sp && canCraftVisResonator(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.VIS_RESONATOR.get()));
