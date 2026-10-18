@@ -77,16 +77,21 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
     }
 
     /**
-     * When the real pedestal already SAVED both an empty slot and a
-     * matching ritual-specific debit receipt, but the matrix retained the
-     * countdown=1 checkpoint, acknowledge that same removal exactly once.
-     * Neither a merely empty slot nor a foreign/stale receipt is payment.
+     * A pedestal can save its consumed input plus a ritual-specific receipt
+     * while the matrix still has ANY earlier countdown (0..5), since the
+     * different chunks persist independently. The matching receipt and
+     * physically empty original pedestal are authoritative evidence that
+     * consumption already happened; do not debit it twice or replay a bit.
+     *
+     * This advances ONLY the next outstanding ingredient and only when the
+     * server has independently verified the original pedestal/ritual ID.
      */
     public LegacyCrystalFarmerIngredientProgress afterSavedPedestalReceipt(
             int itemBit, boolean exactRitualReceipt, boolean originalSlotEmpty) {
-        if (!exactRitualReceipt || !originalSlotEmpty)
+        if (!exactRitualReceipt || !originalSlotEmpty || itemBit != nextIngredientBit()
+                || readyToFinish())
             throw new IllegalStateException("Unverified persisted pedestal removal");
-        return afterActualPedestalRemoval(itemBit);
+        return new LegacyCrystalFarmerIngredientProgress(consumedMask | itemBit, 0);
     }
 
     /** Commit after a real pedestal emptied successfully; never before. */
