@@ -29,6 +29,19 @@ public final class CrystalFarmerFinishCheckpointTest {
         bad(()->recovered.finishAfterActualCenterReplacement(true));
         bad(()->recovered.reserve(true,true,true));
         eq(recovered,LegacyCrystalFarmerFinishCheckpoint.restore("STALLED"));
+        // Crash after the center's successful BlockEntity save, but before
+        // matrix saved crafting=false. Checkpoint may ACK only an existing
+        // output after every real ingredient and essentia debit is verified.
+        eq(recovered,recovered.acknowledgeAlreadyPublished(false,true,true));
+        eq(recovered,recovered.acknowledgeAlreadyPublished(true,false,true));
+        eq(recovered,recovered.acknowledgeAlreadyPublished(true,true,false));
+        var acknowledged=recovered.acknowledgeAlreadyPublished(true,true,true);
+        eq(true,acknowledged.finished());
+        eq(false,acknowledged.canReserve());
+        bad(()->acknowledged.reserve(true,true,true));
+        bad(()->acknowledged.finishAfterActualCenterReplacement(true));
+        eq(original,original.acknowledgeAlreadyPublished(true,true,true));
+        eq(reserved,reserved.acknowledgeAlreadyPublished(true,true,true));
         // Recovery never implicitly publishes an item. The real world bridge
         // must fail closed if RESERVED was already present at load.
         var finished=reserved.finishAfterActualCenterReplacement(true);
