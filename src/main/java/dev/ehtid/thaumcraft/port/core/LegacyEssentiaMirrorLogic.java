@@ -24,6 +24,21 @@ public final class LegacyEssentiaMirrorLogic {
     public static final int INSTABILITY_THRESHOLD = 64;
     public static final int INSTABILITY_DECAY_INTERVAL = 100;
 
+    /**
+     * Source EssentiaHandler.getSources(null facing, range=8) enumerates a
+     * rectangular box, not a Euclidean sphere: x/z are inclusive [-8,8],
+     * Y is asymmetric [-8,7], and the partner's own block is excluded.
+     * Re-validate cached candidates against the CURRENT partner position;
+     * otherwise a link changed via NBT in the same tick could relay from an
+     * unrelated old source that is still a live BlockEntity.
+     */
+    public static boolean inPartnerSearchBox(int dx, int dy, int dz) {
+        int r = SEARCH_RANGE;
+        return dx >= -r && dx <= r && dy >= -r && dy < r
+                && dz >= -r && dz <= r
+                && (dx != 0 || dy != 0 || dz != 0);
+    }
+
     public record Endpoint(String dimension, int x, int y, int z) {
         public Endpoint {
             if (dimension == null || dimension.isBlank())

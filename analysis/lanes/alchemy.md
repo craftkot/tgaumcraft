@@ -75,3 +75,9 @@
 - `163509c` исправляет только `EssentiaTubeBlockEntity.java` (и собственный журнал): перед соседними `getBlockEntity` и `updateConnections` проверяется `hasChunkAt` на реальном локальном сервере.
 - Одноразовый `036e611` активировал `run_compile=true`: [NeoForge #287](https://circleci.com/gh/craftkot/tgaumcraft/287), при фиксации **PENDING**. `e69ad0d` вернул `run_compile=false`; [verify #288](https://circleci.com/gh/craftkot/tgaumcraft/288) — SUCCESS.
 - Ни M04.1, ни M04.2 не приняты в игровом мире. Для #273 нужен пользовательский `build_273_step_103_container_0.txt` или эквивалентный CircleCI artifact: сам GitHub status показывает только FAILURE, но не точную причину.
+
+## 18.10.2026 — M04.4: NBT/re-link cache integrity
+- Full NeoForge [#287 SUCCESS](https://circleci.com/gh/craftkot/tgaumcraft/287) на прежнем `163509c`: защита труб по соседним чанкам компилируется. Это не доказательство самостоятельного игрового теста на границе чанка.
+- Выявлен узкий реальный риск: `EssentiaMirrorBlockEntity.loadAdditional()` обновлял ссылку из NBT, но не сбрасывал `cachedSource/sourceScanTick`. При изменении адреса партнёра устаревшая найденная BlockEntity могла оставаться «живой» в этом тике. Теперь после NBT-load всегда сбрасываются кэш/таймер проверки, а быстрый путь `remoteSource` повторно требует, чтобы старый кандидат находился в той же ServerLevel и исходной области поиска **нынешнего** партнёра.
+- Добавлен `LegacyEssentiaMirrorLogic.inPartnerSearchBox(dx,dy,dz)`, повторяет границы `nullFacing(range=8)`: X/Z `[-8,+8]`, Y `[-8,+7]`, кроме origin. Новые Core-проверки включают все шесть границ, асимметрию Y и исключение центра. **Геймплейная защита после NBT/re-link требует отдельного реального запуска**.
+- Следующий шаг: Core CI + full NeoForge компиляция этого изменения. #273 FAILURE без пользовательского лога не трактовать как поломку mirror-transport. Только `feature/alchemy`, без merge.

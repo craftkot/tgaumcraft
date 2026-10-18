@@ -94,6 +94,19 @@ public final class LegacyEssentiaMirrorLogicTest {
 
         eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
         eq(8,LegacyEssentiaMirrorLogic.SEARCH_RANGE);
+        // Match actual BETA26 nullFacing(range=8) boundaries, including
+        // asymmetric Y. Cached remote sources outside the CURRENT partner's
+        // search box must never be reused after an NBT/relink.
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(-8,-8,-8));
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(8,7,8));
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,8,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,-9,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(9,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(-9,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,9));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,-9));
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));
         for(int count:new int[]{0,2,10})
             eq(false,LegacyEssentiaMirrorLogic.canTransfer(count,true,true,true));

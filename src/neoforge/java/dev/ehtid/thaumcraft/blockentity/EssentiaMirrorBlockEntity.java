@@ -123,7 +123,18 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         if(remoteMirror==null || !(remoteMirror.level instanceof ServerLevel remote))return null;
         long tick=local.getGameTime();
         if(sourceScanTick==tick) {
-            if(stillValidSource(cachedSource,requestedAspect))return cachedSource;
+            // A previously discovered BlockEntity may still exist even after
+            // the reciprocal mirror address changes via restored/merged NBT.
+            // Never consume it unless it is in this CURRENT partner's world
+            // AND original source-search box.
+            if(cachedSource!=null
+                    && cachedSource.world()==remote
+                    && LegacyEssentiaMirrorLogic.inPartnerSearchBox(
+                            cachedSource.pos().getX()-remoteMirror.worldPosition.getX(),
+                            cachedSource.pos().getY()-remoteMirror.worldPosition.getY(),
+                            cachedSource.pos().getZ()-remoteMirror.worldPosition.getZ())
+                    && stillValidSource(cachedSource,requestedAspect))
+                return cachedSource;
             if(cachedSource==null && requestedAspect==null)return null;
         }
         sourceScanTick=tick;
@@ -445,6 +456,12 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
                 ?new BlockPos(tag.getInt("linkX"),tag.getInt("linkY"),tag.getInt("linkZ")):null;
         if(linkPosition==null||linkDimension==null)linked=false;
         instability=Math.max(0,tag.getInt("instability"));
+        // Loading a saved or /data-merged BlockEntity is not a fresh remote
+        // source discovery. Both the old endpoint and any cached neighbour
+        // could have been removed, moved or re-linked between loads.
+        cachedSource=null;
+        sourceScanTick=Long.MIN_VALUE;
+        nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
     }
 
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
