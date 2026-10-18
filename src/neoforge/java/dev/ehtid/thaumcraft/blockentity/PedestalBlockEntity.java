@@ -5,6 +5,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import java.util.UUID;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -20,6 +22,9 @@ import net.minecraft.world.level.block.state.BlockState;
  */
 public final class PedestalBlockEntity extends BlockEntity implements Container {
     private final NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
+    /** Receipt is saved atomically WITH the emptied pedestal slot. */
+    private UUID infusionRemovalRitual;
+    private int infusionRemovalBit;
 
     public PedestalBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.PEDESTAL.get(), pos, state);
@@ -66,6 +71,40 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
         return true;
     }
 
+    /**
+     * Crystal Farmer side item debit plus its identity in ONE pedestal
+     * BlockEntity NBT snapshot. A matrix that saved countdown=1 immediately
+     * before a crash can recover ONLY from this matching receipt and EMPTY
+     * slot. External inventory changes invalidate the receipt.
+     */
+    public boolean consumeInfusionIngredientWithReceipt(ItemStack expected,
+                                                          UUID ritualId, int ingredientBit) {
+        if (level == null || level.isClientSide || ritualId == null
+                || expected == null || expected.isEmpty() || expected.getCount() != 1
+                || (ingredientBit != 1 && ingredientBit != 2))
+            return false;
+        ItemStack now = items.get(0);
+        if (now.isEmpty() || now.getCount() != 1
+                || !ItemStack.isSameItemSameComponents(now, expected))
+            return false;
+        items.set(0, ItemStack.EMPTY);
+        infusionRemovalRitual = ritualId;
+        infusionRemovalBit = ingredientBit;
+        changedAndSync();
+        return true;
+    }
+
+    public boolean hasInfusionRemovalReceipt(UUID ritualId, int ingredientBit) {
+        return ritualId != null && items.get(0).isEmpty()
+                && ritualId.equals(infusionRemovalRitual)
+                && ingredientBit == infusionRemovalBit;
+    }
+
+    private void clearInfusionRemovalReceipt() {
+        infusionRemovalRitual = null;
+        infusionRemovalBit = 0;
+    }
+
     /** Infusion writes are server authoritative; caller owns cost validation. */
     public void putFromInfusion(ItemStack ingredient) {
         if (level == null || level.isClientSide)
@@ -87,13 +126,19 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override public ItemStack removeItem(int slot, int amount) {
         if (slot != 0 || amount <= 0) return ItemStack.EMPTY;
         ItemStack result = ContainerHelper.removeItem(items, slot, amount);
-        if (!result.isEmpty()) changedAndSync();
+        if (!result.isEmpty()) {
+            clearInfusionRemovalReceipt();
+            changedAndSync();
+        }
         return result;
     }
     @Override public ItemStack removeItemNoUpdate(int slot) {
         if (slot != 0) return ItemStack.EMPTY;
         ItemStack result = ContainerHelper.takeItem(items, slot);
-        if (!result.isEmpty()) changedAndSync();
+        if (!result.isEmpty()) {
+            clearInfusionRemovalReceipt();
+            changedAndSync();
+        }
         return result;
     }
     @Override public void setItem(int slot, ItemStack stack) {
@@ -101,6 +146,7 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
         ItemStack one = stack.copy();
         if (!one.isEmpty()) one.setCount(1);
         items.set(0, one);
+        clearInfusionRemovalReceipt();
         changedAndSync();
     }
     @Override public int getMaxStackSize() { return 1; }
@@ -116,6 +162,7 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override public void clearContent() {
         if (isOccupied()) {
             items.set(0, ItemStack.EMPTY);
+            clearInfusionRemovalReceipt();
             changedAndSync();
         }
     }
@@ -133,13 +180,32 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
+        if (infusionRemovalRitual != null && items.get(0).isEmpty()
+                && (infusionRemovalBit == 1 || infusionRemovalBit == 2)) {
+            tag.putUUID("PortInfusionRemovalRitual", infusionRemovalRitual);
+            tag.putInt("PortInfusionRemovalBit", infusionRemovalBit);
+        }
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        clearInfusionRemovalReceipt();
         items.set(0, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items, registries);
         // Malformed old-world ItemStacks cannot create multi-stack pedestals.
         if (!items.get(0).isEmpty() && items.get(0).getCount() > 1)
             items.get(0).setCount(1);
+        if (items.get(0).isEmpty()
+                && tag.contains("PortInfusionRemovalRitual", Tag.TAG_INT_ARRAY)
+                && tag.contains("PortInfusionRemovalBit", Tag.TAG_INT)) {
+            int bit = tag.getInt("PortInfusionRemovalBit");
+            if (bit == 1 || bit == 2) {
+                try {
+                    infusionRemovalRitual = tag.getUUID("PortInfusionRemovalRitual");
+                    infusionRemovalBit = bit;
+                } catch (IllegalArgumentException malformed) {
+                    clearInfusionRemovalReceipt();
+                }
+            }
+        }
     }
 }
