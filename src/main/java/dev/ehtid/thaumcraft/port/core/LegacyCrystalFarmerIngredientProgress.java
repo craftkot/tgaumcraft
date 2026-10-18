@@ -40,6 +40,22 @@ public record LegacyCrystalFarmerIngredientProgress(int consumedMask, int countd
         return 0;
     }
 
+    /**
+     * A world save is not atomic across the matrix and side pedestals.
+     * If the matrix has persisted an ingredient debit but the pedestal
+     * has restored its old item, allowing the ritual to finish would mint
+     * an output while leaving that paid ingredient behind.
+     *
+     * Fail closed on either discrepancy: consumed items must be absent,
+     * outstanding items must still be present. Legitimate insertion of an
+     * extra matching item during an active ritual also pauses progression
+     * until the extra is removed; never treats it as a free ingredient.
+     */
+    public boolean matchesLivePedestals(boolean seedsPresent, boolean salisPresent) {
+        return (((consumedMask & SEEDS_BIT) == 0) == seedsPresent)
+                && (((consumedMask & SALIS_BIT) == 0) == salisPresent);
+    }
+
     public boolean readyToFinish() { return consumedMask == ALL; }
 
     public Action nextAction() {
