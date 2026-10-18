@@ -107,6 +107,18 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(-9,0,0));
         eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,9));
         eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,-9));
+        // Exhaustively compare the optimization against the ORIGINAL
+        // nullFacing source enumeration at every in-box and out-of-box
+        // coordinate, not just representative boundary examples.
+        var originalScanOffsets = new java.util.HashSet<>(
+                LegacyEssentiaSourceOrder.nullFacing(
+                        LegacyEssentiaMirrorLogic.SEARCH_RANGE));
+        for(int dx=-9;dx<=9;dx++)
+            for(int dy=-9;dy<=8;dy++)
+                for(int dz=-9;dz<=9;dz++)
+                    eq(originalScanOffsets.contains(
+                            new LegacyEssentiaSourceOrder.Offset(dx,dy,dz)),
+                            LegacyEssentiaMirrorLogic.inPartnerSearchBox(dx,dy,dz));
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));
         for(int count:new int[]{0,2,10})
             eq(false,LegacyEssentiaMirrorLogic.canTransfer(count,true,true,true));
