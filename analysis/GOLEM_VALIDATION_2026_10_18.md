@@ -99,3 +99,34 @@ gradle --init-script tools/golems.gradle -PgolemRestartScenario=fill -PgolemRest
 Логи сессии: `/workspace/reference/golems-fill-{core,compile,gametest,final,restart-write,restart-read}.log`. Подготовленные зависимости позволяют `--offline`; в чистой среде они сначала должны быть загружены штатным Gradle способом. Полная внешняя compatibility с чужими inventory mods, клиент, live chunk unloading и аварийный power loss не проверялись.
 
 JAR M10.4 SHA256 `f0f0fd66c33bf71e48341db09087efa51e45986ea561adf5590f5329efeb059a`; ZIP CRC PASS. Последующие изменения касаются документации.
+
+## Продолжение M10.5 — filters/limits/menu
+
+Источники и подтверждённый дефект BETA26 ground count описаны в design M10.5. Предыдущие сценарии сохранены. Новые server assertions:
+
+1. Pickup whitelist по item/components, копия ghost count1; смена на blacklist отменяет lease; размер не ограничивает Pickup. Изменение components на земле повторно проверяется; подмена target UUID при валидном lease запрещена.
+2. Два заранее зарезервированных Fill, стартовый запас5, cap12, у каждого5: в цели12, остаток3; plain diamonds с другими components не учитываются в cap.
+3. HAULER выбирает подходящую offhand, не затрагивая mainhand stone; handler реально принимает2 вместо6 — withheld+remainder сохранены; пустой whitelist запрещает перенос, size0 разрешает без лимита.
+4. Реальный серверный Menu: ghost никогда не расходует/не выдаёт предмет; THROW/SWAP/CLONE/drag/quickmove безопасны. Owner/distance/instance, некорректные action IDs, shift-copy, limit70000 через два DataSlot, saturation int max, stale delete/recreate.
+5. Registry-aware NBT сохраняет item components, bl, full int size и ghost count1; старые строки без настроек сохраняют прежние defaults; leases не восстанавливаются.
+6. Исходный world-drop с дефектным ground count сохраняет каждый предмет и исходный per-drop cap; не выдаётся за строгий общий лимит на земле.
+7. Полностью автономный AI выполняет filtered Pickup → navigation → Fill до cap12 из17, оставляет5 у голема и5 неподходящих diamonds на земле; conservation проверяется на каждом tick, по завершении нет зацикленного задания.
+
+Команды (Java21; в этой среде cached Gradle позволяет `--offline`):
+
+```bash
+bash tools/run_core_parity.sh
+gradle --offline --init-script tools/golems.gradle build -x test runGolemGameTest
+gradle --offline --init-script tools/golems.gradle -PgolemRestartScenario=filter -PgolemRestartPhase=write runGolemRestart
+gradle --offline --init-script tools/golems.gradle -PgolemRestartScenario=filter -PgolemRestartPhase=read runGolemRestart
+```
+
+Новый restart-сценарий использует отдельный `build/golem-filter-restart` (eula=true, online-mode=false, port25590, view/simulation2). Старые миры не удаляются и не перезаписываются. Проверяет предыдущие инварианты сущности/груза/barrel и дополнительно named ghost count1, blacklist Pickup, whitelist Fill и int cap70000 после двух процессов dedicated server.
+
+Логи сессии вне Git: `/workspace/reference/golems-filter-{core,compile,final,reviewed,restart-write,restart-read}.log`. Меню тестируется на сервере; GUI Minecraft-клиент и его раскладка остаются непроверенными. Внешние inventory mods, live chunk unload и crash-atomic transfer по-прежнему не проверены. Реальные итоги финальных запусков записываются ниже и в lane-журнале.
+
+При расширении с21 до22 тестов обнаружен дефект test harness usage: прямой `h.succeed()` в `runAfterDelay` удалял ItemEntity до последнего `onEachTick` в том же тике. Трассировка подтвердила `GameTestInfo.succeed` как источник discard; все17 переносимых предметов и final cap12/remainder5 уже сохранялись. Завершение переведено в GameTestSequence после tick callbacks, временный tracing удалён. Диагностические ошибки не объявлялись PASS.
+
+Итог M10.5: **Core runner PASS**, construction34 808 /task+filter937 assertions; **build +22/22 required GameTests PASS**, 6.425s сценариев /45s полного запуска (`golems-filter-verified.log`). **Cold filter WRITE/READ assertions PASS**, два процесса dedicated server (1m2s /44s); сохранены один UUID/owner/props/home/XP/color/health/точный cargo37, обе печати, barrel11gold, ghost item/components count1, blacklist/whitelist и size70000. Нет старых leases и дубликата груза.
+
+Итоговый JAR ZIP CRC PASS; SHA256 `c6a08efca9d5216f5c8a65394a2748f53a88d9236ec53b57f5bc21236987343b`. Эта проверка относится к реализованному срезу; графический клиент, live chunk unload/reload, внешние inventory mods и аварийный обрыв посреди transfer не запускались.
