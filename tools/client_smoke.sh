@@ -448,10 +448,10 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' WRONG_ASPECT_SOURCE_UNCHANGED
     capture 60-reverse-incompatible-aspect-rejected
 
-    # 2) A full sink must not swallow a 65th unit or debit the source.
-    send_chat '/data merge block 376 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:64s}'
+    # 2) A full 250-unit BETA26 sink must not swallow a 251st unit or debit the source.
+    send_chat '/data merge block 376 149 344 {Aspect:"aer",AspectFilter:"aer",Amount:250s}'
     sleep 10
-    assert_mirror_world_nbt 376 149 344 '{Aspect:"aer",Amount:64s}' FULL_RECEIVER_UNCHANGED
+    assert_mirror_world_nbt 376 149 344 '{Aspect:"aer",Amount:250s}' FULL_RECEIVER_UNCHANGED
     assert_mirror_world_nbt 344 149 344 '{Aspect:"aer",Amount:12s}' FULL_SOURCE_UNCHANGED
     capture 61-reverse-full-sink-rejected
 

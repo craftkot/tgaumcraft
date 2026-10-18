@@ -77,7 +77,7 @@ public final class LegacyEssentiaMirrorLogicTest {
         // Aligned with live negative mirror world scenarios: a mismatched
         // filter or full jar never qualifies for a one-unit credit.
         var wrongAspect = new LegacyEssentiaJarLogic.State(null,"ignis",0);
-        var fullAer = new LegacyEssentiaJarLogic.State("aer","aer",64);
+        var fullAer = new LegacyEssentiaJarLogic.State("aer","aer",LegacyEssentiaJarLogic.CAPACITY);
         eq(false,LegacyEssentiaJarLogic.accepts(wrongAspect,"aer"));
         eq(0,LegacyEssentiaJarLogic.add(fullAer,"aer",1).transferred());
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
