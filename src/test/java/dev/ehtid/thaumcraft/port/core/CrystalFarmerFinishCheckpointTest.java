@@ -59,6 +59,50 @@ public final class CrystalFarmerFinishCheckpointTest {
         bad(()->LegacyCrystalFarmerFinishCheckpoint.restore("NOT_A_PHASE"));
         eq(true,finished.finished());
         eq(false,finished.canReserve());
+        // Cross-stage restart simulation in pure Java for ALL seven actual
+        // BETA26 recipes and three legal multiplier values. This checks the
+        // exact amount paid, the source 5-cycle order, and a non-replayable
+        // crash after reservation. It is NOT a Minecraft world-save test.
+        var aspects = new AspectRegistry();
+        for (var recipe : LegacyInfusionCrystalFarmerCatalog.all()) {
+            for (float multiplier : new float[]{0.5F, 1.0F, 1.35F}) {
+                var price = LegacyInfusionStartPlanner.calculateEssentia(
+                        LegacyInfusionCrystalFarmerCatalog.essentia(recipe, aspects), multiplier);
+                var ledger = LegacyInfusionRitualLedger.begin(recipe.legacyId(), price);
+                eq(false, ledger.readyForIngredients());
+                for (var amount : ledger.requested().entrySet()) {
+                    for (int unit = 0; unit < amount.getValue(); unit++)
+                        ledger = ledger.afterWorldDebit(amount.getKey());
+                }
+                eq(true, ledger.readyForIngredients());
+                eq(0, ledger.unitsLeft());
+                var paid = LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        recipe.legacyId(), ledger.requested(), ledger.remaining(),
+                        ledger.paid(), multiplier);
+                eq(true, paid.readyForIngredients());
+                var items = LegacyCrystalFarmerIngredientProgress.initial();
+                for (int bit : new int[]{
+                        LegacyCrystalFarmerIngredientProgress.SEEDS_BIT,
+                        LegacyCrystalFarmerIngredientProgress.SALIS_BIT}) {
+                    for (int step = 0; step < 5; step++)
+                        items = items.afterValidatedCountdown();
+                    eq(LegacyCrystalFarmerIngredientProgress.Action.CONSUME, items.nextAction());
+                    items = items.afterActualPedestalRemoval(bit);
+                }
+                eq(true, items.readyToFinish());
+                eq(true, items.matchesLivePedestals(false, false));
+                eq(false, items.matchesLivePedestals(true, false));
+                eq(false, items.matchesLivePedestals(false, true));
+                var reservation = LegacyCrystalFarmerFinishCheckpoint.initial()
+                        .reserve(paid.readyForIngredients(), items.readyToFinish(), true);
+                var afterCrash = LegacyCrystalFarmerFinishCheckpoint.restore(
+                        reservation.phase().name());
+                eq(LegacyCrystalFarmerFinishCheckpoint.Phase.STALLED, afterCrash.phase());
+                eq(afterCrash, afterCrash.acknowledgeAlreadyPublished(true, true, false));
+                eq(true, afterCrash.acknowledgeAlreadyPublished(true, true, true).finished());
+                bad(() -> afterCrash.finishAfterActualCenterReplacement(true));
+            }
+        }
         System.out.println("BETA26 Crystal Farmer finish reservation: OK ("+checks+" assertions)");
     }
 }
