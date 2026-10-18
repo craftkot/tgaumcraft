@@ -70,3 +70,8 @@
 - CI [#273](https://circleci.com/gh/craftkot/tgaumcraft/273) — **FAILURE**. Подробный игровой лог этого прогона недоступен в GitHub status; причина **не установлена**, нельзя автоматически считать повторением #241. Требуется артефакт #273 до дальнейших изменений Minecraft fixture.
 - Найдена конкретная потенциально опасная точка в `EssentiaTubeBlockEntity`: `neighbours()`, исходный финальный дебет `serverTick()` и взаимодействие `toggleSide()` вызывали `getBlockEntity` / `updateConnections` у соседей без проверки `hasChunkAt`. Теперь все эти ветви проверяют загрузку соседнего чанка, прежде чем его читать/изменять. **Нет форс-загрузки, нет синтетического источника**, если соседний чанк не загружен.
 - Важное различие: это безопасная правка M04.3, а не доказанное исправление ошибки CI #273. Нужна NeoForge-компиляция новой версии, позднее игровой тест на границе чанков.
+
+### Компиляция защиты трубы — проверка ветки
+- `163509c` исправляет только `EssentiaTubeBlockEntity.java` (и собственный журнал): перед соседними `getBlockEntity` и `updateConnections` проверяется `hasChunkAt` на реальном локальном сервере.
+- Одноразовый `036e611` активировал `run_compile=true`: [NeoForge #287](https://circleci.com/gh/craftkot/tgaumcraft/287), при фиксации **PENDING**. `e69ad0d` вернул `run_compile=false`; [verify #288](https://circleci.com/gh/craftkot/tgaumcraft/288) — SUCCESS.
+- Ни M04.1, ни M04.2 не приняты в игровом мире. Для #273 нужен пользовательский `build_273_step_103_container_0.txt` или эквивалентный CircleCI artifact: сам GitHub status показывает только FAILURE, но не точную причину.
