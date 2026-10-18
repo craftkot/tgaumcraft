@@ -186,10 +186,10 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
                 || (!jar.isVoidJar() && jar.stored.amount() >= LegacyEssentiaJarLogic.CAPACITY))
             return;
         BlockPos sourcePos = pos.above();
-        // A jar at y=15 of a chunk section / beside an unloaded chunk
-        // may only pull from an already-loaded real BlockEntity. A plain
-        // getBlockEntity() lookup is not an unloaded-chunk guard, and must
-        // never force-generate a chunk on a 5-tick suction probe.
+        // Defensive server-world check before probing a transport source.
+        // Above a jar is normally in the SAME x/z chunk as the jar, so this
+        // is a conservative safety check, not a claim that it fixes a
+        // documented cross-chunk failure or the unrelated client CI #273.
         if (!level.hasChunkAt(sourcePos)) return;
         if (!(level.getBlockEntity(sourcePos) instanceof EssentiaTransportPort above)
                 || !above.transportConnects(Direction.DOWN)
