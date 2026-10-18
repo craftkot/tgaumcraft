@@ -49,6 +49,36 @@ public final class ResearchKnowledgeRequirementStatusTest {
         check(ResearchKnowledgeRequirementStatus.inspect(null, player, categories) == null,
                 "null source rejected");
 
+        // Exercise ALL 171 knowledge requirements from the actual original
+        // 148-page / 271-stage BETA26 manifest projection, including its
+        // unusual required_knowledgeauram source field.
+        var untouched = new PlayerKnowledgeData();
+        int sourceKnowledgeGates = 0;
+        int auramGates = 0;
+        for (var page : LegacyResearchPages.all()) {
+            for (var stage : page.stages()) {
+                for (String encoded : stage.requiredKnowledge()) {
+                    var status = ResearchKnowledgeRequirementStatus.inspect(
+                            encoded, untouched, categories);
+                    check(status != null && !status.satisfied(),
+                            "source knowledge gate must parse and start locked: " + encoded);
+                    sourceKnowledgeGates++;
+                }
+                for (String encoded : stage.auramKnowledge()) {
+                    var status = ResearchKnowledgeRequirementStatus.inspect(
+                            encoded, untouched, categories);
+                    check(status != null && !status.satisfied(),
+                            "source auram knowledge gate must parse: " + encoded);
+                    sourceKnowledgeGates++;
+                    auramGates++;
+                }
+            }
+        }
+        check(sourceKnowledgeGates == 171, "171 original BETA26 knowledge gate records");
+        check(auramGates == 1, "preserve the one original knowledgeauram field");
+        check(untouched.copyKnowledgeRaw().isEmpty(),
+                "reading original page requirements must not award knowledge");
+
         // Roundtrip via the SAME BETA26 knowledge rows consumed by the
         // persistent NeoForge player attachment. No client-side unlocking.
         var decoded = new PlayerKnowledgeData();
