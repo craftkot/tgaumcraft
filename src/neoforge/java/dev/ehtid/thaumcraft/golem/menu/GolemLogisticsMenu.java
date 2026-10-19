@@ -15,6 +15,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     private final GolemSeals.Seal expected;
     private final Player viewer;
     private final SimpleContainer ghost=new SimpleContainer(9);
+    private final DataSlot cycle=DataSlot.standalone();
     private final DataSlot type=DataSlot.standalone(), selected=DataSlot.standalone();
     private final DataSlot low=DataSlot.standalone(), high=DataSlot.standalone();
     private final DataSlot blacklist=DataSlot.standalone(), nbt=DataSlot.standalone(), single=DataSlot.standalone(), leave=DataSlot.standalone();
@@ -28,7 +29,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         });
         for(int r=0;r<3;r++) for(int c=0;c<9;c++) addSlot(new Slot(inv,c+r*9+9,8+c*18,190+r*18));
         for(int c=0;c<9;c++) addSlot(new Slot(inv,c,8+c*18,248));
-        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone}) addDataSlot(data);
+        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone,cycle}) addDataSlot(data);
         refresh();
     }
     private GolemSeals.Seal current() { return level==null || expected==null?null:GolemSeals.get(level).get(expected.key()); }
@@ -43,6 +44,8 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     public int selected() { return selected.get(); }
     public boolean stock() { return type.get()==1; }
     public boolean provider() { return type.get()==2; }
+    public boolean advancedEmpty() { return type.get()==3; }
+    public boolean cycle() { return cycle.get()!=0; }
     public boolean blacklist() { return blacklist.get()!=0; }
     public boolean matchNbt() { return nbt.get()!=0; }
     public boolean single() { return single.get()!=0; }
@@ -59,7 +62,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         var filter=s.logistics().slot(selected());
         low.set(filter.limit()&65535); high.set(filter.limit()>>>16);
         blacklist.set(s.logistics().blacklist()?1:0); nbt.set(s.logistics().matchNbt()?1:0);
-        single.set(s.logistics().single()?1:0); leave.set(s.leaveOne()?1:0);
+        cycle.set(s.logistics().cycle()?1:0); single.set(s.logistics().single()?1:0); leave.set(s.leaveOne()?1:0);
         priority.set(s.priority()); color.set(s.color()); locked.set(s.locked()?1:0); redstone.set(s.redstone()?1:0);
     }
     @Override public void broadcastChanges() { refresh(); super.broadcastChanges(); }
@@ -91,6 +94,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         if(id>=100 && id<109) { selected.set(id-100); broadcastChanges(); return true; }
         if(id==0 && !stock()) return edit(p,policy.withMode(!policy.blacklist(),policy.matchNbt(),policy.single()));
         if(id==31 || id==61) return edit(p,policy.withMode(policy.blacklist(),id==31,policy.single()));
+        if((id==34 || id==64) && advancedEmpty()) return edit(p,policy.withCycle(id==34));
         if((id==34 || id==64) && provider()) return edit(p,policy.withMode(policy.blacklist(),policy.matchNbt(),id==34));
         boolean result;
         if((id==35 || id==65) && !stock()) result=data.configureLeaveOne(expected,p.getUUID(),id==35);

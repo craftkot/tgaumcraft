@@ -83,6 +83,7 @@ public final class GolemSeals extends SavedData {
     private final Map<SealKey, Seal> seals = new LinkedHashMap<>();
     private final TaskBoard board = new TaskBoard();
     private final GolemLogistics logistics=new GolemLogistics(this);
+    private final Map<SealKey,Integer> emptyCycles=new HashMap<>();
     private final GolemFarm farm=new GolemFarm(this);
     private final Map<Integer, UUID> targets = new HashMap<>();
     private final Map<UUID, Integer> itemTasks = new HashMap<>();
@@ -222,6 +223,7 @@ public final class GolemSeals extends SavedData {
     private void removeSeal(SealKey key) {
         logistics.changed(key);
         farm.removed(key);
+        emptyCycles.remove(key);
         seals.remove(key);
         watchedFillTasks.remove(key);
         for (var entry : new ArrayList<>(taskSeals.entrySet())) {
@@ -377,7 +379,7 @@ public final class GolemSeals extends SavedData {
 
     private void createEmptyTask(ServerLevel level, Seal seal) {
         ItemStack cached = seal.type()==Type.EMPTY_ADVANCED
-                ? GolemContainers.emptyCandidate(level,seal.key(),seal.logistics(),seal.leaveOne())
+                ? GolemContainers.emptyCandidate(level,seal.key(),seal.logistics(),seal.leaveOne(),emptyCycles.getOrDefault(seal.key(),0))
                 : GolemContainers.emptyCandidate(level, seal.key(), seal.filter(), seal.leaveOne());
         if (cached.isEmpty()) return;
         int id = allocateTaskId();
@@ -486,6 +488,7 @@ public final class GolemSeals extends SavedData {
         if (target == null || golem.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(target.pos())) > 4) return false;
         int moved = GolemContainers.extractInto(golem, GolemContainers.handler(level, target),
                 emptyCandidates.get(assignment.lease().taskId()), extractionPolicy(seals.get(target),assignment.lease().taskId()), seals.get(target).leaveOne());
+        emptyCycles.merge(target,1,(old,one)->old+one);
         board.complete(assignment.lease(), true);
         board.suspend(assignment.lease());
         forget(assignment.lease().taskId());
@@ -617,7 +620,7 @@ public final class GolemSeals extends SavedData {
                         loadedType,
                         SealFilter.load(row, registries), UUID.randomUUID(), row.getBoolean("redstone"), area,
                         (loadedType.extracts() || loadedType==Type.PROVIDE) && row.getBoolean("pleave"),
-                        LogisticsPolicy.load(row,registries,loadedType==Type.STOCK),
+                        LogisticsPolicy.load(row,registries,loadedType==Type.STOCK).withCycle(loadedType==Type.EMPTY_ADVANCED&&row.getBoolean("pcycle")),
                         new HarvestSettings(!row.contains("prep") || row.getBoolean("prep"),row.getBoolean("ppro"))));
                 if(loadedType==Type.HARVEST) data.farm.loadRow(row,data.seals.get(key));
             } catch (IllegalArgumentException ignored) {

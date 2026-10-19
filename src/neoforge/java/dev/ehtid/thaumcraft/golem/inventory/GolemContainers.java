@@ -20,11 +20,14 @@ public final class GolemContainers {
     private GolemContainers() {}
 
     public static ItemStack emptyCandidate(ServerLevel level, SealKey key, LogisticsPolicy policy, boolean leaveOne) {
+        return emptyCandidate(level,key,policy,leaveOne,0);
+    }
+    public static ItemStack emptyCandidate(ServerLevel level, SealKey key, LogisticsPolicy policy, boolean leaveOne,int completed) {
         var handler=handler(level,key);
         if(handler==null) return ItemStack.EMPTY;
         for(int i=0;i<handler.getSlots();i++) {
             var actual=handler.getStackInSlot(i);
-            if(!policy.accepts(actual)) continue;
+            if(!policy.extractionAccepts(actual,completed)) continue;
             var filter=new SealFilter(actual,false,0,policy.matchNbt());
             if(leaveOne && matchingStock(handler,actual,filter)<2) continue;
             var preview=handler.extractItem(i,actual.getCount(),true);

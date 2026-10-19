@@ -34,7 +34,7 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         String[] labels={"-10","-1","+1","+10"};
         for(int i=0;i<4;i++) { final int id=i+1; limits[i]=button(Component.literal(labels[i]),8+i*41,95,37,()->send(id)); }
         leave=button(Component.empty(),8,95,78,()->send(menu.leaveOne()?65:35));
-        single=button(Component.empty(),90,95,78,()->send(menu.single()?64:34));
+        single=button(Component.empty(),90,95,78,()->send((menu.provider()?menu.single():menu.cycle())?64:34));
         button(Component.literal("−"),8,117,24,()->send(80)); button(Component.literal("+"),144,117,24,()->send(81));
         button(Component.literal("−"),8,137,24,()->send(82)); button(Component.literal("+"),144,137,24,()->send(83));
         locked=button(Component.empty(),8,157,78,()->send(menu.locked()?26:25));
@@ -47,7 +47,7 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         nbt.setMessage(label(menu.matchNbt()?"nbt_match":"nbt_ignore"));
         for(var button:limits) button.visible=button.active=menu.stock();
         leave.visible=leave.active=!menu.stock(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
-        single.visible=single.active=menu.provider(); single.setMessage(label(menu.single()?"single":"batch"));
+        single.visible=single.active=menu.provider()||menu.advancedEmpty(); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):(menu.cycle()?"cycle":"all_filters")));
         locked.setMessage(label(menu.locked()?"locked":"public"));
         redstone.setMessage(label(menu.redstone()?"redstone_stop":"redstone_ignore"));
     }
