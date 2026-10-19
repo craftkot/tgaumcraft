@@ -357,5 +357,6 @@
   "container.thaumcraft.golem_press": "Golem Press",
   "menu.thaumcraft.golem_press.start": "Assemble",
   "menu.thaumcraft.golem_press.wood": "Wood · Basic · Walker",
-  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s"
+  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s",
+  "block.thaumcraft.table_stone": "Stone Table"
 }

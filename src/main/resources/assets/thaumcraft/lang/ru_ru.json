@@ -357,5 +357,6 @@
   "container.thaumcraft.golem_press": "Голем-пресс",
   "menu.thaumcraft.golem_press.start": "Собрать",
   "menu.thaumcraft.golem_press.wood": "Дерево · Базовый · Шагающий",
-  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s"
+  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s",
+  "block.thaumcraft.table_stone": "Каменный стол"
 }
