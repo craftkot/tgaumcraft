@@ -21,7 +21,7 @@ public final class GolemTask {
     private boolean suspended;
     private boolean completed;
     private int data;
-    private Object linkedProvision;
+    private ProvisionRequest<?> linkedProvision;
     private short lifespan = 300;
     private byte priority;
 
@@ -60,8 +60,8 @@ public final class GolemTask {
     public boolean isReserved() { return reserved; }
     public boolean isSuspended() { return suspended; }
     public boolean isCompleted() { return completed; }
-    public Object getLinkedProvision() { return linkedProvision; }
-    public void setLinkedProvision(Object provision) { linkedProvision = provision; }
+    public ProvisionRequest<?> getLinkedProvision() { return linkedProvision; }
+    public void setLinkedProvision(ProvisionRequest<?> provision) { linkedProvision = provision; }
 
     public void setReserved(boolean reserved) {
         this.reserved = reserved;

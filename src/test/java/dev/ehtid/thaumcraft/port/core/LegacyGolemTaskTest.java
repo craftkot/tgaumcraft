@@ -2,6 +2,9 @@ package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
 import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
+import dev.ehtid.thaumcraft.port.core.golem.ProvisionBoard;
+import dev.ehtid.thaumcraft.port.core.golem.ProvisionRequest;
+import dev.ehtid.thaumcraft.port.core.golem.ProvisionRules;
 import dev.ehtid.thaumcraft.port.core.golem.SealArea;
 import dev.ehtid.thaumcraft.port.core.golem.SealAreaControls;
 import dev.ehtid.thaumcraft.port.core.golem.TaskBoard;
@@ -14,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Official BETA26 API rules plus deliberately separate modern server-safety invariants. */
 public final class LegacyGolemTaskTest {
@@ -42,6 +46,10 @@ public final class LegacyGolemTaskTest {
 
     private static GolemTask block(int id, int x) {
         return GolemTask.block(id, null, new SealArea.BlockPos(x, 0, 0));
+    }
+
+    private static ProvisionRequest<String> provision() {
+        return new ProvisionBoard<String>(() -> 0).request(new ProvisionRequest.EntityTarget(BOB), "iron", 1, 0).orElseThrow();
     }
 
     private static TaskSelection.Context permissive(UUID owner) {
@@ -76,10 +84,10 @@ public final class LegacyGolemTaskTest {
         task.setLifespan((short) 32_700);
         task.setReserved(true);
         eq((long) (short) 32_820, task.getLifespan());
-        task.setLinkedProvision(new Object());
+        task.setLinkedProvision(provision());
         task.setSuspended(false);
         eq(null, task.getLinkedProvision());
-        task.setLinkedProvision(new Object());
+        task.setLinkedProvision(provision());
         task.setSuspended(true);
         eq(null, task.getLinkedProvision());
         task.setData(42);
@@ -190,7 +198,7 @@ public final class LegacyGolemTaskTest {
         eq(List.of(), TaskSelection.sorted(List.of(near), GolemTask.Type.BLOCK, forbiddenTrait));
         GolemTask entity = GolemTask.entity(5, null, BOB);
         eq(List.of(entity), TaskSelection.sorted(List.of(entity), GolemTask.Type.ENTITY, permissive(ALICE)));
-        entity.setLinkedProvision(new Object());
+        entity.setLinkedProvision(provision());
         eq(List.of(), TaskSelection.sorted(List.of(entity), GolemTask.Type.ENTITY, red));
         eq(true, entity.isSuspended());
         eq(null, entity.getLinkedProvision());
@@ -323,6 +331,138 @@ public final class LegacyGolemTaskTest {
         bounded.close();
     }
 
+    private static void provisioning() throws InterruptedException {
+        var now = new AtomicLong(500);
+        var board = new ProvisionBoard<String>(now::get);
+        var location = new SealArea.SealPos(ORIGIN, SealArea.Facing.UP);
+        var target = new ProvisionRequest.BlockTarget(location);
+        var request = board.request(target, "iron:name=ore", 16, 0).orElseThrow();
+        eq(10_500L, request.timeout());
+        eq(16, request.count());
+        eq(target, request.target());
+        eq(null, request.linkedTask());
+        now.set(600);
+        eq(true, request == board.request(target, "iron:name=ore", 16, 0).orElseThrow());
+        eq(10_500L, request.timeout());
+        // Exact identity includes count, components, side, UI and target kind.
+        eq(false, request == board.request(target, "iron:name=ore", 15, 0).orElseThrow());
+        eq(false, request == board.request(target, "iron", 16, 0).orElseThrow());
+        eq(false, request == board.request(target, "iron:name=ore", 16, 1).orElseThrow());
+        var otherSide = new ProvisionRequest.BlockTarget(new SealArea.SealPos(ORIGIN, SealArea.Facing.DOWN));
+        eq(false, request == board.request(otherSide, "iron:name=ore", 16, 0).orElseThrow());
+        var entity = board.request(new ProvisionRequest.EntityTarget(BOB), "iron:name=ore", 16, 0).orElseThrow();
+        var seal = board.request(new ProvisionRequest.SealTarget(location, ALICE), "iron", 16, 0).orElseThrow();
+        var replacement = board.request(new ProvisionRequest.SealTarget(location, BOB), "iron", 16, 0).orElseThrow();
+        eq(false, seal == replacement);
+        var pickup = ProvisionRules.pickup(500, location, request, (byte) -3);
+        eq(0, pickup.getData());
+        eq(GolemTask.Type.BLOCK, pickup.getType());
+        eq(ORIGIN, pickup.getPos());
+        eq((byte) 5, pickup.getPriority());
+        eq(31_000L, pickup.getLifespan());
+        var sealPickup = ProvisionRules.pickup(501, location, seal, (byte) -3);
+        eq((byte) -3, sealPickup.getPriority());
+        eq(10L, sealPickup.getLifespan());
+        eq(true, board.link(request, null, pickup));
+        eq(120_600L, request.timeout());
+        eq(request, pickup.getLinkedProvision());
+        eq(pickup, request.linkedTask());
+        var delivery = ProvisionRules.delivery(502, pickup, request);
+        eq(2, delivery.getData());
+        eq(ORIGIN, delivery.getPos());
+        eq(location, delivery.getSealPos());
+        eq((byte) 5, delivery.getPriority());
+        eq(31_000L, delivery.getLifespan());
+        eq(false, board.link(request, null, delivery));
+        now.set(700);
+        eq(true, board.link(request, pickup, delivery));
+        eq(null, pickup.getLinkedProvision());
+        pickup.setSuspended(true);
+        eq(false, board.unlink(request, pickup));
+        eq(delivery, request.linkedTask());
+        eq(120_700L, request.timeout());
+        eq(false, board.link(request, delivery, delivery));
+        var entityDelivery = ProvisionRules.delivery(503, pickup, entity);
+        eq(1, entityDelivery.getData());
+        eq(GolemTask.Type.ENTITY, entityDelivery.getType());
+        eq(BOB, entityDelivery.getEntityId());
+        rejects(IllegalArgumentException.class, () -> ProvisionRules.delivery(504, pickup, seal));
+        eq(false, board.link(entity, null, delivery));
+        var dead = block(505, 0); dead.setSuspended(true);
+        eq(false, board.link(entity, null, dead));
+        now.set(800);
+        eq(true, board.unlink(request, delivery));
+        eq(120_800L, request.timeout());
+        eq(null, delivery.getLinkedProvision());
+        eq(false, board.unlink(request, delivery));
+        eq(true, board.link(request, null, delivery));
+        // Unlinked requests are swept even before the initial deadline, matching BETA26.
+        board.sweep();
+        eq(List.of(request), board.snapshot());
+        eq(true, entity.invalid());
+        eq(false, board.link(entity, null, entityDelivery));
+        now.set(request.timeout()); board.sweep();
+        eq(1, board.snapshot().size()); // Strict timeout < now, equality is still live.
+        now.incrementAndGet(); board.sweep();
+        eq(List.of(), board.snapshot());
+        eq(true, delivery.isSuspended());
+        eq(null, delivery.getLinkedProvision());
+        var fresh = board.request(target, "iron:name=ore", 16, 0).orElseThrow();
+        eq(false, fresh.id() == request.id());
+        eq(false, board.link(request, null, block(506, 0)));
+        eq(true, board.invalidate(fresh));
+        eq(false, board.invalidate(fresh));
+        eq(false, board.link(fresh, null, block(507, 0)));
+        board.sweep();
+        var done = board.request(target, "gold", 2, 0).orElseThrow();
+        var doneTask = block(508, 0); board.link(done, null, doneTask); doneTask.setCompletion(true);
+        board.sweep(); eq(List.of(), board.snapshot());
+        var suspended = board.request(target, "gold", 2, 0).orElseThrow();
+        var suspendedTask = block(509, 0); board.link(suspended, null, suspendedTask); suspendedTask.setSuspended(true);
+        board.sweep(); eq(List.of(), board.snapshot());
+        var closed = board.request(target, "gold", 2, 0).orElseThrow();
+        var closeTask = block(510, 0); board.link(closed, null, closeTask);
+        var failure = new AtomicReference<Throwable>();
+        var foreignThread = new Thread(() -> {
+            try { board.snapshot(); } catch (Throwable ex) { failure.set(ex); }
+        });
+        foreignThread.start(); foreignThread.join();
+        eq(true, failure.get() instanceof IllegalStateException);
+        board.close(); board.close();
+        eq(true, board.isClosed()); eq(List.of(), board.snapshot());
+        eq(true, closeTask.isSuspended()); eq(true, closed.invalid());
+        eq(null, closed.linkedTask());
+        eq(Optional.empty(), board.request(target, "gold", 2, 0));
+        rejects(IllegalArgumentException.class, () -> board.request(target, "gold", 0, 0));
+        try (var bounded = new ProvisionBoard<String>(now::get)) {
+            for (int i=0; i<ProvisionBoard.MAX_REQUESTS; i++)
+                eq(true, bounded.request(target, "item"+i, 1, 0).isPresent());
+            eq(Optional.empty(), bounded.request(target, "overflow", 1, 0));
+            eq(ProvisionBoard.MAX_REQUESTS, bounded.snapshot().size());
+            eq(true, bounded.request(target, "item0", 1, 0).isPresent());
+        }
+        eq(9, ProvisionRules.FILTER_SLOTS); eq(20, ProvisionRules.INTERVAL_TICKS);
+        eq(100, ProvisionRules.SWEEP_TICKS);
+        eq(64, ProvisionRules.stockDemand(200, 10, 64, 128));
+        eq(2, ProvisionRules.stockDemand(20, 18, 64, 10));
+        eq(1, ProvisionRules.stockDemand(20, 18, 64, 1));
+        eq(0, ProvisionRules.stockDemand(20, 21, 64, 64));
+        eq(0, ProvisionRules.stockDemand(20, Long.MAX_VALUE, 64, 64));
+        eq(0, ProvisionRules.stockDemand(20, 0, 64, 0));
+        eq(0, ProvisionRules.stockDemand(0, 0, 64, 64));
+        eq(16, ProvisionRules.stockDemand(100, 0, 16, 64));
+        eq(true, ProvisionRules.inProviderRange(4095.99));
+        eq(false, ProvisionRules.inProviderRange(4096));
+        eq(false, ProvisionRules.inProviderRange(Double.NaN));
+        eq(false, ProvisionRules.inProviderRange(-1));
+        eq(6, ProvisionRules.pickupAmount(16, 64, 7, false, true));
+        eq(0, ProvisionRules.pickupAmount(16, 64, 1, false, true));
+        eq(1, ProvisionRules.pickupAmount(16, 64, 7, true, true));
+        eq(16, ProvisionRules.pickupAmount(16, 64, Long.MAX_VALUE, false, true));
+        eq(7, ProvisionRules.pickupAmount(16, 64, 7, false, false));
+        eq(2, ProvisionRules.pickupAmount(16, 2, 7, false, false));
+    }
+
     public static void main(String[] args) throws InterruptedException {
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
             for (boolean sameComponents : List.of(false, true)) for (boolean matchNbt : List.of(false, true))
@@ -438,6 +578,7 @@ public final class LegacyGolemTaskTest {
         sortingAndSealPolicy();
         exclusiveLeasesAndLifecycle();
         expiryAndWatchdog();
+        provisioning();
         System.out.println("BETA26 golem task rules, six-face seal areas and exclusive server leases: OK ("
                 + assertions + " assertions)");
     }
