@@ -405,5 +405,12 @@
   "menu.thaumcraft.golem_seal.provision": "Request seeds: On",
   "menu.thaumcraft.golem_seal.no_provision": "Request seeds: Off",
   "menu.thaumcraft.golem_seal.cycle": "Cycle filters",
-  "menu.thaumcraft.golem_seal.all_filters": "All filters"
+  "menu.thaumcraft.golem_seal.all_filters": "All filters",
+  "menu.thaumcraft.golem_seal.matching": "Matching options",
+  "menu.thaumcraft.golem_seal.meta_match": "Metadata: On",
+  "menu.thaumcraft.golem_seal.meta_ignore": "Metadata: Off",
+  "menu.thaumcraft.golem_seal.ore_match": "Ore groups: On",
+  "menu.thaumcraft.golem_seal.ore_ignore": "Ore groups: Off",
+  "menu.thaumcraft.golem_seal.mod_match": "Match mod: On",
+  "menu.thaumcraft.golem_seal.mod_ignore": "Match mod: Off"
 }

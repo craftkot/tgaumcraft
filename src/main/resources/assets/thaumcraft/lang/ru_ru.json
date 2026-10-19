@@ -405,5 +405,12 @@
   "menu.thaumcraft.golem_seal.provision": "Запрос семян: вкл.",
   "menu.thaumcraft.golem_seal.no_provision": "Запрос семян: выкл.",
   "menu.thaumcraft.golem_seal.cycle": "Цикл фильтров",
-  "menu.thaumcraft.golem_seal.all_filters": "Все фильтры"
+  "menu.thaumcraft.golem_seal.all_filters": "Все фильтры",
+  "menu.thaumcraft.golem_seal.matching": "Правила сравнения",
+  "menu.thaumcraft.golem_seal.meta_match": "Мета: вкл.",
+  "menu.thaumcraft.golem_seal.meta_ignore": "Мета: выкл.",
+  "menu.thaumcraft.golem_seal.ore_match": "Руды: вкл.",
+  "menu.thaumcraft.golem_seal.ore_ignore": "Руды: выкл.",
+  "menu.thaumcraft.golem_seal.mod_match": "Сравнение по моду: вкл.",
+  "menu.thaumcraft.golem_seal.mod_ignore": "Сравнение по моду: выкл."
 }
