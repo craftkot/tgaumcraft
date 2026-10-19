@@ -16,7 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-/** Paid default-wood processor. Formation and the full construction editor remain separate work. */
+/** Paid default-wood processor. The full construction editor remains separate work. */
 public final class GolemPressBlockEntity extends BlockEntity implements WorldlyContainer, EssentiaTransportPort {
     private ItemStack output = ItemStack.EMPTY;
     private GolemPress.State job = GolemPress.State.idle();
@@ -28,7 +28,8 @@ public final class GolemPressBlockEntity extends BlockEntity implements WorldlyC
     public GolemPress.State job() { return job; }
 
     public boolean start(Player player) {
-        if (!(level instanceof ServerLevel server) || !stillValid(player) || job.active()) return false;
+        if (!(level instanceof ServerLevel server) || !stillValid(player) || job.active()
+                || !GolemPressStructures.get(server).canOperate(worldPosition)) return false;
         ItemStack product = GolemPlacerItem.stack(GolemDesign.defaultWood(), 0);
         if (!room(product) || !GolemPressPayment.pay(server, worldPosition, player)) return false;
         job = job.startPaid(GolemDesign.defaultWood());
@@ -43,7 +44,8 @@ public final class GolemPressBlockEntity extends BlockEntity implements WorldlyC
     }
 
     public static void tick(ServerLevel level, BlockPos pos, BlockState state, GolemPressBlockEntity press) {
-        if (++press.ticks % GolemPress.INTERVAL != 0 || !press.job.active()) return;
+        if (++press.ticks % GolemPress.INTERVAL != 0 || !press.job.active()
+                || !GolemPressStructures.get(level).canOperate(pos)) return;
         if (press.job.remaining() > 0) {
             if (!press.job.buffered()) {
                 for (Direction face : Direction.values()) {

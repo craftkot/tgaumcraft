@@ -10,6 +10,9 @@ import dev.ehtid.thaumcraft.golem.press.GolemPressBlock;
 import dev.ehtid.thaumcraft.golem.press.GolemPressBlockEntity;
 import dev.ehtid.thaumcraft.golem.press.GolemPressMenu;
 import dev.ehtid.thaumcraft.golem.press.GolemStoneTableBlock;
+import dev.ehtid.thaumcraft.golem.press.GolemPressPlaceholderBlock;
+import dev.ehtid.thaumcraft.port.core.golem.GolemPressBlueprint.Part;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -52,6 +55,14 @@ public final class GolemModule {
                     .isRedstoneConductor((state, level, pos) -> false)
                     .isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
     public static final DeferredItem<BlockItem> STONE_TABLE_ITEM = ITEMS.registerSimpleBlockItem(STONE_TABLE, new Item.Properties());
+    private static DeferredHolder<Block, GolemPressPlaceholderBlock> placeholder(String name, Part part) {
+        return BLOCKS.register(name, () -> new GolemPressPlaceholderBlock(BlockBehaviour.Properties.of().strength(2.5F, 1.2F)
+                .noOcclusion().pushReaction(PushReaction.BLOCK).lightLevel(state -> part == Part.CAULDRON ? 13 : 0), part));
+    }
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_BARS = placeholder("placeholder_bars", Part.BARS);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_ANVIL = placeholder("placeholder_anvil", Part.ANVIL);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_CAULDRON = placeholder("placeholder_cauldron", Part.CAULDRON);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_TABLE = placeholder("placeholder_table", Part.TABLE);
     public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
     /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
     public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");

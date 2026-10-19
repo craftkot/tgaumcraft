@@ -24,6 +24,18 @@ public final class LegacyGolemConstructionTest {
     }
     public static void main(String[] args) {
         componentRecipes();
+        same("MINDCLOCKWORK", GolemPressBlueprint.RESEARCH); same(50, GolemPressBlueprint.DELAY);
+        int[][] controllers = {{1,0},{0,0},{0,1},{1,1}};
+        for (int rotation = 0; rotation < 4; rotation++) {
+            var cells = GolemPressBlueprint.cells(rotation);
+            same(5, cells.size()); same(5L, cells.stream().map(GolemPressBlueprint.Cell::part).distinct().count());
+            same(controllers[rotation][0], cells.get(2).x()); same(controllers[rotation][1], cells.get(2).z());
+            same(0, cells.get(2).y()); same(1, cells.get(4).y());
+            same(cells.get(2).x(), cells.get(4).x()); same(cells.get(2).z(), cells.get(4).z());
+            same(4L, cells.stream().filter(c -> c.y() == 0).count());
+            same(5L, cells.stream().map(c -> c.x()+":"+c.y()+":"+c.z()).distinct().count());
+        }
+        invalid(() -> GolemPressBlueprint.cells(-1)); invalid(() -> GolemPressBlueprint.cells(4));
         same(6, GolemMaterial.values().length);
         same(5, GolemCatalog.HEADS.size());
         same(5, GolemCatalog.ARMS.size());
