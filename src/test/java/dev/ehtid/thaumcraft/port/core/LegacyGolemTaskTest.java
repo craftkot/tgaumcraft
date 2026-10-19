@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
+import dev.ehtid.thaumcraft.port.core.golem.GolemBreakerRules;
+import dev.ehtid.thaumcraft.port.core.golem.GolemTrait;
 import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
 import dev.ehtid.thaumcraft.port.core.golem.ProvisionBoard;
 import dev.ehtid.thaumcraft.port.core.golem.ProvisionRequest;
@@ -583,6 +585,8 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        breakerRules();
+
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
             for (boolean sameComponents : List.of(false, true)) for (boolean matchNbt : List.of(false, true))
                 eq(sameItem && sameDamage && (sameComponents || !matchNbt),
@@ -705,4 +709,23 @@ public final class LegacyGolemTaskTest {
         System.out.println("BETA26 golem task rules, six-face seal areas and exclusive server leases: OK ("
                 + assertions + " assertions)");
     }
+    private static void breakerRules() {
+        eq(true,GolemBreakerRules.eligible(java.util.Set.of(GolemTrait.BREAKER,GolemTrait.CLUMSY)));
+        eq(true,!GolemBreakerRules.eligible(java.util.Set.of(GolemTrait.DEFT)));
+        eq(true,!GolemBreakerRules.breakable(true,0) && !GolemBreakerRules.breakable(false,-1));
+        eq(true,GolemBreakerRules.breakable(false,0));
+        eq(500,GolemBreakerRules.work(50)); eq(15,GolemBreakerRules.work(1.5F)); eq(0,GolemBreakerRules.work(0));
+        eq(true,GolemBreakerRules.completes(21,false) && !GolemBreakerRules.completes(22,false));
+        eq(true,GolemBreakerRules.completes(7,true) && !GolemBreakerRules.completes(8,true));
+        eq(479,GolemBreakerRules.remaining(500,false)); eq(493,GolemBreakerRules.remaining(500,true));
+        eq(0,GolemBreakerRules.remaining(1,false)); eq(8,GolemBreakerRules.crackStage(21,50)); eq(11,GolemBreakerRules.CALLBACK_TICKS);
+        eq(true,GolemBreakerRules.accepts(true,false,false,0,1,true));
+        eq(true,GolemBreakerRules.accepts(true,true,false,0,1,true));
+        eq(true,!GolemBreakerRules.accepts(false,false,true,0,1,true));
+        eq(true,GolemBreakerRules.accepts(false,false,true,0,1,false));
+        eq(true,!GolemBreakerRules.accepts(false,false,false,0,0,false));
+        eq(true,!GolemBreakerRules.accepts(false,true,true,1,1,true));
+        eq(true,!GolemBreakerRules.accepts(false,false,true,1,32767,true));
+    }
+
 }

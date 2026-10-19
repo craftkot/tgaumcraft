@@ -206,7 +206,7 @@ public final class LegacyGolemConstructionTest {
             same((long)rows.size(),rows.stream().map(c->c.legacyItemId()+":"+c.metadata()).distinct().count());
             if(GolemRuntimeRules.groundWorker(d)) supported++;
         }
-        same(180,supported);
+        same(270,supported);
         var advanced=GolemDesign.fromIds(3,2,1,1,1,0);
         same(9,component(advanced,"thaumcraft:plate",0));
         same(3,component(advanced,"thaumcraft:mechanism_simple",0));
