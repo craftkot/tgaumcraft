@@ -9,4 +9,10 @@ public final class SealEmptyRules {
     public static int requested(int cachedCount, int carryCapacity) {
         return Math.max(0, Math.min(cachedCount, carryCapacity));
     }
+
+    /** Source pleave subtracts one from fresh matching stock, never from a stale task budget. */
+    public static int requested(int cachedCount, int carryCapacity, long stock, boolean leaveOne) {
+        int reserve = leaveOne ? 1 : 0;
+        return stock <= reserve ? 0 : (int) Math.min(requested(cachedCount, carryCapacity), stock - reserve);
+    }
 }

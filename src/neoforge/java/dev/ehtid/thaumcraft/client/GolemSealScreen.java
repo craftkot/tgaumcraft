@@ -16,7 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 /** Minimal new artwork; original BETA26 bell GUI and visual parity remain pending. */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu> {
-    private Button mode, lock, redstone;
+    private Button mode, lock, redstone, leaveOne;
     private final Button[] limits = new Button[4];
     private final Button[] areas = new Button[6];
 
@@ -51,6 +51,8 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
             areas[i] = addRenderableWidget(Button.builder(Component.literal(i % 2 == 0 ? "−" : "+"), b -> send(action))
                     .bounds(leftPos + 8 + i / 2 * 54 + i % 2 * 27, topPos + 74, 22, 16).build());
         }
+        leaveOne = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.leaveOne() ? 65 : 35))
+                .bounds(leftPos + 8, topPos + 74, 160, 16).build());
         addRenderableWidget(Button.builder(Component.literal("−"), b -> send(80)).bounds(leftPos+8, topPos+98, 24, 18).build());
         addRenderableWidget(Button.builder(Component.literal("+"), b -> send(81)).bounds(leftPos+144, topPos+98, 24, 18).build());
         addRenderableWidget(Button.builder(Component.literal("−"), b -> send(82)).bounds(leftPos+8, topPos+118, 24, 18).build());
@@ -61,6 +63,8 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     }
 
     private void updateControls() {
+        leaveOne.visible = leaveOne.active = menu.hasLeaveOne();
+        leaveOne.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.leaveOne() ? "leave_one" : "take_all")));
         lock.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.locked() ? "locked" : "public")));
         redstone.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.redstone() ? "redstone_stop" : "redstone_ignore")));
         int[] sizes = {menu.areaX(), menu.areaY(), menu.areaZ()};

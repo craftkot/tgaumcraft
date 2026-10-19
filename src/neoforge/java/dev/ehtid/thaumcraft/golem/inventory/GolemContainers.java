@@ -20,11 +20,16 @@ public final class GolemContainers {
 
     /** Source's first matching visible stack, cached per task. Counts are not filter limits. */
     public static ItemStack emptyCandidate(ServerLevel level, SealKey key, SealFilter filter) {
+        return emptyCandidate(level, key, filter, false);
+    }
+
+    public static ItemStack emptyCandidate(ServerLevel level, SealKey key, SealFilter filter, boolean leaveOne) {
         IItemHandler source = handler(level, key);
         if (source == null) return ItemStack.EMPTY;
         for (int slot = 0; slot < source.getSlots(); slot++) {
             ItemStack visible = source.getStackInSlot(slot);
             if (!filter.accepts(visible)) continue;
+            if (leaveOne && matchingStock(source, visible) < 2) continue;
             // Modern guard: do not produce impossible work for a side that forbids extraction.
             ItemStack preview = source.extractItem(slot, visible.getCount(), true);
             return preview.isEmpty() || !ItemStack.isSameItemSameComponents(visible, preview)
@@ -34,10 +39,15 @@ public final class GolemContainers {
     }
 
     public static boolean canExtract(ServerLevel level, ThaumcraftGolem golem, SealKey key, ItemStack cached, SealFilter filter) {
+        return canExtract(level, golem, key, cached, filter, false);
+    }
+
+    public static boolean canExtract(ServerLevel level, ThaumcraftGolem golem, SealKey key, ItemStack cached, SealFilter filter, boolean leaveOne) {
         if (cached == null || !filter.accepts(cached) || golem.hasTransferRecovery()) return false;
-        int requested = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached));
-        IItemHandler source = requested > 0 ? handler(level, key) : null;
+        IItemHandler source = handler(level, key);
         if (source == null) return false;
+        int requested = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached), leaveOne);
+        if (requested <= 0) return false;
         for (int slot = 0; slot < source.getSlots(); slot++) {
             if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
             ItemStack preview = source.extractItem(slot, requested, true);
@@ -48,8 +58,12 @@ public final class GolemContainers {
 
     /** Server-thread extraction: retain actual payload/components, including an unexpected remainder. */
     public static int extractInto(ThaumcraftGolem golem, IItemHandler source, ItemStack cached, SealFilter filter) {
+        return extractInto(golem, source, cached, filter, false);
+    }
+
+    public static int extractInto(ThaumcraftGolem golem, IItemHandler source, ItemStack cached, SealFilter filter, boolean leaveOne) {
         if (golem.level().isClientSide || source == null || golem.hasTransferRecovery() || !filter.accepts(cached)) return 0;
-        int remaining = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached));
+        int remaining = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached), leaveOne);
         int moved = 0;
         for (int slot = 0; slot < source.getSlots() && remaining > 0 && !golem.hasTransferRecovery(); slot++) {
             if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
@@ -63,6 +77,15 @@ public final class GolemContainers {
             remaining -= count;
         }
         return moved;
+    }
+
+    private static long matchingStock(IItemHandler source, ItemStack template) {
+        long count = 0;
+        for (int slot = 0; slot < source.getSlots(); slot++) {
+            ItemStack stack = source.getStackInSlot(slot);
+            if (ItemStack.isSameItemSameComponents(stack, template)) count += stack.getCount();
+        }
+        return count;
     }
 
     public static boolean loaded(ServerLevel level, SealKey key) {

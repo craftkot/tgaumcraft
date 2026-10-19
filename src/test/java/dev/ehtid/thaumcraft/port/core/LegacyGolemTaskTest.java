@@ -419,6 +419,16 @@ public final class LegacyGolemTaskTest {
                 dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(vacuos,
                         dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.EMPTY, registry), "vacuos"));
         eq(10L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(vacuos, "vacuos"));
+        eq(6, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 7, true));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 1, true));
+        eq(1, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 1, false));
+        eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, 70, true));
+        eq(5, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, 6, true));
+        eq(2, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(2, 64, 7, true));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 0, 7, true));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 0, false));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, -1, true));
+        eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, Long.MAX_VALUE, true));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();

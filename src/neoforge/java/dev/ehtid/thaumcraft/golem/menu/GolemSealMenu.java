@@ -29,6 +29,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final DataSlot priority = DataSlot.standalone(), color = DataSlot.standalone();
     private final DataSlot locked = DataSlot.standalone(), redstone = DataSlot.standalone();
     private final DataSlot areaX = DataSlot.standalone(), areaY = DataSlot.standalone(), areaZ = DataSlot.standalone();
+    private final DataSlot leaveOne = DataSlot.standalone();
 
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
 
@@ -50,6 +51,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(limitHigh);
         addDataSlot(priority); addDataSlot(color); addDataSlot(locked); addDataSlot(redstone);
         addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
+        addDataSlot(leaveOne);
         refresh();
     }
 
@@ -77,6 +79,8 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public int areaX() { return areaX.get(); }
     public int areaY() { return areaY.get(); }
     public int areaZ() { return areaZ.get(); }
+    public boolean hasLeaveOne() { return fill.get() == 2; }
+    public boolean leaveOne() { return leaveOne.get() != 0; }
 
     private void refresh() {
         var seal = current();
@@ -85,6 +89,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         priority.set(seal.priority()); color.set(seal.color());
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
+        leaveOne.set(seal.leaveOne() ? 1 : 0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
         fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case EMPTY -> 2; });
         limitLow.set(seal.filter().limit() & 0xffff);
@@ -126,6 +131,11 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
         var seal = current();
+        if (id == 35 || id == 65) {
+            boolean result = GolemSeals.get(level).configureLeaveOne(expected, player.getUUID(), id == 35);
+            if (result) broadcastChanges();
+            return result;
+        }
         if (id >= 90 && id <= 95) {
             if (seal.type() != GolemSeals.Type.PICKUP) return false;
             var size = new SealArea.BlockPos(seal.area().getX(), seal.area().getY(), seal.area().getZ());

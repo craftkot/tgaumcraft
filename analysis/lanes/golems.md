@@ -244,3 +244,11 @@ JAR CRC PASS/SHA256 `72ce794162fa18d54834d571c9f74692c1e5c3c9a4e5c7a029ef2e18cc5
 
 - `e0dfbf0` — isolated Empty+recovery cold fixture/evidence; READ BUILD SUCCESSFUL1m1s, assertions PASS.
 - Этот малый integration commit содержит только3 EN/RU keys на язык и журнал. JSON валиден, переводы уже были включены в прошедший51/51 build/JAR. Общие registry/алхимия/Gradle/CI/research data/runner не менялись. Следующий безопасный срез — исходный pleave: оставлять1, с fresh completion count и сохранением toggle; остальные advanced props/Provide/Stock/Press/farming/визуал открыты.
+
+- `bb22ebb` —3 Empty EN/RU keys на язык; предыдущие3 commits опубликованы обычным push, Draft PR #3 обновлён с full51/51/cold evidence без merge.
+
+## M10.12 — исходный pleave, 19.10.2026
+
+Продолжение следующего безопасного пункта после законченного Empty. Source SealEmpty/InventoryUtils подтверждает reserve1 matching stock, fresh completion count и defaultfalse; SealBaseContainer подтверждает IDs35/65 для index5. Добавлены Core budget rules+10 assertions (итого1075), сохранение toggle, owner/instance guarded service/DataSlot/menu, producer/claim/completion guards и3 реальных server GameTests: authority/NBT/backward compatibility, два зарезервированных задания при остатке1 и disable→fresh task, автономный двух-worker маршрут70→69+1 с per-tick conservation. Full Core/build/54 tests запущены, фактический результат ниже. Общие registry/build.gradle/CI/runner/research data не меняются;2 EN/RU keys на язык будут отдельным малым commit. Старые cold worlds не трогаются; подготовлен новый leave/port25595.
+
+Финальный runtime M10.12: **Core1075 PASS, full NeoForge build+54/54 required GameTests PASS с первого запуска** (`golems-leave-build.log`,1m15s). JAR CRC PASS/SHA256 `73d2798d6061654371fd559865424d75c7febdeb3f08bcf27a9654f717db83c6`. Проверен fresh reserve1 при конкурирующих cached tasks и реальный маршрут69+1, старые default take-all tests тоже PASS. Этот commit содержит Core/runtime/menu/client control+3 tests с дизайном/протоколом; отдельные следующие — opt-in cold fixture и2 EN/RU labels на язык. WRITE запущен в новом мире; результат ниже после реальных assertions. Общие регистрация/алхимия/research data/CI/runner не менялись; весь M10/59/100 остаётся незавершённым.
