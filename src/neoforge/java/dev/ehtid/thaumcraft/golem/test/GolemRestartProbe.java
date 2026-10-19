@@ -27,7 +27,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean AREA_SCENARIO = "area".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean EMPTY_SCENARIO = "empty".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean AREA_SCENARIO = EMPTY_SCENARIO || "area".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean BELL_SCENARIO = AREA_SCENARIO || "bell".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean CONTROLS_SCENARIO = BELL_SCENARIO || "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILTER_SCENARIO = CONTROLS_SCENARIO || "filter".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
@@ -119,6 +120,17 @@ public final class GolemRestartProbe {
             require(data.configureArea(data.get(new GolemSeals.SealKey(HOME.below(), Direction.UP)), OWNER_ID,
                     new BlockPos(2, 3, 4)), "Nondefault asymmetric Pickup area stored");
         }
+        if (EMPTY_SCENARIO) {
+            var data = GolemSeals.get(level);
+            var key = new GolemSeals.SealKey(HOME.offset(-3, -1, 0), Direction.UP);
+            level.setBlockAndUpdate(key.pos(), Blocks.BARREL.defaultBlockState());
+            require(data.place(key.pos(), key.face(), OWNER_ID, GolemSeals.Type.EMPTY), "Empty type placed");
+            require(data.configureControls(data.get(key), OWNER_ID, 1, 6, true, false), "Empty controls stored");
+            var source = dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level, key);
+            require(source != null && source.insertItem(0, new ItemStack(Items.EMERALD, 23), false).isEmpty(), "Persistent extraction source populated");
+            golem.holdExtracted(new ItemStack(Items.DIAMOND, 3));
+            require(golem.hasTransferRecovery(), "Unexpected payload retained beside incompatible normal cargo");
+        }
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
 
@@ -167,6 +179,16 @@ public final class GolemRestartProbe {
             require(bounds.minX == HOME.getX()-1 && bounds.maxX == HOME.getX()+2
                     && bounds.minY == HOME.getY() && bounds.maxY == HOME.getY()+3
                     && bounds.minZ == HOME.getZ()-3 && bounds.maxZ == HOME.getZ()+4, "Restored scan uses configured dimensions");
+        }
+        if (EMPTY_SCENARIO) {
+            var data = GolemSeals.get(level);
+            var key = new GolemSeals.SealKey(HOME.offset(-3, -1, 0), Direction.UP);
+            var seal = data.get(key);
+            require(seal != null && seal.type() == GolemSeals.Type.EMPTY && seal.owner().equals(OWNER_ID)
+                    && seal.priority() == 1 && seal.color() == 6 && seal.locked() && !seal.redstone(), "Typed Empty and controls restored");
+            var source = dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level, key);
+            require(source != null && ItemStack.matches(source.getStackInSlot(0), new ItemStack(Items.EMERALD, 23)), "Source stock restored exactly once");
+            require(ItemStack.matches(golem.transferRecovery(), new ItemStack(Items.DIAMOND, 3)), "Actual recovery payload restored beside original cargo37");
         }
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
