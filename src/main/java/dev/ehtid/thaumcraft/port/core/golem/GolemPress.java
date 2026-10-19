@@ -19,8 +19,8 @@ public final class GolemPress {
                 if (remaining != 0 || maximum != 0 || buffered) throw new IllegalArgumentException("Invalid idle press");
             } else {
                 var design = GolemDesign.fromLong(props);
-                // Only this construction has both verified costs and a running entity adapter.
-                if (props != GolemDesign.defaultWood().toLong() || maximum != cost(design)
+                // Construction always produces rank0; supported native functions are gated by its adapter.
+                if (design.rank()!=0 || props>>>48!=0 || maximum != cost(design)
                         || remaining < 0 || remaining > maximum || buffered && remaining == 0)
                     throw new IllegalArgumentException("Invalid or unsupported press job");
             }

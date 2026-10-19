@@ -516,3 +516,28 @@ GolemLogistics связан с **существующими** TaskBoard/GolemBlo
 Scope: block/Stock и entity API маршруты работают. Seal-target provisioning для Harvest replant пока не подключён: это зависит от переноса получателя/его trait gates и replant lifecycle. Полные advanced filter semantics, runtime SMART/DEFT parts, remaining seals/farming/combat/visual/full progression остаются открыты. Read-only Harvest audit подтвердил **DEFT+SMART**,5-tick area scan, prep defaulttrue/ppro defaultfalse; поэтому следующий зависимый этап — реальная сборка соответствующих голов/рук, затем Harvest/replant и seal-target requests. Источники остаются внеGit. Весь M10/59/100 не закрывается.
 
 Core Java21: construction35048/task2202 PASS (20 новых source-recipe/mixed-task assertions). Native результаты, включая исходную failed fixture и окончательный93 прогон/cold, фиксируются в протоколе и lane.
+
+
+## M10.20 — все стоимости частей, ground-конструкции и оплачиваемый Press editor
+
+Источник: полный static initializer и generateComponents/addToList GolemProperties BETA26, EntityThaumcraftGolem.damageEntity/updateEntityAttributes/addRankXp. Для SRG-полей использован официальный [MCP stable39-1.12](https://maven.minecraftforge.net/de/oceanlabs/mcp/mcp_stable/39-1.12/mcp_stable-39-1.12.zip), скачанный только в /workspace/reference. Собственный symbolic reader внеGit восстановил registration data для проверки; ни JAR, ни полные dumps/mappings в Git не публикуются. Исправность трактовки counts отдельно сверена addToList: исходный ItemStack.count умножается на multiplier, совпадающие item+metadata+NBT агрегируются.
+
+Подтверждённый полный Core cost catalog:
+
+| Компонент | Стоимость сверх body(base2+simple mechanism1) |
+|---|---|
+| Material base | wood=greatwood plank; iron=plate@1; clay=hardened_clay→terracotta; brass=plate@0; thaumium=plate@2; void=plate@3. Все используют simple mechanism |
+| Heads0–4 | mind@0; mind@1; mind@1+brass plate1+base1+**white wool1**; mind@0+vision module@0; mind@1+vision module@0 |
+| Arms0–4 | none; mechanism1+base1; aggression module@1+shears2+base1; **diamond2**+base1+piston2; aggression module@1+dispenser2+arrow32+mechanism1 |
+| Legs0–3 | base1+mechanism1; **bowl2+leather1**+mechanism1; **flint4**+base1+mechanism2; levitator1+brass plate4+**slime ball1**+mechanism1 |
+| Addons0–3 | none; base4; aggression module@1+mechanism1; **leather1+chest1** |
+
+Core now covers6×5×5×4×4=2400 constructions; rank does not change components. Merge order body→arms→legs→head→addon preserves source behavior and keeps existing wood3/mechanism2/mind1. GolemPress.State validates exact source cost for all rank0 catalog designs, not just packed0; native supported functions remain separately gated. GolemRuntimeRules enumerates required research and current supported family; GolemDamageRules preserves FIREPROOF health immunity, all-golem CACTUS immunity and BLASTPROOF damage=min(maxHealth/2, incoming*0.3), **not explosion immunity**.
+
+Current native family has180 combinations: all6 materials, all5 heads, basic/fine arms, WALKER legs, none/armored/hauler addons; ranks0…10 persist. Flying/roller/climber/combat/breaker/ranged functions stay unavailable until their real adapters are ported. Unsupported valid saved configurations retain raw props and cargo with AI disabled, rather than pretending to walk as a supported design. SMART rank gain uses existing source thresholds, HAULER uses two actual equipment cargo slots, material health/armor/regen/fire/blast effects run on the server. NeoForge21.1 actuallyHurt reads protected DamageContainer rather than its float parameter; the source pre-armor adjustment must update the current nested container. This was found by a failing actual blast test, not inferred from compilation.
+
+Press selection is server-owned, rank0, persisted as SelectedDesign independently of paid job props. Five small button selectors cycle only researched/supported options; the server derives components/cost and rechecks actual research, player/viewer/range and current machine before payment. Busy job cannot change its design. Source material/head/arms/legs/addon requirements are enforced also at start. GolemPressPayment reuses its all-or-nothing vanilla/player plans for the selected catalog; plate metadata maps through existing PlateItem, synthetic modern metadata components normalize without removing unrelated NBT/name. Unknown ingredient mappings reject payment. Seven noninteractive recipe ghosts show exact counts; output shift transfer excludes these slots, and CLONE/THROW/drag/pick-all cannot extract recipe previews. Original artwork remains open.
+
+Dependencies: MindBiothaumic is **infusion**, not an arcane or ordinary recipe: MINDBIOTHAUMIC, instability4, Cognitio50+Machina25, central mind@0, side brain1+complex mechanism1 (ConfigRecipes confirmed). Vision/aggression modules likewise need their source acquisition audit/M06 integration. Current main infusion completion is Crystal-Farmer-specific; no replacement ritual or guessed crafting recipe is introduced here. These components are registered as source identities and used/paid by the real Press, but native tests supply them as fixture inputs. This proves paid assembly and behavior, **not full survival acquisition**. M06 contracts/research progress/source visuals remain integration dependencies; other branches are not modified.
+
+Java21 full Core PASS: construction39872/task2202,4824 new source cost/merge/runtime/damage assertions. Native/cold actual results follow in the validation journal. Full M10/59/100 stays open. Next independent step is Harvest/replant with actual SMART+DEFT workers, then SealTarget provisioning and remaining source flags/movements/combat.

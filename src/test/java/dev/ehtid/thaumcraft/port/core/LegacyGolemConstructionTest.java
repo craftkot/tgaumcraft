@@ -48,11 +48,10 @@ public final class LegacyGolemConstructionTest {
                 new GolemAssembly.Component("thaumcraft:mechanism_simple", 0, 2),
                 new GolemAssembly.Component("thaumcraft:mind", 0, 1)), components);
         same(components, GolemAssembly.components(wood.withRank(10)));
-        assertions++;
-        try {
-            GolemAssembly.components(GolemDesign.fromIds(1, 0, 0, 0, 0, 0));
-            throw new AssertionError("Unported costs must not be silently guessed");
-        } catch (UnsupportedOperationException expected) { /* explicit implementation gap */ }
+        same(java.util.List.of(new GolemAssembly.Component("thaumcraft:plate",1,3),
+                new GolemAssembly.Component("thaumcraft:mechanism_simple",0,2),new GolemAssembly.Component("thaumcraft:mind",0,1)),
+                GolemAssembly.components(GolemDesign.fromIds(1,0,0,0,0,0)));
+        assemblyCatalog();
         same(0L, wood.toLong());
         same(8, GolemPress.cost(wood));
         var press = GolemPress.State.idle();
@@ -192,5 +191,45 @@ public final class LegacyGolemConstructionTest {
         knowledge.addResearch("MINDCLOCKWORK"); knowledge.setResearchStage("MINDCLOCKWORK", 1);
         same(false, knowledge.isResearchKnown(mind.research));
         knowledge.setResearchStage("MINDCLOCKWORK", 2); same(true, knowledge.isResearchKnown(mind.research));
+    }
+
+    private static int component(GolemDesign design,String id,int meta) {
+        return GolemAssembly.components(design).stream().filter(c->c.legacyItemId().equals(id)&&c.metadata()==meta).mapToInt(GolemAssembly.Component::count).sum();
+    }
+    private static void assemblyCatalog() {
+        // Golden totals from the BETA26 registration arrays, including each ItemStack's own count.
+        int[] heads={1,1,4,2,2},arms={0,2,4,5,36},legs={2,4,7,7},addons={0,4,2,2};
+        int supported=0;
+        for(int m=0;m<6;m++) for(int h=0;h<5;h++) for(int a=0;a<5;a++) for(int l=0;l<4;l++) for(int x=0;x<4;x++) {
+            var d=GolemDesign.fromIds(m,h,a,l,x,0); var rows=GolemAssembly.components(d);
+            same(3+heads[h]+arms[a]+legs[l]+addons[x],rows.stream().mapToInt(GolemAssembly.Component::count).sum());
+            same((long)rows.size(),rows.stream().map(c->c.legacyItemId()+":"+c.metadata()).distinct().count());
+            if(GolemRuntimeRules.groundWorker(d)) supported++;
+        }
+        same(180,supported);
+        var advanced=GolemDesign.fromIds(3,2,1,1,1,0);
+        same(9,component(advanced,"thaumcraft:plate",0));
+        same(3,component(advanced,"thaumcraft:mechanism_simple",0));
+        same(1,component(advanced,"minecraft:leather",0));
+        same(2,component(advanced,"minecraft:bowl",0));
+        same(1,component(advanced,"minecraft:wool",0));
+        same(1,component(advanced,"thaumcraft:mind",1));
+        var breakers=GolemDesign.fromIds(0,0,3,0,0,0);
+        same(2,component(breakers,"minecraft:diamond",0)); same(2,component(breakers,"minecraft:piston",0));
+        same(4,component(GolemDesign.fromIds(0,0,0,2,0,0),"minecraft:flint",0));
+        var flyer=GolemDesign.fromIds(0,0,0,3,0,0);
+        same(4,component(flyer,"thaumcraft:plate",0)); same(1,component(flyer,"minecraft:slime_ball",0));
+        same(1,component(flyer,"thaumcraft:levitator",0)); same(false,GolemRuntimeRules.groundWorker(flyer));
+        var hauler=GolemDesign.fromIds(0,1,1,0,3,10);
+        same(true,GolemRuntimeRules.groundWorker(hauler));
+        same(1,component(hauler,"minecraft:leather",0)); same(1,component(hauler,"minecraft:chest",0));
+        same(Set.of("MATSTUDWOOD","MINDBIOTHAUMIC","MATSTUDBRASS","MINDCLOCKWORK"),GolemRuntimeRules.research(hauler));
+        var iron=GolemDesign.fromIds(1,0,0,0,0,0); var clay=GolemDesign.fromIds(2,0,0,0,0,0);
+        same(0F,GolemDamageRules.amount(iron,10,30,true,false,false));
+        same(3F,GolemDamageRules.amount(iron,10,30,false,true,false));
+        same(15F,GolemDamageRules.amount(iron,100,30,false,true,false));
+        same(10F,GolemDamageRules.amount(clay,10,20,false,true,false));
+        same(0F,GolemDamageRules.amount(GolemDesign.defaultWood(),10,16,false,false,true));
+        same(10F,GolemDamageRules.amount(GolemDesign.defaultWood(),10,16,true,false,false));
     }
 }
