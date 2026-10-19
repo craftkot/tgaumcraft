@@ -403,6 +403,22 @@ public final class LegacyGolemTaskTest {
         }
         eq(Optional.empty(), SealAreaControls.adjust(areaSize, 96));
         eq(Optional.empty(), SealAreaControls.adjust(new SealArea.BlockPos(Integer.MAX_VALUE, 1, 1), 93));
+        eq(7, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(10, 7));
+        eq(10, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(10, 128));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(10, 0));
+        eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(-1, 64));
+        eq(20, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.INTERVAL_TICKS);
+        eq((short) 5, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.TASK_LIFESPAN_SECONDS);
+        var emptyKnowledge = new PlayerKnowledgeData();
+        var vacuos = new AspectListData().add(registry.VOID, 10);
+        eq(null, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(emptyKnowledge, vacuos, registry));
+        emptyKnowledge.addResearch("SEALEMPTY");
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.EMPTY,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(emptyKnowledge, vacuos, registry));
+        eq(0L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(vacuos,
+                        dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.EMPTY, registry), "vacuos"));
+        eq(10L, dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(vacuos, "vacuos"));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();

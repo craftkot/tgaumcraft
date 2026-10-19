@@ -10,10 +10,12 @@ public final class GolemSealRecipes {
     public static final int VIS = 20, BLANK_OUTPUT = 3, ESSENTIA = 10;
     public enum Ingredient { EMPTY, CLAY, TALLOW, RED_DYE, NITOR, OTHER }
     public enum Conversion {
-        PICKUP("SEALCOLLECT"), FILL("SEALSTORE");
+        PICKUP("SEALCOLLECT"), FILL("SEALSTORE"), EMPTY("SEALEMPTY");
         public final String research;
         Conversion(String research) { this.research = research; }
-        public AspectData aspect(AspectRegistry registry) { return this == PICKUP ? registry.DESIRE : registry.AVERSION; }
+        public AspectData aspect(AspectRegistry registry) {
+            return switch (this) { case PICKUP -> registry.DESIRE; case FILL -> registry.AVERSION; case EMPTY -> registry.VOID; };
+        }
     }
 
     public static boolean matchesBlank(List<Ingredient> grid) {

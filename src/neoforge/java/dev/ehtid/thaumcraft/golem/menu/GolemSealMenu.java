@@ -66,7 +66,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     }
 
     public boolean blacklist() { return blacklist.get() != 0; }
-    public boolean hasLimit() { return fill.get() != 0 && !blacklist(); }
+    public boolean hasLimit() { return fill.get() == 1 && !blacklist(); }
     public int limit() { return (limitLow.get() & 0xffff) | (limitHigh.get() & 0x7fff) << 16; }
 
     public int priority() { return priority.get(); }
@@ -86,7 +86,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
-        fill.set(seal.type() == GolemSeals.Type.FILL ? 1 : 0);
+        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case EMPTY -> 2; });
         limitLow.set(seal.filter().limit() & 0xffff);
         limitHigh.set(seal.filter().limit() >>> 16);
     }

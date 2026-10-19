@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.golem.inventory;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals.SealKey;
 import dev.ehtid.thaumcraft.golem.seal.SealFilter;
+import dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -16,6 +17,53 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 /** BETA26 SealFill basic strict filter, projected onto sided NeoForge item capabilities. */
 public final class GolemContainers {
     private GolemContainers() {}
+
+    /** Source's first matching visible stack, cached per task. Counts are not filter limits. */
+    public static ItemStack emptyCandidate(ServerLevel level, SealKey key, SealFilter filter) {
+        IItemHandler source = handler(level, key);
+        if (source == null) return ItemStack.EMPTY;
+        for (int slot = 0; slot < source.getSlots(); slot++) {
+            ItemStack visible = source.getStackInSlot(slot);
+            if (!filter.accepts(visible)) continue;
+            // Modern guard: do not produce impossible work for a side that forbids extraction.
+            ItemStack preview = source.extractItem(slot, visible.getCount(), true);
+            return preview.isEmpty() || !ItemStack.isSameItemSameComponents(visible, preview)
+                    ? ItemStack.EMPTY : visible.copy();
+        }
+        return ItemStack.EMPTY;
+    }
+
+    public static boolean canExtract(ServerLevel level, ThaumcraftGolem golem, SealKey key, ItemStack cached, SealFilter filter) {
+        if (cached == null || !filter.accepts(cached) || golem.hasTransferRecovery()) return false;
+        int requested = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached));
+        IItemHandler source = requested > 0 ? handler(level, key) : null;
+        if (source == null) return false;
+        for (int slot = 0; slot < source.getSlots(); slot++) {
+            if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
+            ItemStack preview = source.extractItem(slot, requested, true);
+            if (!preview.isEmpty() && ItemStack.isSameItemSameComponents(cached, preview)) return true;
+        }
+        return false;
+    }
+
+    /** Server-thread extraction: retain actual payload/components, including an unexpected remainder. */
+    public static int extractInto(ThaumcraftGolem golem, IItemHandler source, ItemStack cached, SealFilter filter) {
+        if (golem.level().isClientSide || source == null || golem.hasTransferRecovery() || !filter.accepts(cached)) return 0;
+        int remaining = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached));
+        int moved = 0;
+        for (int slot = 0; slot < source.getSlots() && remaining > 0 && !golem.hasTransferRecovery(); slot++) {
+            if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
+            int requested = Math.min(remaining, golem.canCarryAmount(cached));
+            if (requested <= 0) break;
+            ItemStack actual = source.extractItem(slot, requested, false).copy();
+            if (actual.isEmpty()) continue;
+            int count = actual.getCount();
+            golem.holdExtracted(actual);
+            moved += count;
+            remaining -= count;
+        }
+        return moved;
+    }
 
     public static boolean loaded(ServerLevel level, SealKey key) {
         if (!level.hasChunkAt(key.pos()) || !level.hasChunkAt(key.pos().relative(key.face()))) return false;

@@ -12,10 +12,10 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/** BETA26 AIGotoBlock for Fill, below entity tasks and above the home goal. */
-public final class GolemFillGoal extends Goal {
+/** BETA26 AIGotoBlock: Fill/Empty share navigation and one priority-sorted block task queue. */
+public final class GolemBlockGoal extends Goal {
     private final ThaumcraftGolem golem;
-    private GolemSeals.FillAssignment assignment;
+    private GolemSeals.BlockAssignment assignment;
     private BlockPos destination;
     private BlockPos previousPosition;
     private int cooldown = 5;
@@ -23,7 +23,7 @@ public final class GolemFillGoal extends Goal {
     private boolean done;
     private boolean failed;
 
-    public GolemFillGoal(ThaumcraftGolem golem) {
+    public GolemBlockGoal(ThaumcraftGolem golem) {
         this.golem = golem;
         setFlags(EnumSet.of(Flag.MOVE, Flag.JUMP));
     }
@@ -33,7 +33,7 @@ public final class GolemFillGoal extends Goal {
         if (!(golem.level() instanceof ServerLevel level)) return false;
         if (cooldown-- > 0) return false;
         cooldown = 5;
-        assignment = GolemSeals.get(level).claimFill(golem, this::canReach).orElse(null);
+        assignment = GolemSeals.get(level).claimBlock(golem, this::canReach).orElse(null);
         if (assignment == null) return false;
         destination = adjacentSpace(assignment.seal().pos());
         return true;
@@ -65,7 +65,7 @@ public final class GolemFillGoal extends Goal {
 
     private GolemSeals.SealKey target() {
         return assignment != null && golem.level() instanceof ServerLevel level
-                ? GolemSeals.get(level).fillTarget(level, golem, assignment) : null;
+                ? GolemSeals.get(level).blockTarget(level, golem, assignment) : null;
     }
 
     private void move() {
@@ -92,7 +92,7 @@ public final class GolemFillGoal extends Goal {
         Vec3 center = Vec3.atCenterOf(target.pos());
         golem.getLookControl().setLookAt(center.x, center.y, center.z, 10, golem.getMaxHeadXRot());
         if (distance(target.pos()) <= 4) {
-            done = GolemSeals.get(level).fill(level, golem, assignment);
+            done = GolemSeals.get(level).completeBlock(level, golem, assignment);
             failed = !done;
             return;
         }
@@ -108,7 +108,7 @@ public final class GolemFillGoal extends Goal {
     @Override
     public void stop() {
         if (assignment != null && golem.level() instanceof ServerLevel level)
-            GolemSeals.get(level).releaseFill(level, golem, assignment, failed || !done && travelTicks > 1000);
+            GolemSeals.get(level).releaseBlock(level, golem, assignment, failed || !done && travelTicks > 1000);
         assignment = null;
         golem.setWorking(false);
         golem.getNavigation().stop();

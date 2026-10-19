@@ -38,7 +38,10 @@ public final class GolemBellItem extends Item {
         if (seal == null) return InteractionResult.PASS;
         if (!seal.owner().equals(player.getUUID())) return InteractionResult.FAIL;
         if (player.isShiftKeyDown()) {
-            ItemStack returned = new ItemStack(seal.type() == GolemSeals.Type.PICKUP ? GolemModule.PICKUP_SEAL.get() : GolemModule.FILL_SEAL.get());
+            ItemStack returned = new ItemStack(switch (seal.type()) {
+                case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
+                case EMPTY -> GolemModule.EMPTY_SEAL.get();
+            });
             Vec3 pos = Vec3.atCenterOf(key.pos()).add(key.face().getStepX()/1.7, key.face().getStepY()/1.7, key.face().getStepZ()/1.7);
             ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, returned);
             if (!level.addFreshEntity(drop)) return InteractionResult.FAIL;

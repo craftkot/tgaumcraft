@@ -61,6 +61,9 @@ public final class GolemSealCrafting {
     }
 
     public static ItemStack product(GolemSealRecipes.Conversion recipe) {
-        return new ItemStack(recipe == GolemSealRecipes.Conversion.PICKUP ? GolemModule.PICKUP_SEAL.get() : GolemModule.FILL_SEAL.get());
+        return new ItemStack(switch (recipe) {
+            case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
+            case EMPTY -> GolemModule.EMPTY_SEAL.get();
+        });
     }
 }

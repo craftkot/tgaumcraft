@@ -44,6 +44,8 @@ public final class GolemModule {
             "seal_pickup", GolemSealItem::new, new Item.Properties());
     public static final DeferredItem<GolemSealItem> FILL_SEAL = ITEMS.registerItem(
             "seal_fill", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.FILL), new Item.Properties());
+    public static final DeferredItem<GolemSealItem> EMPTY_SEAL = ITEMS.registerItem(
+            "seal_empty", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.EMPTY), new Item.Properties());
 
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
@@ -64,6 +66,7 @@ public final class GolemModule {
             event.accept(BLANK_SEAL.get());
             event.accept(PICKUP_SEAL.get());
             event.accept(FILL_SEAL.get());
+            event.accept(EMPTY_SEAL.get());
         }
     }
 

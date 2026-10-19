@@ -150,7 +150,7 @@ public final class GolemFillGameTests {
         h.runAfterDelay(25, () -> {
             var assignment = seals.claimFill(golem, ignored -> true).orElseThrow();
             seals.place(pos, Direction.UP, owner, GolemSeals.Type.FILL);
-            var redirected = new GolemSeals.FillAssignment(assignment.lease(), new GolemSeals.SealKey(pos, Direction.UP));
+            var redirected = new GolemSeals.BlockAssignment(assignment.lease(), new GolemSeals.SealKey(pos, Direction.UP));
             h.assertTrue(!seals.fill(h.getLevel(), golem, redirected) && held(golem) == 9,
                     "A valid token cannot be redirected to a different seal face");
             seals.remove(pos, Direction.UP, owner);

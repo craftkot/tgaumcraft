@@ -8,7 +8,7 @@ import dev.ehtid.thaumcraft.port.core.golem.GolemBellRules;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
-import dev.ehtid.thaumcraft.golem.ai.GolemFillGoal;
+import dev.ehtid.thaumcraft.golem.ai.GolemBlockGoal;
 import dev.ehtid.thaumcraft.golem.ai.GolemPickupGoal;
 import dev.ehtid.thaumcraft.item.GolemPlacerItem;
 import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
@@ -52,7 +52,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
     private int rankXp;
     private Long invalidDesign;
     private GolemPickupGoal pickupGoal;
-    private GolemFillGoal fillGoal;
+    private GolemBlockGoal blockGoal;
+    private ItemStack transferRecovery = ItemStack.EMPTY;
     private GolemFollowOwnerGoal followGoal;
 
     public ThaumcraftGolem(EntityType<? extends ThaumcraftGolem> type, Level level) {
@@ -85,8 +86,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
     protected void registerGoals() {
         pickupGoal = new GolemPickupGoal(this);
         goalSelector.addGoal(3, pickupGoal);
-        fillGoal = new GolemFillGoal(this);
-        goalSelector.addGoal(4, fillGoal);
+        blockGoal = new GolemBlockGoal(this);
+        goalSelector.addGoal(4, blockGoal);
         followGoal = new GolemFollowOwnerGoal(this);
         goalSelector.addGoal(4, followGoal);
         goalSelector.addGoal(5, new GolemHomeGoal(this));
@@ -119,7 +120,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     public void setFollowingOwner(boolean following) {
         if (level().isClientSide || isFollowingOwner() == following || invalidDesign != null) return;
         if (pickupGoal != null) pickupGoal.stop();
-        if (fillGoal != null) fillGoal.stop();
+        if (blockGoal != null) blockGoal.stop();
         if (followGoal != null) followGoal.stop();
         getNavigation().stop();
         setWorking(false);
@@ -161,6 +162,14 @@ public final class ThaumcraftGolem extends PathfinderMob {
         return capacity;
     }
 
+    /** Owns unexpected actual extraction remainders; never invent a stack from a simulation. */
+    public boolean hasTransferRecovery() { return !transferRecovery.isEmpty(); }
+    public ItemStack transferRecovery() { return transferRecovery.copy(); }
+    public void holdExtracted(ItemStack actual) {
+        if (level().isClientSide || hasTransferRecovery()) throw new IllegalStateException("Extraction recovery must be drained first");
+        transferRecovery = holdItem(actual);
+    }
+
     /** Returns a new remainder. No world/container mutation, and no alias to the caller's stack. */
     public ItemStack holdItem(ItemStack incoming) {
         ItemStack remainder = incoming.copy();
@@ -185,6 +194,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
+        if (!level().isClientSide && isAlive() && hasTransferRecovery()) transferRecovery = holdItem(transferRecovery);
         if (!level().isClientSide && isAlive() && invalidDesign == null
                 && tickCount % (design().hasTrait(GolemTrait.REPAIR) ? 40 : 100) == 0)
             heal(1.0F);
@@ -200,6 +210,11 @@ public final class ThaumcraftGolem extends PathfinderMob {
             if (held.isEmpty()) continue;
             setItemSlot(slot, ItemStack.EMPTY);
             spawnAtLocation(held.copy());
+        }
+        if (hasTransferRecovery()) {
+            ItemStack retained = transferRecovery;
+            transferRecovery = ItemStack.EMPTY;
+            spawnAtLocation(retained.copy());
         }
         super.dropCustomDeathLoot(level, source, recentlyHit);
     }
@@ -217,6 +232,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
         tag.putByte("gflags", entityData.get(FLAGS));
         tag.putInt("rankXP", rankXp);
         tag.putByte("color", golemColor());
+        if (hasTransferRecovery()) tag.put("transferRecovery", transferRecovery.save(registryAccess()));
+        else tag.remove("transferRecovery");
         if (ownerId() != null) tag.putString("OwnerUUID", ownerId().toString());
         tag.putBoolean("v", true);
     }
@@ -242,6 +259,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
         entityData.set(OWNER, Optional.ofNullable(owner));
         entityData.set(FLAGS, tag.getByte("gflags"));
         entityData.set(COLOR, tag.getByte("color"));
+        transferRecovery = tag.contains("transferRecovery")
+                ? ItemStack.parseOptional(registryAccess(), tag.getCompound("transferRecovery")) : ItemStack.EMPTY;
         rankXp = Math.max(0, tag.getInt("rankXP"));
         setWorking(false); // Reservations are ephemeral; reacquire after load, never replay a completed pickup.
         applyDesign();
@@ -292,6 +311,11 @@ public final class ThaumcraftGolem extends PathfinderMob {
             if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
             setItemSlot(slot, ItemStack.EMPTY);
         }
+        if (hasTransferRecovery()) {
+            ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), transferRecovery.copy());
+            if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
+            transferRecovery = ItemStack.EMPTY;
+        }
         ItemEntity placer = new ItemEntity(level(), getX(), getY() + 0.5, getZ(),
                 GolemPlacerItem.stack(invalidDesign != null ? invalidDesign : design().toLong(), rankXp));
         if (!level().addFreshEntity(placer)) return InteractionResult.FAIL;
@@ -302,7 +326,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     public void remove(RemovalReason reason) {
         if (pickupGoal != null && !level().isClientSide) pickupGoal.stop();
-        if (fillGoal != null && !level().isClientSide) fillGoal.stop();
+        if (blockGoal != null && !level().isClientSide) blockGoal.stop();
         if (followGoal != null && !level().isClientSide) followGoal.stop();
         super.remove(reason);
     }

@@ -62,6 +62,8 @@ public final class GolemSealItem extends Item {
                         Component.translatable("menu.thaumcraft.golem_seal.title")));
                 return InteractionResult.CONSUME;
             }
+            if (type == GolemSeals.Type.EMPTY && dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level,
+                    new GolemSeals.SealKey(support, face)) == null) return InteractionResult.FAIL;
             if (!seals.place(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
             if (!player.getAbilities().instabuild) held.shrink(1);
             player.displayClientMessage(Component.translatable(
@@ -73,6 +75,6 @@ public final class GolemSealItem extends Item {
     }
 
     private String message(String action) {
-        return "message.thaumcraft.golem.seal." + (type == GolemSeals.Type.FILL ? "fill." : "") + action;
+        return "message.thaumcraft.golem.seal." + switch (type) { case FILL -> "fill."; case EMPTY -> "empty."; default -> ""; } + action;
     }
 }
