@@ -73,9 +73,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 return super.tryRemove(amount, maximum, player);
             }
             @Override public boolean mayPickup(Player player) {
-                if (GolemComponentCrafting.isProduct(getItem()))
-                    return player == owner && player instanceof ServerPlayer sp
-                            && ItemStack.isSameItemSameComponents(getItem(), GolemComponentCrafting.preview(bench, sp, 0.0F));
+                if (GolemComponentCrafting.isProduct(getItem()) && player instanceof ServerPlayer sp)
+                    return player == owner && ItemStack.isSameItemSameComponents(getItem(), GolemComponentCrafting.preview(bench, sp, 0.0F));
                 if (player instanceof ServerPlayer sp && getItem().is(GolemModule.BLANK_SEAL.get()))
                     return GolemSealCrafting.canCraftBlank(bench, sp, 0.0F);
                 if (player instanceof ServerPlayer sp) return canCraftCurrentRecipe(sp, 0.0F);
