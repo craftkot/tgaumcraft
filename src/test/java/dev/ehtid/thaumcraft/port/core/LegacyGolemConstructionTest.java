@@ -41,6 +41,32 @@ public final class LegacyGolemConstructionTest {
             throw new AssertionError("Unported costs must not be silently guessed");
         } catch (UnsupportedOperationException expected) { /* explicit implementation gap */ }
         same(0L, wood.toLong());
+        same(8, GolemPress.cost(wood));
+        var press = GolemPress.State.idle();
+        same(false, press.accepts("machina", 1));
+        same(false, press.ready());
+        press = press.startPaid(wood);
+        same(8, press.remaining());
+        same(8, press.maximum());
+        same(false, press.accepts("aer", 1));
+        same(false, press.accepts("machina", 0));
+        for (int unit = 0; unit < 8; unit++) {
+            same(press, press.consumeBuffered()); // No phantom progress without actual payment.
+            press = press.receive("machina", 64); // One-unit buffer, never bulk-credit.
+            same(false, press.accepts("machina", 1));
+            same(press, new GolemPress.State(press.props(), press.remaining(), press.maximum(), true));
+            press = press.consumeBuffered();
+            same(7 - unit, press.remaining());
+        }
+        same(true, press.ready());
+        same(false, press.accepts("machina", 1));
+        same(GolemPress.State.idle(), press.finish());
+        invalid(() -> new GolemPress.State(0, -1, 8, false));
+        invalid(() -> new GolemPress.State(0, 9, 8, false));
+        invalid(() -> new GolemPress.State(0, 0, 8, true));
+        invalid(() -> new GolemPress.State(0, 8, 7, false));
+        invalid(() -> new GolemPress.State(-1, 0, 0, true));
+        invalid(() -> GolemPress.State.idle().startPaid(wood.withRank(1)));
         same(Set.of(LIGHT), wood.traits());
         same(16, wood.stats().maxHealth());
         same(2, wood.stats().armor());

@@ -6,6 +6,17 @@ import dev.ehtid.thaumcraft.item.GolemPlacerItem;
 import dev.ehtid.thaumcraft.item.GolemSealItem;
 import dev.ehtid.thaumcraft.item.GolemBellItem;
 import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
+import dev.ehtid.thaumcraft.golem.press.GolemPressBlock;
+import dev.ehtid.thaumcraft.golem.press.GolemPressBlockEntity;
+import dev.ehtid.thaumcraft.golem.press.GolemPressMenu;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.item.BlockItem;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
+import net.minecraft.core.Direction;
 import dev.ehtid.thaumcraft.registry.ThaumcraftCreativeTabs;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.EntityType;
@@ -28,10 +39,22 @@ public final class GolemModule {
     private static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(Registries.ENTITY_TYPE, ThaumcraftPort.MOD_ID);
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<Block, GolemPressBlock> PRESS = BLOCKS.register("golem_builder",
+            () -> new GolemPressBlock(BlockBehaviour.Properties.of().strength(3.5F)));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GolemPressBlockEntity>> PRESS_ENTITY = BLOCK_ENTITIES.register(
+            "golem_builder", () -> BlockEntityType.Builder.of(GolemPressBlockEntity::new, PRESS.get()).build(null));
+    public static final DeferredItem<BlockItem> PRESS_ITEM = ITEMS.registerSimpleBlockItem(PRESS, new Item.Properties());
+    public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
+    /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
+    public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
 
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ThaumcraftPort.MOD_ID);
     public static final DeferredHolder<MenuType<?>, MenuType<GolemSealMenu>> SEAL_MENU = MENUS.register(
             "golem_seal", () -> new MenuType<>(GolemSealMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>, MenuType<GolemPressMenu>> PRESS_MENU = MENUS.register(
+            "golem_press", () -> new MenuType<>(GolemPressMenu::new, FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<EntityType<?>, EntityType<ThaumcraftGolem>> GOLEM = ENTITIES.register(
             "golem", () -> EntityType.Builder.of(ThaumcraftGolem::new, MobCategory.CREATURE)
@@ -51,8 +74,16 @@ public final class GolemModule {
         ENTITIES.register(bus);
         ITEMS.register(bus);
         MENUS.register(bus);
+        BLOCKS.register(bus);
+        BLOCK_ENTITIES.register(bus);
+        bus.addListener(GolemModule::capabilities);
         bus.addListener(GolemModule::attributes);
         bus.addListener(GolemModule::creativeContents);
+    }
+
+    private static void capabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PRESS_ENTITY.get(),
+                (press, face) -> new SidedInvWrapper(press, face == null ? Direction.DOWN : face));
     }
 
     private static void attributes(EntityAttributeCreationEvent event) {
@@ -67,6 +98,9 @@ public final class GolemModule {
             event.accept(PICKUP_SEAL.get());
             event.accept(FILL_SEAL.get());
             event.accept(EMPTY_SEAL.get());
+            event.accept(PRESS_ITEM.get());
+            event.accept(SIMPLE_MECHANISM.get());
+            event.accept(CLOCKWORK_MIND.get());
         }
     }
 
