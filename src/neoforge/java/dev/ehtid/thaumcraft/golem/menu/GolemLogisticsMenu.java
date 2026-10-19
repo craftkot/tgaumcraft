@@ -15,6 +15,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     private final GolemSeals.Seal expected;
     private final Player viewer;
     private final SimpleContainer ghost=new SimpleContainer(9);
+    private final DataSlot existing=DataSlot.standalone(),areaX=DataSlot.standalone(),areaY=DataSlot.standalone(),areaZ=DataSlot.standalone();
     private final DataSlot metadata=DataSlot.standalone(),ore=DataSlot.standalone(),mod=DataSlot.standalone();
     private final DataSlot cycle=DataSlot.standalone();
     private final DataSlot type=DataSlot.standalone(), selected=DataSlot.standalone();
@@ -30,7 +31,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         });
         for(int r=0;r<3;r++) for(int c=0;c<9;c++) addSlot(new Slot(inv,c+r*9+9,8+c*18,190+r*18));
         for(int c=0;c<9;c++) addSlot(new Slot(inv,c,8+c*18,248));
-        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone,cycle,metadata,ore,mod}) addDataSlot(data);
+        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone,cycle,metadata,ore,mod,existing,areaX,areaY,areaZ}) addDataSlot(data);
         refresh();
     }
     private GolemSeals.Seal current() { return level==null || expected==null?null:GolemSeals.get(level).get(expected.key()); }
@@ -47,6 +48,15 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     public boolean provider() { return type.get()==2; }
     public boolean advancedEmpty() { return type.get()==3; }
     public boolean cycle() { return cycle.get()!=0; }
+    public boolean advancedFill() { return type.get()==4; }
+    public boolean advancedPickup() { return type.get()==5; }
+    public boolean hasLimits() { return stock() || advancedFill()&&!blacklist(); }
+    public boolean canLeaveOne() { return provider()||advancedEmpty(); }
+    public boolean existingOnly() { return existing.get()!=0; }
+    public boolean hasArea() { return advancedPickup(); }
+    public int areaX() { return areaX.get(); }
+    public int areaY() { return areaY.get(); }
+    public int areaZ() { return areaZ.get(); }
     public boolean blacklist() { return blacklist.get()!=0; }
     public boolean metadata() { return metadata.get()!=0; }
     public boolean ore() { return ore.get()!=0; }
@@ -61,11 +71,12 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     public boolean redstone() { return redstone.get()!=0; }
     private void refresh() {
         var s=current(); if(s==null) return;
-        type.set(s.type()==GolemSeals.Type.STOCK?1:s.type()==GolemSeals.Type.PROVIDE?2:3);
+        type.set(s.type()==GolemSeals.Type.STOCK?1:s.type()==GolemSeals.Type.PROVIDE?2:s.type()==GolemSeals.Type.FILL_ADVANCED?4:s.type()==GolemSeals.Type.PICKUP_ADVANCED?5:3);
         for(int i=0;i<9;i++) ghost.setItem(i,s.logistics().slot(i).item());
         var filter=s.logistics().slot(selected());
         low.set(filter.limit()&65535); high.set(filter.limit()>>>16);
         blacklist.set(s.logistics().blacklist()?1:0); nbt.set(s.logistics().matchNbt()?1:0);
+        existing.set(s.logistics().existingOnly()?1:0); areaX.set(s.area().getX()); areaY.set(s.area().getY()); areaZ.set(s.area().getZ());
         metadata.set(s.logistics().options().metadata()?1:0); ore.set(s.logistics().options().ore()?1:0); mod.set(s.logistics().options().mod()?1:0);
         cycle.set(s.logistics().cycle()?1:0); single.set(s.logistics().single()?1:0); leave.set(s.leaveOne()?1:0);
         priority.set(s.priority()); color.set(s.color()); locked.set(s.locked()?1:0); redstone.set(s.redstone()?1:0);
@@ -97,16 +108,23 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         if(level==null || !stillValid(p)) return false;
         var s=current(); var policy=s.logistics(); var data=GolemSeals.get(level);
         if(id>=100 && id<109) { selected.set(id-100); broadcastChanges(); return true; }
+        if(id>=90 && id<=95 && hasArea()) {
+            var size=new dev.ehtid.thaumcraft.port.core.golem.SealArea.BlockPos(s.area().getX(),s.area().getY(),s.area().getZ());
+            var next=dev.ehtid.thaumcraft.port.core.golem.SealAreaControls.adjust(size,id); if(next.isEmpty()) return false;
+            var value=next.get(); boolean changed=data.configureArea(expected,p.getUUID(),new net.minecraft.core.BlockPos(value.x(),value.y(),value.z()));
+            if(changed) broadcastChanges(); return changed;
+        }
         if(id==0 && !stock()) return edit(p,policy.withMode(!policy.blacklist(),policy.matchNbt(),policy.single()));
         if(id==30 || id==60) return edit(p,policy.withOptions(policy.options().withMetadata(id==30)));
         if(id==32 || id==62) return edit(p,policy.withOptions(policy.options().withOre(id==32)));
         if(id==33 || id==63) return edit(p,policy.withOptions(policy.options().withMod(id==33)));
         if(id==31 || id==61) return edit(p,policy.withMode(policy.blacklist(),id==31,policy.single()));
+        if((id==34 || id==64) && advancedFill()) return edit(p,policy.withExistingOnly(id==34));
         if((id==34 || id==64) && advancedEmpty()) return edit(p,policy.withCycle(id==34));
         if((id==34 || id==64) && provider()) return edit(p,policy.withMode(policy.blacklist(),policy.matchNbt(),id==34));
         boolean result;
-        if((id==35 || id==65) && !stock()) result=data.configureLeaveOne(expected,p.getUUID(),id==35);
-        else if(stock() && id>=1 && id<=4) {
+        if((id==35 || id==65) && canLeaveOne()) result=data.configureLeaveOne(expected,p.getUUID(),id==35);
+        else if(hasLimits() && id>=1 && id<=4) {
             int delta=switch(id) { case 1->-10; case 2->-1; case 3->1; default->10; };
             int count=(int)Math.max(0L,Math.min(Integer.MAX_VALUE,(long)limit()+delta));
             return edit(p,policy.withSlot(selected(),policy.slot(selected()).withLimit(count)));

@@ -17,7 +17,8 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 @EventBusSubscriber(modid=ThaumcraftPort.MOD_ID,bus=EventBusSubscriber.Bus.MOD,value=Dist.CLIENT)
 public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLogisticsMenu> {
     private Button mode,nbt,single,leave,locked,redstone,metadata,ore,mod,matching;
-    private boolean matchingPanel;
+    private int panel;
+    private final Button[] areas=new Button[6];
     private final java.util.List<Button> ordinary=new java.util.ArrayList<>();
     private final Button[] limits=new Button[4];
     public GolemLogisticsScreen(GolemLogisticsMenu menu,Inventory inv,Component title) {
@@ -31,8 +32,10 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
     @Override protected void init() {
         super.init(); ordinary.clear();
         for(int i=0;i<9;i++) { final int id=100+i; button(Component.literal(Integer.toString(i+1)),8+i*18,43,16,()->send(id)); }
-        matching=button(Component.literal("…"),144,3,24,()->{ matchingPanel=!matchingPanel; update(); });
+        matching=button(Component.literal("…"),144,3,24,()->{ panel=(panel+1)%(menu.hasArea()?3:2); update(); });
         matching.setTooltip(net.minecraft.client.gui.components.Tooltip.create(label("matching")));
+        int[] areaActions={92,93,90,91,94,95};
+        for(int i=0;i<6;i++) { final int action=areaActions[i]; areas[i]=button(Component.literal(i%2==0?"−":"+"),i%2==0?8:144,83+(i/2)*20,24,()->send(action)); }
         metadata=button(Component.empty(),8,83,78,()->send(menu.metadata()?60:30));
         ore=button(Component.empty(),90,83,78,()->send(menu.ore()?62:32));
         mod=button(Component.empty(),8,103,160,()->send(menu.mod()?63:33));
@@ -41,7 +44,7 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         String[] labels={"-10","-1","+1","+10"};
         for(int i=0;i<4;i++) { final int id=i+1; limits[i]=button(Component.literal(labels[i]),8+i*41,95,37,()->send(id)); }
         leave=button(Component.empty(),8,95,78,()->send(menu.leaveOne()?65:35));
-        single=button(Component.empty(),90,95,78,()->send((menu.provider()?menu.single():menu.cycle())?64:34));
+        single=button(Component.empty(),90,95,78,()->send((menu.provider()?menu.single():menu.advancedFill()?menu.existingOnly():menu.cycle())?64:34));
         ordinary.add(button(Component.literal("−"),8,117,24,()->send(80))); ordinary.add(button(Component.literal("+"),144,117,24,()->send(81)));
         ordinary.add(button(Component.literal("−"),8,137,24,()->send(82))); ordinary.add(button(Component.literal("+"),144,137,24,()->send(83)));
         locked=button(Component.empty(),8,157,78,()->send(menu.locked()?26:25));
@@ -51,16 +54,19 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
     }
     private Component label(String key) { return Component.translatable("menu.thaumcraft.golem_seal."+key); }
     private void update() {
-        for(var b:ordinary) b.visible=b.active=!matchingPanel;
+        if(panel==2&&!menu.hasArea()) panel=0;
+        boolean matchingPanel=panel==1;
+        for(int i=0;i<areas.length;i++) areas[i].visible=areas[i].active=panel==2&&menu.hasArea();
+        for(var b:ordinary) b.visible=b.active=panel==0;
         metadata.visible=metadata.active=ore.visible=ore.active=mod.visible=mod.active=matchingPanel;
         metadata.setMessage(label(menu.metadata()?"meta_match":"meta_ignore"));
         ore.setMessage(label(menu.ore()?"ore_match":"ore_ignore"));
         mod.setMessage(label(menu.mod()?"mod_match":"mod_ignore"));
         mode.active=!menu.stock(); mode.setMessage(label(menu.blacklist()?"blacklist":"whitelist"));
         nbt.setMessage(label(menu.matchNbt()?"nbt_match":"nbt_ignore"));
-        for(var button:limits) button.visible=button.active=!matchingPanel&&menu.stock();
-        leave.visible=leave.active=!matchingPanel&&!menu.stock(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
-        single.visible=single.active=!matchingPanel&&(menu.provider()||menu.advancedEmpty()); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):(menu.cycle()?"cycle":"all_filters")));
+        for(var button:limits) button.visible=button.active=panel==0&&menu.hasLimits();
+        leave.visible=leave.active=panel==0&&menu.canLeaveOne(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
+        single.visible=single.active=panel==0&&(menu.provider()||menu.advancedEmpty()||menu.advancedFill()); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):menu.advancedFill()?(menu.existingOnly()?"existing_only":"any_stock"):(menu.cycle()?"cycle":"all_filters")));
         locked.setMessage(label(menu.locked()?"locked":"public"));
         redstone.setMessage(label(menu.redstone()?"redstone_stop":"redstone_ignore"));
     }
@@ -75,8 +81,12 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
     }
     @Override protected void renderLabels(GuiGraphics g,int mx,int my) {
         super.renderLabels(g,mx,my);
-        if(!matchingPanel&&menu.stock()) g.drawString(font,Component.translatable("menu.thaumcraft.golem_seal.limit",menu.limit()),8,84,0x404040,false);
-        if(matchingPanel) return;
+        if(panel==0&&menu.hasLimits()) g.drawString(font,Component.translatable("menu.thaumcraft.golem_seal.limit",menu.advancedFill()&&menu.limit()==0?label("unlimited"):Component.literal(Integer.toString(menu.limit()))),8,84,0x404040,false);
+        if(panel==2) {
+            int[] sizes={menu.areaX(),menu.areaY(),menu.areaZ()};
+            for(int i=0;i<3;i++) { var text=Component.literal("XYZ".charAt(i)+": "+sizes[i]); g.drawString(font,text,(imageWidth-font.width(text))/2,87+i*20,0x404040,false); }
+        }
+        if(panel!=0) return;
         var priority=Component.translatable("menu.thaumcraft.golem_seal.priority",menu.priority());
         var color=Component.translatable("menu.thaumcraft.golem_seal.color",menu.color());
         g.drawString(font,priority,(imageWidth-font.width(priority))/2,121,0x404040,false);

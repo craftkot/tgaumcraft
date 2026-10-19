@@ -125,6 +125,11 @@ public final class GolemContainers {
                 ? EquipmentSlot.OFFHAND : null;
     }
 
+    private static EquipmentSlot validSlot(ThaumcraftGolem golem,SealFilter filter,EquipmentSlot slot) {
+        return (slot==EquipmentSlot.MAINHAND || slot==EquipmentSlot.OFFHAND&&golem.design().stats().carrySlots()>1)
+                && filter.accepts(golem.getItemBySlot(slot))?slot:null;
+    }
+
     private static int amount(IItemHandler target, ItemStack carried, SealFilter filter) {
         long existing = 0;
         if (target != null && !filter.blacklist() && filter.limit() > 0) {
@@ -139,13 +144,36 @@ public final class GolemContainers {
         return filter.transferable(carried, existing);
     }
 
+    private record FillSelection(EquipmentSlot slot,SealFilter filter) {}
+    private static FillSelection advancedFillFilter(ThaumcraftGolem golem,IItemHandler target,LogisticsPolicy policy) {
+        for(var slot:new EquipmentSlot[]{EquipmentSlot.MAINHAND,EquipmentSlot.OFFHAND}) {
+            if(slot==EquipmentSlot.OFFHAND && golem.design().stats().carrySlots()<2) continue;
+            var actual=golem.getItemBySlot(slot); var filter=policy.fillFilter(actual); if(filter==null) continue;
+            // Source pexist gates only an actual handler, not fallback world drops.
+            if(policy.existingOnly() && target!=null && matchingStock(target,actual,filter)<=0) return null;
+            return new FillSelection(slot,filter);
+        }
+        return null;
+    }
+    public static boolean canDeposit(ServerLevel level,ThaumcraftGolem golem,SealKey key,LogisticsPolicy policy) {
+        if(!loaded(level,key)) return false;
+        var selected=advancedFillFilter(golem,handler(level,key),policy);
+        return selected!=null && canDeposit(level,golem,key,selected.filter,selected.slot);
+    }
+    public static int deposit(ServerLevel level,ThaumcraftGolem golem,SealKey key,LogisticsPolicy policy) {
+        if(!loaded(level,key)) return 0;
+        var selected=advancedFillFilter(golem,handler(level,key),policy);
+        return selected==null?0:deposit(level,golem,key,selected.filter,selected.slot);
+    }
+
     public static boolean canDeposit(ServerLevel level, ThaumcraftGolem golem, SealKey key) {
         return canDeposit(level, golem, key, SealFilter.defaults());
     }
 
-    public static boolean canDeposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) {
+    public static boolean canDeposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) { return canDeposit(level,golem,key,filter,null); }
+    private static boolean canDeposit(ServerLevel level,ThaumcraftGolem golem,SealKey key,SealFilter filter,EquipmentSlot selected) {
         if (!loaded(level, key)) return false;
-        EquipmentSlot slot = firstSlot(golem, filter);
+        EquipmentSlot slot = selected==null?firstSlot(golem,filter):validSlot(golem,filter,selected);
         if (slot == null) return false;
         ItemStack stack = golem.getItemBySlot(slot);
         IItemHandler target = handler(level, key);
@@ -163,9 +191,10 @@ public final class GolemContainers {
         return insertCarried(golem,target,filter,Integer.MAX_VALUE);
     }
 
-    public static int insertCarried(ThaumcraftGolem golem, IItemHandler target, SealFilter filter,int maximum) {
+    public static int insertCarried(ThaumcraftGolem golem, IItemHandler target, SealFilter filter,int maximum) { return insertCarried(golem,target,filter,maximum,null); }
+    private static int insertCarried(ThaumcraftGolem golem,IItemHandler target,SealFilter filter,int maximum,EquipmentSlot selected) {
         if (golem.level().isClientSide) return 0;
-        EquipmentSlot slot = firstSlot(golem, filter);
+        EquipmentSlot slot = selected==null?firstSlot(golem,filter):validSlot(golem,filter,selected);
         if (slot == null) return 0;
         ItemStack original = golem.getItemBySlot(slot).copy();
         int requested = Math.min(maximum,amount(target, original, filter)); // Fresh count at actual completion, after other workers.
@@ -183,11 +212,12 @@ public final class GolemContainers {
         return deposit(level, golem, key, SealFilter.defaults());
     }
 
-    public static int deposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) {
+    public static int deposit(ServerLevel level, ThaumcraftGolem golem, SealKey key, SealFilter filter) { return deposit(level,golem,key,filter,null); }
+    private static int deposit(ServerLevel level,ThaumcraftGolem golem,SealKey key,SealFilter filter,EquipmentSlot selected) {
         if (!loaded(level, key)) return 0;
         IItemHandler target = handler(level, key); // Re-resolve at completion; do not cache a removed container.
-        if (target != null) return insertCarried(golem, target, filter);
-        EquipmentSlot slot = firstSlot(golem, filter);
+        if (target != null) return insertCarried(golem, target, filter,Integer.MAX_VALUE,selected);
+        EquipmentSlot slot = selected==null?firstSlot(golem,filter):validSlot(golem,filter,selected);
         if (slot == null) return 0;
         ItemStack original = golem.getItemBySlot(slot).copy();
         int requested = amount(null, original, filter);

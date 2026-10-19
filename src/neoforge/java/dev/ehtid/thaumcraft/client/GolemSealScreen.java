@@ -51,6 +51,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
                     .bounds(leftPos + 8 + i * 41, topPos + 74, 37, 16).build());
         }
         int[] actions = {92, 93, 90, 91, 94, 95}; // X-/X+/Y-/Y+/Z-/Z+
+        int[] areaActions={92,93,90,91,94,95};
         for (int i = 0; i < areas.length; i++) {
             final int action = actions[i];
             areas[i] = addRenderableWidget(Button.builder(Component.literal(i % 2 == 0 ? "−" : "+"), b -> send(action))
