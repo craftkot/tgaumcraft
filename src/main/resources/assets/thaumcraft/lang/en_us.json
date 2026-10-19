@@ -344,6 +344,8 @@
   "item.thaumcraft.golem_bell": "Golemancer’s Bell",
   "item.thaumcraft.seal_empty": "Seal: Empty",
   "menu.thaumcraft.golem_seal.leave_one": "Leave one in source",
+  "menu.thaumcraft.golem_seal.nbt_match": "NBT: match",
+  "menu.thaumcraft.golem_seal.nbt_ignore": "NBT: any",
   "menu.thaumcraft.golem_seal.take_all": "Take all from source",
   "message.thaumcraft.golem.seal.empty.placed": "Empty seal placed: %s, %s, %s",
   "message.thaumcraft.golem.seal.empty.removed": "Empty seal removed",

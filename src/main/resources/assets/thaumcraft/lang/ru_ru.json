@@ -344,6 +344,8 @@
   "item.thaumcraft.golem_bell": "Колокольчик големов",
   "item.thaumcraft.seal_empty": "Печать: опустошение",
   "menu.thaumcraft.golem_seal.leave_one": "Оставлять один в источнике",
+  "menu.thaumcraft.golem_seal.nbt_match": "NBT: точно",
+  "menu.thaumcraft.golem_seal.nbt_ignore": "NBT: любые",
   "menu.thaumcraft.golem_seal.take_all": "Забирать всё из источника",
   "message.thaumcraft.golem.seal.empty.placed": "Печать опустошения установлена: %s, %s, %s",
   "message.thaumcraft.golem.seal.empty.removed": "Печать опустошения снята",
