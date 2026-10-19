@@ -492,6 +492,24 @@ public final class LegacyGolemTaskTest {
         eq(List.of(mixedEntity,mixedBlock),TaskSelection.sorted(List.of(mixedBlock,mixedEntity),null,permissive(ALICE)));
     }
 
+    private static void farmSourceRules() {
+        var crops=dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.values();
+        eq(5,crops.length);
+        eq(5,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.SCAN_TICKS);
+        eq(1,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.SEED_COST);
+        for(var crop:crops) {
+            for(int age=-1;age<=8;age++) eq(age==crop.maximumAge,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.mature(crop,age));
+            eq(crop!=dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.NETHER_WART,crop.farmland);
+        }
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.mature(null,7));
+        var smart=dev.ehtid.thaumcraft.port.core.golem.GolemTrait.SMART;
+        var deft=dev.ehtid.thaumcraft.port.core.golem.GolemTrait.DEFT;
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.eligible(Set.of()));
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.eligible(Set.of(smart)));
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.eligible(Set.of(deft)));
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.eligible(Set.of(smart,deft)));
+    }
+
     public static void main(String[] args) throws InterruptedException {
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
             for (boolean sameComponents : List.of(false, true)) for (boolean matchNbt : List.of(false, true))
@@ -602,6 +620,7 @@ public final class LegacyGolemTaskTest {
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 0, false));
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, -1, true));
         eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, Long.MAX_VALUE, true));
+        farmSourceRules();
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();

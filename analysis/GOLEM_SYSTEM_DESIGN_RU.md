@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.20** описаны в конце документа: оплаченный Golem Press, исходные рецепты компонентов/стола, сборка через Salis Mundus, связанная разборка и Provide/Stock с реальным block/entity транспортом. Seal-recipient provisioning для Harvest, редактор, прочие конструкции и исходный визуал остаются открыты.
+Текущие срезы **M10.14–M10.21** описаны в конце документа: оплаченный Golem Press, исходные рецепты компонентов/стола, сборка через Salis Mundus, связанная разборка и Provide/Stock с реальным block/entity транспортом. M10.20 добавляет редактор и180 рабочих ground-конструкций; M10.21 — первый Harvest/SealTarget путь. Прочие конструкции, полная farming parity и исходный визуал остаются открыты.
 
 ## 1. Источники и границы доказательств
 
@@ -541,3 +541,28 @@ Press selection is server-owned, rank0, persisted as SelectedDesign independentl
 Dependencies: MindBiothaumic is **infusion**, not an arcane or ordinary recipe: MINDBIOTHAUMIC, instability4, Cognitio50+Machina25, central mind@0, side brain1+complex mechanism1 (ConfigRecipes confirmed). Vision/aggression modules likewise need their source acquisition audit/M06 integration. Current main infusion completion is Crystal-Farmer-specific; no replacement ritual or guessed crafting recipe is introduced here. These components are registered as source identities and used/paid by the real Press, but native tests supply them as fixture inputs. This proves paid assembly and behavior, **not full survival acquisition**. M06 contracts/research progress/source visuals remain integration dependencies; other branches are not modified.
 
 Java21 full Core PASS: construction39872/task2202,4824 new source cost/merge/runtime/damage assertions. Native/cold actual results follow in the validation journal. Full M10/59/100 stays open. Next independent step is Harvest/replant with actual SMART+DEFT workers, then SealTarget provisioning and remaining source flags/movements/combat.
+
+
+## M10.21 — Harvest: первый подтверждённый цикл земледелия
+
+### Исходные правила и предел переноса
+
+Read-only `javap -c -p` официального BETA26: `SealHarvest`, `CropUtils`, `ModConfig`, `ThaumcraftApi`, `SealProvide` и `ConfigRecipes`. Артефакт/SHA256 указаны выше; временные дампы и MCP39 mappings хранятся внеGit. Harvest требует **DEFT и SMART**, запрещённых traits нет. `prep=true`, `ppro=false`; каждые5ticks проверяет одну клетку face-relative SealArea. Сбор вызывает реальную обработку harvest/fakeplayer, затем сохраняет pending ReplantInfo; новая task ждёт настоящего семени в руках. `ppro` запрашивает SealTarget, provider pickup проверяет recipient traits/owner/color/home и оставляет полученное семя самому работнику, **без отдельной delivery task**. Успешная посадка расходует1 carried seed и даёт1 rankXP. Исходный встроенный iron hoe восстанавливает нужный farmland, но не выдаётся как предмет игроку. Pending replants сохраняются; task IDs/leases не являются сохранённым грузом.
+
+Первая реализуемая группа — wheat/carrots/potatoes (age7), beetroot/netherwart (age3); vanilla семена, carrot/potato и wart соответственно, soul sand для wart. Это срез исходного CropUtils, **не все культуры**. Cocoa/clickable, pumpkin/melon fruit, stacked cactus/reeds и модовые IPlantable пока не подключены. Source ModConfig обнаруживает IPlantable seeds и отдельно cocoa; современный extensible adapter ещё нужен.
+
+Исходный рецепт Harvest — **infusion**, `SEALHARVEST`, instability0, Plant10+Senses10+Man10, central blank seal, side wheat/pumpkin/melon/beetroot seeds+sugarcane+cactus. Его нельзя заменять выдуманным crucible/crafting рецептом. Как и biothaumic mind, survival acquisition зависит от M06: текущий generic completion path в main недостаточен для этих рецептов. Предмет зарегистрирован и доступен для разработки; получение через исследованную исходную infusion **не заявлено**.
+
+### Компоненты и владение состоянием
+
+- `GolemFarmRules` — независимые Core ages/seed ids/trait gate/5tick cadence/seed cost. Никаких Minecraft classes.
+- `HarvestSettings` — typed prep/ppro; расширение существующей Seal row, область/owner/color/redstone/priority и instance token остаются общей системой. Existing basic menu скрывает item ghost, показывает два source toggle и переиспользует area controls. На других печатях прежние pnbt IDs сохраняются.
+- `GolemFarm` принадлежит существующему world `GolemSeals` SavedData. Он сканирует только loaded cells, ставит реальные block tasks в существующий TaskBoard, хранит crop-position intent и watched dedup. AI продолжает использовать прежний native BlockGoal/navigation/leases/watchdog/retry. Tasks не создаются заново в отдельной очереди поведения.
+- Completion повторно вызывает общий `blockTarget`: owner/color/follow/health/home/retry/instance guards нельзя обходить устаревшим callback. Для provider completion такой же общий guard усилен. Actor получает owner UUID и отдельное имя golem UUID, SURVIVAL и реальную позицию. Harvest через `ServerPlayerGameMode.destroyBlock`, placement через actual `ItemStack.useOn` — NeoForge break/place hooks действуют. No forced production tickets.
+- До callbacks одно реальное семя **перемещается** из рук голема в fake-player hand. Vanilla placement списывает его; ручного второго shrink нет. Все настоящие остатки actor inventory возвращаются в carry/recovery. Встроенный hoe всегда удаляется как служебный tool. Per-worker reentry guard защищает callbacks; неуспешные действия сохраняют seed/intent для ограниченного retry.
+- Несколько вариантов возврата обслуживает очередь `transferRecoveryQueue` рядом с прежним backward-compatible `transferRecovery`. Это actual escrow, не дополнительные рабочие руки/новый источник предметов. Пока он непуст, новое извлечение/Harvest блокируются; carry drain, NBT, смерть и reclaim обрабатывают каждый payload. Это не распределённая транзакция с внешним модовым inventory и не crash-proof обещание.
+- Pending позиции/тип crop хранятся внутри seal row `ReplantTasks`; неизвестные культуры/внеобластные записи отбрасываются, новые transient tasks генерируются после reload. Area change чистит устаревшие intents. Removal/replacement cannot authorize old SealTarget instance.
+
+### Критерии и сценарии
+
+Нужны реальные пять crop harvest→loot→seed debit1→age0, отсутствие immature loop, canceled Break/Place и retry, no virtual-hoe loot, SMART/DEFT/changed-color gate, native AI navigation, provider→SealTarget→replant без дополнительной доставки, owner menu и NBT settings/pending/no leases, несколько actual refund variants/NBT/reclaim once. Отдельный two-process scenario `farm` должен доказать unpaid intent/real2seeds перед shutdown → auto replant/1seed после disk restart, обе actual refund variants/components и один reclaim без replay. Результаты и неудачные прогоны фиксируются в validation/lane; компиляция сама по себе этим доказательством не является.

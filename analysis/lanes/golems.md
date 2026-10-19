@@ -390,3 +390,9 @@ Core теперь содержит все18 part costs для2400 combinations, 
 
 
 - Construction cold commit послеbb14ec2 — `git log -1` перед этим localization commit, WRITE/READ PASS. Последний малый integration commit содержит только27 EN/RU keys на язык и этот журнал; labels/3 own models уже были включены в successful final99/JAR. После5a0c3d0 четыре commits: Core, native, cold, labels. Обычный push только feature/golems/Draft PR #3 update, main/чужие ветки и shared registries/BE/build.gradle/CI/research data/runner не менялись, merge/rebase/force/delete не выполнялись. Работу продолжаем Harvest/replant с новой реальной SMART/DEFT конструкцией; вся M10 и59/100 остаются открыты.
+
+### 2026-10-19 — M10.21 Harvest/Core
+
+Продолжаем автономно после `f693960`; main остаётся `a4280834`, CI #388 verify-connection SUCCESS (это не NeoForge build). Только feature/golems, один агент; актуальные main roadmap/workflow/AGENTS/audit и журнал перечитаны. Официальный BETA26 read-only Harvest/CropUtils/ModConfig/ThaumcraftApi/Provide/ConfigRecipes audit, без исходных дампов/чужих ресурсов вGit. Подтверждены SMART+DEFT, scan5ticks, prep=true/ppro=false, actualseed1, pendingreplants и SealTarget pickup без delivery; source Harvest — infusion, не crucible. M06 acquisition зависимость не подменяется.
+
+Этот Core commit: пять vanilla crop families/seed ids/ages, traits/interval/cost,63 дополнительных реальных assertions в существующем тесте, runner не менялся. **Java21 полный Core PASS**, construction39872/task2265, `/workspace/reference/golems-farm-core.log`. Весь подготовленный runtime уже прошёл full build+111/111 GameTests1m17s, но выделяется следующим commit вместе с собственными evidence. Сейчас стартовал farm cold WRITE, PASS заранее не предполагается. Cocoa/fruit/stacked/mod crop и survival infusion ещё открыты; вся M10 не завершена.
