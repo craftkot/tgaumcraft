@@ -48,6 +48,7 @@ public final class GolemRestartProbe {
     public static void started(ServerStartedEvent event) {
         if ("press".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("formation".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
+        if ("logistics".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if (!PHASE.equals("write") && !PHASE.equals("read")) return;
         active = event.getServer();
         ticks = 0;
