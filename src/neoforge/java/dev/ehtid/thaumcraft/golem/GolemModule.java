@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
 import dev.ehtid.thaumcraft.golem.press.GolemPressBlock;
 import dev.ehtid.thaumcraft.golem.press.GolemPressBlockEntity;
 import dev.ehtid.thaumcraft.golem.press.GolemPressMenu;
+import dev.ehtid.thaumcraft.golem.press.GolemStoneTableBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -46,6 +47,11 @@ public final class GolemModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GolemPressBlockEntity>> PRESS_ENTITY = BLOCK_ENTITIES.register(
             "golem_builder", () -> BlockEntityType.Builder.of(GolemPressBlockEntity::new, PRESS.get()).build(null));
     public static final DeferredItem<BlockItem> PRESS_ITEM = ITEMS.registerSimpleBlockItem(PRESS, new Item.Properties());
+    public static final DeferredHolder<Block, GolemStoneTableBlock> STONE_TABLE = BLOCKS.register("table_stone",
+            () -> new GolemStoneTableBlock(BlockBehaviour.Properties.of().strength(2.5F, 1.2F).noOcclusion()
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
+    public static final DeferredItem<BlockItem> STONE_TABLE_ITEM = ITEMS.registerSimpleBlockItem(STONE_TABLE, new Item.Properties());
     public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
     /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
     public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
@@ -99,6 +105,7 @@ public final class GolemModule {
             event.accept(FILL_SEAL.get());
             event.accept(EMPTY_SEAL.get());
             event.accept(PRESS_ITEM.get());
+            event.accept(STONE_TABLE_ITEM.get());
             event.accept(SIMPLE_MECHANISM.get());
             event.accept(CLOCKWORK_MIND.get());
         }
