@@ -27,7 +27,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean EMPTY_SCENARIO = "empty".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean LEAVE_SCENARIO = "leave".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean EMPTY_SCENARIO = LEAVE_SCENARIO || "empty".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean AREA_SCENARIO = EMPTY_SCENARIO || "area".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean BELL_SCENARIO = AREA_SCENARIO || "bell".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean CONTROLS_SCENARIO = BELL_SCENARIO || "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
@@ -130,6 +131,7 @@ public final class GolemRestartProbe {
             require(source != null && source.insertItem(0, new ItemStack(Items.EMERALD, 23), false).isEmpty(), "Persistent extraction source populated");
             golem.holdExtracted(new ItemStack(Items.DIAMOND, 3));
             require(golem.hasTransferRecovery(), "Unexpected payload retained beside incompatible normal cargo");
+            if (LEAVE_SCENARIO) require(data.configureLeaveOne(data.get(key), OWNER_ID, true), "Source pleave stored");
         }
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
@@ -189,6 +191,7 @@ public final class GolemRestartProbe {
             var source = dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level, key);
             require(source != null && ItemStack.matches(source.getStackInSlot(0), new ItemStack(Items.EMERALD, 23)), "Source stock restored exactly once");
             require(ItemStack.matches(golem.transferRecovery(), new ItemStack(Items.DIAMOND, 3)), "Actual recovery payload restored beside original cargo37");
+            if (LEAVE_SCENARIO) require(seal.leaveOne(), "Original pleave toggle restored from disk");
         }
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
