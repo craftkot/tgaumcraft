@@ -492,6 +492,22 @@ public final class LegacyGolemTaskTest {
         eq(List.of(mixedEntity,mixedBlock),TaskSelection.sorted(List.of(mixedBlock,mixedEntity),null,permissive(ALICE)));
     }
 
+    private static void emptyCycleSourceRules() {
+        int[] three={0,1,2,0,1,2,0};
+        for(int completed=0;completed<three.length;completed++) eq(three[completed],dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(completed,3));
+        int[] nine={0,1,2,3,4,5,6,7,8,0};
+        for(int completed=0;completed<nine.length;completed++) eq(nine[completed],dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(completed,9));
+        eq(0,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(Integer.MIN_VALUE,1));
+        eq(7,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(Integer.MAX_VALUE,8));
+        eq(2,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(-2,3));
+        eq(0,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(-3,3));
+        eq(1,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(-1,3));
+        eq(2,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(Integer.MIN_VALUE,3));
+        eq(1,dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(Integer.MAX_VALUE,3));
+        for(int count:new int[]{0,-1,10,Integer.MAX_VALUE})
+            rejects(IllegalArgumentException.class,()->dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(0,count));
+    }
+
     private static void farmSourceRules() {
         var crops=dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.values();
         eq(10,crops.length);
@@ -623,6 +639,7 @@ public final class LegacyGolemTaskTest {
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 0, false));
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, -1, true));
         eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, Long.MAX_VALUE, true));
+        emptyCycleSourceRules();
         farmSourceRules();
         taskSourceRules();
         allFaceAreas();

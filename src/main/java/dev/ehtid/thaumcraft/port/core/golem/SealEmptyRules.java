@@ -10,6 +10,12 @@ public final class SealEmptyRules {
         return Math.max(0, Math.min(cachedCount, carryCapacity));
     }
 
+    /** Advanced getInv: abs(completed % populated), omitting empty ghosts; cursor advances on completion. */
+    public static int cycleIndex(int completed,int populated) {
+        if(populated<1 || populated>9) throw new IllegalArgumentException("One to nine populated ghosts required");
+        return Math.abs(completed%populated);
+    }
+
     /** Source pleave subtracts one from fresh matching stock, never from a stale task budget. */
     public static int requested(int cachedCount, int carryCapacity, long stock, boolean leaveOne) {
         int reserve = leaveOne ? 1 : 0;
