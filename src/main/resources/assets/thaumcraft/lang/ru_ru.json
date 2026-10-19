@@ -403,5 +403,7 @@
   "menu.thaumcraft.golem_seal.replant": "Пересадка: вкл.",
   "menu.thaumcraft.golem_seal.no_replant": "Пересадка: выкл.",
   "menu.thaumcraft.golem_seal.provision": "Запрос семян: вкл.",
-  "menu.thaumcraft.golem_seal.no_provision": "Запрос семян: выкл."
+  "menu.thaumcraft.golem_seal.no_provision": "Запрос семян: выкл.",
+  "menu.thaumcraft.golem_seal.cycle": "Цикл фильтров",
+  "menu.thaumcraft.golem_seal.all_filters": "Все фильтры"
 }

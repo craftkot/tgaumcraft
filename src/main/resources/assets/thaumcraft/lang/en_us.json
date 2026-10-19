@@ -403,5 +403,7 @@
   "menu.thaumcraft.golem_seal.replant": "Replant: On",
   "menu.thaumcraft.golem_seal.no_replant": "Replant: Off",
   "menu.thaumcraft.golem_seal.provision": "Request seeds: On",
-  "menu.thaumcraft.golem_seal.no_provision": "Request seeds: Off"
+  "menu.thaumcraft.golem_seal.no_provision": "Request seeds: Off",
+  "menu.thaumcraft.golem_seal.cycle": "Cycle filters",
+  "menu.thaumcraft.golem_seal.all_filters": "All filters"
 }
