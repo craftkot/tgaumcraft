@@ -25,6 +25,8 @@ public final class GolemSealItem extends Item {
         this.type = type;
     }
 
+    @Override public InteractionResult onItemUseFirst(ItemStack stack,UseOnContext context) { return useOn(context); }
+
     @Override
     public InteractionResult useOn(UseOnContext context) {
         Player player = context.getPlayer();
@@ -55,14 +57,10 @@ public final class GolemSealItem extends Item {
             var existing = seals.get(new GolemSeals.SealKey(support, face));
             if (existing != null) {
                 if (existing.type() != type || !existing.owner().equals(player.getUUID())) return InteractionResult.FAIL;
-                var menu = new GolemSealMenu(0, player.getInventory(), level, existing);
-                if (!menu.stillValid(player)) return InteractionResult.FAIL;
-                player.openMenu(new SimpleMenuProvider((id, inventory, viewer) ->
-                        new GolemSealMenu(id, inventory, level, existing),
-                        Component.translatable("menu.thaumcraft.golem_seal.title")));
+                if(!dev.ehtid.thaumcraft.golem.menu.GolemSealMenus.open(player,level,existing)) return InteractionResult.FAIL;
                 return InteractionResult.CONSUME;
             }
-            if (type == GolemSeals.Type.EMPTY && dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level,
+            if ((type.extracts() || type==GolemSeals.Type.PROVIDE || type==GolemSeals.Type.STOCK) && dev.ehtid.thaumcraft.golem.inventory.GolemContainers.handler(level,
                     new GolemSeals.SealKey(support, face)) == null) return InteractionResult.FAIL;
             if (!seals.place(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
             if (!player.getAbilities().instabuild) held.shrink(1);
@@ -75,6 +73,6 @@ public final class GolemSealItem extends Item {
     }
 
     private String message(String action) {
-        return "message.thaumcraft.golem.seal." + switch (type) { case FILL -> "fill."; case EMPTY -> "empty."; default -> ""; } + action;
+        return "message.thaumcraft.golem.seal." + switch (type) { case FILL -> "fill."; case EMPTY -> "empty."; case EMPTY_ADVANCED -> "empty_advanced."; case PROVIDE -> "provider."; case STOCK -> "stock."; default -> ""; } + action;
     }
 }

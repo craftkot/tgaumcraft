@@ -95,7 +95,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         leaveOne.set(seal.leaveOne() ? 1 : 0);
         matchNbt.set(seal.filter().matchNbt() ? 1 : 0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
-        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case EMPTY -> 2; });
+        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; default -> 2; });
         limitLow.set(seal.filter().limit() & 0xffff);
         limitHigh.set(seal.filter().limit() >>> 16);
     }

@@ -57,13 +57,19 @@ public final class GolemSealCrafting {
 
     public static GolemSealRecipes.Conversion conversion(ItemStack stack, PlayerKnowledgeData knowledge,
                                                           AspectListData stored, AspectRegistry registry) {
-        return stack.is(GolemModule.BLANK_SEAL.get()) ? GolemSealRecipes.conversion(knowledge, stored, registry) : null;
+        var catalyst=stack.is(GolemModule.BLANK_SEAL.get())?GolemSealRecipes.Catalyst.BLANK
+                :stack.is(GolemModule.EMPTY_SEAL.get())?GolemSealRecipes.Catalyst.EMPTY
+                :stack.is(GolemModule.FILL_SEAL.get())?GolemSealRecipes.Catalyst.FILL
+                :stack.is(GolemModule.EMPTY_ADVANCED_SEAL.get())?GolemSealRecipes.Catalyst.EMPTY_ADVANCED:null;
+        return catalyst==null?null:GolemSealRecipes.conversion(catalyst,knowledge,stored,registry);
     }
 
     public static ItemStack product(GolemSealRecipes.Conversion recipe) {
         return new ItemStack(switch (recipe) {
             case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
             case EMPTY -> GolemModule.EMPTY_SEAL.get();
+            case EMPTY_ADVANCED -> GolemModule.EMPTY_ADVANCED_SEAL.get(); case PROVIDE -> GolemModule.PROVIDE_SEAL.get();
+            case STOCK -> GolemModule.STOCK_SEAL.get();
         });
     }
 }

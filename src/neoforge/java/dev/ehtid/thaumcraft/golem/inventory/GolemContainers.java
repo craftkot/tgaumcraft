@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.golem.inventory;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals.SealKey;
 import dev.ehtid.thaumcraft.golem.seal.SealFilter;
+import dev.ehtid.thaumcraft.golem.seal.LogisticsPolicy;
 import dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -17,6 +18,20 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 /** BETA26 SealFill basic strict filter, projected onto sided NeoForge item capabilities. */
 public final class GolemContainers {
     private GolemContainers() {}
+
+    public static ItemStack emptyCandidate(ServerLevel level, SealKey key, LogisticsPolicy policy, boolean leaveOne) {
+        var handler=handler(level,key);
+        if(handler==null) return ItemStack.EMPTY;
+        for(int i=0;i<handler.getSlots();i++) {
+            var actual=handler.getStackInSlot(i);
+            if(!policy.accepts(actual)) continue;
+            var filter=new SealFilter(actual,false,0,policy.matchNbt());
+            if(leaveOne && matchingStock(handler,actual,filter)<2) continue;
+            var preview=handler.extractItem(i,actual.getCount(),true);
+            if(!preview.isEmpty() && filter.matches(actual,preview)) return actual.copy();
+        }
+        return ItemStack.EMPTY;
+    }
 
     /** Source's first matching visible stack, cached per task. Counts are not filter limits. */
     public static ItemStack emptyCandidate(ServerLevel level, SealKey key, SealFilter filter) {
@@ -142,11 +157,15 @@ public final class GolemContainers {
     }
 
     public static int insertCarried(ThaumcraftGolem golem, IItemHandler target, SealFilter filter) {
+        return insertCarried(golem,target,filter,Integer.MAX_VALUE);
+    }
+
+    public static int insertCarried(ThaumcraftGolem golem, IItemHandler target, SealFilter filter,int maximum) {
         if (golem.level().isClientSide) return 0;
         EquipmentSlot slot = firstSlot(golem, filter);
         if (slot == null) return 0;
         ItemStack original = golem.getItemBySlot(slot).copy();
-        int requested = amount(target, original, filter); // Fresh count at actual completion, after other workers.
+        int requested = Math.min(maximum,amount(target, original, filter)); // Fresh count at actual completion, after other workers.
         if (requested <= 0) return 0;
         ItemStack retained = original.copy();
         ItemStack extracted = retained.split(requested);

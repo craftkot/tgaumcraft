@@ -72,6 +72,8 @@ public final class GolemModule {
             "golem_seal", () -> new MenuType<>(GolemSealMenu::new, FeatureFlags.VANILLA_SET));
     public static final DeferredHolder<MenuType<?>, MenuType<GolemPressMenu>> PRESS_MENU = MENUS.register(
             "golem_press", () -> new MenuType<>(GolemPressMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>,MenuType<dev.ehtid.thaumcraft.golem.menu.GolemLogisticsMenu>> LOGISTICS_MENU=MENUS.register(
+            "golem_logistics",()->new MenuType<>(dev.ehtid.thaumcraft.golem.menu.GolemLogisticsMenu::new,FeatureFlags.VANILLA_SET));
 
     public static final DeferredHolder<EntityType<?>, EntityType<ThaumcraftGolem>> GOLEM = ENTITIES.register(
             "golem", () -> EntityType.Builder.of(ThaumcraftGolem::new, MobCategory.CREATURE)
@@ -86,6 +88,17 @@ public final class GolemModule {
             "seal_fill", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.FILL), new Item.Properties());
     public static final DeferredItem<GolemSealItem> EMPTY_SEAL = ITEMS.registerItem(
             "seal_empty", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.EMPTY), new Item.Properties());
+    public static final DeferredItem<GolemSealItem> EMPTY_ADVANCED_SEAL=ITEMS.registerItem("seal_empty_advanced",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.EMPTY_ADVANCED),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> PROVIDE_SEAL=ITEMS.registerItem("seal_provider",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.PROVIDE),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> STOCK_SEAL=ITEMS.registerItem("seal_stock",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.STOCK),new Item.Properties());
+
+    public static Item sealItem(dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type type) {
+        return switch(type) { case PICKUP->PICKUP_SEAL.get(); case FILL->FILL_SEAL.get(); case EMPTY->EMPTY_SEAL.get();
+            case EMPTY_ADVANCED->EMPTY_ADVANCED_SEAL.get(); case PROVIDE->PROVIDE_SEAL.get(); case STOCK->STOCK_SEAL.get(); };
+    }
 
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
@@ -115,6 +128,7 @@ public final class GolemModule {
             event.accept(PICKUP_SEAL.get());
             event.accept(FILL_SEAL.get());
             event.accept(EMPTY_SEAL.get());
+            event.accept(EMPTY_ADVANCED_SEAL.get()); event.accept(PROVIDE_SEAL.get()); event.accept(STOCK_SEAL.get());
             event.accept(PRESS_ITEM.get());
             event.accept(STONE_TABLE_ITEM.get());
             event.accept(SIMPLE_MECHANISM.get());

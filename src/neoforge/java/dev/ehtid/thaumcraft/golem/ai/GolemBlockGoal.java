@@ -35,7 +35,9 @@ public final class GolemBlockGoal extends Goal {
         cooldown = 5;
         assignment = GolemSeals.get(level).claimBlock(golem, this::canReach).orElse(null);
         if (assignment == null) return false;
-        destination = adjacentSpace(assignment.seal().pos());
+        var target=GolemSeals.get(level).blockTarget(level,golem,assignment);
+        if(target==null) return false;
+        destination = adjacentSpace(target.pos());
         return true;
     }
 
@@ -90,6 +92,7 @@ public final class GolemBlockGoal extends Goal {
         var target = target();
         if (target == null || !(golem.level() instanceof ServerLevel level)) return;
         Vec3 center = Vec3.atCenterOf(target.pos());
+        if(destination.distSqr(target.pos())>4) destination=adjacentSpace(target.pos());
         golem.getLookControl().setLookAt(center.x, center.y, center.z, 10, golem.getMaxHeadXRot());
         if (distance(target.pos()) <= 4) {
             done = GolemSeals.get(level).completeBlock(level, golem, assignment);

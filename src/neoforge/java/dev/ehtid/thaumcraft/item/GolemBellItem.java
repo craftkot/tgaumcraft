@@ -38,20 +38,14 @@ public final class GolemBellItem extends Item {
         if (seal == null) return InteractionResult.PASS;
         if (!seal.owner().equals(player.getUUID())) return InteractionResult.FAIL;
         if (player.isShiftKeyDown()) {
-            ItemStack returned = new ItemStack(switch (seal.type()) {
-                case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
-                case EMPTY -> GolemModule.EMPTY_SEAL.get();
-            });
+            ItemStack returned = new ItemStack(GolemModule.sealItem(seal.type()));
             Vec3 pos = Vec3.atCenterOf(key.pos()).add(key.face().getStepX()/1.7, key.face().getStepY()/1.7, key.face().getStepZ()/1.7);
             ItemEntity drop = new ItemEntity(level, pos.x, pos.y, pos.z, returned);
             if (!level.addFreshEntity(drop)) return InteractionResult.FAIL;
             if (!data.remove(seal, player.getUUID())) { drop.discard(); return InteractionResult.FAIL; }
             level.playSound(null, key.pos(), SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.BLOCKS, .5F, 1F);
         } else {
-            var menu = new GolemSealMenu(0, player.getInventory(), level, seal);
-            if (!menu.stillValid(player)) return InteractionResult.FAIL;
-            player.openMenu(new SimpleMenuProvider((id, inventory, viewer) -> new GolemSealMenu(id, inventory, level, seal),
-                    Component.translatable("menu.thaumcraft.golem_seal.title")));
+            if(!dev.ehtid.thaumcraft.golem.menu.GolemSealMenus.open(player,level,seal)) return InteractionResult.FAIL;
         }
         player.swing(context.getHand(), true);
         return InteractionResult.CONSUME;
