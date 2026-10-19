@@ -350,5 +350,12 @@
   "message.thaumcraft.golem.seal.empty.placed": "Empty seal placed: %s, %s, %s",
   "message.thaumcraft.golem.seal.empty.removed": "Empty seal removed",
   "message.thaumcraft.golem.follow": "Golem: follow",
-  "message.thaumcraft.golem.stay": "Golem: work here"
+  "message.thaumcraft.golem.stay": "Golem: work here",
+  "block.thaumcraft.golem_builder": "Golem Press",
+  "item.thaumcraft.mechanism_simple": "Simple Arcane Mechanism",
+  "item.thaumcraft.mind": "Clockwork Mind",
+  "container.thaumcraft.golem_press": "Golem Press",
+  "menu.thaumcraft.golem_press.start": "Assemble",
+  "menu.thaumcraft.golem_press.wood": "Wood · Basic · Walker",
+  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s"
 }

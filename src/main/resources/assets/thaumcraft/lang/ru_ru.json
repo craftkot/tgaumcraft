@@ -350,5 +350,12 @@
   "message.thaumcraft.golem.seal.empty.placed": "Печать опустошения установлена: %s, %s, %s",
   "message.thaumcraft.golem.seal.empty.removed": "Печать опустошения снята",
   "message.thaumcraft.golem.follow": "Голем: следовать",
-  "message.thaumcraft.golem.stay": "Голем: работать здесь"
+  "message.thaumcraft.golem.stay": "Голем: работать здесь",
+  "block.thaumcraft.golem_builder": "Голем-пресс",
+  "item.thaumcraft.mechanism_simple": "Простой магический механизм",
+  "item.thaumcraft.mind": "Заводной разум",
+  "container.thaumcraft.golem_press": "Голем-пресс",
+  "menu.thaumcraft.golem_press.start": "Собрать",
+  "menu.thaumcraft.golem_press.wood": "Дерево · Базовый · Шагающий",
+  "menu.thaumcraft.golem_press.progress": "Machina: %s / %s"
 }
