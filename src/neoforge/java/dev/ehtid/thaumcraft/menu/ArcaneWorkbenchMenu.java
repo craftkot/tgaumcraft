@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
 import dev.ehtid.thaumcraft.port.core.LegacyBellowsArcaneRecipe;
 import dev.ehtid.thaumcraft.golem.crafting.GolemSealCrafting;
+import dev.ehtid.thaumcraft.golem.crafting.GolemComponentCrafting;
 import dev.ehtid.thaumcraft.golem.GolemModule;
 import dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes;
 import dev.ehtid.thaumcraft.port.core.LegacyTubeBufferArcaneRecipe;
@@ -72,6 +73,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 return super.tryRemove(amount, maximum, player);
             }
             @Override public boolean mayPickup(Player player) {
+                if (GolemComponentCrafting.isProduct(getItem()))
+                    return player == owner && player instanceof ServerPlayer sp
+                            && ItemStack.isSameItemSameComponents(getItem(), GolemComponentCrafting.preview(bench, sp, 0.0F));
                 if (player instanceof ServerPlayer sp && getItem().is(GolemModule.BLANK_SEAL.get()))
                     return GolemSealCrafting.canCraftBlank(bench, sp, 0.0F);
                 if (player instanceof ServerPlayer sp) return canCraftCurrentRecipe(sp, 0.0F);
@@ -134,6 +138,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                     return dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.BASE_VIS;
                 if (workbench.selectedTubeUpgrade() != null)
                     return LegacyEssentiaTubeUpgradeRecipes.VIS;
+                var golemComponent = GolemComponentCrafting.recipe(bench);
+                if (golemComponent != null) return golemComponent.vis;
                 if (GolemSealCrafting.matchesBlank(bench)) return GolemSealRecipes.VIS;
                 if (workbench.matchesBellowsPattern()) return LegacyBellowsArcaneRecipe.VIS;
                 if (workbench.matchesSmelterAttachmentPattern(LegacySmelterAttachmentArcaneRecipe.Kind.AUX))
@@ -165,6 +171,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return new DataSlot() {
             @Override public int get() {
                 if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                var golemComponent = GolemComponentCrafting.recipe(bench);
+                if (golemComponent != null) return golemComponent.crystalMask;
                 if (GolemSealCrafting.matchesBlank(bench)) return 1;
                 if (workbench.matchesThaumometerPattern()) return 0b111111;
                 if (workbench.matchesVisResonatorPattern())
@@ -451,7 +459,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
-        return GolemSealCrafting.canCraftBlank(bench, player, totalDiscount)
+        return GolemComponentCrafting.canCraft(bench, player, totalDiscount)
+                || GolemSealCrafting.canCraftBlank(bench, player, totalDiscount)
                 || canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
@@ -515,6 +524,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
 
     private ItemStack craftSelectedRecipe(ServerPlayer player, ItemStack expected,
                                           float totalDiscount) {
+        ItemStack component = GolemComponentCrafting.craft(bench, player, expected, totalDiscount);
+        if (!component.isEmpty()) { refreshResult(); return component; }
         if (expected.is(GolemModule.BLANK_SEAL.get()) && GolemSealCrafting.craftBlank(bench, player, totalDiscount))
             return new ItemStack(GolemModule.BLANK_SEAL.get(), GolemSealRecipes.BLANK_OUTPUT);
         if (expected.is(ThaumcraftItems.THAUMOMETER.get())
@@ -575,7 +586,9 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private void refreshResult() {
-        if (owner instanceof ServerPlayer sp && GolemSealCrafting.canCraftBlank(bench, sp, 0.0F))
+        if (owner instanceof ServerPlayer sp && GolemComponentCrafting.canCraft(bench, sp, 0.0F))
+            result.setItem(0, GolemComponentCrafting.product(GolemComponentCrafting.recipe(bench)));
+        else if (owner instanceof ServerPlayer sp && GolemSealCrafting.canCraftBlank(bench, sp, 0.0F))
             result.setItem(0, new ItemStack(GolemModule.BLANK_SEAL.get(), GolemSealRecipes.BLANK_OUTPUT));
         else if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
             result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
