@@ -358,5 +358,16 @@
   "menu.thaumcraft.golem_press.start": "Assemble",
   "menu.thaumcraft.golem_press.wood": "Wood · Basic · Walker",
   "menu.thaumcraft.golem_press.progress": "Machina: %s / %s",
-  "block.thaumcraft.table_stone": "Stone Table"
+  "block.thaumcraft.table_stone": "Stone Table",
+  "item.thaumcraft.seal_empty_advanced": "Advanced Empty Seal",
+  "item.thaumcraft.seal_provider": "Provide Seal",
+  "item.thaumcraft.seal_stock": "Stock Seal",
+  "message.thaumcraft.golem.seal.empty_advanced.placed": "Advanced Empty seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.empty_advanced.removed": "Advanced Empty seal removed",
+  "message.thaumcraft.golem.seal.provider.placed": "Provide seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.provider.removed": "Provide seal removed",
+  "message.thaumcraft.golem.seal.stock.placed": "Stock seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.stock.removed": "Stock seal removed",
+  "menu.thaumcraft.golem_seal.single": "One item",
+  "menu.thaumcraft.golem_seal.batch": "Whole request"
 }

@@ -358,5 +358,16 @@
   "menu.thaumcraft.golem_press.start": "Собрать",
   "menu.thaumcraft.golem_press.wood": "Дерево · Базовый · Шагающий",
   "menu.thaumcraft.golem_press.progress": "Machina: %s / %s",
-  "block.thaumcraft.table_stone": "Каменный стол"
+  "block.thaumcraft.table_stone": "Каменный стол",
+  "item.thaumcraft.seal_empty_advanced": "Улучшенная печать опустошения",
+  "item.thaumcraft.seal_provider": "Печать снабжения",
+  "item.thaumcraft.seal_stock": "Печать запаса",
+  "message.thaumcraft.golem.seal.empty_advanced.placed": "Улучшенная печать опустошения установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.empty_advanced.removed": "Улучшенная печать опустошения снята",
+  "message.thaumcraft.golem.seal.provider.placed": "Печать снабжения установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.provider.removed": "Печать снабжения снята",
+  "message.thaumcraft.golem.seal.stock.placed": "Печать запаса установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.stock.removed": "Печать запаса снята",
+  "menu.thaumcraft.golem_seal.single": "Один предмет",
+  "menu.thaumcraft.golem_seal.batch": "Вся заявка"
 }
