@@ -9,12 +9,21 @@ public final class GolemSealRecipes {
     public static final String BLANK_RESEARCH = "CONTROLSEALS";
     public static final int VIS = 20, BLANK_OUTPUT = 3, ESSENTIA = 10;
     public enum Ingredient { EMPTY, CLAY, TALLOW, RED_DYE, NITOR, OTHER }
+    public enum Catalyst { BLANK, EMPTY, FILL, EMPTY_ADVANCED }
     public enum Conversion {
-        PICKUP("SEALCOLLECT"), FILL("SEALSTORE"), EMPTY("SEALEMPTY");
+        PICKUP("SEALCOLLECT",Catalyst.BLANK,"desiderium"), FILL("SEALSTORE",Catalyst.BLANK,"aversio"),
+        EMPTY("SEALEMPTY",Catalyst.BLANK,"vacuos"),
+        EMPTY_ADVANCED("SEALEMPTY&&MINDBIOTHAUMIC",Catalyst.EMPTY,"sensus","cognitio"),
+        PROVIDE("SEALPROVIDE",Catalyst.EMPTY_ADVANCED,"permutatio","desiderium"),
+        STOCK("SEALSTOCK",Catalyst.FILL,"cognitio","desiderium");
         public final String research;
-        Conversion(String research) { this.research = research; }
+        public final Catalyst catalyst;
+        public final List<String> aspects;
+        Conversion(String research,Catalyst catalyst,String... aspects) {
+            this.research=research; this.catalyst=catalyst; this.aspects=List.of(aspects);
+        }
         public AspectData aspect(AspectRegistry registry) {
-            return switch (this) { case PICKUP -> registry.DESIRE; case FILL -> registry.AVERSION; case EMPTY -> registry.VOID; };
+            return registry.get(aspects.getFirst());
         }
     }
 
@@ -32,11 +41,16 @@ public final class GolemSealRecipes {
     }
 
     public static Conversion conversion(PlayerKnowledgeData knowledge, AspectListData stored, AspectRegistry registry) {
+        return conversion(Catalyst.BLANK,knowledge,stored,registry);
+    }
+
+    public static Conversion conversion(Catalyst catalyst,PlayerKnowledgeData knowledge, AspectListData stored, AspectRegistry registry) {
         if (knowledge == null) return null;
         for (Conversion recipe : Conversion.values())
-            if (knowledge.isResearchKnown(recipe.research) && amount(stored, recipe.aspect(registry).tag()) >= ESSENTIA)
+            if (recipe.catalyst==catalyst && java.util.Arrays.stream(recipe.research.split("&&")).allMatch(knowledge::isResearchKnown)
+                    && recipe.aspects.stream().allMatch(tag->amount(stored,tag)>=ESSENTIA))
                 return recipe;
-        return null; // Both source costs are 10: insertion order wins ties.
+        return null; // Same-catalyst basic recipes cost10: insertion order wins ties.
     }
 
     public static long amount(AspectListData stored, String tag) {
@@ -46,9 +60,10 @@ public final class GolemSealRecipes {
     }
 
     public static AspectListData afterCraft(AspectListData stored, Conversion recipe, AspectRegistry registry) {
-        String tag = recipe.aspect(registry).tag();
-        if (amount(stored, tag) < ESSENTIA) throw new IllegalArgumentException("Missing seal essentia");
+        if(recipe.aspects.stream().anyMatch(tag->amount(stored,tag)<ESSENTIA))
+            throw new IllegalArgumentException("Missing seal essentia");
         var result = stored.copy();
+        for(String tag:recipe.aspects) {
         int remaining = ESSENTIA;
         // Runtime scanners and tiles use separate registries; canonical identity is the legacy aspect tag.
         for (AspectData aspect : stored.getAspects()) {
@@ -56,6 +71,7 @@ public final class GolemSealRecipes {
             int debit = Math.min(remaining, stored.getAmount(aspect));
             result.remove(aspect, debit); remaining -= debit;
             if (remaining == 0) break;
+        }
         }
         return result;
     }

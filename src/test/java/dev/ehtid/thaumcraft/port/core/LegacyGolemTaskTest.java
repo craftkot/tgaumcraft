@@ -461,6 +461,35 @@ public final class LegacyGolemTaskTest {
         eq(16, ProvisionRules.pickupAmount(16, 64, Long.MAX_VALUE, false, true));
         eq(7, ProvisionRules.pickupAmount(16, 64, 7, false, false));
         eq(2, ProvisionRules.pickupAmount(16, 2, 7, false, false));
+        var registry=new AspectRegistry(); var knowledge=new PlayerKnowledgeData();
+        var advanced=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.EMPTY_ADVANCED;
+        var aspects=new AspectListData().add(registry.SENSES,10).add(registry.MIND,10);
+        var emptyCatalyst=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.EMPTY;
+        knowledge.addResearch("SEALEMPTY");
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(emptyCatalyst,knowledge,aspects,registry));
+        knowledge.addResearch("MINDBIOTHAUMIC");
+        eq(advanced,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(emptyCatalyst,knowledge,aspects,registry));
+        eq(List.of("sensus","cognitio"),advanced.aspects);
+        eq(0L,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(aspects,advanced,registry),"cognitio"));
+        eq(10L,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(aspects,"cognitio"));
+        for(var recipe:List.of(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PROVIDE,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.STOCK)) {
+            var exact=new AspectListData();
+            for(var tag:recipe.aspects) exact.add(registry.get(tag),10);
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,exact,registry));
+            knowledge.addResearch(recipe.research);
+            eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,exact,registry));
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(
+                    dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,knowledge,exact,registry));
+            var after=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(exact,recipe,registry);
+            for(var tag:recipe.aspects) eq(0L,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.amount(after,tag));
+            exact.remove(registry.get(recipe.aspects.getLast()),1);
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,exact,registry));
+            rejects(IllegalArgumentException.class,()->dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(exact,recipe,registry));
+        }
+        var mixedBlock=block(600,10); var mixedEntity=GolemTask.entity(601,null,BOB); mixedEntity.setPriority((byte)5);
+        eq(List.of(mixedEntity,mixedBlock),TaskSelection.sorted(List.of(mixedBlock,mixedEntity),null,permissive(ALICE)));
     }
 
     public static void main(String[] args) throws InterruptedException {

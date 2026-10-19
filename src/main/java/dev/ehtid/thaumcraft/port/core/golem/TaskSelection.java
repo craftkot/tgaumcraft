@@ -57,13 +57,13 @@ public final class TaskSelection {
                                          GolemTask.Type type, Context context) {
         List<Candidate> candidates = new ArrayList<>();
         for (GolemTask task : tasks) {
-            if (task.getType() != type || task.isReserved() || task.isSuspended()
+            if (type != null && task.getType() != type || task.isReserved() || task.isSuspended()
                     || task.isCompleted() || task.getLifespan() <= 0) continue;
             if (context.golemId != null && task.getGolemUUID() != null
                     && !context.golemId.equals(task.getGolemUUID())) continue;
 
             Position target;
-            if (type == GolemTask.Type.BLOCK) {
+            if (task.getType() == GolemTask.Type.BLOCK) {
                 SealArea.BlockPos pos = task.getPos();
                 target = new Position(pos.x(), pos.y(), pos.z());
             } else {

@@ -264,3 +264,8 @@ Core request lifecycle не означает готовые Provide/Stock items,
 Все прежние81 tests прошли, включая Salis formation/rollback/teardown/component chain/navigation/ItemHandlers/menu/persisted-state fixtures. JAR CRC/content PASS: `build/libs/thaumcraft-6.1.BETA26-port.stage9.jar`, SHA256 `3e3b91696b76ef02bcfd6b91d95a34094be791b198bcfefd02a19bf6d746f4d4`.
 
 Новый regular-server cold WRITE/READ и Minecraft client не запускались; новых NBT fields/сохраняемых заявок нет. Исходный ephemeral lifecycle не доказывает восстановление будущего Provide transport. Старые cold PASS не переименованы в M10.18. Live chunk unload/crash atomicity/full progression/Provide-Stock gameplay остаются непроверенными. Новых общих integration files в этом срезе нет, Core runner неизменен. M10 и59/100 не закрываются.
+
+
+## M10.19 — Core recipes и mixed task selection, 19.10.2026
+
+Fresh main a4280834, base399a306, CI #386 verify-connection SUCCESS. Java21 полный `bash tools/run_core_parity.sh` **PASS**, construction35048/task2202,20 новых assertions: точные catalysts/оба aspects/двойной research requisites/пограничные отрицательные оплаты и общий priority/distance порядок block+entity. Лог `/workspace/reference/golems-logistics-core-final.log`; runner не менялся. Full native/cold относятся к следующим commits этого среза, не подменяются Core результатом. Исследованы ConfigRecipes/SealEmptyAdvanced и предварительно SealHarvest из официального BETA26 JAR, dumps только внеGit.
