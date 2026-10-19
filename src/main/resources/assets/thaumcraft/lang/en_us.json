@@ -343,6 +343,8 @@
   "item.thaumcraft.seal_blank": "Blank Control Seal",
   "item.thaumcraft.golem_bell": "Golemancer’s Bell",
   "item.thaumcraft.seal_empty": "Seal: Empty",
+  "menu.thaumcraft.golem_seal.leave_one": "Leave one in source",
+  "menu.thaumcraft.golem_seal.take_all": "Take all from source",
   "message.thaumcraft.golem.seal.empty.placed": "Empty seal placed: %s, %s, %s",
   "message.thaumcraft.golem.seal.empty.removed": "Empty seal removed",
   "message.thaumcraft.golem.follow": "Golem: follow",
