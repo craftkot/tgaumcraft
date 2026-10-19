@@ -166,3 +166,11 @@ Java21 полный Core runner PASS (`golems-dyes-core.log`), construction34808
 Новый NBT roundtrip сохраняет оплаченный black16, FLAGS follow, точный cargo/components без нового красителя; прежний Bell cold-restart уже проверил тот же формат COLOR/color на диске с color6. Новых persisted полей нет: холодный dedicated restart в M10.9 повторно не запускался, историческое доказательство не выдаётся за новый прогон. Новые тесты не меняют registry/tag содержимое, не подменяют transfer/goal policy. Модовый custom multi-tag предмет отдельно не испытывался; порядок неоднозначных tag matches документирован в дизайне.
 
 JAR ZIP CRC PASS / SHA256 `23909ddd1161737bc6a1ad9720521389617ec10563998aae66c5459e8adae503`. Authlib publickeys network warning не помешал offline GameTestServer; все38 required scenarios фактически завершились успешно. Клиент, цветовая лента/исходный renderer/zap, live unload и аварийная атомарность transfer не проверены. M10/общая оценка59/100 не закрываются.
+
+## M10.10 — область Pickup, 19.10.2026
+
+Java21 полный Core runner PASS (`golems-area-core.log`): construction34808, task/filter/recipe/Bell/dye/area1055 assertions. Полный `build -x test runGolemGameTest` с optional init script: **42/42 required GameTests и build PASS**,1m2s, первый запуск (`golems-area-build.log`). Четыре новых сценария: owner/range/stale nonce +actions90…95 +bounds1…8 +Fill rejection +NBT/default/invalid data; реальные шесть face producers/claims/pickup из одного outward блока; shrink cancellation/expand fresh assignment/remote no forced load; автономный Pickup/path/Fill после расширения через реальное меню, сохранность emerald7 каждый tick.
+
+Клиентские controls используют свободную строку Pickup, скрыты для Fill; размеры экрана/слоты прежние. Новые DataSlots/buttons скомпилированы и server authority проверена, но графическое отображение/packet rendering/area overlay не запускались. Перечень тестов не подменяет эту клиентскую проверку.
+
+JAR ZIP CRC PASS/SHA256 `514c79f4cc68162bd6e32dc0116ff90725caacde31e2a1286f3ac264f8df3998`. Isolated cold scenario `-PgolemRestartScenario=area` в `build/golem-area-restart` сохраняет asymmetric area2,3,4 и все прежние Bell+controls/filter/entity/cargo assertions; фактический cold итог добавляется после двух процессов. Старые test worlds не переиспользуются и не удаляются.

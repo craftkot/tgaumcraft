@@ -18,6 +18,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu> {
     private Button mode, lock, redstone;
     private final Button[] limits = new Button[4];
+    private final Button[] areas = new Button[6];
 
     public GolemSealScreen(GolemSealMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -44,6 +45,12 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
             limits[i] = addRenderableWidget(Button.builder(Component.literal(labels[i]), b -> send(id))
                     .bounds(leftPos + 8 + i * 41, topPos + 74, 37, 16).build());
         }
+        int[] actions = {92, 93, 90, 91, 94, 95}; // X-/X+/Y-/Y+/Z-/Z+
+        for (int i = 0; i < areas.length; i++) {
+            final int action = actions[i];
+            areas[i] = addRenderableWidget(Button.builder(Component.literal(i % 2 == 0 ? "−" : "+"), b -> send(action))
+                    .bounds(leftPos + 8 + i / 2 * 54 + i % 2 * 27, topPos + 74, 22, 16).build());
+        }
         addRenderableWidget(Button.builder(Component.literal("−"), b -> send(80)).bounds(leftPos+8, topPos+98, 24, 18).build());
         addRenderableWidget(Button.builder(Component.literal("+"), b -> send(81)).bounds(leftPos+144, topPos+98, 24, 18).build());
         addRenderableWidget(Button.builder(Component.literal("−"), b -> send(82)).bounds(leftPos+8, topPos+118, 24, 18).build());
@@ -56,6 +63,12 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     private void updateControls() {
         lock.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.locked() ? "locked" : "public")));
         redstone.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.redstone() ? "redstone_stop" : "redstone_ignore")));
+        int[] sizes = {menu.areaX(), menu.areaY(), menu.areaZ()};
+        for (int i = 0; i < areas.length; i++) {
+            areas[i].visible = menu.hasArea();
+            areas[i].active = menu.hasArea() && (i % 2 == 0 ? sizes[i / 2] > 1 : sizes[i / 2] < 8);
+        }
+        for (Button button : limits) button.visible = button.active = menu.hasLimit();
     }
 
     @Override protected void containerTick() {
@@ -85,6 +98,14 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
             Component value = menu.limit() == 0 ? Component.translatable("menu.thaumcraft.golem_seal.unlimited")
                     : Component.literal(Integer.toString(menu.limit()));
             g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.limit", value), 8, 65, 0x404040, false);
+        }
+        if (menu.hasArea()) {
+            int[] sizes = {menu.areaX(), menu.areaY(), menu.areaZ()};
+            String[] axes = {"X", "Y", "Z"};
+            for (int i = 0; i < axes.length; i++) {
+                String value = axes[i] + ": " + sizes[i];
+                g.drawString(font, value, 8 + i * 54 + (49 - font.width(value)) / 2, 65, 0x404040, false);
+            }
         }
     }
 

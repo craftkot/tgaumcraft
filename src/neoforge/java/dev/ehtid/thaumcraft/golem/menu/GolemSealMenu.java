@@ -3,6 +3,8 @@ package dev.ehtid.thaumcraft.golem.menu;
 import dev.ehtid.thaumcraft.golem.GolemModule;
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals;
 import dev.ehtid.thaumcraft.golem.seal.SealFilter;
+import dev.ehtid.thaumcraft.port.core.golem.SealArea;
+import dev.ehtid.thaumcraft.port.core.golem.SealAreaControls;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
@@ -26,6 +28,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
 
     private final DataSlot priority = DataSlot.standalone(), color = DataSlot.standalone();
     private final DataSlot locked = DataSlot.standalone(), redstone = DataSlot.standalone();
+    private final DataSlot areaX = DataSlot.standalone(), areaY = DataSlot.standalone(), areaZ = DataSlot.standalone();
 
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
 
@@ -46,6 +49,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(limitLow);
         addDataSlot(limitHigh);
         addDataSlot(priority); addDataSlot(color); addDataSlot(locked); addDataSlot(redstone);
+        addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
         refresh();
     }
 
@@ -69,6 +73,10 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public int color() { return color.get(); }
     public boolean locked() { return locked.get() != 0; }
     public boolean redstone() { return redstone.get() != 0; }
+    public boolean hasArea() { return fill.get() == 0; }
+    public int areaX() { return areaX.get(); }
+    public int areaY() { return areaY.get(); }
+    public int areaZ() { return areaZ.get(); }
 
     private void refresh() {
         var seal = current();
@@ -76,6 +84,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         ghost.setItem(0, seal.filter().item());
         priority.set(seal.priority()); color.set(seal.color());
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
+        areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
         fill.set(seal.type() == GolemSeals.Type.FILL ? 1 : 0);
         limitLow.set(seal.filter().limit() & 0xffff);
@@ -117,6 +126,17 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
         var seal = current();
+        if (id >= 90 && id <= 95) {
+            if (seal.type() != GolemSeals.Type.PICKUP) return false;
+            var size = new SealArea.BlockPos(seal.area().getX(), seal.area().getY(), seal.area().getZ());
+            var adjusted = SealAreaControls.adjust(size, id);
+            if (adjusted.isEmpty()) return false;
+            var next = adjusted.get();
+            boolean result = GolemSeals.get(level).configureArea(expected, player.getUUID(),
+                    new net.minecraft.core.BlockPos(next.x(), next.y(), next.z()));
+            if (result) broadcastChanges();
+            return result;
+        }
         if (id == 25 || id == 26 || id == 27 || id == 28 || id >= 80 && id <= 83) {
             int nextPriority = seal.priority() + (id == 80 ? -1 : id == 81 ? 1 : 0);
             int nextColor = seal.color() + (id == 82 ? -1 : id == 83 ? 1 : 0);

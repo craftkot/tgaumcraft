@@ -6,6 +6,7 @@ import dev.ehtid.thaumcraft.golem.inventory.GolemContainers;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTrait;
 import dev.ehtid.thaumcraft.port.core.golem.SealArea;
+import dev.ehtid.thaumcraft.port.core.golem.SealAreaControls;
 import dev.ehtid.thaumcraft.port.core.golem.TaskBoard;
 import dev.ehtid.thaumcraft.port.core.golem.TaskSelection;
 import net.minecraft.core.BlockPos;
@@ -61,9 +62,13 @@ public final class GolemSeals extends SavedData {
     }
 
     public record Seal(SealKey key, UUID owner, byte priority, byte color, boolean locked, Type type,
-                       SealFilter filter, UUID instanceId, boolean redstone) {
+                       SealFilter filter, UUID instanceId, boolean redstone, BlockPos area) {
+        public Seal {
+            area = area.immutable();
+            if (!validArea(area)) throw new IllegalArgumentException("Seal area outside1..8");
+        }
         public Seal(SealKey key, UUID owner, byte priority, byte color, boolean locked, Type type) {
-            this(key, owner, priority, color, locked, type, SealFilter.defaults(), UUID.randomUUID(), false);
+            this(key, owner, priority, color, locked, type, SealFilter.defaults(), UUID.randomUUID(), false, defaultArea(key));
         }
     }
 
@@ -137,7 +142,7 @@ public final class GolemSeals extends SavedData {
         if (current == null || !current.instanceId().equals(expected.instanceId()) || !current.owner().equals(owner))
             return false;
         return replace(current, new Seal(current.key(), current.owner(), current.priority(), current.color(),
-                current.locked(), current.type(), java.util.Objects.requireNonNull(filter), current.instanceId(), current.redstone()));
+                current.locked(), current.type(), java.util.Objects.requireNonNull(filter), current.instanceId(), current.redstone(), current.area()));
     }
 
     public boolean configureControls(Seal expected, UUID owner, int priority, int color, boolean locked, boolean redstone) {
@@ -145,7 +150,15 @@ public final class GolemSeals extends SavedData {
         if (current == null || !current.instanceId().equals(expected.instanceId()) || !current.owner().equals(owner)
                 || priority < -5 || priority > 5 || color < 0 || color > 16) return false;
         return replace(current, new Seal(current.key(), current.owner(), (byte) priority, (byte) color,
-                locked, current.type(), current.filter(), current.instanceId(), redstone));
+                locked, current.type(), current.filter(), current.instanceId(), redstone, current.area()));
+    }
+
+    public boolean configureArea(Seal expected, UUID owner, BlockPos area) {
+        Seal current = expected == null ? null : seals.get(expected.key());
+        if (current == null || current.type() != Type.PICKUP || !current.owner().equals(owner)
+                || !current.instanceId().equals(expected.instanceId()) || !validArea(area)) return false;
+        return replace(current, new Seal(current.key(), current.owner(), current.priority(), current.color(),
+                current.locked(), current.type(), current.filter(), current.instanceId(), current.redstone(), area));
     }
 
     private boolean replace(Seal current, Seal replacement) {
@@ -211,7 +224,7 @@ public final class GolemSeals extends SavedData {
                 continue;
             }
             if (Math.floorMod(level.getGameTime() + phase++, 5) != 0) continue;
-            for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, bounds(seal.key()),
+            for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, bounds(seal),
                     entity -> entity.isAlive() && entity.onGround() && !entity.hasPickUpDelay()
                             && seal.filter().accepts(entity.getItem()))) {
                 if (!level.hasChunkAt(item.blockPosition()) || itemTasks.containsKey(item.getUUID())) continue;
@@ -427,10 +440,27 @@ public final class GolemSeals extends SavedData {
 
     /** Original default area: one outward block, 5 blocks on both tangent axes. */
     public static AABB bounds(SealKey key) {
-        SealArea.Bounds bounds = SealArea.defaults(corePos(key)).bounds();
+        return bounds(key, defaultArea(key));
+    }
+
+    public static AABB bounds(Seal seal) { return bounds(seal.key(), seal.area()); }
+
+    private static AABB bounds(SealKey key, BlockPos area) {
+        SealArea.Bounds bounds = new SealArea(corePos(key), coreArea(area)).bounds();
         return new AABB(bounds.minX(), bounds.minY(), bounds.minZ(),
                 bounds.maxX(), bounds.maxY(), bounds.maxZ());
     }
+
+    private static BlockPos defaultArea(SealKey key) {
+        var size = SealArea.defaults(corePos(key)).size();
+        return new BlockPos(size.x(), size.y(), size.z());
+    }
+
+    private static SealArea.BlockPos coreArea(BlockPos area) {
+        return new SealArea.BlockPos(area.getX(), area.getY(), area.getZ());
+    }
+
+    private static boolean validArea(BlockPos area) { return area != null && SealAreaControls.valid(coreArea(area)); }
 
     public static GolemSeals load(CompoundTag tag, HolderLookup.Provider registries) {
         GolemSeals data = new GolemSeals();
@@ -442,10 +472,13 @@ public final class GolemSeals extends SavedData {
             if ((!PICKUP_KEY.equals(typeKey) && !FILL_KEY.equals(typeKey)) || face < 0 || face >= Direction.values().length
                     || row.getString("owner").isEmpty()) continue;
             SealKey key = new SealKey(BlockPos.of(row.getLong("pos")), Direction.values()[face]);
+            BlockPos area = row.contains("area", Tag.TAG_LONG) ? BlockPos.of(row.getLong("area")) : defaultArea(key);
+            // Old worlds used default sizes. Malformed/oversized external data cannot grow a scan unboundedly.
+            if (FILL_KEY.equals(typeKey) || !validArea(area)) area = defaultArea(key);
             try {
                 data.seals.putIfAbsent(key, new Seal(key, UUID.fromString(row.getString("owner")),
                         row.getByte("priority"), row.getByte("color"), row.getBoolean("locked"),
-                        FILL_KEY.equals(typeKey) ? Type.FILL : Type.PICKUP, SealFilter.load(row, registries), UUID.randomUUID(), row.getBoolean("redstone")));
+                        FILL_KEY.equals(typeKey) ? Type.FILL : Type.PICKUP, SealFilter.load(row, registries), UUID.randomUUID(), row.getBoolean("redstone"), area));
             } catch (IllegalArgumentException ignored) {
                 // Invalid external data must not become a seal owned by everybody.
             }
@@ -467,10 +500,7 @@ public final class GolemSeals extends SavedData {
             row.putBoolean("locked", seal.locked());
             row.putBoolean("redstone", seal.redstone());
             seal.filter().save(row, registries);
-            // Configurable areas remain deferred.
-            row.putLong("area", new BlockPos(seal.key().face().getStepX() == 0 ? 3 : 1,
-                    seal.key().face().getStepY() == 0 ? 3 : 1,
-                    seal.key().face().getStepZ() == 0 ? 3 : 1).asLong());
+            row.putLong("area", seal.area().asLong());
             rows.add(row);
         }
         tag.put("seals", rows);

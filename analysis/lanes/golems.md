@@ -217,3 +217,6 @@ Core runner Java21 PASS; full build/42-test suite запущен. Новый iso
 Фактический runtime итог: **full Core runner PASS** (construction34808, task/filter/recipe/Bell/dye/area1055); **full NeoForge build и42/42 required GameTests PASS с первого запуска** (`golems-area-build.log`,1m2s). Четыре новых server tests включают реальные scan/claim/pickup на всех6 гранях, menu/typed NBT/legacy fallback, cancellation+expand и автономный path/Fill с per-tick conservation7. JAR CRC PASS/SHA256 `514c79f4cc68162bd6e32dc0116ff90725caacde31e2a1286f3ac264f8df3998`. Cold WRITE запущен в отдельном новом `build/golem-area-restart`/port25593; старые fixtures не затрагиваются.
 
 Первый area commit выделяет pure Core menu actions/границы и14 дополнительных assertions. Runtime/меню/producer/4 GameTests и документация следуют вторым, cold fixture/итог — третьим малым commit. Все production/test исходники уже присутствовали в прошедшем42/42.
+
+- `4805a9d` — pure Core source area actions/bounds +14 assertions, общий runner без изменений.
+- Этот runtime commit выделяет persisted area/service/menu/client controls/producer и4 GameTests с дизайном/протоколом. Cold probe/optional init script будут отдельным следующим commit после WRITE/READ. Нет изменений в общих registry/локализациях/build.gradle/CI/research data; старые menu packet IDs сохранены.
