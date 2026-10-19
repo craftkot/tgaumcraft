@@ -205,3 +205,15 @@ Fresh remote main `a4280834`, feature HEAD `d53e87c`, clean tree; CI #372 verify
 
 - `d703727` — Core legacy/modern color mapping и87 дополнительных assertions, общий runner без изменений.
 - Следующий runtime commit содержит только lane-local dye adapter/entity interaction/5 GameTests и документы. JAR CRC PASS/SHA256 `23909ddd1161737bc6a1ad9720521389617ec10563998aae66c5459e8adae503`. Новый NBT roundtrip PASS; cold restart не повторялся, формат прежний и ранее проверен Bell WRITE/READ. Клиент/лента/исходный zap не готовы. Затем продолжается source-аудит области печати; завершённое окрашивание не объявляет закрытым весь M10.
+
+- `1beefd8` — paid owner dye interaction/standard tags/5 GameTests и протокол;38/38 PASS. Оба dye commits опубликованы обычным fast-forward push, remote feature/golems=1beefd8.
+
+## M10.10 — исходная область Pickup, 19.10.2026
+
+Продолжение после завершённого окрашивания. Подтверждены ISealConfigArea только у Pickup (не Fill), defaults по нормали/касательным, packed area NBT, source actions90…95 и bounds1…8 из SealBaseContainer. Core geometry всех6 граней уже существовала и переиспользована. Добавлены14 Core assertions (итого1055), persisted immutable area и owner/nonce guards, server menu DataSlots/buttons, producer с configured bounds и4 реальных GameTest. GUI использует свободную строку Pickup, размер/слоты/общие локализации не меняются.
+
+Core runner Java21 PASS; full build/42-test suite запущен. Новый isolated cold scenario=area подготовлен для asymmetric2,3,4 с прежними cargo/filter/control/FLAGS assertions; исход ниже после выполнения. Существующие Bell/controls/filter/fill worlds не меняются. M10/59/100 без изменений, чужие ветки/общие registry/build.gradle/CI/runner/research data не меняются.
+
+Фактический runtime итог: **full Core runner PASS** (construction34808, task/filter/recipe/Bell/dye/area1055); **full NeoForge build и42/42 required GameTests PASS с первого запуска** (`golems-area-build.log`,1m2s). Четыре новых server tests включают реальные scan/claim/pickup на всех6 гранях, menu/typed NBT/legacy fallback, cancellation+expand и автономный path/Fill с per-tick conservation7. JAR CRC PASS/SHA256 `514c79f4cc68162bd6e32dc0116ff90725caacde31e2a1286f3ac264f8df3998`. Cold WRITE запущен в отдельном новом `build/golem-area-restart`/port25593; старые fixtures не затрагиваются.
+
+Первый area commit выделяет pure Core menu actions/границы и14 дополнительных assertions. Runtime/меню/producer/4 GameTests и документация следуют вторым, cold fixture/итог — третьим малым commit. Все production/test исходники уже присутствовали в прошедшем42/42.

@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.port.core;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
 import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
 import dev.ehtid.thaumcraft.port.core.golem.SealArea;
+import dev.ehtid.thaumcraft.port.core.golem.SealAreaControls;
 import dev.ehtid.thaumcraft.port.core.golem.TaskBoard;
 import dev.ehtid.thaumcraft.port.core.golem.TaskSelection;
 import java.util.ArrayList;
@@ -389,6 +390,19 @@ public final class LegacyGolemTaskTest {
         rejects(IllegalArgumentException.class, () -> GolemColorRules.fromLegacyDyeIndex(16));
         rejects(IllegalArgumentException.class, () -> GolemColorRules.fromModernDyeId(-1));
         rejects(IllegalArgumentException.class, () -> GolemColorRules.fromModernDyeId(16));
+        var areaSize = new SealArea.BlockPos(2, 3, 4);
+        eq(Optional.of(new SealArea.BlockPos(2, 2, 4)), SealAreaControls.adjust(areaSize, 90));
+        eq(Optional.of(new SealArea.BlockPos(2, 4, 4)), SealAreaControls.adjust(areaSize, 91));
+        eq(Optional.of(new SealArea.BlockPos(1, 3, 4)), SealAreaControls.adjust(areaSize, 92));
+        eq(Optional.of(new SealArea.BlockPos(3, 3, 4)), SealAreaControls.adjust(areaSize, 93));
+        eq(Optional.of(new SealArea.BlockPos(2, 3, 3)), SealAreaControls.adjust(areaSize, 94));
+        eq(Optional.of(new SealArea.BlockPos(2, 3, 5)), SealAreaControls.adjust(areaSize, 95));
+        for (int axis = 0; axis < 3; axis++) {
+            eq(Optional.empty(), SealAreaControls.adjust(new SealArea.BlockPos(1, 1, 1), 90 + axis * 2));
+            eq(Optional.empty(), SealAreaControls.adjust(new SealArea.BlockPos(8, 8, 8), 91 + axis * 2));
+        }
+        eq(Optional.empty(), SealAreaControls.adjust(areaSize, 96));
+        eq(Optional.empty(), SealAreaControls.adjust(new SealArea.BlockPos(Integer.MAX_VALUE, 1, 1), 93));
         taskSourceRules();
         allFaceAreas();
         sortingAndSealPolicy();
