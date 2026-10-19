@@ -420,5 +420,8 @@
   "message.thaumcraft.golem.seal.fill_advanced.placed": "Улучшенная печать заполнения установлена",
   "message.thaumcraft.golem.seal.fill_advanced.removed": "Улучшенная печать заполнения удалена",
   "menu.thaumcraft.golem_seal.existing_only": "Только имеющееся",
-  "menu.thaumcraft.golem_seal.any_stock": "Любой запас"
+  "menu.thaumcraft.golem_seal.any_stock": "Любой запас",
+  "item.thaumcraft.seal_breaker": "Печать: Разрушение",
+  "message.thaumcraft.golem.seal.breaker.placed": "Печать разрушения установлена",
+  "message.thaumcraft.golem.seal.breaker.removed": "Печать разрушения снята"
 }
