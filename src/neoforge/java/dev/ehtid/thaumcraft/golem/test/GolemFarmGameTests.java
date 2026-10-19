@@ -35,8 +35,13 @@ public final class GolemFarmGameTests {
     private GolemFarmGameTests() {}
     private static Farm farm(GameTestHelper h,BlockState state,Item seed) {
         for(int x=0;x<12;x++) for(int z=0;z<12;z++) h.setBlock(new BlockPos(x,0,z),Blocks.STONE);
-        var support=h.absolutePos(new BlockPos(5,0,5)); var crop=support.above();
-        h.getLevel().setBlockAndUpdate(support,state.is(Blocks.NETHER_WART)?Blocks.SOUL_SAND.defaultBlockState():Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
+        boolean stacked=state.is(Blocks.SUGAR_CANE)||state.is(Blocks.CACTUS);
+        var support=h.absolutePos(new BlockPos(5,stacked?1:0,5)); var crop=support.above();
+        if(stacked) {
+            h.getLevel().setBlockAndUpdate(support.below(),state.is(Blocks.CACTUS)?Blocks.SAND.defaultBlockState():Blocks.DIRT.defaultBlockState());
+            if(state.is(Blocks.SUGAR_CANE)) h.getLevel().setBlockAndUpdate(support.below().north(),Blocks.WATER.defaultBlockState());
+        }
+        h.getLevel().setBlockAndUpdate(support,stacked?state:state.is(Blocks.NETHER_WART)?Blocks.SOUL_SAND.defaultBlockState():Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
         h.getLevel().setBlockAndUpdate(crop,state);
         var data=GolemSeals.get(h.getLevel()); var key=new GolemSeals.SealKey(support,Direction.UP); var owner=UUID.randomUUID();
         h.assertTrue(data.place(support,Direction.UP,owner,GolemSeals.Type.HARVEST),"Actual Harvest seal placed");
@@ -78,6 +83,44 @@ public final class GolemFarmGameTests {
     @GameTest(template="golem_test",batch="farm_wart",timeoutTicks=60)
     public static void netherWartUsesAgeThreeAndSoulSand(GameTestHelper h) { cycle(h,Blocks.NETHER_WART.defaultBlockState().setValue(NetherWartBlock.AGE,3),Blocks.NETHER_WART.defaultBlockState(),Items.NETHER_WART); }
 
+    private static void fruit(GameTestHelper h,Block fruit,Item seed,Block stem) {
+        var f=farm(h,fruit.defaultBlockState(),seed);
+        h.getLevel().setBlockAndUpdate(f.crop.north().below(),Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
+        h.getLevel().setBlockAndUpdate(f.crop.north(),stem.defaultBlockState().setValue(StemBlock.AGE,7));
+        h.runAfterDelay(8,()->{
+            h.assertTrue(complete(h,f,claim(f)) && h.getLevel().isEmptyBlock(f.crop),"Actual fruit harvested");
+            h.assertTrue(f.golem.getMainHandItem().getCount()==2 && pending(h,f).isEmpty(),"Fruit has no source seed mapping: no fabricated replant or debit");
+            h.assertTrue(h.getLevel().getBlockState(f.crop.north()).is(stem),"Fruit harvest preserves actual stem");
+            f.data.configureArea(f.data.get(f.key),f.golem.ownerId(),new BlockPos(2,1,2));
+            h.runAfterDelay(50,()->{
+                h.assertTrue(f.data.claimBlock(f.golem,p->true).isEmpty() && h.getLevel().getBlockState(f.crop.north()).is(stem),"Mature stems are excluded from crop harvesting");
+                f.close(); h.succeed();
+            });
+        });
+    }
+    @GameTest(template="golem_test",batch="farm_melon",timeoutTicks=90)
+    public static void melonFruitPreservesStemAndDoesNotInventReplant(GameTestHelper h) { fruit(h,Blocks.MELON,Items.MELON_SEEDS,Blocks.MELON_STEM); }
+    @GameTest(template="golem_test",batch="farm_pumpkin",timeoutTicks=90)
+    public static void pumpkinFruitPreservesStemAndDoesNotInventReplant(GameTestHelper h) { fruit(h,Blocks.PUMPKIN,Items.PUMPKIN_SEEDS,Blocks.PUMPKIN_STEM); }
+    private static void stacked(GameTestHelper h,Block block,Item item) {
+        var f=farm(h,block.defaultBlockState(),item);
+        h.runAfterDelay(8,()->{
+            h.assertTrue(complete(h,f,claim(f)) && h.getLevel().isEmptyBlock(f.crop) && h.getLevel().getBlockState(f.key.pos()).is(block),"Actual upper segment harvested; rooted base remains");
+            h.assertTrue(pending(h,f).isEmpty() && f.golem.getMainHandItem().getCount()==2,"Source ItemBlock/ItemReed are not registered IPlantable seeds; no replant debit");
+            f.data.remove(f.key.pos(),f.key.face(),f.golem.ownerId());
+            var lower=new GolemSeals.SealKey(f.key.pos().below(),Direction.UP);
+            f.data.place(lower.pos(),lower.face(),f.golem.ownerId(),GolemSeals.Type.HARVEST); f.data.configureArea(f.data.get(lower),f.golem.ownerId(),new BlockPos(1,1,1));
+            h.runAfterDelay(10,()->{
+                h.assertTrue(f.data.claimBlock(f.golem,p->true).isEmpty() && h.getLevel().getBlockState(f.key.pos()).is(block),"Root segment never becomes a harvest task");
+                f.data.remove(lower.pos(),lower.face(),f.golem.ownerId()); f.golem.discard(); h.succeed();
+            });
+        });
+    }
+    @GameTest(template="golem_test",batch="farm_cane",timeoutTicks=60)
+    public static void sugarCaneHarvestLeavesRootAndDoesNotRequestSeed(GameTestHelper h) { stacked(h,Blocks.SUGAR_CANE,Items.SUGAR_CANE); }
+    @GameTest(template="golem_test",batch="farm_cactus",timeoutTicks=60)
+    public static void cactusHarvestLeavesRootAndDoesNotRequestSeed(GameTestHelper h) { stacked(h,Blocks.CACTUS,Items.CACTUS); }
+
     @GameTest(template="golem_test",batch="farm_break_cancel",timeoutTicks=60)
     public static void canceledHarvestCannotCreateLootOrReplantAndCanRetry(GameTestHelper h) {
         var f=farm(h,Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE,7),Items.WHEAT_SEEDS);
@@ -97,9 +140,11 @@ public final class GolemFarmGameTests {
         h.runAfterDelay(8,()->{
             complete(h,f,claim(f));
             h.runAfterDelay(8,()->{
+                h.getLevel().setBlockAndUpdate(f.crop.below(),Blocks.DIRT.defaultBlockState());
                 var task=claim(f); java.util.function.Consumer<BlockEvent.EntityPlaceEvent> reject=e->{ if(e.getLevel()==h.getLevel()&&e.getPos().equals(f.crop)) e.setCanceled(true); };
                 NeoForge.EVENT_BUS.addListener(reject);
-                try { h.assertTrue(!complete(h,f,task) && h.getLevel().isEmptyBlock(f.crop) && f.golem.getMainHandItem().getCount()==2 && pending(h,f).size()==1,"Canceled real placement refunds seed and retains intent"); }
+                try { h.assertTrue(!complete(h,f,task) && h.getLevel().isEmptyBlock(f.crop) && f.golem.getMainHandItem().getCount()==2 && pending(h,f).size()==1,"Canceled real placement refunds seed and retains intent");
+                    h.assertTrue(h.getLevel().getBlockState(f.crop.below()).is(Blocks.FARMLAND),"Built-in hoe restores farmland through real useOn before seed retry"); }
                 finally { NeoForge.EVENT_BUS.unregister(reject); }
                 h.assertTrue(complete(h,f,task) && f.golem.getMainHandItem().getCount()==1 && pending(h,f).isEmpty(),"Retry consumes exactly one seed");
                 h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,h.getBounds()).stream().noneMatch(e->e.getItem().is(Items.IRON_HOE)),"Built-in tool never becomes world loot"); f.close(); h.succeed();

@@ -41,10 +41,11 @@ final class GolemFarm {
         for(var crop:GolemFarmRules.Crop.values()) if(crop.block.equals(id.getPath())) return crop;
         return null;
     }
-    private static boolean mature(BlockState state) {
+    private static boolean mature(ServerLevel level,BlockPos pos) {
+        var state=level.getBlockState(pos);
         var crop=kind(state); if(crop==null) return false;
-        int age=state.getBlock() instanceof CropBlock block?block.getAge(state):state.getValue(NetherWartBlock.AGE);
-        return GolemFarmRules.mature(crop,age);
+        int age=crop.readiness!=GolemFarmRules.Readiness.AGE?-1:state.getBlock() instanceof CropBlock block?block.getAge(state):state.getValue(NetherWartBlock.AGE);
+        return GolemFarmRules.ready(crop,age,level.getBlockState(pos.below()).is(state.getBlock()));
     }
     private static boolean loaded(ServerLevel level,BlockPos pos) {
         return !level.isOutsideBuildHeight(pos) && level.hasChunkAt(pos) && level.hasChunkAt(pos.below());
@@ -61,7 +62,7 @@ final class GolemFarm {
             int index=scan.getOrDefault(s.key(),0); var target=area.positionAt(index); scan.put(s.key(),(index+1)%area.count());
             var pos=new BlockPos(target.x(),target.y(),target.z());
             if(!loaded(level,pos)) continue;
-            var current=level.getBlockState(pos); boolean harvest=mature(current);
+            var current=level.getBlockState(pos); boolean harvest=mature(level,pos);
             boolean plant=!harvest && s.harvest().replant() && pending!=null && pending.containsKey(pos) && current.isAir();
             if(!harvest && !plant) continue;
             var positions=watched.computeIfAbsent(s.key(),k->new HashMap<>());
@@ -86,7 +87,7 @@ final class GolemFarm {
         var w=work.get(task.getId());
         if(w==null || w.seal!=s || !GolemFarmRules.eligible(g.design().traits()) || g.hasTransferRecovery() || !loaded(level,w.pos)
                 || g.home().distSqr(w.pos)>=(double)g.design().stats().homeRadius()*g.design().stats().homeRadius()) return false;
-        if(!w.replant) return mature(level.getBlockState(w.pos));
+        if(!w.replant) return mature(level,w.pos);
         var crop=replants.getOrDefault(s.key(),Map.of()).get(w.pos);
         if(crop==null || !s.harvest().replant() || !level.isEmptyBlock(w.pos)) return false;
         if(carrying(g,crop)!=null) return true;
@@ -105,7 +106,7 @@ final class GolemFarm {
             if(!w.replant) {
                 var crop=kind(level.getBlockState(w.pos));
                 success=actor.gameMode.destroyBlock(w.pos);
-                if(success && level.isEmptyBlock(w.pos) && w.seal.harvest().replant()) {
+                if(success && level.isEmptyBlock(w.pos) && crop.seed!=null && w.seal.harvest().replant()) {
                     replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,crop); data.setDirty();
                 }
             } else {
@@ -149,7 +150,7 @@ final class GolemFarm {
         var list=row.getList("ReplantTasks",Tag.TAG_COMPOUND); var area=area(s).bounds();
         for(int i=0;i<list.size();i++) try {
             var entry=list.getCompound(i); var pos=BlockPos.of(entry.getLong("pos")); var crop=GolemFarmRules.Crop.valueOf(entry.getString("crop"));
-            if(area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ()))) replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,crop);
+            if(crop.seed!=null && area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ()))) replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,crop);
         } catch(IllegalArgumentException ignored) { /* Unknown crops cannot become arbitrary block placement. */ }
     }
 }
