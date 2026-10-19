@@ -566,3 +566,11 @@ Read-only `javap -c -p` официального BETA26: `SealHarvest`, `CropUti
 ### Критерии и сценарии
 
 Нужны реальные пять crop harvest→loot→seed debit1→age0, отсутствие immature loop, canceled Break/Place и retry, no virtual-hoe loot, SMART/DEFT/changed-color gate, native AI navigation, provider→SealTarget→replant без дополнительной доставки, owner menu и NBT settings/pending/no leases, несколько actual refund variants/NBT/reclaim once. Отдельный two-process scenario `farm` должен доказать unpaid intent/real2seeds перед shutdown → auto replant/1seed после disk restart, обе actual refund variants/components и один reclaim без replay. Результаты и неудачные прогоны фиксируются в validation/lane; компиляция сама по себе этим доказательством не является.
+
+## M10.22 — плоды и stacked crops
+
+`ModConfig.postInitMisc`: standard MELON_BLOCK/PUMPKIN с wildcard metadata32767; stacked REEDS/CACTUS с32767; wart3. SRG имена проверены MCP39 fields.csv, не угаданы. `CropUtils.isGrownCrop` требует для stacked тот же блок ниже, исключает BlockStem. Modern mapping: source melon_block→melon, farm pumpkin→pumpkin; carved/jack-o-lantern не добавляются как выдуманные культуры.
+
+Важное уточнение seed discovery: законно доступный Forge1.12.2-14.23.5.2860 sources JAR (внеGit) добавляет item IPlantable в ItemSeeds/ItemSeedFood; ItemBlock и ItemReed этого интерфейса не получают. Vanilla не может реализовывать Forge interface без patch. Поэтому плодовые pumpkin/melon seeds отображаются на stems, **не fruits**, cactus/cane items не имеют source seed mapping. Для этих четырёх Harvest собирает реальный блок/loot, сохраняет rooted base/stems и **не создаёт replant intent/seed request/debit**. Придуманная ручная посадка нового сегмента изменила бы BETA26.
+
+Core readiness разделён AGE/FRUIT/STACKED; данные девяти культур, readiness по реальному below state. Native проверяет loaded below до readiness. Save отбрасывает невозможные pending intents для видов без source seed, сохраняя backward compatibility пяти исходных families. Тесты: все возраста и оба below cases, реальные pumpkin/melon fruit со stem exclusion, cane/cactus верхний сегмент/root refusal, а также реальное hoe restoring dirt→farmland до canceled/retried seed placement. Результаты прогонов — в validation/lane; Cocoa direction/модовые adapters ещё отдельно.
