@@ -492,6 +492,26 @@ public final class LegacyGolemTaskTest {
         eq(List.of(mixedEntity,mixedBlock),TaskSelection.sorted(List.of(mixedBlock,mixedEntity),null,permissive(ALICE)));
     }
 
+    private static void advancedSealRecipeSourceRules() {
+        var registry=new AspectRegistry();
+        for(var recipe:List.of(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.PICKUP_ADVANCED,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.FILL_ADVANCED)) {
+            var knowledge=new PlayerKnowledgeData(); var paid=new AspectListData().add(registry.SENSES,10).add(registry.MIND,10);
+            knowledge.addResearch(recipe.research.split("&&")[0]);
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,paid,registry));
+            knowledge.addResearch("MINDBIOTHAUMIC");
+            eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,paid,registry));
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,knowledge,paid,registry));
+            eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(recipe.catalyst,knowledge,new AspectListData().add(registry.SENSES,10).add(registry.MIND,9),registry));
+            eq(0,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(paid,recipe,registry).visSize());
+            eq(20,paid.visSize());
+        }
+        var all=new PlayerKnowledgeData(); for(var research:List.of("SEALSTORE","MINDBIOTHAUMIC","SEALSTOCK")) all.addResearch(research);
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.FILL_ADVANCED,
+                dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.FILL,all,
+                        new AspectListData().add(registry.SENSES,10).add(registry.MIND,10).add(registry.DESIRE,10),registry));
+    }
+
     private static void extendedMatchSourceRules() {
         var strict=dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options.strict();
         var match=new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(false,false,false,false,true,true);
@@ -672,6 +692,7 @@ public final class LegacyGolemTaskTest {
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 0, false));
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, -1, true));
         eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, Long.MAX_VALUE, true));
+        advancedSealRecipeSourceRules();
         extendedMatchSourceRules();
         emptyCycleSourceRules();
         farmSourceRules();

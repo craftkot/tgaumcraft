@@ -9,9 +9,12 @@ public final class GolemSealRecipes {
     public static final String BLANK_RESEARCH = "CONTROLSEALS";
     public static final int VIS = 20, BLANK_OUTPUT = 3, ESSENTIA = 10;
     public enum Ingredient { EMPTY, CLAY, TALLOW, RED_DYE, NITOR, OTHER }
-    public enum Catalyst { BLANK, EMPTY, FILL, EMPTY_ADVANCED }
+    public enum Catalyst { BLANK, EMPTY, FILL, EMPTY_ADVANCED, PICKUP }
     public enum Conversion {
-        PICKUP("SEALCOLLECT",Catalyst.BLANK,"desiderium"), FILL("SEALSTORE",Catalyst.BLANK,"aversio"),
+        PICKUP("SEALCOLLECT",Catalyst.BLANK,"desiderium"),
+        PICKUP_ADVANCED("SEALCOLLECT&&MINDBIOTHAUMIC",Catalyst.PICKUP,"sensus","cognitio"),
+        FILL("SEALSTORE",Catalyst.BLANK,"aversio"),
+        FILL_ADVANCED("SEALSTORE&&MINDBIOTHAUMIC",Catalyst.FILL,"sensus","cognitio"),
         EMPTY("SEALEMPTY",Catalyst.BLANK,"vacuos"),
         EMPTY_ADVANCED("SEALEMPTY&&MINDBIOTHAUMIC",Catalyst.EMPTY,"sensus","cognitio"),
         PROVIDE("SEALPROVIDE",Catalyst.EMPTY_ADVANCED,"permutatio","desiderium"),
