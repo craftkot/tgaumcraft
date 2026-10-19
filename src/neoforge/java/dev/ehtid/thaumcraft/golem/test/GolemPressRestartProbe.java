@@ -34,7 +34,10 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemPressRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean ENABLED = "press".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean CONSTRUCTION="construction".equals(System.getProperty("thaumcraft.golemRestartScenario",""));
+    private static final boolean ENABLED = CONSTRUCTION || "press".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final GolemDesign DESIGN=CONSTRUCTION?GolemDesign.fromIds(0,1,1,0,3,0):GolemDesign.defaultWood();
+    private static final int COST=dev.ehtid.thaumcraft.port.core.golem.GolemPress.cost(DESIGN);
     private static final BlockPos FIRST = new BlockPos(8, 120, 8), SECOND = new BlockPos(12, 120, 8);
     private static MinecraftServer active;
     private static int ticks;
@@ -47,7 +50,7 @@ public final class GolemPressRestartProbe {
         active.overworld().getChunk(0, 0);
     }
     @SubscribeEvent public static void tick(ServerTickEvent.Post event) {
-        if (active != event.getServer() || checked || ++ticks < 60) return;
+        if (active != event.getServer() || checked || ++ticks < (CONSTRUCTION && PHASE.equals("read")?160:60)) return;
         var level = active.overworld();
         boolean ready = level.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(0, 0)) && level.isPositionEntityTicking(FIRST);
         if (!ready && ticks < 600) return;
@@ -55,7 +58,7 @@ public final class GolemPressRestartProbe {
         try {
             require(ready, "Fixture chunk is ticking");
             if (PHASE.equals("write")) write(); else read();
-            LogUtils.getLogger().info("GOLEM_PRESS_RESTART_{}_ASSERTIONS_OK", PHASE.toUpperCase(java.util.Locale.ROOT));
+            LogUtils.getLogger().info("GOLEM_{}_RESTART_{}_ASSERTIONS_OK",CONSTRUCTION?"CONSTRUCTION":"PRESS", PHASE.toUpperCase(java.util.Locale.ROOT));
         } catch (RuntimeException | AssertionError error) {
             LogUtils.getLogger().error("GOLEM_PRESS_RESTART_ASSERTIONS_FAILED", error);
         } finally { active.halt(false); }
@@ -64,54 +67,65 @@ public final class GolemPressRestartProbe {
 
     private static void write() {
         var level = active.overworld();
+        if(CONSTRUCTION) require(COST==20,"Source SMART/FINE/HAULER cost20");
         require(!level.getBlockState(FIRST).is(GolemModule.PRESS.get()), "Write requires a fresh fixture world");
         for (BlockPos pos : new BlockPos[]{FIRST, SECOND}) {
             level.setBlockAndUpdate(pos, GolemModule.PRESS.get().defaultBlockState());
             level.setBlockAndUpdate(pos.below(), ThaumcraftBlocks.JAR_NORMAL.get().defaultBlockState());
             level.setBlockAndUpdate(pos.north(), Blocks.BARREL.defaultBlockState());
             var ingredients = (Container) level.getBlockEntity(pos.north());
-            GolemPressGameTests.ingredients(ingredients, 1);
+            ingredients(ingredients);
             var player = FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(), "PressRestart"));
             player.setGameMode(GameType.SURVIVAL); player.getInventory().clearContent(); player.moveTo(Vec3.atBottomCenterOf(pos.east()));
             var press = press(pos); var jar = jar(pos);
-            for (int unit = 0; unit < 10; unit++) require(jar.addFromTransport("machina", 1, Direction.UP) == 1, "Fixture source credit");
+            for (int unit = 0; unit < COST+2; unit++) require(jar.addFromTransport("machina", 1, Direction.UP) == 1, "Fixture source credit");
+            player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MINDCLOCKWORK");
+            player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MATSTUDWOOD");
+            dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.research(DESIGN).forEach(
+                    player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge()::addResearch);
+            if(CONSTRUCTION) require(press.select(player,1,1)&&press.select(player,2,1)&&press.select(player,4,-1)&&press.selection().equals(DESIGN),"Actual paid selection SMART/FINE/HAULER");
             require(press.start(player) && ingredients.isEmpty(), "Exactly one paid component batch removed");
-            GolemPressGameTests.ingredients(ingredients, 1); // Untouched second batch proves reload cannot pay/start again.
+            ingredients(ingredients); // Untouched second batch proves reload cannot pay/start again.
             if (pos.equals(FIRST)) {
                 for (int tick = 0; tick < 15; tick++) GolemPressBlockEntity.tick(level, pos, press.getBlockState(), press);
-                require(press.job().remaining() == 5 && jar.snapshot().amount() == 7, "First three actual source debits");
+                require(press.job().remaining() == COST-3 && jar.snapshot().amount() == COST-1, "First three actual source debits");
                 require(jar.takeTransport("machina", 1, Direction.UP) == 1
                         && press.addTransport("machina", 1, Direction.DOWN) == 1, "Persist a fourth paid unit in buffer");
             }
             press.setItem(0, blocker());
             if (pos.equals(SECOND)) {
-                for (int tick = 0; tick < 40; tick++) GolemPressBlockEntity.tick(level, pos, press.getBlockState(), press);
+                for (int tick = 0; tick < COST*5; tick++) GolemPressBlockEntity.tick(level, pos, press.getBlockState(), press);
                 require(press.job().ready() && jar.snapshot().amount() == 2, "Second job fully paid but blocked before save");
             }
         }
-        require(press(FIRST).job().buffered() && press(FIRST).job().remaining() == 5 && jar(FIRST).snapshot().amount() == 6,
+        require(press(FIRST).job().buffered() && press(FIRST).job().remaining() == COST-3 && jar(FIRST).snapshot().amount() == COST-2,
                 "Mid-craft saved state includes one actual paid buffer");
     }
     private static void read() {
         var level = active.overworld();
         for (BlockPos pos : new BlockPos[]{FIRST, SECOND}) {
             var press = press(pos); var jar = jar(pos);
-            require(press.job().ready() && press.job().props() == 0 && press.job().maximum() == 8, "Both restored jobs finish or remain paid and blocked");
+            require(press.job().ready() && press.job().props() == DESIGN.toLong() && press.job().maximum() == COST && press.selection().equals(DESIGN), "Both restored jobs finish or remain paid and blocked");
             require(jar.snapshot().amount() == 2 && "machina".equals(jar.snapshot().aspect()), "Buffer survived restart: exact total eight Machina debited");
             require(ItemStack.isSameItemSameComponents(blocker(), press.getItem(0)) && press.getItem(0).getCount() == 2,
                     "Actual output stack and components survive disk restart");
             var inputs = (Container) level.getBlockEntity(pos.north());
-            require(inputs.getItem(0).getCount() == 3 && inputs.getItem(1).getCount() == 2 && inputs.getItem(2).getCount() == 1,
-                    "Untouched second batch is not consumed on resume");
+            int slot=0;
+            for(var c:dev.ehtid.thaumcraft.port.core.golem.GolemAssembly.components(DESIGN))
+                require(ItemStack.matches(inputs.getItem(slot++),dev.ehtid.thaumcraft.golem.press.GolemComponents.stack(c)),"Untouched second component batch is not consumed on resume");
             press.removeItem(0, 2);
             for (int tick = 0; tick < 5; tick++) GolemPressBlockEntity.tick(level, pos, press.getBlockState(), press);
             require(!press.job().active() && press.getItem(0).getCount() == 1
-                    && ItemStack.isSameItemSameComponents(press.getItem(0), GolemPlacerItem.stack(GolemDesign.defaultWood(), 0)),
+                    && ItemStack.isSameItemSameComponents(press.getItem(0), GolemPlacerItem.stack(DESIGN, 0)),
                     "Exactly one product per paid restored job");
             for (int tick = 0; tick < 10; tick++) GolemPressBlockEntity.tick(level, pos, press.getBlockState(), press);
             require(press.getItem(0).getCount() == 1 && jar.snapshot().amount() == 2, "No replay or additional debit");
         }
         require(level.getEntitiesOfClass(ItemEntity.class, new AABB(FIRST).inflate(8)).isEmpty(), "No duplicated ground output");
+    }
+    private static void ingredients(Container container) {
+        int slot=0; for(var c:dev.ehtid.thaumcraft.port.core.golem.GolemAssembly.components(DESIGN))
+            container.setItem(slot++,dev.ehtid.thaumcraft.golem.press.GolemComponents.stack(c));
     }
     private static ItemStack blocker() {
         var stack = new ItemStack(Items.GOLD_INGOT, 2); stack.set(DataComponents.CUSTOM_NAME, Component.literal("M10 press restart blocker")); return stack;
