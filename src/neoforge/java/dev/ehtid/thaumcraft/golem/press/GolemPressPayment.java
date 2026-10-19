@@ -27,7 +27,7 @@ final class GolemPressPayment {
     private record Source(Container inventory, Direction face) {}
     private record Debit(Container inventory, int slot, ItemStack expected, int count) {}
 
-    static boolean pay(ServerLevel level, BlockPos pos, Player player) {
+    static boolean pay(ServerLevel level, BlockPos pos, Player player,GolemDesign design) {
         var adjacent = new ArrayList<Source>();
         var seen = Collections.newSetFromMap(new IdentityHashMap<Container, Boolean>());
         for (Direction face : Direction.values()) {
@@ -41,13 +41,9 @@ final class GolemPressPayment {
                     .getNamespace().equals("minecraft") && seen.add(inv)) adjacent.add(new Source(inv, face.getOpposite()));
         }
         var debits = new ArrayList<Debit>();
-        for (var component : GolemAssembly.components(GolemDesign.defaultWood())) {
-            ItemStack required = new ItemStack(switch (component.legacyItemId()) {
-                case "thaumcraft:plank_greatwood" -> ThaumcraftItems.PLANK_GREATWOOD.get();
-                case "thaumcraft:mechanism_simple" -> GolemModule.SIMPLE_MECHANISM.get();
-                case "thaumcraft:mind" -> GolemModule.CLOCKWORK_MIND.get();
-                default -> throw new IllegalStateException("Unmapped verified component");
-            }, component.count());
+        for (var component : GolemAssembly.components(design)) {
+            ItemStack required=GolemComponents.stack(component);
+            if(required.isEmpty()) return false;
             var plan = plan(adjacent, required);
             // Each component is either fully adjacent or fully in the player's inventory, as in BETA26.
             if (plan == null) plan = plan(List.of(new Source(player.getInventory(), null)), required);
@@ -76,7 +72,7 @@ final class GolemPressPayment {
             for (int slot : slots) {
                 if (slot < 0 || slot >= source.inventory.getContainerSize() || !seenSlots.add(slot)) continue;
                 ItemStack actual = source.inventory.getItem(slot);
-                if (!ItemStack.isSameItemSameComponents(required, actual)) continue;
+                if (!GolemComponents.matches(required, actual)) continue;
                 if (source.face != null && source.inventory instanceof WorldlyContainer sided
                         && !sided.canTakeItemThroughFace(slot, actual, source.face)) continue;
                 int count = Math.min(remaining, actual.getCount());

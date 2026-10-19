@@ -173,7 +173,8 @@ public final class GolemFormationGameTests {
         BlockPos controller=pos(origin,0,Part.CONTROLLER);owner.moveTo(Vec3.atBottomCenterOf(controller.east()));
         owner.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get()));use(owner,controller,Direction.UP);
         h.startSequence().thenIdle(55).thenExecute(()->{
-            var level=h.getLevel();GolemPressGameTests.ingredients(owner.getInventory(),1);
+            var level=h.getLevel();owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MATSTUDWOOD");
+            GolemPressGameTests.ingredients(owner.getInventory(),1);
             level.setBlockAndUpdate(controller.below(),dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.JAR_NORMAL.get().defaultBlockState());
             var jar=(dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity)level.getBlockEntity(controller.below());
             for(int i=0;i<8;i++)h.assertTrue(jar.addFromTransport("machina",1,Direction.UP)==1,"Fixture Machina stock");

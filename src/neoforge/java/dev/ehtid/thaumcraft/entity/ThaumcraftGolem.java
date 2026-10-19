@@ -129,6 +129,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
 
     public void initialize(GolemDesign design, UUID owner, BlockPos home, int xp) {
+        if(!GolemModule.supportsRuntime(design)) throw new IllegalArgumentException("Unsupported runtime golem construction");
         entityData.set(DESIGN, design.toLong());
         entityData.set(OWNER, Optional.ofNullable(owner));
         this.home = home.immutable();
@@ -146,6 +147,19 @@ public final class ThaumcraftGolem extends PathfinderMob {
         getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(stats.followRange());
         getAttribute(Attributes.STEP_HEIGHT).setBaseValue(stats.stepHeight());
         restrictTo(home, stats.homeRadius());
+    }
+
+    @Override protected void actuallyHurt(net.minecraft.world.damagesource.DamageSource source,float amount) {
+        // NeoForge21.1 actuallyHurt reads its current DamageContainer, not this float argument.
+        // Apply the original pre-armor adjustment to that same nested damage context.
+        if(!damageContainers.isEmpty()) amount=damageContainers.peek().getNewDamage();
+        amount=dev.ehtid.thaumcraft.port.core.golem.GolemDamageRules.amount(design(),amount,getMaxHealth(),
+                source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE),source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION),
+                source.is(net.minecraft.world.damagesource.DamageTypes.CACTUS));
+        if(amount>0) {
+            if(!damageContainers.isEmpty()) damageContainers.peek().setNewDamage(amount);
+            super.actuallyHurt(source,amount);
+        }
     }
 
     private EquipmentSlot carrySlot(int i) { return i == 0 ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND; }
@@ -243,7 +257,10 @@ public final class ThaumcraftGolem extends PathfinderMob {
         super.readAdditionalSaveData(tag);
         GolemDesign design;
         invalidDesign = null;
-        try { design = GolemDesign.fromLong(tag.getLong("props")); }
+        try {
+            design = GolemDesign.fromLong(tag.getLong("props"));
+            if(!GolemModule.supportsRuntime(design)) throw new IllegalArgumentException("Unsupported saved golem functions");
+        }
         catch (IllegalArgumentException e) {
             // Retain malformed configuration and equipment without crashing a world
             // load or silently converting it into a different functioning worker.

@@ -290,3 +290,12 @@ WRITE использует настоящие provider/Stock SavedData, реал
 ## M10.20 — Core component catalog, 19.10.2026
 
 Java21 полный `bash tools/run_core_parity.sh`: **PASS**, construction39872/task2202, лог `/workspace/reference/golems-construction-catalog-core.log`.4824 новых assertions проверяют golden source counts всех2400 combinations, уникальные merged keys, конкретные source SRG mappings/metadata, runtime180-family gate, research sets и exact fire/cactus/blast math. Все прежние Core suites прошли, runner неизменен. Cost data получены из официального BETA26 GolemProperties/JAR и официального MCP stable39-1.12; результаты исследования только внеGit. Это Core parity, не blanket доказательство всех native parts. Дальше native worker/editor/cold evidence отдельными commits.
+
+
+### M10.20 — native family/Press editor, итог99
+
+Compile PASS19s. Первый full99:97 PASS/2 FAIL (`golems-worker-editor-build.log`,1m9s). Старая restoration fixture не имела MATSTUDWOOD после ввода source research gate; исправлена фикстура. Реальный BLASTPROOF test выявил, что NeoForge21.1 LivingEntity.actuallyHurt читает DamageContainer.getNewDamage вместо переданного float. Прочитан актуальный NeoForge bytecode, адаптер меняет текущий protected damage context перед super.actuallyHurt; source min(maxHP/2,damage*0.3) остаётся до armor. Это production исправление, не ослабление assertions. `golems-worker-editor-verified.log`:99/99 PASS1m9s.
+
+После завершения ingredient preview и ghost-slot exclusion: **full `build -x test runGolemGameTest` PASS99/99,1m25s**, `/workspace/reference/golems-worker-editor-final.log`.6 новых required tests покрывают actual configured8-component/16Machina paid Press→consumed placer→one SMART-DEFT12HP entity/rank1→NBT; server knowledge/viewer/iron-vs-brass meta/busy config/recipe ghost no extraction; fire/cactus/blast actual health; six material attributes/VOID repair40ticks; HAULER64+6 cargo and ninth advanced Empty filter with SMART gate; unsupported valid config preservedNoAI. Прежние93 scenarios также PASS.
+
+JAR CRC/content PASS SHA256 `05bb81d053d3c8a27f6ef7572ce3b861ac678e9be3fa9c64c0e68f2be02cc2ab`.27 EN/RU keys на язык и3 temporary component models включены в этот build, но client rendering не запускался. Это180 working ground configurations и source Core costs остальных, не blanket flight/combat/farming/survival progression parity. Cold selected/paid20Machina scenario/evidence отдельным следующим commit. Нет общих registry/CI/build.gradle/research data/runner изменений.

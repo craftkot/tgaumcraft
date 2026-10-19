@@ -66,6 +66,10 @@ public final class GolemModule {
     public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
     /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
     public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
+    /** Source mind@1 and modules@0/1. Their infusion acquisition belongs to the M06 integration. */
+    public static final DeferredItem<Item> BIOTHAUMIC_MIND=ITEMS.registerSimpleItem("mind_biothaumic");
+    public static final DeferredItem<Item> VISION_MODULE=ITEMS.registerSimpleItem("module_vision");
+    public static final DeferredItem<Item> AGGRESSION_MODULE=ITEMS.registerSimpleItem("module_aggression");
 
     private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ThaumcraftPort.MOD_ID);
     public static final DeferredHolder<MenuType<?>, MenuType<GolemSealMenu>> SEAL_MENU = MENUS.register(
@@ -133,11 +137,12 @@ public final class GolemModule {
             event.accept(STONE_TABLE_ITEM.get());
             event.accept(SIMPLE_MECHANISM.get());
             event.accept(CLOCKWORK_MIND.get());
+            event.accept(BIOTHAUMIC_MIND.get()); event.accept(VISION_MODULE.get()); event.accept(AGGRESSION_MODULE.get());
         }
     }
 
     /** Avoid advertising unimplemented flight/combat/body functions through arbitrary props. */
     public static boolean supportsRuntime(GolemDesign design) {
-        return design.toLong() == GolemDesign.defaultWood().toLong();
+        return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.groundWorker(design);
     }
 }

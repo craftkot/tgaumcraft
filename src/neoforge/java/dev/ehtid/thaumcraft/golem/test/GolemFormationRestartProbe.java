@@ -58,6 +58,7 @@ public final class GolemFormationRestartProbe {
                 require(!level.getBlockState(CONTROLLER).is(GolemModule.PRESS.get()),"Fresh write fixture");
                 owner=FakePlayerFactory.get(level,new GameProfile(UUID.randomUUID(),"FormationRestart"));owner.setGameMode(GameType.SURVIVAL);owner.getInventory().clearContent();
                 owner.moveTo(Vec3.atBottomCenterOf(CONTROLLER.east()));owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MINDCLOCKWORK");
+                owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MATSTUDWOOD");
                 GolemFormationGameTests.placeSource(level,ORIGIN,1);owner.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get()));
                 require(GolemFormationGameTests.use(owner,CONTROLLER,Direction.UP).consumesAction()&&owner.getMainHandItem().isEmpty(),"Actual single dust payment");
                 started=true;return;

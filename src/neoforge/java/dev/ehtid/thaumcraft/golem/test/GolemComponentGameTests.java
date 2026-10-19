@@ -133,7 +133,7 @@ public final class GolemComponentGameTests {
 
     @GameTest(template="golem_test", batch="component_press_chain", timeoutTicks=160)
     public static void threePaidMechanismsAndMindActuallyFeedOneMachinaPressCycle(GameTestHelper h) {
-        var f = fixture(h); var inv = f.player.getInventory(); knowledge(f).addResearch("BASEARTIFICE");
+        var f = fixture(h); knowledge(f).addResearch("MATSTUDWOOD"); var inv = f.player.getInventory(); knowledge(f).addResearch("BASEARTIFICE");
         knowledge(f).addResearch("MINDCLOCKWORK"); knowledge(f).setResearchStage("MINDCLOCKWORK", 2);
         inv.setItem(0, plate(0, 8)); inv.setItem(1, plate(1, 6)); inv.setItem(2, new ItemStack(Items.STICK, 3));
         inv.setItem(3, new ItemStack(Items.GLASS_PANE, 3)); inv.setItem(4, new ItemStack(Items.COMPARATOR));

@@ -175,6 +175,8 @@ public final class GolemPressGameTests {
     }
     private static FakePlayer player(GameTestHelper h) {
         var player = FakePlayerFactory.get(h.getLevel(), new GameProfile(UUID.randomUUID(), "PressTester"));
+        player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MINDCLOCKWORK");
+        player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("MATSTUDWOOD");
         player.setGameMode(GameType.SURVIVAL); player.getInventory().clearContent(); player.moveTo(Vec3.atBottomCenterOf(h.absolutePos(POS).east())); return player;
     }
     public static void ingredients(Container inventory, int copies) {

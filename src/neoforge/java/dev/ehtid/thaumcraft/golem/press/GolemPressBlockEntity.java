@@ -20,19 +20,40 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class GolemPressBlockEntity extends BlockEntity implements WorldlyContainer, EssentiaTransportPort {
     private ItemStack output = ItemStack.EMPTY;
     private GolemPress.State job = GolemPress.State.idle();
+    private GolemDesign selected=GolemDesign.defaultWood();
     private int ticks;
 
     public GolemPressBlockEntity(BlockPos pos, BlockState state) {
         super(GolemModule.PRESS_ENTITY.get(), pos, state);
     }
     public GolemPress.State job() { return job; }
+    public GolemDesign selection() { return selected; }
+    public boolean selectionKnown(Player player) {
+        var knowledge=player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.research(selected).stream().allMatch(knowledge::isResearchKnown);
+    }
+    public boolean select(Player player,int part,int delta) {
+        if(!stillValid(player) || job.active() || part<0 || part>4 || Math.abs(delta)!=1) return false;
+        int[] ids={selected.material().id(),selected.head().id(),selected.arms().id(),selected.legs().id(),selected.addon().id()};
+        int[] sizes={6,5,5,4,4};
+        var knowledge=player.getData(dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        for(int i=0;i<sizes[part];i++) {
+            ids[part]=Math.floorMod(ids[part]+delta,sizes[part]);
+            var candidate=GolemDesign.fromIds(ids[0],ids[1],ids[2],ids[3],ids[4],0);
+            if(!GolemModule.supportsRuntime(candidate) || !dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.research(candidate).stream().allMatch(knowledge::isResearchKnown)) continue;
+            if(candidate.equals(selected)) return false;
+            selected=candidate; setChanged(); return true;
+        }
+        return false;
+    }
 
     public boolean start(Player player) {
         if (!(level instanceof ServerLevel server) || !stillValid(player) || job.active()
-                || !GolemPressStructures.get(server).canOperate(worldPosition)) return false;
-        ItemStack product = GolemPlacerItem.stack(GolemDesign.defaultWood(), 0);
-        if (!room(product) || !GolemPressPayment.pay(server, worldPosition, player)) return false;
-        job = job.startPaid(GolemDesign.defaultWood());
+                || !GolemPressStructures.get(server).canOperate(worldPosition) || !GolemModule.supportsRuntime(selected)
+                || !selectionKnown(player)) return false;
+        ItemStack product = GolemPlacerItem.stack(selected, 0);
+        if (!room(product) || !GolemPressPayment.pay(server, worldPosition, player,selected)) return false;
+        job = job.startPaid(selected);
         ticks = 0;
         setChanged();
         return true;
@@ -118,13 +139,22 @@ public final class GolemPressBlockEntity extends BlockEntity implements WorldlyC
         super.saveAdditional(tag, registries);
         tag.putLong("golem", job.props()); tag.putInt("cost", job.remaining()); tag.putInt("mcost", job.maximum());
         tag.putBoolean("BufferedMachina", job.buffered());
+        tag.putLong("SelectedDesign",selected.toLong());
         if (!output.isEmpty()) tag.put("Output", output.save(registries));
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         job = GolemPress.State.idle();
+        selected=GolemDesign.defaultWood();
+        try {
+            var design=GolemDesign.fromLong(tag.getLong("SelectedDesign"));
+            if(design.rank()==0 && GolemModule.supportsRuntime(design)) selected=design;
+        } catch(IllegalArgumentException ignored) { /* Invalid selection cannot alter a paid job. */ }
         if (tag.contains("golem")) {
-            try { job = new GolemPress.State(tag.getLong("golem"), tag.getInt("cost"), tag.getInt("mcost"), tag.getBoolean("BufferedMachina")); }
+            try {
+                var candidate=new GolemPress.State(tag.getLong("golem"), tag.getInt("cost"), tag.getInt("mcost"), tag.getBoolean("BufferedMachina"));
+                if(!candidate.active() || GolemModule.supportsRuntime(GolemDesign.fromLong(candidate.props()))) job=candidate;
+            }
             catch (IllegalArgumentException ignored) { /* Never turn malformed or unsupported jobs into free output. */ }
         }
         output = tag.contains("Output") ? ItemStack.parseOptional(registries, tag.getCompound("Output")) : ItemStack.EMPTY;
