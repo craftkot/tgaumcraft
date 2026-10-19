@@ -28,7 +28,7 @@ public final class GolemContainers {
         for(int i=0;i<handler.getSlots();i++) {
             var actual=handler.getStackInSlot(i);
             if(!policy.extractionAccepts(actual,completed)) continue;
-            var filter=new SealFilter(actual,false,0,policy.matchNbt());
+            var filter=new SealFilter(actual,false,0,policy.options());
             if(leaveOne && matchingStock(handler,actual,filter)<2) continue;
             var preview=handler.extractItem(i,actual.getCount(),true);
             if(!preview.isEmpty() && filter.matches(actual,preview)) return actual.copy();
@@ -101,7 +101,7 @@ public final class GolemContainers {
         long count = 0;
         for (int slot = 0; slot < source.getSlots(); slot++) {
             ItemStack stack = source.getStackInSlot(slot);
-            if (filter.matches(stack, template)) count += stack.getCount();
+            if (filter.matches(template, stack)) count += stack.getCount();
         }
         return count;
     }

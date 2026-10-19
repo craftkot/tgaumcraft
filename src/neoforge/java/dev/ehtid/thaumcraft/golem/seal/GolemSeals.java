@@ -544,7 +544,7 @@ public final class GolemSeals extends SavedData {
     private SealFilter extractionPolicy(Seal seal,int taskId) {
         if(seal.type()!=Type.EMPTY_ADVANCED) return seal.filter();
         var candidate=emptyCandidates.get(taskId);
-        return new SealFilter(candidate==null?ItemStack.EMPTY:candidate,false,0,seal.logistics().matchNbt());
+        return new SealFilter(candidate==null?ItemStack.EMPTY:candidate,false,0,seal.logistics().options());
     }
     private static Optional<TaskSelection.Position> entityPosition(ServerLevel level,GolemTask task) {
         var entity=task.getEntityId()==null?null:level.getEntity(task.getEntityId());

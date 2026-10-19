@@ -16,7 +16,9 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 /** Functional new layout; original BETA26 artwork remains a separate parity task. */
 @EventBusSubscriber(modid=ThaumcraftPort.MOD_ID,bus=EventBusSubscriber.Bus.MOD,value=Dist.CLIENT)
 public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLogisticsMenu> {
-    private Button mode,nbt,single,leave,locked,redstone;
+    private Button mode,nbt,single,leave,locked,redstone,metadata,ore,mod,matching;
+    private boolean matchingPanel;
+    private final java.util.List<Button> ordinary=new java.util.ArrayList<>();
     private final Button[] limits=new Button[4];
     public GolemLogisticsScreen(GolemLogisticsMenu menu,Inventory inv,Component title) {
         super(menu,inv,title); imageWidth=176; imageHeight=272; inventoryLabelY=179;
@@ -27,27 +29,38 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         return addRenderableWidget(Button.builder(text,b->action.run()).bounds(leftPos+x,topPos+y,width,16).build());
     }
     @Override protected void init() {
-        super.init();
+        super.init(); ordinary.clear();
         for(int i=0;i<9;i++) { final int id=100+i; button(Component.literal(Integer.toString(i+1)),8+i*18,43,16,()->send(id)); }
+        matching=button(Component.literal("…"),144,3,24,()->{ matchingPanel=!matchingPanel; update(); });
+        matching.setTooltip(net.minecraft.client.gui.components.Tooltip.create(label("matching")));
+        metadata=button(Component.empty(),8,83,78,()->send(menu.metadata()?60:30));
+        ore=button(Component.empty(),90,83,78,()->send(menu.ore()?62:32));
+        mod=button(Component.empty(),8,103,160,()->send(menu.mod()?63:33));
         mode=button(Component.empty(),8,63,78,()->send(0));
         nbt=button(Component.empty(),90,63,78,()->send(menu.matchNbt()?61:31));
         String[] labels={"-10","-1","+1","+10"};
         for(int i=0;i<4;i++) { final int id=i+1; limits[i]=button(Component.literal(labels[i]),8+i*41,95,37,()->send(id)); }
         leave=button(Component.empty(),8,95,78,()->send(menu.leaveOne()?65:35));
         single=button(Component.empty(),90,95,78,()->send((menu.provider()?menu.single():menu.cycle())?64:34));
-        button(Component.literal("−"),8,117,24,()->send(80)); button(Component.literal("+"),144,117,24,()->send(81));
-        button(Component.literal("−"),8,137,24,()->send(82)); button(Component.literal("+"),144,137,24,()->send(83));
+        ordinary.add(button(Component.literal("−"),8,117,24,()->send(80))); ordinary.add(button(Component.literal("+"),144,117,24,()->send(81)));
+        ordinary.add(button(Component.literal("−"),8,137,24,()->send(82))); ordinary.add(button(Component.literal("+"),144,137,24,()->send(83)));
         locked=button(Component.empty(),8,157,78,()->send(menu.locked()?26:25));
         redstone=button(Component.empty(),90,157,78,()->send(menu.redstone()?28:27));
+        ordinary.add(locked); ordinary.add(redstone);
         update();
     }
     private Component label(String key) { return Component.translatable("menu.thaumcraft.golem_seal."+key); }
     private void update() {
+        for(var b:ordinary) b.visible=b.active=!matchingPanel;
+        metadata.visible=metadata.active=ore.visible=ore.active=mod.visible=mod.active=matchingPanel;
+        metadata.setMessage(label(menu.metadata()?"meta_match":"meta_ignore"));
+        ore.setMessage(label(menu.ore()?"ore_match":"ore_ignore"));
+        mod.setMessage(label(menu.mod()?"mod_match":"mod_ignore"));
         mode.active=!menu.stock(); mode.setMessage(label(menu.blacklist()?"blacklist":"whitelist"));
         nbt.setMessage(label(menu.matchNbt()?"nbt_match":"nbt_ignore"));
-        for(var button:limits) button.visible=button.active=menu.stock();
-        leave.visible=leave.active=!menu.stock(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
-        single.visible=single.active=menu.provider()||menu.advancedEmpty(); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):(menu.cycle()?"cycle":"all_filters")));
+        for(var button:limits) button.visible=button.active=!matchingPanel&&menu.stock();
+        leave.visible=leave.active=!matchingPanel&&!menu.stock(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
+        single.visible=single.active=!matchingPanel&&(menu.provider()||menu.advancedEmpty()); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):(menu.cycle()?"cycle":"all_filters")));
         locked.setMessage(label(menu.locked()?"locked":"public"));
         redstone.setMessage(label(menu.redstone()?"redstone_stop":"redstone_ignore"));
     }
@@ -62,7 +75,8 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
     }
     @Override protected void renderLabels(GuiGraphics g,int mx,int my) {
         super.renderLabels(g,mx,my);
-        if(menu.stock()) g.drawString(font,Component.translatable("menu.thaumcraft.golem_seal.limit",menu.limit()),8,84,0x404040,false);
+        if(!matchingPanel&&menu.stock()) g.drawString(font,Component.translatable("menu.thaumcraft.golem_seal.limit",menu.limit()),8,84,0x404040,false);
+        if(matchingPanel) return;
         var priority=Component.translatable("menu.thaumcraft.golem_seal.priority",menu.priority());
         var color=Component.translatable("menu.thaumcraft.golem_seal.color",menu.color());
         g.drawString(font,priority,(imageWidth-font.width(priority))/2,121,0x404040,false);

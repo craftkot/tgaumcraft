@@ -26,6 +26,10 @@ public final class LogisticsPolicy {
     public SealFilter slot(int i) { return slots.get(i); }
     public boolean blacklist() { return slot(0).blacklist(); }
     public boolean matchNbt() { return slot(0).matchNbt(); }
+    public dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options options() { return slot(0).options(); }
+    public LogisticsPolicy withOptions(dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options value) {
+        return new LogisticsPolicy(slots.stream().map(s->s.withOptions(value)).toList(),single,cycle);
+    }
     public boolean single() { return single; }
     public boolean cycle() { return cycle; }
     public LogisticsPolicy withCycle(boolean enabled) { return new LogisticsPolicy(slots,single,enabled); }
@@ -37,11 +41,11 @@ public final class LogisticsPolicy {
         return selected.matches(selected.item(),stack);
     }
     public LogisticsPolicy withSlot(int i, SealFilter next) {
-        var copy=new ArrayList<>(slots); copy.set(i,next.withBlacklist(blacklist()).withMatchNbt(matchNbt()));
+        var copy=new ArrayList<>(slots); copy.set(i,next.withBlacklist(blacklist()).withOptions(options()));
         return new LogisticsPolicy(copy,single,cycle);
     }
     public LogisticsPolicy withMode(boolean blacklist, boolean nbt, boolean single) {
-        return new LogisticsPolicy(slots.stream().map(s->s.withBlacklist(blacklist).withMatchNbt(nbt)).toList(),single,cycle);
+        return new LogisticsPolicy(slots.stream().map(s->s.withBlacklist(blacklist).withOptions(options().withNbt(nbt))).toList(),single,cycle);
     }
     public boolean accepts(ItemStack stack) {
         if(stack.isEmpty()) return false;
@@ -57,6 +61,7 @@ public final class LogisticsPolicy {
         var filters=new ListTag();
         for(int i=0;i<9;i++) { var entry=new CompoundTag(); entry.putInt("index",i); slots.get(i).save(entry,registries); filters.add(entry); }
         row.put("logistics",filters); row.putBoolean("psing",single); row.putBoolean("pcycle",cycle);
+        row.putBoolean("pmeta",options().metadata()); row.putBoolean("pnbt",options().nbt()); row.putBoolean("pore",options().ore()); row.putBoolean("pmod",options().mod());
     }
     public static LogisticsPolicy load(CompoundTag row, HolderLookup.Provider registries, boolean stock) {
         var defaults=defaults(stock); var filters=new ArrayList<>(defaults.slots);
