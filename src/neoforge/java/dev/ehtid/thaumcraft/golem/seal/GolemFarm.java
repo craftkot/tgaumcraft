@@ -13,6 +13,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,9 +23,10 @@ import java.util.*;
 
 /** Source Harvest scan -> shared task board -> real protected harvest and paid seed placement. */
 final class GolemFarm {
+    private record Plant(GolemFarmRules.Crop crop,Direction support,boolean farmland) {}
     private record Work(GolemSeals.Seal seal,BlockPos pos,boolean replant) {}
     private final GolemSeals data;
-    private final Map<GolemSeals.SealKey,Map<BlockPos,GolemFarmRules.Crop>> replants=new HashMap<>();
+    private final Map<GolemSeals.SealKey,Map<BlockPos,Plant>> replants=new HashMap<>();
     private final Map<Integer,Work> work=new HashMap<>();
     private final Map<GolemSeals.SealKey,Map<BlockPos,Integer>> watched=new HashMap<>();
     private final Map<GolemSeals.SealKey,Integer> scan=new HashMap<>();
@@ -44,7 +46,7 @@ final class GolemFarm {
     private static boolean mature(ServerLevel level,BlockPos pos) {
         var state=level.getBlockState(pos);
         var crop=kind(state); if(crop==null) return false;
-        int age=crop.readiness!=GolemFarmRules.Readiness.AGE?-1:state.getBlock() instanceof CropBlock block?block.getAge(state):state.getValue(NetherWartBlock.AGE);
+        int age=crop.readiness!=GolemFarmRules.Readiness.AGE?-1:state.getBlock() instanceof CropBlock block?block.getAge(state):state.is(Blocks.COCOA)?state.getValue(CocoaBlock.AGE):state.getValue(NetherWartBlock.AGE);
         return GolemFarmRules.ready(crop,age,level.getBlockState(pos.below()).is(state.getBlock()));
     }
     private static boolean loaded(ServerLevel level,BlockPos pos) {
@@ -88,8 +90,10 @@ final class GolemFarm {
         if(w==null || w.seal!=s || !GolemFarmRules.eligible(g.design().traits()) || g.hasTransferRecovery() || !loaded(level,w.pos)
                 || g.home().distSqr(w.pos)>=(double)g.design().stats().homeRadius()*g.design().stats().homeRadius()) return false;
         if(!w.replant) return mature(level,w.pos);
-        var crop=replants.getOrDefault(s.key(),Map.of()).get(w.pos);
-        if(crop==null || !s.harvest().replant() || !level.isEmptyBlock(w.pos)) return false;
+        var plant=replants.getOrDefault(s.key(),Map.of()).get(w.pos);
+        if(plant==null || !s.harvest().replant() || !level.isEmptyBlock(w.pos)) return false;
+        if(!level.hasChunkAt(w.pos.relative(plant.support))) return false;
+        var crop=plant.crop;
         if(carrying(g,crop)!=null) return true;
         if(s.harvest().provision()) GolemProvisioning.request(level,new ProvisionRequest.SealTarget(GolemProvisioning.location(s.key()),s.instanceId()),seed(crop),0);
         return false;
@@ -104,14 +108,16 @@ final class GolemFarm {
         try {
             boolean success;
             if(!w.replant) {
-                var crop=kind(level.getBlockState(w.pos));
+                var before=level.getBlockState(w.pos); var crop=kind(before);
+                var support=before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
+                boolean farmland=level.getBlockState(w.pos.below()).is(Blocks.FARMLAND);
                 success=actor.gameMode.destroyBlock(w.pos);
                 if(success && level.isEmptyBlock(w.pos) && crop.seed!=null && w.seal.harvest().replant()) {
-                    replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,crop); data.setDirty();
+                    replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,new Plant(crop,support,farmland)); data.setDirty();
                 }
             } else {
-                var crop=replants.get(w.seal.key()).get(w.pos); var slot=carrying(g,crop);
-                if(crop.farmland && (level.getBlockState(w.pos.below()).is(Blocks.DIRT) || level.getBlockState(w.pos.below()).is(Blocks.GRASS_BLOCK)
+                var plant=replants.get(w.seal.key()).get(w.pos); var crop=plant.crop; var slot=carrying(g,crop);
+                if(plant.farmland && (level.getBlockState(w.pos.below()).is(Blocks.DIRT) || level.getBlockState(w.pos.below()).is(Blocks.GRASS_BLOCK)
                         || level.getBlockState(w.pos.below()).is(Blocks.COARSE_DIRT))) {
                     actor.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(Items.IRON_HOE));
                     try { actor.getMainHandItem().useOn(context(actor,w.pos.below())); }
@@ -121,7 +127,10 @@ final class GolemFarm {
                 var held=g.getItemBySlot(slot); var actual=held.split(GolemFarmRules.SEED_COST);
                 actor.setItemInHand(InteractionHand.MAIN_HAND,actual);
                 g.setItemSlot(slot,held);
-                actual.useOn(context(actor,w.pos.below()));
+                var placement=context(actor,w.pos.relative(plant.support),plant.support.getOpposite());
+                // Modern BlockItem may target a replaceable clicked support itself. Never plant outside the assigned crop cell.
+                if(!new BlockPlaceContext(placement).getClickedPos().equals(w.pos)) return false;
+                actual.useOn(placement);
                 success=kind(level.getBlockState(w.pos))==crop;
                 if(success) {
                     replants.get(w.seal.key()).remove(w.pos); data.setDirty();
@@ -138,11 +147,15 @@ final class GolemFarm {
         }
     }
     private static UseOnContext context(FakePlayer actor,BlockPos support) {
-        return new UseOnContext(actor,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(support).add(0,.5,0),Direction.UP,support,false));
+        return context(actor,support,Direction.UP);
+    }
+    private static UseOnContext context(FakePlayer actor,BlockPos support,Direction outward) {
+        var hit=Vec3.atCenterOf(support).add(Vec3.atLowerCornerOf(outward.getNormal()).scale(.5));
+        return new UseOnContext(actor,InteractionHand.MAIN_HAND,new BlockHitResult(hit,outward,support,false));
     }
     void saveRow(CompoundTag row,GolemSeals.Seal s) {
         var list=new ListTag();
-        for(var e:replants.getOrDefault(s.key(),Map.of()).entrySet()) { var entry=new CompoundTag(); entry.putLong("pos",e.getKey().asLong()); entry.putString("crop",e.getValue().name()); list.add(entry); }
+        for(var e:replants.getOrDefault(s.key(),Map.of()).entrySet()) { var entry=new CompoundTag(); entry.putLong("pos",e.getKey().asLong()); entry.putString("crop",e.getValue().crop.name()); entry.putByte("support",(byte)e.getValue().support.ordinal()); entry.putBoolean("farmland",e.getValue().farmland); list.add(entry); }
         if(!list.isEmpty()) row.put("ReplantTasks",list);
     }
     void loadRow(CompoundTag row,GolemSeals.Seal s) {
@@ -150,7 +163,12 @@ final class GolemFarm {
         var list=row.getList("ReplantTasks",Tag.TAG_COMPOUND); var area=area(s).bounds();
         for(int i=0;i<list.size();i++) try {
             var entry=list.getCompound(i); var pos=BlockPos.of(entry.getLong("pos")); var crop=GolemFarmRules.Crop.valueOf(entry.getString("crop"));
-            if(crop.seed!=null && area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ()))) replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,crop);
+            int face=entry.contains("support",Tag.TAG_BYTE)?entry.getByte("support"):Direction.DOWN.ordinal();
+            if(face<0 || face>=Direction.values().length) continue;
+            var support=Direction.values()[face];
+            if(crop==GolemFarmRules.Crop.COCOA?support.getAxis().isVertical():support!=Direction.DOWN) continue;
+            boolean farmland=entry.contains("farmland")?entry.getBoolean("farmland"):crop.farmland;
+            if(crop.seed!=null && area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ()))) replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,new Plant(crop,support,farmland));
         } catch(IllegalArgumentException ignored) { /* Unknown crops cannot become arbitrary block placement. */ }
     }
 }

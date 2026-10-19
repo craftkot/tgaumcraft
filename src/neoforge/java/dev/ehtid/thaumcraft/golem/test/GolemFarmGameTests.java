@@ -36,17 +36,19 @@ public final class GolemFarmGameTests {
     private static Farm farm(GameTestHelper h,BlockState state,Item seed) {
         for(int x=0;x<12;x++) for(int z=0;z<12;z++) h.setBlock(new BlockPos(x,0,z),Blocks.STONE);
         boolean stacked=state.is(Blocks.SUGAR_CANE)||state.is(Blocks.CACTUS);
+        boolean cocoa=state.is(Blocks.COCOA);
         var support=h.absolutePos(new BlockPos(5,stacked?1:0,5)); var crop=support.above();
         if(stacked) {
             h.getLevel().setBlockAndUpdate(support.below(),state.is(Blocks.CACTUS)?Blocks.SAND.defaultBlockState():Blocks.DIRT.defaultBlockState());
             if(state.is(Blocks.SUGAR_CANE)) h.getLevel().setBlockAndUpdate(support.below().north(),Blocks.WATER.defaultBlockState());
         }
-        h.getLevel().setBlockAndUpdate(support,stacked?state:state.is(Blocks.NETHER_WART)?Blocks.SOUL_SAND.defaultBlockState():Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
+        h.getLevel().setBlockAndUpdate(support,cocoa?Blocks.STONE.defaultBlockState():stacked?state:state.is(Blocks.NETHER_WART)?Blocks.SOUL_SAND.defaultBlockState():Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
+        if(cocoa) h.getLevel().setBlockAndUpdate(crop.relative(state.getValue(CocoaBlock.FACING)),Blocks.JUNGLE_LOG.defaultBlockState());
         h.getLevel().setBlockAndUpdate(crop,state);
         var data=GolemSeals.get(h.getLevel()); var key=new GolemSeals.SealKey(support,Direction.UP); var owner=UUID.randomUUID();
         h.assertTrue(data.place(support,Direction.UP,owner,GolemSeals.Type.HARVEST),"Actual Harvest seal placed");
         data.configureArea(data.get(key),owner,new BlockPos(1,1,1));
-        var g=GolemModule.GOLEM.get().create(h.getLevel()); g.moveTo(Vec3.atBottomCenterOf(crop.east())); g.initialize(FARMER,owner,crop,0); g.setNoAi(true);
+        var g=GolemModule.GOLEM.get().create(h.getLevel()); g.moveTo(Vec3.atBottomCenterOf(cocoa?crop.relative(state.getValue(CocoaBlock.FACING).getOpposite()):crop.east())); g.initialize(FARMER,owner,crop,0); g.setNoAi(true);
         if(seed!=null) g.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(seed,2));
         h.assertTrue(h.getLevel().addFreshEntity(g),"Actual SMART+DEFT farmer spawned"); return new Farm(data,key,crop,g);
     }
@@ -67,6 +69,7 @@ public final class GolemFarmGameTests {
                 var plant=claim(f); h.assertTrue(complete(h,f,plant),"Actual seed placement succeeds");
                 h.assertTrue(h.getLevel().getBlockState(f.crop).equals(young) && f.golem.getMainHandItem().getCount()==1,"Plant starts at age0 and charges exactly one real seed");
                 h.assertTrue(!complete(h,f,plant) && pending(h,f).isEmpty(),"Completed placement cannot charge another seed");
+                h.assertTrue(f.golem.rankXp()==2,"Real successful harvest and paid replant each award one source work experience");
                 h.assertTrue(f.data.claimBlock(f.golem,p->true).isEmpty(),"Immature crop is not harvested again");
                 f.close(); h.succeed();
             });
@@ -83,6 +86,55 @@ public final class GolemFarmGameTests {
     @GameTest(template="golem_test",batch="farm_wart",timeoutTicks=60)
     public static void netherWartUsesAgeThreeAndSoulSand(GameTestHelper h) { cycle(h,Blocks.NETHER_WART.defaultBlockState().setValue(NetherWartBlock.AGE,3),Blocks.NETHER_WART.defaultBlockState(),Items.NETHER_WART); }
 
+    private static void cocoa(GameTestHelper h,Direction support) {
+        var young=Blocks.COCOA.defaultBlockState().setValue(CocoaBlock.FACING,support);
+        cycle(h,young.setValue(CocoaBlock.AGE,2),young,Items.COCOA_BEANS);
+    }
+    @GameTest(template="golem_test",batch="farm_cocoa_north",timeoutTicks=60)
+    public static void cocoaReplantsAgainstNorthLog(GameTestHelper h) { cocoa(h,Direction.NORTH); }
+    @GameTest(template="golem_test",batch="farm_cocoa_south",timeoutTicks=60)
+    public static void cocoaReplantsAgainstSouthLog(GameTestHelper h) { cocoa(h,Direction.SOUTH); }
+    @GameTest(template="golem_test",batch="farm_cocoa_west",timeoutTicks=60)
+    public static void cocoaReplantsAgainstWestLog(GameTestHelper h) { cocoa(h,Direction.WEST); }
+    @GameTest(template="golem_test",batch="farm_cocoa_east",timeoutTicks=60)
+    public static void cocoaReplantsAgainstEastLog(GameTestHelper h) { cocoa(h,Direction.EAST); }
+
+    @GameTest(template="golem_test",batch="farm_cocoa_attachment",timeoutTicks=70)
+    public static void missingCocoaSupportCannotPlantInAnotherCellAndCanRetry(GameTestHelper h) {
+        var young=Blocks.COCOA.defaultBlockState().setValue(CocoaBlock.FACING,Direction.EAST);
+        var f=farm(h,young.setValue(CocoaBlock.AGE,2),Items.COCOA_BEANS);
+        h.runAfterDelay(8,()->{
+            complete(h,f,claim(f));
+            h.runAfterDelay(8,()->{
+                var plant=claim(f); h.getLevel().setBlockAndUpdate(f.crop.east(),Blocks.AIR.defaultBlockState());
+                h.getLevel().setBlockAndUpdate(f.crop.east(2),Blocks.JUNGLE_LOG.defaultBlockState());
+                h.assertTrue(!complete(h,f,plant) && h.getLevel().isEmptyBlock(f.crop.east()) && h.getLevel().isEmptyBlock(f.crop)
+                        && f.golem.getMainHandItem().getCount()==2 && pending(h,f).size()==1,"Missing attachment cannot shift modern BlockItem placement to another cell or debit seed");
+                h.getLevel().setBlockAndUpdate(f.crop.east(),Blocks.JUNGLE_LOG.defaultBlockState());
+                h.assertTrue(complete(h,f,plant) && h.getLevel().getBlockState(f.crop).equals(young) && f.golem.getMainHandItem().getCount()==1,"Restored original support permits same lease retry");
+                f.close(); h.succeed();
+            });
+        });
+    }
+    @GameTest(template="golem_test",batch="farm_cocoa_nbt",timeoutTicks=60)
+    public static void pendingCocoaDirectionRoundTripsAndRejectsVerticalAttachment(GameTestHelper h) {
+        var f=farm(h,Blocks.COCOA.defaultBlockState().setValue(CocoaBlock.FACING,Direction.WEST).setValue(CocoaBlock.AGE,2),null);
+        h.getLevel().setBlockAndUpdate(f.crop.below(),Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
+        h.runAfterDelay(8,()->{
+            complete(h,f,claim(f)); var tag=f.data.save(new CompoundTag(),h.getLevel().registryAccess());
+            var copy=GolemSeals.load(tag,h.getLevel().registryAccess());
+            var rows=copy.save(new CompoundTag(),h.getLevel().registryAccess()).getList("seals",Tag.TAG_COMPOUND);
+            var row=rows.stream().map(t->(CompoundTag)t).filter(t->t.getLong("pos")==f.key.pos().asLong()).findFirst().orElseThrow();
+            var intents=row.getList("ReplantTasks",Tag.TAG_COMPOUND);
+            h.assertTrue(copy.pendingTasks()==0 && intents.size()==1 && intents.getCompound(0).getByte("support")==Direction.WEST.ordinal() && intents.getCompound(0).getBoolean("farmland"),"Original horizontal attachment and actual farmland snapshot persist independently of crop family/live task IDs");
+            intents.getCompound(0).putByte("support",(byte)Direction.UP.ordinal());
+            var invalid=GolemSeals.load(copyTag(row),h.getLevel().registryAccess()).save(new CompoundTag(),h.getLevel().registryAccess());
+            h.assertTrue(invalid.getList("seals",Tag.TAG_COMPOUND).getCompound(0).getList("ReplantTasks",Tag.TAG_COMPOUND).isEmpty(),"Malformed vertical Cocoa intent cannot become arbitrary placement");
+            f.close(); h.succeed();
+        });
+    }
+    private static CompoundTag copyTag(CompoundTag row) { var tag=new CompoundTag(); var rows=new ListTag(); rows.add(row.copy()); tag.put("seals",rows); return tag; }
+
     private static void fruit(GameTestHelper h,Block fruit,Item seed,Block stem) {
         var f=farm(h,fruit.defaultBlockState(),seed);
         h.getLevel().setBlockAndUpdate(f.crop.north().below(),Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
@@ -91,6 +143,7 @@ public final class GolemFarmGameTests {
             h.assertTrue(complete(h,f,claim(f)) && h.getLevel().isEmptyBlock(f.crop),"Actual fruit harvested");
             h.assertTrue(f.golem.getMainHandItem().getCount()==2 && pending(h,f).isEmpty(),"Fruit has no source seed mapping: no fabricated replant or debit");
             h.assertTrue(h.getLevel().getBlockState(f.crop.north()).is(stem),"Fruit harvest preserves actual stem");
+            h.getLevel().setBlockAndUpdate(f.key.pos(),Blocks.STONE.defaultBlockState()); // Prevent random fruit regrowth during the stem-only refusal check.
             f.data.configureArea(f.data.get(f.key),f.golem.ownerId(),new BlockPos(2,1,2));
             h.runAfterDelay(50,()->{
                 h.assertTrue(f.data.claimBlock(f.golem,p->true).isEmpty() && h.getLevel().getBlockState(f.crop.north()).is(stem),"Mature stems are excluded from crop harvesting");
@@ -190,6 +243,11 @@ public final class GolemFarmGameTests {
             var copy=GolemSeals.load(tag,h.getLevel().registryAccess()); var seal=copy.get(f.key);
             h.assertTrue(seal.type()==GolemSeals.Type.HARVEST && seal.harvest().replant() && seal.harvest().provision() && seal.area().equals(new BlockPos(1,1,1)) && copy.pendingTasks()==0 && pending(h,f).size()==1,"Type/settings/intent persist; live leases do not");
             h.assertTrue(copy.save(new CompoundTag(),h.getLevel().registryAccess()).getList("seals",Tag.TAG_COMPOUND).stream().anyMatch(t->t instanceof CompoundTag row && row.getList("ReplantTasks",Tag.TAG_COMPOUND).size()==1),"Pending placement survives full decode/encode");
+            var oldRow=tag.getList("seals",Tag.TAG_COMPOUND).stream().map(t->(CompoundTag)t).filter(t->t.getLong("pos")==f.key.pos().asLong()).findFirst().orElseThrow();
+            var oldIntent=oldRow.getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0); oldIntent.remove("support"); oldIntent.remove("farmland");
+            var oldCopy=GolemSeals.load(copyTag(oldRow),h.getLevel().registryAccess()).save(new CompoundTag(),h.getLevel().registryAccess());
+            var upgraded=oldCopy.getList("seals",Tag.TAG_COMPOUND).getCompound(0).getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0);
+            h.assertTrue(upgraded.getByte("support")==Direction.DOWN.ordinal() && upgraded.getBoolean("farmland"),"M10.21 pending wheat intent upgrades to original downward/farmland defaults");
             f.close(); h.succeed();
         });
     }
