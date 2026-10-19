@@ -342,6 +342,9 @@
   "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: ignore",
   "item.thaumcraft.seal_blank": "Blank Control Seal",
   "item.thaumcraft.golem_bell": "Golemancer’s Bell",
+  "item.thaumcraft.seal_empty": "Seal: Empty",
+  "message.thaumcraft.golem.seal.empty.placed": "Empty seal placed: %s, %s, %s",
+  "message.thaumcraft.golem.seal.empty.removed": "Empty seal removed",
   "message.thaumcraft.golem.follow": "Golem: follow",
   "message.thaumcraft.golem.stay": "Golem: work here"
 }

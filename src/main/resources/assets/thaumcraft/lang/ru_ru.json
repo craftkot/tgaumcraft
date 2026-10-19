@@ -342,6 +342,9 @@
   "menu.thaumcraft.golem_seal.redstone_ignore": "Redstone: игнорировать",
   "item.thaumcraft.seal_blank": "Пустая печать управления",
   "item.thaumcraft.golem_bell": "Колокольчик големов",
+  "item.thaumcraft.seal_empty": "Печать: опустошение",
+  "message.thaumcraft.golem.seal.empty.placed": "Печать опустошения установлена: %s, %s, %s",
+  "message.thaumcraft.golem.seal.empty.removed": "Печать опустошения снята",
   "message.thaumcraft.golem.follow": "Голем: следовать",
   "message.thaumcraft.golem.stay": "Голем: работать здесь"
 }
