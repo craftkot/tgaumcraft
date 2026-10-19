@@ -54,6 +54,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     private GolemPickupGoal pickupGoal;
     private GolemBlockGoal blockGoal;
     private ItemStack transferRecovery = ItemStack.EMPTY;
+    private final java.util.ArrayDeque<ItemStack> recoveryQueue=new java.util.ArrayDeque<>();
     private GolemFollowOwnerGoal followGoal;
 
     public ThaumcraftGolem(EntityType<? extends ThaumcraftGolem> type, Level level) {
@@ -177,8 +178,25 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
 
     /** Owns unexpected actual extraction remainders; never invent a stack from a simulation. */
-    public boolean hasTransferRecovery() { return !transferRecovery.isEmpty(); }
+    public boolean hasTransferRecovery() { return !transferRecovery.isEmpty() || !recoveryQueue.isEmpty(); }
     public ItemStack transferRecovery() { return transferRecovery.copy(); }
+    public java.util.List<ItemStack> transferRecoveryItems() {
+        var result=new java.util.ArrayList<ItemStack>();
+        if(!transferRecovery.isEmpty()) result.add(transferRecovery.copy());
+        recoveryQueue.forEach(s->result.add(s.copy())); return java.util.List.copyOf(result);
+    }
+    /** Returned fake-player inventory/seed escrow may contain several actual variants. No new extraction is allowed until drained. */
+    public void retainTransfer(ItemStack actual) {
+        if(level().isClientSide || actual.isEmpty()) return;
+        var remaining=hasTransferRecovery()?actual.copy():holdItem(actual);
+        if(remaining.isEmpty()) return;
+        if(transferRecovery.isEmpty() && recoveryQueue.isEmpty()) transferRecovery=remaining;
+        else recoveryQueue.addLast(remaining);
+    }
+    private ItemStack popRecovery() {
+        var result=transferRecovery;
+        transferRecovery=recoveryQueue.isEmpty()?ItemStack.EMPTY:recoveryQueue.removeFirst(); return result;
+    }
     public void holdExtracted(ItemStack actual) {
         if (level().isClientSide || hasTransferRecovery()) throw new IllegalStateException("Extraction recovery must be drained first");
         transferRecovery = holdItem(actual);
@@ -208,7 +226,10 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     public void tick() {
         super.tick();
-        if (!level().isClientSide && isAlive() && hasTransferRecovery()) transferRecovery = holdItem(transferRecovery);
+        if (!level().isClientSide && isAlive() && hasTransferRecovery()) {
+            if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
+            transferRecovery = holdItem(transferRecovery);
+        }
         if (!level().isClientSide && isAlive() && invalidDesign == null
                 && tickCount % (design().hasTrait(GolemTrait.REPAIR) ? 40 : 100) == 0)
             heal(1.0F);
@@ -225,9 +246,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
             setItemSlot(slot, ItemStack.EMPTY);
             spawnAtLocation(held.copy());
         }
-        if (hasTransferRecovery()) {
-            ItemStack retained = transferRecovery;
-            transferRecovery = ItemStack.EMPTY;
+        while (hasTransferRecovery()) {
+            ItemStack retained = popRecovery();
             spawnAtLocation(retained.copy());
         }
         super.dropCustomDeathLoot(level, source, recentlyHit);
@@ -246,8 +266,11 @@ public final class ThaumcraftGolem extends PathfinderMob {
         tag.putByte("gflags", entityData.get(FLAGS));
         tag.putInt("rankXP", rankXp);
         tag.putByte("color", golemColor());
-        if (hasTransferRecovery()) tag.put("transferRecovery", transferRecovery.save(registryAccess()));
+        if (!transferRecovery.isEmpty()) tag.put("transferRecovery", transferRecovery.save(registryAccess()));
         else tag.remove("transferRecovery");
+        var queued=new net.minecraft.nbt.ListTag();
+        for(var stack:recoveryQueue) queued.add(stack.save(registryAccess()));
+        if(!queued.isEmpty()) tag.put("transferRecoveryQueue",queued); else tag.remove("transferRecoveryQueue");
         if (ownerId() != null) tag.putString("OwnerUUID", ownerId().toString());
         tag.putBoolean("v", true);
     }
@@ -278,6 +301,9 @@ public final class ThaumcraftGolem extends PathfinderMob {
         entityData.set(COLOR, tag.getByte("color"));
         transferRecovery = tag.contains("transferRecovery")
                 ? ItemStack.parseOptional(registryAccess(), tag.getCompound("transferRecovery")) : ItemStack.EMPTY;
+        recoveryQueue.clear();
+        var queued=tag.getList("transferRecoveryQueue",net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for(int i=0;i<queued.size();i++) { var stack=ItemStack.parseOptional(registryAccess(),queued.getCompound(i)); if(!stack.isEmpty()) recoveryQueue.addLast(stack); }
         rankXp = Math.max(0, tag.getInt("rankXP"));
         setWorking(false); // Reservations are ephemeral; reacquire after load, never replay a completed pickup.
         applyDesign();
@@ -328,10 +354,11 @@ public final class ThaumcraftGolem extends PathfinderMob {
             if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
             setItemSlot(slot, ItemStack.EMPTY);
         }
-        if (hasTransferRecovery()) {
+        while (hasTransferRecovery()) {
+            if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
             ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), transferRecovery.copy());
             if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
-            transferRecovery = ItemStack.EMPTY;
+            popRecovery();
         }
         ItemEntity placer = new ItemEntity(level(), getX(), getY() + 0.5, getZ(),
                 GolemPlacerItem.stack(invalidDesign != null ? invalidDesign : design().toLong(), rankXp));

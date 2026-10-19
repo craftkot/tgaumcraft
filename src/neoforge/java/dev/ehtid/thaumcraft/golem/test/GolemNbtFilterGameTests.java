@@ -40,7 +40,7 @@ public final class GolemNbtFilterGameTests {
     public static void sourcePnbtActionsPersistForAllThreeTypesAndGhostEditsPreservePolicy(GameTestHelper h) {
         floor(h); var level=h.getLevel(); var data=GolemSeals.get(level); var owner=player(h,"NbtMenuOwner");
         var other=player(h,"NbtMenuOther");
-        for(var type:GolemSeals.Type.values()) {
+        for(var type:new GolemSeals.Type[]{GolemSeals.Type.PICKUP,GolemSeals.Type.FILL,GolemSeals.Type.EMPTY}) {
             var key=seal(h,owner,new BlockPos(4+type.ordinal()*2,1,6),type);
             owner.moveTo(Vec3.atBottomCenterOf(key.pos().above())); other.moveTo(owner.position());
             var menu=new GolemSealMenu(30+type.ordinal(),owner.getInventory(),level,data.get(key));

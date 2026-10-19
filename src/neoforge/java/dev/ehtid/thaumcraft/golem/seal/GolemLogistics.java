@@ -68,16 +68,21 @@ final class GolemLogistics {
             for(var request:requests.snapshot()) {
                 if(request.invalid() || request.linkedTask()!=null || request.timeout()<System.currentTimeMillis()
                         || !provider.logistics().accepts(request.item().stack(1))) continue;
-                if(request.target() instanceof ProvisionRequest.SealTarget) continue;
-                var w=new Work(request,requests,provider,recipients.get(request));
+                var recipient=recipients.get(request);
+                if(request.target() instanceof ProvisionRequest.SealTarget target) {
+                    var location=target.location(); var key=new GolemSeals.SealKey(new BlockPos(location.pos().x(),location.pos().y(),location.pos().z()),Direction.values()[location.face().ordinal()]);
+                    recipient=data.get(key);
+                    if(recipient==null || recipient.type()!=GolemSeals.Type.HARVEST || !recipient.instanceId().equals(target.instanceId())) continue;
+                }
+                var w=new Work(request,requests,provider,recipient);
                 if(!valid(level,w)) continue;
                 var destination=destination(level,w);
                 if(destination==null || provider.key().equals(destination)
                         || !ProvisionRules.inProviderRange(provider.key().pos().distSqr(destination.pos()))) continue;
-                if(resumeCargo(level,w)) break;
+                if(!(request.target() instanceof ProvisionRequest.SealTarget) && resumeCargo(level,w)) break;
                 var stack=request.item().stack(request.count());
                 if(strictStock(GolemContainers.handler(level,provider.key()),stack)<= (provider.leaveOne()?1:0)) continue;
-                var task=ProvisionRules.pickup(data.nextId(),GolemProvisioning.location(provider.key()),request,(byte)5);
+                var task=ProvisionRules.pickup(data.nextId(),GolemProvisioning.location(provider.key()),request,recipient==null?(byte)5:recipient.priority());
                 if(!data.enqueue(task,provider)) break;
                 if(!requests.link(request,null,task)) { data.cancel(task.getId()); continue; }
                 remember(task,w); break;
@@ -111,12 +116,17 @@ final class GolemLogistics {
                 && GolemContainers.handler(level,seal.key())!=null;
     }
     private boolean valid(ServerLevel level,Work w) {
-        if(!usable(level,w.provider) || w.recipient!=null && !usable(level,w.recipient)) return false;
+        if(!usable(level,w.provider)) return false;
+        if(w.recipient!=null && (data.get(w.recipient.key())!=w.recipient || !level.hasChunkAt(w.recipient.key().pos())
+                || level.isEmptyBlock(w.recipient.key().pos()) || GolemSeals.stopped(level,w.recipient))) return false;
         var target=destination(level,w);
         if(target==null || !level.hasChunkAt(target.pos()) || !level.hasChunkAt(target.pos().relative(target.face()))) return false;
         return !(w.request.target() instanceof ProvisionRequest.BlockTarget) || GolemContainers.handler(level,target)!=null;
     }
     private GolemSeals.SealKey destination(ServerLevel level,Work w) {
+        if(w.request.target() instanceof ProvisionRequest.SealTarget seal) {
+            var p=seal.location(); return new GolemSeals.SealKey(new BlockPos(p.pos().x(),p.pos().y(),p.pos().z()),Direction.values()[p.face().ordinal()]);
+        }
         if(w.request.target() instanceof ProvisionRequest.BlockTarget block) {
             var p=block.location();
             return new GolemSeals.SealKey(new BlockPos(p.pos().x(),p.pos().y(),p.pos().z()),Direction.values()[p.face().ordinal()]);
@@ -148,6 +158,7 @@ final class GolemLogistics {
         if(target==null || golem.home().distSqr(target.pos()) >= (double)golem.design().stats().homeRadius()*golem.design().stats().homeRadius()) return false;
         if(w.recipient!=null && ((w.recipient.locked() && !w.recipient.owner().equals(golem.ownerId()))
                 || !TaskSelection.colorMatches(golem.golemColor(),w.recipient.color()))) return false;
+        if(w.recipient!=null && w.recipient.type()==GolemSeals.Type.HARVEST && !GolemFarmRules.eligible(golem.design().traits())) return false;
         if(task.getData()!=0) return !carried(golem,w).isEmpty();
         if(!carried(golem,w).isEmpty() || golem.hasTransferRecovery()) return false;
         var stack=w.request.item().stack(w.request.count());
@@ -157,7 +168,7 @@ final class GolemLogistics {
                 new SealFilter(stack,false,0),provider.leaveOne());
     }
     boolean complete(ServerLevel level,ThaumcraftGolem golem,GolemSeals.BlockAssignment assignment) {
-        if(golem.level()!=level || !assignment.lease().owner().equals(golem.getUUID())) return false;
+        if(data.blockTarget(level,golem,assignment)==null) return false;
         var task=data.tasks().task(assignment.lease()).orElse(null);
         var w=task==null?null:work.get(task.getId());
         if(w==null || !assignment.seal().equals(w.provider.key()) || !eligible(level,golem,task,w.provider)) return false;
@@ -170,10 +181,14 @@ final class GolemLogistics {
             int moved=GolemContainers.extractInto(golem,GolemContainers.handler(level,target),stack.copyWithCount(amount),
                     new SealFilter(stack,false,0),w.provider.leaveOne());
             if(moved>0 && !carried(golem,w).isEmpty()) {
+                if(w.request.target() instanceof ProvisionRequest.SealTarget) {
+                    w.requests.invalidate(w.request); // Recipient's existing replant task uses the real carried seed.
+                } else {
                 var next=ProvisionRules.delivery(data.nextId(),task,w.request);
                 next.setGolemUUID(golem.getUUID()); // Keep the paid cargo with its worker.
                 if(data.enqueue(next,w.provider) && w.requests.link(w.request,task,next)) remember(next,w);
                 else { data.cancel(next.getId()); w.requests.invalidate(w.request); }
+                }
                 golem.addRankXp(1);
             } else w.requests.invalidate(w.request);
             data.finish(assignment.lease());

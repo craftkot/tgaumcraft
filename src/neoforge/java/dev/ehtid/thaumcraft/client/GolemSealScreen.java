@@ -17,6 +17,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu> {
     private Button mode, lock, redstone, leaveOne, matchNbt;
+    private Button replant,provision;
     private final Button[] limits = new Button[4];
     private final Button[] areas = new Button[6];
 
@@ -41,6 +42,8 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
                 .bounds(leftPos + 8, topPos + 46, 78, 18).build());
         matchNbt = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.matchNbt() ? 61 : 31))
                 .bounds(leftPos + 90, topPos + 46, 78, 18).build());
+        replant=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.replant()?60:30)).bounds(leftPos+8,topPos+46,78,18).build());
+        provision=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.provision()?61:31)).bounds(leftPos+90,topPos+46,78,18).build());
         String[] labels = {"-10", "-1", "+1", "+10"};
         for (int i = 0; i < 4; i++) {
             final int id = i + 1;
@@ -65,6 +68,10 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     }
 
     private void updateControls() {
+        mode.visible=mode.active=matchNbt.visible=matchNbt.active=!menu.harvest();
+        replant.visible=replant.active=provision.visible=provision.active=menu.harvest();
+        replant.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.replant()?"replant":"no_replant")));
+        provision.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.provision()?"provision":"no_provision")));
         matchNbt.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.matchNbt() ? "nbt_match" : "nbt_ignore")));
         leaveOne.visible = leaveOne.active = menu.hasLeaveOne();
         leaveOne.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.leaveOne() ? "leave_one" : "take_all")));
@@ -88,6 +95,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     @Override protected void renderBg(GuiGraphics g, float partialTick, int mouseX, int mouseY) {
         g.fill(leftPos, topPos, leftPos + imageWidth, topPos + imageHeight, 0xffc6c6c6);
         for (var slot : menu.slots) {
+            if(!slot.isActive()) continue;
             g.fill(leftPos + slot.x - 1, topPos + slot.y - 1, leftPos + slot.x + 17, topPos + slot.y + 17, 0xff373737);
             g.fill(leftPos + slot.x, topPos + slot.y, leftPos + slot.x + 16, topPos + slot.y + 16, 0xff8b8b8b);
         }
@@ -95,8 +103,10 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
 
     @Override protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         super.renderLabels(g, mouseX, mouseY);
-        g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.filter"), 40, 25, 0x404040, false);
-        g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.clear"), 40, 35, 0x404040, false);
+        if(!menu.harvest()) {
+            g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.filter"), 40, 25, 0x404040, false);
+            g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.clear"), 40, 35, 0x404040, false);
+        }
         Component priority = Component.translatable("menu.thaumcraft.golem_seal.priority", menu.priority());
         Component color = Component.translatable("menu.thaumcraft.golem_seal.color", menu.color());
         g.drawString(font, priority, (imageWidth - font.width(priority)) / 2, 103, 0x404040, false);
