@@ -29,7 +29,8 @@ import java.util.UUID;
 /** Opt-in real disk restart: harvest intent and several actual refund variants, no serialized leases. */
 @EventBusSubscriber(modid=ThaumcraftPort.MOD_ID)
 public final class GolemFarmRestartProbe {
-    private static final boolean ENABLED="farm".equals(System.getProperty("thaumcraft.golemRestartScenario",""));
+    private static final String SCENARIO=System.getProperty("thaumcraft.golemRestartScenario","");
+    private static final boolean COCOA=SCENARIO.equals("cocoa"), ENABLED=COCOA||SCENARIO.equals("farm");
     private static final String PHASE=System.getProperty("thaumcraft.golemRestartPhase","");
     private static final UUID OWNER=UUID.fromString("f3bad72b-daa0-411c-80b1-b938e50ef20c"), WORKER=UUID.fromString("37147f1e-429a-4caf-ab97-f15e33274a10"), REFUND=UUID.fromString("258fc93a-9748-44b9-ac14-cd7991512d78");
     private static final BlockPos CROP=new BlockPos(8,120,8);
@@ -44,6 +45,8 @@ public final class GolemFarmRestartProbe {
     }
     @SubscribeEvent public static void stopped(ServerStoppedEvent event) { if(active==event.getServer()) active=null; }
     private static ThaumcraftGolem worker(UUID id) { return active.overworld().getEntity(id) instanceof ThaumcraftGolem g?g:null; }
+    private static Item seed() { return COCOA?Items.COCOA_BEANS:Items.WHEAT_SEEDS; }
+    private static net.minecraft.world.level.block.state.BlockState young() { return COCOA?Blocks.COCOA.defaultBlockState().setValue(CocoaBlock.FACING,Direction.EAST):Blocks.WHEAT.defaultBlockState(); }
     private static ItemStack returned() { var s=new ItemStack(Items.WHEAT_SEEDS,3); s.set(DataComponents.CUSTOM_NAME,Component.literal("Actual cold refund")); return s; }
     private static ListTag pending(GolemSeals data) {
         var rows=data.save(new CompoundTag(),active.overworld().registryAccess()).getList("seals",Tag.TAG_COMPOUND);
@@ -61,11 +64,12 @@ public final class GolemFarmRestartProbe {
                 require(worker(WORKER)==null && worker(REFUND)==null && !data.contains(SEAL.pos(),SEAL.face()),"Fresh isolated farm world");
                 for(int x=1;x<=14;x++) for(int z=2;z<=14;z++) level.setBlockAndUpdate(new BlockPos(x,119,z),Blocks.STONE.defaultBlockState());
                 level.setBlockAndUpdate(SEAL.pos(),Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));
-                level.setBlockAndUpdate(CROP,Blocks.WHEAT.defaultBlockState().setValue(CropBlock.AGE,7));
+                if(COCOA) level.setBlockAndUpdate(CROP.east(),Blocks.JUNGLE_LOG.defaultBlockState());
+                level.setBlockAndUpdate(CROP,COCOA?young().setValue(CocoaBlock.AGE,2):young().setValue(CropBlock.AGE,7));
                 data.place(SEAL.pos(),SEAL.face(),OWNER,GolemSeals.Type.HARVEST);
                 data.configureArea(data.get(SEAL),OWNER,new BlockPos(1,1,1)); data.configureHarvest(data.get(SEAL),OWNER,new HarvestSettings(true,true));
-                var g=GolemModule.GOLEM.get().create(level); g.setUUID(WORKER); g.moveTo(Vec3.atBottomCenterOf(CROP.east()));
-                g.initialize(GolemDesign.fromIds(0,1,1,0,0,0),OWNER,CROP,0); g.setNoAi(true); g.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.WHEAT_SEEDS,2));
+                var g=GolemModule.GOLEM.get().create(level); g.setUUID(WORKER); g.moveTo(Vec3.atBottomCenterOf(COCOA?CROP.west():CROP.east()));
+                g.initialize(GolemDesign.fromIds(0,1,1,0,0,0),OWNER,CROP,0); g.setNoAi(true); g.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(seed(),2));
                 require(level.addFreshEntity(g),"Actual farmer spawned");
                 var r=GolemModule.GOLEM.get().create(level); r.setUUID(REFUND); r.moveTo(Vec3.atBottomCenterOf(CROP.east(4)));
                 r.initialize(GolemDesign.defaultWood(),OWNER,CROP,0); r.setNoAi(true); r.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.COBBLESTONE,64));
@@ -82,11 +86,13 @@ public final class GolemFarmRestartProbe {
                 if(!prepared) {
                     var seal=data.get(SEAL);
                     require(seal!=null && seal.type()==GolemSeals.Type.HARVEST && seal.harvest().replant() && seal.harvest().provision() && seal.area().equals(new BlockPos(1,1,1)),"Harvest controls and area survived disk restart");
-                    require(level.isEmptyBlock(CROP) && pending(data).size()==1 && g.getMainHandItem().getCount()==2,"Unpaid replant restored without charging seed during load");
+                    require(level.isEmptyBlock(CROP) && pending(data).size()==1 && g.getMainHandItem().is(seed()) && g.getMainHandItem().getCount()==2,"Unpaid replant restored without charging seed during load");
+                    require(pending(data).getCompound(0).getByte("support")== (COCOA?Direction.EAST:Direction.DOWN).ordinal()
+                            && pending(data).getCompound(0).getBoolean("farmland"),"Exact attachment and original farmland snapshot survived disk");
                     require(r.transferRecoveryItems().size()==2 && ItemStack.matches(r.transferRecoveryItems().getFirst(),returned()) && r.transferRecoveryItems().get(1).getCount()==4,"Both actual refund variants/components survived disk");
                     g.setNoAi(false); prepared=true; return;
                 }
-                if(!level.getBlockState(CROP).equals(Blocks.WHEAT.defaultBlockState()) || g.getMainHandItem().getCount()!=1) { require(ticks<600,"Autonomous replant completes within600 ticks"); return; }
+                if(!level.getBlockState(CROP).equals(young()) || g.getMainHandItem().getCount()!=1) { require(ticks<600,"Autonomous replant completes within600 ticks"); return; }
                 if(++settled<40) return;
                 require(pending(data).isEmpty(),"Saved intent consumed exactly once after autonomous resume");
                 var actor=FakePlayerFactory.get(level,new GameProfile(OWNER,"ColdRefundOwner")); actor.setShiftKeyDown(true); actor.moveTo(r.position());
@@ -96,8 +102,8 @@ public final class GolemFarmRestartProbe {
                         && drops.stream().filter(e->e.getItem().is(Items.CARROT)).mapToInt(e->e.getItem().getCount()).sum()==4,"Exactly3 named seeds and4 carrots returned after restart");
                 require(level.getEntitiesOfClass(ThaumcraftGolem.class,new AABB(CROP).inflate(16)).size()==1,"One remaining farmer; no entity replay");
             }
-            checked=true; LogUtils.getLogger().info("GOLEM_FARM_RESTART_{}_ASSERTIONS_OK",PHASE.toUpperCase(java.util.Locale.ROOT));
-        } catch(RuntimeException|AssertionError ex) { checked=true; LogUtils.getLogger().error("GOLEM_FARM_RESTART_ASSERTIONS_FAILED",ex); }
+            checked=true; LogUtils.getLogger().info("GOLEM_{}_RESTART_{}_ASSERTIONS_OK",SCENARIO.toUpperCase(java.util.Locale.ROOT),PHASE.toUpperCase(java.util.Locale.ROOT));
+        } catch(RuntimeException|AssertionError ex) { checked=true; LogUtils.getLogger().error("GOLEM_"+SCENARIO.toUpperCase(java.util.Locale.ROOT)+"_RESTART_ASSERTIONS_FAILED",ex); }
         if(checked) active.halt(false);
     }
     private static void require(boolean value,String message) { if(!value) throw new AssertionError(message); }

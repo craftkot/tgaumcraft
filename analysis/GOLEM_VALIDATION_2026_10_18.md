@@ -338,3 +338,9 @@ Read-only source ModConfig/CropUtils/SealHarvest: cocoa seed is brown dye→mode
 **Финальный full NeoForge build121/121 PASS1m10s**, `/workspace/reference/golems-cocoa-final.log`.6 новых Cocoa scenarios: все4 горизонтальных facing сactual loot/paid one bean/age0; missing original log плюс второе соседнее log не сдвигает placement в чужую клетку и не списывает seed, восстановленный support позволяет same lease retry; actual original attachment/farmland NBT и отказ vertical malformed face. Existing M10.21 wheat intent без новых полей корректно обновляется вDOWN/farmlandtrue, leases отсутствуют. Все прежние115PASS; локальные fruit fixtures исключают случайное regrowth во время stem-only refusal check.
 
 JAR CRC PASS SHA256 `a1191fc6a4b9e5b09f0014da8a03a1f8114091c81c2afeca28ba524041cb6141`. Client/renderer не запускался, no art copied. Отдельный cold Cocoa scenario запущен после этого final runtime, результаты отдельно, заранее не предполагаются.
+
+### M10.23 — Cocoa cold WRITE/READ
+
+Отдельный scenario `cocoa`, `build/golem-cocoa-restart`, port25602; расширен собственный farm probe с прежним backward farm route. **WRITE PASS1m17s, READ PASS59s**, `/workspace/reference/golems-cocoa-restart-write.log`/`...-read.log`, explicit `GOLEM_COCOA_RESTART_WRITE_ASSERTIONS_OK`/`...READ_ASSERTIONS_OK`. Прогон завершён на compiled runtime финального121/JARa1191fc6 до сборки следующего pcycle среза.
+
+WRITE actual Cocoa harvest сохраняет AIR/pending original EAST attachment/actual farmlandtrue под Cocoa,2real beans, same farmer UUID, source controls и второй actual multi-refund holder. READ проверяет эти поля с диска, autonomous AI размещает age0 Cocoa на прежнем EAST log за1bean; ещё40ticks без повторного debit/intent, actual refund3namedseeds+4carrots reclaimed once, один worker остаётся. Source farmland snapshot не заменён типовым crop default. Fixture-only forcedchunk и offline dedicated server не выдаются за live unload/client/crash transaction evidence.
