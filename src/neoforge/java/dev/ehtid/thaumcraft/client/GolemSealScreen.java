@@ -68,7 +68,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     }
 
     private void updateControls() {
-        mode.visible=mode.active=matchNbt.visible=matchNbt.active=!menu.harvest();
+        mode.visible=mode.active=matchNbt.visible=matchNbt.active=!menu.harvest()&&!menu.lumber();
         replant.visible=replant.active=provision.visible=provision.active=menu.harvest();
         replant.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.replant()?"replant":"no_replant")));
         provision.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.provision()?"provision":"no_provision")));
@@ -103,7 +103,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
 
     @Override protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         super.renderLabels(g, mouseX, mouseY);
-        if(!menu.harvest()) {
+        if(!menu.harvest()&&!menu.lumber()) {
             g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.filter"), 40, 25, 0x404040, false);
             g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.clear"), 40, 35, 0x404040, false);
         }

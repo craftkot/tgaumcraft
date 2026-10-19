@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBreakerRules;
+import dev.ehtid.thaumcraft.port.core.golem.GolemLumberRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTrait;
 import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
 import dev.ehtid.thaumcraft.port.core.golem.ProvisionBoard;
@@ -586,6 +587,7 @@ public final class LegacyGolemTaskTest {
 
     public static void main(String[] args) throws InterruptedException {
         breakerRules();
+        lumberRules();
 
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
             for (boolean sameComponents : List.of(false, true)) for (boolean matchNbt : List.of(false, true))
@@ -726,6 +728,38 @@ public final class LegacyGolemTaskTest {
         eq(true,!GolemBreakerRules.accepts(false,false,false,0,0,false));
         eq(true,!GolemBreakerRules.accepts(false,true,true,1,1,true));
         eq(true,!GolemBreakerRules.accepts(false,false,true,1,32767,true));
+    }
+
+    private static void lumberRules() {
+        var registry=new AspectRegistry(); var knowledge=new PlayerKnowledgeData(); var stored=new AspectListData();
+        stored.add(registry.get("herba"),40); stored.add(registry.get("sensus"),20);
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,knowledge,stored,registry));
+        knowledge.addResearch("SEALLUMBER"); var recipe=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.LUMBER;
+        eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,knowledge,stored,registry));
+        eq(40,recipe.amount("herba")); eq(20,recipe.amount("sensus"));
+        var paid=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry); eq(0,paid.visSize()); eq(60,stored.visSize());
+        stored.remove(registry.get("herba"),1);
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,knowledge,stored,registry));
+        rejects(IllegalArgumentException.class,()->dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry));
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,knowledge,stored,registry));
+
+        eq(true,GolemLumberRules.eligible(Set.of(GolemTrait.BREAKER,GolemTrait.SMART,GolemTrait.CLUMSY)));
+        eq(false,GolemLumberRules.eligible(Set.of(GolemTrait.BREAKER))); eq(false,GolemLumberRules.eligible(Set.of(GolemTrait.SMART)));
+        var origin=new GolemLumberRules.Pos(0,0,0); var top=new GolemLumberRules.Pos(0,3,0);
+        var logs=new HashSet<GolemLumberRules.Pos>(List.of(origin,new GolemLumberRules.Pos(0,1,0),new GolemLumberRules.Pos(0,2,0),top));
+        java.util.function.Function<GolemLumberRules.Pos,GolemLumberRules.Cell> view=p->logs.contains(p)?GolemLumberRules.Cell.MATCH:GolemLumberRules.Cell.OTHER;
+        eq(Optional.of(top),GolemLumberRules.furthest(origin,view)); logs.remove(top);
+        eq(Optional.of(new GolemLumberRules.Pos(0,2,0)),GolemLumberRules.furthest(origin,view));
+        logs.clear(); logs.add(origin); logs.add(new GolemLumberRules.Pos(2,0,0));
+        eq(Optional.of(new GolemLumberRules.Pos(2,0,0)),GolemLumberRules.furthest(origin,view)); // Source radius2 jumps an air gap.
+        logs.clear(); logs.add(origin); var first=new GolemLumberRules.Pos(-2,2,-2); logs.add(first); logs.add(new GolemLumberRules.Pos(2,2,2)); logs.add(new GolemLumberRules.Pos(2,4,2));
+        eq(Optional.of(first),GolemLumberRules.furthest(origin,view)); // Source ordered greedy branch, not a BFS/global maximum.
+        logs.clear(); for(int y=0;y<=60;y++) logs.add(new GolemLumberRules.Pos(0,y,0));
+        eq(Optional.of(new GolemLumberRules.Pos(0,48,0)),GolemLumberRules.furthest(origin,view));
+        logs.clear(); for(int x=-30;x<=0;x++) logs.add(new GolemLumberRules.Pos(x,0,0));
+        eq(Optional.of(new GolemLumberRules.Pos(-24,0,0)),GolemLumberRules.furthest(origin,view));
+        eq(Optional.empty(),GolemLumberRules.furthest(origin,p->GolemLumberRules.Cell.UNKNOWN));
+        logs.clear(); logs.add(origin); eq(Optional.of(origin),GolemLumberRules.furthest(origin,view));
     }
 
 }

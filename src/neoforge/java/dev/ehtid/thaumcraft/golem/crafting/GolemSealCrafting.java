@@ -57,7 +57,8 @@ public final class GolemSealCrafting {
 
     public static GolemSealRecipes.Conversion conversion(ItemStack stack, PlayerKnowledgeData knowledge,
                                                           AspectListData stored, AspectRegistry registry) {
-        var catalyst=stack.is(GolemModule.BLANK_SEAL.get())?GolemSealRecipes.Catalyst.BLANK
+        var catalyst=stack.is(GolemModule.BREAKER_SEAL.get())?GolemSealRecipes.Catalyst.BREAKER
+                :stack.is(GolemModule.BLANK_SEAL.get())?GolemSealRecipes.Catalyst.BLANK
                 :stack.is(GolemModule.PICKUP_SEAL.get())?GolemSealRecipes.Catalyst.PICKUP
                 :stack.is(GolemModule.EMPTY_SEAL.get())?GolemSealRecipes.Catalyst.EMPTY
                 :stack.is(GolemModule.FILL_SEAL.get())?GolemSealRecipes.Catalyst.FILL
@@ -70,7 +71,7 @@ public final class GolemSealCrafting {
             case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
             case EMPTY -> GolemModule.EMPTY_SEAL.get();
             case EMPTY_ADVANCED -> GolemModule.EMPTY_ADVANCED_SEAL.get(); case PROVIDE -> GolemModule.PROVIDE_SEAL.get();
-            case STOCK -> GolemModule.STOCK_SEAL.get();
+            case STOCK -> GolemModule.STOCK_SEAL.get(); case LUMBER -> GolemModule.LUMBER_SEAL.get();
             case PICKUP_ADVANCED -> GolemModule.PICKUP_ADVANCED_SEAL.get(); case FILL_ADVANCED -> GolemModule.FILL_ADVANCED_SEAL.get();
         });
     }

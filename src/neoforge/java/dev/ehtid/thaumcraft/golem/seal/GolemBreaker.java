@@ -1,19 +1,14 @@
 package dev.ehtid.thaumcraft.golem.seal;
 
-import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.port.core.golem.*;
 import net.minecraft.core.*;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.*;
-import net.minecraft.world.item.component.Tool;
-import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import java.util.*;
 
 /** Source SealBreaker work/callbacks on the shared task board; modern protected real block loot. */
@@ -79,20 +74,9 @@ final class GolemBreaker {
                 cracks.put(task.getId(),new Crack(level,g.getId(),w.pos)); level.destroyBlockProgress(g.getId(),w.pos,GolemBreakerRules.crackStage(task.getData(),w.original.getDestroySpeed(level,w.pos)));
                 var sound=w.original.getSoundType(level,w.pos,g); level.playSound(null,w.pos,sound.getHitSound(),SoundSource.BLOCKS,(sound.getVolume()+.7F)/8,sound.getPitch()*.5F); return false;
             }
-            var profile=new GameProfile(g.ownerId()==null?g.getUUID():g.ownerId(),"TCB"+g.getUUID().toString().replace("-","").substring(0,13));
-            var actor=FakePlayerFactory.get(level,profile); actor.setGameMode(GameType.SURVIVAL); actor.moveTo(g.position());
-            // Source harvestBlock(force=true) uses an enchanted placeholder and ignores tool tiers.
-            // A private zero-wear tool component provides the same drops through modern protection/loot callbacks.
-            var tool=new ItemStack(Items.STICK); tool.set(DataComponents.TOOL,new Tool(List.of(Tool.Rule.minesAndDrops(List.of(w.original.getBlock()),1)),1,0));
-            actor.setItemInHand(InteractionHand.MAIN_HAND,tool);
-            try {
-                boolean success=actor.gameMode.destroyBlock(w.pos) && !level.getBlockState(w.pos).equals(w.original);
-                if(!success) { data.cancel(task.getId()); return false; }
-                data.finish(assignment.lease()); g.addRankXp(1); return true;
-            } finally {
-                actor.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY); // Never reward the built-in tool.
-                for(int i=0;i<actor.getInventory().getContainerSize();i++) { var stack=actor.getInventory().removeItemNoUpdate(i); if(!stack.isEmpty()) g.retainTransfer(stack); }
-            }
+            boolean success=GolemBlockHarvest.harvest(level,g,w.pos,true);
+            if(!success) { data.cancel(task.getId()); return false; }
+            data.finish(assignment.lease()); g.addRankXp(1); return true;
         } finally { busy.remove(g.getUUID()); }
     }
 }
