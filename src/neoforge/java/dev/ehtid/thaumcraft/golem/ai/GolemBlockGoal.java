@@ -96,7 +96,8 @@ public final class GolemBlockGoal extends Goal {
         golem.getLookControl().setLookAt(center.x, center.y, center.z, 10, golem.getMaxHeadXRot());
         if (distance(target.pos()) <= 4) {
             done = GolemSeals.get(level).completeBlock(level, golem, assignment);
-            failed = !done;
+            failed = !done && !GolemSeals.get(level).blockWorkOngoing(level,golem,assignment);
+            if(!done && ++travelTicks>1000) failed=true;
             return;
         }
         if (++travelTicks % 5 != 0) return;

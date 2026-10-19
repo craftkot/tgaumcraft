@@ -40,7 +40,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         super.init();
         mode = addRenderableWidget(Button.builder(Component.translatable("menu.thaumcraft.golem_seal." + (menu.blacklist() ? "blacklist" : "whitelist")), b -> send(0))
                 .bounds(leftPos + 8, topPos + 46, 78, 18).build());
-        matchNbt = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.matchNbt() ? 61 : 31))
+        matchNbt = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.breaker()?(menu.metadata()?60:30):(menu.matchNbt()?61:31)))
                 .bounds(leftPos + 90, topPos + 46, 78, 18).build());
         replant=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.replant()?60:30)).bounds(leftPos+8,topPos+46,78,18).build());
         provision=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.provision()?61:31)).bounds(leftPos+90,topPos+46,78,18).build());
@@ -51,7 +51,6 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
                     .bounds(leftPos + 8 + i * 41, topPos + 74, 37, 16).build());
         }
         int[] actions = {92, 93, 90, 91, 94, 95}; // X-/X+/Y-/Y+/Z-/Z+
-        int[] areaActions={92,93,90,91,94,95};
         for (int i = 0; i < areas.length; i++) {
             final int action = actions[i];
             areas[i] = addRenderableWidget(Button.builder(Component.literal(i % 2 == 0 ? "−" : "+"), b -> send(action))
@@ -73,7 +72,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         replant.visible=replant.active=provision.visible=provision.active=menu.harvest();
         replant.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.replant()?"replant":"no_replant")));
         provision.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.provision()?"provision":"no_provision")));
-        matchNbt.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.matchNbt() ? "nbt_match" : "nbt_ignore")));
+        matchNbt.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.breaker()?(menu.metadata()?"meta_match":"meta_ignore"):(menu.matchNbt()?"nbt_match":"nbt_ignore"))));
         leaveOne.visible = leaveOne.active = menu.hasLeaveOne();
         leaveOne.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.leaveOne() ? "leave_one" : "take_all")));
         lock.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.locked() ? "locked" : "public")));

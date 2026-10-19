@@ -31,6 +31,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final DataSlot areaX = DataSlot.standalone(), areaY = DataSlot.standalone(), areaZ = DataSlot.standalone();
     private final DataSlot leaveOne = DataSlot.standalone();
     private final DataSlot matchNbt = DataSlot.standalone();
+    private final DataSlot metadata=DataSlot.standalone();
     private final DataSlot replant=DataSlot.standalone(),provision=DataSlot.standalone();
 
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
@@ -56,7 +57,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
         addDataSlot(leaveOne);
         addDataSlot(matchNbt);
-        addDataSlot(replant); addDataSlot(provision);
+        addDataSlot(replant); addDataSlot(provision); addDataSlot(metadata);
         refresh();
     }
 
@@ -80,7 +81,9 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public int color() { return color.get(); }
     public boolean locked() { return locked.get() != 0; }
     public boolean redstone() { return redstone.get() != 0; }
-    public boolean hasArea() { return fill.get() == 0 || harvest(); }
+    public boolean hasArea() { return fill.get() == 0 || harvest() || breaker(); }
+    public boolean breaker() { return fill.get()==4; }
+    public boolean metadata() { return metadata.get()!=0; }
     public boolean harvest() { return fill.get()==3; }
     public boolean replant() { return replant.get()!=0; }
     public boolean provision() { return provision.get()!=0; }
@@ -99,9 +102,9 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
         leaveOne.set(seal.leaveOne() ? 1 : 0);
-        matchNbt.set(seal.filter().matchNbt() ? 1 : 0);
+        matchNbt.set(seal.filter().matchNbt() ? 1 : 0); metadata.set(seal.filter().options().metadata()?1:0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
-        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; default -> 2; });
+        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; case BREAKER->4; default -> 2; });
         replant.set(seal.harvest().replant()?1:0); provision.set(seal.harvest().provision()?1:0);
         limitLow.set(seal.filter().limit() & 0xffff);
         limitHigh.set(seal.filter().limit() >>> 16);
@@ -149,7 +152,12 @@ public final class GolemSealMenu extends AbstractContainerMenu {
                             id==31 || id!=61&&seal.harvest().provision()));
             if(result) broadcastChanges(); return result;
         }
+        if(breaker() && (id==30 || id==60)) {
+            boolean result=GolemSeals.get(level).configure(expected,player.getUUID(),seal.filter().withOptions(seal.filter().options().withMetadata(id==30)));
+            if(result) broadcastChanges(); return result;
+        }
         if (id == 31 || id == 61) {
+            if(breaker()) return false;
             boolean result = GolemSeals.get(level).configure(expected, player.getUUID(), seal.filter().withMatchNbt(id == 31));
             if (result) broadcastChanges();
             return result;
@@ -160,7 +168,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
             return result;
         }
         if (id >= 90 && id <= 95) {
-            if (seal.type() != GolemSeals.Type.PICKUP && seal.type()!=GolemSeals.Type.HARVEST) return false;
+            if (seal.type() != GolemSeals.Type.PICKUP && seal.type()!=GolemSeals.Type.HARVEST && seal.type()!=GolemSeals.Type.BREAKER) return false;
             var size = new SealArea.BlockPos(seal.area().getX(), seal.area().getY(), seal.area().getZ());
             var adjusted = SealAreaControls.adjust(size, id);
             if (adjusted.isEmpty()) return false;
