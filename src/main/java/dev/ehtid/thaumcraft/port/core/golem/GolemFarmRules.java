@@ -10,7 +10,7 @@ public final class GolemFarmRules {
     public enum Crop {
         WHEAT("wheat","wheat_seeds",7,true), CARROTS("carrots","carrot",7,true),
         POTATOES("potatoes","potato",7,true), BEETROOTS("beetroots","beetroot_seeds",3,true),
-        NETHER_WART("nether_wart","nether_wart",3,false),
+        NETHER_WART("nether_wart","nether_wart",3,false), COCOA("cocoa","cocoa_beans",2,false),
         MELON("melon",Readiness.FRUIT), PUMPKIN("pumpkin",Readiness.FRUIT),
         SUGAR_CANE("sugar_cane",Readiness.STACKED), CACTUS("cactus",Readiness.STACKED);
         public final String block,seed;

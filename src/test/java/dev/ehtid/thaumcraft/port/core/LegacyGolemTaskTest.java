@@ -494,12 +494,12 @@ public final class LegacyGolemTaskTest {
 
     private static void farmSourceRules() {
         var crops=dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.values();
-        eq(9,crops.length);
+        eq(10,crops.length);
         eq(5,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.SCAN_TICKS);
         eq(1,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.SEED_COST);
         for(var crop:crops) {
             for(int age=-1;age<=8;age++) eq(crop.readiness==dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Readiness.AGE&&age==crop.maximumAge,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.mature(crop,age));
-            eq(crop.readiness==dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Readiness.AGE&&crop!=dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.NETHER_WART,crop.farmland);
+            eq(Set.of(dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.WHEAT,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.CARROTS,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.POTATOES,dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Crop.BEETROOTS).contains(crop),crop.farmland);
             for(boolean below:new boolean[]{false,true}) for(int age=0;age<=15;age++)
                 eq(switch(crop.readiness) { case AGE -> age==crop.maximumAge; case FRUIT -> true; case STACKED -> below; },dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.ready(crop,age,below));
             eq(crop.readiness==dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules.Readiness.AGE,crop.seed!=null);

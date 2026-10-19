@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.21** описаны в конце документа: оплаченный Golem Press, исходные рецепты компонентов/стола, сборка через Salis Mundus, связанная разборка и Provide/Stock с реальным block/entity транспортом. M10.20 добавляет редактор и180 рабочих ground-конструкций; M10.21 — первый Harvest/SealTarget путь. Прочие конструкции, полная farming parity и исходный визуал остаются открыты.
+Текущие срезы **M10.14–M10.23** описаны в конце документа: оплаченный Golem Press, исходные рецепты компонентов/стола, сборка через Salis Mundus, связанная разборка и Provide/Stock с реальным block/entity транспортом. M10.20 добавляет редактор и180 рабочих ground-конструкций; M10.21 — первый Harvest/SealTarget путь. Прочие конструкции, полная farming parity и исходный визуал остаются открыты.
 
 ## 1. Источники и границы доказательств
 
@@ -574,3 +574,14 @@ Read-only `javap -c -p` официального BETA26: `SealHarvest`, `CropUti
 Важное уточнение seed discovery: законно доступный Forge1.12.2-14.23.5.2860 sources JAR (внеGit) добавляет item IPlantable в ItemSeeds/ItemSeedFood; ItemBlock и ItemReed этого интерфейса не получают. Vanilla не может реализовывать Forge interface без patch. Поэтому плодовые pumpkin/melon seeds отображаются на stems, **не fruits**, cactus/cane items не имеют source seed mapping. Для этих четырёх Harvest собирает реальный блок/loot, сохраняет rooted base/stems и **не создаёт replant intent/seed request/debit**. Придуманная ручная посадка нового сегмента изменила бы BETA26.
 
 Core readiness разделён AGE/FRUIT/STACKED; данные девяти культур, readiness по реальному below state. Native проверяет loaded below до readiness. Save отбрасывает невозможные pending intents для видов без source seed, сохраняя backward compatibility пяти исходных families. Тесты: все возраста и оба below cases, реальные pumpkin/melon fruit со stem exclusion, cane/cactus верхний сегмент/root refusal, а также реальное hoe restoring dirt→farmland до canceled/retried seed placement. Результаты прогонов — в validation/lane; Cocoa direction/модовые adapters ещё отдельно.
+
+
+## M10.23 — Cocoa attachment и исходный farmland snapshot
+
+`ModConfig.postInitMisc` явно регистрирует COCOA→brown dye (modern cocoa_beans); CropUtils IGrowable maturity даётage2. `SealHarvest.onTaskCompletion` берёт исходный BlockDirectional.FACING как сторону attachment, сохраняет ReplantInfo.face и original below-is-farmland. На replant item.onItemUse вызывается в `pos.offset(face)` с opposite clicked face;1actual carried seed,1rankXP. Cocoa не относится к обычной вертикальной посадке.
+
+Перенос добавляет десятый подтверждённый vanilla вид. Pending `Plant(crop,support,farmland)` хранит оригинальную сторону/почву, не taskIDs. Вертикальные crops используют DOWN; Cocoa — только horizontal. NBT `support`/`farmland` сохраняются; старый M10.21 wheat/carrot/potato/beetroot/wart intent без них загружается с DOWN и прежним корректным farmland default. Malformed directions/unknown crops не разрешают arbitrary placement. Это расширение своего формата, а не чтение legacy world save из1.12.
+
+Modern CocoaBeans — BlockItem. Если бревно исчезло, BlockPlaceContext может выбрать саму replaceable support cell, а не assigned crop cell. Поэтому до real useOn проверяется **точный placement target**; при несовпадении actual seed возвращается через прежний escrow, чужая клетка не меняется. При восстановлении attachment та же lease может повторить посадку. Графический интерфейс не менялся. Новые scenarios:4реальных facing cycles, missing support + второе соседнее log/retry, NBT direction/vertical rejection/old pending defaults. Cold scenario `cocoa` отдельно проверяет original EAST/soil flag с диска и autonomous paid replant.
+
+Остаток farming: модовые Crop/seed/clickable adapters и source API registrations, расширенные policies/прочие seals. Полный survival Harvest recipe и biothaumic mind по-прежнему требуют M06 generic infusion. Новые данные/границы проверок записываются в validation/lane, без объявления whole M10 PASS.
