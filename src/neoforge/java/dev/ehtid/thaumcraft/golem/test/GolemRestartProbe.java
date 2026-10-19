@@ -27,7 +27,8 @@ import java.util.UUID;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class GolemRestartProbe {
     private static final String PHASE = System.getProperty("thaumcraft.golemRestartPhase", "");
-    private static final boolean BELL_SCENARIO = "bell".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean AREA_SCENARIO = "area".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
+    private static final boolean BELL_SCENARIO = AREA_SCENARIO || "bell".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean CONTROLS_SCENARIO = BELL_SCENARIO || "controls".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILTER_SCENARIO = CONTROLS_SCENARIO || "filter".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
     private static final boolean FILL_SCENARIO = FILTER_SCENARIO || "fill".equals(System.getProperty("thaumcraft.golemRestartScenario", ""));
@@ -113,6 +114,11 @@ public final class GolemRestartProbe {
             require(data.configureControls(data.get(new GolemSeals.SealKey(HOME.offset(3,-1,0), Direction.UP)), OWNER_ID, 5, 6, true, false), "Fill controls stored");
         }
         if (BELL_SCENARIO) golem.setFollowingOwner(true);
+        if (AREA_SCENARIO) {
+            var data = GolemSeals.get(level);
+            require(data.configureArea(data.get(new GolemSeals.SealKey(HOME.below(), Direction.UP)), OWNER_ID,
+                    new BlockPos(2, 3, 4)), "Nondefault asymmetric Pickup area stored");
+        }
         require(GolemSeals.get(level).pendingTasks() == 0, "No persisted task required");
     }
 
@@ -154,6 +160,14 @@ public final class GolemRestartProbe {
             require(fill.priority()==5 && fill.color()==6 && fill.locked() && !fill.redstone(), "Fill controls restored");
         }
         if (BELL_SCENARIO) require(golem.isFollowingOwner(), "Original following FLAGS bit restored");
+        if (AREA_SCENARIO) {
+            var pickup = GolemSeals.get(level).get(new GolemSeals.SealKey(HOME.below(), Direction.UP));
+            require(pickup.area().equals(new BlockPos(2, 3, 4)), "Configured asymmetric area restored from disk");
+            var bounds = GolemSeals.bounds(pickup);
+            require(bounds.minX == HOME.getX()-1 && bounds.maxX == HOME.getX()+2
+                    && bounds.minY == HOME.getY() && bounds.maxY == HOME.getY()+3
+                    && bounds.minZ == HOME.getZ()-3 && bounds.maxZ == HOME.getZ()+4, "Restored scan uses configured dimensions");
+        }
         int workers = 0;
         for (var entity : level.getAllEntities()) if (entity instanceof ThaumcraftGolem) workers++;
         require(workers == 1, "Exactly one restored worker");
