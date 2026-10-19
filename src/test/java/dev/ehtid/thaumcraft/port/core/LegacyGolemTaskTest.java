@@ -492,6 +492,39 @@ public final class LegacyGolemTaskTest {
         eq(List.of(mixedEntity,mixedBlock),TaskSelection.sorted(List.of(mixedBlock,mixedEntity),null,permissive(ALICE)));
     }
 
+    private static void extendedMatchSourceRules() {
+        var strict=dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options.strict();
+        var match=new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(false,false,false,false,true,true);
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(match,strict.withMod(true)));
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(true,true,false,true,false,true),strict.withMod(true).withOre(true)));
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(match,strict.withOre(true)));
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(match,strict));
+        var tool=new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(true,false,false,true,true,false);
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(tool,strict.withNbt(false)));
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(tool,strict.withMetadata(false)));
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(true,false,true,true,true,false),strict));
+        var named=new dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Comparison(true,true,false,false,true,false);
+        eq(false,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(named,strict.withMetadata(false)));
+        eq(true,dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(named,strict.withNbt(false)));
+        String[][] aliases={{"minecraft:oak_planks","minecraft:planks","0"},{"minecraft:dark_oak_planks","minecraft:planks","5"},
+                {"minecraft:acacia_log","minecraft:log2","0"},{"minecraft:dark_oak_leaves","minecraft:leaves2","1"},
+                {"minecraft:blue_wool","minecraft:wool","11"},{"minecraft:red_dye","minecraft:dye","1"},
+                {"minecraft:charcoal","minecraft:coal","1"},{"minecraft:music_disc_11","minecraft:record_11","0"},
+                {"minecraft:dark_oak_slab","minecraft:wooden_slab","5"},{"minecraft:oak_door","minecraft:wooden_door","0"},
+                {"thaumcraft:module_aggression","thaumcraft:modules","1"},{"thaumcraft:mind_biothaumic","thaumcraft:mind","1"},
+                {"example:log20","example:log20","0"},{"minecraft:cherry_planks","minecraft:cherry_planks","0"}};
+        for(var row:aliases) { var item=dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem.modern(row[0],false,0); eq(row[1],item.id()); eq(Integer.parseInt(row[2]),item.metadata()); }
+        eq(23,dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem.modern("minecraft:iron_axe",true,23).metadata());
+        eq(Set.of("logWood"),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("minecraft:log2",1)));
+        eq(Set.of("dye","dyeBlue","gemLapis"),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("minecraft:dye",4)));
+        eq(Set.of("dye"),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("minecraft:dye",32767)));
+        eq(Set.of("blockGlass","blockGlassBlue"),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("minecraft:stained_glass",11)));
+        eq(Set.of("plateIron"),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("thaumcraft:plate",1)));
+        eq(Set.of(),dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.groups(new dev.ehtid.thaumcraft.port.core.golem.GolemLegacyItem("minecraft:stone",32767)));
+        eq("plankWood",dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.commonTags().get("minecraft:planks"));
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemOreGroups.commonTags().get("c:ingots"));
+    }
+
     private static void emptyCycleSourceRules() {
         int[] three={0,1,2,0,1,2,0};
         for(int completed=0;completed<three.length;completed++) eq(three[completed],dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.cycleIndex(completed,3));
@@ -639,6 +672,7 @@ public final class LegacyGolemTaskTest {
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, 0, false));
         eq(0, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(7, 64, -1, true));
         eq(64, dev.ehtid.thaumcraft.port.core.golem.SealEmptyRules.requested(64, 64, Long.MAX_VALUE, true));
+        extendedMatchSourceRules();
         emptyCycleSourceRules();
         farmSourceRules();
         taskSourceRules();
