@@ -51,6 +51,11 @@ public final class GolemPressStructures extends SavedData {
     private boolean changing;
     public static GolemPressStructures get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(FACTORY, "thaumcraft_golem_press_structures"); }
     public int size() { return structures.size(); }
+    public static boolean reserved(Level level, BlockPos pos) {
+        if (!(level instanceof ServerLevel server)) return false;
+        var s = get(server).byCell.get(pos);
+        return s != null && s.phase != Phase.ACTIVE;
+    }
     public boolean canOperate(BlockPos controller) { var structure = byCell.get(controller); return structure == null || structure.phase == Phase.ACTIVE; }
     public BlockPos controllerFor(BlockPos pos) { var s = byCell.get(pos); return s != null && s.phase == Phase.ACTIVE ? s.controller() : null; }
 
@@ -59,7 +64,7 @@ public final class GolemPressStructures extends SavedData {
         var player = context.getPlayer(); var level = context.getLevel();
         if (player == null || dust.isEmpty() || player.isSpectator() || !player.isAlive() || player.isShiftKeyDown()
                 || !player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().isResearchKnown(GolemPressBlueprint.RESEARCH)) return InteractionResult.PASS;
-        if (level instanceof ServerLevel server && get(server).byCell.containsKey(context.getClickedPos())) return InteractionResult.CONSUME;
+        if (reserved(level, context.getClickedPos())) return InteractionResult.CONSUME;
         Structure match = find(level, context.getClickedPos());
         if (match == null) return InteractionResult.PASS;
         for (var cell : match.cells()) {

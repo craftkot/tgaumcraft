@@ -131,7 +131,7 @@ public final class GolemComponentGameTests {
         h.succeed();
     }
 
-    @GameTest(template="golem_test", batch="component_press_chain", timeoutTicks=100)
+    @GameTest(template="golem_test", batch="component_press_chain", timeoutTicks=160)
     public static void threePaidMechanismsAndMindActuallyFeedOneMachinaPressCycle(GameTestHelper h) {
         var f = fixture(h); var inv = f.player.getInventory(); knowledge(f).addResearch("BASEARTIFICE");
         knowledge(f).addResearch("MINDCLOCKWORK"); knowledge(f).setResearchStage("MINDCLOCKWORK", 2);
@@ -159,15 +159,24 @@ public final class GolemComponentGameTests {
         h.assertTrue(f.bench.getVis() == 45 && count(inv, GolemModule.SIMPLE_MECHANISM.get()) == 2
                 && count(inv, GolemModule.CLOCKWORK_MIND.get()) == 1 && f.bench.getItem(10).isEmpty()
                 && f.bench.getItem(11).getCount() == 1 && f.bench.getItem(13).getCount() == 3, "Exact55vis/Ignis4/Aqua3/Ordo1 across full ingredient chain");
-        BlockPos pos = new BlockPos(8, 2, 8); h.setBlock(pos, GolemModule.PRESS.get()); h.setBlock(pos.below(), ThaumcraftBlocks.JAR_NORMAL.get());
-        var press = (GolemPressBlockEntity) h.getLevel().getBlockEntity(h.absolutePos(pos));
+        BlockPos pos = new BlockPos(8, 2, 8);
+        GolemFormationGameTests.placeSource(h.getLevel(), h.absolutePos(pos.west()), 0);
+        h.setBlock(pos.below(), ThaumcraftBlocks.JAR_NORMAL.get());
         var jar = (EssentiaJarBlockEntity) h.getLevel().getBlockEntity(h.absolutePos(pos.below()));
         for (int unit = 0; unit < 8; unit++) h.assertTrue(jar.addFromTransport("machina", 1, Direction.UP) == 1, "Fixture actual source stock");
         f.player.moveTo(Vec3.atBottomCenterOf(h.absolutePos(pos).east()));
-        h.assertTrue(press.start(f.player) && inv.isEmpty(), "Press consumes only the exact remaining2 mechanisms+mind+3wood; no raw fixture copies remain");
-        h.startSequence().thenIdle(45).thenExecute(() -> h.assertTrue(!press.job().active() && jar.snapshot().amount() == 0
+        h.assertTrue(inv.getItem(8).isEmpty(), "Fixture Salis slot does not replace earned components");
+        inv.selected = 8; inv.setItem(8, new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get()));
+        h.assertTrue(GolemFormationGameTests.use(f.player,h.absolutePos(pos),Direction.UP).consumesAction() && inv.getItem(8).isEmpty(),"One real Salis paid to assemble constituent blocks");
+        h.startSequence().thenIdle(55).thenExecute(() -> {
+            var press=(GolemPressBlockEntity)h.getLevel().getBlockEntity(h.absolutePos(pos));
+            h.assertTrue(press!=null && press.start(f.player) && inv.isEmpty(),"Formed press consumes only actual remaining2 mechanisms+mind+3wood");
+        }).thenIdle(45).thenExecute(() -> {
+            var press=(GolemPressBlockEntity)h.getLevel().getBlockEntity(h.absolutePos(pos));
+            h.assertTrue(!press.job().active() && jar.snapshot().amount() == 0
                 && press.getItem(0).is(GolemModule.GOLEM_PLACER.get()) && press.getItem(0).getCount() == 1,
-                "Paid raw materials→arcane components→8 Machina→exactly one real golem product")).thenSucceed();
+                "Paid raw materials→arcane components→8 Machina→exactly one real golem product");
+        }).thenSucceed();
     }
 
     private static Fixture fixture(GameTestHelper h) {
