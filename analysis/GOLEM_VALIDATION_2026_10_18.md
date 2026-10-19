@@ -251,3 +251,16 @@ JAR ZIP CRC/content PASS, SHA256 `58c445df72d3b946896f1691882d2227e11033e1a75818
 Команда `JAVA_HOME=/workspace/toolchain/jdk-21.0.12.1+1 PATH=/workspace/toolchain/jdk-21.0.12.1+1/bin:$PATH bash tools/run_core_parity.sh` — **PASS**, construction35048/task2182. Лог `/workspace/reference/golems-provision-core.log`.1091 новых Core assertions проверяют три получателя/side/count/components/UI identity, dedup без refresh, initial/link/unlink deadlines, timeout equality, stale callbacks, terminal/closed/foreign-thread requests, bound1000 без eviction, исходные task data/priority/lifespan, Stock budget и provider radius/psing/pleave. Общий runner не менялся, фиктивные маркеры не добавлялись.
 
 Core request lifecycle не означает готовые Provide/Stock items, UI, recipes или actual golem transport. Серверный API и фактический native прогон выделяются следующим commit, результаты ниже. Запросы ephemeral; новых NBT fields в этом срезе нет.
+
+
+### Серверный API M10.18 и итоговое дерево
+
+`/workspace/reference/gradle-golems --offline --init-script tools/golems.gradle build -x test runGolemGameTest` — **BUILD SUCCESSFUL in1m10s, All84 required tests passed** с первого запуска, `/workspace/reference/golems-provision-build.log`. Запущен настоящий NeoForge21.1.250 GameTestServer под Java21;3 новых required scenarios:
+
+1. Actual barrel stock5 named iron +40 plain iron: desired12 даёт7; request template/input/output defensive copies, duplicate reuse. Затем заняты все слоты/63named iron→room1 даёт1;64→no request, desired0→no request. Ни один вызов не меняет реальные stacks.
+2. Actual furnace UP input3raw iron→demand7; DOWN не принимает raw iron→no request. Содержимое остаётся прежним. Remote chunk25M остаётся незагруженным до/после producer.
+3. Native world board: caller stack mutation не меняет saved request identity, UI discriminator разделяет requests, pickup→entity delivery data1/UUID сохраняют взаимные ссылки; поздний pickup unlink не сбрасывает delivery, invalidation/sweep отменяет связанную работу. Это API/task lifecycle integration, не маршрут голема с фактическим переносом.
+
+Все прежние81 tests прошли, включая Salis formation/rollback/teardown/component chain/navigation/ItemHandlers/menu/persisted-state fixtures. JAR CRC/content PASS: `build/libs/thaumcraft-6.1.BETA26-port.stage9.jar`, SHA256 `3e3b91696b76ef02bcfd6b91d95a34094be791b198bcfefd02a19bf6d746f4d4`.
+
+Новый regular-server cold WRITE/READ и Minecraft client не запускались; новых NBT fields/сохраняемых заявок нет. Исходный ephemeral lifecycle не доказывает восстановление будущего Provide transport. Старые cold PASS не переименованы в M10.18. Live chunk unload/crash atomicity/full progression/Provide-Stock gameplay остаются непроверенными. Новых общих integration files в этом срезе нет, Core runner неизменен. M10 и59/100 не закрываются.
