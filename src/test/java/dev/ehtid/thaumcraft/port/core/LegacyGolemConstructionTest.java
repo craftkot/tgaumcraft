@@ -23,6 +23,7 @@ public final class LegacyGolemConstructionTest {
         throw new AssertionError("Invalid design was accepted");
     }
     public static void main(String[] args) {
+        componentRecipes();
         same(6, GolemMaterial.values().length);
         same(5, GolemCatalog.HEADS.size());
         same(5, GolemCatalog.ARMS.size());
@@ -142,5 +143,42 @@ public final class LegacyGolemConstructionTest {
                         same(false, trait.opposite() != null && restored.hasTrait(trait.opposite()));
                 }
         System.out.println("BETA26 golem construction: OK (" + assertions + " assertions)");
+    }
+
+    private static void componentRecipes() {
+        var mechanism = GolemComponentRecipes.Recipe.SIMPLE_MECHANISM;
+        var mind = GolemComponentRecipes.Recipe.CLOCKWORK_MIND;
+        same("BASEARTIFICE", mechanism.research); same(10, mechanism.vis); same(6, mechanism.crystalMask);
+        same("MINDCLOCKWORK@2", mind.research); same(25, mind.vis); same(18, mind.crystalMask);
+        same(7, mechanism.discountedVis(.25F)); same(18, mind.discountedVis(.25F));
+        same(0, mind.discountedVis(1));
+        invalid(() -> mind.discountedVis(Float.NaN)); invalid(() -> mind.discountedVis(Float.POSITIVE_INFINITY));
+        invalid(() -> mind.discountedVis(-.01F)); invalid(() -> mind.discountedVis(1.01F));
+        // Independent golden matrices, including mandatory empty corners and comparator (not clock).
+        String[] golden = {" B ISI B ", " P PGPBCB"};
+        int recipeIndex = 0;
+        for (var recipe : GolemComponentRecipes.Recipe.values()) {
+            int[] grid = new int[9];
+            String pattern = golden[recipeIndex++];
+            for (int slot = 0; slot < 9; slot++) grid[slot] = GolemComponentRecipes.bit(switch (pattern.charAt(slot)) {
+                case 'B' -> GolemComponentRecipes.Ingredient.BRASS_PLATE;
+                case 'I' -> GolemComponentRecipes.Ingredient.IRON_PLATE;
+                case 'S' -> GolemComponentRecipes.Ingredient.WOODEN_ROD;
+                case 'P' -> GolemComponentRecipes.Ingredient.GLASS_PANE;
+                case 'G' -> GolemComponentRecipes.Ingredient.SIMPLE_MECHANISM;
+                case 'C' -> GolemComponentRecipes.Ingredient.COMPARATOR;
+                default -> GolemComponentRecipes.Ingredient.EMPTY;
+            });
+            same(true, recipe.matches(grid)); same(false, recipe.matches(null)); same(false, recipe.matches(new int[8]));
+            for (int slot = 0; slot < 9; slot++) for (var replacement : GolemComponentRecipes.Ingredient.values()) {
+                int original = grid[slot]; grid[slot] = GolemComponentRecipes.bit(replacement);
+                same(grid[slot] == original, recipe.matches(grid)); grid[slot] = original;
+            }
+        }
+        var knowledge = new PlayerKnowledgeData();
+        same(false, knowledge.isResearchKnown(mind.research));
+        knowledge.addResearch("MINDCLOCKWORK"); knowledge.setResearchStage("MINDCLOCKWORK", 1);
+        same(false, knowledge.isResearchKnown(mind.research));
+        knowledge.setResearchStage("MINDCLOCKWORK", 2); same(true, knowledge.isResearchKnown(mind.research));
     }
 }
