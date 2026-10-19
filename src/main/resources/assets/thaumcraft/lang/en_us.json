@@ -396,5 +396,12 @@
   "menu.thaumcraft.golem_press.addon.3": "Hauler",
   "item.thaumcraft.mind_biothaumic": "Biothaumic Mind",
   "item.thaumcraft.module_vision": "Vision Module",
-  "item.thaumcraft.module_aggression": "Aggression Module"
+  "item.thaumcraft.module_aggression": "Aggression Module",
+  "item.thaumcraft.seal_harvest": "Seal: Harvest",
+  "message.thaumcraft.golem.seal.harvest.placed": "Harvest seal placed",
+  "message.thaumcraft.golem.seal.harvest.removed": "Harvest seal removed",
+  "menu.thaumcraft.golem_seal.replant": "Replant: On",
+  "menu.thaumcraft.golem_seal.no_replant": "Replant: Off",
+  "menu.thaumcraft.golem_seal.provision": "Request seeds: On",
+  "menu.thaumcraft.golem_seal.no_provision": "Request seeds: Off"
 }

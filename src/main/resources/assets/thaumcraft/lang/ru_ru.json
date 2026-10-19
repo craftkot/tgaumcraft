@@ -396,5 +396,12 @@
   "menu.thaumcraft.golem_press.addon.3": "Переносчик",
   "item.thaumcraft.mind_biothaumic": "Биотаумический разум",
   "item.thaumcraft.module_vision": "Модуль зрения",
-  "item.thaumcraft.module_aggression": "Модуль агрессии"
+  "item.thaumcraft.module_aggression": "Модуль агрессии",
+  "item.thaumcraft.seal_harvest": "Печать: Сбор урожая",
+  "message.thaumcraft.golem.seal.harvest.placed": "Печать сбора урожая установлена",
+  "message.thaumcraft.golem.seal.harvest.removed": "Печать сбора урожая удалена",
+  "menu.thaumcraft.golem_seal.replant": "Пересадка: вкл.",
+  "menu.thaumcraft.golem_seal.no_replant": "Пересадка: выкл.",
+  "menu.thaumcraft.golem_seal.provision": "Запрос семян: вкл.",
+  "menu.thaumcraft.golem_seal.no_provision": "Запрос семян: выкл."
 }
