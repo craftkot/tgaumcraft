@@ -4,6 +4,11 @@ package dev.ehtid.thaumcraft.port.core.golem;
 public final class SealFilterRules {
     private SealFilterRules() {}
 
+    /** BETA26 igNBT does not disable the separate igDmg/pmeta comparison. */
+    public static boolean matches(boolean sameItem, boolean sameDamage, boolean sameComponents, boolean matchNbt) {
+        return sameItem && sameDamage && (!matchNbt || sameComponents);
+    }
+
     public static boolean accepts(boolean blacklist, boolean hasFilter, boolean matches) {
         return blacklist ? !hasFilter || !matches : hasFilter && matches;
     }

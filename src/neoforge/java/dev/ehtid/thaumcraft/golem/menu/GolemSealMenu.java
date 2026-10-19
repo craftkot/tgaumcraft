@@ -30,6 +30,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final DataSlot locked = DataSlot.standalone(), redstone = DataSlot.standalone();
     private final DataSlot areaX = DataSlot.standalone(), areaY = DataSlot.standalone(), areaZ = DataSlot.standalone();
     private final DataSlot leaveOne = DataSlot.standalone();
+    private final DataSlot matchNbt = DataSlot.standalone();
 
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
 
@@ -52,6 +53,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(priority); addDataSlot(color); addDataSlot(locked); addDataSlot(redstone);
         addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
         addDataSlot(leaveOne);
+        addDataSlot(matchNbt);
         refresh();
     }
 
@@ -81,6 +83,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public int areaZ() { return areaZ.get(); }
     public boolean hasLeaveOne() { return fill.get() == 2; }
     public boolean leaveOne() { return leaveOne.get() != 0; }
+    public boolean matchNbt() { return matchNbt.get() != 0; }
 
     private void refresh() {
         var seal = current();
@@ -90,6 +93,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
         leaveOne.set(seal.leaveOne() ? 1 : 0);
+        matchNbt.set(seal.filter().matchNbt() ? 1 : 0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
         fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case EMPTY -> 2; });
         limitLow.set(seal.filter().limit() & 0xffff);
@@ -108,8 +112,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         if (slot == 0) {
             if (level != null && click == ClickType.PICKUP && (button == 0 || button == 1)) {
                 var policy = current().filter();
-                setFilter(player, new SealFilter(button == 1 ? ItemStack.EMPTY : getCarried(),
-                        policy.blacklist(), policy.limit()));
+                setFilter(player, policy.withItem(button == 1 ? ItemStack.EMPTY : getCarried()));
             }
             return; // Ghost never participates in THROW, SWAP, CLONE, drag, double-click or quick-move.
         }
@@ -119,7 +122,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public ItemStack quickMoveStack(Player player, int index) {
         if (level != null && stillValid(player) && index > 0 && index < slots.size()) {
             var policy = current().filter();
-            setFilter(player, new SealFilter(slots.get(index).getItem(), policy.blacklist(), policy.limit()));
+            setFilter(player, policy.withItem(slots.get(index).getItem()));
         }
         return ItemStack.EMPTY; // No real stack moved or consumed by a ghost copy.
     }
@@ -131,6 +134,11 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
         var seal = current();
+        if (id == 31 || id == 61) {
+            boolean result = GolemSeals.get(level).configure(expected, player.getUUID(), seal.filter().withMatchNbt(id == 31));
+            if (result) broadcastChanges();
+            return result;
+        }
         if (id == 35 || id == 65) {
             boolean result = GolemSeals.get(level).configureLeaveOne(expected, player.getUUID(), id == 35);
             if (result) broadcastChanges();
@@ -156,12 +164,12 @@ public final class GolemSealMenu extends AbstractContainerMenu {
             return result;
         }
         var policy = seal.filter();
-        if (id == 0) setFilter(player, new SealFilter(policy.item(), !policy.blacklist(), policy.limit()));
-        else if (id == 5) setFilter(player, new SealFilter(ItemStack.EMPTY, policy.blacklist(), policy.limit()));
+        if (id == 0) setFilter(player, policy.withBlacklist(!policy.blacklist()));
+        else if (id == 5) setFilter(player, policy.withItem(ItemStack.EMPTY));
         else if (hasLimit() && id >= 1 && id <= 4) {
             int delta = switch (id) { case 1 -> -10; case 2 -> -1; case 3 -> 1; default -> 10; };
             int next = (int) Math.max(0L, Math.min(Integer.MAX_VALUE, (long) policy.limit() + delta));
-            setFilter(player, new SealFilter(policy.item(), policy.blacklist(), next));
+            setFilter(player, policy.withLimit(next));
         } else return false;
         return true;
     }

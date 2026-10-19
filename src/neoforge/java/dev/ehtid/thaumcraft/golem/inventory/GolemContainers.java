@@ -29,7 +29,7 @@ public final class GolemContainers {
         for (int slot = 0; slot < source.getSlots(); slot++) {
             ItemStack visible = source.getStackInSlot(slot);
             if (!filter.accepts(visible)) continue;
-            if (leaveOne && matchingStock(source, visible) < 2) continue;
+            if (leaveOne && matchingStock(source, visible, filter) < 2) continue;
             // Modern guard: do not produce impossible work for a side that forbids extraction.
             ItemStack preview = source.extractItem(slot, visible.getCount(), true);
             return preview.isEmpty() || !ItemStack.isSameItemSameComponents(visible, preview)
@@ -46,12 +46,12 @@ public final class GolemContainers {
         if (cached == null || !filter.accepts(cached) || golem.hasTransferRecovery()) return false;
         IItemHandler source = handler(level, key);
         if (source == null) return false;
-        int requested = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached), leaveOne);
+        int requested = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached, filter), leaveOne);
         if (requested <= 0) return false;
         for (int slot = 0; slot < source.getSlots(); slot++) {
-            if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
+            if (!filter.matches(cached, source.getStackInSlot(slot))) continue;
             ItemStack preview = source.extractItem(slot, requested, true);
-            if (!preview.isEmpty() && ItemStack.isSameItemSameComponents(cached, preview)) return true;
+            if (!preview.isEmpty() && filter.matches(cached, preview)) return true;
         }
         return false;
     }
@@ -63,10 +63,10 @@ public final class GolemContainers {
 
     public static int extractInto(ThaumcraftGolem golem, IItemHandler source, ItemStack cached, SealFilter filter, boolean leaveOne) {
         if (golem.level().isClientSide || source == null || golem.hasTransferRecovery() || !filter.accepts(cached)) return 0;
-        int remaining = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached), leaveOne);
+        int remaining = SealEmptyRules.requested(cached.getCount(), golem.canCarryAmount(cached), matchingStock(source, cached, filter), leaveOne);
         int moved = 0;
         for (int slot = 0; slot < source.getSlots() && remaining > 0 && !golem.hasTransferRecovery(); slot++) {
-            if (!ItemStack.isSameItemSameComponents(cached, source.getStackInSlot(slot))) continue;
+            if (!filter.matches(cached, source.getStackInSlot(slot))) continue;
             int requested = Math.min(remaining, golem.canCarryAmount(cached));
             if (requested <= 0) break;
             ItemStack actual = source.extractItem(slot, requested, false).copy();
@@ -79,11 +79,11 @@ public final class GolemContainers {
         return moved;
     }
 
-    private static long matchingStock(IItemHandler source, ItemStack template) {
+    private static long matchingStock(IItemHandler source, ItemStack template, SealFilter filter) {
         long count = 0;
         for (int slot = 0; slot < source.getSlots(); slot++) {
             ItemStack stack = source.getStackInSlot(slot);
-            if (ItemStack.isSameItemSameComponents(stack, template)) count += stack.getCount();
+            if (filter.matches(stack, template)) count += stack.getCount();
         }
         return count;
     }
@@ -112,7 +112,7 @@ public final class GolemContainers {
         if (target != null && !filter.blacklist() && filter.limit() > 0) {
             for (int i = 0; i < target.getSlots(); i++) {
                 ItemStack stack = target.getStackInSlot(i);
-                if (ItemStack.isSameItemSameComponents(carried, stack)) existing += stack.getCount();
+                if (filter.matches(carried, stack)) existing += stack.getCount();
             }
         }
         // BETA26 countStackInWorld skips nonempty stacks (verified bytecode).

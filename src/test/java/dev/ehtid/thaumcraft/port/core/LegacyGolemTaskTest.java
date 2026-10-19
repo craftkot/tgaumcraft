@@ -324,6 +324,10 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
+            for (boolean sameComponents : List.of(false, true)) for (boolean matchNbt : List.of(false, true))
+                eq(sameItem && sameDamage && (sameComponents || !matchNbt),
+                        dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.matches(sameItem, sameDamage, sameComponents, matchNbt));
         for (boolean blacklist : List.of(false, true)) {
             for (boolean present : List.of(false, true)) {
                 for (boolean matches : List.of(false, true)) {

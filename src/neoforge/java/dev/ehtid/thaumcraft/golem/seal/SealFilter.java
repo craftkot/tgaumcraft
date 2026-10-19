@@ -12,20 +12,35 @@ public final class SealFilter {
     private final ItemStack item;
     private final boolean blacklist;
     private final int limit;
+    private final boolean matchNbt;
 
     public SealFilter(ItemStack item, boolean blacklist, int limit) {
+        this(item, blacklist, limit, true);
+    }
+
+    public SealFilter(ItemStack item, boolean blacklist, int limit, boolean matchNbt) {
         this.item = item.isEmpty() ? ItemStack.EMPTY : item.copyWithCount(1);
         this.blacklist = blacklist;
         this.limit = Math.max(0, limit);
+        this.matchNbt = matchNbt;
     }
 
     public static SealFilter defaults() { return new SealFilter(ItemStack.EMPTY, true, 0); }
     public ItemStack item() { return item.copy(); }
     public boolean blacklist() { return blacklist; }
     public int limit() { return limit; }
+    public boolean matchNbt() { return matchNbt; }
+    public SealFilter withItem(ItemStack next) { return new SealFilter(next, blacklist, limit, matchNbt); }
+    public SealFilter withBlacklist(boolean next) { return new SealFilter(item, next, limit, matchNbt); }
+    public SealFilter withLimit(int next) { return new SealFilter(item, blacklist, next, matchNbt); }
+    public SealFilter withMatchNbt(boolean next) { return new SealFilter(item, blacklist, limit, next); }
+    public boolean matches(ItemStack left, ItemStack right) {
+        return !left.isEmpty() && !right.isEmpty() && SealFilterRules.matches(left.is(right.getItem()),
+                left.getDamageValue() == right.getDamageValue(), ItemStack.isSameItemSameComponents(left, right), matchNbt);
+    }
     public boolean accepts(ItemStack stack) {
         return !stack.isEmpty() && SealFilterRules.accepts(blacklist, !item.isEmpty(),
-                ItemStack.isSameItemSameComponents(item, stack));
+                matches(item, stack));
     }
     public int transferable(ItemStack carried, long existing) {
         return accepts(carried) ? SealFilterRules.transferable(carried.getCount(), blacklist, limit, existing) : 0;
@@ -33,6 +48,7 @@ public final class SealFilter {
 
     public void save(CompoundTag row, HolderLookup.Provider registries) {
         row.putBoolean("bl", blacklist);
+        row.putBoolean("pnbt", matchNbt);
         ListTag items = new ListTag();
         if (!item.isEmpty()) {
             CompoundTag entry = (CompoundTag) item.save(registries);
@@ -60,6 +76,7 @@ public final class SealFilter {
         for (int i = 0; i < sizes.size(); i++) {
             if (sizes.getCompound(i).getByte("Slot") == 0) { limit = sizes.getCompound(i).getInt("Size"); break; }
         }
-        return new SealFilter(item, !row.contains("bl") || row.getBoolean("bl"), limit);
+        return new SealFilter(item, !row.contains("bl") || row.getBoolean("bl"), limit,
+                !row.contains("pnbt") || row.getBoolean("pnbt"));
     }
 }

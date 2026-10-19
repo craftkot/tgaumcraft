@@ -16,7 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 /** Minimal new artwork; original BETA26 bell GUI and visual parity remain pending. */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu> {
-    private Button mode, lock, redstone, leaveOne;
+    private Button mode, lock, redstone, leaveOne, matchNbt;
     private final Button[] limits = new Button[4];
     private final Button[] areas = new Button[6];
 
@@ -38,7 +38,9 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     @Override protected void init() {
         super.init();
         mode = addRenderableWidget(Button.builder(Component.translatable("menu.thaumcraft.golem_seal." + (menu.blacklist() ? "blacklist" : "whitelist")), b -> send(0))
-                .bounds(leftPos + 8, topPos + 46, 160, 18).build());
+                .bounds(leftPos + 8, topPos + 46, 78, 18).build());
+        matchNbt = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.matchNbt() ? 61 : 31))
+                .bounds(leftPos + 90, topPos + 46, 78, 18).build());
         String[] labels = {"-10", "-1", "+1", "+10"};
         for (int i = 0; i < 4; i++) {
             final int id = i + 1;
@@ -63,6 +65,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     }
 
     private void updateControls() {
+        matchNbt.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.matchNbt() ? "nbt_match" : "nbt_ignore")));
         leaveOne.visible = leaveOne.active = menu.hasLeaveOne();
         leaveOne.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.leaveOne() ? "leave_one" : "take_all")));
         lock.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.locked() ? "locked" : "public")));
