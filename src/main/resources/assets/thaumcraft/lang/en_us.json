@@ -412,5 +412,13 @@
   "menu.thaumcraft.golem_seal.ore_match": "Ore groups: On",
   "menu.thaumcraft.golem_seal.ore_ignore": "Ore groups: Off",
   "menu.thaumcraft.golem_seal.mod_match": "Match mod: On",
-  "menu.thaumcraft.golem_seal.mod_ignore": "Match mod: Off"
+  "menu.thaumcraft.golem_seal.mod_ignore": "Match mod: Off",
+  "item.thaumcraft.seal_pickup_advanced": "Seal: Advanced Pickup",
+  "item.thaumcraft.seal_fill_advanced": "Seal: Advanced Fill",
+  "message.thaumcraft.golem.seal.pickup_advanced.placed": "Advanced pickup seal placed",
+  "message.thaumcraft.golem.seal.pickup_advanced.removed": "Advanced pickup seal removed",
+  "message.thaumcraft.golem.seal.fill_advanced.placed": "Advanced fill seal placed",
+  "message.thaumcraft.golem.seal.fill_advanced.removed": "Advanced fill seal removed",
+  "menu.thaumcraft.golem_seal.existing_only": "Only existing stock",
+  "menu.thaumcraft.golem_seal.any_stock": "Any stock"
 }

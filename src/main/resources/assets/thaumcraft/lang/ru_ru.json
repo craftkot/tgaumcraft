@@ -412,5 +412,13 @@
   "menu.thaumcraft.golem_seal.ore_match": "Руды: вкл.",
   "menu.thaumcraft.golem_seal.ore_ignore": "Руды: выкл.",
   "menu.thaumcraft.golem_seal.mod_match": "Сравнение по моду: вкл.",
-  "menu.thaumcraft.golem_seal.mod_ignore": "Сравнение по моду: выкл."
+  "menu.thaumcraft.golem_seal.mod_ignore": "Сравнение по моду: выкл.",
+  "item.thaumcraft.seal_pickup_advanced": "Печать: Улучшенный подбор",
+  "item.thaumcraft.seal_fill_advanced": "Печать: Улучшенное заполнение",
+  "message.thaumcraft.golem.seal.pickup_advanced.placed": "Улучшенная печать подбора установлена",
+  "message.thaumcraft.golem.seal.pickup_advanced.removed": "Улучшенная печать подбора удалена",
+  "message.thaumcraft.golem.seal.fill_advanced.placed": "Улучшенная печать заполнения установлена",
+  "message.thaumcraft.golem.seal.fill_advanced.removed": "Улучшенная печать заполнения удалена",
+  "menu.thaumcraft.golem_seal.existing_only": "Только имеющееся",
+  "menu.thaumcraft.golem_seal.any_stock": "Любой запас"
 }
