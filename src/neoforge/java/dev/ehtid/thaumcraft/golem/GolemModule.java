@@ -159,8 +159,8 @@ public final class GolemModule {
         }
     }
 
-    /** Keep unimplemented flight and ranged functions gated. */
+    /** Keep unimplemented ranged functions gated. */
     public static boolean supportsRuntime(GolemDesign design) {
-        return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.groundWorker(design);
+        return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.supportsRuntime(design);
     }
 }

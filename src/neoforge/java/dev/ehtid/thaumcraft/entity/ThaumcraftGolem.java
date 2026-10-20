@@ -35,7 +35,7 @@ import net.minecraft.world.level.Level;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Server-owned ground worker and source melee adapter. Flying/ranged parts remain gated. */
+/** Server-owned ground/air golem and source melee adapter. Ranged parts remain gated. */
 public final class ThaumcraftGolem extends PathfinderMob {
     private static final EntityDataAccessor<Long> DESIGN = SynchedEntityData.defineId(
             ThaumcraftGolem.class, EntityDataSerializers.LONG);
@@ -89,7 +89,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     @Override
     protected void registerGoals() {
         goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this) {
-            @Override public boolean canUse() { return fighter() && super.canUse(); }
+            @Override public boolean canUse() { return fighter() && getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation && super.canUse(); }
         });
         goalSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.15, false) {
             @Override public boolean canUse() { return fighter() && super.canUse(); }
@@ -155,13 +155,17 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
 
     private void applyDesign() {
-        // Constructor starts as the default walker. Real initialization/NBT must rebuild navigation
-        // when the packed design selects source PathNavigateClimber; ranking alone keeps its path.
-        boolean climber=design().hasTrait(GolemTrait.CLIMBER);
-        if(climber && !(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation))
-            navigation=new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this,level());
-        else if(!climber && navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation)
-            navigation=new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this,level());
+        // Packed design is applied after the default walker constructor and on native NBT restoration.
+        boolean flyer=design().hasTrait(GolemTrait.FLYER),climber=design().hasTrait(GolemTrait.CLIMBER);
+        if(flyer) {
+            if(!(navigation instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation)) navigation=new dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation(this,level());
+            if(!(moveControl instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl)) moveControl=new dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl(this);
+            setNoGravity(true);
+        } else {
+            if(climber&&!(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation)) navigation=new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this,level());
+            else if(!climber&&(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation||navigation instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation)) navigation=new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this,level());
+            if(moveControl instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl) { moveControl=new net.minecraft.world.entity.ai.control.MoveControl(this); setNoGravity(false); }
+        }
         if(!climber) entityData.set(CLIMBING,false);
         var stats = design().stats();
         getAttribute(Attributes.MAX_HEALTH).setBaseValue(stats.maxHealth());
@@ -278,6 +282,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
     public void tick() {
         if (!level().isClientSide && getTarget() != null && isAlliedTo(getTarget())) setTarget(null);
         super.tick();
+        if (!level().isClientSide && design().hasTrait(GolemTrait.FLYER)) setNoGravity(true);
         if (!level().isClientSide) entityData.set(CLIMBING,invalidDesign==null&&design().hasTrait(GolemTrait.CLIMBER)&&horizontalCollision);
         if (!level().isClientSide && isAlive() && hasTransferRecovery()) {
             if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();

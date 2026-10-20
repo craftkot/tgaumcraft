@@ -23,6 +23,7 @@ public final class LegacyGolemConstructionTest {
         throw new AssertionError("Invalid design was accepted");
     }
     public static void main(String[] args) {
+        flight();
         componentRecipes();
         same("MINDCLOCKWORK", GolemPressBlueprint.RESEARCH); same(50, GolemPressBlueprint.DELAY);
         int[][] controllers = {{1,0},{0,0},{0,1},{1,1}};
@@ -204,17 +205,17 @@ public final class LegacyGolemConstructionTest {
             var d=GolemDesign.fromIds(m,h,a,l,x,0); var rows=GolemAssembly.components(d);
             same(3+heads[h]+arms[a]+legs[l]+addons[x],rows.stream().mapToInt(GolemAssembly.Component::count).sum());
             same((long)rows.size(),rows.stream().map(c->c.legacyItemId()+":"+c.metadata()).distinct().count());
-            if(GolemRuntimeRules.groundWorker(d)) supported++;
+            if(GolemRuntimeRules.supportsRuntime(d)) supported++;
         }
-        same(1440,supported);
+        same(1920,supported);
         same(22,GolemPress.cost(GolemDesign.fromIds(0,1,2,0,0,0)));
-        same(true,GolemRuntimeRules.groundWorker(GolemDesign.fromIds(0,1,2,0,0,0)));
-        same(true,GolemRuntimeRules.groundWorker(GolemDesign.fromIds(0,1,1,1,2,0)));
-        same(false,GolemRuntimeRules.groundWorker(GolemDesign.fromIds(0,1,4,0,0,0)));
+        same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,2,0,0,0)));
+        same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,1,1,2,0)));
+        same(false,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,4,0,0,0)));
         var wheels=GolemDesign.fromIds(0,0,0,1,0,0);
         same(1.45F,wheels.stats().moveSpeedMultiplier()); same(0.5F,wheels.stats().stepHeight()); same(12,GolemPress.cost(wheels));
         same(2,component(wheels,"minecraft:bowl",0)); same(1,component(wheels,"minecraft:leather",0)); same(2,component(wheels,"thaumcraft:mechanism_simple",0));
-        same(true,GolemRuntimeRules.groundWorker(GolemDesign.fromIds(0,0,0,2,0,0)));
+        same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,0,0,2,0,0)));
         same(15,GolemPress.cost(GolemDesign.fromIds(0,0,0,2,0,0)));
         var advanced=GolemDesign.fromIds(3,2,1,1,1,0);
         same(9,component(advanced,"thaumcraft:plate",0));
@@ -228,9 +229,9 @@ public final class LegacyGolemConstructionTest {
         same(4,component(GolemDesign.fromIds(0,0,0,2,0,0),"minecraft:flint",0));
         var flyer=GolemDesign.fromIds(0,0,0,3,0,0);
         same(4,component(flyer,"thaumcraft:plate",0)); same(1,component(flyer,"minecraft:slime_ball",0));
-        same(1,component(flyer,"thaumcraft:levitator",0)); same(false,GolemRuntimeRules.groundWorker(flyer));
+        same(1,component(flyer,"thaumcraft:levitator",0)); same(true,GolemRuntimeRules.supportsRuntime(flyer));
         var hauler=GolemDesign.fromIds(0,1,1,0,3,10);
-        same(true,GolemRuntimeRules.groundWorker(hauler));
+        same(true,GolemRuntimeRules.supportsRuntime(hauler));
         same(1,component(hauler,"minecraft:leather",0)); same(1,component(hauler,"minecraft:chest",0));
         same(Set.of("MATSTUDWOOD","MINDBIOTHAUMIC","MATSTUDBRASS","MINDCLOCKWORK"),GolemRuntimeRules.research(hauler));
         var iron=GolemDesign.fromIds(1,0,0,0,0,0); var clay=GolemDesign.fromIds(2,0,0,0,0,0);
@@ -244,4 +245,18 @@ public final class LegacyGolemConstructionTest {
         same(0F,GolemDamageRules.amount(GolemDesign.defaultWood(),10,16,false,false,true));
         same(10F,GolemDamageRules.amount(GolemDesign.defaultWood(),10,16,true,false,false));
     }
+    private static void flight() {
+        var zero=new GolemFlightRules.Vector(0,0,0);
+        var x=GolemFlightRules.move(new GolemFlightRules.Vector(10,0,0),zero,1,.5);
+        near(.033,x.velocity().x()); near(0,x.velocity().y()); near(0,x.velocity().z()); same(false,x.arrived());
+        var y=GolemFlightRules.move(new GolemFlightRules.Vector(0,10,0),zero,1,.5); near(.0125,y.velocity().y());
+        var diagonal=GolemFlightRules.move(new GolemFlightRules.Vector(3,4,0),new GolemFlightRules.Vector(.2,-.1,.3),2,.5);
+        near(.2396,diagonal.velocity().x()); near(-.08,diagonal.velocity().y()); near(.3,diagonal.velocity().z());
+        var brake=GolemFlightRules.move(zero,new GolemFlightRules.Vector(.2,-.1,.3),1,.5);
+        same(true,brake.arrived()); near(.1,brake.velocity().x()); near(-.05,brake.velocity().y()); near(.15,brake.velocity().z());
+        same(false,GolemFlightRules.move(new GolemFlightRules.Vector(.5,0,0),zero,1,.5).arrived());
+        same(6,GolemFlightRules.LOOK_AHEAD); near(36,GolemFlightRules.SMOOTH_DISTANCE_SQUARED);
+        near(.87,GolemDesign.fromIds(0,0,0,3,0,0).stats().moveSpeedMultiplier());
+    }
+
 }

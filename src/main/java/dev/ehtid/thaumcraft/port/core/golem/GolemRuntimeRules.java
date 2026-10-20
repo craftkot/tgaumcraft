@@ -3,11 +3,11 @@ package dev.ehtid.thaumcraft.port.core.golem;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/** The verified working family. Unsupported navigation/combat functions stay gated until ported. */
+/** Verified movement families. Ranged arms remain gated until their real projectile adapter is ported. */
 public final class GolemRuntimeRules {
     private GolemRuntimeRules() {}
-    public static boolean groundWorker(GolemDesign d) {
-        return d.toLong()>>>48==0 && d.arms().id()<=3 && d.legs().id()<=2;
+    public static boolean supportsRuntime(GolemDesign d) {
+        return d.toLong()>>>48==0 && d.arms().id()<=3;
     }
     public static Set<String> research(GolemDesign d) {
         var keys=new LinkedHashSet<String>(); keys.add(d.material().research());
