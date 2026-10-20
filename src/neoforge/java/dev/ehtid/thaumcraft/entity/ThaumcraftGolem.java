@@ -48,6 +48,8 @@ public final class ThaumcraftGolem extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> WORKING = SynchedEntityData.defineId(
             ThaumcraftGolem.class, EntityDataSerializers.BOOLEAN);
 
+    private static final EntityDataAccessor<Boolean> CLIMBING = SynchedEntityData.defineId(ThaumcraftGolem.class,EntityDataSerializers.BOOLEAN);
+
     private BlockPos home = BlockPos.ZERO;
     private int rankXp;
     private Long invalidDesign;
@@ -81,6 +83,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
         builder.define(COLOR, (byte) 0);
         builder.define(FLAGS, (byte) 0);
         builder.define(WORKING, false);
+        builder.define(CLIMBING, false);
     }
 
     @Override
@@ -152,6 +155,14 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
 
     private void applyDesign() {
+        // Constructor starts as the default walker. Real initialization/NBT must rebuild navigation
+        // when the packed design selects source PathNavigateClimber; ranking alone keeps its path.
+        boolean climber=design().hasTrait(GolemTrait.CLIMBER);
+        if(climber && !(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation))
+            navigation=new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this,level());
+        else if(!climber && navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation)
+            navigation=new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this,level());
+        if(!climber) entityData.set(CLIMBING,false);
         var stats = design().stats();
         getAttribute(Attributes.MAX_HEALTH).setBaseValue(stats.maxHealth());
         getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(stats.movementSpeed());
@@ -256,10 +267,13 @@ public final class ThaumcraftGolem extends PathfinderMob {
         return remainder;
     }
 
+    @Override public boolean onClimbable() { return entityData.get(CLIMBING); }
+
     @Override
     public void tick() {
         if (!level().isClientSide && getTarget() != null && isAlliedTo(getTarget())) setTarget(null);
         super.tick();
+        if (!level().isClientSide) entityData.set(CLIMBING,invalidDesign==null&&design().hasTrait(GolemTrait.CLIMBER)&&horizontalCollision);
         if (!level().isClientSide && isAlive() && hasTransferRecovery()) {
             if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
             transferRecovery = holdItem(transferRecovery);

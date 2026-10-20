@@ -38,8 +38,12 @@ public final class GolemGuardGameTests {
     @GameTest(template="golem_test",batch="guard_ai",timeoutTicks=200)
     public static void guardActuallyAssignsNavigatesAndKillsHostileWithSourceAssignmentAndKillXp(GameTestHelper h) {
         var f=fixture(h,GolemSeals.Type.GUARD,true); var hostile=target(h,EntityType.HUSK,7,5,4); f.golem.setItemSlot(EquipmentSlot.MAINHAND,new ItemStack(Items.GOLD_INGOT,7));
+        var beforeKill=new java.util.concurrent.atomic.AtomicInteger(-1);
+        java.util.function.Consumer<net.neoforged.neoforge.event.entity.living.LivingDeathEvent> death=e->{ if(e.getEntity()==hostile&&e.getSource().getEntity()==f.golem) beforeKill.set(f.golem.rankXp()); };
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(death);
+        h.runAfterDelay(199,()->net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(death));
         h.onEachTick(()->h.assertTrue(f.golem.getMainHandItem().getCount()==7,"Guard combat conserves all7actualcargo"));
-        h.succeedWhen(()->{ h.assertTrue(!hostile.isAlive()&&f.golem.rankXp()==9,"Real Guard assignment1 plus actual SMART kill8, not a decorative target"); f.close(); });
+        h.succeedWhen(()->{ h.assertTrue(!hostile.isAlive()&&beforeKill.get()>=1&&f.golem.rankXp()==beforeKill.get()+8,"Native Guard kill8 follows actual source assignments: before="+beforeKill.get()+", after="+f.golem.rankXp()); net.neoforged.neoforge.common.NeoForge.EVENT_BUS.unregister(death); f.close(); });
     }
     @GameTest(template="golem_test",batch="guard_routing",timeoutTicks=60)
     public static void combatTaskNeverRoutesIntoPickupOrContainerAndStartCannotReplay(GameTestHelper h) {
