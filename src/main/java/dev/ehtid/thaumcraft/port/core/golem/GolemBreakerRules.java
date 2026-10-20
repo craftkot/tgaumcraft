@@ -8,6 +8,10 @@ public final class GolemBreakerRules {
     public static final int NORMAL_STEP=21, SILK_STEP=7, CALLBACK_TICKS=11;
     public static boolean eligible(Set<GolemTrait> traits) { return traits.contains(GolemTrait.BREAKER); }
     public static boolean breakable(boolean air,float hardness) { return !air && Float.isFinite(hardness) && hardness>=0; }
+    /** Source loops every nonempty ghost: whitelist ALL, blacklist NONE; empty list accepts either mode. */
+    public static boolean acceptsFilters(java.util.List<Boolean> matches,boolean blacklist) {
+        return blacklist?matches.stream().noneMatch(Boolean::booleanValue):matches.stream().allMatch(Boolean::booleanValue);
+    }
     public static int work(float hardness) {
         if(!breakable(false,hardness)) throw new IllegalArgumentException("Unbreakable hardness");
         return (int)(hardness*10.0F);

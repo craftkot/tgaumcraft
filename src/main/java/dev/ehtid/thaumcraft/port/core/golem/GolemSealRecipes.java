@@ -20,7 +20,8 @@ public final class GolemSealRecipes {
         EMPTY_ADVANCED("SEALEMPTY&&MINDBIOTHAUMIC",Catalyst.EMPTY,"sensus","cognitio"),
         PROVIDE("SEALPROVIDE",Catalyst.EMPTY_ADVANCED,"permutatio","desiderium"),
         STOCK("SEALSTOCK",Catalyst.FILL,"cognitio","desiderium"),
-        LUMBER("SEALLUMBER",Catalyst.BREAKER,List.of(new Cost("herba",40),new Cost("sensus",20)));
+        LUMBER("SEALLUMBER",Catalyst.BREAKER,List.of(new Cost("herba",40),new Cost("sensus",20))),
+        BREAKER_ADVANCED("SEALBREAK&&MINDBIOTHAUMIC",Catalyst.BREAKER,List.of(new Cost("sensus",10),new Cost("cognitio",10),new Cost("instrumentum",20)));
         public final String research;
         public final Catalyst catalyst;
         public final List<String> aspects;

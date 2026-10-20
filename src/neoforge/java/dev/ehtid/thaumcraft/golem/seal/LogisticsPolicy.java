@@ -11,11 +11,11 @@ import java.util.List;
 /** Nine defensive ghost slots. Stock is a whitelist with a separate desired total per slot. */
 public final class LogisticsPolicy {
     private final List<SealFilter> slots;
-    private final boolean single,cycle,existingOnly;
-    public LogisticsPolicy(List<SealFilter> slots,boolean single) { this(slots,single,false,false); }
-    private LogisticsPolicy(List<SealFilter> slots, boolean single,boolean cycle,boolean existingOnly) {
+    private final boolean single,cycle,existingOnly,silk;
+    public LogisticsPolicy(List<SealFilter> slots,boolean single) { this(slots,single,false,false,false); }
+    private LogisticsPolicy(List<SealFilter> slots, boolean single,boolean cycle,boolean existingOnly,boolean silk) {
         if (slots.size()!=9) throw new IllegalArgumentException("Nine logistics slots required");
-        this.slots=List.copyOf(slots); this.single=single; this.cycle=cycle; this.existingOnly=existingOnly;
+        this.slots=List.copyOf(slots); this.single=single; this.cycle=cycle; this.existingOnly=existingOnly; this.silk=silk;
     }
     public static LogisticsPolicy defaults(boolean stock) {
         var slots=new ArrayList<SealFilter>();
@@ -28,11 +28,13 @@ public final class LogisticsPolicy {
     public boolean matchNbt() { return slot(0).matchNbt(); }
     public dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options options() { return slot(0).options(); }
     public LogisticsPolicy withOptions(dev.ehtid.thaumcraft.port.core.golem.SealFilterRules.Options value) {
-        return new LogisticsPolicy(slots.stream().map(s->s.withOptions(value)).toList(),single,cycle,existingOnly);
+        return new LogisticsPolicy(slots.stream().map(s->s.withOptions(value)).toList(),single,cycle,existingOnly,silk);
     }
     public boolean single() { return single; }
+    public boolean silk() { return silk; }
+    public LogisticsPolicy withSilk(boolean value) { return new LogisticsPolicy(slots,single,cycle,existingOnly,value); }
     public boolean existingOnly() { return existingOnly; }
-    public LogisticsPolicy withExistingOnly(boolean value) { return new LogisticsPolicy(slots,single,cycle,value); }
+    public LogisticsPolicy withExistingOnly(boolean value) { return new LogisticsPolicy(slots,single,cycle,value,silk); }
     /** Source first matching ghost controls Fill size; zero remains unlimited, unlike Stock. */
     public SealFilter fillFilter(ItemStack actual) {
         if(!accepts(actual)) return null;
@@ -41,7 +43,7 @@ public final class LogisticsPolicy {
         return null;
     }
     public boolean cycle() { return cycle; }
-    public LogisticsPolicy withCycle(boolean enabled) { return new LogisticsPolicy(slots,single,enabled,existingOnly); }
+    public LogisticsPolicy withCycle(boolean enabled) { return new LogisticsPolicy(slots,single,enabled,existingOnly,silk); }
     public boolean extractionAccepts(ItemStack stack,int completed) {
         if(!cycle || blacklist()) return accepts(stack);
         var populated=slots.stream().filter(s->!s.item().isEmpty()).toList();
@@ -51,10 +53,10 @@ public final class LogisticsPolicy {
     }
     public LogisticsPolicy withSlot(int i, SealFilter next) {
         var copy=new ArrayList<>(slots); copy.set(i,next.withBlacklist(blacklist()).withOptions(options()));
-        return new LogisticsPolicy(copy,single,cycle,existingOnly);
+        return new LogisticsPolicy(copy,single,cycle,existingOnly,silk);
     }
     public LogisticsPolicy withMode(boolean blacklist, boolean nbt, boolean single) {
-        return new LogisticsPolicy(slots.stream().map(s->s.withBlacklist(blacklist).withOptions(options().withNbt(nbt))).toList(),single,cycle,existingOnly);
+        return new LogisticsPolicy(slots.stream().map(s->s.withBlacklist(blacklist).withOptions(options().withNbt(nbt))).toList(),single,cycle,existingOnly,silk);
     }
     public boolean accepts(ItemStack stack) {
         if(stack.isEmpty()) return false;
@@ -69,7 +71,7 @@ public final class LogisticsPolicy {
     public void save(CompoundTag row, HolderLookup.Provider registries) {
         var filters=new ListTag();
         for(int i=0;i<9;i++) { var entry=new CompoundTag(); entry.putInt("index",i); slots.get(i).save(entry,registries); filters.add(entry); }
-        row.put("logistics",filters); row.putBoolean("psing",single); row.putBoolean("pcycle",cycle); row.putBoolean("pexist",existingOnly);
+        row.put("logistics",filters); row.putBoolean("psilk",silk); row.putBoolean("psing",single); row.putBoolean("pcycle",cycle); row.putBoolean("pexist",existingOnly);
         row.putBoolean("pmeta",options().metadata()); row.putBoolean("pnbt",options().nbt()); row.putBoolean("pore",options().ore()); row.putBoolean("pmod",options().mod());
     }
     public static LogisticsPolicy load(CompoundTag row, HolderLookup.Provider registries, boolean stock) {
@@ -80,7 +82,7 @@ public final class LogisticsPolicy {
             if(index>=0&&index<9) filters.set(index,SealFilter.load(entry,registries));
         }
         var first=filters.getFirst();
-        return new LogisticsPolicy(filters,row.getBoolean("psing"),!stock&&row.getBoolean("pcycle"),!stock&&row.getBoolean("pexist"))
+        return new LogisticsPolicy(filters,row.getBoolean("psing"),!stock&&row.getBoolean("pcycle"),!stock&&row.getBoolean("pexist"),row.getBoolean("psilk"))
                 .withMode(!stock&&first.blacklist(),first.matchNbt(),!stock&&row.getBoolean("psing"));
     }
 }

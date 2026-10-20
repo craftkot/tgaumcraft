@@ -22,6 +22,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     private final DataSlot low=DataSlot.standalone(), high=DataSlot.standalone();
     private final DataSlot blacklist=DataSlot.standalone(), nbt=DataSlot.standalone(), single=DataSlot.standalone(), leave=DataSlot.standalone();
     private final DataSlot priority=DataSlot.standalone(),color=DataSlot.standalone(),locked=DataSlot.standalone(),redstone=DataSlot.standalone();
+    private final DataSlot silk=DataSlot.standalone();
     public GolemLogisticsMenu(int id,Inventory inv) { this(id,inv,null,null); }
     public GolemLogisticsMenu(int id,Inventory inv,ServerLevel level,GolemSeals.Seal seal) {
         super(GolemModule.LOGISTICS_MENU.get(),id); this.level=level; expected=seal; viewer=inv.player;
@@ -31,7 +32,7 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         });
         for(int r=0;r<3;r++) for(int c=0;c<9;c++) addSlot(new Slot(inv,c+r*9+9,8+c*18,190+r*18));
         for(int c=0;c<9;c++) addSlot(new Slot(inv,c,8+c*18,248));
-        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone,cycle,metadata,ore,mod,existing,areaX,areaY,areaZ}) addDataSlot(data);
+        for(var data:new DataSlot[]{type,selected,low,high,blacklist,nbt,single,leave,priority,color,locked,redstone,cycle,metadata,ore,mod,existing,areaX,areaY,areaZ,silk}) addDataSlot(data);
         refresh();
     }
     private GolemSeals.Seal current() { return level==null || expected==null?null:GolemSeals.get(level).get(expected.key()); }
@@ -49,11 +50,13 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     public boolean advancedEmpty() { return type.get()==3; }
     public boolean cycle() { return cycle.get()!=0; }
     public boolean advancedFill() { return type.get()==4; }
+    public boolean advancedBreaker() { return type.get()==6; }
+    public boolean silk() { return silk.get()!=0; }
     public boolean advancedPickup() { return type.get()==5; }
     public boolean hasLimits() { return stock() || advancedFill()&&!blacklist(); }
     public boolean canLeaveOne() { return provider()||advancedEmpty(); }
     public boolean existingOnly() { return existing.get()!=0; }
-    public boolean hasArea() { return advancedPickup(); }
+    public boolean hasArea() { return advancedPickup()||advancedBreaker(); }
     public int areaX() { return areaX.get(); }
     public int areaY() { return areaY.get(); }
     public int areaZ() { return areaZ.get(); }
@@ -71,12 +74,12 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
     public boolean redstone() { return redstone.get()!=0; }
     private void refresh() {
         var s=current(); if(s==null) return;
-        type.set(s.type()==GolemSeals.Type.STOCK?1:s.type()==GolemSeals.Type.PROVIDE?2:s.type()==GolemSeals.Type.FILL_ADVANCED?4:s.type()==GolemSeals.Type.PICKUP_ADVANCED?5:3);
+        type.set(s.type()==GolemSeals.Type.STOCK?1:s.type()==GolemSeals.Type.PROVIDE?2:s.type()==GolemSeals.Type.FILL_ADVANCED?4:s.type()==GolemSeals.Type.PICKUP_ADVANCED?5:s.type()==GolemSeals.Type.BREAKER_ADVANCED?6:3);
         for(int i=0;i<9;i++) ghost.setItem(i,s.logistics().slot(i).item());
         var filter=s.logistics().slot(selected());
         low.set(filter.limit()&65535); high.set(filter.limit()>>>16);
         blacklist.set(s.logistics().blacklist()?1:0); nbt.set(s.logistics().matchNbt()?1:0);
-        existing.set(s.logistics().existingOnly()?1:0); areaX.set(s.area().getX()); areaY.set(s.area().getY()); areaZ.set(s.area().getZ());
+        silk.set(s.logistics().silk()?1:0); existing.set(s.logistics().existingOnly()?1:0); areaX.set(s.area().getX()); areaY.set(s.area().getY()); areaZ.set(s.area().getZ());
         metadata.set(s.logistics().options().metadata()?1:0); ore.set(s.logistics().options().ore()?1:0); mod.set(s.logistics().options().mod()?1:0);
         cycle.set(s.logistics().cycle()?1:0); single.set(s.logistics().single()?1:0); leave.set(s.leaveOne()?1:0);
         priority.set(s.priority()); color.set(s.color()); locked.set(s.locked()?1:0); redstone.set(s.redstone()?1:0);
@@ -116,6 +119,8 @@ public final class GolemLogisticsMenu extends AbstractContainerMenu {
         }
         if(id==0 && !stock()) return edit(p,policy.withMode(!policy.blacklist(),policy.matchNbt(),policy.single()));
         if(id==30 || id==60) return edit(p,policy.withOptions(policy.options().withMetadata(id==30)));
+        if(advancedBreaker() && (id==31 || id==61)) return edit(p,policy.withSilk(id==31));
+        if(advancedBreaker() && (id==32 || id==62 || id==33 || id==63)) return false;
         if(id==32 || id==62) return edit(p,policy.withOptions(policy.options().withOre(id==32)));
         if(id==33 || id==63) return edit(p,policy.withOptions(policy.options().withMod(id==33)));
         if(id==31 || id==61) return edit(p,policy.withMode(policy.blacklist(),id==31,policy.single()));

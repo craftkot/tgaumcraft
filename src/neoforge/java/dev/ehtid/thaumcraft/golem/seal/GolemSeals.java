@@ -55,15 +55,16 @@ public final class GolemSeals extends SavedData {
     public static final String EMPTY_KEY = "thaumcraft:empty";
     public enum Type {
         PICKUP(PICKUP_KEY), FILL(FILL_KEY), EMPTY(EMPTY_KEY), EMPTY_ADVANCED("thaumcraft:empty_advanced"),
-        PROVIDE("thaumcraft:provider"), STOCK("thaumcraft:stock"), HARVEST("thaumcraft:harvest"), PICKUP_ADVANCED("thaumcraft:pickup_advanced"), FILL_ADVANCED("thaumcraft:fill_advanced"), BREAKER("thaumcraft:breaker"), LUMBER("thaumcraft:lumber");
+        PROVIDE("thaumcraft:provider"), STOCK("thaumcraft:stock"), HARVEST("thaumcraft:harvest"), PICKUP_ADVANCED("thaumcraft:pickup_advanced"), FILL_ADVANCED("thaumcraft:fill_advanced"), BREAKER("thaumcraft:breaker"), LUMBER("thaumcraft:lumber"), BREAKER_ADVANCED("thaumcraft:breaker_advanced");
         public final String key;
         Type(String key) { this.key = key; }
-        public boolean forestry() { return this==BREAKER || this==LUMBER; }
+        public boolean breaksBlocks() { return this==BREAKER || this==BREAKER_ADVANCED; }
+        public boolean forestry() { return breaksBlocks() || this==LUMBER; }
         public boolean areaControl() { return picksUp() || this==HARVEST || forestry(); }
         public boolean logistics() { return this==PROVIDE || this==STOCK || advanced(); }
         public boolean picksUp() { return this==PICKUP || this==PICKUP_ADVANCED; }
         public boolean fills() { return this==FILL || this==FILL_ADVANCED; }
-        public boolean advanced() { return this==EMPTY_ADVANCED || this==PICKUP_ADVANCED || this==FILL_ADVANCED; }
+        public boolean advanced() { return this==EMPTY_ADVANCED || this==PICKUP_ADVANCED || this==FILL_ADVANCED || this==BREAKER_ADVANCED; }
         public boolean extracts() { return this==EMPTY || this==EMPTY_ADVANCED; }
     }
 
@@ -447,7 +448,7 @@ public final class GolemSeals extends SavedData {
     }
 
     private SealKey destination(ServerLevel level,GolemTask task,Seal seal) {
-        return switch(seal.type()) { case PROVIDE->logistics.destination(level,task); case HARVEST->farm.destination(task); case BREAKER->breaker.destination(task); case LUMBER->lumber.destination(task); default->seal.key(); };
+        return switch(seal.type()) { case PROVIDE->logistics.destination(level,task); case HARVEST->farm.destination(task); case BREAKER,BREAKER_ADVANCED->breaker.destination(task); case LUMBER->lumber.destination(task); default->seal.key(); };
     }
 
     private boolean blockEligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
@@ -461,7 +462,7 @@ public final class GolemSeals extends SavedData {
                 && golem.home().distSqr(seal.key().pos()) < (double) golem.design().stats().homeRadius()
                         * golem.design().stats().homeRadius()
                 && (seal.type()==Type.LUMBER ? lumber.eligible(level,golem,task,seal)
-                    : seal.type()==Type.BREAKER ? breaker.eligible(level,golem,task,seal)
+                    : seal.type().breaksBlocks() ? breaker.eligible(level,golem,task,seal)
                     : seal.type()==Type.HARVEST ? farm.eligible(level,golem,task,seal)
                     : seal.type()==Type.PROVIDE ? logistics.eligible(level,golem,task,seal)
                     : seal.type().fills() ? canFill(level,golem,seal)
@@ -494,7 +495,7 @@ public final class GolemSeals extends SavedData {
     public boolean completeBlock(ServerLevel level, ThaumcraftGolem golem, BlockAssignment assignment) {
         Seal seal = seals.get(assignment.seal());
         return seal != null && (seal.type()==Type.LUMBER ? lumber.complete(level,golem,assignment)
-                : seal.type()==Type.BREAKER ? breaker.complete(level,golem,assignment)
+                : seal.type().breaksBlocks() ? breaker.complete(level,golem,assignment)
                 : seal.type()==Type.HARVEST ? farm.complete(level,golem,assignment)
                 : seal.type()==Type.PROVIDE ? logistics.complete(level,golem,assignment)
                 : seal.type().fills() ? fill(level, golem, assignment) : empty(level, golem, assignment));
@@ -654,7 +655,7 @@ public final class GolemSeals extends SavedData {
                         loadedType,
                         SealFilter.load(row, registries), UUID.randomUUID(), row.getBoolean("redstone"), area,
                         (loadedType.extracts() || loadedType==Type.PROVIDE) && row.getBoolean("pleave"),
-                        LogisticsPolicy.load(row,registries,loadedType==Type.STOCK).withCycle(loadedType==Type.EMPTY_ADVANCED&&row.getBoolean("pcycle")).withExistingOnly(loadedType==Type.FILL_ADVANCED&&row.getBoolean("pexist")),
+                        LogisticsPolicy.load(row,registries,loadedType==Type.STOCK).withCycle(loadedType==Type.EMPTY_ADVANCED&&row.getBoolean("pcycle")).withSilk(loadedType==Type.BREAKER_ADVANCED&&row.getBoolean("psilk")).withExistingOnly(loadedType==Type.FILL_ADVANCED&&row.getBoolean("pexist")),
                         new HarvestSettings(!row.contains("prep") || row.getBoolean("prep"),row.getBoolean("ppro"))));
                 if(loadedType==Type.HARVEST) data.farm.loadRow(row,data.seals.get(key));
             } catch (IllegalArgumentException ignored) {

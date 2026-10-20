@@ -35,14 +35,15 @@ final class GolemBreaker {
         if(!loaded(level,pos)) return false;
         var state=level.getBlockState(pos);
         if(!GolemBreakerRules.breakable(state.isAir(),state.getDestroySpeed(level,pos))) return false;
-        var ghost=seal.filter().item();
-        if(ghost.isEmpty()) return true;
-        var actual=state.getBlock().getCloneItemStack(level,pos,state);
-        var a=GolemStackMatcher.identity(actual); var b=GolemStackMatcher.identity(ghost);
-        return GolemBreakerRules.accepts(false,seal.filter().blacklist(),a.id().equals(b.id()),a.metadata(),b.metadata(),seal.filter().options().metadata());
+        var actual=state.getBlock().getCloneItemStack(level,pos,state); var a=GolemStackMatcher.identity(actual);
+        var filters=seal.type()==GolemSeals.Type.BREAKER_ADVANCED?seal.logistics().slots():List.of(seal.filter());
+        var matches=new ArrayList<Boolean>();
+        for(var filter:filters) { var ghost=filter.item(); if(ghost.isEmpty()) continue; var b=GolemStackMatcher.identity(ghost);
+            matches.add(GolemBreakerRules.accepts(false,false,a.id().equals(b.id()),a.metadata(),b.metadata(),filter.options().metadata())); }
+        return GolemBreakerRules.acceptsFilters(matches,seal.type()==GolemSeals.Type.BREAKER_ADVANCED?seal.logistics().blacklist():seal.filter().blacklist());
     }
     void tick(ServerLevel level) {
-        for(var s:data.all()) if(s.type()==GolemSeals.Type.BREAKER && loaded(level,s.key().pos()) && !GolemSeals.stopped(level,s)) {
+        for(var s:data.all()) if(s.type().breaksBlocks() && loaded(level,s.key().pos()) && !GolemSeals.stopped(level,s)) {
             var area=new SealArea(GolemProvisioning.location(s.key()),new SealArea.BlockPos(s.area().getX(),s.area().getY(),s.area().getZ()));
             int index=scan.getOrDefault(s.key(),0); var target=area.positionAt(index); scan.put(s.key(),(index+1)%area.count());
             var pos=new BlockPos(target.x(),target.y(),target.z()); if(!valid(level,pos,s)) continue;
@@ -69,12 +70,13 @@ final class GolemBreaker {
         try {
             if(nextCallback.getOrDefault(task.getId(),0L)>level.getGameTime()) return false;
             nextCallback.put(task.getId(),level.getGameTime()+GolemBreakerRules.CALLBACK_TICKS); g.swing(InteractionHand.MAIN_HAND);
-            if(!GolemBreakerRules.completes(task.getData(),false)) {
-                task.setData(GolemBreakerRules.remaining(task.getData(),false)); task.setLifespan((short)Math.max(10,task.getLifespan()));
+            boolean silk=w.seal.type()==GolemSeals.Type.BREAKER_ADVANCED&&w.seal.logistics().silk();
+            if(!GolemBreakerRules.completes(task.getData(),silk)) {
+                task.setData(GolemBreakerRules.remaining(task.getData(),silk)); task.setLifespan((short)Math.max(10,task.getLifespan()));
                 cracks.put(task.getId(),new Crack(level,g.getId(),w.pos)); level.destroyBlockProgress(g.getId(),w.pos,GolemBreakerRules.crackStage(task.getData(),w.original.getDestroySpeed(level,w.pos)));
                 var sound=w.original.getSoundType(level,w.pos,g); level.playSound(null,w.pos,sound.getHitSound(),SoundSource.BLOCKS,(sound.getVolume()+.7F)/8,sound.getPitch()*.5F); return false;
             }
-            boolean success=GolemBlockHarvest.harvest(level,g,w.pos,true);
+            boolean success=GolemBlockHarvest.harvest(level,g,w.pos,true,silk);
             if(!success) { data.cancel(task.getId()); return false; }
             data.finish(assignment.lease()); g.addRankXp(1); return true;
         } finally { busy.remove(g.getUUID()); }

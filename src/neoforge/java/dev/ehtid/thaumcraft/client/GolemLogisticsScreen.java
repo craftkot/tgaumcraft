@@ -40,7 +40,7 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         ore=button(Component.empty(),90,83,78,()->send(menu.ore()?62:32));
         mod=button(Component.empty(),8,103,160,()->send(menu.mod()?63:33));
         mode=button(Component.empty(),8,63,78,()->send(0));
-        nbt=button(Component.empty(),90,63,78,()->send(menu.matchNbt()?61:31));
+        nbt=button(Component.empty(),90,63,78,()->send(menu.advancedBreaker()?(menu.silk()?61:31):(menu.matchNbt()?61:31)));
         String[] labels={"-10","-1","+1","+10"};
         for(int i=0;i<4;i++) { final int id=i+1; limits[i]=button(Component.literal(labels[i]),8+i*41,95,37,()->send(id)); }
         leave=button(Component.empty(),8,95,78,()->send(menu.leaveOne()?65:35));
@@ -58,12 +58,13 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         boolean matchingPanel=panel==1;
         for(int i=0;i<areas.length;i++) areas[i].visible=areas[i].active=panel==2&&menu.hasArea();
         for(var b:ordinary) b.visible=b.active=panel==0;
-        metadata.visible=metadata.active=ore.visible=ore.active=mod.visible=mod.active=matchingPanel;
+        metadata.visible=metadata.active=matchingPanel;
+        ore.visible=ore.active=mod.visible=mod.active=matchingPanel&&!menu.advancedBreaker();
         metadata.setMessage(label(menu.metadata()?"meta_match":"meta_ignore"));
         ore.setMessage(label(menu.ore()?"ore_match":"ore_ignore"));
         mod.setMessage(label(menu.mod()?"mod_match":"mod_ignore"));
         mode.active=!menu.stock(); mode.setMessage(label(menu.blacklist()?"blacklist":"whitelist"));
-        nbt.setMessage(label(menu.matchNbt()?"nbt_match":"nbt_ignore"));
+        nbt.setMessage(label(menu.advancedBreaker()?(menu.silk()?"silk":"no_silk"):(menu.matchNbt()?"nbt_match":"nbt_ignore")));
         for(var button:limits) button.visible=button.active=panel==0&&menu.hasLimits();
         leave.visible=leave.active=panel==0&&menu.canLeaveOne(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
         single.visible=single.active=panel==0&&(menu.provider()||menu.advancedEmpty()||menu.advancedFill()); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):menu.advancedFill()?(menu.existingOnly()?"existing_only":"any_stock"):(menu.cycle()?"cycle":"all_filters")));

@@ -587,6 +587,7 @@ public final class LegacyGolemTaskTest {
 
     public static void main(String[] args) throws InterruptedException {
         breakerRules();
+        advancedBreakerRules();
         lumberRules();
 
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
@@ -760,6 +761,20 @@ public final class LegacyGolemTaskTest {
         eq(Optional.of(new GolemLumberRules.Pos(-24,0,0)),GolemLumberRules.furthest(origin,view));
         eq(Optional.empty(),GolemLumberRules.furthest(origin,p->GolemLumberRules.Cell.UNKNOWN));
         logs.clear(); logs.add(origin); eq(Optional.of(origin),GolemLumberRules.furthest(origin,view));
+    }
+
+    private static void advancedBreakerRules() {
+        eq(true,GolemBreakerRules.acceptsFilters(List.of(),false)); eq(true,GolemBreakerRules.acceptsFilters(List.of(),true));
+        eq(true,GolemBreakerRules.acceptsFilters(List.of(true,true),false)); eq(false,GolemBreakerRules.acceptsFilters(List.of(true,false),false));
+        eq(false,GolemBreakerRules.acceptsFilters(List.of(true,false),true)); eq(true,GolemBreakerRules.acceptsFilters(List.of(false,false),true));
+        var registry=new AspectRegistry(); var k=new PlayerKnowledgeData(); var stored=new AspectListData(); stored.add(registry.get("sensus"),10); stored.add(registry.get("cognitio"),10); stored.add(registry.get("instrumentum"),20);
+        var recipe=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.BREAKER_ADVANCED;
+        k.addResearch("SEALBREAK");
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,k,stored,registry));
+        k.addResearch("MINDBIOTHAUMIC"); eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,k,stored,registry));
+        eq(10,recipe.amount("sensus")); eq(10,recipe.amount("cognitio")); eq(20,recipe.amount("instrumentum")); eq(0,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry).visSize()); eq(40,stored.visSize());
+        stored.remove(registry.get("instrumentum"),1); eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,k,stored,registry));
+        rejects(IllegalArgumentException.class,()->dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry));
     }
 
 }

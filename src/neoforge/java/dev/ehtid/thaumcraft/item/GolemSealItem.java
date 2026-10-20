@@ -73,6 +73,6 @@ public final class GolemSealItem extends Item {
     }
 
     private String message(String action) {
-        return "message.thaumcraft.golem.seal." + switch (type) { case FILL -> "fill."; case EMPTY -> "empty."; case EMPTY_ADVANCED -> "empty_advanced."; case PROVIDE -> "provider."; case STOCK -> "stock."; case HARVEST -> "harvest."; case BREAKER -> "breaker."; case LUMBER -> "lumber."; case PICKUP_ADVANCED -> "pickup_advanced."; case FILL_ADVANCED -> "fill_advanced."; default -> ""; } + action;
+        return "message.thaumcraft.golem.seal." + switch (type) { case FILL -> "fill."; case EMPTY -> "empty."; case EMPTY_ADVANCED -> "empty_advanced."; case PROVIDE -> "provider."; case STOCK -> "stock."; case HARVEST -> "harvest."; case BREAKER -> "breaker."; case LUMBER -> "lumber."; case BREAKER_ADVANCED -> "breaker_advanced."; case PICKUP_ADVANCED -> "pickup_advanced."; case FILL_ADVANCED -> "fill_advanced."; default -> ""; } + action;
     }
 }
