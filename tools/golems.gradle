@@ -9,6 +9,12 @@ allprojects {
                 gameDirectory = project.layout.buildDirectory.dir('golem-gametest')
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft'
             }
+            neo.runs.create('golemFlightStress') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-flight-stress')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_stress'
+            }
             neo.runs.create('golemClient') {
                 client()
                 gameDirectory = project.layout.buildDirectory.dir('golem-client')
