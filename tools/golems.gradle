@@ -14,8 +14,19 @@ allprojects {
                 gameDirectory = project.layout.buildDirectory.dir('golem-client')
                 jvmArguments.add '-Xmx2G'
                 programArguments.addAll '--width', '1280', '--height', '800'
+                def remote = project.findProperty('golemRemoteAddress') ?: ''
+                if (remote) programArguments.addAll '--quickPlayMultiplayer', remote
+                systemProperty 'thaumcraft.golemSealRemoteProbe', (remote != '').toString()
                 systemProperty 'thaumcraft.golemClientProbe', 'true'
                 systemProperty 'thaumcraft.golemClientScenario', project.findProperty('golemClientScenario') ?: ''
+            }
+            neo.runs.create('golemSealServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('golem-seal-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemClientProbe', 'true'
+                systemProperty 'thaumcraft.golemClientScenario', 'seals'
+                systemProperty 'thaumcraft.golemSealRemoteProbe', 'true'
             }
             neo.runs.create('golemRestart') {
                 server()

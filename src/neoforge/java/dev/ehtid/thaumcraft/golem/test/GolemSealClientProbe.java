@@ -21,17 +21,20 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 @EventBusSubscriber(modid=ThaumcraftPort.MOD_ID)
 public final class GolemSealClientProbe {
     private static final boolean ENABLED=Boolean.getBoolean("thaumcraft.golemClientProbe")&&"seals".equals(System.getProperty("thaumcraft.golemClientScenario",""));
+    private static final boolean REMOTE=Boolean.getBoolean("thaumcraft.golemSealRemoteProbe");
     private static final GolemSeals.SealKey PICK=new GolemSeals.SealKey(new BlockPos(7,119,5),Direction.UP),FILL=new GolemSeals.SealKey(new BlockPos(11,120,5),Direction.SOUTH),BREAKER=new GolemSeals.SealKey(new BlockPos(4,121,5),Direction.WEST);
-    private static MinecraftServer active; private static int phase,ticks; private static boolean checked;
+    private static MinecraftServer active; private static int phase,ticks,finishedAt; private static boolean checked;
     private GolemSealClientProbe() {}
     @SubscribeEvent public static void started(ServerStartedEvent e) {
-        if(!ENABLED||e.getServer().isDedicatedServer()) return;
-        active=e.getServer();phase=ticks=0;checked=false;
+        if(!ENABLED||e.getServer().isDedicatedServer()!=REMOTE) return;
+        active=e.getServer();phase=ticks=finishedAt=0;checked=false;
     }
     @SubscribeEvent public static void stopped(ServerStoppedEvent e) { if(active==e.getServer()) active=null; }
     @SubscribeEvent public static void tick(ServerTickEvent.Post e) {
-        if(active!=e.getServer()||checked||active.getPlayerList().getPlayers().isEmpty()) return;
-        ticks++; var level=active.overworld(); var player=active.getPlayerList().getPlayers().getFirst();var data=GolemSeals.get(level);
+        if(active!=e.getServer()) return;
+        ticks++;
+        if(checked) {if(REMOTE&&ticks-finishedAt>=200)active.halt(false);return;}
+        if(active.getPlayerList().getPlayers().isEmpty()) return; var level=active.overworld(); var player=active.getPlayerList().getPlayers().getFirst();var data=GolemSeals.get(level);
         try {
             if(phase==0) {
                 require(!data.contains(PICK.pos(),PICK.face())&&!data.contains(FILL.pos(),FILL.face())&&!data.contains(BREAKER.pos(),BREAKER.face()),"Create a fresh isolated world; prior fixture is never overwritten");
@@ -60,9 +63,9 @@ public final class GolemSealClientProbe {
             }
             if(phase==6&&!data.contains(PICK.pos(),PICK.face())) {
                 int drops=level.getEntitiesOfClass(ItemEntity.class,new AABB(PICK.pos()).inflate(8),i->i.getItem().is(GolemModule.PICKUP_SEAL.get())).stream().mapToInt(i->i.getItem().getCount()).sum();
-                require(drops==1&&data.contains(FILL.pos(),FILL.face())&&data.contains(BREAKER.pos(),BREAKER.face()),"Real bell removal returns exactly one seal and retains other faces");checked=true;LogUtils.getLogger().info("GOLEM_CLIENT_SEAL_SERVER_REMOVE_ASSERTIONS_OK");
+                require(drops==1&&data.contains(FILL.pos(),FILL.face())&&data.contains(BREAKER.pos(),BREAKER.face()),"Real bell removal returns exactly one seal and retains other faces");checked=true;finishedAt=ticks;LogUtils.getLogger().info("GOLEM_CLIENT_SEAL_SERVER_REMOVE_ASSERTIONS_OK");
             }
-        } catch(RuntimeException|AssertionError ex) {checked=true;LogUtils.getLogger().error("GOLEM_CLIENT_SEAL_ASSERTIONS_FAILED",ex);}
+        } catch(RuntimeException|AssertionError ex) {checked=true;finishedAt=ticks;LogUtils.getLogger().error("GOLEM_CLIENT_SEAL_ASSERTIONS_FAILED",ex);}
     }
     private static void wall(net.minecraft.server.level.ServerLevel level,boolean present) {
         for(int x=3;x<=12;x++) for(int y=120;y<=126;y++) level.setBlockAndUpdate(new BlockPos(x,y,8),(present?Blocks.STONE:Blocks.AIR).defaultBlockState());

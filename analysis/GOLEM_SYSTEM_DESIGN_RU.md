@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.41** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2901 и233/233 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущие срезы **M10.14–M10.42** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2901 и233/233 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
@@ -11,7 +11,7 @@
 | C. AI/tasks | Shared leases/приоритет/distance, interrupts/cancel/retry, ground/wheels/climb/flight, melee/ranged | Полная modded navigation/engine parity и широкая stress matrix |
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | S2C chunk mirror и source области проверены M40; исходный artwork и внешняя API совместимость открыты |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Modded crops/clickables, generic M06 recipe acquisition и crash consistency |
-| F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | Боевой graphical run M38 PASS (AdvancedGuard C2S/actual flying dart kill/render path); исходные meshes/анимации/parts/particles не портированы |
+| F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | M38 combat PASS; M40 integrated и M42 separate-JVM TCP seal snapshot/edit/REMOVE/offhand/sneak world areas PASS. Original meshes/анимации/parts/particles не портированы |
 | Проверки | Core +233 native GameTests + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
@@ -775,3 +775,8 @@ Press scanner/formation/restoration/essentia reads используют non-load
 
 
 M41 actual dedicated proof: две source-formed50tick машины/двеdust payments, real component debit, partial paid buffer и fully paid blocked output→native chunk absence40ticks→новые BE с exact captured NBT state/5links→native paid finish oneplacer each/2spareMachina each/untouched second batch/no replay100ticks→actual anvil break refunds oneanvil+oneproduct. BUILD SUCCESS1m38s/explicitmarker20:11:18UTC, production233. Неверное требование consume-before-unload исправлено в fixture; source interval/cost не менялись. Cold Press ранее проверен отдельно; live unload не равен crash atomicity.
+
+
+### M42 — actual TCP projection
+
+Две JVM и реальный InetSocketAddress/no integrated server проверены в клиенте; owner menu C2S area/color→actual S2C cache update/sameinstance→bell one-drop removal/остальные2seal entries сохранены. Dedicated server BUILD SUCCESS3m24s, все измерения saved; separate native client GUI quit/exit0. Through-wall screenshot первогоTCP run выявил vanilla NO_DEPTH_TEST no-op. fd38183 явно disable/restores previous GL flag в scoped state; actual GL assertion previous=true/currentfalse и повторный raw screenshot положительны. [Доказательства и инструкция](evidence/golems/client_seals_tcp_2026_10_20/README.md). Core39962/2901, native233 baseline; последующий client-only fix не требует повторять полный dedicated suite. Открыты crash save-order/инвентарная atomicity, multi-user/networkstress, moddedAPI, originalvisuals и survival dependencies.
