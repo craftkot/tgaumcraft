@@ -35,7 +35,7 @@ import net.minecraft.world.level.Level;
 import java.util.Optional;
 import java.util.UUID;
 
-/** First ground worker adapter. Combat and flying parts are separate M10 slices. */
+/** Server-owned ground worker and source melee adapter. Flying/ranged parts remain gated. */
 public final class ThaumcraftGolem extends PathfinderMob {
     private static final EntityDataAccessor<Long> DESIGN = SynchedEntityData.defineId(
             ThaumcraftGolem.class, EntityDataSerializers.LONG);
@@ -85,6 +85,18 @@ public final class ThaumcraftGolem extends PathfinderMob {
 
     @Override
     protected void registerGoals() {
+        goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this) {
+            @Override public boolean canUse() { return fighter() && super.canUse(); }
+        });
+        goalSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.15, false) {
+            @Override public boolean canUse() { return fighter() && super.canUse(); }
+            @Override public boolean canContinueToUse() { return fighter() && super.canContinueToUse(); }
+        });
+        targetSelector.addGoal(1, new dev.ehtid.thaumcraft.golem.ai.GolemOwnerTargetGoal(this, true));
+        targetSelector.addGoal(2, new dev.ehtid.thaumcraft.golem.ai.GolemOwnerTargetGoal(this, false));
+        targetSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal(this) {
+            @Override public boolean canUse() { return fighter() && super.canUse(); }
+        });
         pickupGoal = new GolemPickupGoal(this);
         goalSelector.addGoal(3, pickupGoal);
         blockGoal = new GolemBlockGoal(this);
@@ -148,6 +160,27 @@ public final class ThaumcraftGolem extends PathfinderMob {
         getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(stats.followRange());
         getAttribute(Attributes.STEP_HEIGHT).setBaseValue(stats.stepHeight());
         restrictTo(home, stats.homeRadius());
+    }
+
+    public boolean fighter() { return invalidDesign == null && design().hasTrait(GolemTrait.FIGHTER); }
+    public Player ownerEntity() { return ownerId() == null ? null : level().getPlayerByUUID(ownerId()); }
+    @Override public net.minecraft.world.scores.PlayerTeam getTeam() {
+        Player owner = ownerEntity();
+        return owner != null ? owner.getTeam() : super.getTeam();
+    }
+    @Override public boolean isAlliedTo(net.minecraft.world.entity.Entity other) {
+        Player owner = ownerEntity();
+        return owner != null ? other == owner || owner.isAlliedTo(other) : super.isAlliedTo(other);
+    }
+    @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        if (level().isClientSide || !fighter() || isAlliedTo(target)) return false;
+        boolean hit = super.doHurtTarget(target);
+        if (hit && target instanceof net.minecraft.world.entity.LivingEntity living) {
+            // Preserve source ordering: lethal first hit cannot retroactively produce player XP.
+            if (design().hasTrait(GolemTrait.DEFT)) living.lastHurtByPlayerTime = 100;
+            if (target instanceof net.minecraft.world.entity.Mob && !living.isAlive()) addRankXp(8);
+        }
+        return hit;
     }
 
     @Override protected void actuallyHurt(net.minecraft.world.damagesource.DamageSource source,float amount) {
@@ -225,6 +258,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
 
     @Override
     public void tick() {
+        if (!level().isClientSide && getTarget() != null && isAlliedTo(getTarget())) setTarget(null);
         super.tick();
         if (!level().isClientSide && isAlive() && hasTransferRecovery()) {
             if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();

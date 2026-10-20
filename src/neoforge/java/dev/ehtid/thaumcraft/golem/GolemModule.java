@@ -156,7 +156,7 @@ public final class GolemModule {
         }
     }
 
-    /** Avoid advertising unimplemented flight/combat/body functions through arbitrary props. */
+    /** Keep unimplemented flight, climbing and ranged functions gated. */
     public static boolean supportsRuntime(GolemDesign design) {
         return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.groundWorker(design);
     }

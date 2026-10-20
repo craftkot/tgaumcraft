@@ -7,7 +7,7 @@ import java.util.Set;
 public final class GolemRuntimeRules {
     private GolemRuntimeRules() {}
     public static boolean groundWorker(GolemDesign d) {
-        return d.toLong()>>>48==0 && (d.arms().id()<=1 || d.arms().id()==3) && d.legs().id()<=1 && d.addon().id()!=2;
+        return d.toLong()>>>48==0 && d.arms().id()<=3 && d.legs().id()<=1;
     }
     public static Set<String> research(GolemDesign d) {
         var keys=new LinkedHashSet<String>(); keys.add(d.material().research());
