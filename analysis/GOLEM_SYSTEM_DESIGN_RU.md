@@ -2,17 +2,17 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.40** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2901 и231/231 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущие срезы **M10.14–M10.41** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2901 и233/233 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
-| A. Entity/state/lifecycle | Source design/stats/owner/rank, synced данные, native NBT, paid spawn/reclaim, death cargo, cold restart | Actual worker/seal live unload PASS M39; Press live unload/crash injection не выполнены |
+| A. Entity/state/lifecycle | Source design/stats/owner/rank, synced данные, native NBT, paid spawn/reclaim, death cargo, cold restart | Worker/seal live unload PASS M39; actual formed paid Press pair live unload PASS M41; abrupt crash injection не выполнен |
 | B. Parts/upgrades | Все source каталог/traits/2400 costs, researched Press, parts selection, source modules и характеристики | Survival acquisition отсутствующего levitator/часть исследований зависят от M06/M07/M08 |
 | C. AI/tasks | Shared leases/приоритет/distance, interrupts/cancel/retry, ground/wheels/climb/flight, melee/ranged | Полная modded navigation/engine parity и широкая stress matrix |
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | S2C chunk mirror и source области проверены M40; исходный artwork и внешняя API совместимость открыты |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Modded crops/clickables, generic M06 recipe acquisition и crash consistency |
 | F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | Боевой graphical run M38 PASS (AdvancedGuard C2S/actual flying dart kill/render path); исходные meshes/анимации/parts/particles не портированы |
-| Проверки | Core +231 native GameTests + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
+| Проверки | Core +233 native GameTests + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
 ## 1. Источники и границы доказательств
@@ -772,3 +772,6 @@ Full Java21 Core39962/2901PASS (+8 source visual goldens), `golems-seal-visual-c
 ### M41 — Press block-ticking lifecycle
 
 Press scanner/formation/restoration/essentia reads используют non-loading ServerChunkCache.isPositionTicking (реальная block-ticking future и vanilla block simulation range). Это шире entity-ticking guard работников/печатей M39: отдельный actual level32 ticket доказывает оплату/processing8Machina→oneplacer при отсутствии entity ticks. Второй native test сохраняет PENDING/ACTIVE/RESTORING в FULL non-ticking chunk и проверяет настоящее исчезновение chunk/сохранностьrecords. Before-fix231/232, послеfix233/233requiredPASS; source cost/interval/payment неизменны. Actual formed paid Press unload/reload ещё проверяется отдельно; crash consistency не подразумевается.
+
+
+M41 actual dedicated proof: две source-formed50tick машины/двеdust payments, real component debit, partial paid buffer и fully paid blocked output→native chunk absence40ticks→новые BE с exact captured NBT state/5links→native paid finish oneplacer each/2spareMachina each/untouched second batch/no replay100ticks→actual anvil break refunds oneanvil+oneproduct. BUILD SUCCESS1m38s/explicitmarker20:11:18UTC, production233. Неверное требование consume-before-unload исправлено в fixture; source interval/cost не менялись. Cold Press ранее проверен отдельно; live unload не равен crash atomicity.

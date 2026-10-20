@@ -2,13 +2,13 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 20.10.2026, M10.40
+## Актуальный checkpoint — 20.10.2026, M10.41
 
-Реализованы2400 source runtime-конфигураций, оплаченный researched Press/parts, все16 печатей, shared tasks, native automation/Harvest/Cocoa/Breaker/Lumber/Silk/Use и melee/Guard/Butcher/CLIMBER/FLYER/RANGED. **Java21 full Core39962construction/2901task PASS; full NeoForge231/231required GameTests PASS**. Отдельные настоящие cold WRITE/READ и live worker/seal unload→reload→cargo13 PASS; точные baselines/ошибки/ограничения ниже.
+Реализованы2400 source runtime-конфигураций, оплаченный researched Press/parts, все16 печатей, shared tasks, native automation/Harvest/Cocoa/Breaker/Lumber/Silk/Use и melee/Guard/Butcher/CLIMBER/FLYER/RANGED. **Java21 full Core39962construction/2901task PASS; full NeoForge233/233required GameTests PASS**. Отдельные настоящие cold WRITE/READ и live worker/seal unload→reload→cargo13 PASS; точные baselines/ошибки/ограничения ниже.
 
 Настоящий Minecraft-клиент: прежние Use/Silk C2S и wheeled Pickup→Fill11, боевой AdvancedGuard/flying dart kill, теперь M40 tracking snapshot/area/color update/one-drop removal, offhand и sneak-through geometry. Последний клиент штатно сохранил мир и завершился **BUILD SUCCESS7m23s**; [raw evidence](../evidence/golems/client_seals_2026_10_20/README.md). Rendering использует только S2C cache; исходный artwork/модели/анимации не заменяются заявлением о временных контурах.
 
-Следующий конкретный пункт — Press live chunk unload/reload. Широкий mod crop/clickable API/stress/crash injection и survival зависимости M06/M07/M08 (особенно отсутствующий levitator) открыты. Полный M10/59/100 не объявляются. Текущий HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Main fresh-fetch20.10 остаётсяa4280834. Only feature/golems; shared ROADMAP/build.gradle/CI/foreign branches untouched. Исторические checkpoints ниже не описывают текущий остаток.
+Press live chunk unload/reload двух actual formed paid machines PASS1m38s (native buffer/blocked output/one result each/no replay/real dismantle). Следующий конкретный пункт — separate-JVM TCP client seals. Широкий mod crop/clickable API/stress/crash injection и survival зависимости M06/M07/M08 (особенно отсутствующий levitator) открыты. Полный M10/59/100 не объявляются. Текущий HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Main fresh-fetch20.10 остаётсяa4280834. Only feature/golems; shared ROADMAP/build.gradle/CI/foreign branches untouched. Исторические checkpoints ниже не описывают текущий остаток.
 
 ## Границы и исходное состояние
 
@@ -616,3 +616,12 @@ Native baseline231/231 и Core39962/2901 предыдущего коммита �
 Исправление использует **ServerChunkCache.isPositionTicking**, non-loading block-ticking future + vanilla inBlockTickingRange. Это именно block-ticking, а не более узкое entity-ticking условие големов M39. Formation/restore piston halo, ACTIVE scan и соседние источники Machina ждут этого состояния; обычные client-side checks сохранены. TileGolemBuilder.func_73660_a по BETA26 сохраняет five-tick paid consumption; современная lifecycle projection не меняет source cost/interval/output/payment.
 
 **Полный233/233required native GameTests PASS**, `golems-press-ticking-fixed.log`20:09:18UTC: все231 прежних плюс сохранность трёх inactive phases и положительный настоящий level32 block-ticking/не entity-ticking Press→один оплаченный placer/ровно8 Machina. Последний не позволяет случайно остановить машины в законной vanilla block-ticking полосе. Core39962/2901 неизменён, дополнительных Core rules нет. Следом actual formed pair live-unload/reload probe на этой233 production; до явного marker PASS ему не присваивается.
+
+
+### M41 — actual formed Press live unload завершён
+
+`23b496e` — production block-ticking fix и233nativePASS1m40s; этот отдельный коммит содержит только opt-in dedicated fixture/свою маршрутизацию и результат. **BUILD SUCCESS1m38s / GOLEM_PRESS_CHUNK_UNLOAD_ASSERTIONS_OK20:11:18UTC**, `golems-press-chunk-fixed.log`, isolated build/golem-press-chunk-unload/port25615, production233.
+
+Две настоящие пятиблочные машины собраны через Salis Mundus с двумя реальными debit и50tick ожиданием. Каждая снимает ровно один batch компонентов из barrel; второй batch оставлен для контроля. Первая имеет partial paid work и реальный buffered Machina (4оплаченных, ещё4missing), вторая полностью оплатила8 и стоит с blocked output; namedgold2 blockers сохранены. Fixture отпустил свой forced ticket20:11:09UTC; native ChunkEvent.Unload/getChunkNow=null/entity storage absent20:11:10. Следующие40ticks chunk остаётся отсутствующим, старые JavaBE не прогрессируют. Reload создаёт новые BE с точным captured job/selection/output components, jar0/2, всеми5links обеих машин и нетронутыми вторыми batches. Реальные пополнения только4missing+2spare, разблокировка выхода→native ticks→ровно по одному placer/по2unspentMachina;100ticks без replay/новых debit/groundoutput. Настоящее разрушение anvil первой машины восстанавливает её source blocks и даёт ровно anvil+один paid product; другая машина сохраняет свой single product. Никакого ручного удаления чанков/билетов движка или редактирования мирового NBT.
+
+Первый прерванный startup и failed buffer-timing assumption сохранены отдельно; before-fix native lifecycle failure тоже сохранён. Этот proof не заявляет abrupt process crash/multi-file atomicity. Следующий concrete пункт — separate-JVM TCP клиентские seals, уже подготовлен opt-in fixture; PASS до actual connection/C2S/S2C markers не заявляется. Core39962/2901 не менялся. ОбщиеROADMAP/build.gradle/CI/чужие ветки не тронуты.
