@@ -206,7 +206,11 @@ public final class LegacyGolemConstructionTest {
             same((long)rows.size(),rows.stream().map(c->c.legacyItemId()+":"+c.metadata()).distinct().count());
             if(GolemRuntimeRules.groundWorker(d)) supported++;
         }
-        same(270,supported);
+        same(540,supported);
+        var wheels=GolemDesign.fromIds(0,0,0,1,0,0);
+        same(1.45F,wheels.stats().moveSpeedMultiplier()); same(0.5F,wheels.stats().stepHeight()); same(12,GolemPress.cost(wheels));
+        same(2,component(wheels,"minecraft:bowl",0)); same(1,component(wheels,"minecraft:leather",0)); same(2,component(wheels,"thaumcraft:mechanism_simple",0));
+        same(false,GolemRuntimeRules.groundWorker(GolemDesign.fromIds(0,0,0,2,0,0)));
         var advanced=GolemDesign.fromIds(3,2,1,1,1,0);
         same(9,component(advanced,"thaumcraft:plate",0));
         same(3,component(advanced,"thaumcraft:mechanism_simple",0));
