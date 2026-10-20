@@ -25,7 +25,7 @@ import java.util.*;
 
 /** Source Harvest scan -> shared task board -> real protected harvest and paid seed placement. */
 final class GolemFarm {
-    private record Plant(GolemFarmRules.Crop crop,ResourceLocation block,ItemStack seed,Direction support,boolean farmland) {}
+    private record Plant(GolemFarmRules.Crop crop,ResourceLocation block,ResourceLocation plant,ItemStack seed,Direction support,boolean farmland) {}
     private record Work(GolemSeals.Seal seal,BlockPos pos,boolean replant) {}
     private final GolemSeals data;
     private final Map<GolemSeals.SealKey,Map<BlockPos,Plant>> replants=new HashMap<>();
@@ -59,9 +59,12 @@ final class GolemFarm {
     private static ItemStack seedFor(Block block,GolemFarmRules.Crop crop) {
         var override=GolemHarvestRegistry.seed(block);return !override.isEmpty()?override:crop!=null&&crop.seed!=null?seed(crop):ItemStack.EMPTY;
     }
+    private static ResourceLocation plantedBlock(ItemStack seed) {
+        return seed.getItem() instanceof BlockItem item?BuiltInRegistries.BLOCK.getKey(item.getBlock()):null;
+    }
     private static boolean configured(Plant plant) {
         var block=BuiltInRegistries.BLOCK.get(plant.block);
-        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop));
+        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop))&&Objects.equals(plant.plant,plantedBlock(plant.seed));
     }
     private static SealArea area(GolemSeals.Seal s) {
         return new SealArea(GolemProvisioning.location(s.key()),new SealArea.BlockPos(s.area().getX(),s.area().getY(),s.area().getZ()));
@@ -127,12 +130,13 @@ final class GolemFarm {
                     // Source ignores onBlockActivated's boolean and grants XP for the attempted click; no replant intent.
                     data.finish(assignment.lease());g.addRankXp(1);g.swing(InteractionHand.MAIN_HAND);return true;
                 }
-                var support=before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
                 boolean farmland=level.getBlockState(w.pos.below()).is(Blocks.FARMLAND);
                 var seed=seedFor(before.getBlock(),crop);
+                var planted=plantedBlock(seed);
+                var support=Objects.equals(planted,BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))&&before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
                 success=actor.gameMode.destroyBlock(w.pos);
-                if(success && level.isEmptyBlock(w.pos) && !seed.isEmpty() && w.seal.harvest().replant()) {
-                    replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,new Plant(crop,BuiltInRegistries.BLOCK.getKey(before.getBlock()),seed,support,farmland)); data.setDirty();
+                if(success && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && w.seal.harvest().replant()) {
+                    replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,new Plant(crop,BuiltInRegistries.BLOCK.getKey(before.getBlock()),planted,seed,support,farmland)); data.setDirty();
                 }
             } else {
                 var plant=replants.get(w.seal.key()).get(w.pos); var slot=carrying(g,plant.seed);
@@ -150,7 +154,7 @@ final class GolemFarm {
                 // Modern BlockItem may target a replaceable clicked support itself. Never plant outside the assigned crop cell.
                 if(!new BlockPlaceContext(placement).getClickedPos().equals(w.pos)) return false;
                 actual.useOn(placement);
-                success=level.getBlockState(w.pos).is(BuiltInRegistries.BLOCK.get(plant.block));
+                success=level.getBlockState(w.pos).is(BuiltInRegistries.BLOCK.get(plant.plant));
                 if(success) {
                     replants.get(w.seal.key()).remove(w.pos); data.setDirty();
                 }
@@ -172,7 +176,7 @@ final class GolemFarm {
     }
     void saveRow(CompoundTag row,GolemSeals.Seal s,net.minecraft.core.HolderLookup.Provider registries) {
         var list=new ListTag();
-        for(var e:replants.getOrDefault(s.key(),Map.of()).entrySet()) { var entry=new CompoundTag(); entry.putLong("pos",e.getKey().asLong()); entry.putString("crop",e.getValue().crop==null?e.getValue().block.toString():e.getValue().crop.name()); entry.put("seed",e.getValue().seed.save(registries)); entry.putByte("support",(byte)e.getValue().support.ordinal()); entry.putBoolean("farmland",e.getValue().farmland); list.add(entry); }
+        for(var e:replants.getOrDefault(s.key(),Map.of()).entrySet()) { var entry=new CompoundTag(); entry.putLong("pos",e.getKey().asLong()); entry.putString("crop",e.getValue().crop==null?e.getValue().block.toString():e.getValue().crop.name()); entry.putString("plant",e.getValue().plant.toString()); entry.put("seed",e.getValue().seed.save(registries)); entry.putByte("support",(byte)e.getValue().support.ordinal()); entry.putBoolean("farmland",e.getValue().farmland); list.add(entry); }
         if(!list.isEmpty()) row.put("ReplantTasks",list);
     }
     void loadRow(CompoundTag row,GolemSeals.Seal s,net.minecraft.core.HolderLookup.Provider registries) {
@@ -189,12 +193,14 @@ final class GolemFarm {
             if(entry.contains("seed")&&!entry.contains("seed",Tag.TAG_COMPOUND))continue;
             var stored=entry.contains("seed",Tag.TAG_COMPOUND)?ItemStack.parseOptional(registries,entry.getCompound("seed")):(crop==null||crop.seed==null?ItemStack.EMPTY:seed(crop));
             if(stored.isEmpty()||!ItemStack.isSameItemSameComponents(expected,stored))continue;
+            var planted=entry.contains("plant")?ResourceLocation.parse(entry.getString("plant")):block;
+            if(!Objects.equals(planted,plantedBlock(expected)))continue;
             int face=entry.contains("support",Tag.TAG_BYTE)?entry.getByte("support"):Direction.DOWN.ordinal();
             if(face<0 || face>=Direction.values().length) continue;
             var support=Direction.values()[face];
-            if(crop==GolemFarmRules.Crop.COCOA?support.getAxis().isVertical():support!=Direction.DOWN) continue;
+            if(planted.equals(BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))?support.getAxis().isVertical():support!=Direction.DOWN) continue;
             boolean farmland=entry.contains("farmland")?entry.getBoolean("farmland"):crop!=null&&crop.farmland;
-            var plant=new Plant(crop,block,stored.copyWithCount(1),support,farmland);
+            var plant=new Plant(crop,block,planted,stored.copyWithCount(1),support,farmland);
             if(configured(plant)&&area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ())))replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,plant);
         } catch(IllegalArgumentException ignored) { /* Unknown crops cannot become arbitrary block placement. */ }
     }

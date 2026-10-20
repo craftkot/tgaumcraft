@@ -802,3 +802,8 @@ Generic replant хранит canonical blockID+actualseed components/support/soi
 ### M46 — расширенная flight evidence
 
 Отдельный runGolemFlightStress включает только собственный stress namespace; normal245suite unchanged. Actual32scenarios seeds0..15/open+4-highwall: все самоназначают ownerlockedBreaker, native3Dnav/collision/NoGravity/actualorebreak→diamond1/XP1. 32/32requiredPASS45s; actualgameTicks open57–76/wall74–354, один wallseed законно выходит за350representative budget. Source navigation не менялась; старый unseeded failure не считается ретроспективно исправленным. [Evidence/timings](evidence/golems/flight_matrix_2026_10_20/README.md). Общий текущий baselineCore39962/2909 и245native плюсотдельная32matrix; неAllSeeds/NavParity. Source custom non-BlockItem/cross-blockseed API/modbinaries/visual/survivalintegration иsplit-save atomicity остаются открыты.
+
+
+### M47 — отдельный результат посадки
+
+`registerSeed(originCrop, actualSeed)` допускает Native BlockItem другого блока, как позволяет source seed map. Intent хранит `crop` (источник), `plant` (ожидаемый результат), точные item components и прежние support/soil guards. Результат выводится из BlockItem и перепроверяется при load/completion; cross-block intent без `plant` или с поддельным результатом не исполняется. Старое same-block NBT продолжает читаться. Actual protected carrot harvest→named wheat seeds2→native wheat age0/remain1 и защитные сценарии проверены полными248GameTests. Произвольные non-BlockItem callbacks и нестандартные directional plant adapters остаются открыты; полный внешний mod ABI не заявляется. Это расширяет M45, снимая его прежнее same-block ограничение.

@@ -81,4 +81,31 @@ public final class GolemCropAdapterGameTests {
     public static void clickableRegistrationTakesSourcePrecedenceOverStandardAndSeedMappings(GameTestHelper h){
         var f=fixture(h,false,true);var click=GolemHarvestRegistry.registerClickable(RIPE);h.runAfterDelay(8,()->{try{h.assertTrue(complete(h,f,claim(f))&&h.getLevel().getBlockState(f.crop).getValue(SweetBerryBushBlock.AGE)==1&&ItemStack.matches(f.worker.getMainHandItem(),seed(2))&&pending(h,f.data,f.key).isEmpty(),"Source clickable branch wins, no destruction or seed/replant side effect");}finally{click.close();f.close();}h.succeed();});
     }
+    private static ItemStack crossSeed(int n){var s=new ItemStack(Items.WHEAT_SEEDS,n);s.set(DataComponents.CUSTOM_NAME,Component.literal("M47 crop rotation seed"));return s;}
+    private static void carrots(GameTestHelper h,Fixture f){h.getLevel().setBlockAndUpdate(f.key.pos(),Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE,7));h.getLevel().setBlockAndUpdate(f.crop,Blocks.CARROTS.defaultBlockState().setValue(CropBlock.AGE,7));f.worker.setItemSlot(EquipmentSlot.MAINHAND,crossSeed(2));}
+    @GameTest(template="golem_test",batch="crop_cross_registration",timeoutTicks=30)
+    public static void sourceSeedMappingMayPointAtADifferentNativePlant(GameTestHelper h){
+        try(var mapping=GolemHarvestRegistry.registerSeed(Blocks.PUMPKIN,new ItemStack(Items.PUMPKIN_SEEDS))){var actual=GolemHarvestRegistry.seed(Blocks.PUMPKIN);h.assertTrue(actual.is(Items.PUMPKIN_SEEDS)&&((BlockItem)actual.getItem()).getBlock()==Blocks.PUMPKIN_STEM,"Source native seed mapping pumpkin->stem is not falsely rejected as a different block");}
+        h.succeed();
+    }
+    @GameTest(template="golem_test",batch="crop_cross_payment",timeoutTicks=80)
+    public static void actualCrossCropSeedPlantsItsNativeBlockAndPaysExactlyOne(GameTestHelper h){
+        var f=fixture(h,false,false);carrots(h,f);var mapping=GolemHarvestRegistry.registerSeed(Blocks.CARROTS,crossSeed(1));
+        h.runAfterDelay(8,()->{h.assertTrue(complete(h,f,claim(f))&&h.getLevel().isEmptyBlock(f.crop)&&ItemStack.matches(f.worker.getMainHandItem(),crossSeed(2)),"Real carrot harvest retains both actual wheat seeds");
+            var intent=pending(h,f.data,f.key).getCompound(0);h.assertTrue(intent.getString("crop").equals("CARROTS")&&intent.getString("plant").equals("minecraft:wheat"),"Paid intent separates harvested crop from expected native planted block");
+            var copy=GolemSeals.load(f.data.save(new CompoundTag(),h.getLevel().registryAccess()),h.getLevel().registryAccess());h.assertTrue(pending(h,copy,f.key).size()==1,"Cross-block mapping survives decode with exact actual seed");
+            h.runAfterDelay(8,()->{try{h.assertTrue(complete(h,f,claim(f))&&h.getLevel().getBlockState(f.crop).is(Blocks.WHEAT)&&h.getLevel().getBlockState(f.crop).getValue(CropBlock.AGE)==0&&ItemStack.matches(f.worker.getMainHandItem(),crossSeed(1))&&pending(h,f.data,f.key).isEmpty()&&f.worker.rankXp()==2,"Real Native BlockItem planted wheat rather than carrots, seed2->seed1+plant1, no ghost crop or stale intent");}finally{mapping.close();f.close();}h.succeed();});
+        });
+    }
+    @GameTest(template="golem_test",batch="crop_cross_forgery",timeoutTicks=60)
+    public static void forgedOrMissingCrossPlantTargetCannotTurnSeedIntoAnotherBlock(GameTestHelper h){
+        var f=fixture(h,false,false);carrots(h,f);var mapping=GolemHarvestRegistry.registerSeed(Blocks.CARROTS,crossSeed(1));
+        h.runAfterDelay(8,()->{try{h.assertTrue(complete(h,f,claim(f)),"Real crop harvest");var tag=f.data.save(new CompoundTag(),h.getLevel().registryAccess());CompoundTag intent=null;
+            for(var t:tag.getList("seals",Tag.TAG_COMPOUND))if(((CompoundTag)t).getLong("pos")==f.key.pos().asLong())intent=((CompoundTag)t).getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0);
+            h.assertTrue(intent!=null,"Real pending record");intent.putString("plant","minecraft:diamond_block");h.assertTrue(pending(h,GolemSeals.load(tag,h.getLevel().registryAccess()),f.key).isEmpty(),"Forged target is not accepted for real wheat seeds");
+            intent.remove("plant");h.assertTrue(pending(h,GolemSeals.load(tag,h.getLevel().registryAccess()),f.key).isEmpty(),"Legacy missing target means original crop only; it cannot silently upgrade into a cross-block command");
+            h.assertTrue(ItemStack.matches(f.worker.getMainHandItem(),crossSeed(2))&&h.getLevel().isEmptyBlock(f.crop),"Decode never mutates the actual seed owner or world");
+        }finally{mapping.close();f.close();}h.succeed();});
+    }
+
 }

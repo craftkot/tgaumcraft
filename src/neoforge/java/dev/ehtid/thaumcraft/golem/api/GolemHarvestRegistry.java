@@ -28,9 +28,10 @@ public final class GolemHarvestRegistry {
     public static boolean isClickable(BlockState state){return CROPS.stream().anyMatch(r->r.kind==Kind.CLICKABLE&&r.states.contains(state));}
     public static boolean isMature(BlockState state,boolean sameBlockBelow){return CROPS.stream().anyMatch(r->r.states.contains(state)&&(r.kind!=Kind.STACKED||sameBlockBelow));}
     public static boolean hasBreakableCrop(Block block){return CROPS.stream().anyMatch(r->r.kind!=Kind.CLICKABLE&&r.states.stream().anyMatch(s->s.is(block)));}
-    /** Native BlockItem planting is implemented; arbitrary custom non-BlockItem planting callbacks need an adapter. */
+    /** The seed may place a different native BlockItem block (e.g. pumpkin seeds -> stem). */
     public static SeedRegistration registerSeed(Block block,ItemStack seed) {
-        if(seed.isEmpty()||!(seed.getItem() instanceof BlockItem item)||item.getBlock()!=block)throw new IllegalArgumentException("Seed must be a native BlockItem of its crop");
+        Objects.requireNonNull(block,"crop");
+        if(seed.isEmpty()||!(seed.getItem() instanceof BlockItem))throw new IllegalArgumentException("Seed must provide native BlockItem planting; non-BlockItem callbacks need an adapter");
         var r=new SeedRegistration(block,seed.copyWithCount(1));SEEDS.add(r);return r;
     }
     public static ItemStack seed(Block block) {
