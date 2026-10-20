@@ -423,5 +423,8 @@
   "menu.thaumcraft.golem_seal.any_stock": "Any stock",
   "item.thaumcraft.seal_breaker": "Seal: Breaker",
   "message.thaumcraft.golem.seal.breaker.placed": "Breaker seal placed",
-  "message.thaumcraft.golem.seal.breaker.removed": "Breaker seal removed"
+  "message.thaumcraft.golem.seal.breaker.removed": "Breaker seal removed",
+  "item.thaumcraft.seal_lumber": "Seal: Lumber",
+  "message.thaumcraft.golem.seal.lumber.placed": "Lumber seal placed",
+  "message.thaumcraft.golem.seal.lumber.removed": "Lumber seal removed"
 }
