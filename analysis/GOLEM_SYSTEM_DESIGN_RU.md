@@ -767,3 +767,8 @@ Full Java21 Core39962/2901PASS (+8 source visual goldens), `golems-seal-visual-c
 ### M40 — graphical proof
 
 После функционального033722d настоящие screenshots обнаружили неверную камеру; a20d040 применяет AFTER_LEVEL modelViewMatrix до camera translation. Повторный Java21/MC1.21.1/NeoForge21.1.250 клиент BUILD SUCCESS7m23s: actual tracking snapshot, offhand/normal-depth/sneak-through, C2S area/color→S2C cache update, bell removal→одна реальная печать/две оставшиеся записи, штатное сохранение всех измерений и выход. [Неизменённые screenshots, assertions и воспроизведение](evidence/golems/client_seals_2026_10_20/README.md). Геометрия line-only provisional, bitmap/grid/particles/анимации не объявлены перенесёнными. 231native предшествует camera-only fix; baseline Core39962/2901 без новых серверных правил. Следующий Press live-unload.
+
+
+### M41 — Press block-ticking lifecycle
+
+Press scanner/formation/restoration/essentia reads используют non-loading ServerChunkCache.isPositionTicking (реальная block-ticking future и vanilla block simulation range). Это шире entity-ticking guard работников/печатей M39: отдельный actual level32 ticket доказывает оплату/processing8Machina→oneplacer при отсутствии entity ticks. Второй native test сохраняет PENDING/ACTIVE/RESTORING в FULL non-ticking chunk и проверяет настоящее исчезновение chunk/сохранностьrecords. Before-fix231/232, послеfix233/233requiredPASS; source cost/interval/payment неизменны. Actual formed paid Press unload/reload ещё проверяется отдельно; crash consistency не подразумевается.

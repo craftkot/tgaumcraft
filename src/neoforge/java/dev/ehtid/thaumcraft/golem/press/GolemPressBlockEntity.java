@@ -65,12 +65,12 @@ public final class GolemPressBlockEntity extends BlockEntity implements WorldlyC
     }
 
     public static void tick(ServerLevel level, BlockPos pos, BlockState state, GolemPressBlockEntity press) {
-        if (++press.ticks % GolemPress.INTERVAL != 0 || !press.job.active()
+        if (!level.getChunkSource().isPositionTicking(net.minecraft.world.level.ChunkPos.asLong(pos)) || ++press.ticks % GolemPress.INTERVAL != 0 || !press.job.active()
                 || !GolemPressStructures.get(level).canOperate(pos)) return;
         if (press.job.remaining() > 0) {
             if (!press.job.buffered()) {
                 for (Direction face : Direction.values()) {
-                    if (!press.canTransportInput(face) || !level.hasChunkAt(pos.relative(face))) continue;
+                    if (!press.canTransportInput(face) || !level.getChunkSource().isPositionTicking(net.minecraft.world.level.ChunkPos.asLong(pos.relative(face)))) continue;
                     if (!(level.getBlockEntity(pos.relative(face)) instanceof EssentiaTransportPort source)) continue;
                     Direction other = face.getOpposite();
                     if (!source.transportConnects(other) || !source.canTransportOutput(other)

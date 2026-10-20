@@ -101,9 +101,12 @@ public final class GolemPressStructures extends SavedData {
     }
     private static boolean loaded(Level level, BlockPos pos) {
         // The vanilla piston signal checks also inspect neighbors of a neighbor.
-        // Four corner chunks cover this 5x5 horizontal region without requesting one.
-        for (int x : new int[]{-2,2}) for (int z : new int[]{-2,2})
-            if (!level.hasChunkAt(pos.offset(x,0,z))) return false;
+        // A server FULL chunk may already be non-ticking; block reads can renew UNKNOWN tickets.
+        // Four corners cover the 5x5 piston-update halo without requesting any chunks.
+        for (int x : new int[]{-2,2}) for (int z : new int[]{-2,2}) {
+            BlockPos corner=pos.offset(x,0,z);
+            if (level instanceof ServerLevel server ? !server.getChunkSource().isPositionTicking(net.minecraft.world.level.ChunkPos.asLong(corner)) : !level.hasChunkAt(corner)) return false;
+        }
         return true;
     }
     private static boolean sourceMatches(Part part, BlockState state) {
@@ -149,7 +152,7 @@ public final class GolemPressStructures extends SavedData {
                 if (valid) assemble(level, s, actor); else forget(s); // Dust was paid at activation, as in BETA26.
             } else if (s.phase == Phase.RESTORING && level.getGameTime() % 20 == 0) restore(level, s);
             else if (s.phase == Phase.ACTIVE && level.getGameTime() % 20 == 0) {
-                for (var c : s.cells()) if (level.hasChunkAt(s.pos(c)) && !level.getBlockState(s.pos(c)).is(target(c.part()))) {
+                for (var c : s.cells()) if (level.getChunkSource().isPositionTicking(net.minecraft.world.level.ChunkPos.asLong(s.pos(c))) && !level.getBlockState(s.pos(c)).is(target(c.part()))) {
                     dismantle(level, s, c.part()); break;
                 }
             }
