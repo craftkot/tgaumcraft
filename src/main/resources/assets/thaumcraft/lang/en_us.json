@@ -444,5 +444,15 @@
   "menu.thaumcraft.golem_seal.sneak": "Sneak",
   "menu.thaumcraft.golem_seal.no_sneak": "Stand",
   "menu.thaumcraft.golem_seal.use_provision": "Request items: on",
-  "menu.thaumcraft.golem_seal.use_no_provision": "Request items: off"
+  "menu.thaumcraft.golem_seal.use_no_provision": "Request items: off",
+  "item.thaumcraft.seal_guard": "Guard Seal",
+  "item.thaumcraft.seal_guard_advanced": "Advanced Guard Seal",
+  "item.thaumcraft.seal_butcher": "Butcher Seal",
+  "menu.thaumcraft.golem_seal.guard_mobs_on": "Hostiles: on",
+  "menu.thaumcraft.golem_seal.guard_mobs_off": "Hostiles: off",
+  "menu.thaumcraft.golem_seal.guard_animals_on": "Animals: on",
+  "menu.thaumcraft.golem_seal.guard_animals_off": "Animals: off",
+  "menu.thaumcraft.golem_seal.guard_players_on": "Players: on",
+  "menu.thaumcraft.golem_seal.guard_players_off": "Players: off",
+  "menu.thaumcraft.golem_seal.guard_animals_help": "Also includes monsters and villagers."
 }
