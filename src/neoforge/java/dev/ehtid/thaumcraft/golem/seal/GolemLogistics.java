@@ -72,7 +72,7 @@ final class GolemLogistics {
                 if(request.target() instanceof ProvisionRequest.SealTarget target) {
                     var location=target.location(); var key=new GolemSeals.SealKey(new BlockPos(location.pos().x(),location.pos().y(),location.pos().z()),Direction.values()[location.face().ordinal()]);
                     recipient=data.get(key);
-                    if(recipient==null || recipient.type()!=GolemSeals.Type.HARVEST || !recipient.instanceId().equals(target.instanceId())) continue;
+                    if(recipient==null || recipient.type()!=GolemSeals.Type.HARVEST&&recipient.type()!=GolemSeals.Type.USE || !recipient.instanceId().equals(target.instanceId())) continue;
                 }
                 var w=new Work(request,requests,provider,recipient);
                 if(!valid(level,w)) continue;
@@ -118,7 +118,7 @@ final class GolemLogistics {
     private boolean valid(ServerLevel level,Work w) {
         if(!usable(level,w.provider)) return false;
         if(w.recipient!=null && (data.get(w.recipient.key())!=w.recipient || !level.hasChunkAt(w.recipient.key().pos())
-                || level.isEmptyBlock(w.recipient.key().pos()) || GolemSeals.stopped(level,w.recipient))) return false;
+                || level.isEmptyBlock(w.recipient.key().pos())&&w.recipient.type()!=GolemSeals.Type.USE || GolemSeals.stopped(level,w.recipient))) return false;
         var target=destination(level,w);
         if(target==null || !level.hasChunkAt(target.pos()) || !level.hasChunkAt(target.pos().relative(target.face()))) return false;
         return !(w.request.target() instanceof ProvisionRequest.BlockTarget) || GolemContainers.handler(level,target)!=null;
@@ -158,7 +158,7 @@ final class GolemLogistics {
         if(target==null || golem.home().distSqr(target.pos()) >= (double)golem.design().stats().homeRadius()*golem.design().stats().homeRadius()) return false;
         if(w.recipient!=null && ((w.recipient.locked() && !w.recipient.owner().equals(golem.ownerId()))
                 || !TaskSelection.colorMatches(golem.golemColor(),w.recipient.color()))) return false;
-        if(w.recipient!=null && w.recipient.type()==GolemSeals.Type.HARVEST && !GolemFarmRules.eligible(golem.design().traits())) return false;
+        if(w.recipient!=null && (w.recipient.type()==GolemSeals.Type.HARVEST||w.recipient.type()==GolemSeals.Type.USE) && !GolemFarmRules.eligible(golem.design().traits())) return false;
         if(task.getData()!=0) return !carried(golem,w).isEmpty();
         if(!carried(golem,w).isEmpty() || golem.hasTransferRecovery()) return false;
         var stack=w.request.item().stack(w.request.count());

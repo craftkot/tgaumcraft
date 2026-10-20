@@ -71,7 +71,7 @@ public final class GolemSealCrafting {
             case PICKUP -> GolemModule.PICKUP_SEAL.get(); case FILL -> GolemModule.FILL_SEAL.get();
             case EMPTY -> GolemModule.EMPTY_SEAL.get();
             case EMPTY_ADVANCED -> GolemModule.EMPTY_ADVANCED_SEAL.get(); case PROVIDE -> GolemModule.PROVIDE_SEAL.get();
-            case STOCK -> GolemModule.STOCK_SEAL.get(); case LUMBER -> GolemModule.LUMBER_SEAL.get(); case BREAKER_ADVANCED -> GolemModule.BREAKER_ADVANCED_SEAL.get();
+            case STOCK -> GolemModule.STOCK_SEAL.get(); case LUMBER -> GolemModule.LUMBER_SEAL.get(); case BREAKER_ADVANCED -> GolemModule.BREAKER_ADVANCED_SEAL.get(); case USE -> GolemModule.USE_SEAL.get();
             case PICKUP_ADVANCED -> GolemModule.PICKUP_ADVANCED_SEAL.get(); case FILL_ADVANCED -> GolemModule.FILL_ADVANCED_SEAL.get();
         });
     }

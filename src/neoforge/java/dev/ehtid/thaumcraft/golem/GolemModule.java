@@ -111,9 +111,11 @@ public final class GolemModule {
             p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.LUMBER),new Item.Properties());
     public static final DeferredItem<GolemSealItem> BREAKER_ADVANCED_SEAL=ITEMS.registerItem("seal_breaker_advanced",
             p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.BREAKER_ADVANCED),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> USE_SEAL=ITEMS.registerItem("seal_use",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.USE),new Item.Properties());
     public static Item sealItem(dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type type) {
         return switch(type) { case PICKUP->PICKUP_SEAL.get(); case FILL->FILL_SEAL.get(); case EMPTY->EMPTY_SEAL.get();
-            case EMPTY_ADVANCED->EMPTY_ADVANCED_SEAL.get(); case PROVIDE->PROVIDE_SEAL.get(); case STOCK->STOCK_SEAL.get(); case HARVEST->HARVEST_SEAL.get(); case PICKUP_ADVANCED->PICKUP_ADVANCED_SEAL.get(); case FILL_ADVANCED->FILL_ADVANCED_SEAL.get(); case BREAKER->BREAKER_SEAL.get(); case LUMBER->LUMBER_SEAL.get(); case BREAKER_ADVANCED->BREAKER_ADVANCED_SEAL.get(); };
+            case EMPTY_ADVANCED->EMPTY_ADVANCED_SEAL.get(); case PROVIDE->PROVIDE_SEAL.get(); case STOCK->STOCK_SEAL.get(); case HARVEST->HARVEST_SEAL.get(); case PICKUP_ADVANCED->PICKUP_ADVANCED_SEAL.get(); case FILL_ADVANCED->FILL_ADVANCED_SEAL.get(); case BREAKER->BREAKER_SEAL.get(); case LUMBER->LUMBER_SEAL.get(); case BREAKER_ADVANCED->BREAKER_ADVANCED_SEAL.get(); case USE->USE_SEAL.get(); };
     }
 
     public static void register(IEventBus bus) {
@@ -145,7 +147,7 @@ public final class GolemModule {
             event.accept(FILL_SEAL.get());
             event.accept(EMPTY_SEAL.get());
             event.accept(EMPTY_ADVANCED_SEAL.get()); event.accept(PROVIDE_SEAL.get()); event.accept(STOCK_SEAL.get());
-            event.accept(BREAKER_ADVANCED_SEAL.get()); event.accept(LUMBER_SEAL.get()); event.accept(BREAKER_SEAL.get()); event.accept(HARVEST_SEAL.get()); event.accept(PICKUP_ADVANCED_SEAL.get()); event.accept(FILL_ADVANCED_SEAL.get());
+            event.accept(USE_SEAL.get()); event.accept(BREAKER_ADVANCED_SEAL.get()); event.accept(LUMBER_SEAL.get()); event.accept(BREAKER_SEAL.get()); event.accept(HARVEST_SEAL.get()); event.accept(PICKUP_ADVANCED_SEAL.get()); event.accept(FILL_ADVANCED_SEAL.get());
             event.accept(PRESS_ITEM.get());
             event.accept(STONE_TABLE_ITEM.get());
             event.accept(SIMPLE_MECHANISM.get());

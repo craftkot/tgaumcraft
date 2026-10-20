@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.port.core;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBreakerRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemLumberRules;
+import dev.ehtid.thaumcraft.port.core.golem.GolemUseRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemTrait;
 import dev.ehtid.thaumcraft.port.core.golem.GolemColorRules;
 import dev.ehtid.thaumcraft.port.core.golem.ProvisionBoard;
@@ -588,6 +589,7 @@ public final class LegacyGolemTaskTest {
     public static void main(String[] args) throws InterruptedException {
         breakerRules();
         advancedBreakerRules();
+        useRules();
         lumberRules();
 
         for (boolean sameItem : List.of(false, true)) for (boolean sameDamage : List.of(false, true))
@@ -775,6 +777,21 @@ public final class LegacyGolemTaskTest {
         eq(10,recipe.amount("sensus")); eq(10,recipe.amount("cognitio")); eq(20,recipe.amount("instrumentum")); eq(0,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry).visSize()); eq(40,stored.visSize());
         stored.remove(registry.get("instrumentum"),1); eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BREAKER,k,stored,registry));
         rejects(IllegalArgumentException.class,()->dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry));
+    }
+
+    private static void useRules() {
+        var defaults=GolemUseRules.Settings.defaults(); eq(5,GolemUseRules.SCAN_TICKS);
+        eq(0,GolemUseRules.completionHand(true,false,true)); eq(1,GolemUseRules.completionHand(false,false,true)); eq(0,GolemUseRules.completionHand(false,true,true)); eq(-1,GolemUseRules.completionHand(false,false,false));
+        for(int i=4;i<=8;i++) { eq(false,defaults.toggle(i)); var changed=defaults.withToggle(i,true); for(int j=4;j<=8;j++) eq(i==j,changed.toggle(j)); eq(defaults,changed.withToggle(i,false)); }
+        rejects(IllegalArgumentException.class,()->defaults.withToggle(3,true));
+        eq(true,GolemUseRules.eligible(Set.of(GolemTrait.SMART,GolemTrait.DEFT))); eq(false,GolemUseRules.eligible(Set.of(GolemTrait.SMART))); eq(false,GolemUseRules.eligible(Set.of(GolemTrait.DEFT)));
+        eq(true,GolemUseRules.target(defaults,false)); eq(false,GolemUseRules.target(defaults,true)); eq(true,GolemUseRules.target(defaults.withToggle(5,true),true));
+        eq(false,GolemUseRules.carrying(defaults,false)); eq(true,GolemUseRules.carrying(defaults,true)); eq(true,GolemUseRules.carrying(defaults.withToggle(6,true),false));
+        for(boolean matched:new boolean[]{false,true}) for(boolean black:new boolean[]{false,true}) for(boolean empty:new boolean[]{false,true})
+            eq(!matched&&!black&&!empty,GolemUseRules.request(defaults.withToggle(8,true),matched,black,empty));
+        var registry=new AspectRegistry(); var stored=new AspectListData(); var k=new PlayerKnowledgeData(); stored.add(registry.get("fabrico"),20); stored.add(registry.get("sensus"),10); stored.add(registry.get("cognitio"),20);
+        eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry)); k.addResearch("SEALUSE");
+        var recipe=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.USE; eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry)); eq(0,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry).visSize()); eq(50,stored.visSize()); stored.remove(registry.get("fabrico"),1); eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry));
     }
 
 }

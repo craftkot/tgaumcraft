@@ -31,7 +31,8 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final DataSlot areaX = DataSlot.standalone(), areaY = DataSlot.standalone(), areaZ = DataSlot.standalone();
     private final DataSlot leaveOne = DataSlot.standalone();
     private final DataSlot matchNbt = DataSlot.standalone();
-    private final DataSlot metadata=DataSlot.standalone();
+    private final DataSlot metadata=DataSlot.standalone(),ore=DataSlot.standalone(),mod=DataSlot.standalone();
+    private final DataSlot[] useToggles=java.util.stream.IntStream.range(0,5).mapToObj(i->DataSlot.standalone()).toArray(DataSlot[]::new);
     private final DataSlot replant=DataSlot.standalone(),provision=DataSlot.standalone();
 
     public GolemSealMenu(int id, Inventory inventory) { this(id, inventory, null, null); }
@@ -57,7 +58,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
         addDataSlot(leaveOne);
         addDataSlot(matchNbt);
-        addDataSlot(replant); addDataSlot(provision); addDataSlot(metadata);
+        addDataSlot(replant); addDataSlot(provision); addDataSlot(metadata); addDataSlot(ore); addDataSlot(mod); for(var toggle:useToggles) addDataSlot(toggle);
         refresh();
     }
 
@@ -69,7 +70,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         return player == viewer && player.level() == level && player.isAlive() && !player.isSpectator()
                 && current != null && current.instanceId().equals(expected.instanceId())
                 && current.owner().equals(player.getUUID()) && level.hasChunkAt(current.key().pos())
-                && !level.isEmptyBlock(current.key().pos()) && player.mayInteract(level, current.key().pos())
+                && (!level.isEmptyBlock(current.key().pos())||current.type()==GolemSeals.Type.USE) && player.mayInteract(level, current.key().pos())
                 && player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(current.key().pos())) <= 64;
     }
 
@@ -82,6 +83,10 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public boolean locked() { return locked.get() != 0; }
     public boolean redstone() { return redstone.get() != 0; }
     public boolean hasArea() { return fill.get() == 0 || harvest() || breaker() || lumber(); }
+    public boolean use() { return fill.get()==6; }
+    public boolean useToggle(int sourceIndex) { return useToggles[sourceIndex-4].get()!=0; }
+    public boolean ore() { return ore.get()!=0; }
+    public boolean mod() { return mod.get()!=0; }
     public boolean lumber() { return fill.get()==5; }
     public boolean breaker() { return fill.get()==4; }
     public boolean metadata() { return metadata.get()!=0; }
@@ -103,9 +108,10 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         locked.set(seal.locked() ? 1 : 0); redstone.set(seal.redstone() ? 1 : 0);
         areaX.set(seal.area().getX()); areaY.set(seal.area().getY()); areaZ.set(seal.area().getZ());
         leaveOne.set(seal.leaveOne() ? 1 : 0);
-        matchNbt.set(seal.filter().matchNbt() ? 1 : 0); metadata.set(seal.filter().options().metadata()?1:0);
+        matchNbt.set(seal.filter().matchNbt() ? 1 : 0); metadata.set(seal.filter().options().metadata()?1:0); ore.set(seal.filter().options().ore()?1:0); mod.set(seal.filter().options().mod()?1:0);
+        var settings=GolemSeals.get(level).useSettings(seal); for(int i=0;i<5;i++) useToggles[i].set(settings.toggle(i+4)?1:0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
-        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; case BREAKER->4; case LUMBER->5; default -> 2; });
+        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; case BREAKER->4; case LUMBER->5; case USE->6; default -> 2; });
         replant.set(seal.harvest().replant()?1:0); provision.set(seal.harvest().provision()?1:0);
         limitLow.set(seal.filter().limit() & 0xffff);
         limitHigh.set(seal.filter().limit() >>> 16);
@@ -147,6 +153,15 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
         var seal = current();
+        if(use()) {
+            if(id==30||id==60||id==32||id==62||id==33||id==63) {
+                var options=seal.filter().options();
+                options=switch(id) { case 30,60->options.withMetadata(id==30); case 32,62->options.withOre(id==32); default->options.withMod(id==33); };
+                boolean result=GolemSeals.get(level).configure(expected,player.getUUID(),seal.filter().withOptions(options)); if(result) broadcastChanges(); return result;
+            }
+            int index=id>=34&&id<=38?id-30:id>=64&&id<=68?id-60:-1;
+            if(index>=4) { boolean result=GolemSeals.get(level).configureUse(expected,player.getUUID(),GolemSeals.get(level).useSettings(seal).withToggle(index,id<60)); if(result) broadcastChanges(); return result; }
+        }
         if(harvest() && (id==30 || id==60 || id==31 || id==61)) {
             boolean result=GolemSeals.get(level).configureHarvest(expected,player.getUUID(),
                     new dev.ehtid.thaumcraft.golem.seal.HarvestSettings(id==30 || id!=60&&seal.harvest().replant(),
