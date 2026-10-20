@@ -28,6 +28,15 @@ allprojects {
                 systemProperty 'thaumcraft.golemClientScenario', 'seals'
                 systemProperty 'thaumcraft.golemSealRemoteProbe', 'true'
             }
+            neo.runs.create('golemCrash') {
+                server()
+                def kind = project.findProperty('golemCrashCase') ?: 'unsaved'
+                if (!(kind in ['unsaved', 'saved', 'split'])) throw new GradleException('Unknown golem crash case')
+                gameDirectory = project.layout.buildDirectory.dir('golem-crash-' + kind)
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemCrashCase', kind
+                systemProperty 'thaumcraft.golemCrashPhase', project.findProperty('golemCrashPhase') ?: ''
+            }
             neo.runs.create('golemRestart') {
                 server()
                 def scenario = project.findProperty('golemRestartScenario') ?: ''
