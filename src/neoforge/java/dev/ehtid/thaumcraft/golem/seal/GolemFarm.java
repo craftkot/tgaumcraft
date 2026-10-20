@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.golem.seal;
 
 import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
+import dev.ehtid.thaumcraft.golem.api.GolemHarvestRegistry;
+import dev.ehtid.thaumcraft.golem.inventory.GolemInteractionInventory;
 import dev.ehtid.thaumcraft.port.core.golem.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -45,6 +47,7 @@ final class GolemFarm {
     }
     private static boolean mature(ServerLevel level,BlockPos pos) {
         var state=level.getBlockState(pos);
+        if(GolemHarvestRegistry.isClickable(state))return true;
         var crop=kind(state); if(crop==null) return false;
         int age=crop.readiness!=GolemFarmRules.Readiness.AGE?-1:state.getBlock() instanceof CropBlock block?block.getAge(state):state.is(Blocks.COCOA)?state.getValue(CocoaBlock.AGE):state.getValue(NetherWartBlock.AGE);
         return GolemFarmRules.ready(crop,age,level.getBlockState(pos.below()).is(state.getBlock()));
@@ -109,6 +112,15 @@ final class GolemFarm {
             boolean success;
             if(!w.replant) {
                 var before=level.getBlockState(w.pos); var crop=kind(before);
+                if(GolemHarvestRegistry.isClickable(before)) {
+                    actor.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
+                    var face=GolemFarmRules.clickFace(new SealArea.BlockPos(w.pos.getX(),w.pos.getY(),w.pos.getZ()),g.getX(),g.getY(),g.getZ(),g.getEyeHeight(),SealArea.Facing.valueOf(g.getDirection().name()));
+                    try {
+                        actor.gameMode.useItemOn(actor,level,ItemStack.EMPTY,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atLowerCornerOf(w.pos),Direction.values()[face.ordinal()],w.pos,false));
+                    } catch(RuntimeException ex) {com.mojang.logging.LogUtils.getLogger().warn("Golem Harvest click failed; recovering actual callback inventory",ex);}
+                    // Source ignores onBlockActivated's boolean and grants XP for the attempted click; no replant intent.
+                    data.finish(assignment.lease());g.addRankXp(1);g.swing(InteractionHand.MAIN_HAND);return true;
+                }
                 var support=before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
                 boolean farmland=level.getBlockState(w.pos.below()).is(Blocks.FARMLAND);
                 success=actor.gameMode.destroyBlock(w.pos);
@@ -140,10 +152,8 @@ final class GolemFarm {
             data.finish(assignment.lease()); g.addRankXp(1); g.swing(InteractionHand.MAIN_HAND); return true;
         } finally {
             // Recover actual leftover seeds or legitimate auto-pickup inventory from mod callbacks.
-            for(int i=0;i<actor.getInventory().getContainerSize();i++) {
-                var stack=actor.getInventory().removeItemNoUpdate(i); if(!stack.isEmpty()) g.retainTransfer(stack);
-            }
-            busy.remove(g.getUUID());
+            try {GolemInteractionInventory.recover(actor,g);}
+            finally {busy.remove(g.getUUID());}
         }
     }
     private static UseOnContext context(FakePlayer actor,BlockPos support) {

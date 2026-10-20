@@ -94,13 +94,8 @@ final class GolemUse {
             data.finish(assignment.lease()); g.addRankXp(1); g.swing(InteractionHand.MAIN_HAND); return true;
         } finally {
             try { if(config.left()) actor.gameMode.handleBlockBreakAction(pos,ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK,face,level.getMaxBuildHeight(),0); } catch(RuntimeException ex) { LogUtils.getLogger().warn("Golem Use dig cleanup failed; recovering actual inventory",ex); }
-            try {
-                var cursor=actor.containerMenu.getCarried(); actor.containerMenu.setCarried(ItemStack.EMPTY); if(!cursor.isEmpty()) g.retainTransfer(cursor);
-                actor.closeContainer();
-            } finally {
-                try { for(int i=0;i<actor.getInventory().getContainerSize();i++) { var actual=actor.getInventory().removeItemNoUpdate(i); if(!actual.isEmpty()) g.retainTransfer(actual); } }
-                finally { actor.setShiftKeyDown(false); busy.remove(g.getUUID()); }
-            }
+            try {dev.ehtid.thaumcraft.golem.inventory.GolemInteractionInventory.recover(actor,g);}
+            finally {actor.setShiftKeyDown(false);busy.remove(g.getUUID());}
         }
     }
     void saveRow(CompoundTag row,GolemSeals.Seal s) { var c=settings(s); row.putBoolean("pleft",c.left()); row.putBoolean("pempty",c.empty()); row.putBoolean("pemptyhand",c.emptyHand()); row.putBoolean("psneak",c.sneak()); row.putBoolean("ppro",c.provision()); }

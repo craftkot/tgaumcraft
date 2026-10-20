@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
+import dev.ehtid.thaumcraft.port.core.golem.GolemFarmRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemCombatRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBreakerRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemLumberRules;
@@ -588,6 +589,7 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        cropClickFace();
         eq(1F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(0));
         eq(.75F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(64));
         eq(.5F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(128));
@@ -833,6 +835,18 @@ public final class LegacyGolemTaskTest {
         eq(true,GolemCombatRules.butcher(new GolemCombatRules.Target(false,true,false,false,false,false)));
         for(int n=0;n<=4;n++) eq(n>=3,GolemCombatRules.excess(n));
         rejects(IllegalArgumentException.class,()->defaults.withToggle(3,true)); eq(new GolemCombatRules.Settings(true,false,false),defaults);
+    }
+
+    private static void cropClickFace() {
+        var p=new SealArea.BlockPos(0,10,0);var north=SealArea.Facing.NORTH;
+        eq(SealArea.Facing.UP,GolemFarmRules.clickFace(p,.5,11,.5,1.6F,north));
+        eq(SealArea.Facing.DOWN,GolemFarmRules.clickFace(p,.5,7,.5,1.6F,north));
+        eq(SealArea.Facing.SOUTH,GolemFarmRules.clickFace(p,.5,10,.5,2,north)); // Exactly2 is not UP.
+        eq(SealArea.Facing.SOUTH,GolemFarmRules.clickFace(p,2.5,20,.5,2,north)); // Strict X boundary.
+        eq(SealArea.Facing.SOUTH,GolemFarmRules.clickFace(p,.5,20,2.5,2,north)); // Strict Z boundary.
+        eq(SealArea.Facing.WEST,GolemFarmRules.clickFace(p,3,10,3,1,SealArea.Facing.EAST));
+        eq(SealArea.Facing.SOUTH,GolemFarmRules.clickFace(new SealArea.BlockPos(33333333,10,0),33333334,20,.5,2,north)); // Source float center32, distance2.
+        rejects(IllegalArgumentException.class,()->GolemFarmRules.clickFace(p,0,0,0,1,SealArea.Facing.UP));
     }
 
 }

@@ -36,4 +36,15 @@ public final class GolemFarmRules {
             case STACKED -> sameBlockBelow;
         };
     }
+    /** SealHarvest delegates to 1.12 EnumFacing.getDirectionFromEntity, including float block centers. */
+    public static SealArea.Facing clickFace(SealArea.BlockPos pos,double x,double y,double z,float eyeHeight,SealArea.Facing horizontal) {
+        if(horizontal==null||horizontal==SealArea.Facing.UP||horizontal==SealArea.Facing.DOWN)throw new IllegalArgumentException("Horizontal facing required");
+        if(Math.abs(x-(double)((float)pos.x()+.5F))<2&&Math.abs(z-(double)((float)pos.z()+.5F))<2) {
+            double eyes=y+eyeHeight;
+            if(eyes-pos.y()>2)return SealArea.Facing.UP;
+            if(pos.y()-eyes>0)return SealArea.Facing.DOWN;
+        }
+        return switch(horizontal){case NORTH->SealArea.Facing.SOUTH;case SOUTH->SealArea.Facing.NORTH;case WEST->SealArea.Facing.EAST;case EAST->SealArea.Facing.WEST;default->throw new IllegalArgumentException("Horizontal facing required");};
+    }
+
 }
