@@ -694,7 +694,7 @@ public final class GolemSeals extends SavedData {
                         (loadedType.extracts() || loadedType==Type.PROVIDE) && row.getBoolean("pleave"),
                         LogisticsPolicy.load(row,registries,loadedType==Type.STOCK).withCycle(loadedType==Type.EMPTY_ADVANCED&&row.getBoolean("pcycle")).withSilk(loadedType==Type.BREAKER_ADVANCED&&row.getBoolean("psilk")).withExistingOnly(loadedType==Type.FILL_ADVANCED&&row.getBoolean("pexist")),
                         new HarvestSettings(!row.contains("prep") || row.getBoolean("prep"),row.getBoolean("ppro"))));
-                if(loadedType==Type.HARVEST) data.farm.loadRow(row,data.seals.get(key));
+                if(loadedType==Type.HARVEST) data.farm.loadRow(row,data.seals.get(key),registries);
                 if(loadedType==Type.USE) data.use.loadRow(row,data.seals.get(key));
                 if(loadedType.combat()) data.combat.loadRow(row,data.seals.get(key));
             } catch (IllegalArgumentException ignored) {
@@ -720,7 +720,7 @@ public final class GolemSeals extends SavedData {
             row.putBoolean("pleave", seal.leaveOne());
             seal.filter().save(row, registries);
             if(seal.type().logistics()) seal.logistics().save(row,registries);
-            if(seal.type()==Type.HARVEST) { row.putBoolean("prep",seal.harvest().replant()); row.putBoolean("ppro",seal.harvest().provision()); farm.saveRow(row,seal); }
+            if(seal.type()==Type.HARVEST) { row.putBoolean("prep",seal.harvest().replant()); row.putBoolean("ppro",seal.harvest().provision()); farm.saveRow(row,seal,registries); }
             if(seal.type()==Type.USE) use.saveRow(row,seal);
             if(seal.type().combat()) combat.saveRow(row,seal);
             row.putLong("area", seal.area().asLong());

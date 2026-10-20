@@ -244,7 +244,7 @@ public final class GolemFarmGameTests {
             h.assertTrue(seal.type()==GolemSeals.Type.HARVEST && seal.harvest().replant() && seal.harvest().provision() && seal.area().equals(new BlockPos(1,1,1)) && copy.pendingTasks()==0 && pending(h,f).size()==1,"Type/settings/intent persist; live leases do not");
             h.assertTrue(copy.save(new CompoundTag(),h.getLevel().registryAccess()).getList("seals",Tag.TAG_COMPOUND).stream().anyMatch(t->t instanceof CompoundTag row && row.getList("ReplantTasks",Tag.TAG_COMPOUND).size()==1),"Pending placement survives full decode/encode");
             var oldRow=tag.getList("seals",Tag.TAG_COMPOUND).stream().map(t->(CompoundTag)t).filter(t->t.getLong("pos")==f.key.pos().asLong()).findFirst().orElseThrow();
-            var oldIntent=oldRow.getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0); oldIntent.remove("support"); oldIntent.remove("farmland");
+            var oldIntent=oldRow.getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0); oldIntent.remove("support"); oldIntent.remove("farmland"); oldIntent.remove("seed");
             var oldCopy=GolemSeals.load(copyTag(oldRow),h.getLevel().registryAccess()).save(new CompoundTag(),h.getLevel().registryAccess());
             var upgraded=oldCopy.getList("seals",Tag.TAG_COMPOUND).getCompound(0).getList("ReplantTasks",Tag.TAG_COMPOUND).getCompound(0);
             h.assertTrue(upgraded.getByte("support")==Direction.DOWN.ordinal() && upgraded.getBoolean("farmland"),"M10.21 pending wheat intent upgrades to original downward/farmland defaults");
