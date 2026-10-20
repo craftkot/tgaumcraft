@@ -14,3 +14,10 @@ Java21/Core39962construction/2909taskPASS. Source CropUtils/SealHarvest/Thaumcra
 Воспроизведение native: `gradle --offline --init-script tools/golems.gradle build -x test runGolemGameTest`. Cold: свежие отдельные `build/golem-clickable-restart`/`build/golem-seed-restart`, eula/server.properties с localhost25620/25621; `-PgolemRestartScenario=clickable` или `seeded`, сначала `-PgolemRestartPhase=write build -x test runGolemRestart`, затем `-PgolemRestartPhase=read runGolemRestart`. Требуются явные WRITE/READ_ASSERTIONS_OK, BUILD SUCCESS сам по себе недостаточен. Старые fixture worlds не перезаписывать.
 
 Sweet berries/Bamboo — явно зарегистрированные native adapter specimens, отсутствовавшие в1.12, а не новый default Thaumcraftcontent. Custom non-BlockItem/cross-block planting callbacks, конкретные foreign mod binaries и полноценная external API parity не проверены. Свежий graphical client после server-only M44/M45 не запускался; последние реальные integrated/TCP graphical proofs — M40/M42.
+
+
+M47 расширяет seed mapping на другой Native BlockItem plant: исходная культура и ожидаемый результат сохраняются раздельно. Full **248/248 native PASS1m26s**; три новых сценария проверяют actual carrot→wheat paid placement, pumpkin→stem enrollment и поддельный/отсутствующий результат. Legacy same-block intent остаётся читаемым, cross-block без нового `plant` отвергается.
+
+Отдельный **seeded_cross WRITE55s/READ46s PASS** (21:34:13/21:35:23UTC): настоящий carrot break оставил5ordinarycarrots/2namedwheatseeds/XP1/один originalUUID и pending `plant=minecraft:wheat`. Новая JVM восстановила intent/owner/NoAI/cargo; native AI посадила wheatAGE0, ровно1namedseed остался, ordinarycarrots5 не изменились, каждыйtick seed+plant=2,100tick no replay/одинworker. Это устраняет прежнее same-block ограничение M45; non-BlockItem callbacks и foreign binaries этим не проверены.
+
+Воспроизведение cross-block: отдельный свежий `build/golem-seed-cross-restart`, localhost25622/eula, `-PgolemRestartScenario=seeded_cross`, фазы write/read как выше. Логи `golems-seed-cross-restart-{write,read}.log` внеGit. Тестовый мир не редактировался и старые worlds не перезаписывались.

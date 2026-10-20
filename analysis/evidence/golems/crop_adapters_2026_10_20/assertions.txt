@@ -38,3 +38,19 @@ BUILD SUCCESSFUL in 51s
 golems-seed-restart-read original log excerpt (UTC)
 [21:14:28] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_READ_ASSERTIONS_OK ordinaryFruit=3
 BUILD SUCCESSFUL in 46s
+
+# golems-cross-seed-native
+[21:31:11] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'crop_cross_payment:0' (1 tests)...
+[21:31:20] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'crop_cross_registration:0' (1 tests)...
+[21:31:37] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'crop_cross_forgery:0' (1 tests)...
+[21:31:37] [Server thread/INFO] [minecraft/GameTestServer]: ========= 248 GAME TESTS COMPLETE IN 39.56 s ======================
+[21:31:37] [Server thread/INFO] [minecraft/GameTestServer]: All 248 required tests passed :)
+BUILD SUCCESSFUL in 1m 26s
+
+# golems-seed-cross-restart-write
+[21:34:13] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_WRITE_ASSERTIONS_OK crossBlock=true ordinaryFruit=5
+BUILD SUCCESSFUL in 55s
+
+# golems-seed-cross-restart-read
+[21:35:23] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_READ_ASSERTIONS_OK crossBlock=true ordinaryFruit=5
+BUILD SUCCESSFUL in 46s
