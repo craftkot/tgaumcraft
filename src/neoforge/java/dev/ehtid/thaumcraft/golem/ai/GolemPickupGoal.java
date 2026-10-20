@@ -13,7 +13,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/** BETA26 AIGotoEntity restricted to the real pickup-seal callback. */
+/** BETA26 AIGotoEntity: shared selection for real pickup and immediate living-target assignment. */
 public final class GolemPickupGoal extends Goal {
     private final ThaumcraftGolem golem;
     private GolemSeals.Assignment assignment;
@@ -21,6 +21,7 @@ public final class GolemPickupGoal extends Goal {
     private int travelTicks;
     private BlockPos previousPosition;
     private boolean completed;
+    private boolean combat;
     private boolean failed;
 
     public GolemPickupGoal(ThaumcraftGolem golem) {
@@ -33,11 +34,12 @@ public final class GolemPickupGoal extends Goal {
         if (!(golem.level() instanceof ServerLevel level)) return false;
         if (cooldown > 0) { cooldown--; return false; }
         cooldown = 5;
-        assignment = GolemSeals.get(level).claim(golem, this::canReach).orElse(null);
+        assignment = GolemSeals.get(level).claimEntity(golem, this::canReach).orElse(null);
+        combat=assignment!=null&&GolemSeals.get(level).combat(assignment);
         return assignment != null;
     }
 
-    private boolean canReach(ItemEntity item) {
+    private boolean canReach(net.minecraft.world.entity.Entity item) {
         double reach = GolemSeals.reachSquared(item);
         if (golem.distanceToSqr(item) < reach) return true;
         Path path = golem.getNavigation().createPath(item, 0);
@@ -55,6 +57,10 @@ public final class GolemPickupGoal extends Goal {
         previousPosition = null;
         completed = false;
         failed = false;
+        if(combat && golem.level() instanceof ServerLevel level) {
+            completed=GolemSeals.get(level).startCombat(level,golem,assignment); failed=!completed;
+            golem.setWorking(false); return;
+        }
         golem.setWorking(true);
         ItemEntity target = target();
         if (target != null) golem.getNavigation().moveTo(target, speed());

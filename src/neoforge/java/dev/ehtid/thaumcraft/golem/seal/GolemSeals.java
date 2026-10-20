@@ -55,16 +55,18 @@ public final class GolemSeals extends SavedData {
     public static final String EMPTY_KEY = "thaumcraft:empty";
     public enum Type {
         PICKUP(PICKUP_KEY), FILL(FILL_KEY), EMPTY(EMPTY_KEY), EMPTY_ADVANCED("thaumcraft:empty_advanced"),
-        PROVIDE("thaumcraft:provider"), STOCK("thaumcraft:stock"), HARVEST("thaumcraft:harvest"), PICKUP_ADVANCED("thaumcraft:pickup_advanced"), FILL_ADVANCED("thaumcraft:fill_advanced"), BREAKER("thaumcraft:breaker"), LUMBER("thaumcraft:lumber"), BREAKER_ADVANCED("thaumcraft:breaker_advanced"), USE("thaumcraft:use");
+        PROVIDE("thaumcraft:provider"), STOCK("thaumcraft:stock"), HARVEST("thaumcraft:harvest"), PICKUP_ADVANCED("thaumcraft:pickup_advanced"), FILL_ADVANCED("thaumcraft:fill_advanced"), BREAKER("thaumcraft:breaker"), LUMBER("thaumcraft:lumber"), BREAKER_ADVANCED("thaumcraft:breaker_advanced"), USE("thaumcraft:use"), GUARD("thaumcraft:guard"), GUARD_ADVANCED("thaumcraft:guard_advanced"), BUTCHER("thaumcraft:butcher");
         public final String key;
         Type(String key) { this.key = key; }
+        public boolean combat() { return this==GUARD || this==GUARD_ADVANCED || this==BUTCHER; }
+        public boolean blockWork() { return fills() || extracts() || this==PROVIDE || this==HARVEST || forestry() || this==USE; }
         public boolean breaksBlocks() { return this==BREAKER || this==BREAKER_ADVANCED; }
         public boolean forestry() { return breaksBlocks() || this==LUMBER; }
-        public boolean areaControl() { return picksUp() || this==HARVEST || forestry(); }
-        public boolean logistics() { return this==PROVIDE || this==STOCK || advanced(); }
+        public boolean areaControl() { return picksUp() || this==HARVEST || forestry() || combat(); }
+        public boolean logistics() { return this==PROVIDE || this==STOCK || advanced()&&this!=GUARD_ADVANCED; }
         public boolean picksUp() { return this==PICKUP || this==PICKUP_ADVANCED; }
         public boolean fills() { return this==FILL || this==FILL_ADVANCED; }
-        public boolean advanced() { return this==EMPTY_ADVANCED || this==PICKUP_ADVANCED || this==FILL_ADVANCED || this==BREAKER_ADVANCED; }
+        public boolean advanced() { return this==EMPTY_ADVANCED || this==PICKUP_ADVANCED || this==FILL_ADVANCED || this==BREAKER_ADVANCED || this==GUARD_ADVANCED; }
         public boolean extracts() { return this==EMPTY || this==EMPTY_ADVANCED; }
     }
 
@@ -94,6 +96,7 @@ public final class GolemSeals extends SavedData {
     private final GolemBreaker breaker=new GolemBreaker(this);
     private final GolemLumber lumber=new GolemLumber(this);
     private final GolemUse use=new GolemUse(this);
+    private final GolemCombat combat=new GolemCombat(this);
     private final Map<Integer, UUID> targets = new HashMap<>();
     private final Map<UUID, Integer> itemTasks = new HashMap<>();
     private final Map<Integer, SealKey> taskSeals = new HashMap<>();
@@ -238,7 +241,7 @@ public final class GolemSeals extends SavedData {
 
     private void removeSeal(SealKey key) {
         logistics.changed(key);
-        farm.removed(key); breaker.removed(key); lumber.removed(key); use.removed(key);
+        farm.removed(key); breaker.removed(key); lumber.removed(key); use.removed(key); combat.removed(key);
         emptyCycles.remove(key);
         seals.remove(key);
         watchedFillTasks.remove(key);
@@ -297,7 +300,7 @@ public final class GolemSeals extends SavedData {
                 break; // Original SealPickup emits at most one task per scan.
             }
         }
-        farm.tick(level); breaker.tick(level); lumber.tick(level); use.tick(level);
+        farm.tick(level); breaker.tick(level); lumber.tick(level); use.tick(level); combat.tick(level);
         logistics.tick(level);
     }
 
@@ -310,26 +313,34 @@ public final class GolemSeals extends SavedData {
     }
 
     public Optional<Assignment> claim(ThaumcraftGolem golem, Predicate<ItemEntity> canReach) {
-        if (!(golem.level() instanceof ServerLevel level) || golem.design().hasTrait(GolemTrait.CLUMSY))
-            return Optional.empty();
-        TaskSelection.Context context = new TaskSelection.Context(golem.getUUID(), golem.golemColor(),
-                new TaskSelection.Position(golem.getX(), golem.getY(), golem.getZ()),
-                task -> entityPosition(level,task),
-                task -> Optional.ofNullable(seals.get(taskSeals.get(task.getId())))
-                        .map(seal -> new TaskSelection.SealRule(seal.color(),
-                                ignored -> eligible(level, golem, task, seal))));
-        for (GolemTask task : board.sorted(GolemTask.Type.ENTITY, context)) {
-            Seal seal = seals.get(taskSeals.get(task.getId()));
-            if (seal == null || !eligible(level, golem, task, seal)) continue;
-            ItemEntity item = item(level, task.getEntityId());
-            if (item == null || !canReach.test(item)) continue;
-            Optional<TaskBoard.Lease> lease = board.claim(task.getId(), golem.getUUID());
-            if (lease.isPresent()) {
-                workers.put(task.getId(), golem.getUUID());
-                return Optional.of(new Assignment(lease.get(), item.getUUID(), seal.key()));
-            }
+        return claimEntity(golem,entity->entity instanceof ItemEntity item&&canReach.test(item));
+    }
+    /** One source priority/distance order for Pickup and living combat tasks, never two competing goals. */
+    public Optional<Assignment> claimEntity(ThaumcraftGolem golem, Predicate<net.minecraft.world.entity.Entity> canReach) {
+        if (!(golem.level() instanceof ServerLevel level)) return Optional.empty();
+        var context=new TaskSelection.Context(golem.getUUID(),golem.golemColor(),
+                new TaskSelection.Position(golem.getX(),golem.getY(),golem.getZ()),task->entityPosition(level,task),
+                task->Optional.ofNullable(seals.get(taskSeals.get(task.getId()))).map(seal->new TaskSelection.SealRule(seal.color(),ignored->entityEligible(level,golem,task,seal))));
+        for(var task:board.sorted(GolemTask.Type.ENTITY,context)) {
+            var seal=seals.get(taskSeals.get(task.getId()));
+            if(seal==null||!entityEligible(level,golem,task,seal)) continue;
+            var target=level.getEntity(task.getEntityId()); if(target==null||!canReach.test(target)) continue;
+            var lease=board.claim(task.getId(),golem.getUUID());
+            if(lease.isPresent()) { workers.put(task.getId(),golem.getUUID()); return Optional.of(new Assignment(lease.get(),target.getUUID(),seal.key())); }
         }
         return Optional.empty();
+    }
+    private boolean entityEligible(ServerLevel level,ThaumcraftGolem golem,GolemTask task,Seal seal) {
+        if(retryAfter.getOrDefault(task.getId(),Map.of()).getOrDefault(golem.getUUID(),0L)>level.getGameTime()) return false;
+        return seal.type().combat()?combat.eligible(level,golem,task,seal):eligible(level,golem,task,seal);
+    }
+    public boolean combat(Assignment assignment) { var seal=get(assignment.seal()); return seal!=null&&seal.type().combat(); }
+    public boolean startCombat(ServerLevel level,ThaumcraftGolem golem,Assignment assignment) { return combat.start(level,golem,assignment); }
+    public dev.ehtid.thaumcraft.port.core.golem.GolemCombatRules.Settings combatSettings(Seal seal) { return combat.settings(seal); }
+    public boolean configureCombat(Seal expected,UUID owner,dev.ehtid.thaumcraft.port.core.golem.GolemCombatRules.Settings settings) {
+        var current=expected==null?null:get(expected.key());
+        if(current==null||current.type()!=Type.GUARD_ADVANCED||!current.owner().equals(owner)||!current.instanceId().equals(expected.instanceId())||settings==null) return false;
+        replace(current,current); combat.configure(current,settings); setDirty(); return true;
     }
 
     private boolean eligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
@@ -460,7 +471,7 @@ public final class GolemSeals extends SavedData {
     }
 
     private boolean blockEligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
-        return !golem.isFollowingOwner() && !seal.type().picksUp() && seal.type()!=Type.STOCK
+        return !golem.isFollowingOwner() && seal.type().blockWork()
                 && (!seal.type().advanced() || golem.design().hasTrait(GolemTrait.SMART)) && !stopped(level, seal) && golem.isAlive() && !golem.isRemoved()
                 && !task.isSuspended() && !task.isCompleted() && taskSeals.containsKey(task.getId())
                 && (seal.type().forestry() || !golem.design().hasTrait(GolemTrait.CLUMSY))
@@ -566,7 +577,7 @@ public final class GolemSeals extends SavedData {
         return level.hasNeighborSignal(support) || level.hasNeighborSignal(outward);
     }
 
-    public static double reachSquared(ItemEntity item) {
+    public static double reachSquared(net.minecraft.world.entity.Entity item) {
         return 3.5D + (item.getBbWidth() / 2.0F) * (item.getBbWidth() / 2.0F);
     }
 
@@ -577,7 +588,7 @@ public final class GolemSeals extends SavedData {
 
     private void forget(int id) {
         logistics.forget(id);
-        farm.forget(id); breaker.forget(id); lumber.forget(id); use.forget(id);
+        farm.forget(id); breaker.forget(id); lumber.forget(id); use.forget(id); combat.forget(id);
         emptyCandidates.remove(id);
         UUID item = targets.remove(id);
         if (item != null) itemTasks.remove(item, id);
@@ -669,6 +680,7 @@ public final class GolemSeals extends SavedData {
                         new HarvestSettings(!row.contains("prep") || row.getBoolean("prep"),row.getBoolean("ppro"))));
                 if(loadedType==Type.HARVEST) data.farm.loadRow(row,data.seals.get(key));
                 if(loadedType==Type.USE) data.use.loadRow(row,data.seals.get(key));
+                if(loadedType.combat()) data.combat.loadRow(row,data.seals.get(key));
             } catch (IllegalArgumentException ignored) {
                 // Invalid external data must not become a seal owned by everybody.
             }
@@ -694,6 +706,7 @@ public final class GolemSeals extends SavedData {
             if(seal.type().logistics()) seal.logistics().save(row,registries);
             if(seal.type()==Type.HARVEST) { row.putBoolean("prep",seal.harvest().replant()); row.putBoolean("ppro",seal.harvest().provision()); farm.saveRow(row,seal); }
             if(seal.type()==Type.USE) use.saveRow(row,seal);
+            if(seal.type().combat()) combat.saveRow(row,seal);
             row.putLong("area", seal.area().asLong());
             rows.add(row);
         }

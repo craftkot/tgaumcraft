@@ -21,6 +21,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     private final GolemSeals.Seal expected;
     private final Player viewer;
     private final SimpleContainer ghost = new SimpleContainer(1);
+    private final DataSlot[] combatToggles={DataSlot.standalone(),DataSlot.standalone(),DataSlot.standalone()};
     private final DataSlot blacklist = DataSlot.standalone();
     private final DataSlot fill = DataSlot.standalone();
     private final DataSlot limitLow = DataSlot.standalone();
@@ -43,7 +44,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         this.expected = seal;
         this.viewer = inventory.player;
         addSlot(new Slot(ghost, 0, 17, 24) {
-            @Override public boolean isActive() { return !harvest()&&!lumber(); }
+            @Override public boolean isActive() { return !harvest()&&!lumber()&&!combat(); }
             @Override public boolean mayPickup(Player player) { return false; }
             @Override public boolean mayPlace(ItemStack stack) { return false; }
         });
@@ -58,7 +59,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         addDataSlot(areaX); addDataSlot(areaY); addDataSlot(areaZ);
         addDataSlot(leaveOne);
         addDataSlot(matchNbt);
-        addDataSlot(replant); addDataSlot(provision); addDataSlot(metadata); addDataSlot(ore); addDataSlot(mod); for(var toggle:useToggles) addDataSlot(toggle);
+        addDataSlot(replant); addDataSlot(provision); addDataSlot(metadata); addDataSlot(ore); addDataSlot(mod); for(var toggle:useToggles) addDataSlot(toggle); for(var toggle:combatToggles) addDataSlot(toggle);
         refresh();
     }
 
@@ -82,7 +83,10 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     public int color() { return color.get(); }
     public boolean locked() { return locked.get() != 0; }
     public boolean redstone() { return redstone.get() != 0; }
-    public boolean hasArea() { return fill.get() == 0 || harvest() || breaker() || lumber(); }
+    public boolean hasArea() { return fill.get() == 0 || harvest() || breaker() || lumber() || combat(); }
+    public boolean combat() { return fill.get()>=7&&fill.get()<=9; }
+    public boolean advancedGuard() { return fill.get()==8; }
+    public boolean combatToggle(int index) { return combatToggles[index].get()!=0; }
     public boolean use() { return fill.get()==6; }
     public boolean useToggle(int sourceIndex) { return useToggles[sourceIndex-4].get()!=0; }
     public boolean ore() { return ore.get()!=0; }
@@ -110,8 +114,9 @@ public final class GolemSealMenu extends AbstractContainerMenu {
         leaveOne.set(seal.leaveOne() ? 1 : 0);
         matchNbt.set(seal.filter().matchNbt() ? 1 : 0); metadata.set(seal.filter().options().metadata()?1:0); ore.set(seal.filter().options().ore()?1:0); mod.set(seal.filter().options().mod()?1:0);
         var settings=GolemSeals.get(level).useSettings(seal); for(int i=0;i<5;i++) useToggles[i].set(settings.toggle(i+4)?1:0);
+        var combat=GolemSeals.get(level).combatSettings(seal); combatToggles[0].set(combat.mobs()?1:0); combatToggles[1].set(combat.animals()?1:0); combatToggles[2].set(combat.players()?1:0);
         blacklist.set(seal.filter().blacklist() ? 1 : 0);
-        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; case BREAKER->4; case LUMBER->5; case USE->6; default -> 2; });
+        fill.set(switch (seal.type()) { case PICKUP -> 0; case FILL -> 1; case HARVEST->3; case BREAKER->4; case LUMBER->5; case USE->6; case GUARD->7; case GUARD_ADVANCED->8; case BUTCHER->9; default -> 2; });
         replant.set(seal.harvest().replant()?1:0); provision.set(seal.harvest().provision()?1:0);
         limitLow.set(seal.filter().limit() & 0xffff);
         limitHigh.set(seal.filter().limit() >>> 16);
@@ -127,7 +132,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public void clicked(int slot, int button, ClickType click, Player player) {
         if (level != null && !stillValid(player)) return;
         if (slot == 0) {
-            if(harvest()||lumber()) return;
+            if(harvest()||lumber()||combat()) return;
             if (level != null && click == ClickType.PICKUP && (button == 0 || button == 1)) {
                 var policy = current().filter();
                 setFilter(player, policy.withItem(button == 1 ? ItemStack.EMPTY : getCarried()));
@@ -138,7 +143,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     }
 
     @Override public ItemStack quickMoveStack(Player player, int index) {
-        if(harvest()||lumber()) return ItemStack.EMPTY;
+        if(harvest()||lumber()||combat()) return ItemStack.EMPTY;
         if (level != null && stillValid(player) && index > 0 && index < slots.size()) {
             var policy = current().filter();
             setFilter(player, policy.withItem(slots.get(index).getItem()));
@@ -153,6 +158,11 @@ public final class GolemSealMenu extends AbstractContainerMenu {
     @Override public boolean clickMenuButton(Player player, int id) {
         if (level == null || !stillValid(player)) return false;
         var seal = current();
+        if(advancedGuard()&&(id>=30&&id<=32||id>=60&&id<=62)) {
+            int index=id<60?id-30:id-60; var data=GolemSeals.get(level);
+            boolean result=data.configureCombat(expected,player.getUUID(),data.combatSettings(seal).withToggle(index,id<60));
+            if(result) broadcastChanges(); return result;
+        }
         if(use()) {
             if(id==30||id==60||id==32||id==62||id==33||id==63) {
                 var options=seal.filter().options();
@@ -173,7 +183,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
             if(result) broadcastChanges(); return result;
         }
         if (id == 31 || id == 61) {
-            if(breaker()||lumber()) return false;
+            if(breaker()||lumber()||combat()) return false;
             boolean result = GolemSeals.get(level).configure(expected, player.getUUID(), seal.filter().withMatchNbt(id == 31));
             if (result) broadcastChanges();
             return result;
@@ -203,7 +213,7 @@ public final class GolemSealMenu extends AbstractContainerMenu {
             return result;
         }
         var policy = seal.filter();
-        if(harvest()||lumber()) return false;
+        if(harvest()||lumber()||combat()) return false;
         if (id == 0) setFilter(player, policy.withBlacklist(!policy.blacklist()));
         else if (id == 5) setFilter(player, policy.withItem(ItemStack.EMPTY));
         else if (hasLimit() && id >= 1 && id <= 4) {

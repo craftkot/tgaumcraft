@@ -9,7 +9,7 @@ public final class GolemSealRecipes {
     public static final String BLANK_RESEARCH = "CONTROLSEALS";
     public static final int VIS = 20, BLANK_OUTPUT = 3, ESSENTIA = 10;
     public enum Ingredient { EMPTY, CLAY, TALLOW, RED_DYE, NITOR, OTHER }
-    public enum Catalyst { BLANK, EMPTY, FILL, EMPTY_ADVANCED, PICKUP, BREAKER }
+    public enum Catalyst { BLANK, EMPTY, FILL, EMPTY_ADVANCED, PICKUP, BREAKER, GUARD }
     public record Cost(String tag,int amount) {}
     public enum Conversion {
         PICKUP("SEALCOLLECT",Catalyst.BLANK,"desiderium"),
@@ -22,6 +22,8 @@ public final class GolemSealRecipes {
         STOCK("SEALSTOCK",Catalyst.FILL,"cognitio","desiderium"),
         LUMBER("SEALLUMBER",Catalyst.BREAKER,List.of(new Cost("herba",40),new Cost("sensus",20))),
         USE("SEALUSE",Catalyst.BLANK,List.of(new Cost("fabrico",20),new Cost("sensus",10),new Cost("cognitio",20))),
+        GUARD("SEALGUARD",Catalyst.BLANK,List.of(new Cost("aversio",20),new Cost("praemunio",20))),
+        GUARD_ADVANCED("SEALGUARD&&MINDBIOTHAUMIC",Catalyst.GUARD,List.of(new Cost("sensus",20),new Cost("cognitio",20))),
         BREAKER_ADVANCED("SEALBREAK&&MINDBIOTHAUMIC",Catalyst.BREAKER,List.of(new Cost("sensus",10),new Cost("cognitio",10),new Cost("instrumentum",20)));
         public final String research;
         public final Catalyst catalyst;

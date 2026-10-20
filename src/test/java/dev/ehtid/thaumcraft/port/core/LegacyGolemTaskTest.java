@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
 
 import dev.ehtid.thaumcraft.port.core.golem.GolemTask;
+import dev.ehtid.thaumcraft.port.core.golem.GolemCombatRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBreakerRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemLumberRules;
 import dev.ehtid.thaumcraft.port.core.golem.GolemUseRules;
@@ -587,6 +588,7 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        combatSeals();
         breakerRules();
         advancedBreakerRules();
         useRules();
@@ -792,6 +794,37 @@ public final class LegacyGolemTaskTest {
         var registry=new AspectRegistry(); var stored=new AspectListData(); var k=new PlayerKnowledgeData(); stored.add(registry.get("fabrico"),20); stored.add(registry.get("sensus"),10); stored.add(registry.get("cognitio"),20);
         eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry)); k.addResearch("SEALUSE");
         var recipe=dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.USE; eq(recipe,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry)); eq(0,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.afterCraft(stored,recipe,registry).visSize()); eq(50,stored.visSize()); stored.remove(registry.get("fabrico"),1); eq(null,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.conversion(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.BLANK,k,stored,registry));
+    }
+
+    private static void combatSeals() {
+        eq("SEALGUARD",dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD.research);
+        eq(20,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD.amount("aversio"));
+        eq(20,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD.amount("praemunio"));
+        eq("SEALGUARD&&MINDBIOTHAUMIC",dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD_ADVANCED.research);
+        eq(dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Catalyst.GUARD,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD_ADVANCED.catalyst);
+        eq(20,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD_ADVANCED.amount("sensus"));
+        eq(20,dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes.Conversion.GUARD_ADVANCED.amount("cognitio"));
+        eq(20,GolemCombatRules.GUARD_INTERVAL); eq(200,GolemCombatRules.BUTCHER_INTERVAL); eq((short)10,GolemCombatRules.TASK_LIFESPAN);
+        var defaults=GolemCombatRules.Settings.defaults(); eq(new GolemCombatRules.Settings(true,false,false),defaults);
+        var monster=new GolemCombatRules.Target(true,true,false,false,false,false);
+        var pig=new GolemCombatRules.Target(false,true,false,false,false,false);
+        var player=new GolemCombatRules.Target(false,false,true,false,false,false);
+        eq(true,GolemCombatRules.guard(defaults,monster,false)); eq(false,GolemCombatRules.guard(defaults,pig,true)); eq(false,GolemCombatRules.guard(defaults,player,true));
+        var animals=defaults.withToggle(0,false).withToggle(1,true);
+        eq(true,GolemCombatRules.guard(animals,monster,false)); // Legacy IAnimals includes monsters.
+        eq(true,GolemCombatRules.guard(animals,pig,false)); eq(false,GolemCombatRules.guard(animals,player,true));
+        var players=defaults.withToggle(0,false).withToggle(2,true);
+        eq(false,GolemCombatRules.guard(players,player,false)); eq(true,GolemCombatRules.guard(players,player,true));
+        eq(false,GolemCombatRules.eligible(Set.of(GolemTrait.SMART),false)); eq(true,GolemCombatRules.eligible(Set.of(GolemTrait.FIGHTER,GolemTrait.CLUMSY),false));
+        eq(false,GolemCombatRules.eligible(Set.of(GolemTrait.FIGHTER),true)); eq(true,GolemCombatRules.eligible(Set.of(GolemTrait.FIGHTER,GolemTrait.SMART,GolemTrait.CLUMSY),true));
+        eq(true,GolemCombatRules.butcher(pig)); eq(false,GolemCombatRules.butcher(monster)); eq(false,GolemCombatRules.butcher(player));
+        eq(false,GolemCombatRules.butcher(new GolemCombatRules.Target(false,true,false,true,false,false)));
+        eq(false,GolemCombatRules.butcher(new GolemCombatRules.Target(false,true,false,false,true,false)));
+        eq(false,GolemCombatRules.butcher(new GolemCombatRules.Target(false,true,false,false,false,true)));
+        // Source tamed horse is not EntityTameable; a baby villager is not EntityAnimal.
+        eq(true,GolemCombatRules.butcher(new GolemCombatRules.Target(false,true,false,false,false,false)));
+        for(int n=0;n<=4;n++) eq(n>=3,GolemCombatRules.excess(n));
+        rejects(IllegalArgumentException.class,()->defaults.withToggle(3,true)); eq(new GolemCombatRules.Settings(true,false,false),defaults);
     }
 
 }

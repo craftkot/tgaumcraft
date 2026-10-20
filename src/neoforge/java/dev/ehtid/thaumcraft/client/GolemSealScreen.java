@@ -20,6 +20,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
     private Button replant,provision,usePanel,metadata,ore,mod;
     private int panel;
     private final Button[] useActions=new Button[5];
+    private final Button[] combatActions=new Button[3];
     private final java.util.List<Button> common=new java.util.ArrayList<>();
     private final Button[] limits = new Button[4];
     private final Button[] areas = new Button[6];
@@ -68,18 +69,22 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         lock = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.locked() ? 26 : 25)).bounds(leftPos+8, topPos+138, 160, 18).build());
         redstone = addRenderableWidget(Button.builder(Component.empty(), b -> send(menu.redstone() ? 28 : 27)).bounds(leftPos+8, topPos+158, 160, 18).build());
         common.add(lock); common.add(redstone);
-        usePanel=addRenderableWidget(Button.builder(Component.literal("…"),b->{panel=(panel+1)%3;updateControls();}).bounds(leftPos+144,topPos+3,24,18).build());
+        usePanel=addRenderableWidget(Button.builder(Component.literal("…"),b->{panel=(panel+1)%(menu.use()?3:2);updateControls();}).bounds(leftPos+144,topPos+3,24,18).build());
         metadata=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.metadata()?60:30)).bounds(leftPos+8,topPos+46,160,18).build());
         ore=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.ore()?62:32)).bounds(leftPos+8,topPos+66,160,18).build());
         mod=addRenderableWidget(Button.builder(Component.empty(),b->send(menu.mod()?63:33)).bounds(leftPos+8,topPos+86,160,18).build());
         for(int i=0;i<5;i++) { final int index=i+4; useActions[i]=addRenderableWidget(Button.builder(Component.empty(),b->send((menu.useToggle(index)?60:30)+index)).bounds(leftPos+8,topPos+46+i*22,160,18).build()); }
+        for(int i=0;i<3;i++) { final int index=i; combatActions[i]=addRenderableWidget(Button.builder(Component.empty(),b->send((menu.combatToggle(index)?60:30)+index)).bounds(leftPos+8,topPos+46+i*22,160,18).build()); }
+        combatActions[1].setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("menu.thaumcraft.golem_seal.guard_animals_help")));
         updateControls();
     }
 
     private void updateControls() {
-        if(!menu.use()) panel=0;
-        usePanel.visible=usePanel.active=menu.use();
+        if(!menu.use()&&!menu.advancedGuard()) panel=0;
+        usePanel.visible=usePanel.active=menu.use()||menu.advancedGuard();
         boolean ordinary=panel==0;
+        String[] guardKeys={"guard_mobs","guard_animals","guard_players"};
+        for(int i=0;i<3;i++) { combatActions[i].visible=combatActions[i].active=menu.advancedGuard()&&panel==1; combatActions[i].setMessage(Component.translatable("menu.thaumcraft.golem_seal."+guardKeys[i]+(menu.combatToggle(i)?"_on":"_off"))); }
         for(var b:common) b.visible=b.active=ordinary;
         metadata.visible=metadata.active=ore.visible=ore.active=mod.visible=mod.active=menu.use()&&panel==1;
         metadata.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.metadata()?"meta_match":"meta_ignore")));
@@ -87,7 +92,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         mod.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.mod()?"mod_match":"mod_ignore")));
         String[] on={"left_click","empty_target","empty_hand","sneak","use_provision"},off={"right_click","solid_target","carried_hand","no_sneak","use_no_provision"};
         for(int i=0;i<5;i++) { useActions[i].visible=useActions[i].active=menu.use()&&panel==2; useActions[i].setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.useToggle(i+4)?on[i]:off[i]))); }
-        mode.visible=mode.active=matchNbt.visible=matchNbt.active=ordinary&&!menu.harvest()&&!menu.lumber();
+        mode.visible=mode.active=matchNbt.visible=matchNbt.active=ordinary&&!menu.harvest()&&!menu.lumber()&&!menu.combat();
         replant.visible=replant.active=provision.visible=provision.active=menu.harvest();
         replant.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.replant()?"replant":"no_replant")));
         provision.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.provision()?"provision":"no_provision")));
@@ -98,8 +103,8 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         redstone.setMessage(Component.translatable("menu.thaumcraft.golem_seal." + (menu.redstone() ? "redstone_stop" : "redstone_ignore")));
         int[] sizes = {menu.areaX(), menu.areaY(), menu.areaZ()};
         for (int i = 0; i < areas.length; i++) {
-            areas[i].visible = menu.hasArea();
-            areas[i].active = menu.hasArea() && (i % 2 == 0 ? sizes[i / 2] > 1 : sizes[i / 2] < 8);
+            areas[i].visible = ordinary&&menu.hasArea();
+            areas[i].active = ordinary&&menu.hasArea() && (i % 2 == 0 ? sizes[i / 2] > 1 : sizes[i / 2] < 8);
         }
         for (Button button : limits) button.visible = button.active = menu.hasLimit();
     }
@@ -122,7 +127,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
 
     @Override protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
         super.renderLabels(g, mouseX, mouseY);
-        if(!menu.harvest()&&!menu.lumber()) {
+        if(!menu.harvest()&&!menu.lumber()&&!menu.combat()) {
             g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.filter"), 40, 25, 0x404040, false);
             g.drawString(font, Component.translatable("menu.thaumcraft.golem_seal.clear"), 40, 35, 0x404040, false);
         }
