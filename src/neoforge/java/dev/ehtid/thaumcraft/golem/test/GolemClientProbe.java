@@ -38,7 +38,7 @@ public final class GolemClientProbe {
     private static boolean guardChecked,rangedKill; private static int xpAtKill;
     private GolemClientProbe() {}
     @SubscribeEvent public static void started(ServerStartedEvent event) {
-        if(!ENABLED||event.getServer().isDedicatedServer()) return;
+        if(!ENABLED||event.getServer().isDedicatedServer()||"seals".equals(System.getProperty("thaumcraft.golemClientScenario",""))) return;
         active=event.getServer(); phase=ticks=phaseTick=0; useChecked=silkChecked=done=failed=guardChecked=rangedKill=false; worker=shooter=null; paid=null; victim=null;
     }
     @SubscribeEvent public static void death(LivingDeathEvent event) {
