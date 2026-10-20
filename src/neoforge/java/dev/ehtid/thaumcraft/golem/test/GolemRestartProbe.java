@@ -49,6 +49,7 @@ public final class GolemRestartProbe {
         if ("press".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("formation".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("logistics".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
+        if ("seeded".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("clickable".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("press_chunk".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
         if ("chunk".equals(System.getProperty("thaumcraft.golemRestartScenario", ""))) return;
