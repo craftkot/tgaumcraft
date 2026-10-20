@@ -258,8 +258,8 @@ public final class GolemSeals extends SavedData {
             UUID target = targets.get(entry.getKey());
             ItemEntity item = item(level, target);
             SealKey key = taskSeals.get(entry.getKey());
-            if (key == null || !seals.containsKey(key) || !level.hasChunkAt(key.pos()) || stopped(level, seals.get(key))
-                    || target != null && (item == null || !item.isAlive() || !level.hasChunkAt(item.blockPosition()))) {
+            if (key == null || !seals.containsKey(key) || !GolemSeals.active(level,key.pos()) || stopped(level, seals.get(key))
+                    || target != null && (item == null || !item.isAlive() || !GolemSeals.active(level,item.blockPosition()))) {
                 suspend(entry.getKey());
                 continue;
             }
@@ -270,7 +270,7 @@ public final class GolemSeals extends SavedData {
         if (level.getGameTime() % 20 == 0) board.tickSecond(task -> forget(task.getId()));
         int phase = 0;
         for (Seal seal : new ArrayList<>(seals.values())) {
-            if (!level.hasChunkAt(seal.key().pos())) continue;
+            if (!GolemSeals.active(level,seal.key().pos())) continue;
             if (level.getGameTime() % 20 == 0 && level.isEmptyBlock(seal.key().pos()) && seal.type()!=Type.USE) {
                 removeSeal(seal.key());
                 continue;
@@ -289,7 +289,7 @@ public final class GolemSeals extends SavedData {
             for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, bounds(seal),
                     entity -> entity.isAlive() && entity.onGround() && !entity.hasPickUpDelay()
                             && pickupAccepts(seal,entity.getItem()))) {
-                if (!level.hasChunkAt(item.blockPosition()) || itemTasks.containsKey(item.getUUID())) continue;
+                if (!GolemSeals.active(level,item.blockPosition()) || itemTasks.containsKey(item.getUUID())) continue;
                 int id = allocateTaskId();
                 GolemTask task = GolemTask.entity(id, corePos(seal.key()), item.getUUID());
                 task.setPriority(seal.priority());
@@ -346,7 +346,7 @@ public final class GolemSeals extends SavedData {
     private boolean eligible(ServerLevel level, ThaumcraftGolem golem, GolemTask task, Seal seal) {
         if (golem.isFollowingOwner() || !golem.isAlive() || golem.isRemoved() || task.isSuspended() || task.isCompleted()
                 || !targets.containsKey(task.getId())
-                || !level.hasChunkAt(seal.key().pos()) || level.isEmptyBlock(seal.key().pos()) || stopped(level, seal)
+                || !GolemSeals.active(level,seal.key().pos()) || level.isEmptyBlock(seal.key().pos()) || stopped(level, seal)
                 || golem.design().hasTrait(GolemTrait.CLUMSY)) return false;
         if(seal.type().advanced() && !golem.design().hasTrait(GolemTrait.SMART)) return false;
         // BETA26 accidentally UUID.equals(String) for locked owners. UUID identity
@@ -357,7 +357,7 @@ public final class GolemSeals extends SavedData {
                 > level.getGameTime()) return false;
         ItemEntity item = item(level, task.getEntityId());
         if (item == null || !item.isAlive() || !pickupAccepts(seal,item.getItem())
-                || !level.hasChunkAt(item.blockPosition()) || golem.canCarryAmount(item.getItem()) <= 0)
+                || !GolemSeals.active(level,item.blockPosition()) || golem.canCarryAmount(item.getItem()) <= 0)
             return false;
         double range = golem.design().hasTrait(GolemTrait.SCOUT) ? 48 : 32;
         return golem.home().distSqr(item.blockPosition()) < range * range;
@@ -565,14 +565,21 @@ public final class GolemSeals extends SavedData {
         if (board.release(assignment.lease())) { workers.remove(assignment.lease().taskId(), golem.getUUID()); breaker.released(assignment.lease().taskId()); lumber.released(assignment.lease().taskId()); }
     }
 
-    /** BETA26 tests support and outward block. Unknown signal chunks pause without loading. */
+    /** Non-loading check. A merely FULL chunk can be pinned by vanilla UNKNOWN tickets on ordinary block reads. */
+    public static boolean active(ServerLevel level, BlockPos pos) {
+        return level.isPositionEntityTicking(pos);
+    }
+
+    /** Inactive regions pause; active redstone tests source support/outward blocks without loading unknown signal chunks. */
     public static boolean stopped(ServerLevel level, Seal seal) {
-        if (seal == null || !seal.redstone()) return false;
+        if (seal == null) return false;
+        if (!active(level,seal.key().pos())) return true;
+        if (!seal.redstone()) return false;
         BlockPos support = seal.key().pos(), outward = support.relative(seal.key().face());
         // Vanilla conductor signal queries can inspect a second neighbor layer.
         for (BlockPos pos : List.of(support, outward)) {
             for (int dx = -2; dx <= 2; dx++) for (int dz = -2; dz <= 2; dz++)
-                if (!level.hasChunkAt(pos.offset(dx, 0, dz))) return true;
+                if (!GolemSeals.active(level,pos.offset(dx, 0, dz))) return true;
         }
         return level.hasNeighborSignal(support) || level.hasNeighborSignal(outward);
     }

@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.37** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2893 и226/226 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущие срезы **M10.14–M10.37** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2893 и227/227 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
@@ -12,7 +12,7 @@
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | Overlay исходной области и полная внешняя API совместимость |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Modded crops/clickables, generic M06 recipe acquisition и crash consistency |
 | F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | Боевой graphical run M38 PASS (AdvancedGuard C2S/actual flying dart kill/render path); исходные meshes/анимации/parts/particles не портированы |
-| Проверки | Core +226 native GameTests + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
+| Проверки | Core +227 native GameTests + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
 ## 1. Источники и границы доказательств
@@ -737,3 +737,12 @@ Source goal priority1/speed1/range16: двадцать последовател�
 Полный Java21 Core39962 construction/2893 task assertions PASS; full NeoForge226/226 required PASS2m42s, десять новых native сценариев и все216 предыдущих. Реальны: Guard и Flyer убивают настоящими дротиками, clock23/45, LOS/range/removed/owner guards, Gaussian launch/native owner/dimensions, native NBT, реально застрявший неподымаемый Dart с positive-control обычной стрелой, оплаченный Press32 arrows/42components/54Machina→one placer→one active shooter, cargo conservation/no fictitious melee XP. Визуализация пока provisional vanilla arrow texture, исходная Thaumcraft artwork не копируется; графический ranged run ещё не проведён. Cold in-flight probe вынесен в следующий commit и до отдельного READ marker не считается пройденным.
 
 M38: actual combat client5m16sPASS подтверждает Guard C2S/исходный IAnimals overlap, enabled FLYER+RANGED/nativeHusk death/нет meleeXP8, реальный DartRenderer call и доступную texture. Raw evidence/reproduction: [client combat](evidence/golems/client_combat_2026_10_20/README.md). Provisional models/vanilla arrow остаются provisional, acquisition levitator не доказан. Первый отказ owner menu был правильной8block защитой; исправлен fixture teleport, не production access.
+
+
+### 20.10.2026 M10.39 — настоящая граница ticking chunks
+
+Проверка live unload нашла production defect: после удаления forced ticket дальний чанк оставался FULL/с entity storage. Первоначальная гипотеза event-order не объяснила повторный провал. Два первых dedicated runs имеют explicit ASSERTIONS_FAILED несмотря на BUILD SUCCESS2m56s/2m16s; миры и логи сохранены внеGit. Modern vanilla ServerChunkCache.getChunkFutureMainThread(requireChunk=true) добавляет TicketType.UNKNOWN; обычные getBlockState/capability reads после одного hasChunkAt могли постоянно обновлять этот билет. Достаточно наличия FULL chunk для прежнего guard, но этого недостаточно для безопасного серверного lifecycle.
+
+Lane-local fix: GolemSeals.active использует non-loading isPositionEntityTicking; все seal producers/target validation/capability/двойной сундук/сигнальный halo ждут реальных ticking chunks. Неподвижная граница simulation radius не обрабатывается фоновыми seal scanners, inactive seal record не принимается за разрушенную опору; leases отменяются прежним путём. Это явно названная modern lifecycle projection, не утверждение буквальной эквивалентности старого1.12 loaded-chunk API. Никакого ручного удаления сущности/билета/файлов ради PASS.
+
+**Full NeoForge227/227requiredPASS1m39s**, `golems-chunk-fix-build.log`15:13:55UTC: все226 прежних+новый реальный FULL/UNKNOWN без entity-ticking ticket. Все16 source seal types одновременно placed в actualFULL chunk, native capability lookup отказывает без block read; через60ticks чанк действительно исчез, saved seals сохранились. Java21 Core39962/2893 unchanged/no Core rule edit. Полный dedicated carry13→native unload→sameUUID reload→Fill сейчас запущен отдельно; PASS до marker не объявляется. Клиентский M38 proof относится к production226 до этого lifecycle fix, visuals/UI не менялись.

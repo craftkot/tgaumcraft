@@ -117,10 +117,10 @@ final class GolemLogistics {
     }
     private boolean valid(ServerLevel level,Work w) {
         if(!usable(level,w.provider)) return false;
-        if(w.recipient!=null && (data.get(w.recipient.key())!=w.recipient || !level.hasChunkAt(w.recipient.key().pos())
+        if(w.recipient!=null && (data.get(w.recipient.key())!=w.recipient || !GolemSeals.active(level,w.recipient.key().pos())
                 || level.isEmptyBlock(w.recipient.key().pos())&&w.recipient.type()!=GolemSeals.Type.USE || GolemSeals.stopped(level,w.recipient))) return false;
         var target=destination(level,w);
-        if(target==null || !level.hasChunkAt(target.pos()) || !level.hasChunkAt(target.pos().relative(target.face()))) return false;
+        if(target==null || !GolemSeals.active(level,target.pos()) || !GolemSeals.active(level,target.pos().relative(target.face()))) return false;
         return !(w.request.target() instanceof ProvisionRequest.BlockTarget) || GolemContainers.handler(level,target)!=null;
     }
     private GolemSeals.SealKey destination(ServerLevel level,Work w) {

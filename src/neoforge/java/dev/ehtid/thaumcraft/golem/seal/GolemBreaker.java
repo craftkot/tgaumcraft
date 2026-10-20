@@ -30,7 +30,7 @@ final class GolemBreaker {
     }
     void released(int id) { clearCrack(id); nextCallback.remove(id); }
     private void clearCrack(int id) { var crack=cracks.remove(id); if(crack!=null) crack.level.destroyBlockProgress(crack.worker,crack.pos,-1); }
-    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos) && level.hasChunkAt(pos); }
+    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos) && GolemSeals.active(level,pos); }
     private static boolean valid(ServerLevel level,BlockPos pos,GolemSeals.Seal seal) {
         if(!loaded(level,pos)) return false;
         var state=level.getBlockState(pos);

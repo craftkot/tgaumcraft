@@ -24,7 +24,7 @@ final class GolemLumber {
     void removed(GolemSeals.SealKey key) { watched.remove(key); scan.remove(key); }
     void forget(int id) { var w=work.remove(id); if(w!=null) { var positions=watched.get(w.seal.key()); if(positions!=null) positions.remove(w.origin,id); } nextCallback.remove(id); }
     void released(int id) { nextCallback.remove(id); }
-    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos)&&level.hasChunkAt(pos); }
+    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos)&&GolemSeals.active(level,pos); }
     private static ItemStack item(ServerLevel level,BlockPos pos,BlockState state) { return state.getBlock().getCloneItemStack(level,pos,state); }
     private static GolemLegacyItem identity(ServerLevel level,BlockPos pos,BlockState state) {
         var blockId=BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString();
@@ -60,7 +60,7 @@ final class GolemLumber {
         var origin=new GolemLumberRules.Pos(w.origin.getX(),w.origin.getY(),w.origin.getZ()); var identity=identity(level,w.origin,w.original);
         var target=GolemLumberRules.furthest(origin,p->{ var pos=new BlockPos(p.x(),p.y(),p.z());
             if(level.isOutsideBuildHeight(pos)) return GolemLumberRules.Cell.OTHER;
-            if(!level.hasChunkAt(pos)) return GolemLumberRules.Cell.UNKNOWN;
+            if(!GolemSeals.active(level,pos)) return GolemLumberRules.Cell.UNKNOWN;
             var state=level.getBlockState(pos); if(state.isAir()||state.getDestroySpeed(level,pos)<0) return GolemLumberRules.Cell.OTHER;
             return identity(level,pos,state).equals(identity)?GolemLumberRules.Cell.MATCH:GolemLumberRules.Cell.OTHER;
         });

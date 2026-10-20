@@ -30,7 +30,7 @@ final class GolemUse {
     void configure(GolemSeals.Seal seal,GolemUseRules.Settings value) { settings.put(seal.key(),value); }
     void removed(GolemSeals.SealKey key) { settings.remove(key); watched.remove(key); }
     void forget(int id) { var w=work.remove(id); if(w!=null) watched.remove(w.seal.key(),id); }
-    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos)&&level.hasChunkAt(pos); }
+    private static boolean loaded(ServerLevel level,BlockPos pos) { return !level.isOutsideBuildHeight(pos)&&GolemSeals.active(level,pos); }
     void tick(ServerLevel level) {
         if(level.getGameTime()%GolemUseRules.SCAN_TICKS!=0) return;
         for(var s:data.all()) if(s.type()==GolemSeals.Type.USE&&loaded(level,s.key().pos())&&!GolemSeals.stopped(level,s)&&GolemUseRules.target(settings(s),level.isEmptyBlock(s.key().pos()))) {

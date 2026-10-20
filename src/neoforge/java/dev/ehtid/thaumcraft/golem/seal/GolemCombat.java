@@ -31,7 +31,7 @@ final class GolemCombat {
                 target instanceof Animal animal&&animal.isBaby(),target instanceof TamableAnimal tame&&tame.isTame(),target instanceof AbstractGolem);
     }
     private boolean valid(ServerLevel level,GolemSeals.Seal seal,LivingEntity target) {
-        return target.isAlive()&&!target.isRemoved()&&level.hasChunkAt(target.blockPosition())
+        return target.isAlive()&&!target.isRemoved()&&GolemSeals.active(level,target.blockPosition())
                 &&(seal.type()==GolemSeals.Type.BUTCHER?GolemCombatRules.butcher(classification(target))
                     :GolemCombatRules.guard(settings(seal),classification(target),level.getServer().isPvpAllowed()));
     }
@@ -39,10 +39,10 @@ final class GolemCombat {
     void tick(ServerLevel level) {
         for(var entry:new ArrayList<>(work.entrySet())) {
             var target=target(level,entry.getValue());
-            if(target==null||!target.isAlive()||!level.hasChunkAt(target.blockPosition())) data.cancel(entry.getKey());
+            if(target==null||!target.isAlive()||!GolemSeals.active(level,target.blockPosition())) data.cancel(entry.getKey());
         }
         for(var seal:data.all()) {
-            if(!seal.type().combat()||!level.hasChunkAt(seal.key().pos())||GolemSeals.stopped(level,seal)) continue;
+            if(!seal.type().combat()||!GolemSeals.active(level,seal.key().pos())||GolemSeals.stopped(level,seal)) continue;
             boolean butcher=seal.type()==GolemSeals.Type.BUTCHER;
             if(level.getGameTime()%(butcher?GolemCombatRules.BUTCHER_INTERVAL:GolemCombatRules.GUARD_INTERVAL)!=0) continue;
             var map=watched.computeIfAbsent(seal.key(),k->new HashMap<>());

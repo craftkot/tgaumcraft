@@ -50,7 +50,7 @@ final class GolemFarm {
         return GolemFarmRules.ready(crop,age,level.getBlockState(pos.below()).is(state.getBlock()));
     }
     private static boolean loaded(ServerLevel level,BlockPos pos) {
-        return !level.isOutsideBuildHeight(pos) && level.hasChunkAt(pos) && level.hasChunkAt(pos.below());
+        return !level.isOutsideBuildHeight(pos) && GolemSeals.active(level,pos) && GolemSeals.active(level,pos.below());
     }
     private static ItemStack seed(GolemFarmRules.Crop crop) { return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.withDefaultNamespace(crop.seed))); }
     private static SealArea area(GolemSeals.Seal s) {
@@ -60,7 +60,7 @@ final class GolemFarm {
         for(var s:data.all()) if(s.type()==GolemSeals.Type.HARVEST) {
             var pending=replants.get(s.key()); var area=area(s);
             if(pending!=null && pending.keySet().removeIf(p->!area.bounds().contains(new SealArea.BlockPos(p.getX(),p.getY(),p.getZ())))) data.setDirty();
-            if(level.getGameTime()%GolemFarmRules.SCAN_TICKS!=0 || !level.hasChunkAt(s.key().pos()) || GolemSeals.stopped(level,s)) continue;
+            if(level.getGameTime()%GolemFarmRules.SCAN_TICKS!=0 || !GolemSeals.active(level,s.key().pos()) || GolemSeals.stopped(level,s)) continue;
             int index=scan.getOrDefault(s.key(),0); var target=area.positionAt(index); scan.put(s.key(),(index+1)%area.count());
             var pos=new BlockPos(target.x(),target.y(),target.z());
             if(!loaded(level,pos)) continue;
@@ -92,7 +92,7 @@ final class GolemFarm {
         if(!w.replant) return mature(level,w.pos);
         var plant=replants.getOrDefault(s.key(),Map.of()).get(w.pos);
         if(plant==null || !s.harvest().replant() || !level.isEmptyBlock(w.pos)) return false;
-        if(!level.hasChunkAt(w.pos.relative(plant.support))) return false;
+        if(!GolemSeals.active(level,w.pos.relative(plant.support))) return false;
         var crop=plant.crop;
         if(carrying(g,crop)!=null) return true;
         if(s.harvest().provision()) GolemProvisioning.request(level,new ProvisionRequest.SealTarget(GolemProvisioning.location(s.key()),s.instanceId()),seed(crop),0);

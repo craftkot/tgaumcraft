@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.golem.inventory;
 
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
+import dev.ehtid.thaumcraft.golem.seal.GolemSeals;
 import dev.ehtid.thaumcraft.golem.seal.GolemSeals.SealKey;
 import dev.ehtid.thaumcraft.golem.seal.SealFilter;
 import dev.ehtid.thaumcraft.golem.seal.LogisticsPolicy;
@@ -107,12 +108,12 @@ public final class GolemContainers {
     }
 
     public static boolean loaded(ServerLevel level, SealKey key) {
-        if (!level.hasChunkAt(key.pos()) || !level.hasChunkAt(key.pos().relative(key.face()))) return false;
+        if (!GolemSeals.active(level,key.pos()) || !GolemSeals.active(level,key.pos().relative(key.face()))) return false;
         var state = level.getBlockState(key.pos());
         if (state.isAir()) return false;
         // Vanilla double-chest capability joins both halves. Never request its unloaded partner.
         return !(state.getBlock() instanceof ChestBlock) || state.getValue(ChestBlock.TYPE) == ChestType.SINGLE
-                || level.hasChunkAt(key.pos().relative(ChestBlock.getConnectedDirection(state)));
+                || GolemSeals.active(level,key.pos().relative(ChestBlock.getConnectedDirection(state)));
     }
 
     public static IItemHandler handler(ServerLevel level, SealKey key) {
