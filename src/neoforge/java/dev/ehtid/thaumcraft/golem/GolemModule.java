@@ -82,6 +82,8 @@ public final class GolemModule {
     public static final DeferredHolder<EntityType<?>, EntityType<ThaumcraftGolem>> GOLEM = ENTITIES.register(
             "golem", () -> EntityType.Builder.of(ThaumcraftGolem::new, MobCategory.CREATURE)
                     .sized(0.4F, 0.9F).eyeHeight(0.7F).clientTrackingRange(8).build("thaumcraft:golem"));
+    public static final DeferredHolder<EntityType<?>,EntityType<dev.ehtid.thaumcraft.entity.GolemDart>> GOLEM_DART=ENTITIES.register("golem_dart",
+            ()->EntityType.Builder.<dev.ehtid.thaumcraft.entity.GolemDart>of(dev.ehtid.thaumcraft.entity.GolemDart::new,MobCategory.MISC).sized(.2F,.2F).clientTrackingRange(4).updateInterval(20).build("thaumcraft:golem_dart"));
     public static final DeferredItem<GolemPlacerItem> GOLEM_PLACER = ITEMS.registerItem(
             "golem", GolemPlacerItem::new, new Item.Properties());
     public static final DeferredItem<GolemBellItem> GOLEM_BELL = ITEMS.registerItem("golem_bell", GolemBellItem::new, new Item.Properties().stacksTo(1));
@@ -159,7 +161,7 @@ public final class GolemModule {
         }
     }
 
-    /** Keep unimplemented ranged functions gated. */
+    /** Keep unknown packed extensions gated even when all catalog parts are supported. */
     public static boolean supportsRuntime(GolemDesign design) {
         return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.supportsRuntime(design);
     }

@@ -35,8 +35,8 @@ import net.minecraft.world.level.Level;
 import java.util.Optional;
 import java.util.UUID;
 
-/** Server-owned ground/air golem and source melee adapter. Ranged parts remain gated. */
-public final class ThaumcraftGolem extends PathfinderMob {
+/** Server-owned ground/air golem and source melee adapter. Catalog ranged arms use real server projectiles. */
+public final class ThaumcraftGolem extends PathfinderMob implements net.minecraft.world.entity.monster.RangedAttackMob {
     private static final EntityDataAccessor<Long> DESIGN = SynchedEntityData.defineId(
             ThaumcraftGolem.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(
@@ -91,6 +91,7 @@ public final class ThaumcraftGolem extends PathfinderMob {
         goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this) {
             @Override public boolean canUse() { return fighter() && getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation && super.canUse(); }
         });
+        goalSelector.addGoal(1,new dev.ehtid.thaumcraft.golem.ai.GolemRangedGoal(this));
         goalSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.15, false) {
             @Override public boolean canUse() { return fighter() && super.canUse(); }
             @Override public boolean canContinueToUse() { return fighter() && super.canContinueToUse(); }
@@ -178,6 +179,16 @@ public final class ThaumcraftGolem extends PathfinderMob {
     }
 
     public boolean fighter() { return invalidDesign == null && design().hasTrait(GolemTrait.FIGHTER); }
+    public boolean ranged() { return fighter()&&design().hasTrait(GolemTrait.RANGED); }
+    @Override public void performRangedAttack(net.minecraft.world.entity.LivingEntity target,float factor) {
+        if(!(level() instanceof net.minecraft.server.level.ServerLevel level)||!ranged()||target==null||!target.isAlive()||isAlliedTo(target)) return;
+        var dart=new GolemDart(level,this);
+        double x=target.getX()-getX(),y=dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.verticalAim(target.getBoundingBox().minY,target.getEyeHeight(),factor,dart.getY()),z=target.getZ()-getZ();
+        if(x*x+y*y+z*z<1e-20) return;
+        dart.setBaseDamage(dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.damage(getAttributeValue(Attributes.ATTACK_DAMAGE),factor,level.getRandom().nextGaussian()));
+        dart.shootLegacy(x,y,z,dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.VELOCITY,dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.INACCURACY);
+        if(level.addFreshEntity(dart)) playSound(SoundEvents.ARROW_SHOOT,1,1/(level.getRandom().nextFloat()*.4F+.8F));
+    }
     public Player ownerEntity() { return ownerId() == null ? null : level().getPlayerByUUID(ownerId()); }
     @Override public net.minecraft.world.scores.PlayerTeam getTeam() {
         Player owner = ownerEntity();

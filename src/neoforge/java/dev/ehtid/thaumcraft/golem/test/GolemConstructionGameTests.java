@@ -151,9 +151,9 @@ public final class GolemConstructionGameTests {
     }
 
     @GameTest(template="golem_test",batch="construction_unported",timeoutTicks=40)
-    public static void unportedFunctionsStayGatedAndSavedPayloadIsRetained(GameTestHelper h) {
-        floor(h); var d=GolemDesign.fromIds(0,0,4,0,0,0);
-        h.assertTrue(!GolemModule.supportsRuntime(d),"Unported ranged function stays gated until real projectiles");
+    public static void unknownPackedExtensionsStayQuarantinedAndSavedPayloadIsRetained(GameTestHelper h) {
+        floor(h); var d=GolemDesign.fromLong(1L<<56);
+        h.assertTrue(!GolemModule.supportsRuntime(d),"Unknown packed extension must remain gated while all catalog parts work");
         var g=GolemModule.GOLEM.get().create(h.getLevel()); var tag=new CompoundTag(); tag.putLong("props",d.toLong());
         g.readAdditionalSaveData(tag); var saved=new CompoundTag(); g.saveWithoutId(saved);
         h.assertTrue(g.isNoAi() && saved.getLong("props")==d.toLong(),"Unsupported valid configuration remains inert and preserved for future migration");

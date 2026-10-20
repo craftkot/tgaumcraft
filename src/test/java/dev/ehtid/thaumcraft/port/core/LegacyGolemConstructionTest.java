@@ -23,6 +23,7 @@ public final class LegacyGolemConstructionTest {
         throw new AssertionError("Invalid design was accepted");
     }
     public static void main(String[] args) {
+        ranged();
         flight();
         componentRecipes();
         same("MINDCLOCKWORK", GolemPressBlueprint.RESEARCH); same(50, GolemPressBlueprint.DELAY);
@@ -207,11 +208,12 @@ public final class LegacyGolemConstructionTest {
             same((long)rows.size(),rows.stream().map(c->c.legacyItemId()+":"+c.metadata()).distinct().count());
             if(GolemRuntimeRules.supportsRuntime(d)) supported++;
         }
-        same(1920,supported);
+        same(2400,supported);
         same(22,GolemPress.cost(GolemDesign.fromIds(0,1,2,0,0,0)));
         same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,2,0,0,0)));
         same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,1,1,2,0)));
-        same(false,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,4,0,0,0)));
+        same(true,GolemRuntimeRules.supportsRuntime(GolemDesign.fromIds(0,1,4,0,0,0)));
+        same(false,GolemRuntimeRules.supportsRuntime(GolemDesign.fromLong(1L<<56)));
         var wheels=GolemDesign.fromIds(0,0,0,1,0,0);
         same(1.45F,wheels.stats().moveSpeedMultiplier()); same(0.5F,wheels.stats().stepHeight()); same(12,GolemPress.cost(wheels));
         same(2,component(wheels,"minecraft:bowl",0)); same(1,component(wheels,"minecraft:leather",0)); same(2,component(wheels,"thaumcraft:mechanism_simple",0));
@@ -257,6 +259,25 @@ public final class LegacyGolemConstructionTest {
         same(false,GolemFlightRules.move(new GolemFlightRules.Vector(.5,0,0),zero,1,.5).arrived());
         same(6,GolemFlightRules.LOOK_AHEAD); near(36,GolemFlightRules.SMOOTH_DISTANCE_SQUARED);
         near(.87,GolemDesign.fromIds(0,0,0,3,0,0).stats().moveSpeedMultiplier());
+    }
+
+    private static void ranged() {
+        same(20,GolemRangedRules.MIN_DELAY); same(25,GolemRangedRules.MAX_DELAY); near(16,GolemRangedRules.RANGE);
+        same(20,GolemRangedRules.delay(0)); same(22,GolemRangedRules.delay(.5F)); same(25,GolemRangedRules.delay(1)); same(40,GolemRangedRules.delay(4));
+        near(.1,GolemRangedRules.strength(0)); near(1,GolemRangedRules.strength(4)); near(.5,GolemRangedRules.factor(64));
+        near(1.5,GolemRangedRules.damage(3,.5F,0)); near(1,GolemRangedRules.damage(3,.5F,-2)); near(2,GolemRangedRules.damage(3,.5F,2));
+        same(true,GolemRangedRules.damage(1,.1F,-4)<0); // Source formula does not clamp its Gaussian base damage.
+        near(2.45,GolemRangedRules.verticalAim(10,1.7F,.5F,9.5));
+        var shot=GolemRangedRules.launch(3,4,0,1.6F,0,3,-2,1); near(.96,shot.x()); near(1.28,shot.y()); near(0,shot.z());
+        var spread=GolemRangedRules.launch(10,0,0,1.6F,3,1,-1,2); near((1+GolemRangedRules.SPREAD*3)*(double)1.6F,spread.x()); near(-GolemRangedRules.SPREAD*3*(double)1.6F,spread.y()); near(GolemRangedRules.SPREAD*6*(double)1.6F,spread.z());
+        var fire=GolemRangedRules.tick(new GolemRangedRules.Clock(1,19),64,true);
+        same(true,fire.shoot()); same(true,fire.stopMoving()); same(new GolemRangedRules.Clock(22,20),fire.clock()); near(.5,fire.strength());
+        var blocked=GolemRangedRules.tick(new GolemRangedRules.Clock(1,20),64,false);
+        same(false,blocked.shoot()); same(false,blocked.stopMoving()); same(new GolemRangedRules.Clock(0,0),blocked.clock());
+        var retry=GolemRangedRules.tick(blocked.clock(),64,true); same(false,retry.shoot()); same(new GolemRangedRules.Clock(22,1),retry.clock());
+        var outside=GolemRangedRules.tick(new GolemRangedRules.Clock(1,30),257,true); same(false,outside.shoot()); same(false,outside.stopMoving());
+        var state=GolemRangedRules.Clock.initial();
+        for(int tick=1;tick<=26;tick++) { var step=GolemRangedRules.tick(state,256,true); same(tick==26,step.shoot()); state=step.clock(); }
     }
 
 }

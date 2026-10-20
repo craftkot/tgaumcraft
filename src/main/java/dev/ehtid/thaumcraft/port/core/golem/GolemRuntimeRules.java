@@ -3,11 +3,11 @@ package dev.ehtid.thaumcraft.port.core.golem;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/** Verified movement families. Ranged arms remain gated until their real projectile adapter is ported. */
+/** Verified catalog families; unknown packed extensions remain quarantined. */
 public final class GolemRuntimeRules {
     private GolemRuntimeRules() {}
     public static boolean supportsRuntime(GolemDesign d) {
-        return d.toLong()>>>48==0 && d.arms().id()<=3;
+        return d.toLong()>>>48==0;
     }
     public static Set<String> research(GolemDesign d) {
         var keys=new LinkedHashSet<String>(); keys.add(d.material().research());

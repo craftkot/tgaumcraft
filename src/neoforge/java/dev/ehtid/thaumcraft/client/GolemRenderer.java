@@ -42,6 +42,7 @@ public final class GolemRenderer extends MobRenderer<ThaumcraftGolem, GolemRende
     @SubscribeEvent
     public static void registerRenderer(EntityRenderersEvent.RegisterRenderers event) {
         event.registerEntityRenderer(GolemModule.GOLEM.get(), GolemRenderer::new);
+        event.registerEntityRenderer(GolemModule.GOLEM_DART.get(), GolemDartRenderer::new);
     }
 
     @Override
