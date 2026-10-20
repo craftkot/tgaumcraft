@@ -2,15 +2,15 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 20.10.2026, M10.36
+## Актуальный checkpoint — 20.10.2026, M10.38
 
-Runtime разрешает1920 source ground/air-конструкций/paid researched Press/Provide-Stock/Harvest10vanilla cultures, source Cocoa attachments, advanced Empty pcycle, metadata/NBT/ore/mod matching, Advanced Pickup/Fill настоящий Breaker с arms3, Lumber Advanced Breaker/Silk Touch и SealUse с actualcallbacks/provisioning; настоящий melee/owner-defense и Guard/AdvancedGuard/Butcher. **Java21 full Core39903construction/2893task PASS; full NeoForge216/216 required GameTests PASS**. Matching/Advanced dedicated-server WRITE+READ assertions реально PASS, логи/compiled baselines ниже; Breaker/Lumber/Silk/Use Guard/Climber/Flyer cold WRITE+READ assertions тоже PASS. Full M10/59/100 не объявляются.
+Runtime разрешает2400 каталожных source ground/air/ranged-конструкций/paid researched Press/Provide-Stock/Harvest10vanilla cultures, source Cocoa attachments, advanced Empty pcycle, metadata/NBT/ore/mod matching, Advanced Pickup/Fill настоящий Breaker с arms3, Lumber Advanced Breaker/Silk Touch и SealUse с actualcallbacks/provisioning; настоящий melee/owner-defense и Guard/AdvancedGuard/Butcher. **Java21 full Core39962construction/2893task PASS; full NeoForge226/226 required GameTests PASS**. Matching/Advanced dedicated-server WRITE+READ assertions реально PASS, логи/compiled baselines ниже; Breaker/Lumber/Silk/Use Guard/Climber/Flyer cold WRITE+READ assertions тоже PASS. Full M10/59/100 не объявляются.
 
 **Настоящий Minecraft-клиент проверен**: два отдельных запуска Minecraft1.21.1/NeoForge21.1.250, реальные мышиные C2S-переключения Use/psilk, actual wheeled AI Pickup→Fill11 с сохранением суммы каждый tick. Второй запуск после исправлений интерфейса завершён через штатное сохранение/выход, BUILD SUCCESS9m41s. Необработанные [снимки и инструкция](../evidence/golems/client_2026_10_20/README.md). Это opt-in creative fixture, исходная модель/анимация колёс и все остальные GUI не объявляются проверенными.
 
-Следующий конкретный пункт — ranged arms/projectiles. M06 generic infusion для Harvest/Breaker и source advanced component acquisition — external integration dependency; main unchanged. Original visuals, mod crop/clickable API, live chunk unload и crash injection открыты.
+Ranged arms/реальные owner-bound darts/source Gaussian launch/no бесплатный pickup реализованы, cold in-flight WRITE+READ PASS. Actual client combat/AdvancedGuard/ranged renderer PASS5m16s; следующий конкретный пункт — actual live chunk unload (dedicated проверка сейчас в работе). M06 generic infusion для Harvest/Breaker и source advanced component acquisition — external integration dependency; main unchanged. Original visuals, mod crop/clickable API, live chunk unload и crash injection открыты.
 
-Текущий branch HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Исторические checkpoint sections ниже не описывают текущий остаток. Main fresh-fetch20.10 остаётся `a4280834`; lightweight verify-connection CI не заменяет181 local GameTests. Only feature/golems, shared ROADMAP/registry/build.gradle/CI/research и чужие ветки untouched; без merge/rebase/force/delete.
+Текущий branch HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Исторические checkpoint sections ниже не описывают текущий остаток. Main fresh-fetch20.10 остаётся `a4280834`; lightweight verify-connection CI не заменяет226 local GameTests. Only feature/golems, shared ROADMAP/registry/build.gradle/CI/research и чужие ветки untouched; без merge/rebase/force/delete.
 
 ## Границы и исходное состояние
 
@@ -549,3 +549,10 @@ M37 cold: **WRITE2m35s/READ1m24s explicit assertions PASS**, `golems-ranged-rest
 Next isolated EN/RU entity label, then actual client AdvancedGuard C2S/flying ranged fight/real renderer; earlier M32 screenshots predate combat. Shared build/CI/main/foreign branches unchanged.
 
 - `dff6187` — real Dart WRITE/READ PASS above. This integration commit adds only one EN/RU entity-name key per language; JSON parsed, final client build follows. No source/runtime change after226 suite/cold.
+
+
+### 20.10.2026 M10.38 — настоящий боевой клиент
+
+После0abeb6a расширен прежний opt-in integrated probe, отдельный combat-only scenario. Первый full client **BUILD SUCCESS6m50s** и graceful save/exit, но smoke assertions FAIL при попытке открыть Guard за8block menu radius; реальные Use/Silk/Pickup→Fill11 до этого PASS. Исправлен только test player teleport внутрь радиуса, source permission guard не ослаблен. Второй **BUILD SUCCESS5m16s**, Java21/MC1.21.1/NeoForge21.1.250/LWJGL3.3.3/Xvfb/Mesa, actual C2S Guard flags15:01:14UTC, actual renderer callback15:01:39UTC, originalHusk native GolemDart kill15:01:51UTC/FLYING_RANGED_ASSERTIONS_OK. Source IAnimals target rules/real enabled airnav/cargo7/source no rangedXP8 preserved. Raw screenshots/reproduction: analysis/evidence/golems/client_combat_2026_10_20. No original visuals/survival levitator/modAPI parity implied. Source production after226/cold unchanged except opt-in client verification hook; no costly226 repeat without server changes. Packaged CRC/classes/AT/uniqueENRU JSON PASS SHA2562265da53f19f6e60c62390f3b2f6a51b6e4e27c406da9b22bc6ca2489e2474c7 (also contains subsequent compiled opt-in chunk probe, not yet verified/committed here).
+
+This client commit follows0abeb6a (oneENRU dart label) and separates own combat scenario/render proof/raw screenshots/docs from in-progress live chunk fixture/routing. Current own0abeb6a CircleCI#419verify-connectionSUCCESS; main#232SUCCESS/currenta4280834unchanged. No shared build/CI/main/foreignbranch change; Draft#3 stays Draft.

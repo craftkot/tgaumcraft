@@ -15,6 +15,7 @@ allprojects {
                 jvmArguments.add '-Xmx2G'
                 programArguments.addAll '--width', '1280', '--height', '800'
                 systemProperty 'thaumcraft.golemClientProbe', 'true'
+                systemProperty 'thaumcraft.golemClientScenario', project.findProperty('golemClientScenario') ?: ''
             }
             neo.runs.create('golemRestart') {
                 server()
