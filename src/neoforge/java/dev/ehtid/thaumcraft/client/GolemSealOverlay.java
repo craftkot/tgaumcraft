@@ -48,7 +48,10 @@ public final class GolemSealOverlay {
         if(player==null||level==null||!displays(player.getMainHandItem())&&!displays(player.getOffhandItem())) return;
         var pose=e.getPoseStack(); var camera=e.getCamera().getPosition(); var buffers=mc.renderBuffers().bufferSource();
         var type=player.isShiftKeyDown()?GolemSealRenderTypes.THROUGH:GolemSealRenderTypes.NORMAL;
-        var lines=buffers.getBuffer(type); pose.pushPose(); pose.translate(-camera.x,-camera.y,-camera.z);
+        var lines=buffers.getBuffer(type); pose.pushPose();
+        // AFTER_LEVEL supplies a fresh PoseStack; GameRenderer passes camera rotation separately.
+        pose.mulPose(e.getModelViewMatrix());
+        pose.translate(-camera.x,-camera.y,-camera.z);
         int rendered=0,areas=0;
         try {
             float time=player.tickCount+e.getPartialTick().getGameTimeDeltaPartialTick(false);
