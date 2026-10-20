@@ -431,5 +431,16 @@
   "message.thaumcraft.golem.seal.breaker_advanced.placed": "Advanced breaker seal placed",
   "message.thaumcraft.golem.seal.breaker_advanced.removed": "Advanced breaker seal removed",
   "menu.thaumcraft.golem_seal.silk": "Silk Touch",
-  "menu.thaumcraft.golem_seal.no_silk": "Normal drops"
+  "menu.thaumcraft.golem_seal.no_silk": "Normal drops",
+  "item.thaumcraft.seal_use": "Seal: Use",
+  "message.thaumcraft.golem.seal.use.placed": "Use seal placed",
+  "message.thaumcraft.golem.seal.use.removed": "Use seal removed",
+  "menu.thaumcraft.golem_seal.left_click": "Left click",
+  "menu.thaumcraft.golem_seal.right_click": "Right click",
+  "menu.thaumcraft.golem_seal.empty_target": "Empty target",
+  "menu.thaumcraft.golem_seal.solid_target": "Existing block",
+  "menu.thaumcraft.golem_seal.empty_hand": "Empty hand",
+  "menu.thaumcraft.golem_seal.carried_hand": "Carried item",
+  "menu.thaumcraft.golem_seal.sneak": "Sneak",
+  "menu.thaumcraft.golem_seal.no_sneak": "Stand"
 }

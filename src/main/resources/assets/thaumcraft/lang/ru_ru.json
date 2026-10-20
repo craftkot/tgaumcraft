@@ -431,5 +431,16 @@
   "message.thaumcraft.golem.seal.breaker_advanced.placed": "Продвинутая печать разрушения установлена",
   "message.thaumcraft.golem.seal.breaker_advanced.removed": "Продвинутая печать разрушения снята",
   "menu.thaumcraft.golem_seal.silk": "Шёлковое касание",
-  "menu.thaumcraft.golem_seal.no_silk": "Обычная добыча"
+  "menu.thaumcraft.golem_seal.no_silk": "Обычная добыча",
+  "item.thaumcraft.seal_use": "Печать: Использование",
+  "message.thaumcraft.golem.seal.use.placed": "Печать использования установлена",
+  "message.thaumcraft.golem.seal.use.removed": "Печать использования снята",
+  "menu.thaumcraft.golem_seal.left_click": "Левый щелчок",
+  "menu.thaumcraft.golem_seal.right_click": "Правый щелчок",
+  "menu.thaumcraft.golem_seal.empty_target": "Пустая цель",
+  "menu.thaumcraft.golem_seal.solid_target": "Существующий блок",
+  "menu.thaumcraft.golem_seal.empty_hand": "Пустая рука",
+  "menu.thaumcraft.golem_seal.carried_hand": "Переносимый предмет",
+  "menu.thaumcraft.golem_seal.sneak": "Красться",
+  "menu.thaumcraft.golem_seal.no_sneak": "Стоять"
 }
