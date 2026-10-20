@@ -1,0 +1,32 @@
+[
+  {
+    "case": "unsaved",
+    "workers": 1,
+    "blockIron": 13,
+    "entityIron": 0,
+    "totalIron": 13,
+    "hopperGold": 17,
+    "itemEntityGold": 0,
+    "totalGold": 17
+  },
+  {
+    "case": "saved",
+    "workers": 1,
+    "blockIron": 13,
+    "entityIron": 0,
+    "totalIron": 13,
+    "hopperGold": 17,
+    "itemEntityGold": 0,
+    "totalGold": 17
+  },
+  {
+    "case": "split",
+    "workers": 1,
+    "blockIron": 13,
+    "entityIron": 13,
+    "totalIron": 26,
+    "hopperGold": 17,
+    "itemEntityGold": 17,
+    "totalGold": 34
+  }
+]

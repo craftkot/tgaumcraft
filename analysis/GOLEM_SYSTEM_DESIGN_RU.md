@@ -780,3 +780,8 @@ M41 actual dedicated proof: две source-formed50tick машины/двеdust p
 ### M42 — actual TCP projection
 
 Две JVM и реальный InetSocketAddress/no integrated server проверены в клиенте; owner menu C2S area/color→actual S2C cache update/sameinstance→bell one-drop removal/остальные2seal entries сохранены. Dedicated server BUILD SUCCESS3m24s, все измерения saved; separate native client GUI quit/exit0. Through-wall screenshot первогоTCP run выявил vanilla NO_DEPTH_TEST no-op. fd38183 явно disable/restores previous GL flag в scoped state; actual GL assertion previous=true/currentfalse и повторный raw screenshot положительны. [Доказательства и инструкция](evidence/golems/client_seals_tcp_2026_10_20/README.md). Core39962/2901, native233 baseline; последующий client-only fix не требует повторять полный dedicated suite. Открыты crash save-order/инвентарная atomicity, multi-user/networkstress, moddedAPI, originalvisuals и survival dependencies.
+
+
+### M43 — границы аварийного сохранения
+
+Actual halt86/новая JVM matrix: unsaved откатывается к последнему полному checkpoint, resumedelivery13/vanilla hopper17 без replay; saved удерживает13/17; split native block-save prefix восстанавливает26/34 (дублирование и в golem path, и в vanilla control). Это измеренный HAZARD, не atomic recovery PASS. ServerLevel пишет SavedData→block chunks→entity store отдельно. Эвристическое удаление одинаковых stacks не обосновано; общий durable protocol должен учитывать всех владельцев и внешние callbacks, что выходит за локальную архитектуру нынешнего M10. [Raw evidence и воспроизведение](evidence/golems/crash_2026_10_20/README.md). Graceful restart/live unload проверены отдельно и не означают multi-file crash atomicity.
