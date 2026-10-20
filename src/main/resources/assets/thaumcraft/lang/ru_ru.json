@@ -454,5 +454,6 @@
   "menu.thaumcraft.golem_seal.guard_animals_off": "Животные: выкл.",
   "menu.thaumcraft.golem_seal.guard_players_on": "Игроки: вкл.",
   "menu.thaumcraft.golem_seal.guard_players_off": "Игроки: выкл.",
-  "menu.thaumcraft.golem_seal.guard_animals_help": "Включая монстров и жителей."
+  "menu.thaumcraft.golem_seal.guard_animals_help": "Включая монстров и жителей.",
+  "entity.thaumcraft.golem_dart": "Дротик голема"
 }
