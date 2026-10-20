@@ -14,3 +14,10 @@
 Воспроизведение: положить проверенный официальный JAR в `build/golem-crop-integration/mods/`, затем Java21/Gradle9.2.1 `gradle --offline --init-script tools/golems.gradle build -x test runGolemCropIntegration`. В обычный `runGolemGameTest` этот mod и namespace не добавляются. Собственный synthetic template скопирован из golem_test порта, оригинальная графика не используется. Raw first compile выявил protected getAgeProperty; исправлено на публичный native getStateForAge, затем четыре настоящих теста выполнены.
 
 Пока проверены одна версия/мод/четыре сценария; произвольные non-BlockItem callbacks, все моды/все custom soils/сетевая графика и crash atomicity этим не закрыты. Следом отдельная foreign item/intent cold JVM-пара.
+
+
+## M48 cold: foreign item registry + SavedData
+
+**WRITE51s21:40:38UTC/READ47s21:41:47UTC explicitPASS**, две настоящие dedicated JVM с тем же Farmer’s Delight binary. Actual protected cabbage harvest создал1native cabbage, сохранил originalUUID/owner/XP1/NoAItrue/2named foreign cabbage seeds и intent с `farmersdelight:cabbages`/настоящими item components. Новый процесс заново регистрирует adapter и восстанавливает native foreign item codec/intent; enabledAI→actualyoungcabbage/remainingnamedseed1, everytick seed+plant=2, обычнаякапуста1 сохранена, namedground0, pendingclear/oneworker/100tickno replay. Fixture не производит ожидаемый урожай из testmetadata.
+
+Воспроизведение: свежий отдельный `build/golem-seed-external-restart`, localhost25623/eula/server.properties и проверенныйJAR в его `mods/`. `-PgolemRestartScenario=seeded_external -PgolemRestartPhase=write build -x test runGolemRestart`, затем та же scenario/phase=read/runGolemRestart. Raw `golems-seed-external-restart-{write,read}.log`. Старые миры не перезаписывать. Cold test добавляет только own route/probe, не compile dependency/общее сохранение.
