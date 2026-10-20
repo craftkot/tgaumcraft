@@ -426,5 +426,10 @@
   "message.thaumcraft.golem.seal.breaker.removed": "Печать разрушения снята",
   "item.thaumcraft.seal_lumber": "Печать: Лесоруб",
   "message.thaumcraft.golem.seal.lumber.placed": "Печать лесоруба установлена",
-  "message.thaumcraft.golem.seal.lumber.removed": "Печать лесоруба снята"
+  "message.thaumcraft.golem.seal.lumber.removed": "Печать лесоруба снята",
+  "item.thaumcraft.seal_breaker_advanced": "Печать: Продвинутое разрушение",
+  "message.thaumcraft.golem.seal.breaker_advanced.placed": "Продвинутая печать разрушения установлена",
+  "message.thaumcraft.golem.seal.breaker_advanced.removed": "Продвинутая печать разрушения снята",
+  "menu.thaumcraft.golem_seal.silk": "Шёлковое касание",
+  "menu.thaumcraft.golem_seal.no_silk": "Обычная добыча"
 }
