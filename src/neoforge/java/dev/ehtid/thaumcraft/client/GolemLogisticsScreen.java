@@ -65,6 +65,7 @@ public final class GolemLogisticsScreen extends AbstractContainerScreen<GolemLog
         mod.setMessage(label(menu.mod()?"mod_match":"mod_ignore"));
         mode.active=!menu.stock(); mode.setMessage(label(menu.blacklist()?"blacklist":"whitelist"));
         nbt.setMessage(label(menu.advancedBreaker()?(menu.silk()?"silk":"no_silk"):(menu.matchNbt()?"nbt_match":"nbt_ignore")));
+        nbt.setTooltip(menu.advancedBreaker()?net.minecraft.client.gui.components.Tooltip.create(Component.translatable("enchantment.minecraft.silk_touch")):null);
         for(var button:limits) button.visible=button.active=panel==0&&menu.hasLimits();
         leave.visible=leave.active=panel==0&&menu.canLeaveOne(); leave.setMessage(label(menu.leaveOne()?"leave_one":"take_all"));
         single.visible=single.active=panel==0&&(menu.provider()||menu.advancedEmpty()||menu.advancedFill()); single.setMessage(label(menu.provider()?(menu.single()?"single":"batch"):menu.advancedFill()?(menu.existingOnly()?"existing_only":"any_stock"):(menu.cycle()?"cycle":"all_filters")));

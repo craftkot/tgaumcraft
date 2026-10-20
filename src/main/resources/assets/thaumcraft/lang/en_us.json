@@ -442,5 +442,7 @@
   "menu.thaumcraft.golem_seal.empty_hand": "Empty hand",
   "menu.thaumcraft.golem_seal.carried_hand": "Carried item",
   "menu.thaumcraft.golem_seal.sneak": "Sneak",
-  "menu.thaumcraft.golem_seal.no_sneak": "Stand"
+  "menu.thaumcraft.golem_seal.no_sneak": "Stand",
+  "menu.thaumcraft.golem_seal.use_provision": "Request items: on",
+  "menu.thaumcraft.golem_seal.use_no_provision": "Request items: off"
 }

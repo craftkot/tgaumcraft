@@ -85,7 +85,7 @@ public final class GolemSealScreen extends AbstractContainerScreen<GolemSealMenu
         metadata.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.metadata()?"meta_match":"meta_ignore")));
         ore.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.ore()?"ore_match":"ore_ignore")));
         mod.setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.mod()?"mod_match":"mod_ignore")));
-        String[] on={"left_click","empty_target","empty_hand","sneak","provision"},off={"right_click","solid_target","carried_hand","no_sneak","no_provision"};
+        String[] on={"left_click","empty_target","empty_hand","sneak","use_provision"},off={"right_click","solid_target","carried_hand","no_sneak","use_no_provision"};
         for(int i=0;i<5;i++) { useActions[i].visible=useActions[i].active=menu.use()&&panel==2; useActions[i].setMessage(Component.translatable("menu.thaumcraft.golem_seal."+(menu.useToggle(i+4)?on[i]:off[i]))); }
         mode.visible=mode.active=matchNbt.visible=matchNbt.active=ordinary&&!menu.harvest()&&!menu.lumber();
         replant.visible=replant.active=provision.visible=provision.active=menu.harvest();

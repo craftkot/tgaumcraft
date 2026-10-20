@@ -2,13 +2,15 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 20.10.2026, M10.31
+## Актуальный checkpoint — 20.10.2026, M10.32
 
 Фактически реализованы540 ground-конструкций/paid researched Press/Provide-Stock/Harvest10vanilla cultures, source Cocoa attachments, advanced Empty pcycle, metadata/NBT/ore/mod matching, Advanced Pickup/Fill настоящий Breaker с arms3, Lumber Advanced Breaker/Silk Touch и SealUse с actualcallbacks/provisioning. **Java21 full Core39879construction/2856task PASS; full NeoForge181/181 required GameTests PASS**. Matching/Advanced dedicated-server WRITE+READ assertions реально PASS, логи/compiled baselines ниже; Breaker/Lumber/Silk/Use cold WRITE+READ assertions тоже PASS. Full M10/59/100 не объявляются.
 
-Следующий конкретный пункт — **настоящий клиент**: portable Xvfb/xdotool подготовлены внеGit, isolated M10 run/GUI/frame проверка ещё впереди. Затем Guard/GuardAdvanced/Butcher и climbing/flight/combat parts. M06 generic infusion для Harvest/Breaker и source advanced component acquisition — external integration dependency; main unchanged. Original visuals/client, mod crop/clickable API, live chunk unload и crash injection открыты. Portable Xvfb теперь запущен, graphical client ещё не запускался.
+**Настоящий Minecraft-клиент проверен**: два отдельных запуска Minecraft1.21.1/NeoForge21.1.250, реальные мышиные C2S-переключения Use/psilk, actual wheeled AI Pickup→Fill11 с сохранением суммы каждый tick. Второй запуск после исправлений интерфейса завершён через штатное сохранение/выход, BUILD SUCCESS9m41s. Необработанные [снимки и инструкция](../evidence/golems/client_2026_10_20/README.md). Это opt-in creative fixture, исходная модель/анимация колёс и все остальные GUI не объявляются проверенными.
 
-Текущий branch HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Исторические checkpoint sections ниже не описывают текущий остаток. Main fresh-fetch19.10 остаётся `a4280834`; lightweight verify-connection CI не заменяет181 local GameTests. Only feature/golems, shared ROADMAP/registry/build.gradle/CI/research и чужие ветки untouched; без merge/rebase/force/delete.
+Следующий конкретный пункт — Guard/GuardAdvanced/Butcher и combat parts, затем climbing/flight. M06 generic infusion для Harvest/Breaker и source advanced component acquisition — external integration dependency; main unchanged. Original visuals, mod crop/clickable API, live chunk unload и crash injection открыты.
+
+Текущий branch HEAD: `git rev-parse feature/golems`; Draft [PR#3](https://github.com/craftkot/tgaumcraft/pull/3), не объединять. Исторические checkpoint sections ниже не описывают текущий остаток. Main fresh-fetch20.10 остаётся `a4280834`; lightweight verify-connection CI не заменяет181 local GameTests. Only feature/golems, shared ROADMAP/registry/build.gradle/CI/research и чужие ветки untouched; без merge/rebase/force/delete.
 
 ## Границы и исходное состояние
 
@@ -495,3 +497,9 @@ Core теперь содержит все18 part costs для2400 combinations, 
 ### 2026-10-20 — M10.31 WHEELED
 
 После2d2a7b0 sourceEntity/GolemLegWheels: serveronlygroundNav/speed+.25/step.5 already implemented adapters; functionitself client-only. Runtimegate now540 source-supported ground families, noflight/climb/combat prematurely enabled. **Core39879/2856PASS** (+7goldens); first181run180PASS/1fixture initialonGround failure, fixedwait5/actualcrossing-time; **final181/181PASS1m39s**, `golems-wheels-final.log`. Real fastergroundmovement/Pickup→Fill11eachTick/paid8items12Machina→oneactualplacer/entity/NBT checked. Corrected oldM27 prose/testlabel: arms3needsdiamond2+piston2+base1, notaggressionmodule; Core/economy alwayscorrect, thisdoesnotchange paidcost. No persistent schema/new language keys; no expensive redundantcold. Thiscommit functionalCoregate/3tests/source docs. Параллельно подготовленportableXvfb/xdotool изDebian внеGit, localdisplay:97 реально1280×800; clientещёнезапускался. СледомisolatedM10clientrun/реальнаяGUIпроверка, затембоевыеseals/остальныеспецчасти. SharedGradle/CI/main untouched.
+
+### 2026-10-20 — M10.32 настоящий клиент
+
+После8588307 подготовлен isolated opt-in golemClient run/probe без shared Gradle/CI. Два реальных запуска Java21/Minecraft1.21.1/NeoForge21.1.250/LWJGL3.3.3 под portable Xvfb: первый BUILD SUCCESS13m12s, второй после исправлений **BUILD SUCCESS9m41s**, оба штатно сохранили мир и завершили клиент. Второй actual C2S Use emptyHand08:31:20UTC/psilk08:35:00UTC и native wheeled AI actual11→barrel08:35:16UTC assertionsPASS; начальныеflagsfalse, success не seeded. Screenshots без редактирования в analysis/evidence/golems/client_2026_10_20. Найдены и исправлены source Use item-request label (ошибочно harvest seeds), длинный RU Silk button+localizedtooltip, два реально отсутствовавших vanilla texture paths compass/clock→compass_00/clock_00; второй fresh bake не выдаёт warnings на эти два item. Existing foreign base_metal/caster warnings и offline auth warning не скрываются.
+
+Final packaged build после выхода клиента PASS; CRC/expected classes/uniqueENRUJSON PASS, SHA256 a798699a24c75b551470aba4aae8c6674c0d026b326af050161cf1eac0999bd4. Server production после181-suite не менялся (opt-in integrated-only probe, UI/resources); дорогой181повтор без причины не запускался. Full Core39879/2856 и181GameTests остаются последним server baseline. Main fresh-fetch a4280834 unchanged; own8588307 CircleCI#408 verify-connection SUCCESS, отдельно от real local proof. Следом маленький client-fix commit и proof/harness commit; затем продолжается combat source audit/реальная реализация.
