@@ -807,3 +807,8 @@ Generic replant хранит canonical blockID+actualseed components/support/soi
 ### M47 — отдельный результат посадки
 
 `registerSeed(originCrop, actualSeed)` допускает Native BlockItem другого блока, как позволяет source seed map. Intent хранит `crop` (источник), `plant` (ожидаемый результат), точные item components и прежние support/soil guards. Результат выводится из BlockItem и перепроверяется при load/completion; cross-block intent без `plant` или с поддельным результатом не исполняется. Старое same-block NBT продолжает читаться. Actual protected carrot harvest→named wheat seeds2→native wheat age0/remain1 и защитные сценарии проверены полными248GameTests. Произвольные non-BlockItem callbacks и нестандартные directional plant adapters остаются открыты; полный внешний mod ABI не заявляется. Это расширяет M45, снимая его прежнее same-block ограничение.
+
+
+### M48 — проверка внешнего binary без compile coupling
+
+Собственный optional integration run загружает официальный Farmer’s Delight1.3.4 JAR из отдельного mods-dir. Test adapters enroll реальные native crop states/seed item templates через публичный API; normal gameplay не меняется. Четыре настоящих native сценария проверили cabbage loot/paidplant/NBT, enabled onion AI/conservation, tomato empty-hand callback и protected owner cancellation. 4/4PASS отдельно от248baseline; отсутствие JAR не пропускается как PASS. Прямых импортов foreign Java-классов/общих dependencies нет. Это закрывает первый конкретный foreign binary proof, но не полную mod API parity, non-BlockItem/customsoil matrix или все версии. [Происхождение/доказательства](evidence/golems/external_crops_2026_10_20/README.md).

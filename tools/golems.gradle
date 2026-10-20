@@ -15,6 +15,12 @@ allprojects {
                 jvmArguments.add '-Xmx1G'
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_stress'
             }
+            neo.runs.create('golemCropIntegration') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-crop-integration')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_crops'
+            }
             neo.runs.create('golemClient') {
                 client()
                 gameDirectory = project.layout.buildDirectory.dir('golem-client')
