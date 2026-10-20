@@ -88,4 +88,11 @@ public final class GolemClimberGameTests {
         h.runAfterDelay(95,()->{ h.assertTrue(!press.job().active()&&jar.snapshot().amount()==0,"Actual researched job paid exactly15units"); owner.setItemInHand(InteractionHand.MAIN_HAND,press.removeItem(0,1)); var pos=h.absolutePos(new BlockPos(9,0,8)); var ctx=new UseOnContext(owner,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos).add(0,.5,0),Direction.UP,pos,false));
             h.assertTrue(GolemModule.GOLEM_PLACER.get().useOn(ctx).consumesAction()&&owner.getMainHandItem().isEmpty(),"One actual climber placer consumed"); var entities=h.getLevel().getEntitiesOfClass(ThaumcraftGolem.class,h.getBounds()); h.assertTrue(entities.size()==1&&entities.getFirst().design().equals(design())&&entities.getFirst().getNavigation() instanceof WallClimberNavigation&&!entities.getFirst().isNoAi(),"One real enabled climber with correct initialization navigation"); entities.getFirst().discard(); h.succeed(); });
     }
+    @GameTest(template="golem_climb_test",batch="climber_fall",timeoutTicks=40)
+    public static void sourceClimberFallImmunityPreventsActualDamageWhileWalkerStillFalls(GameTestHelper h) {
+        floor(h); var owner=UUID.randomUUID(); var climber=worker(h,design(),owner,2,5); var walker=worker(h,GolemDesign.defaultWood(),owner,2,3); climber.setNoAi(true); walker.setNoAi(true); float health=climber.getHealth(); float walkingHealth=walker.getHealth(); var damage=h.getLevel().damageSources().fall();
+        h.assertTrue(!climber.causeFallDamage(10,1,damage)&&climber.getHealth()==health,"Source CLIMBER rejects actual fall damage");
+        h.assertTrue(walker.causeFallDamage(10,1,damage)&&walker.getHealth()<walkingHealth,"Ordinary walker retains real native fall damage"); climber.discard(); walker.discard(); h.succeed();
+    }
+
 }

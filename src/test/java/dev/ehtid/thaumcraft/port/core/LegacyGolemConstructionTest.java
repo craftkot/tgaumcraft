@@ -234,6 +234,9 @@ public final class LegacyGolemConstructionTest {
         same(1,component(hauler,"minecraft:leather",0)); same(1,component(hauler,"minecraft:chest",0));
         same(Set.of("MATSTUDWOOD","MINDBIOTHAUMIC","MATSTUDBRASS","MINDCLOCKWORK"),GolemRuntimeRules.research(hauler));
         var iron=GolemDesign.fromIds(1,0,0,0,0,0); var clay=GolemDesign.fromIds(2,0,0,0,0,0);
+        same(false,GolemDamageRules.fallImmune(GolemDesign.defaultWood()));
+        same(true,GolemDamageRules.fallImmune(GolemDesign.fromIds(0,0,0,2,0,0)));
+        same(true,GolemDamageRules.fallImmune(GolemDesign.fromIds(0,0,0,3,0,0)));
         same(0F,GolemDamageRules.amount(iron,10,30,true,false,false));
         same(3F,GolemDamageRules.amount(iron,10,30,false,true,false));
         same(15F,GolemDamageRules.amount(iron,100,30,false,true,false));

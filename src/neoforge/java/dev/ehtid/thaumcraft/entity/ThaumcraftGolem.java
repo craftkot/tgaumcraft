@@ -194,6 +194,11 @@ public final class ThaumcraftGolem extends PathfinderMob {
         return hit;
     }
 
+    @Override public boolean causeFallDamage(float distance,float multiplier,net.minecraft.world.damagesource.DamageSource source) {
+        return !dev.ehtid.thaumcraft.port.core.golem.GolemDamageRules.fallImmune(design())
+                && super.causeFallDamage(distance,multiplier,source);
+    }
+
     @Override protected void actuallyHurt(net.minecraft.world.damagesource.DamageSource source,float amount) {
         // NeoForge21.1 actuallyHurt reads its current DamageContainer, not this float argument.
         // Apply the original pre-armor adjustment to that same nested damage context.
