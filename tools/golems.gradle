@@ -9,6 +9,13 @@ allprojects {
                 gameDirectory = project.layout.buildDirectory.dir('golem-gametest')
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft'
             }
+            neo.runs.create('golemClient') {
+                client()
+                gameDirectory = project.layout.buildDirectory.dir('golem-client')
+                jvmArguments.add '-Xmx2G'
+                programArguments.addAll '--width', '1280', '--height', '800'
+                systemProperty 'thaumcraft.golemClientProbe', 'true'
+            }
             neo.runs.create('golemRestart') {
                 server()
                 def scenario = project.findProperty('golemRestartScenario') ?: ''
