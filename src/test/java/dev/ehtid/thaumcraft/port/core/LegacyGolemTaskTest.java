@@ -588,6 +588,14 @@ public final class LegacyGolemTaskTest {
     }
 
     public static void main(String[] args) throws InterruptedException {
+        eq(1F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(0));
+        eq(.75F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(64));
+        eq(.5F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(128));
+        eq(0F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(256));
+        eq(0F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(257));
+        eq(0F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.opacity(Double.NaN));
+        eq(.7F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.unpaintedChannel(0,0,4));
+        eq(.8F,dev.ehtid.thaumcraft.port.core.golem.GolemSealVisualRules.unpaintedChannel((float)(Math.PI*2),0,4));
         combatSeals();
         breakerRules();
         advancedBreakerRules();

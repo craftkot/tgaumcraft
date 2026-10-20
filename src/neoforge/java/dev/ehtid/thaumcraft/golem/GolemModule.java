@@ -87,7 +87,7 @@ public final class GolemModule {
     public static final DeferredItem<GolemPlacerItem> GOLEM_PLACER = ITEMS.registerItem(
             "golem", GolemPlacerItem::new, new Item.Properties());
     public static final DeferredItem<GolemBellItem> GOLEM_BELL = ITEMS.registerItem("golem_bell", GolemBellItem::new, new Item.Properties().stacksTo(1));
-    public static final DeferredItem<Item> BLANK_SEAL = ITEMS.registerSimpleItem("seal_blank");
+    public static final DeferredItem<Item> BLANK_SEAL = ITEMS.registerItem("seal_blank",dev.ehtid.thaumcraft.item.GolemBlankSealItem::new);
     public static final DeferredItem<GolemSealItem> PICKUP_SEAL = ITEMS.registerItem(
             "seal_pickup", GolemSealItem::new, new Item.Properties());
     public static final DeferredItem<GolemSealItem> FILL_SEAL = ITEMS.registerItem(
@@ -131,6 +131,7 @@ public final class GolemModule {
         BLOCK_ENTITIES.register(bus);
         bus.addListener(GolemModule::capabilities);
         bus.addListener(GolemModule::attributes);
+        bus.addListener(dev.ehtid.thaumcraft.golem.network.GolemSealSync::register);
         bus.addListener(GolemModule::creativeContents);
     }
 

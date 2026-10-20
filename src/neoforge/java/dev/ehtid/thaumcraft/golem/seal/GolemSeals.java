@@ -106,8 +106,14 @@ public final class GolemSeals extends SavedData {
     private final Map<Integer, ItemStack> emptyCandidates = new HashMap<>();
     private int nextTaskId;
 
+    private ServerLevel attachedLevel;
     public static GolemSeals get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
+        var data=level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
+        data.attachedLevel=level;
+        return data;
+    }
+    private void publish(Seal seal) {
+        if(attachedLevel!=null) dev.ehtid.thaumcraft.golem.network.GolemSealSync.changed(attachedLevel,seal);
     }
 
     @SubscribeEvent
@@ -138,6 +144,7 @@ public final class GolemSeals extends SavedData {
         SealKey key = new SealKey(pos, face);
         if (seals.containsKey(key)) return false;
         seals.put(key, new Seal(key, owner, (byte) 0, (byte) 0, false, java.util.Objects.requireNonNull(type)));
+        publish(seals.get(key));
         setDirty();
         return true;
     }
@@ -217,6 +224,7 @@ public final class GolemSeals extends SavedData {
     private boolean replace(Seal current, Seal replacement) {
         logistics.changed(current.key());
         seals.put(current.key(), replacement);
+        publish(replacement);
         watchedFillTasks.remove(current.key());
         for (var entry : new ArrayList<>(taskSeals.entrySet())) {
             if (entry.getValue().equals(current.key())) suspend(entry.getKey());
@@ -244,6 +252,7 @@ public final class GolemSeals extends SavedData {
         farm.removed(key); breaker.removed(key); lumber.removed(key); use.removed(key); combat.removed(key);
         emptyCycles.remove(key);
         seals.remove(key);
+        if(attachedLevel!=null) dev.ehtid.thaumcraft.golem.network.GolemSealSync.removed(attachedLevel,key);
         watchedFillTasks.remove(key);
         for (var entry : new ArrayList<>(taskSeals.entrySet())) {
             if (entry.getValue().equals(key)) suspend(entry.getKey());

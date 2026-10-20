@@ -14,7 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 
 /** Places/removes basic seals; re-use an owned face to open its filter menu. Bell remains separate work. */
-public final class GolemSealItem extends Item {
+public final class GolemSealItem extends Item implements dev.ehtid.thaumcraft.golem.GolemSealDisplayer {
     private final GolemSeals.Type type;
     public GolemSealItem(Properties properties) {
         this(properties, GolemSeals.Type.PICKUP);

@@ -18,7 +18,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 /** BETA26 bell block use: open a face's seal, or sneak-remove and drop its exact item. */
-public final class GolemBellItem extends Item {
+public final class GolemBellItem extends Item implements dev.ehtid.thaumcraft.golem.GolemSealDisplayer {
     public GolemBellItem(Properties properties) { super(properties); }
 
     @Override public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) { return useOn(context); }
