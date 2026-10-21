@@ -301,8 +301,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         ItemStack capturedSalis = originalSalis.displayedItem().copy();
         if (capturedCenter.getCount() != 1
                 || !capturedCenter.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !preview.recipe().aspectTag().equals(
-                        CrystalEssenceItem.legacyAspect(capturedCenter))
+                || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                        capturedCenter, preview.recipe().aspectTag())
                 || capturedSeeds.getCount() != 1 || !capturedSeeds.is(Items.WHEAT_SEEDS)
                 || capturedSalis.getCount() != 1
                 || !capturedSalis.is(ThaumcraftItems.SALIS_MUNDUS.get()))
@@ -403,7 +403,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)
                 || center.displayedItem().getCount() != 1
                 || !center.displayedItem().is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !spec.aspectTag().equals(CrystalEssenceItem.legacyAspect(center.displayedItem()))
+                || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                        center.displayedItem(), spec.aspectTag())
                 || originalCentralInput.isEmpty()
                 || !ItemStack.isSameItemSameComponents(
                         originalCentralInput, center.displayedItem()))
@@ -636,7 +637,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         ItemStack expected = center.displayedItem().copy();
         if (expected.getCount() != 1
                 || !expected.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !recipe.aspectTag().equals(CrystalEssenceItem.legacyAspect(expected)))
+                || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                        expected, recipe.aspectTag()))
             return;
 
         // Reservation is checkpointed before the real central inventory
@@ -874,8 +876,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         .findFirst().orElse(null);
                 if (spec == null || originalCentralInput.getCount() != 1
                         || !originalCentralInput.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                        || !spec.aspectTag().equals(
-                                CrystalEssenceItem.legacyAspect(originalCentralInput)))
+                        || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                                originalCentralInput, spec.aspectTag()))
                     throw new IllegalArgumentException("Original central crystal snapshot differs from recipe");
                 if (recipeInstability != spec.instability())
                     throw new IllegalArgumentException("Saved infusion instability differs from original recipe");
