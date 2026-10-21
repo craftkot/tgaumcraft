@@ -65,6 +65,39 @@ public final class CrystalFarmerParityTest {
             eq(5,half.cost().getAmount(aspects.CRYSTAL));
             eq(2,half.cost().getAmount(aspects.TRAP));
         }
+        // Physical jar payment evidence: the successful server debit
+        // must reduce EXACTLY one unit, preserve the filter, and clear the
+        // aspect only when the last unit is consumed. A boolean success
+        // without physical balance movement is not sufficient.
+        for (var recipe : catalog) {
+            var named = recipe.aspectTag();
+            for (int initial : new int[]{1, 2, 10, 250}) {
+                for (String filter : new String[]{null, named}) {
+                    var before = new LegacyEssentiaJarLogic.State(named, filter, initial);
+                    var actual = LegacyEssentiaJarLogic.take(before, named, 1);
+                    eq(1, actual.transferred());
+                    eq(true, LegacyInfusionJarDebitEvidence.exactlyOne(
+                            named, before, actual.state(), true));
+                    eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(
+                            named, before, before, true));
+                    eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(
+                            named, before, actual.state(), false));
+                    eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(
+                            "unexpected", before, actual.state(), true));
+                    var badFilter = new LegacyEssentiaJarLogic.State(
+                            actual.state().aspect(), "different", actual.state().amount());
+                    eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(
+                            named, before, badFilter, true));
+                    if (initial > 1) {
+                        var noDebit = new LegacyEssentiaJarLogic.State(named, filter, initial);
+                        eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(
+                                named, before, noDebit, true));
+                    }
+                }
+            }
+        }
+        eq(false, LegacyInfusionJarDebitEvidence.exactlyOne(null, null, null, true));
+        eq(false, LegacyInfusionJarDebitEvidence.exactlyOne("aer", null, null, false));
         eq(null,LegacyInfusionCrystalFarmerCatalog.forAspect("unknown"));
         System.out.println("Crystal farmer BETA26 parity: OK ("+assertions+" assertions)");
     }
