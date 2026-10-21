@@ -100,8 +100,10 @@ public final class ResearchIndexScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("gui.back"), b -> onClose())
                 .bounds(x + 41, y + 307, 150, 20).build());
         readPage = addRenderableWidget(Button.builder(Component.literal("Read page"), b -> {
+            // Unknown (but discoverable) nodes are graph hints only:
+            // do not open a detail screen that must conceal its contents.
             if (selectedEntry != null && currentEntries().stream().anyMatch(
-                    e -> e.key().equals(selectedEntry)))
+                    e -> e.key().equals(selectedEntry) && e.known()))
                 minecraft.setScreen(new ResearchPageScreen(this, selectedEntry));
         }).bounds(x + 41, y + 283, 150, 19).build());
         viewToggle = addRenderableWidget(Button.builder(
@@ -152,7 +154,8 @@ public final class ResearchIndexScreen extends Screen {
         for (Button pan : panButtons) pan.visible = graphView;
         if (readPage != null) readPage.active = selectedEntry != null
                 && LegacyResearchPages.get(selectedEntry) != null
-                && entries.stream().anyMatch(e -> e.key().equals(selectedEntry));
+                && entries.stream().anyMatch(
+                    e -> e.key().equals(selectedEntry) && e.known());
     }
 
     @Override

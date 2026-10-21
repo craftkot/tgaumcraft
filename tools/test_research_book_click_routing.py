@@ -26,4 +26,9 @@ assert "bounds(x + 395, y + 284, 67, 20)" in source
 assert "bounds(x + 398, y + 308, 35, 20)" in source
 assert "selectedEntry = entries.get(index).key();" in source
 assert "return false;" in method
-print("M07 research book widget-priority/click routing: PASS")
+# A discoverable but UNKNOWN node can be selected on the original tree,
+# but its research stage content must remain hidden until server discovery.
+assert "e -> e.key().equals(selectedEntry) && e.known()" in source
+assert "e -> e.key().equals(selectedEntry) && e.known());" in source
+
+print("M07 research book widget-priority and discovered-page gating: PASS")
