@@ -103,6 +103,33 @@ public final class CrystalFarmerFinishCheckpointTest {
                 bad(() -> afterCrash.finishAfterActualCenterReplacement(true));
             }
         }
+        // A visually identical output planted on the center pedestal must
+        // NEVER turn a STALLED reservation into accepted delivery.
+        // The receipt's UUID and original output item ID are retained in
+        // the SAME physical center pedestal NBT as the actual output.
+        var ritualId = java.util.UUID.fromString("50d6639c-f9d8-4f1a-8e40-1c6160243f01");
+        var foreignId = java.util.UUID.fromString("9a56c783-64a5-4239-a65a-8bf18542f005");
+        for (var recipe : LegacyInfusionCrystalFarmerCatalog.all()) {
+            String output = "thaumcraft:crystal_" + recipe.aspectTag();
+            var receipt = new LegacyCrystalFarmerOutputReceipt(ritualId, output);
+            eq(true, receipt.provesSavedPublication(ritualId, output, true));
+            eq(false, receipt.provesSavedPublication(foreignId, output, true));
+            eq(false, receipt.provesSavedPublication(null, output, true));
+            eq(false, receipt.provesSavedPublication(ritualId,
+                    "thaumcraft:crystal_wrong", true));
+            eq(false, receipt.provesSavedPublication(ritualId, output, false));
+            eq(false, receipt.provesSavedPublication(ritualId, null, true));
+            var crashed = LegacyCrystalFarmerFinishCheckpoint.restore("RESERVED");
+            eq(crashed, crashed.acknowledgeAlreadyPublished(true, true,
+                    receipt.provesSavedPublication(foreignId, output, true)));
+            eq(crashed, crashed.acknowledgeAlreadyPublished(true, true,
+                    receipt.provesSavedPublication(ritualId, output, false)));
+            eq(true, crashed.acknowledgeAlreadyPublished(true, true,
+                    receipt.provesSavedPublication(ritualId, output, true)).finished());
+        }
+        bad(() -> new LegacyCrystalFarmerOutputReceipt(null, "thaumcraft:crystal_aer"));
+        bad(() -> new LegacyCrystalFarmerOutputReceipt(ritualId, ""));
+        bad(() -> new LegacyCrystalFarmerOutputReceipt(ritualId, null));
         System.out.println("BETA26 Crystal Farmer finish reservation: OK ("+checks+" assertions)");
     }
 }
