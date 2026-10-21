@@ -22,6 +22,21 @@ public final class CrystalFarmerParityTest {
             eq(tags[i], recipe.aspectTag());
             eq(i==6 ? 4 : 0, recipe.instability());
             eq(recipe, LegacyInfusionCrystalFarmerCatalog.forAspect(tags[i]));
+            eq(true, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of(new LegacyContainedAspectTags.Entry(tags[i], 1))));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of(new LegacyContainedAspectTags.Entry(tags[i], 2))));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of(new LegacyContainedAspectTags.Entry(tags[i], 0))));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of(new LegacyContainedAspectTags.Entry(tags[i], 1),
+                            new LegacyContainedAspectTags.Entry("other", 1))));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of(new LegacyContainedAspectTags.Entry("other", 1))));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], List.of()));
+            eq(false, LegacyInfusionCrystalFarmerCatalog.exactOriginalCrystalEntries(
+                    tags[i], null));
             var cost = LegacyInfusionCrystalFarmerCatalog.essentia(recipe, aspects);
             eq(10, cost.getAmount(aspects.get(tags[i])));
             eq(10, cost.getAmount(aspects.CRYSTAL));
