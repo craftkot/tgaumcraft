@@ -298,6 +298,10 @@ public final class ResearchIndexScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        // Give active GUI controls first refusal. In list mode the tenth
+        // research row (y + 270..293) intersects the List/Tree toggle
+        // (y + 284..304); intercepting rows first made that button unclickable.
+        if (super.mouseClicked(mouseX, mouseY, mouseButton)) return true;
         if (mouseButton == 0) {
             int x = (width - BOOK_W) / 2, y = (height - BOOK_H) / 2;
             if (graphView) {
@@ -317,7 +321,7 @@ public final class ResearchIndexScreen extends Screen {
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return false;
     }
 
     @Override

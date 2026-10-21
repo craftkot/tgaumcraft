@@ -14,3 +14,6 @@ javac --release 21 -d "$OUT" \
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchBrowserPaginationTest
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchAidDrawStandaloneTest
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchCardDrawRejectionParityTest
+
+# Real client Screen hierarchy unavailable in standalone Java; source-based routing regression.
+python3 tools/test_research_book_click_routing.py
