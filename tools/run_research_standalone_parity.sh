@@ -9,6 +9,8 @@ javac --release 21 -d "$OUT" \
   src/main/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserPagination.java \
   src/main/java/dev/ehtid/thaumcraft/port/core/LegacyTheorycraftDrawEngine.java \
   src/test/java/dev/ehtid/thaumcraft/port/core/ResearchBrowserPaginationTest.java \
-  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchAidDrawStandaloneTest.java
+  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchAidDrawStandaloneTest.java \
+  src/test/java/dev/ehtid/thaumcraft/port/core/ResearchCardDrawRejectionParityTest.java
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchBrowserPaginationTest
 java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchAidDrawStandaloneTest
+java -cp "$OUT" dev.ehtid.thaumcraft.port.core.ResearchCardDrawRejectionParityTest
