@@ -446,8 +446,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      * not accept a caller-provided cost snapshot (which could be replayed).
      * The outstanding costs come only from the persisted, verified ledger.
      *
-     * This ends at the ingredient stage; output and pedestal consumption
-     * remain gated until the original finish transaction is ported.
+     * Every validated debit updates the persisted verified price ledger;
+     * later pedestal consumption and the one-time result use separate
+     * physical receipts and a reservation checkpoint.
      */
     public LegacyInfusionEssentiaCycle.Result drainVerifiedInfusionEssentia() {
         if (!(level instanceof ServerLevel server) || !active || !crafting
@@ -482,7 +483,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
 
     /**
      * Real original five-cycle ingestion of the two verified BETA26
-     * Crystal Farmer ingredients. No recipe output is granted yet.
+     * Crystal Farmer ingredients. Result issuance is a separate operation
+     * guarded by the full paid ledger, two physical receipts and reservation.
      *
      * A countdown only progresses while a matching actual ItemStack still
      * sits on a loaded side pedestal. On the CONSUME cycle the pedestal is
@@ -555,9 +557,6 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         originalSeedInput = ItemStack.EMPTY;
         originalSalisInput = ItemStack.EMPTY;
         ritualStartCostMultiplier = 1.0F;
-        originalCentralInput = ItemStack.EMPTY;
-        originalSeedInput = ItemStack.EMPTY;
-        originalSalisInput = ItemStack.EMPTY;
         finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
         changedAndSync();
     }
@@ -673,8 +672,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             tile.acknowledgeRecoveredCrystalFarmerOutput();
         // Source stage: one REAL unit at most per original matrix craft cycle.
         // A legacy 'crafting:1' tag without our verified checkpoint never
-        // drains resources. After essence reaches zero, wait for the future
-        // original pedestal/finish implementation instead of granting items.
+        // drains resources. The post-payment ingredient and finish stages
+        // are separately gated by original physical pedestal receipts.
         if (tile.crafting && tile.ritualLedger != null
                 && !tile.ritualLedger.readyForIngredients()
                 && tile.ticks % Math.max(1, tile.cycleTime) == 0)
