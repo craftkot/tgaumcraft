@@ -43,13 +43,14 @@ public final class CrystalFarmerInfusionAdapter {
         if (!centerItem.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())) return null;
         String originalAspect = CrystalEssenceItem.legacyAspect(centerItem);
         var spec = LegacyInfusionCrystalFarmerCatalog.forAspect(originalAspect);
-        if (spec == null) return null;
+        if (spec == null || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                centerItem, spec.aspectTag())) return null;
         // The original ItemStack-containing-NBT becomes IngredientNBTTC.
         // Never match another aspect just because Item IDs are identical.
         var original = LegacyInfusionCrystalFarmerCatalog.matcher(
                 spec, ASPECTS,
-                (ItemStack item) -> item.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                        && spec.aspectTag().equals(CrystalEssenceItem.legacyAspect(item)),
+                (ItemStack item) ->
+                        CrystalEssenceItem.isOriginalInfusionCrystal(item, spec.aspectTag()),
                 (ItemStack item) -> item.is(Items.WHEAT_SEEDS),
                 (ItemStack item) -> item.is(ThaumcraftItems.SALIS_MUNDUS.get()));
         var prepared = matrix.prepareInfusionStartFromWorld(knowledge, original);
