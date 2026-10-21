@@ -1,0 +1,28 @@
+{
+  "read_only": true,
+  "worker_count": 1,
+  "worker_uuid": [
+    1794393460,
+    1555189628,
+    -1224300664,
+    -1115143276
+  ],
+  "rankXP": 2,
+  "actual_mainhand": {
+    "components": {
+      "minecraft:custom_name": "\"M45 cold paid seed\""
+    },
+    "count": 1,
+    "id": "thaumcraft:adapter_probe_no_debit"
+  },
+  "crop_at_6_120_6": {
+    "Properties": {
+      "age": "0"
+    },
+    "Name": "minecraft:wheat"
+  },
+  "seal_count": 1,
+  "pending_replants": 0,
+  "ground_callback_seeds": 0,
+  "ground_actual_wheat": 1
+}

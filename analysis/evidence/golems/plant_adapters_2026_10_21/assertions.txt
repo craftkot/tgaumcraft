@@ -29,3 +29,14 @@ BUILD SUCCESSFUL in 1m 8s
 [06:25:52] [Server thread/INFO] [minecraft/GameTestServer]: ========= 248 GAME TESTS COMPLETE IN 1.291 min ======================
 [06:25:52] [Server thread/INFO] [minecraft/GameTestServer]: All 248 required tests passed :)
 BUILD SUCCESSFUL in 2m 22s
+
+# golems-seed-callback-restart-write
+[06:28:43] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_WRITE_ASSERTIONS_OK crossBlock=false externalMod=false callbackSeed=true ordinaryFruit=1
+BUILD SUCCESSFUL in 55s
+
+# golems-seed-callback-restart-read
+[06:30:36] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_READ_ASSERTIONS_OK crossBlock=false externalMod=false callbackSeed=true ordinaryFruit=1
+BUILD SUCCESSFUL in 1m 5s
+
+# golems-nonblock-final-jar
+BUILD SUCCESSFUL in 21s
