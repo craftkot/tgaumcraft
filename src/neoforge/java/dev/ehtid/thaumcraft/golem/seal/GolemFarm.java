@@ -59,12 +59,13 @@ final class GolemFarm {
     private static ItemStack seedFor(Block block,GolemFarmRules.Crop crop) {
         var override=GolemHarvestRegistry.seed(block);return !override.isEmpty()?override:crop!=null&&crop.seed!=null?seed(crop):ItemStack.EMPTY;
     }
-    private static ResourceLocation plantedBlock(ItemStack seed) {
-        return seed.getItem() instanceof BlockItem item?BuiltInRegistries.BLOCK.getKey(item.getBlock()):null;
+    private static ResourceLocation plantedBlock(Block crop,ItemStack seed) {
+        var plant=GolemHarvestRegistry.plantedBlock(crop,seed);
+        return plant==null?null:BuiltInRegistries.BLOCK.getKey(plant);
     }
     private static boolean configured(Plant plant) {
         var block=BuiltInRegistries.BLOCK.get(plant.block);
-        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop))&&Objects.equals(plant.plant,plantedBlock(plant.seed));
+        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop))&&Objects.equals(plant.plant,plantedBlock(block,plant.seed));
     }
     private static SealArea area(GolemSeals.Seal s) {
         return new SealArea(GolemProvisioning.location(s.key()),new SealArea.BlockPos(s.area().getX(),s.area().getY(),s.area().getZ()));
@@ -132,7 +133,7 @@ final class GolemFarm {
                 }
                 boolean farmland=level.getBlockState(w.pos.below()).is(Blocks.FARMLAND);
                 var seed=seedFor(before.getBlock(),crop);
-                var planted=plantedBlock(seed);
+                var planted=plantedBlock(before.getBlock(),seed);
                 var support=Objects.equals(planted,BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))&&before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
                 boolean harvested=actor.gameMode.destroyBlock(w.pos);
                 if(harvested && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && w.seal.harvest().replant()) {
@@ -156,9 +157,11 @@ final class GolemFarm {
                 var placement=context(actor,w.pos.relative(plant.support),plant.support.getOpposite());
                 // Modern BlockItem may target a replaceable clicked support itself. Never plant outside the assigned crop cell.
                 if(!new BlockPlaceContext(placement).getClickedPos().equals(w.pos)) return false;
-                actual.useOn(placement);
+                if(!place(level,actual,placement))return false;
                 success=level.getBlockState(w.pos).is(BuiltInRegistries.BLOCK.get(plant.plant));
                 if(success) {
+                    // Source pays one seed after a successful callback, even if that item does not debit itself.
+                    if(!actual.isEmpty())actual.shrink(GolemFarmRules.SEED_COST);
                     replants.get(w.seal.key()).remove(w.pos); data.setDirty();
                 }
             }
@@ -168,6 +171,34 @@ final class GolemFarm {
             // Recover actual leftover seeds or legitimate auto-pickup inventory from mod callbacks.
             try {GolemInteractionInventory.recover(actor,g);}
             finally {busy.remove(g.getUUID());}
+        }
+    }
+    private static boolean place(ServerLevel level,ItemStack actual,UseOnContext context) {
+        // CommonHooks owns one global snapshot list; never corrupt an enclosing mod callback's capture.
+        if(level.captureBlockSnapshots||level.restoringBlockSnapshots||!level.capturedBlockSnapshots.isEmpty())return false;
+        var target=new BlockPlaceContext(context).getClickedPos();
+        var targetBefore=BlockSnapshot.create(level.dimension(),level,target);
+        try {
+            if(actual.useOn(context).consumesAction())return true;
+            // A failed item callback must not leave an unpaid plant without a placement event.
+            if(!level.getBlockState(target).equals(targetBefore.getState())) {
+                level.restoringBlockSnapshots=true;
+                try {targetBefore.restore(targetBefore.getFlags()|Block.UPDATE_CLIENTS);}
+                finally {level.restoringBlockSnapshots=false;}
+            }
+            return false;
+        }
+        catch(RuntimeException ex) {
+            // CommonHooks lacks a finally around Item.useOn. Restore only this call's actual captured blocks.
+            level.captureBlockSnapshots=false;
+            try {
+                level.restoringBlockSnapshots=true;
+                for(int i=level.capturedBlockSnapshots.size()-1;i>=0;i--){var snapshot=level.capturedBlockSnapshots.get(i);snapshot.restore(snapshot.getFlags()|Block.UPDATE_CLIENTS);}
+                // The event bus can throw after CommonHooks has moved its snapshots into a local list.
+                if(!level.getBlockState(target).equals(targetBefore.getState()))targetBefore.restore(targetBefore.getFlags()|Block.UPDATE_CLIENTS);
+            } finally {level.restoringBlockSnapshots=false;level.capturedBlockSnapshots.clear();}
+            com.mojang.logging.LogUtils.getLogger().warn("Golem planting callback failed; captured blocks restored and actual inventory recovered",ex);
+            return false;
         }
     }
     private static UseOnContext context(FakePlayer actor,BlockPos support) {
@@ -197,7 +228,7 @@ final class GolemFarm {
             var stored=entry.contains("seed",Tag.TAG_COMPOUND)?ItemStack.parseOptional(registries,entry.getCompound("seed")):(crop==null||crop.seed==null?ItemStack.EMPTY:seed(crop));
             if(stored.isEmpty()||!ItemStack.isSameItemSameComponents(expected,stored))continue;
             var planted=entry.contains("plant")?ResourceLocation.parse(entry.getString("plant")):block;
-            if(!Objects.equals(planted,plantedBlock(expected)))continue;
+            if(!Objects.equals(planted,plantedBlock(BuiltInRegistries.BLOCK.get(block),expected)))continue;
             int face=entry.contains("support",Tag.TAG_BYTE)?entry.getByte("support"):Direction.DOWN.ordinal();
             if(face<0 || face>=Direction.values().length) continue;
             var support=Direction.values()[face];

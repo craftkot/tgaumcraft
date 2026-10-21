@@ -21,6 +21,13 @@ allprojects {
                 jvmArguments.add '-Xmx1G'
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_crops'
             }
+            neo.runs.create('golemPlantAdapters') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-plant-adapters')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_plants'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+            }
             neo.runs.create('golemClient') {
                 client()
                 gameDirectory = project.layout.buildDirectory.dir('golem-client')

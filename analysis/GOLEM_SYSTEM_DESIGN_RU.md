@@ -817,3 +817,10 @@ Generic replant хранит canonical blockID+actualseed components/support/soi
 ### M49 — attempted harvest XP, protected world mutation
 
 Source SealHarvest игнорирует boolean harvestBlock и начисляет XP1 за попытку; исходный task при completion suspended. Native завершает lease и начисляет sourceXP1 даже при отказе modern destroyBlock, но сохраняет owner-protection/crop/seeds/no ghostloot/no unfundedreplant. Это не разрешение обходить event и не изменение placementXP: посадка требует настоящего native успеха. Завершённый lease нельзя повторить для XP; новый scan возможен. Full248 и separate external4 повторно прошли, включая настоящий cancellation/stalelease/newscan. [M49 proof/JAR QA](evidence/golems/harvest_attempt_2026_10_21/README.md). До этого M48 protectionXP0 являлся ошибкой port parity и теперь исправлен.
+
+
+### M50 — non-BlockItem native seed adapters
+
+Явный overload `registerSeed(origin, actualSeed, expectedPlant)` заменяет отсутствующий IPlantable контракт: мод предоставляет настоящий Item.useOn, порт не создаёт растение вместо него. Worldresult/authoritative seedcomponents/NBT проверяются против объявления. Source payment1 обеспечен для actual reserved unit даже при callback без self-debit/с изменением компонентов. Old2argAPI и legacy NBT продолжают работать. Existing floor/Cocoa4faces подтверждены; полный generic directional/support callback contract ещё не заявлен.
+
+Farm дополнительно изолирует NeoForge snapshot capture: native Item/event exception → rollbackcapturedblocks+target+flags и actualremaininginventory recovery; PASSmutation не создаёт unpaidplant. Другой enclosingcapture не разрушается. Это не произвольный distributed transaction/общая crash atomicity. 13actual optionaltests, затем full248 и4realFD повторноPASS. Probeitems толькоexplicitopt-in; concreteforeignnonBlockbinary не проверялся. [Доказательства/воспроизведение](evidence/golems/plant_adapters_2026_10_21/README.md).

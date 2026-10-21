@@ -30,9 +30,19 @@ public final class GolemHarvestRegistry {
     public static boolean hasBreakableCrop(Block block){return CROPS.stream().anyMatch(r->r.kind!=Kind.CLICKABLE&&r.states.stream().anyMatch(s->s.is(block)));}
     /** The seed may place a different native BlockItem block (e.g. pumpkin seeds -> stem). */
     public static SeedRegistration registerSeed(Block block,ItemStack seed) {
-        Objects.requireNonNull(block,"crop");
         if(seed.isEmpty()||!(seed.getItem() instanceof BlockItem))throw new IllegalArgumentException("Seed must provide native BlockItem planting; non-BlockItem callbacks need an adapter");
-        var r=new SeedRegistration(block,seed.copyWithCount(1));SEEDS.add(r);return r;
+        return registerSeed(block,seed,((BlockItem)seed.getItem()).getBlock());
+    }
+    /** Explicit replacement for legacy IPlantable: the item's real useOn must plant this block. */
+    public static SeedRegistration registerSeed(Block crop,ItemStack seed,Block plantedBlock) {
+        Objects.requireNonNull(crop,"crop");Objects.requireNonNull(plantedBlock,"plant");
+        if(seed.isEmpty()||plantedBlock.defaultBlockState().isAir())throw new IllegalArgumentException("A real seed and non-air native plant are required");
+        var r=new SeedRegistration(crop,seed.copyWithCount(1),plantedBlock);SEEDS.add(r);return r;
+    }
+    public static Block plantedBlock(Block crop,ItemStack actualSeed) {
+        var snapshot=SEEDS.toArray(SeedRegistration[]::new);
+        for(int i=snapshot.length-1;i>=0;i--){var r=snapshot[i];if(r.block==crop)return ItemStack.isSameItemSameComponents(r.seed,actualSeed)?r.plant:null;}
+        return actualSeed.getItem() instanceof BlockItem item?item.getBlock():null;
     }
     public static ItemStack seed(Block block) {
         var snapshot=SEEDS.toArray(SeedRegistration[]::new);
@@ -45,8 +55,8 @@ public final class GolemHarvestRegistry {
         @Override public void close(){CROPS.remove(this);}
     }
     public static final class SeedRegistration implements AutoCloseable {
-        private final Block block;private final ItemStack seed;
-        private SeedRegistration(Block block,ItemStack seed){this.block=block;this.seed=seed;}
+        private final Block block;private final ItemStack seed;private final Block plant;
+        private SeedRegistration(Block block,ItemStack seed,Block plant){this.block=block;this.seed=seed;this.plant=plant;}
         @Override public void close(){SEEDS.remove(this);}
     }
 }
