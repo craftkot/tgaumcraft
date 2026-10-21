@@ -134,10 +134,13 @@ final class GolemFarm {
                 var seed=seedFor(before.getBlock(),crop);
                 var planted=plantedBlock(seed);
                 var support=Objects.equals(planted,BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))&&before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
-                success=actor.gameMode.destroyBlock(w.pos);
-                if(success && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && w.seal.harvest().replant()) {
+                boolean harvested=actor.gameMode.destroyBlock(w.pos);
+                if(harvested && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && w.seal.harvest().replant()) {
                     replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,new Plant(crop,BuiltInRegistries.BLOCK.getKey(before.getBlock()),planted,seed,support,farmland)); data.setDirty();
                 }
+                // BETA26 ignores harvestBlock's boolean: finish this attempt and award XP even on refusal.
+                // Modern owner protection still prevents block mutation, drops and unfunded replant intents.
+                success=true;
             } else {
                 var plant=replants.get(w.seal.key()).get(w.pos); var slot=carrying(g,plant.seed);
                 if(plant.farmland && (level.getBlockState(w.pos.below()).is(Blocks.DIRT) || level.getBlockState(w.pos.below()).is(Blocks.GRASS_BLOCK)

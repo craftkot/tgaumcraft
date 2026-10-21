@@ -180,10 +180,11 @@ public final class GolemFarmGameTests {
         h.runAfterDelay(8,()->{
             var task=claim(f); java.util.function.Consumer<BlockEvent.BreakEvent> reject=e->{ if(e.getLevel()==h.getLevel()&&e.getPos().equals(f.crop)) e.setCanceled(true); };
             NeoForge.EVENT_BUS.addListener(reject);
-            try { h.assertTrue(!complete(h,f,task) && h.getLevel().getBlockState(f.crop).is(Blocks.WHEAT) && pending(h,f).isEmpty(),"Protected crop stays intact without replant credit"); }
+            try { h.assertTrue(complete(h,f,task) && f.golem.rankXp()==1 && h.getLevel().getBlockState(f.crop).is(Blocks.WHEAT) && pending(h,f).isEmpty(),"Source completes the attempted harvest/XP1; protected crop stays intact without replant credit"); }
             finally { NeoForge.EVENT_BUS.unregister(reject); }
             h.assertTrue(h.getLevel().getEntitiesOfClass(ItemEntity.class,h.getBounds()).isEmpty() && f.golem.getMainHandItem().getCount()==2,"No loot or seed debit on canceled break");
-            h.assertTrue(complete(h,f,task),"Same lease retries after protection permits break"); f.close(); h.succeed();
+            h.assertTrue(!complete(h,f,task)&&f.golem.rankXp()==1,"Completed lease cannot repeat the callback or award duplicate XP");
+            h.runAfterDelay(11,()->{try{h.assertTrue(complete(h,f,claim(f))&&f.golem.rankXp()==2,"A newly scanned task harvests after protection permits it");}finally{f.close();}h.succeed();});
         });
     }
 

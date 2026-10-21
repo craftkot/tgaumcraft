@@ -2,17 +2,17 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.46** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2909 и245/245 NeoForge GameTests PASS**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущие срезы **M10.14–M10.49** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2909 и248/248 NeoForge GameTests PASS; отдельно32flight и4реальныхexternalFDтеста**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
 | A. Entity/state/lifecycle | Source design/stats/owner/rank, synced данные, native NBT, paid spawn/reclaim, death cargo, cold restart | Worker/seal live unload PASS M39; actual formed paid Press pair live unload PASS M41; abrupt unsaved/saved recovery PASS; split-save HAZARD26/34 открыт |
 | B. Parts/upgrades | Все source каталог/traits/2400 costs, researched Press, parts selection, source modules и характеристики | Survival acquisition отсутствующего levitator/часть исследований зависят от M06/M07/M08 |
-| C. AI/tasks | Shared leases/приоритет/distance, interrupts/cancel/retry, ground/wheels/climb/flight, melee/ranged | Полная modded navigation/engine parity и широкая stress matrix |
+| C. AI/tasks | Shared leases/приоритет/distance, interrupts/cancel/retry, ground/wheels/climb/flight, melee/ranged | Полная modded navigation/engine parity Проверены32flightseed/open-wall; все моды/геометрии этим не покрыты |
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | S2C chunk mirror и source области проверены M40; исходный artwork и внешняя API совместимость открыты |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Registered standard/stacked/clickable/nativeBlockItem seeds PASS M44/M45; произвольные mod callbacks/foreign binaries/M06/crash consistency открыты |
 | F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | M38 combat PASS; M40 integrated и M42 separate-JVM TCP seal snapshot/edit/REMOVE/offhand/sneak world areas PASS. Original meshes/анимации/parts/particles не портированы |
-| Проверки | Core +245 native GameTests +32optionalflight + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
+| Проверки | Core +248 native GameTests +32optionalflight +4externalFD + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
 ## 1. Источники и границы доказательств
@@ -812,3 +812,8 @@ Generic replant хранит canonical blockID+actualseed components/support/soi
 ### M48 — проверка внешнего binary без compile coupling
 
 Собственный optional integration run загружает официальный Farmer’s Delight1.3.4 JAR из отдельного mods-dir. Test adapters enroll реальные native crop states/seed item templates через публичный API; normal gameplay не меняется. Четыре настоящих native сценария проверили cabbage loot/paidplant/NBT, enabled onion AI/conservation, tomato empty-hand callback и protected owner cancellation. 4/4PASS отдельно от248baseline; отсутствие JAR не пропускается как PASS. Прямых импортов foreign Java-классов/общих dependencies нет. Это закрывает первый конкретный foreign binary proof, но не полную mod API parity, non-BlockItem/customsoil matrix или все версии. [Происхождение/доказательства](evidence/golems/external_crops_2026_10_20/README.md).
+
+
+### M49 — attempted harvest XP, protected world mutation
+
+Source SealHarvest игнорирует boolean harvestBlock и начисляет XP1 за попытку; исходный task при completion suspended. Native завершает lease и начисляет sourceXP1 даже при отказе modern destroyBlock, но сохраняет owner-protection/crop/seeds/no ghostloot/no unfundedreplant. Это не разрешение обходить event и не изменение placementXP: посадка требует настоящего native успеха. Завершённый lease нельзя повторить для XP; новый scan возможен. Full248 и separate external4 повторно прошли, включая настоящий cancellation/stalelease/newscan. [M49 proof/JAR QA](evidence/golems/harvest_attempt_2026_10_21/README.md). До этого M48 protectionXP0 являлся ошибкой port parity и теперь исправлен.

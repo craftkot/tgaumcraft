@@ -127,10 +127,10 @@ public final class GolemExternalCropGameTests {
                 h.assertTrue(e.getPlayer().getUUID().equals(f.worker.ownerId()),"Actual owner fake-player identity");calls.incrementAndGet();e.setCanceled(true);
             }
         };NeoForge.EVENT_BUS.addListener(deny);try{
-            h.assertTrue(!f.data.completeBlock(h.getLevel(),f.worker,claim(f))&&calls.get()==1&&f.crop.isMaxAge(h.getLevel().getBlockState(f.pos))
+            h.assertTrue(f.data.completeBlock(h.getLevel(),f.worker,claim(f))&&calls.get()==1&&f.crop.isMaxAge(h.getLevel().getBlockState(f.pos))
                 &&ItemStack.matches(f.worker.getMainHandItem(),f.seed.copyWithCount(2))&&pending(h,f).isEmpty()
-                &&f.worker.rankXp()==0&&ground(h,item("cabbage"),false)==0,"Real protected foreign block is retained, no ghost drops/seed debit/XP");
-            LogUtils.getLogger().info("GOLEM_EXTERNAL_PROTECTION_ASSERTIONS_OK cancelled=1 paidSeeds=2 fruit=0 xp=0");
+                &&f.worker.rankXp()==1&&ground(h,item("cabbage"),false)==0,"Real protected foreign block is retained, no ghost drops/seed debit; source attempted XP1");
+            LogUtils.getLogger().info("GOLEM_EXTERNAL_PROTECTION_ASSERTIONS_OK cancelled=1 paidSeeds=2 fruit=0 xp=1 sourceAttempt=true");
         }finally{NeoForge.EVENT_BUS.unregister(deny);f.close();}h.succeed();});
     }
 }
