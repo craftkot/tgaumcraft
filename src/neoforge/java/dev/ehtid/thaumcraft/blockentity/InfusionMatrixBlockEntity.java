@@ -566,7 +566,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      * its genuine BlockItem output. Restoring RESERVED yields STALLED, so
      * NEVER call craftingFinish again. We can ACK the existing output only
      * after checking the paid ledger, consumed mask, fixed side positions and
-     * the exact center result in the real loaded world.
+     * the exact center result PLUS same-UUID proof that the result was
+     * actually published by this infusion in the real loaded world.
      *
      * Otherwise leave STALLED untouched for manual recovery. No items,
      * essentia, or world chunks are generated/loaded by this method.
@@ -595,7 +596,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (spec == null) return;
         net.minecraft.world.item.Item expected = crystalFarmerOutput(spec.aspectTag());
         ItemStack present = center.displayedItem();
-        if (expected == null || present.getCount() != 1 || !present.is(expected))
+        if (expected == null || present.getCount() != 1 || !present.is(expected)
+                || !center.hasInfusionOutputReceipt(
+                        activeInfusionRitual, new ItemStack(expected)))
             return;
         var ack = finishCheckpoint.acknowledgeAlreadyPublished(
                 ritualLedger.readyForIngredients(),
@@ -644,8 +647,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         // write. Reloaded RESERVED may not publish anything automatically.
         finishCheckpoint = finishCheckpoint.reserve(true,true,true);
         changedAndSync();
-        if (!center.replaceInfusionIngredientIfUnchanged(
-                expected, new ItemStack(outputItem))) return;
+        if (!center.publishInfusionResultWithReceipt(
+                expected, new ItemStack(outputItem), activeInfusionRitual)) return;
 
         finishCheckpoint = finishCheckpoint.finishAfterActualCenterReplacement(true);
         clearCompletedCrystalFarmer();
