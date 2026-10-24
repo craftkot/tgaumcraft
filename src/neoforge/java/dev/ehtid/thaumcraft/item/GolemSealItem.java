@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -48,9 +49,22 @@ public final class GolemSealItem extends Item implements dev.ehtid.thaumcraft.go
         }
         GolemSeals seals = GolemSeals.get(level);
         if (player.isShiftKeyDown()) {
-            if (!seals.remove(support, face, player.getUUID(), type)) return InteractionResult.FAIL;
-            ItemStack returned = new ItemStack(this);
-            if (!player.addItem(returned)) player.drop(returned, false);
+            var expected = seals.get(new GolemSeals.SealKey(support, face));
+            if (expected == null || expected.type() != type || !expected.owner().equals(player.getUUID()))
+                return InteractionResult.FAIL;
+            // A cancelled native spawn must not destroy the paid seal. Publish one real refund
+            // before retiring its exact instance, just as the bell does. Join callbacks may
+            // replace the seal synchronously; their replacement must survive this old click.
+            var returned = new ItemEntity(level, player.getX(), player.getY() + .5, player.getZ(), new ItemStack(this));
+            if (!level.addFreshEntity(returned)) return InteractionResult.FAIL;
+            if (!seals.remove(expected, player.getUUID())) {
+                returned.discard();
+                return InteractionResult.FAIL;
+            }
+            // Keep the existing inventory-first experience using that actual item's remainder.
+            // A full inventory leaves the single accepted entity; no synthetic second drop.
+            player.addItem(returned.getItem());
+            if (returned.getItem().isEmpty()) returned.discard();
             player.displayClientMessage(Component.translatable(
                     message("removed")), true);
         } else {

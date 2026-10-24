@@ -2,7 +2,9 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 24.10.2026 (МСК), M10.52
+## Актуальный checkpoint — 24.10.2026 (МСК), M10.53 в работе
+
+После `928f003` исправлена подтверждённая потеря печати: typed seal removal сначала публикует один настоящий возврат, затем удаляет исходный `instanceId`. Отмена native spawn сохраняет печать; замена в синхронном callback не удаляется старой операцией. При наличии места фактический stack принятой сущности переходит в инвентарь, при полном остаётся одна сущность. Java21 Core39962/2909/allrunner PASS; полный NeoForge build и **252/252 required GameTest PASS** (4 новых refund tests), 1m47s, `golems-m53-native.log`. Проверка двух настоящих TCP-клиентов выполняется отдельно; её результат пока не заявлен.
 
 Работают source каталог2400 конструкций/оплаченный Press/части,16печатей/sharedtasks, логистика и ферма, инструменты/Use, melee/Guard/Butcher/CLIMBER/FLYER/RANGED и клиентская синхронизация. M51 объединил snapshot recovery для Farm/Use/ABORT и сохранил actualinventory/sourceattemptXP. M52 проверил фермерский цикл и оплату non-BlockItem callback через настоящие отдельные TCP server/client JVM и raw кадры. Это не полный M10/2400живых конструкций/оригинальный визуал.
 

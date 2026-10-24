@@ -837,3 +837,9 @@ GolemBlockInteraction отделяет world capture от фактическог
 ### M52 — видимый цикл и настоящая клиентская синхронизация
 
 SeparateJVM TCPclient/server подтвердилnativefarmcycle/nonBlockseedpayment иexactequipment/block/ownerpackets: зрелыйcrop+seed2→actualAI→youngcrop+seed1. ClientчитаеттолькоClientLevel/vanillapackets, оба состояния отрисованы и rawPNGинспектированы. Serverpertickconservation/100ticknoreplay/diskJSON/normalexit0 подтверждаютмеханику отдельнооткартинки. [Proof/reproduction](evidence/golems/client_crops_tcp_2026_10_24/README.md). LifecycleповторёнпослеошибкивнешнегозакрытияXwindow; финальныйrunштатный. Originalmodels/animations/fullvisualparity/survival/multiuser/crashatomicity остаютсяоткрыты. Один vanilla-reference itemmodelJSON не являетсязаимствованнымThaumcraftart.
+
+### M53a — возврат печати без потери при отменённом spawn
+
+Typed seal removal раньше сначала удалял печать, а затем пытался вернуть предмет в инвентарь или мир. При полном инвентаре и отменённом `EntityJoinLevelEvent` исходный предмет терялся. Теперь одна настоящая сущность возврата принимается миром до удаления точного исходного `instanceId`. Отменённый spawn сохраняет печать. Если callback заменил её новой на той же грани, старая операция сохраняет новую печать и убирает свой непринятый возврат. После успешного удаления фактический stack принятой сущности перемещается в свободный инвентарь; полный инвентарь оставляет один world remainder. Это защита современной интеграции, а не обещание атомарности произвольных side effects или split-save crash.
+
+Четыре настоящих GameTest проверяют отказ spawn с полным инвентарём, один возврат при полном инвентаре без повторной выплаты, перенос принятого stack в свободный инвентарь и синхронную замену `instanceId`. Full build/252 required tests PASS на Java21; Core39962/2909/allrunner PASS. Двухклиентская owner-проверка оформляется отдельно после фактического результата.
