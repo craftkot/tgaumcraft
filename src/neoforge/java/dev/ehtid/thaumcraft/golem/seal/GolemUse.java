@@ -1,15 +1,16 @@
 package dev.ehtid.thaumcraft.golem.seal;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.logging.LogUtils;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.inventory.GolemContainers;
+import dev.ehtid.thaumcraft.golem.inventory.GolemBlockInteraction;
 import dev.ehtid.thaumcraft.port.core.golem.*;
 import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.GameType;
@@ -79,6 +80,7 @@ final class GolemUse {
         int hand=GolemUseRules.completionHand(w.seal.filter().item().isEmpty(),carried==EquipmentSlot.MAINHAND,carried==EquipmentSlot.OFFHAND);
         var slot=hand==1?EquipmentSlot.OFFHAND:EquipmentSlot.MAINHAND;
         if(!config.emptyHand()&&(hand<0||g.getItemBySlot(slot).isEmpty())) { data.finish(assignment.lease()); return true; } // Source suspends without a click or XP.
+        if(!GolemBlockInteraction.available(level))return false;
         if(!busy.add(g.getUUID())) return false;
         var actor=FakePlayerFactory.get(level,new GameProfile(g.ownerId()==null?g.getUUID():g.ownerId(),"TCU"+g.getUUID().toString().replace("-","").substring(0,13)));
         var pos=w.seal.key().pos(); var face=w.seal.key().face();
@@ -86,14 +88,21 @@ final class GolemUse {
         if(!config.emptyHand()) { var actual=g.getItemBySlot(slot); g.setItemSlot(slot,ItemStack.EMPTY); actor.setItemInHand(InteractionHand.MAIN_HAND,actual); }
         else actor.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY); // Keep real cargo safe; source's empty-hand pre-debit could discard it.
         try {
-            try {
-                if(config.left()) actor.gameMode.handleBlockBreakAction(pos,ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK,face,level.getMaxBuildHeight(),0);
-                else actor.gameMode.useItemOn(actor,level,actor.getMainHandItem(),InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos).add(Vec3.atLowerCornerOf(face.getNormal()).scale(.5)),face,pos,false));
-            } catch(RuntimeException ex) { LogUtils.getLogger().warn("Golem Use callback failed; actual inventory will be recovered",ex); }
+            var outcome=GolemBlockInteraction.invoke(level,"Use",()->{
+                if(config.left()) {
+                    actor.gameMode.handleBlockBreakAction(pos,ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK,face,level.getMaxBuildHeight(),0);
+                    return InteractionResult.SUCCESS;
+                }
+                return actor.gameMode.useItemOn(actor,level,actor.getMainHandItem(),InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos).add(Vec3.atLowerCornerOf(face.getNormal()).scale(.5)),face,pos,false));
+            },config.left()?new BlockPos[0]:new BlockPos[]{pos,pos.relative(face)});
+            if(!outcome.attempted())return false;
             // Source awards one SMART XP for the attempted click, even when the action returned PASS/FAIL.
             data.finish(assignment.lease()); g.addRankXp(1); g.swing(InteractionHand.MAIN_HAND); return true;
         } finally {
-            try { if(config.left()) actor.gameMode.handleBlockBreakAction(pos,ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK,face,level.getMaxBuildHeight(),0); } catch(RuntimeException ex) { LogUtils.getLogger().warn("Golem Use dig cleanup failed; recovering actual inventory",ex); }
+            if(config.left())GolemBlockInteraction.invoke(level,"Use dig cleanup",()->{
+                actor.gameMode.handleBlockBreakAction(pos,ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK,face,level.getMaxBuildHeight(),0);
+                return InteractionResult.SUCCESS;
+            });
             try {dev.ehtid.thaumcraft.golem.inventory.GolemInteractionInventory.recover(actor,g);}
             finally {actor.setShiftKeyDown(false);busy.remove(g.getUUID());}
         }

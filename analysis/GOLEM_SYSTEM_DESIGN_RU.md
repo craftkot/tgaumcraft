@@ -827,3 +827,8 @@ Farm дополнительно изолирует NeoForge snapshot capture: na
 
 
 M50 cold WRITE55s/READ65s подтвердил actualnonBlockseed codec/intent/originalUUID и native AI charge1, даже когда callback сам не оплачивает и меняет компоненты. Независимый read-only worldNBT после READ:1namedseed+1youngplant/0pending/0groundcallbackseed/1originalwheat/oneworkerXP2. Конкретный foreign nonBlockItem binary и freshgraphicalclient не проверены. [Cold/disk/JAR proof](evidence/golems/plant_adapters_2026_10_21/README.md). Следующее переиспользование snapshotexception recovery в SealUse требует собственного native audit/test, пока не заявлено реализованным.
+
+
+### M51 — общий безопасный native callback boundary
+
+GolemBlockInteraction отделяет world capture от фактического inventory recovery и переиспользуется Farm/Use/ABORT. Он не создаёт ItemStackrefund из копий, не восстанавливает clickedBE inventory, не прогружает соседей дляfallback. Attempted Use сохраняетsourceXP1; pausedenclosingcapture не начинаетдействие. Capturedblocks/известныебезопасныеplacementcells восстанавливаютсяприRuntimeException/PASSmutation; matureclickablecell и реальные плодыне превращаются в повторный бесплатный harvest. СвежиеCore/22optional/248normal/FD4/coldUse WRITE-READ подтверждены. [Границы и actualproof](evidence/golems/use_recovery_2026_10_24/README.md). Общая crash consistency и произвольные sideeffects внешнихмодов этим не решаются.

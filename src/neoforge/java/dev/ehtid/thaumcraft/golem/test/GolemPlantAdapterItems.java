@@ -30,6 +30,8 @@ public final class GolemPlantAdapterItems {
             helper.register(id("no_debit"),new CallbackSeed(0));
             helper.register(id("fault"),new CallbackSeed(1));
             helper.register(id("pass"),new CallbackSeed(2));
+            helper.register(id("multi_fault"),new CallbackSeed(3));
+            helper.register(id("cursor_fault"),new CallbackSeed(4));
         });
     }
     private static final class CallbackSeed extends Item {
@@ -40,6 +42,15 @@ public final class GolemPlantAdapterItems {
             var state=Blocks.WHEAT.getStateForPlacement(placement);
             if(!placement.canPlace()||state==null||!state.canSurvive(context.getLevel(),pos))return InteractionResult.FAIL;
             if(!context.getLevel().setBlock(pos,state,3))return InteractionResult.FAIL;
+            if(mode==3){
+                context.getLevel().setBlock(pos.east(),Blocks.GOLD_BLOCK.defaultBlockState(),3);
+                throw new IllegalStateException("Intentional real multi-block Item.useOn fault");
+            }
+            if(mode==4){
+                var player=context.getPlayer();var actual=player.getItemInHand(context.getHand());
+                player.setItemInHand(context.getHand(),ItemStack.EMPTY);player.containerMenu.setCarried(actual);
+                throw new IllegalStateException("Intentional actual cursor ownership transfer then Item.useOn fault");
+            }
             if(mode==1)throw new IllegalStateException("Intentional real placement callback failure");
             if(mode==2)return InteractionResult.PASS;
             // Some callbacks leave payment to the caller; source Harvest still charges its reserved seed.

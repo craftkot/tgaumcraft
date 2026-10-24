@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.api.GolemHarvestRegistry;
 import dev.ehtid.thaumcraft.golem.inventory.GolemInteractionInventory;
+import dev.ehtid.thaumcraft.golem.inventory.GolemBlockInteraction;
 import dev.ehtid.thaumcraft.port.core.golem.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -115,7 +116,7 @@ final class GolemFarm {
         if(data.blockTarget(level,g,assignment)==null) return false;
         var task=data.tasks().task(assignment.lease()).orElse(null); var w=task==null?null:work.get(task.getId());
         if(w==null || !assignment.seal().equals(w.seal.key()) || data.get(w.seal.key())!=w.seal || GolemSeals.stopped(level,w.seal)
-                || !eligible(level,g,task,w.seal) || g.distanceToSqr(Vec3.atCenterOf(w.pos))>4 || !busy.add(g.getUUID())) return false;
+                || !eligible(level,g,task,w.seal) || g.distanceToSqr(Vec3.atCenterOf(w.pos))>4 || !GolemBlockInteraction.available(level) || !busy.add(g.getUUID())) return false;
         var profile=new GameProfile(g.ownerId()==null?g.getUUID():g.ownerId(),"TCG"+g.getUUID().toString().replace("-","").substring(0,13));
         var actor=FakePlayerFactory.get(level,profile); actor.setGameMode(GameType.SURVIVAL); actor.moveTo(g.position());
         try {
@@ -125,9 +126,9 @@ final class GolemFarm {
                 if(GolemHarvestRegistry.isClickable(before)) {
                     actor.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY);
                     var face=GolemFarmRules.clickFace(new SealArea.BlockPos(w.pos.getX(),w.pos.getY(),w.pos.getZ()),g.getX(),g.getY(),g.getZ(),g.getEyeHeight(),SealArea.Facing.valueOf(g.getDirection().name()));
-                    try {
-                        actor.gameMode.useItemOn(actor,level,ItemStack.EMPTY,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atLowerCornerOf(w.pos),Direction.values()[face.ordinal()],w.pos,false));
-                    } catch(RuntimeException ex) {com.mojang.logging.LogUtils.getLogger().warn("Golem Harvest click failed; recovering actual callback inventory",ex);}
+                    // Source ignores the result; never restore a mature crop after its callback produced real fruit.
+                    var outcome=GolemBlockInteraction.invoke(level,"Harvest click",()->actor.gameMode.useItemOn(actor,level,ItemStack.EMPTY,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atLowerCornerOf(w.pos),Direction.values()[face.ordinal()],w.pos,false)));
+                    if(!outcome.attempted())return false;
                     // Source ignores onBlockActivated's boolean and grants XP for the attempted click; no replant intent.
                     data.finish(assignment.lease());g.addRankXp(1);g.swing(InteractionHand.MAIN_HAND);return true;
                 }
@@ -147,7 +148,7 @@ final class GolemFarm {
                 if(plant.farmland && (level.getBlockState(w.pos.below()).is(Blocks.DIRT) || level.getBlockState(w.pos.below()).is(Blocks.GRASS_BLOCK)
                         || level.getBlockState(w.pos.below()).is(Blocks.COARSE_DIRT))) {
                     actor.setItemInHand(InteractionHand.MAIN_HAND,new ItemStack(Items.IRON_HOE));
-                    try { actor.getMainHandItem().useOn(context(actor,w.pos.below())); }
+                    try { GolemBlockInteraction.invoke(level,"Harvest hoe",()->actor.getMainHandItem().useOn(context(actor,w.pos.below()))); }
                     finally { actor.setItemInHand(InteractionHand.MAIN_HAND,ItemStack.EMPTY); } // Source built-in tool, never a player reward.
                 }
                 // Real ownership moves out of the golem before placement callbacks can reenter.
@@ -174,32 +175,8 @@ final class GolemFarm {
         }
     }
     private static boolean place(ServerLevel level,ItemStack actual,UseOnContext context) {
-        // CommonHooks owns one global snapshot list; never corrupt an enclosing mod callback's capture.
-        if(level.captureBlockSnapshots||level.restoringBlockSnapshots||!level.capturedBlockSnapshots.isEmpty())return false;
         var target=new BlockPlaceContext(context).getClickedPos();
-        var targetBefore=BlockSnapshot.create(level.dimension(),level,target);
-        try {
-            if(actual.useOn(context).consumesAction())return true;
-            // A failed item callback must not leave an unpaid plant without a placement event.
-            if(!level.getBlockState(target).equals(targetBefore.getState())) {
-                level.restoringBlockSnapshots=true;
-                try {targetBefore.restore(targetBefore.getFlags()|Block.UPDATE_CLIENTS);}
-                finally {level.restoringBlockSnapshots=false;}
-            }
-            return false;
-        }
-        catch(RuntimeException ex) {
-            // CommonHooks lacks a finally around Item.useOn. Restore only this call's actual captured blocks.
-            level.captureBlockSnapshots=false;
-            try {
-                level.restoringBlockSnapshots=true;
-                for(int i=level.capturedBlockSnapshots.size()-1;i>=0;i--){var snapshot=level.capturedBlockSnapshots.get(i);snapshot.restore(snapshot.getFlags()|Block.UPDATE_CLIENTS);}
-                // The event bus can throw after CommonHooks has moved its snapshots into a local list.
-                if(!level.getBlockState(target).equals(targetBefore.getState()))targetBefore.restore(targetBefore.getFlags()|Block.UPDATE_CLIENTS);
-            } finally {level.restoringBlockSnapshots=false;level.capturedBlockSnapshots.clear();}
-            com.mojang.logging.LogUtils.getLogger().warn("Golem planting callback failed; captured blocks restored and actual inventory recovered",ex);
-            return false;
-        }
+        return GolemBlockInteraction.invoke(level,"planting",()->actual.useOn(context),target).result().consumesAction();
     }
     private static UseOnContext context(FakePlayer actor,BlockPos support) {
         return context(actor,support,Direction.UP);

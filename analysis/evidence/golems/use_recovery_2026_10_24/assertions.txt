@@ -1,0 +1,36 @@
+
+# golems-m51-core
+BETA26 golem construction: OK (39962 assertions)
+BETA26 golem task rules, six-face seal areas and exclusive server leases: OK (2909 assertions)
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK
+
+# golems-m51-native
+[16:39:21] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_CANCEL_ASSERTIONS_OK initial=4 planted=1 remaining=3 attemptsXP=2
+[16:39:21] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_ITEM_ASSERTIONS_OK type=multi_fault actualCargo=4 plant=0 xp=1 staleReplay=false
+[16:39:22] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_CURSOR_ASSERTIONS_OK actualCargo=4 cursor=0 fakeHand=0 xp=1 staleReplay=false
+[16:39:24] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_EVENT_ASSERTIONS_OK events=1 actualCargo=4 plant=0 xp=1
+[16:39:25] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_OUTER_ASSERTIONS_OK pausedXP=0 retriedXP=1 plant=1 remaining=3 enclosingBlock=retained
+[16:39:27] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_ITEM_ASSERTIONS_OK type=fault actualCargo=4 plant=0 xp=1 staleReplay=false
+[16:39:27] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_PASS_ASSERTIONS_OK actualCargo=4 plant=0 xp=1
+[16:39:28] [Server thread/INFO] [minecraft/GameTestServer]: All 21 required tests passed :)
+[16:40:32] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[16:40:38] [Server thread/INFO] [minecraft/GameTestServer]: All 248 required tests passed :)
+BUILD SUCCESSFUL in 2m 23s
+
+# golems-m51-final-native-write
+[16:43:17] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_CANCEL_ASSERTIONS_OK initial=4 planted=1 remaining=3 attemptsXP=2
+[16:43:18] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_ITEM_ASSERTIONS_OK type=multi_fault actualCargo=4 plant=0 xp=1 staleReplay=false
+[16:43:20] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_CURSOR_ASSERTIONS_OK actualCargo=4 cursor=0 fakeHand=0 xp=1 staleReplay=false
+[16:43:20] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_ABORT_ASSERTIONS_OK start=1 abort=1 actualCargo=4 cleanupBlock=0 xp=1 staleReplay=false
+[16:43:22] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_EVENT_ASSERTIONS_OK events=1 actualCargo=4 plant=0 xp=1
+[16:43:23] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_OUTER_ASSERTIONS_OK pausedXP=0 retriedXP=1 plant=1 remaining=3 enclosingBlock=retained
+[16:43:24] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_ITEM_ASSERTIONS_OK type=fault actualCargo=4 plant=0 xp=1 staleReplay=false
+[16:43:24] [Server thread/INFO] [de.eh.th.go.te.GolemUseRecoveryGameTests/]: GOLEM_USE_RECOVERY_PASS_ASSERTIONS_OK actualCargo=4 plant=0 xp=1
+[16:43:26] [Server thread/INFO] [minecraft/GameTestServer]: All 22 required tests passed :)
+[16:44:11] [Server thread/INFO] [minecraft/GameTestServer]: All 248 required tests passed :)
+[16:44:23] [Server thread/INFO] [de.eh.th.go.te.GolemUseRestartProbe/]: GOLEM_USE_RESTART_WRITE_ASSERTIONS_OK
+BUILD SUCCESSFUL in 2m 23s
+
+# golems-m51-read-m52-server
+[16:46:45] [Server thread/INFO] [de.eh.th.go.te.GolemUseRestartProbe/]: GOLEM_USE_RESTART_READ_ASSERTIONS_OK
+BUILD SUCCESSFUL in 3m 6s
