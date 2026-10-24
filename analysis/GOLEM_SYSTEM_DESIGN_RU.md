@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.50** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2909 и248/248 NeoForge GameTests PASS; отдельно32flight,4реальныхexternalFDтеста и13nativecallbackadapterтестов**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущие срезы **M10.14–M10.52** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2909 и248/248 NeoForge GameTests PASS; отдельно32flight,4реальныхexternalFDтеста и22nativecallbackadapter/Use recoveryтеста**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
@@ -12,7 +12,7 @@
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | S2C chunk mirror и source области проверены M40; исходный artwork и внешняя API совместимость открыты |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Registered standard/stacked/clickable/nativeBlockItem seeds PASS M44/M45; произвольные mod callbacks/foreign binaries/M06/crash consistency открыты |
 | F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | M38 combat PASS; M40 integrated и M42 separate-JVM TCP seal snapshot/edit/REMOVE/offhand/sneak world areas PASS. Original meshes/анимации/parts/particles не портированы |
-| Проверки | Core +248 native GameTests +32optionalflight +4externalFD +13callbackadapters + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
+| Проверки | Core +248 native GameTests +32optionalflight +4externalFD +22callbackadapters/Use + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
 ## 1. Источники и границы доказательств
@@ -832,3 +832,8 @@ M50 cold WRITE55s/READ65s подтвердил actualnonBlockseed codec/intent/o
 ### M51 — общий безопасный native callback boundary
 
 GolemBlockInteraction отделяет world capture от фактического inventory recovery и переиспользуется Farm/Use/ABORT. Он не создаёт ItemStackrefund из копий, не восстанавливает clickedBE inventory, не прогружает соседей дляfallback. Attempted Use сохраняетsourceXP1; pausedenclosingcapture не начинаетдействие. Capturedblocks/известныебезопасныеplacementcells восстанавливаютсяприRuntimeException/PASSmutation; matureclickablecell и реальные плодыне превращаются в повторный бесплатный harvest. СвежиеCore/22optional/248normal/FD4/coldUse WRITE-READ подтверждены. [Границы и actualproof](evidence/golems/use_recovery_2026_10_24/README.md). Общая crash consistency и произвольные sideeffects внешнихмодов этим не решаются.
+
+
+### M52 — видимый цикл и настоящая клиентская синхронизация
+
+SeparateJVM TCPclient/server подтвердилnativefarmcycle/nonBlockseedpayment иexactequipment/block/ownerpackets: зрелыйcrop+seed2→actualAI→youngcrop+seed1. ClientчитаеттолькоClientLevel/vanillapackets, оба состояния отрисованы и rawPNGинспектированы. Serverpertickconservation/100ticknoreplay/diskJSON/normalexit0 подтверждаютмеханику отдельнооткартинки. [Proof/reproduction](evidence/golems/client_crops_tcp_2026_10_24/README.md). LifecycleповторёнпослеошибкивнешнегозакрытияXwindow; финальныйrunштатный. Originalmodels/animations/fullvisualparity/survival/multiuser/crashatomicity остаютсяоткрыты. Один vanilla-reference itemmodelJSON не являетсязаимствованнымThaumcraftart.

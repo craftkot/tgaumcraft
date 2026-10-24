@@ -30,14 +30,27 @@ allprojects {
             }
             neo.runs.create('golemClient') {
                 client()
-                gameDirectory = project.layout.buildDirectory.dir('golem-client')
+                def scenario = project.findProperty('golemClientScenario') ?: ''
+                gameDirectory = project.layout.buildDirectory.dir(scenario == 'crops' ? 'golem-crop-client' : 'golem-client')
                 jvmArguments.add '-Xmx2G'
                 programArguments.addAll '--width', '1280', '--height', '800'
                 def remote = project.findProperty('golemRemoteAddress') ?: ''
                 if (remote) programArguments.addAll '--quickPlayMultiplayer', remote
                 systemProperty 'thaumcraft.golemSealRemoteProbe', (remote != '').toString()
                 systemProperty 'thaumcraft.golemClientProbe', 'true'
-                systemProperty 'thaumcraft.golemClientScenario', project.findProperty('golemClientScenario') ?: ''
+                systemProperty 'thaumcraft.golemClientScenario', scenario
+                if (scenario == 'crops') {
+                    systemProperty 'thaumcraft.golemCropClientProbe', 'true'
+                    systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+                }
+            }
+            neo.runs.create('golemCropServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemCropServerDirectory') ?: 'golem-crop-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemCropClientProbe', 'true'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+                systemProperty 'thaumcraft.golemCropHoldTicks', project.findProperty('golemCropHoldTicks') ?: '600'
             }
             neo.runs.create('golemSealServer') {
                 server()
