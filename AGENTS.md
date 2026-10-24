@@ -9,7 +9,7 @@
 | Алхимия / основной чат | `feature/alchemy` | M04 → M05; сейчас M04.1 (fixture #209 исправлен, новый gameplay не подтверждён) | `analysis/lanes/alchemy.md` |
 | Исследования / второй чат | `feature/research` | M07.1/M07.2 🟡; непроверенные помощники/карточки | `analysis/lanes/research.md` |
 | Инфузия / третий чат | `feature/infusion` | M06.1 🟡; ledger и checkpoint без подтверждённого survival world restart | `analysis/lanes/infusion.md` |
-| Големы / отдельный разработчик | `feature/golems` | M10 🟡; серверные GameTests и отдельные клиентские проверки M42 заявлены разработчиком; после crop API свежий клиент не проверен, split-save выявил дублирование, crash-atomicity не подтверждена | `analysis/lanes/golems.md` |
+| Големы / отдельный разработчик | `feature/golems` | M10 🟡; M51/M52: разработчик опубликовал локальные full NeoForge/248 GameTests, 22 callback tests, cold Use и новый TCP graphical crop client (отдельные JVM, 24.10); координатор эти прогоны не воспроизводил. Split-save 13→26 iron/17→34 gold остаётся открытым, M10 не принят | `analysis/lanes/golems.md` |
 
 `main` — только для интеграции проверенных PR. На 18.10.2026 во всех четырёх feature-ветках есть кодовые коммиты: **M04/M06/M07/M10 🟡**; это не означает завершения этапов. Перед каждым подходом сверять живой HEAD, lane-журнал и CI, а не эту дату; индекс остаётся **59/100**. По одному 🟡 этапу на ветку.
 
