@@ -1,0 +1,14 @@
+{
+  "jar": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "45a6d767809701936ed4384ecbd7c3d1e93bd39bca320055ed165be9239a0413",
+  "crc_ok": true,
+  "classes": 727,
+  "all_java21": true,
+  "expected_classes_present": [
+    "dev/ehtid/thaumcraft/golem/test/GolemDirectionalPlantGameTests.class",
+    "dev/ehtid/thaumcraft/golem/test/GolemPlantAdapterItems$DirectionalPlant.class",
+    "dev/ehtid/thaumcraft/golem/test/GolemSeedRestartProbe.class",
+    "dev/ehtid/thaumcraft/golem/api/GolemHarvestRegistry.class"
+  ],
+  "en_ru_unique_json": true
+}

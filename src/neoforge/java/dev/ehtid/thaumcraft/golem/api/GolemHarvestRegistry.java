@@ -1,8 +1,10 @@
 package dev.ehtid.thaumcraft.golem.api;
 
 import net.minecraft.world.item.*;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -35,9 +37,42 @@ public final class GolemHarvestRegistry {
     }
     /** Explicit replacement for legacy IPlantable: the item's real useOn must plant this block. */
     public static SeedRegistration registerSeed(Block crop,ItemStack seed,Block plantedBlock) {
+        return registerSeed(crop,seed,plantedBlock,null);
+    }
+    /**
+     * BETA26's non-IPlantable BlockDirectional path reads the support from the original mature
+     * crop's FACING. Modern blocks opt into that contract explicitly; a FACING property alone
+     * must never turn an arbitrary block into a supported crop or seed.
+     */
+    public static SeedRegistration registerDirectionalSeed(Block crop,ItemStack seed,Block plantedBlock,EnumProperty<Direction> supportProperty) {
+        Objects.requireNonNull(crop,"crop");Objects.requireNonNull(supportProperty,"support property");
+        if(!crop.defaultBlockState().hasProperty(supportProperty))throw new IllegalArgumentException("Support property must belong to the original crop");
+        return registerSeed(crop,seed,plantedBlock,supportProperty);
+    }
+    private static SeedRegistration registerSeed(Block crop,ItemStack seed,Block plantedBlock,EnumProperty<Direction> supportProperty) {
         Objects.requireNonNull(crop,"crop");Objects.requireNonNull(plantedBlock,"plant");
         if(seed.isEmpty()||plantedBlock.defaultBlockState().isAir())throw new IllegalArgumentException("A real seed and non-air native plant are required");
-        var r=new SeedRegistration(crop,seed.copyWithCount(1),plantedBlock);SEEDS.add(r);return r;
+        var r=new SeedRegistration(crop,seed.copyWithCount(1),plantedBlock,supportProperty);SEEDS.add(r);return r;
+    }
+    /** Pure original-state lookup; ordinary seed registrations retain their floor support. */
+    public static Direction replantSupport(BlockState originalCrop,ItemStack actualSeed) {
+        var r=latestSeed(originalCrop.getBlock());
+        if(r==null)return Direction.DOWN;
+        if(!ItemStack.isSameItemSameComponents(r.seed,actualSeed))return null;
+        return r.supportProperty==null?Direction.DOWN:originalCrop.getValue(r.supportProperty);
+    }
+    /** Stored support faces remain valid only under the current exact-seed registration. */
+    public static boolean validReplantSupport(Block crop,ItemStack actualSeed,Direction support) {
+        if(support==null)return false;
+        var r=latestSeed(crop);
+        if(r==null)return support==Direction.DOWN;
+        if(!ItemStack.isSameItemSameComponents(r.seed,actualSeed))return false;
+        return r.supportProperty==null?support==Direction.DOWN:r.supportProperty.getPossibleValues().contains(support);
+    }
+    private static SeedRegistration latestSeed(Block crop) {
+        var snapshot=SEEDS.toArray(SeedRegistration[]::new);
+        for(int i=snapshot.length-1;i>=0;i--)if(snapshot[i].block==crop)return snapshot[i];
+        return null;
     }
     public static Block plantedBlock(Block crop,ItemStack actualSeed) {
         var snapshot=SEEDS.toArray(SeedRegistration[]::new);
@@ -56,7 +91,8 @@ public final class GolemHarvestRegistry {
     }
     public static final class SeedRegistration implements AutoCloseable {
         private final Block block;private final ItemStack seed;private final Block plant;
-        private SeedRegistration(Block block,ItemStack seed,Block plant){this.block=block;this.seed=seed;this.plant=plant;}
+        private final EnumProperty<Direction> supportProperty;
+        private SeedRegistration(Block block,ItemStack seed,Block plant,EnumProperty<Direction> supportProperty){this.block=block;this.seed=seed;this.plant=plant;this.supportProperty=supportProperty;}
         @Override public void close(){SEEDS.remove(this);}
     }
 }

@@ -66,7 +66,14 @@ final class GolemFarm {
     }
     private static boolean configured(Plant plant) {
         var block=BuiltInRegistries.BLOCK.get(plant.block);
-        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop))&&Objects.equals(plant.plant,plantedBlock(block,plant.seed));
+        return (plant.crop!=null||GolemHarvestRegistry.hasBreakableCrop(block))&&ItemStack.isSameItemSameComponents(plant.seed,seedFor(block,plant.crop))&&Objects.equals(plant.plant,plantedBlock(block,plant.seed))
+                &&validSupport(block,plant.seed,plant.plant,plant.support);
+    }
+    private static boolean validSupport(Block crop,ItemStack seed,ResourceLocation planted,Direction support) {
+        // Vanilla cocoa keeps its historical horizontal support contract. Other crops need
+        // an explicit directional seed registration before a persisted side face is accepted.
+        return planted.equals(BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))?support.getAxis().isHorizontal()
+                :GolemHarvestRegistry.validReplantSupport(crop,seed,support);
     }
     private static SealArea area(GolemSeals.Seal s) {
         return new SealArea(GolemProvisioning.location(s.key()),new SealArea.BlockPos(s.area().getX(),s.area().getY(),s.area().getZ()));
@@ -135,9 +142,10 @@ final class GolemFarm {
                 boolean farmland=level.getBlockState(w.pos.below()).is(Blocks.FARMLAND);
                 var seed=seedFor(before.getBlock(),crop);
                 var planted=plantedBlock(before.getBlock(),seed);
-                var support=Objects.equals(planted,BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))&&before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):Direction.DOWN;
+                var support=Objects.equals(planted,BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))&&before.is(Blocks.COCOA)?before.getValue(CocoaBlock.FACING):GolemHarvestRegistry.replantSupport(before,seed);
                 boolean harvested=actor.gameMode.destroyBlock(w.pos);
-                if(harvested && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && w.seal.harvest().replant()) {
+                if(harvested && level.isEmptyBlock(w.pos) && !seed.isEmpty() && planted!=null && support!=null
+                        &&validSupport(before.getBlock(),seed,planted,support) && w.seal.harvest().replant()) {
                     replants.computeIfAbsent(w.seal.key(),k->new HashMap<>()).put(w.pos,new Plant(crop,BuiltInRegistries.BLOCK.getKey(before.getBlock()),planted,seed,support,farmland)); data.setDirty();
                 }
                 // BETA26 ignores harvestBlock's boolean: finish this attempt and award XP even on refusal.
@@ -209,7 +217,7 @@ final class GolemFarm {
             int face=entry.contains("support",Tag.TAG_BYTE)?entry.getByte("support"):Direction.DOWN.ordinal();
             if(face<0 || face>=Direction.values().length) continue;
             var support=Direction.values()[face];
-            if(planted.equals(BuiltInRegistries.BLOCK.getKey(Blocks.COCOA))?support.getAxis().isVertical():support!=Direction.DOWN) continue;
+            if(!validSupport(BuiltInRegistries.BLOCK.get(block),expected,planted,support))continue;
             boolean farmland=entry.contains("farmland")?entry.getBoolean("farmland"):crop!=null&&crop.farmland;
             var plant=new Plant(crop,block,planted,stored.copyWithCount(1),support,farmland);
             if(configured(plant)&&area.contains(new SealArea.BlockPos(pos.getX(),pos.getY(),pos.getZ())))replants.computeIfAbsent(s.key(),k->new HashMap<>()).putIfAbsent(pos,plant);
