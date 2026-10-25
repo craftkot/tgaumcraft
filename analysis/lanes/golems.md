@@ -2,7 +2,7 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 25.10.2026 (МСК), M10.55 проверен
+## Актуальный checkpoint — 25.10.2026 (МСК), M10.56 проверен
 
 `076f4a9` исправил потерю typed seal при отменённом native refund spawn и защищает замену instance внутри callback. Java21 Core39962construction/2909task/allrunner PASS; M53 полный NeoForge build и252/252 required GameTest PASS, включая четыре новых refund случая. Журнал `golems-m53-native.log`,1m47s.
 
@@ -12,13 +12,32 @@
 
 M55: source production не менялся; добавлены только gated SixWayPlant/Seed и3 native tests. UP/DOWN callbacks действительно сохранили опору и exact seed в NBT decode, оплатили1из2, поставили age0 блок и дали XP2 без recovery/replay. Registry test проверил шесть enum-направлений и отказ одноимённого horizontal property. **Full build+33/33 optional PASS2m34s/exit0**. [M55 proof](../evidence/golems/six_way_crops_2026_10_25/README.md). Итоговый JAR CRC/731Java21classes PASS, SHA256 `1bfee21b1a816f4c4ec250fc167d74d8300fc9f20b20540706704cfb941f6858`. Основные252/FD4/cold EAST не повторялись после изменения только test fixtures. Вертикальный cold/graphical navigation и неактивная боковая опора отдельно не проверены.
 
+M56 закрыл реальную inactive side-support boundary: настоящий source FORCED31 / neighbor32 FULL/inactive, mature Harvest→pending EAST/seed2/XP1 и100 rejected candidate leases без расхода. Затем оба native ChunkEvent.Unload/entity removal UNLOADED_TO_CHUNK,40ticks оба getChunkNow=null без production force-load; явный fixture reload восстановил loadedFromDisk другой Java object того же UUID/owner/design/seed2/XP1. Настоящий enabled AI завершил east/age0 plant1/seed1/XP2/0pending и100ticks без replay. [M56 evidence](../evidence/golems/side_support_2026_10_25/README.md). Mutation без единственного support-active guard намеренно упал на реальном ошибочном lease в phase2; исходный GolemFarm восстановлен exact bytes. Fresh review Critical/Important нет, minor offhand+identity sum исправлен до finalgreen. **Свежие Core39962/2909/allrunner PASS, full run3m3s/exit0:33/252/4FD + повторный полный side lifecycle PASS.** Independent read-only disk: originalUUID/seed1/XP2/eastplant1/0pending/items/forcedchunks. Итоговый JAR CRC/732Java21classes/unique EN-RU JSON PASS, SHA256 `67a08e82b05741022affcc4355aa5704cfd3221bdc67cace648b8240953c01e3`. Production Registry/Farm/Core не изменён относительно9a19b39.
+
 Прежние M51/M52 cold Use и graphical paid crop proof: [Use recovery](../evidence/golems/use_recovery_2026_10_24/README.md), [crop TCP](../evidence/golems/client_crops_tcp_2026_10_24/README.md). Каталог2400 конструкций/оплаченный Press/части,16печатей/shared tasks, логистика/ферма/Use, melee/Guard/Butcher/CLIMBER/FLYER/RANGED остаются реализованными основами; это не полная визуальная/игровая приёмка всех2400 конструкций.
 
 **Критический открытый предел:** abrupt split block/entity save даёт26iron вместо13; vanilla контроль34gold вместо17. Общего durable protocol ещё нет, snapshot recovery этого не исправляет. [Матрица](../evidence/golems/crash_2026_10_20/README.md). Произвольные внешние callback inventory/entity side effects не атомарны.
 
-Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий независимый пункт — реальная неактивная боковая опора с тем же exact payment; затем конкретный foreign binary/полный исходный API. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
+Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий независимый пункт — конкретный foreign directional binary и оставшиеся исходные API-контракты. M56 подтвердил inactive FULL neighbor и настоящее отсутствие обоих чанков; отдельный absent neighbor при активном crop не выдумывается вопреки native ticket gradient. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
 
 ## Границы и исходное состояние
+
+### План M56 — inactive side support / native unload-resume, 25.10.2026
+
+Goal: доказать, что зарегистрированная directional crop не тратит seed при неактивной соседней опоре, а после реальной выгрузки/загрузки возобновляет оплаченный native AI replant без копий.
+
+Architecture/stack: Java21/NeoForge1.21.1; один opt-in dedicated `GolemSideSupportProbe`, существующие Registry/Farm/TaskBoard и настоящий FORCED31→neighbor32 ticket gradient. Spec: текущие M54/M55 design и пользовательские требования server/NBT/no force-load. Production не меняется без подтверждённого провала.
+
+Ruling: пользователь явно поручил автономную реализацию без повторных подтверждений; продолжаю существующий design/ветку inline, не создаю новый проект/worktree/approval gate. План и ledger остаются в пользовательском `analysis/lanes/golems.md`, а не новом docs tree.
+
+- [x] Добавить собственный optional server run и fresh world, gated plant fixtures переиспользовать. Новый probe делает настоящий Harvest и проверяет pending EAST/seed2/XP1.
+- [x] Доказать source chunk31 entity-ticking / support chunk32 FULL+block-ticking без entity ticks;100 реальных rejected claims, seed2/XP1/AIR/intent1, support forced=false.
+- [x] Снять source ticket; ждать настоящие ChunkEvent.Unload/EntityLeave/removed UNLOADED_TO_CHUNK и оба getChunkNow=null.40ticks без auto force-load; затем явно загрузить оба чанка, наблюдать новый entity loadedFromDisk с тем же UUID/cargo2 и настоящий enabled AI→crop1/seed1/XP2/0pending/100ticks.
+- [x] Mutation check: временно убрать только production inactive-support eligibility guard, тот же probe в другом fresh world обязан упасть на claim refusal; восстановить файл дословно до commit и повторить green. Это test-only coverage, не новая выдуманная игровая механика.
+- [x] Запустить Core/full native suites один раз по необходимости, read-only disk/JAR audit; fresh-context review.
+- [ ] Commit/push собственной ветки и обновить Draft PR без merge.
+
+Review focus: FULL не называть unloaded; pending task допустим при refused claim; setup tickets отличать от production; native entity reload должен дать другой Java object с тем же UUID; failed mutation run не объявлять PASS. Ни private tracker mutation, ни synthetic PASS markers, ни world NBT edits.
 
 Прочитаны актуальные main: `ROADMAP_RU.md`, `AGENTS.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, `analysis/PROGRESS_AUDIT_2026_10_16.md`. Ветка ранее отсутствовала, создана от свежей main. Другие ветки не меняются; merge не разрешён. Общую дорожную карту и CI не переписывать. M10 начат по прямому поручению пользователя; рейтинг 59/100 не повышается.
 
@@ -810,3 +829,13 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - `e538407ca87e724242183959d9f1f9d0a2ec6c8f` — M55 UP/DOWN/six-way proof,33/33 optional иbuild PASS. Отправлен обычным push; [CircleCI#489](https://circleci.com/gh/craftkot/tgaumcraft/489) verify-connection SUCCESS.
 - Draft PR#3 дополнен M55 и итоговым JAR SHA; ссылки evidence ведут на feature/golems. После тестов дополнительно проверены relative evidence links и уникальность EN/RU JSON в финальном JAR.
 - Итоговая публикация меняет только эту запись и JAR metadata о выполненной EN/RU проверке; Java/ресурсы после успешного33/33 не менялись. No running Minecraft/Xvfb; исходные main/shared Gradle/CI/ROADMAP неизменны. Следующий пункт и критический crash предел явно записаны в checkpoint, M10 целиком не объявлен завершённым.
+
+
+## M56 execution ledger — 25.10.2026
+
+- BASE9a19b39/CI#490 SUCCESS, fresh maina4280834. Предварительный read-only source audit подтвердил native ticket31→32 и guard до carry/provisioning; setup использует public APIs без private tracker mutation.
+- Baseline dedicated1m2s/exit0: весь реальный inactive→unload40→reload→AI lifecycle прошёл.
+- Mutation58s: в отдельном fresh world удалён только support-active guard, наблюдён ожидаемый phase2 claim-refusal failure. Файл восстановлен через finally; exact HEAD bytes/SHA256 `68b45906adce4771026eaf622b2577a5e1d8bec2a1ec85de8d53a2509d88c1bd` и git diff0 подтверждены. Mutation BUILD SUCCESS не засчитан как gameplay PASS.
+- Единственный fresh-context reviewer: Critical/Important нет; minor offhand/identity gap исправлен test-only helper перед финальным прогоном, marker gate вместо одного exit0 явно документирован.
+- Финальный новый мир `build/golem-side-support-m56-final`: весь full native run33/252/4FD + dedicated case3m3s/exit0, freshCorePASS. JAR/disk proof и оригинальные журналы сохранены.
+- Ruling: интеграция уже выбрана пользователем — обычный push только feature/golems и обновление существующего Draft PR#3. Меню merge/discard не предлагается повторно, никакой merge/main/force/delete не выполняется; workspace сохраняется для продолжения.

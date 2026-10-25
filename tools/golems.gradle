@@ -51,6 +51,13 @@ allprojects {
                 jvmArguments.add '-Xmx1G'
                 systemProperty 'thaumcraft.golemOwnerClientProbe', 'true'
             }
+            neo.runs.create('golemSideSupport') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemSideSupportDirectory') ?: 'golem-side-support')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemSideSupportProbe', 'true'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+            }
             neo.runs.create('golemCropServer') {
                 server()
                 gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemCropServerDirectory') ?: 'golem-crop-server')
