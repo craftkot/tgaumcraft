@@ -35,7 +35,7 @@ Ruling: пользователь явно поручил автономную р
 - [x] Снять source ticket; ждать настоящие ChunkEvent.Unload/EntityLeave/removed UNLOADED_TO_CHUNK и оба getChunkNow=null.40ticks без auto force-load; затем явно загрузить оба чанка, наблюдать новый entity loadedFromDisk с тем же UUID/cargo2 и настоящий enabled AI→crop1/seed1/XP2/0pending/100ticks.
 - [x] Mutation check: временно убрать только production inactive-support eligibility guard, тот же probe в другом fresh world обязан упасть на claim refusal; восстановить файл дословно до commit и повторить green. Это test-only coverage, не новая выдуманная игровая механика.
 - [x] Запустить Core/full native suites один раз по необходимости, read-only disk/JAR audit; fresh-context review.
-- [ ] Commit/push собственной ветки и обновить Draft PR без merge.
+- [x] Commit/push собственной ветки и обновить Draft PR без merge.
 
 Review focus: FULL не называть unloaded; pending task допустим при refused claim; setup tickets отличать от production; native entity reload должен дать другой Java object с тем же UUID; failed mutation run не объявлять PASS. Ни private tracker mutation, ни synthetic PASS markers, ни world NBT edits.
 
@@ -839,3 +839,7 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - Единственный fresh-context reviewer: Critical/Important нет; minor offhand/identity gap исправлен test-only helper перед финальным прогоном, marker gate вместо одного exit0 явно документирован.
 - Финальный новый мир `build/golem-side-support-m56-final`: весь full native run33/252/4FD + dedicated case3m3s/exit0, freshCorePASS. JAR/disk proof и оригинальные журналы сохранены.
 - Ruling: интеграция уже выбрана пользователем — обычный push только feature/golems и обновление существующего Draft PR#3. Меню merge/discard не предлагается повторно, никакой merge/main/force/delete не выполняется; workspace сохраняется для продолжения.
+
+- `45daf322806483803705b83faeceaa193cefb814` — M56 real side support/unload/resume probe, optional run и полные доказательства; отправлен обычным push. [CircleCI#492](https://circleci.com/gh/craftkot/tgaumcraft/492) verify-connection SUCCESS.
+- Draft PR#3 обновлён M56/новым JAR SHA и фактическими33/252/4/native lifecycle/Core доказательствами; остаётся open/draft, без merge. Полный M10/общий crash consistency не объявлены завершёнными.
+- Финальная публикационная запись меняет только журнал; Java/ресурсы после финального3m3s/exit0 не менялись. Нет запущенных Minecraft/Xvfb.
