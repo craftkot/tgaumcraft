@@ -31,7 +31,7 @@ allprojects {
             neo.runs.create('golemClient') {
                 client()
                 def scenario = project.findProperty('golemClientScenario') ?: ''
-                gameDirectory = project.layout.buildDirectory.dir(scenario == 'crops' ? 'golem-crop-client' : 'golem-client')
+                gameDirectory = project.layout.buildDirectory.dir(scenario == 'crops' ? 'golem-crop-client' : scenario == 'owners' ? 'golem-owner-client-a' : 'golem-client')
                 jvmArguments.add '-Xmx2G'
                 programArguments.addAll '--width', '1280', '--height', '800'
                 def remote = project.findProperty('golemRemoteAddress') ?: ''
@@ -43,6 +43,13 @@ allprojects {
                     systemProperty 'thaumcraft.golemCropClientProbe', 'true'
                     systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
                 }
+                if (scenario == 'owners') systemProperty 'thaumcraft.golemOwnerClientProbe', 'true'
+            }
+            neo.runs.create('golemOwnerServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemOwnerServerDirectory') ?: 'golem-owner-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemOwnerClientProbe', 'true'
             }
             neo.runs.create('golemCropServer') {
                 server()
