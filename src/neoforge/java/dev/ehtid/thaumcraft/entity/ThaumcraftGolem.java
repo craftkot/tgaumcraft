@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.golem.ai.GolemHomeGoal;
 import dev.ehtid.thaumcraft.golem.ai.GolemFollowOwnerGoal;
 import dev.ehtid.thaumcraft.golem.GolemModule;
 import dev.ehtid.thaumcraft.golem.GolemDyes;
+import dev.ehtid.thaumcraft.golem.inventory.GolemInventoryTransfer;
 import dev.ehtid.thaumcraft.port.core.golem.GolemBellRules;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import net.minecraft.network.chat.Component;
@@ -261,6 +262,14 @@ public final class ThaumcraftGolem extends PathfinderMob implements net.minecraf
         var result=transferRecovery;
         transferRecovery=recoveryQueue.isEmpty()?ItemStack.EMPTY:recoveryQueue.removeFirst(); return result;
     }
+    private void restoreRecoveryFirst(ItemStack actual) {
+        if(actual.isEmpty())return;
+        if(!transferRecovery.isEmpty())recoveryQueue.addFirst(transferRecovery);
+        transferRecovery=actual;
+    }
+    private boolean hasCarriedItems() {
+        return !getMainHandItem().isEmpty()||!getOffhandItem().isEmpty()||hasTransferRecovery();
+    }
     public void holdExtracted(ItemStack actual) {
         if (level().isClientSide || hasTransferRecovery()) throw new IllegalStateException("Extraction recovery must be drained first");
         transferRecovery = holdItem(actual);
@@ -415,25 +424,41 @@ public final class ThaumcraftGolem extends PathfinderMob implements net.minecraf
                 || player.getItemInHand(hand).is(net.minecraft.world.item.Items.NAME_TAG))
             return super.mobInteract(player, hand);
         if (level().isClientSide) return InteractionResult.SUCCESS;
-        // Returning to an item releases the task when the goal stops. Drop each carried slot once.
-        for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
-            ItemStack held = getItemBySlot(slot);
-            if (held.isEmpty()) continue;
-            ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), held.copy());
-            if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
-            setItemSlot(slot, ItemStack.EMPTY);
+        var transfer=GolemInventoryTransfer.begin(this);
+        if(transfer==null)return InteractionResult.FAIL;
+        try(transfer){
+            // Returning to an item releases the task when the goal stops. Drop each carried slot once.
+            for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
+                ItemStack held = getItemBySlot(slot);
+                if (held.isEmpty()) continue;
+                setItemSlot(slot, ItemStack.EMPTY);
+                ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), held);
+                if (!GolemInventoryTransfer.publishCargo(this,drop)) return InteractionResult.FAIL;
+            }
+            while (hasTransferRecovery()) {
+                if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
+                ItemStack actual=popRecovery();
+                ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), actual);
+                if (!level().addFreshEntity(drop)) {
+                    ItemStack returned=drop.getItem();drop.setItem(ItemStack.EMPTY);
+                    restoreRecoveryFirst(returned);
+                    return InteractionResult.FAIL;
+                }
+            }
+            // A spawn callback may have funded a hand that the loop already visited.
+            // Leave the worker alive for a later retry instead of discarding those real items.
+            if(hasCarriedItems())return InteractionResult.FAIL;
+            ItemEntity placer = new ItemEntity(level(), getX(), getY() + 0.5, getZ(),
+                    GolemPlacerItem.stack(invalidDesign != null ? invalidDesign : design().toLong(), rankXp));
+            if (!level().addFreshEntity(placer)) return InteractionResult.FAIL;
+            if(hasCarriedItems()){
+                // Roll back only the exact new placer owned by this aborted operation.
+                placer.setItem(ItemStack.EMPTY);placer.discard();
+                return InteractionResult.FAIL;
+            }
+            discard();
+            return InteractionResult.CONSUME;
         }
-        while (hasTransferRecovery()) {
-            if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
-            ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), transferRecovery.copy());
-            if (!level().addFreshEntity(drop)) return InteractionResult.FAIL;
-            popRecovery();
-        }
-        ItemEntity placer = new ItemEntity(level(), getX(), getY() + 0.5, getZ(),
-                GolemPlacerItem.stack(invalidDesign != null ? invalidDesign : design().toLong(), rankXp));
-        if (!level().addFreshEntity(placer)) return InteractionResult.FAIL;
-        discard();
-        return InteractionResult.CONSUME;
     }
 
     @Override

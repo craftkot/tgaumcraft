@@ -2,7 +2,7 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 25.10.2026 (МСК), M10.56 проверен
+## Актуальный checkpoint — 26.10.2026 (МСК), M10.57 production fix проверен
 
 `076f4a9` исправил потерю typed seal при отменённом native refund spawn и защищает замену instance внутри callback. Java21 Core39962construction/2909task/allrunner PASS; M53 полный NeoForge build и252/252 required GameTest PASS, включая четыре новых refund случая. Журнал `golems-m53-native.log`,1m47s.
 
@@ -14,13 +14,30 @@ M55: source production не менялся; добавлены только gate
 
 M56 закрыл реальную inactive side-support boundary: настоящий source FORCED31 / neighbor32 FULL/inactive, mature Harvest→pending EAST/seed2/XP1 и100 rejected candidate leases без расхода. Затем оба native ChunkEvent.Unload/entity removal UNLOADED_TO_CHUNK,40ticks оба getChunkNow=null без production force-load; явный fixture reload восстановил loadedFromDisk другой Java object того же UUID/owner/design/seed2/XP1. Настоящий enabled AI завершил east/age0 plant1/seed1/XP2/0pending и100ticks без replay. [M56 evidence](../evidence/golems/side_support_2026_10_25/README.md). Mutation без единственного support-active guard намеренно упал на реальном ошибочном lease в phase2; исходный GolemFarm восстановлен exact bytes. Fresh review Critical/Important нет, minor offhand+identity sum исправлен до finalgreen. **Свежие Core39962/2909/allrunner PASS, full run3m3s/exit0:33/252/4FD + повторный полный side lifecycle PASS.** Independent read-only disk: originalUUID/seed1/XP2/eastplant1/0pending/items/forcedchunks. Итоговый JAR CRC/732Java21classes/unique EN-RU JSON PASS, SHA256 `67a08e82b05741022affcc4355aa5704cfd3221bdc67cace648b8240953c01e3`. Production Registry/Farm/Core не изменён относительно9a19b39.
 
+M57 — реальные изменения production после корректировки приоритетов пользователем: единый per-worker scope для Containers/reclaim, debit actual payload до callbacks, возврат фактического remainder без snapshot overwrite, сохранение rejected recovery в начале очереди, callback-funded reclaim abort/retry и stale stock-query hand identity check. Устранён ordinary reentry, где callback принимал ещё9 из тех же9, и потеря independently funded cargo/components. **11 новых normal required tests, финальные263/33/4FD/build/cold NBT READ PASS3m40s/exit0**, freshCore39962/2909/allrunner PASS. [M57 evidence](../evidence/golems/transfer_ownership_2026_10_26/README.md). Предыдущая отдельная WRITE JVM PASS; independent disk: originalUUID/owner/iron37/recoveryDiamond3/barrelsGold11+Emerald23/3seals/0grounditems. JAR CRC/740Java21classes/unique EN-RU JSON PASS, SHA256 `9ddae2452516b08318e135d7810ab374aa1b8bd984762e686b2bc47ec8afb8b9`. NBT schema, ordinary recipes/prices/AI и client packets не менялись.
+
 Прежние M51/M52 cold Use и graphical paid crop proof: [Use recovery](../evidence/golems/use_recovery_2026_10_24/README.md), [crop TCP](../evidence/golems/client_crops_tcp_2026_10_24/README.md). Каталог2400 конструкций/оплаченный Press/части,16печатей/shared tasks, логистика/ферма/Use, melee/Guard/Butcher/CLIMBER/FLYER/RANGED остаются реализованными основами; это не полная визуальная/игровая приёмка всех2400 конструкций.
 
-**Критический открытый предел:** abrupt split block/entity save даёт26iron вместо13; vanilla контроль34gold вместо17. Общего durable protocol ещё нет, snapshot recovery этого не исправляет. [Матрица](../evidence/golems/crash_2026_10_20/README.md). Произвольные внешние callback inventory/entity side effects не атомарны.
+**Известный inherited engine crash предел (не локальная M10-регрессия):** abrupt split block/entity save даёт26iron вместо13; vanilla контроль34gold вместо17. Общего durable protocol ещё нет, snapshot recovery этого не исправляет. [Матрица](../evidence/golems/crash_2026_10_20/README.md). Произвольные внешние callback inventory/entity side effects не атомарны.
 
-Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий независимый пункт — конкретный foreign directional binary и оставшиеся исходные API-контракты. M56 подтвердил inactive FULL neighbor и настоящее отсутствие обоих чанков; отдельный absent neighbor при активном crop не выдумывается вопреки native ticket gradient. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
+Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий игровой приоритет — полный survival-путь базовой конструкции и source progression с явными зависимостями M06/M07/M08; дополнительные foreign crop матрицы не опережают эту работу. M56 подтвердил inactive FULL neighbor и настоящее отсутствие обоих чанков; отдельный absent neighbor при активном crop не выдумывается вопреки native ticket gradient. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
 
 ## Границы и исходное состояние
+
+### M57 — shipping fix: реальный callback-дюп груза и возврата голема
+
+26.10.2026. После замечания пользователя приоритет перенесён с расширения тестовых матриц на обычные игровые дефекты. Системный аудит M43 подтвердил независимые native block/entity stores; standalone WAL/receipt или перестановка flush не обеспечивают общую атомарность. Общий vanilla26/34 предел остаётся честно отмечен, но его исправление не выдаётся за локальный порт големов.
+
+Найден конкретный локальный дефект: GolemContainers.deposit публикует копию груза до debit, поэтому EntityJoinLevelEvent может повторно выполнить тот же deposit и выдать9→18. Owner reclaim имеет такой же publish-before-debit/reentry путь. insertCarried после callback восстанавливает original snapshot и может затереть реальный новый груз/компоненты remainder; extractInto бросает исключение, если callback уже заполнил recovery.
+
+План исполнения в пределах существующего design E/server authority:
+
+- [x] Настоящие регрессии на EntityJoinLevelEvent/ItemStackHandler: повторный deposit/reclaim, canceled actual payload, callback extraction и actual remainder/recovery. Сначала наблюдать RED на текущем коде.
+- [x] Единый per-worker transfer scope для container transfers и owner reclaim; debit/split до external callbacks; actual returned payload через retainTransfer, без original snapshot overwrite/refund.
+- [x] GREEN full native/Core/compile и existing restart checks; fresh read-only review и Important fix с RED→GREEN.
+- [ ] Commit/push, журнал и Draft PR.
+
+Ruling: arbitrary handler exceptions after partial acceptance не имеют NeoForge rollback-контракта; запрещено возвращать копию whole input и объявлять это атомарностью. Новая защита исправляет подтверждённые синхронные reentry/cargo-loss сценарии, не маскирует M43 и не меняет нормальные source цены/рецепты/ИИ. Пользователь уже выбрал автономную реализацию/push Draft без merge, повторного approval gate нет.
 
 ### План M56 — inactive side support / native unload-resume, 25.10.2026
 
@@ -843,3 +860,14 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - `45daf322806483803705b83faeceaa193cefb814` — M56 real side support/unload/resume probe, optional run и полные доказательства; отправлен обычным push. [CircleCI#492](https://circleci.com/gh/craftkot/tgaumcraft/492) verify-connection SUCCESS.
 - Draft PR#3 обновлён M56/новым JAR SHA и фактическими33/252/4/native lifecycle/Core доказательствами; остаётся open/draft, без merge. Полный M10/общий crash consistency не объявлены завершёнными.
 - Финальная публикационная запись меняет только журнал; Java/ресурсы после финального3m3s/exit0 не менялись. Нет запущенных Minecraft/Xvfb.
+
+
+## M57 execution ledger — 26.10.2026
+
+- BASE60de47b/CI#493 SUCCESS; maina4280834 unchanged. Аудит native save подтвердил inheritedM43, standalone WAL/permutation flush отвергнуты как unsafe partial fix; взят конкретный обычный port reentry defect.
+- Native RED:8 новых failures, включая nested deposit=9 и nested extraction=3, потерю remainder/recovery. Public Mob.interact contract уточнён по реальному source: внутренний FAIL превращается в PASS, отрицательные тесты проверяют!consumesAction.
+- Первый GREEN candidate:8 новых cases прошли, но existing recovery-reclaim test нашёл несовместимую placement-семантику. Исправлен production restoreRecoveryFirst без ослабления старого test.
+- Два donated-reclaim случая воспроизведены RED, исправлены live-worker abort/exact-created-placer rollback; retries сохраняют все реальные inputs. Intermediate full262/33/4+freshNBTWRITE PASS3m58s/exit0.
+- Fresh reviewer Important: stock getter мог заменить paper9 на actualpaper12. Отдельный11-й RED поймал потерю3. Послеamount добавлен current hand identity/filter guard; финальный full263/33/4+coldREAD PASS3m40s/exit0. Все промежуточные failures сохранены и не выданы за PASS.
+- Новая transient scope не меняет NBT; coldrestore/disk independently подтверждают exactUUID/cargo37/recovery3/stock11+23/3seals и0groundcopies. Свежий CorePASS. Нового client run нет для server-only change.
+- Только lane-owned Java/tests/docs, shared Gradle/CI/ROADMAP/main/чужие ветки не менялись. M43 не назван исправленным, общей atomicity guarantee нет. Следующий scope — игровая progression, а не рост числа узких callback matrices.
