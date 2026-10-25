@@ -26,8 +26,10 @@ public final class GolemPlantAdapterItems {
     public static ResourceLocation id(String name){return ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID,"adapter_probe_"+name);}
     @SubscribeEvent public static void register(RegisterEvent event){
         if(!Boolean.getBoolean("thaumcraft.golemPlantAdapterProbe"))return;
-        event.register(Registries.BLOCK,helper->helper.register(id("directional"),
-                new DirectionalPlant(BlockBehaviour.Properties.of().noCollission().noOcclusion().instabreak().noLootTable())));
+        event.register(Registries.BLOCK,helper->{
+            helper.register(id("directional"),new DirectionalPlant(BlockBehaviour.Properties.of().noCollission().noOcclusion().instabreak().noLootTable()));
+            helper.register(id("six_way"),new SixWayPlant(BlockBehaviour.Properties.of().noCollission().noOcclusion().instabreak().noLootTable()));
+        });
         event.register(Registries.ITEM,helper->{
             helper.register(id("wheat"),new Item(new Item.Properties()){
                 @Override public InteractionResult useOn(UseOnContext c){return Items.WHEAT_SEEDS.useOn(c);}
@@ -42,6 +44,7 @@ public final class GolemPlantAdapterItems {
             helper.register(id("cursor_fault"),new CallbackSeed(4));
             helper.register(id("directional"),new DirectionalSeed(false));
             helper.register(id("directional_fault"),new DirectionalSeed(true));
+            helper.register(id("six_way"),new SixWaySeed());
         });
     }
     /** An actual modern directional block with no IPlantable implementation or BlockItem. */
@@ -73,6 +76,31 @@ public final class GolemPlantAdapterItems {
             }
             // The native callback does not pay itself and changes its actual reserved stack.
             context.getItemInHand().set(DataComponents.CUSTOM_NAME,Component.literal("Directional callback changed reserved components"));
+            return InteractionResult.SUCCESS;
+        }
+    }
+    /** Source BlockDirectional permits all six faces; vertical specimens remain test-run only. */
+    public static final class SixWayPlant extends DirectionalBlock {
+        private static final MapCodec<SixWayPlant> CODEC=simpleCodec(SixWayPlant::new);
+        public static final IntegerProperty AGE=IntegerProperty.create("age",0,1);
+        public SixWayPlant(BlockBehaviour.Properties properties){
+            super(properties);registerDefaultState(stateDefinition.any().setValue(FACING,Direction.DOWN).setValue(AGE,0));
+        }
+        @Override protected MapCodec<? extends DirectionalBlock> codec(){return CODEC;}
+        @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> builder){builder.add(FACING,AGE);}
+        @Override protected boolean canSurvive(BlockState state,LevelReader level,BlockPos pos){
+            return level.getBlockState(pos.relative(state.getValue(FACING))).is(Blocks.JUNGLE_LOG);
+        }
+    }
+    private static final class SixWaySeed extends Item {
+        SixWaySeed(){super(new Item.Properties());}
+        @Override public InteractionResult useOn(UseOnContext context){
+            var placement=new BlockPlaceContext(context);var pos=placement.getClickedPos();
+            var plant=net.minecraft.core.registries.BuiltInRegistries.BLOCK.get(id("six_way"));
+            var state=plant.defaultBlockState().setValue(DirectionalBlock.FACING,context.getClickedFace().getOpposite());
+            if(!placement.canPlace()||!state.canSurvive(context.getLevel(),pos)||!context.getLevel().setBlock(pos,state,3))return InteractionResult.FAIL;
+            // As with the horizontal specimen, source Harvest must debit the actual reservation.
+            context.getItemInHand().set(DataComponents.CUSTOM_NAME,Component.literal("Six-way callback changed reserved components"));
             return InteractionResult.SUCCESS;
         }
     }

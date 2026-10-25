@@ -31,3 +31,5 @@ gradle --offline --init-script tools/golems.gradle -PgolemRestartScenario=seeded
 Для crop integration нужен проверенный Farmer’s Delight binary в его isolated mods directory, см. прежний external crop protocol. Cold требует именно GOLEM_SEED_RESTART_WRITE/READ_ASSERTIONS_OK с `directionalSeed=true` и отсутствие ASSERTIONS_FAILED: один BUILD SUCCESS недостаточен.
 
 Проверены собственный four-way specimen и прежние vanilla/Cocoa/FD регрессии. Произвольный foreign directional binary, six-way/vertical native callbacks и незагруженная боковая опора отдельно не проверены. Это явная современная API-проекция, не совместимость со всем старым ABI. Общий split-save crash hazard26/34 и arbitrary callback side effects остаются открыты.
+
+Позднее M55 отдельно подтвердил native UP/DOWN completion и six-way property validation: [M55 proof](../six_way_crops_2026_10_25/README.md). Это не заменяет отдельный vertical cold/navigation или inactive side-support тест.
