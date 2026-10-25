@@ -9,7 +9,7 @@
 | Алхимия / основной чат | `feature/alchemy` | M04 → M05; сейчас M04.1 (fixture #209 исправлен, новый gameplay не подтверждён) | `analysis/lanes/alchemy.md` |
 | Исследования / второй чат | `feature/research` | M07.1/M07.2 🟡; непроверенные помощники/карточки | `analysis/lanes/research.md` |
 | Инфузия / третий чат | `feature/infusion` | M06.1 🟡; ledger и checkpoint без подтверждённого survival world restart | `analysis/lanes/infusion.md` |
-| Големы / отдельный разработчик | `feature/golems` | M10 🟡; M51/M52: разработчик опубликовал локальные full NeoForge/248 GameTests, 22 callback tests, cold Use и новый TCP graphical crop client (отдельные JVM, 24.10); координатор эти прогоны не воспроизводил. Split-save 13→26 iron/17→34 gold остаётся открытым, M10 не принят | `analysis/lanes/golems.md` |
+| Големы / отдельный разработчик | `feature/golems` | M10 🟡; M53 — developer evidence dedicated server + 2 TCP-клиента, owner isolation (exit-коды сессий недоступны); M54 HEAD `052ef662` — developer evidence full NeoForge, 252/252 required + 30/30 optional + 4/4 FD, directional cold WRITE/READ exit0 и read-only disk audit. Координатор не воспроизводил; CircleCI #487 подтверждает только Core, Actions #40204694716 FAILURE без доступных steps/logs. Split-save 13→26 iron/17→34 gold открыт; общий четырёхветочный runtime не проверен; M10 не принят | `analysis/lanes/golems.md` |
 
 `main` — только для интеграции проверенных PR. На 18.10.2026 во всех четырёх feature-ветках есть кодовые коммиты: **M04/M06/M07/M10 🟡**; это не означает завершения этапов. Перед каждым подходом сверять живой HEAD, lane-журнал и CI, а не эту дату; индекс остаётся **59/100**. По одному 🟡 этапу на ветку.
 
