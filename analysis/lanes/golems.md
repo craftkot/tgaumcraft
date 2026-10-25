@@ -35,7 +35,7 @@ M57 — реальные изменения production после коррект
 - [x] Настоящие регрессии на EntityJoinLevelEvent/ItemStackHandler: повторный deposit/reclaim, canceled actual payload, callback extraction и actual remainder/recovery. Сначала наблюдать RED на текущем коде.
 - [x] Единый per-worker transfer scope для container transfers и owner reclaim; debit/split до external callbacks; actual returned payload через retainTransfer, без original snapshot overwrite/refund.
 - [x] GREEN full native/Core/compile и existing restart checks; fresh read-only review и Important fix с RED→GREEN.
-- [ ] Commit/push, журнал и Draft PR.
+- [x] Commit/push, журнал и Draft PR.
 
 Ruling: arbitrary handler exceptions after partial acceptance не имеют NeoForge rollback-контракта; запрещено возвращать копию whole input и объявлять это атомарностью. Новая защита исправляет подтверждённые синхронные reentry/cargo-loss сценарии, не маскирует M43 и не меняет нормальные source цены/рецепты/ИИ. Пользователь уже выбрал автономную реализацию/push Draft без merge, повторного approval gate нет.
 
@@ -871,3 +871,7 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - Fresh reviewer Important: stock getter мог заменить paper9 на actualpaper12. Отдельный11-й RED поймал потерю3. Послеamount добавлен current hand identity/filter guard; финальный full263/33/4+coldREAD PASS3m40s/exit0. Все промежуточные failures сохранены и не выданы за PASS.
 - Новая transient scope не меняет NBT; coldrestore/disk independently подтверждают exactUUID/cargo37/recovery3/stock11+23/3seals и0groundcopies. Свежий CorePASS. Нового client run нет для server-only change.
 - Только lane-owned Java/tests/docs, shared Gradle/CI/ROADMAP/main/чужие ветки не менялись. M43 не назван исправленным, общей atomicity guarantee нет. Следующий scope — игровая progression, а не рост числа узких callback matrices.
+
+- `ad0327b51a434bb6e7b2a72f4b14ae18d194ecca` — production guard/actual cargo/reclaim fix и11 required regressions; обычный push feature/golems выполнен. [CircleCI#495](https://circleci.com/gh/craftkot/tgaumcraft/495) verify-connection SUCCESS.
+- Draft PR#3 переписан вокруг реально работающей автоматики и последнего production fix, приоритет следующей работы — survival progression. M43 явно inherited/notfixed, не скрыт и не превращён в PASS.
+- Публикационный commit меняет только журнал; Java/ресурсы после последнего263/33/4/coldREAD PASS не менялись. Рабочее дерево после push сохраняется; main/чужие ветки не меняются, merge не выполняется.
