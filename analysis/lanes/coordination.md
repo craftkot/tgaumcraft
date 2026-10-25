@@ -1,5 +1,15 @@
 # Главный координатор — chore/coordination
 
+## Аудит 25.10.2026 13:35 МСК — устранена ловушка устаревших ссылок
+
+- HEAD до организационного коммита: `main a4280834`, `chore/coordination 8cdeb7e2`, `feature/alchemy 633e0887`, `feature/research a33245ca`, `feature/infusion 2e334a96`, `feature/golems 928f0038`; все PR #1/#2/#3 — Draft, без merge. `main...feature/*`: ahead 33/39/81/138, behind=0, changed paths 7/35/18/274; точных пересечений файлов нет, общая API/runtime совместимость не доказана.
+- **Подтверждённый дефект навигации:** в координаторском `ROADMAP_RU.md` относительные ссылки в таблице M04/M07/M06 открывали *старые копии* `analysis/lanes/*.md` в `chore/coordination`. Там `research` и `infusion` ошибочно помечены 🔴 «работа не началась», а `alchemy` требует заново расследовать уже известную причину fixture #209. Рабочие `feature/*` lane-журналы содержат более свежие статусы. В ROADMAP заменены только три ссылки на точные `feature/*` URL и добавлено предупреждение; чужие lane-файлы и feature-ветки не менялись.
+- Точный предыдущий coordination HEAD `8cdeb7e2`: [CircleCI Core #485 SUCCESS](https://circleci.com/gh/craftkot/tgaumcraft/485) по GitHub status; [GitHub Actions PR #40150361650](https://github.com/craftkot/tgaumcraft/actions/runs/40150361650) и [push #40150357172](https://github.com/craftkot/tgaumcraft/actions/runs/40150357172) FAILURE, `verify.steps=null`, причина неизвестна. Feature Core statuses #357/#470/#472/#478 SUCCESS. Новый docs-HEAD после коммита ещё не имеет доказанного CI.
+- Full NeoForge/JAR, совместные dedicated server и client, общий world-save четырёх веток **не проверены**. Локальные M10 GameTests/cold/client доказательства — заявления автора, не независимая проверка; M10 split-save 13→26 iron и 17→34 gold остаётся открытым. 59/100 без пересчёта. Никаких игровых изменений, merge, force или удаления.
+
+---
+
+
 **Статус:** 🟡 организационная ветка подготовлена; реальные автономные облачные сеансы запускает пользователь в Work/Codex Cloud.
 **Главный план:** `main:ROADMAP_RU.md`.
 **Ночная схема:** [`analysis/OVERNIGHT_AUTONOMY_RU.md`](../OVERNIGHT_AUTONOMY_RU.md).
