@@ -1,5 +1,14 @@
 # Главный координатор — chore/coordination
 
+## Аудит 25.10.2026 18:25 МСК — M10.55 и свежие CI
+
+- Fresh HEAD: main `a4280834`, coordination до правки `32217d15`, alchemy `633e0887`, research `a33245ca`, infusion `2e334a96`, golems **[`9a19b396`](https://github.com/craftkot/tgaumcraft/commit/9a19b3967cfd4cdf4ab537532faef7f1573151b8)** (+2 от M54 `052ef662`). PR #1/#2/#3 открыты Draft, base=main. Compare main...feature ahead +33/+39/+81/+143, behind=0; changed paths 7/35/18/295, точных совпадений изменённых путей между четырьмя feature-ветками нет. Golems меняет shared ThaumcraftPort, Crucible, ArcaneWorkbenchMenu, lang, Core runner; отсутствие path overlap не доказывает API/runtime compatibility.
+- M55 [six-way evidence](https://github.com/craftkot/tgaumcraft/blob/feature/golems/analysis/evidence/golems/six_way_crops_2026_10_25/README.md): только новые gated test fixtures и документация, production неизменен. Автор заявляет full NeoForge build + 33/33 optional native tests PASS/exit0; 252 required, 4 Farmer's Delight, vertical cold/graphical не повторялись. M54 directional cold и M53 two-client — прежние developer proofs, координатор не воспроизводил. Никакой общей NeoForge/JAR/server/client/world-save проверки четырёх веток.
+- На точном golems HEAD [CircleCI #490](https://circleci.com/gh/craftkot/tgaumcraft/490) SUCCESS по GitHub status `ci/circleci: verify-connection` — Core, не full/game; GitHub Actions [#40205762871](https://github.com/craftkot/tgaumcraft/actions/runs/40205762871) и [#40205760161](https://github.com/craftkot/tgaumcraft/actions/runs/40205760161) completed FAILURE, job `verify.steps=null`, причина не доказана. На предыдущем coordination SHA [CircleCI #488](https://circleci.com/gh/craftkot/tgaumcraft/488) SUCCESS Core, [Actions #40205165328](https://github.com/craftkot/tgaumcraft/actions/runs/40205165328) FAILURE/steps=null. Новый docs SHA будет иметь собственный CI только после push; не приписывать ему результаты старого SHA.
+- Открытый split-save HAZARD [13→26 iron, 17→34 gold](https://github.com/craftkot/tgaumcraft/blob/feature/golems/analysis/evidence/golems/crash_2026_10_20/README.md). M04/M06/M07/M10 остаются 🟡; M10 не принят; 59/100 без пересчёта. Изменения только организационные, без merge/force/delete/игрового кода; старые срезы ниже сохраняются как история.
+
+---
+
 ## Аудит 25.10.2026 13:35 МСК — устранена ловушка устаревших ссылок
 
 - HEAD до организационного коммита: `main a4280834`, `chore/coordination 8cdeb7e2`, `feature/alchemy 633e0887`, `feature/research a33245ca`, `feature/infusion 2e334a96`, `feature/golems 928f0038`; все PR #1/#2/#3 — Draft, без merge. `main...feature/*`: ahead 33/39/81/138, behind=0, changed paths 7/35/18/274; точных пересечений файлов нет, общая API/runtime совместимость не доказана.
