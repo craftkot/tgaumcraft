@@ -806,3 +806,7 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - `052ef66` — explicit directional registry/Farm,8 native cases и настоящий cold WRITE/READ.
 - Эти3 коммита отправлены обычным push в feature/golems; [CircleCI#487](https://circleci.com/gh/craftkot/tgaumcraft/487) verify-connection SUCCESS на052ef66. PR#3 открыт/draft=true/merged=false/base=main, описание обновлено, merge разрешения нет.
 - Коммит M55 содержит3 новых gated native tests и эту запись; фактический33/33/build/exit0 записан выше. Main a4280834, shared build.gradle/CI/ROADMAP и чужие ветки не менялись.
+
+- `e538407ca87e724242183959d9f1f9d0a2ec6c8f` — M55 UP/DOWN/six-way proof,33/33 optional иbuild PASS. Отправлен обычным push; [CircleCI#489](https://circleci.com/gh/craftkot/tgaumcraft/489) verify-connection SUCCESS.
+- Draft PR#3 дополнен M55 и итоговым JAR SHA; ссылки evidence ведут на feature/golems. После тестов дополнительно проверены relative evidence links и уникальность EN/RU JSON в финальном JAR.
+- Итоговая публикация меняет только эту запись и JAR metadata о выполненной EN/RU проверке; Java/ресурсы после успешного33/33 не менялись. No running Minecraft/Xvfb; исходные main/shared Gradle/CI/ROADMAP неизменны. Следующий пункт и критический crash предел явно записаны в checkpoint, M10 целиком не объявлен завершённым.

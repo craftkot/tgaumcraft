@@ -8,5 +8,6 @@
     "dev/ehtid/thaumcraft/golem/test/GolemSixWayPlantGameTests.class",
     "dev/ehtid/thaumcraft/golem/test/GolemPlantAdapterItems$SixWayPlant.class",
     "dev/ehtid/thaumcraft/golem/test/GolemPlantAdapterItems$SixWaySeed.class"
-  ]
+  ],
+  "en_ru_unique_json": true
 }
