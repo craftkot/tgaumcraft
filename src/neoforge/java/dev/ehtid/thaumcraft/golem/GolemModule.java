@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.golem;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.golem.crafting.GolemPlateIngredient;
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.item.GolemPlacerItem;
 import dev.ehtid.thaumcraft.item.GolemSealItem;
@@ -35,6 +36,8 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.neoforged.neoforge.common.crafting.IngredientType;
 
 /** Lane-local registrations: the shared mod entry point needs only register(bus). */
 public final class GolemModule {
@@ -43,6 +46,10 @@ public final class GolemModule {
     private static final DeferredRegister<EntityType<?>> ENTITIES =
             DeferredRegister.create(Registries.ENTITY_TYPE, ThaumcraftPort.MOD_ID);
     private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister<IngredientType<?>> INGREDIENTS =
+            DeferredRegister.create(NeoForgeRegistries.Keys.INGREDIENT_TYPES, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<IngredientType<?>, IngredientType<GolemPlateIngredient>> PLATE_INGOT =
+            INGREDIENTS.register("golem_ingot", () -> new IngredientType<>(GolemPlateIngredient.CODEC));
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ThaumcraftPort.MOD_ID);
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ThaumcraftPort.MOD_ID);
     public static final DeferredHolder<Block, GolemPressBlock> PRESS = BLOCKS.register("golem_builder",
@@ -126,6 +133,7 @@ public final class GolemModule {
     public static void register(IEventBus bus) {
         ENTITIES.register(bus);
         ITEMS.register(bus);
+        INGREDIENTS.register(bus);
         MENUS.register(bus);
         BLOCKS.register(bus);
         BLOCK_ENTITIES.register(bus);

@@ -2,7 +2,7 @@
 
 Дата аудита: **18.10.2026**. Рабочая ветка: **`feature/golems`**. База аудита: `main` **`a4280834adc5a20b6951098af937d30ca4aeca56`**. Назначение этого документа — уточнить M10 из [единой дорожной карты](../ROADMAP_RU.md), зафиксировать проверенные правила BETA26 и границы реализации. Документ не заменяет карту и не объявляет весь M10 завершённым. Коммиты, фактические запуски и продолжение ведутся в [журнале направления](lanes/golems.md).
 
-Текущие срезы **M10.14–M10.52** описаны в конце документа: оплаченный Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. **Java21 full Core39962/2909 и248/248 NeoForge GameTests PASS; отдельно32flight,4реальныхexternalFDтеста и22nativecallbackadapter/Use recoveryтеста**. Точные cold baselines — в validation/lane. Описание начальных ограничений ниже является историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия, исходный визуал, mod API и crash consistency остаются открыты.
+Текущий срез **M10.58**: оплаченные Press/компоненты/formation и2400 runtime-каталожных конфигураций; matching/Provide-Stock/advanced Pickup-Fill-Empty; Harvest10vanilla/Cocoa; Breaker/Lumber/AdvancedBreaker-Silk; SealUse; Guard/AdvancedGuard/Butcher; melee/CLIMBER/FLYER/RANGED и настоящий дротик. M57 исправил реальные transfer/reclaim reentry и потерю груза; M58 добавил отсутствующие plate recipes и исправил typed output ironplate. **Fresh M58 Java21 Core39962/2909/allrunner и269/269 NeoForge required GameTests/fullbuild PASS.** Отдельные32flight,33nativecallbackadapter и4externalFD проверки относятся к предыдущим явно указанным прогонам и не повторялись в M58. Точные cold/client baselines — в validation/lane. Начальные ограничения ниже являются историей аудита18.10; актуальный результат задают позднейшие M10.* срезы и эта сводка. Полная survival прогрессия (в частности M07/M12), исходный визуал, mod API и crash consistency остаются открыты.
 
 | Компонент | Что реализовано и проверено | Остаток |
 |---|---|---|
@@ -12,7 +12,7 @@
 | D. Seals | Все16 исходных типов имеют реальные серверные пути; area/priority/color/owner/redstone/filter UI/NBT | S2C chunk mirror и source области проверены M40; исходный artwork и внешняя API совместимость открыты |
 | E. Automation | Native inventory transfers/capabilities/recovery, crop cycles/Cocoa, protected harvest/break/lumber/use, finite-item conservation | Registered standard/stacked/clickable/nativeBlockItem seeds PASS M44/M45; произвольные mod callbacks/foreign binaries/M06/crash consistency открыты |
 | F. Client | Owner menus/localization, actual Use/Silk C2S и wheeled transfer; own provisional renderer | M38 combat PASS; M40 integrated и M42 separate-JVM TCP seal snapshot/edit/REMOVE/offhand/sneak world areas PASS. Original meshes/анимации/parts/particles не портированы |
-| Проверки | Core +248 native GameTests +32optionalflight +4externalFD +22callbackadapters/Use + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
+| Проверки | Fresh Core +269 native GameTests; ранее32optionalflight +4externalFD +33callbackadapters/Use + отдельные dedicated cold JVM | Не выдавать representative тесты за2400 live-конструкций или полный M10 |
 
 
 ## 1. Источники и границы доказательств
@@ -877,3 +877,14 @@ Mutation-контроль временно удалил только support rea
 11 required regressions доказали исправление ordinary9→18 reentry, фактических components/recovery и сохранность independently funded callback inputs. Полный263/33/4FD/native cold READ/build PASS3m40s; fresh Core39962/2909/allrunner PASS; [evidence/JAR/disk](evidence/golems/transfer_ownership_2026_10_26/README.md). Прежний recovery retry контракт сохранён, NBT schema/normal prices/recipes/AI не менялись.
 
 M43 классифицируется отдельно как inherited native block/entity save-order limitation, воспроизведённое и на vanilla hopper. Без общего participant protocol нельзя честно исправить его standalone WAL или snapshot refund. Этот риск остаётся видимым, но не должен превращать перенос M10 в бесконечное переписывание сохранения Minecraft. Следующий игровой приоритет — survival-получение базовой конструкции/ресурсов и интеграция source progression; M06/M07/M08 зависимости не заменяются free recipes. Оригинальный визуал/полный API остаются отдельными незавершёнными областями.
+
+
+## M10.58 — восстановление настоящего crafting участка
+
+Три отсутствовавших normal recipes BETA26 (3×brass/thaumium/void ingot в ряд→3 соответствующих plates) добавлены как standard shaped JSON. GolemPlateIngredient сохраняет original ore ingredient semantics: нативные LegacyIngotMeta различаются до generic c/forge tags, посторонние name/CUSTOM_DATA не мешают правильному металлу. isSimple=false и native network codec сохраняют предикат при синхронизации рецептов. Собственная ingredient registration находится только в GolemModule; новый crafting engine и research registry не создаются.
+
+NBT output четырёх plate recipes теперь задаётся SNBT с integer LegacyPlateMeta. Это также исправляет прежний ironplate: JSON numeric custom_data получался byte, несовместимый с существующим строгим PlateItem API. Входной malformed metadata по-прежнему отклоняется.
+
+Fresh269/269 native required tests/full build1m24s/exit0 и fullCore39962/2909/allrunnerPASS. Реальный оплаченный участок проходит из 9brass+6iron ingots через plates до 3mechanisms+mind, с source55Vis/4Ignis/3Aqua/1Ordo. [Источник, ошибки RED, проверки и JAR](evidence/golems/paid_plates_2026_10_26/README.md). Research knowledge явно является fixture предусловием только arcane части.
+
+Full survival route пока требует M07 общего прохождения Thaumonomicon (нынешний UI только FIRSTSTEPS) и M12 Greatwood log/tree/acquisition (есть только planks). Native knowledge stage gate корректен. Free unlock/oak substitution не добавлены. M06/advanced infusion, M08/levitator, source visual/API и общий engine crash-save предел остаются открытыми. Следующий конкретный этап — интеграция этих dependencies, а не дополнительные узкие crop matrices.

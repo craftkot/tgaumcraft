@@ -2,7 +2,9 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 26.10.2026 (МСК), M10.57 production fix проверен
+## Актуальный checkpoint — 26.10.2026 (МСК), M10.58 оплаченные plate recipes проверены
+
+M58 закрывает реальный отсутствующий crafting участок: brass/thaumium/void plate recipes по BETA26 и typed NBT fix прежнего ironplate. Новый component-aware ingredient зарегистрирован только в GolemModule; ванильные shaped recipes/menu переиспользованы. **Fresh Java21 full build +269/269 required GameTests PASS1m24s/exit0, fresh Core39962/2909/allrunner PASS/exit0.** Реальные 9 brass+6 iron ingots оплачивают plates→3mechanisms+mind,55Vis/4Ignis/3Aqua/1Ordo; остаются1brassplate+2mechanisms. Проверены native recipe network codec и отказ malformed/mixed inputs. [M58 proof/source/JAR](../evidence/golems/paid_plates_2026_10_26/README.md). JAR SHA256 `17e30ad7b819e2e235c9fd6ef4086791148ac48af315d0feabf1a94e79f35246`,744Java21classes/CRC/unique resources PASS. M07 generic progression и M12 Greatwood acquisition отсутствуют и остаются явными зависимостями; fixture knowledge не выдан за полное survival прохождение. Новый client/cold/optional33/FD4 не повторялись для recipe-only изменения; ниже сохраняется история прошлых проверок.
 
 `076f4a9` исправил потерю typed seal при отменённом native refund spawn и защищает замену instance внутри callback. Java21 Core39962construction/2909task/allrunner PASS; M53 полный NeoForge build и252/252 required GameTest PASS, включая четыре новых refund случая. Журнал `golems-m53-native.log`,1m47s.
 
@@ -23,6 +25,16 @@ M57 — реальные изменения production после коррект
 Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий игровой приоритет — полный survival-путь базовой конструкции и source progression с явными зависимостями M06/M07/M08; дополнительные foreign crop матрицы не опережают эту работу. M56 подтвердил inactive FULL neighbor и настоящее отсутствие обоих чанков; отдельный absent neighbor при активном crop не выдумывается вопреки native ticket gradient. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
 
 ## Границы и исходное состояние
+
+### M58 — реальные недостающие рецепты пластин, 26.10.2026
+
+Аудит basic survival chain подтвердил port-local разрыв: ingots существуют/алхимия выдаёт brass2/thaumium0, но из plain plate recipes зарегистрирован только ironplate. Source ConfigRecipes.initializeNormalRecipes brassplate1424–1467: горизонтальные3 ingotBrass→3plate@0; thaumiumplate1468–1511:3ingotThaumium→3plate@2; voidplate2075–2118:3ingotVoid→3plate@3. Нет research/vis/crystal gate. Эти3 IDs отсутствуют и в просмотренных feature/alchemy/research, дублирования чужой реализации нет.
+
+- [x] RED шести native CraftingMenu regressions: отсутствующие recipe ids, exact material/cost/metadata, named inputs/malformed tags и actual9plates→3mechanisms+mind.
+- [x] Добавить golem-local metadata-aware ingredient type и3 source shaped JSON recipes; ванильный CraftingMenu/recipe machinery переиспользуется, generic исследовательская система не дублируется.
+- [x] Full native/Core/compile и фактическое оплаченное прохождение доступного участка; source/review/evidence/commit/Draft PR.
+
+Ruling: эта работа закрывает один реальный материальный разрыв. Full survival пока блокируют separate M07 generic book progression (нынешний экран только FIRSTSTEPS) и M12 Greatwood log/tree/acquisition (есть только plank). Исследования/брёвна не выдаются бесплатно, oak не подменяет Greatwood. В arcane-only integration fixture knowledge является явно заданным предусловием, не доказательством полного прохождения research. Сам MINDCLOCKWORK@2 в текущем Knowledge API работает корректно.
 
 ### M57 — shipping fix: реальный callback-дюп груза и возврата голема
 
@@ -875,3 +887,12 @@ Public registerSeed(crop,actualSeed,expectedPlant) позволяет насто
 - `ad0327b51a434bb6e7b2a72f4b14ae18d194ecca` — production guard/actual cargo/reclaim fix и11 required regressions; обычный push feature/golems выполнен. [CircleCI#495](https://circleci.com/gh/craftkot/tgaumcraft/495) verify-connection SUCCESS.
 - Draft PR#3 переписан вокруг реально работающей автоматики и последнего production fix, приоритет следующей работы — survival progression. M43 явно inherited/notfixed, не скрыт и не превращён в PASS.
 - Публикационный commit меняет только журнал; Java/ресурсы после последнего263/33/4/coldREAD PASS не менялись. Рабочее дерево после push сохраняется; main/чужие ветки не меняются, merge не выполняется.
+
+
+## M58 execution ledger — 26.10.2026
+
+- Main fresh HEADa4280834 неизменен; own base1bb95d6/CI#496SUCCESS. Проверены актуальные main docs/собственный lane и отсутствие трёх recipe IDs в read-only foreign branches.
+- Native RED269/6missingrecipe; новый codec/3recipes, compile Iterable API исправлен после реальной compiler error. Candidate5metadata failures не засчитан как PASS; JSON→NBT byte/int root cause исправлен SNBT во всех четырёх plates, включая минимальный existing ironplate field fix.
+- Финальный269/269/fullbuild1m24s/exit0 и fresh Core39962/2909/allrunner/exit0. Tests доказывают оплату обоих металлов перед actual arcane component crafting и native ingredient network roundtrip; M07 знания — явно заданное предусловие.
+- JAR744Java21classes/CRC/unique EN-RU/4typed recipes PASS. Evidence сохранён; source visual/survival/M43 не названы завершёнными. Shared registry entrypoint/Gradle/CI/ROADMAP/main/чужие ветки не менялись.
+- Fresh-context read-only review M58: Critical/Important нет; registration/native metadata/codec/payment корректны, дополнительных tests reviewer не запускал. Java/ресурсы после финального269 PASS не менялись.
