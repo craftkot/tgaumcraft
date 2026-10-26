@@ -1,0 +1,77 @@
+{
+  "repository": "/workspace/tgaumcraft",
+  "branch": "feature/golems",
+  "base_head": "431a8d5704ecd89e3c5b2f4b92ec50b77f039e51",
+  "run_command": "python3 /workspace/reference/run_golem_parts_client_m59.py --output /workspace/reference/golems-m59-parts-client",
+  "launcher_sha256": "92771864588e914402b14b06190809ba938ddb90d0463e36598f585d0659d1a4",
+  "property": "-Dthaumcraft.golemPartsClientProbe=true",
+  "actual_tcp": "127.0.0.1:25630",
+  "username": "M59Parts",
+  "display": ":97",
+  "exits": {
+    "server_exit": 0,
+    "client_exit": 0,
+    "xvfb_exit": 0
+  },
+  "actual_results": {
+    "server_exit": 0,
+    "client_exit": 0,
+    "verified": true,
+    "xvfb_exit": 0,
+    "captures": [
+      {
+        "marker": "[12:04:55] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_GALLERY_FRAME_OBSERVED actualRenderedMaterials=6 heads=5 arms=5 legs=4 addons=4",
+        "screenshot": "gallery.png",
+        "sha256": "057ccfbc26899a0c71105dec83220e1fa677cc96dc0671c085c777327babb57f",
+        "captured_utc": "2026-10-26T12:04:57.054623+00:00"
+      },
+      {
+        "marker": "[12:05:00] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_CARGO_FRAME_OBSERVED actualIron=11 workerVisible=true raisedCarryArms=true wheelRotationChanged=true",
+        "screenshot": "moving-cargo.png",
+        "sha256": "a9a00cb4273f1ffe316c848059625e0f140360ab79f7292d2cf4e3caa762bd59",
+        "captured_utc": "2026-10-26T12:05:01.707221+00:00"
+      },
+      {
+        "marker": "[12:05:03] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_FINAL_FRAME_OBSERVED actualBarrelIron=11",
+        "screenshot": "deposited.png",
+        "sha256": "5ac8f1ba0034169f2e7d56aa82fa411588a01a09e131e08ceaee93d368d2459b",
+        "captured_utc": "2026-10-26T12:05:04.347524+00:00"
+      }
+    ],
+    "server_directory": "/workspace/tgaumcraft/build/golem-parts-server-m59",
+    "client_directory": "/workspace/tgaumcraft/build/golem-parts-client-m59",
+    "observed_utc": "2026-10-26T12:05:24.016864+00:00"
+  },
+  "fixture_worker_uuid": "0b983689-c119-40d3-91ed-000000000010",
+  "asserted": [
+    "Actual remote recipe synchronization: three non-simple custom ingredients; nine native ingot metadata predicates, unrelated custom names accepted.",
+    "Three actual C2S vanilla CraftingMenu output takes: three source ingots paid for three plates per brass/thaumium/void recipe; server independently confirmed all nine paid inputs and nine outputs.",
+    "Six real material entities delivered packed head/arm/leg/addon/owner/equipment metadata; actual RenderLivingEvent.Post checks confirmed selected mesh visibility and material-specific textures/tint.",
+    "Same original enabled wheel worker autonomously picked up eleven funded iron ingots and deposited all eleven through real Pickup/Fill seals; source server asserted ground+held+barrel conservation every tick.",
+    "Actual rendered carry pose raised both arms and wheel rotation changed across two draws while holding eleven iron ingots.",
+    "Actual received vanilla barrel menu showed eleven deposited iron; same worker empty hand; all captured frame markers emitted after actual render stages."
+  ],
+  "limits": [
+    "Gallery raw screenshot partly occludes the void body behind the barrel; all six actual post-draw selection/texture assertions passed.",
+    "Gallery entities and initial funded inputs are explicit isolated creative fixture state; this scenario does not claim survival acquisition.",
+    "Wheel movement/cargo is exercised here; flyer/climber shapes are gallery observations, not new client locomotion coverage."
+  ],
+  "source_sha256": {
+    "src/neoforge/java/dev/ehtid/thaumcraft/golem/test/GolemPartsClientFixture.java": "7789af2b26d84de1025059a2a5eee91efea76faba79c338a01fa1c207570e658",
+    "src/neoforge/java/dev/ehtid/thaumcraft/golem/test/GolemPartsClientProbe.java": "41d4c66a6aa5215a8a9a92af78518b5b0f4ddb22fb085abcac4c6cc3c51f325d",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/GolemPartsClientAssertions.java": "25dabf0044b1fc7e787aeb7f96e1e3c13eec61909fd3701745623c0912ccc30a",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/GolemRenderer.java": "ca89325584af6df955713fe7d096cf349d479e115b47b707b9093bccf1dc0048",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/golem/GolemModel.java": "d0bef9f56f9acc2f1cbc147857b7e34ffce7f2b3ead96f05e00fe8b80122711e",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/golem/GolemDetailLayer.java": "eaa1f6b2efbdabec687eee3110ff06ef9674247abd8c1f60f172b615131111d5",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/golem/GolemItemLayer.java": "5e2b896aa7f138db908705f56dcf50ca5da8cb20a32218396417e512685d79b3"
+  },
+  "artifact_sha256": {
+    "client.log": "59fe6f39a52991f93a8bc4a27537ff4d51892def7df018694e1f41bed023224f",
+    "server.log": "a2df6fb3967f637bf128bebe5ae8d052b8deb832d92d1a2dfa14a3f8f1be8b86",
+    "results.json": "d6d2454993b594a1c59626af547b1f09123eff803d88db0e0cb7b0c80d35fd74",
+    "gallery.png": "057ccfbc26899a0c71105dec83220e1fa677cc96dc0671c085c777327babb57f",
+    "moving-cargo.png": "a9a00cb4273f1ffe316c848059625e0f140360ab79f7292d2cf4e3caa762bd59",
+    "deposited.png": "5ac8f1ba0034169f2e7d56aa82fa411588a01a09e131e08ceaee93d368d2459b"
+  },
+  "inventory_created_utc": "2026-10-26T12:07:52.798625+00:00"
+}
