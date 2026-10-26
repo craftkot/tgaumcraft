@@ -2,10 +2,13 @@ package dev.ehtid.thaumcraft.port.core.golem;
 
 import java.util.List;
 
-/** BETA26 ConfigRecipes: two paid arcane ingredients for the basic wooden construction. */
+/** BETA26 ConfigRecipes: paid arcane golem mechanisms, clockwork minds and modules. */
 public final class GolemComponentRecipes {
     private GolemComponentRecipes() {}
-    public enum Ingredient { EMPTY, BRASS_PLATE, IRON_PLATE, WOODEN_ROD, GLASS_PANE, SIMPLE_MECHANISM, COMPARATOR }
+    public enum Ingredient {
+        EMPTY, BRASS_PLATE, IRON_PLATE, WOODEN_ROD, GLASS_PANE, SIMPLE_MECHANISM, COMPARATOR,
+        GLASS_BOTTLE, FERMENTED_SPIDER_EYE, BLAZE_POWDER
+    }
     public static int bit(Ingredient ingredient) { return 1 << ingredient.ordinal(); }
 
     public enum Recipe {
@@ -16,7 +19,15 @@ public final class GolemComponentRecipes {
         CLOCKWORK_MIND("MINDCLOCKWORK@2", 25, 0b010010, List.of(
                 Ingredient.EMPTY, Ingredient.GLASS_PANE, Ingredient.EMPTY,
                 Ingredient.GLASS_PANE, Ingredient.SIMPLE_MECHANISM, Ingredient.GLASS_PANE,
-                Ingredient.BRASS_PLATE, Ingredient.COMPARATOR, Ingredient.BRASS_PLATE));
+                Ingredient.BRASS_PLATE, Ingredient.COMPARATOR, Ingredient.BRASS_PLATE)),
+        VISION_MODULE("GOLEMVISION", 50, 0b000100, List.of(
+                Ingredient.GLASS_BOTTLE, Ingredient.EMPTY, Ingredient.GLASS_BOTTLE,
+                Ingredient.FERMENTED_SPIDER_EYE, Ingredient.EMPTY, Ingredient.FERMENTED_SPIDER_EYE,
+                Ingredient.BRASS_PLATE, Ingredient.SIMPLE_MECHANISM, Ingredient.BRASS_PLATE)),
+        AGGRESSION_MODULE("SEALGUARD", 50, 0b000010, List.of(
+                Ingredient.EMPTY, Ingredient.GLASS_PANE, Ingredient.EMPTY,
+                Ingredient.GLASS_PANE, Ingredient.BLAZE_POWDER, Ingredient.GLASS_PANE,
+                Ingredient.BRASS_PLATE, Ingredient.SIMPLE_MECHANISM, Ingredient.BRASS_PLATE));
 
         public final String research;
         public final int vis, crystalMask;

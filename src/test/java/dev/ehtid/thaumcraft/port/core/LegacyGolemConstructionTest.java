@@ -170,7 +170,7 @@ public final class LegacyGolemConstructionTest {
         // Independent golden matrices, including mandatory empty corners and comparator (not clock).
         String[] golden = {" B ISI B ", " P PGPBCB"};
         int recipeIndex = 0;
-        for (var recipe : GolemComponentRecipes.Recipe.values()) {
+        for (var recipe : java.util.List.of(mechanism, mind)) {
             int[] grid = new int[9];
             String pattern = golden[recipeIndex++];
             for (int slot = 0; slot < 9; slot++) grid[slot] = GolemComponentRecipes.bit(switch (pattern.charAt(slot)) {

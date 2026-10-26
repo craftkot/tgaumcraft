@@ -73,8 +73,9 @@ public final class GolemModule {
     public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
     /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
     public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
-    /** Source mind@1 and modules@0/1. Their infusion acquisition belongs to the M06 integration. */
+    /** Source mind@1; its infusion acquisition belongs to the M06 integration. */
     public static final DeferredItem<Item> BIOTHAUMIC_MIND=ITEMS.registerSimpleItem("mind_biothaumic");
+    /** Source modules@0/1 are paid arcane recipes, handled by GolemComponentCrafting. */
     public static final DeferredItem<Item> VISION_MODULE=ITEMS.registerSimpleItem("module_vision");
     public static final DeferredItem<Item> AGGRESSION_MODULE=ITEMS.registerSimpleItem("module_aggression");
 

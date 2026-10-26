@@ -39,18 +39,26 @@ public final class GolemComponentCrafting {
             if (stack.is(Items.GLASS_PANE) || stack.is(PANES) || stack.is(VANILLA_PANES)) masks[slot] |= bit(GLASS_PANE);
             if (stack.is(GolemModule.SIMPLE_MECHANISM.get())) masks[slot] |= bit(SIMPLE_MECHANISM);
             if (stack.is(Items.COMPARATOR)) masks[slot] |= bit(COMPARATOR);
+            if (stack.is(Items.GLASS_BOTTLE)) masks[slot] |= bit(GLASS_BOTTLE);
+            if (stack.is(Items.FERMENTED_SPIDER_EYE)) masks[slot] |= bit(FERMENTED_SPIDER_EYE);
+            if (stack.is(Items.BLAZE_POWDER)) masks[slot] |= bit(BLAZE_POWDER);
         }
         for (Recipe recipe : Recipe.values()) if (recipe.matches(masks)) return recipe;
         return null;
     }
 
     public static ItemStack product(Recipe recipe) {
-        return recipe == null ? ItemStack.EMPTY : new ItemStack(recipe == Recipe.SIMPLE_MECHANISM
-                ? GolemModule.SIMPLE_MECHANISM.get() : GolemModule.CLOCKWORK_MIND.get());
+        return recipe == null ? ItemStack.EMPTY : new ItemStack(switch (recipe) {
+            case SIMPLE_MECHANISM -> GolemModule.SIMPLE_MECHANISM.get();
+            case CLOCKWORK_MIND -> GolemModule.CLOCKWORK_MIND.get();
+            case VISION_MODULE -> GolemModule.VISION_MODULE.get();
+            case AGGRESSION_MODULE -> GolemModule.AGGRESSION_MODULE.get();
+        });
     }
 
     public static boolean isProduct(ItemStack stack) {
-        return stack.is(GolemModule.SIMPLE_MECHANISM.get()) || stack.is(GolemModule.CLOCKWORK_MIND.get());
+        return stack.is(GolemModule.SIMPLE_MECHANISM.get()) || stack.is(GolemModule.CLOCKWORK_MIND.get())
+                || stack.is(GolemModule.VISION_MODULE.get()) || stack.is(GolemModule.AGGRESSION_MODULE.get());
     }
 
     public static boolean canCraft(Container bench, ServerPlayer player, float discount) {
