@@ -1,5 +1,12 @@
 # Главный координатор — chore/coordination
 
+## Аудит 26.10.2026 07:30 МСК — актуализированы сводные строки M10.57
+
+- Свежие HEAD без новых коммитов: main `a4280834`, coordination до записи `f5179850`, alchemy `633e0887`, research `a33245ca`, infusion `2e334a96`, golems `1bb95d6a`. PR #1/#2/#3 open/Draft. Compare main...feature: ahead 33/39/81/147, behind=0; прямых пересечений в 7/35/18/300 compare paths нет (последний обрезан; ранее PR #3 дал полный список 307), runtime-интеграция не подтверждена.
+- Исправлен **реальный навигационный дефект документации**: в первых таблицах AGENTS.md и PARALLEL_WORKFLOW_RU.md «текущий статус» големов оставался M10.54/`052ef662`, несмотря на последующий актуальный M10.57/`1bb95d6a`. Теперь обе сводные строки указывают M57; исторические M54–M56 и подробные M57-записи не удалены.
+- CircleCI commit statuses на точных HEAD: main #232, coordination до записи #497, alchemy #357, research #470, infusion #472, golems #496 — SUCCESS **только Core/verify-connection**. Прямые журналы CircleCI недоступны. GitHub Actions на coordination #40243070735 и golems #40237377621 — FAILURE; job verify возвращает steps=[], причина не установлена. Новый coordination CI после этой записи требуется проверить отдельно.
+- Авторский M57 full NeoForge/JAR + 263/33/4 GameTests и cold server WRITE/READ не воспроизводились координатором. Графический клиент M57, общие NeoForge/JAR, server, client и world-save/restart четырёх веток не проверены. Split-save 13→26 iron /17→34 gold открыт. M10 остаётся 🟡/Draft; 59/100 без пересчёта. Никаких правок игрового кода, чужих веток, main, merge/force/delete.
+
 ## Аудит 26.10.2026 02:01 МСК — M10.57, ordinary callback reentry/cargo-loss fix
 
 - HEAD до организационного коммита: main `a4280834`, coordination `09537078`, alchemy `633e0887`, research `a33245ca`, infusion `2e334a96`, golems [`1bb95d6a`](https://github.com/craftkot/tgaumcraft/commit/1bb95d6aa6b0e9c4bbd07e51b3650142f6086193) (+2 после M56). Все PR #1/#2/#3 — open/Draft; `main...feature` ahead 33/39/81/147, behind=0; coordination ahead 49, behind=0. PR #3 paginated files: **307** (100+100+100+7), тогда как compare API вернул 300. Полный PR #3 список и списки 7/35/18 остальных feature-веток **не имеют точных пересечений путей**; остаётся риск shared registries/API/runtime (ThaumcraftPort, CrucibleBlockEntity, ArcaneWorkbenchMenu, локализации, Core runner изменены M10). Это не проверка интеграции.
