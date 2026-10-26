@@ -98,7 +98,13 @@ public final class GolemGuardGameTests {
         var f=fixture(h,GolemSeals.Type.BUTCHER,false); var a=target(h,EntityType.PIG,5,4,10); var b=target(h,EntityType.PIG,6,4,10); var baby=target(h,EntityType.PIG,7,4,10); baby.setBaby(true); var wolf=target(h,EntityType.WOLF,5,6,8); wolf.setTame(true,false);
         h.runAfterDelay(205,()->{
             h.assertTrue(f.data.claimEntity(f.golem,e->true).isEmpty(),"Two eligible adults plus piglet and tame wolf are not source surplus"); var c=target(h,EntityType.PIG,7,6,10);
-            h.runAfterDelay(205,()->{ try { var assignment=claim(f); h.assertTrue(!assignment.targetId().equals(baby.getUUID())&&!assignment.targetId().equals(wolf.getUUID())&&f.data.startCombat(h.getLevel(),f.golem,assignment),"Third actual eligible adult permits one butcher assignment"); h.succeed(); } finally { for(var e:new Mob[]{a,b,c,baby,wolf}) e.discard(); f.close(); } });
+            h.succeedWhen(()->{
+                var available=f.data.claimEntity(f.golem,e->true);
+                h.assertTrue(available.isPresent(),"Butcher emits actual work after the third eligible adult arrives");
+                var assignment=available.orElseThrow();
+                h.assertTrue(!assignment.targetId().equals(baby.getUUID())&&!assignment.targetId().equals(wolf.getUUID())&&f.data.startCombat(h.getLevel(),f.golem,assignment),"Third actual eligible adult permits one butcher assignment");
+                for(var e:new Mob[]{a,b,c,baby,wolf}) e.discard(); f.close();
+            });
         });
     }
     @GameTest(template="golem_test",batch="butcher_ai",timeoutTicks=470)
@@ -119,7 +125,15 @@ public final class GolemGuardGameTests {
     @GameTest(template="golem_test",batch="butcher_classes",timeoutTicks=240)
     public static void butcherCountsAssignableClassesRatherThanDistinctRegistryTypes(GameTestHelper h) {
         var f=fixture(h,GolemSeals.Type.BUTCHER,false); var cow=target(h,EntityType.COW,5,4,10); var a=target(h,EntityType.MOOSHROOM,6,5,10); var b=target(h,EntityType.MOOSHROOM,7,6,10);
-        h.runAfterDelay(205,()->{ try { var assignment=claim(f); h.assertTrue(assignment.targetId().equals(cow.getUUID())&&f.data.startCombat(h.getLevel(),f.golem,assignment),"Cow class counts both MushroomCow subclasses (3), MushroomCow alone counts2; actual source asymmetric query"); h.succeed(); } finally { cow.discard(); a.discard(); b.discard(); f.close(); } });
+        // Source has a random per-seal phase, independent of the test start tick.
+        // Observe real work when it appears, before its ten-second lifespan expires.
+        h.succeedWhen(()->{
+            var available=f.data.claimEntity(f.golem,e->true);
+            h.assertTrue(available.isPresent(),"Butcher must emit actual work for the three assignable adults");
+            var assignment=available.orElseThrow();
+            h.assertTrue(assignment.targetId().equals(cow.getUUID())&&f.data.startCombat(h.getLevel(),f.golem,assignment),"Cow class counts both MushroomCow subclasses (3), MushroomCow alone counts2; actual source asymmetric query");
+            cow.discard(); a.discard(); b.discard(); f.close();
+        });
     }
     @GameTest(template="golem_test",batch="guard_recipe",timeoutTicks=50)
     public static void realCruciblePaysGuardAndAdvancedUpgradeWithBothResearchGates(GameTestHelper h) {

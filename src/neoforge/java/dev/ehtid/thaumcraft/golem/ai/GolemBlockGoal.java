@@ -33,6 +33,8 @@ public final class GolemBlockGoal extends Goal {
         if (!(golem.level() instanceof ServerLevel level)) return false;
         if (cooldown-- > 0) return false;
         cooldown = 5;
+        // Share the source AIGoto active-task gate with the entity worker goal.
+        if (golem.hasWorkTask()) return false;
         assignment = GolemSeals.get(level).claimBlock(golem, this::canReach).orElse(null);
         if (assignment == null) return false;
         var target=GolemSeals.get(level).blockTarget(level,golem,assignment);

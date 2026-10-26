@@ -34,6 +34,8 @@ public final class GolemPickupGoal extends Goal {
         if (!(golem.level() instanceof ServerLevel level)) return false;
         if (cooldown > 0) { cooldown--; return false; }
         cooldown = 5;
+        // BETA26 AIGoto keeps an existing task until its goal completes or releases it.
+        if (golem.hasWorkTask()) return false;
         assignment = GolemSeals.get(level).claimEntity(golem, this::canReach).orElse(null);
         combat=assignment!=null&&GolemSeals.get(level).combat(assignment);
         return assignment != null;

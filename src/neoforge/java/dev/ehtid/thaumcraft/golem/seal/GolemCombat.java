@@ -19,10 +19,11 @@ final class GolemCombat {
     private final Map<Integer,Work> work=new HashMap<>();
     private final Map<GolemSeals.SealKey,GolemCombatRules.Settings> settings=new HashMap<>();
     private final Map<GolemSeals.SealKey,Map<UUID,Integer>> watched=new HashMap<>();
+    private final Map<GolemSeals.SealKey,Integer> delays=new HashMap<>();
     GolemCombat(GolemSeals data) { this.data=data; }
     GolemCombatRules.Settings settings(GolemSeals.Seal seal) { return settings.getOrDefault(seal.key(),GolemCombatRules.Settings.defaults()); }
     void configure(GolemSeals.Seal seal,GolemCombatRules.Settings value) { settings.put(seal.key(),value); }
-    void removed(GolemSeals.SealKey key) { settings.remove(key); watched.remove(key); }
+    void removed(GolemSeals.SealKey key) { settings.remove(key); watched.remove(key); delays.remove(key); }
     void forget(int id) { var w=work.remove(id); if(w!=null) { var map=watched.get(w.seal.key()); if(map!=null) map.remove(w.target,id); } }
     static GolemCombatRules.Target classification(LivingEntity target) {
         boolean monster=target instanceof Enemy;
@@ -44,7 +45,11 @@ final class GolemCombat {
         for(var seal:data.all()) {
             if(!seal.type().combat()||!GolemSeals.active(level,seal.key().pos())||GolemSeals.stopped(level,seal)) continue;
             boolean butcher=seal.type()==GolemSeals.Type.BUTCHER;
-            if(level.getGameTime()%(butcher?GolemCombatRules.BUTCHER_INTERVAL:GolemCombatRules.GUARD_INTERVAL)!=0) continue;
+            // Source SealGuard/SealButcher keep independent transient constructor phases.
+            int delay=delays.computeIfAbsent(seal.key(),key->new Random(System.nanoTime()).nextInt(butcher?200:22));
+            // delay++ precedes the Butcher wait check; redstone/inactivity skip tickSeal entirely.
+            delays.put(seal.key(),delay+1);
+            if(delay%(butcher?GolemCombatRules.BUTCHER_INTERVAL:GolemCombatRules.GUARD_INTERVAL)!=0) continue;
             var map=watched.computeIfAbsent(seal.key(),k->new HashMap<>());
             if(butcher&&!map.isEmpty()) continue; // Source transient wait until started/suspended/expired.
             var candidates=level.getEntitiesOfClass(LivingEntity.class,GolemSeals.bounds(seal),e->valid(level,seal,e));

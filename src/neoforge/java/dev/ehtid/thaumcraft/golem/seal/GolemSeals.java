@@ -487,8 +487,11 @@ public final class GolemSeals extends SavedData {
                 && (!seal.locked() || seal.owner().equals(golem.ownerId()))
                 && TaskSelection.colorMatches(golem.golemColor(), seal.color())
                 && retryAfter.getOrDefault(task.getId(), Map.of()).getOrDefault(golem.getUUID(), 0L) <= level.getGameTime()
-                && golem.home().distSqr(seal.key().pos()) < (double) golem.design().stats().homeRadius()
-                        * golem.design().stats().homeRadius()
+                // AIGotoBlock checks the task position. Provider entity deliveries
+                // apply the live recipient position check in logistics.eligible.
+                && (task.getType()==GolemTask.Type.ENTITY || golem.home().distSqr(new BlockPos(
+                        task.getPos().x(),task.getPos().y(),task.getPos().z()))
+                        < (double) golem.design().stats().homeRadius()*golem.design().stats().homeRadius())
                 && (seal.type()==Type.USE ? use.eligible(level,golem,task,seal)
                     : seal.type()==Type.LUMBER ? lumber.eligible(level,golem,task,seal)
                     : seal.type().breaksBlocks() ? breaker.eligible(level,golem,task,seal)
