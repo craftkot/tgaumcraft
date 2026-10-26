@@ -1,5 +1,13 @@
 # Главный координатор — chore/coordination
 
+## Аудит 26.10.2026 09:51 МСК — исправлена навигация актуального M10 в ROADMAP
+
+- Fresh HEAD: main `a4280834`, coordination до записи `b9123b6f`, alchemy `633e0887`, research `a33245ca`, infusion `2e334a96`, golems `1bb95d6a`; все три PR #1/#2/#3 — open/Draft. Compare main...feature: ahead 33/39/81/147, behind0. Полный список PR #3: 307 файлов; пересечений изменённых путей между четырьмя feature-ветками нет. Отсутствие path-конфликтов не доказывает runtime/API совместимость.
+- Исправлена активная строка M10 в `ROADMAP_RU.md`: она начиналась с «предыдущий срез M10.54» и могла восприниматься как текущая. Теперь первым идёт датированный M10.57/HEAD/границы проверок, а исторический текст M54/M52 **сохранён** в той же строке.
+- CircleCI commit statuses на текущих HEAD: main #232, coordination до записи #498, alchemy #357, research #470, infusion #472, golems #496 — SUCCESS **только Core**; прямые CircleCI logs недоступны. GitHub Actions coordination #40269558738, golems #40237377621, infusion #39673711205 — FAILURE; verify.steps=null, запрос steps пустой, log #40269558738 возвращает 404 BlobNotFound. Причины неизвестны.
+- Авторские full NeoForge/JAR и cold server проверки M10.57 не воспроизводились координатором; клиент M57 и общие NeoForge/server/client/world-save четырёх направлений не проверены. Split-save 13→26 iron / 17→34 gold открыт; M04 real mirror client, M06 paid Survival/restart, M07 research GUI остаются без полной приёмки. Оценка 59/100 без пересчёта. Без изменения игрового кода, main, feature-веток, merge/force/delete.
+
+
 ## Аудит 26.10.2026 07:30 МСК — актуализированы сводные строки M10.57
 
 - Свежие HEAD без новых коммитов: main `a4280834`, coordination до записи `f5179850`, alchemy `633e0887`, research `a33245ca`, infusion `2e334a96`, golems `1bb95d6a`. PR #1/#2/#3 open/Draft. Compare main...feature: ahead 33/39/81/147, behind=0; прямых пересечений в 7/35/18/300 compare paths нет (последний обрезан; ранее PR #3 дал полный список 307), runtime-интеграция не подтверждена.
