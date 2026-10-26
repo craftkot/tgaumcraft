@@ -941,3 +941,6 @@ Read-only remote audit: researcha33245c всё ещё read-only research page б
 
 - Producer final286/33/4FD/fullbuild PASS3m32s/exit0, source frozen. Counter re-review Critical/Important нет; исходный provider Important resolved. Все intermediatefailures сохранены. Последующие изменения только свои docs/evidence, новый дорогой прогон без code delta не нужен.
 - Собственный design/validation/lane обновлены; реальные raw PNG/results/sourcehashes/две independent disk snapshots/launcher/JAR manifest включены в evidence. Графические sources exactmatch доказанному снимку, server-only provider/counter изменения не приписаны новому clientrun. Публикационный commit меняет только эти документы/доказательства.
+
+- `391efc7d559a61d966269a5b0a8c7ae9fc871b8f` — M59 docs/rawproof publication; обычный push всех4sourcecommits+evidence только feature/golems выполнен. [CircleCI#508](https://circleci.com/gh/craftkot/tgaumcraft/508) verify-connection SUCCESS; native proofs перечислены отдельно и не приписаны этому lightweightjob.
+- Draft PR#3 обновлён sourceкоммитами/286+33+4/Core/cold/TCP/JAR/открытыми dependencies; open/draft, mergedfalse. Mainfresh a4280834 неизменен. Финальная публикационная запись меняет только свой lane journal; Java/ресурсы после final286/33/4/buildPASS не менялись, JAR SHA сохранён.
