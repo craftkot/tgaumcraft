@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.golem.seal;
 
 import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
 import dev.ehtid.thaumcraft.golem.inventory.GolemContainers;
+import dev.ehtid.thaumcraft.golem.inventory.GolemInventoryTransfer;
 import dev.ehtid.thaumcraft.port.core.golem.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -197,8 +198,15 @@ final class GolemLogistics {
         var stack=carried(golem,w); int budget=Math.min(w.request.count(),stack.getCount());
         int moved=0;
         if(w.request.target() instanceof ProvisionRequest.EntityTarget) {
-            var drop=new ItemEntity(level,target.pos().getX()+.5,target.pos().getY()+.5,target.pos().getZ()+.5,stack.copyWithCount(budget));
-            if(level.addFreshEntity(drop)) { stack.shrink(budget); moved=budget; }
+            var scope=GolemInventoryTransfer.begin(golem);
+            if(scope==null)return false;
+            try(scope) {
+                var slot=stack==golem.getMainHandItem()?EquipmentSlot.MAINHAND:EquipmentSlot.OFFHAND;
+                var actual=stack.split(budget);
+                golem.setItemSlot(slot,stack);
+                var drop=new ItemEntity(level,target.pos().getX()+.5,target.pos().getY()+.5,target.pos().getZ()+.5,actual);
+                if(GolemInventoryTransfer.publishCargo(golem,drop))moved=budget;
+            }
         } else {
             var handler=GolemContainers.handler(level,target);
             if(w.recipient!=null) {
