@@ -2,7 +2,17 @@
 
 Рабочая ветка: `feature/golems`. Начало: 18.10.2026. База: `main` `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
-## Актуальный checkpoint — 26.10.2026 (МСК), M10.59 параллельная реализация проверена
+## Актуальный checkpoint — 27.10.2026, M10.60
+
+Восстановлены исходный сложный механизм (BASEARTIFICE, 50 Vis, Ignis1/Aqua1), выпадение мозга с недавно атакованного зомби и четыре инфузионных рецепта големов. Добавлен настоящий левитатор: крафт за 35 Vis/Aer1, движение в шести направлениях, четыре дальности, проверка препятствий, оплата из общей ауры, редстоун и сохранение range/vis. Оплаченный левитатор используется в реальном прессе для получения предмета, создающего летающего работника.
+
+**Java 21: полный Core PASS, полная NeoForge-сборка и 295/295 required GameTest PASS, exit0, 1m50s.** Новые проверки включают реальное движение ItemEntity на обычных тиках после оплаты Vis. Первая попытка 294/295 выявила старое требование отсутствия левитатора; оно заменено оплаченной цепочкой с проверкой отказа без физического входа. Логи обеих попыток сохранены.
+
+Отдельный source overlay двух веток без слияния проверил **4/4 оплаченных рецепта**: SealHarvest, SealButcher, SealBreak — по30 эссенции; MindBiothaumic —75. Все используют настоящий caster, банки, пьедесталы и native ticks, проверяют UUID receipts, единственный результат и120 тиков без replay. Для исследований используются явные fixtures. [Исходные подтверждения и доказательства](../evidence/golems/acquisition_2026_10_27/README.md).
+
+Новые визуальные ресурсы собственные; управление дальностью и размещение адаптированы к1.21.1. Новый графический клиент и отдельный cold restart левитатора не запускались; прежние M59 client/cold результаты остаются историческими. Полная Survival-прогрессия M07/M08/M12, исходный визуал, полный API печатей и crash-атомарность не завершены. Индекс59/100 не повышается. Начальный HEAD этого подхода — f566569; коммиты публикации перечислены ниже.
+
+## Checkpoint — 26.10.2026 (МСК), M10.59 параллельная реализация проверена
 
 M59:5агентов одновременно закрыли реальные production gaps. Добавлены source arcane vision/aggression modules; активная работа больше не прерывается Pickup, home gate проверяет цель, Guard/Butcher имеют source per-seal counters с redstone/inactive паузой. Новый functional live-worker API проверяет owner/world/UUID/thread и переносит реальный груз через sharedscope; reviewer-found ENTITY provider dupe исправлен actualdebit-before-publish с actual recovery. Renderer теперь отображает6materials/все5heads/5arms/4legs/4addons собственной geometry и actual cargo/poses, без original art copy.
 
@@ -31,6 +41,14 @@ M57 — реальные изменения production после коррект
 Остаток: оригинальные meshes/animations/визуал (lang MIT не подтверждает права на все art), полный source API и конкретные foreign directional callbacks, survival M06/M07/M08/levitator, crash consistency и internet/load/reconnect stress. Следующий игровой приоритет — полный survival-путь базовой конструкции и source progression с явными зависимостями M06/M07/M08; дополнительные foreign crop матрицы не опережают эту работу. M56 подтвердил inactive FULL neighbor и настоящее отсутствие обоих чанков; отдельный absent neighbor при активном crop не выдумывается вопреки native ticket gradient. UP/DOWN native completion теперь проверен, но не vertical cold/graphical navigation. Source visual/survival/durable protocol требуют отдельных доказательств и зависимостей. Только `feature/golems`, main `a4280834`/чужие ветки/shared ROADMAP/build.gradle/CI не меняются,59/100 прежний. [Draft PR#3](https://github.com/craftkot/tgaumcraft/pull/3) остаётся draft и не сливается. Raw logs UTC, даты checkpoint МСК; исторические записи ниже не заменяют эту сводку.
 
 ## Границы и исходное состояние
+
+### M60 — source acquisition, 27.10.2026, full native295/295 PASS
+
+После M59 восстановлены independent missing source acquisition: complex mechanism через существующий actual arcane workbench (BASEARTIFICE/50Vis/Ignis1+Aqua1,2simple+2thaumiumplate+ordinarypiston) и brain через original recently-hit Zombie drop (`nextInt10-looting<1`, brain1; original Brainy исключение сохранено optionaltype-tag). Новые items имеют vanilla-backed models, original PNG/OBJ не копировались.
+
+С infusion team согласован compile-independent optional resource `/data/thaumcraft/golem/infusion_recipes.json`:4source-рецепта Harvest/Butcher/Breaker/BiothaumicMind с точными gates/costs/instability/metadata mapping/peripheral order. Generic parser/catalog/runtime остаётся только в M06; ownbranch собирается без unmerged infusionimports. Исправлено summary-наблюдение до production: Butcher source instability0 и Bestia10, не Aversio.
+
+Targeted RED→GREEN: complex355/brain574/source JSON4recipe fixtures PASS; existing construction40052 PASS (два новых ingredient enum расширяют прежнюю mutationматрицу). New actual-menu и native brain-event/death tests написаны, **fullbuild+native295/295 теперь PASS; combinedinterop проверяет root отдельно**. [Source/commands/raw evidence](../evidence/golems/acquisition_2026_10_27/README.md). CurrentHEAD остаётся f566569; commit/push не выполнялись. Теперь добавлен настоящий registered levitator block/entity/item и source arcane35Vis/Aer1 recipe, aura1200credits,6directions,4ranges/opaque scan, redstone force pause с continued refill, negative credit/NBT и source motion; existing levitator-leg ingredient разрешается реальным устройством. Core132recipe+263rules PASS; review исправил zero-range force и partial-slab opacity до nativecompile. Root fullCore PASS40088construction/409acquisition/574brain/132recipe/263levitator/2909tasks. First native295:294PASS/1obsolete missing-registry assertion FAIL; все6новых levitator tests, включая настоящий world-tick подъём real item после aura payment, PASS. Устаревший тест заменён настоящей paid arcane levitator→source flyer Press→earned placer→enabled worker цепочкой с atomicmissing-input отказом. Finalnative/fullbuild rerun295/295PASS1m50s. Original-free model/full-face empty-hand use и modern look placement — явные presentation adaptations; original particles/knob art не заявлены. M07/M12/M08/fullsurvival не объявлены завершёнными,59/100 прежний.
 
 ### M58 — реальные недостающие рецепты пластин, 26.10.2026
 
@@ -944,3 +962,12 @@ Read-only remote audit: researcha33245c всё ещё read-only research page б
 
 - `391efc7d559a61d966269a5b0a8c7ae9fc871b8f` — M59 docs/rawproof publication; обычный push всех4sourcecommits+evidence только feature/golems выполнен. [CircleCI#508](https://circleci.com/gh/craftkot/tgaumcraft/508) verify-connection SUCCESS; native proofs перечислены отдельно и не приписаны этому lightweightjob.
 - Draft PR#3 обновлён sourceкоммитами/286+33+4/Core/cold/TCP/JAR/открытыми dependencies; open/draft, mergedfalse. Mainfresh a4280834 неизменен. Финальная публикационная запись меняет только свой lane journal; Java/ресурсы после final286/33/4/buildPASS не менялись, JAR SHA сохранён.
+
+
+## Публикация M60 — проверенный снимок
+
+Общие изменения ограничены регистрацией в собственном GolemModule, минимальными строками EN/RU и шестью строками регистрации трёх исполняемых Core-тестов. build.gradle, CI, main и другие feature-ветки не изменены. Инфузионная команда работает в отдельном worktree по прямому разрешению пользователя. Полные дизассемблированные оригинальные классы сохранены вне Git; в evidence только их SHA/provenance и собственные тестовые логи.
+
+Свежие Core assertions: construction40088, acquisition409, brain574, levitator recipe132/rules263, task rules2909; весь runner завершён exit0. Python golden проверяет четыре source descriptor. JAR:773 класса Java21, CRC/уникальные entries и EN/RU проверены; SHA записан в jar-audit.json. Отдельные plant-adapter33/FD4 и новый графический клиент без относящихся к ним изменений не повторялись.
+
+Следующий функциональный этап: source-перенос событий нестабильности в M06 и завершение Survival-зависимостей M07/M12, затем сквозная Survival-приёмка сборки/инфузии. Полные M10/M06 не объявлены завершёнными. Ветка и Draft PR#3 сохраняются без merge.

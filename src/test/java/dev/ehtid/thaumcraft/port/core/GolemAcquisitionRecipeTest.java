@@ -13,7 +13,34 @@ public final class GolemAcquisitionRecipeTest {
     public static void main(String[] args) {
         checkModule("VISION_MODULE", "GOLEMVISION", 4, "B BE EPGP");
         checkModule("AGGRESSION_MODULE", "SEALGUARD", 2, " R RTRPGP");
+        checkComplexMechanism();
         System.out.println("BETA26 golem module acquisition: OK (" + assertions + " assertions)");
+    }
+
+    private static void checkComplexMechanism() {
+        var recipe = Arrays.stream(GolemComponentRecipes.Recipe.values()).filter(r -> r.name().equals("COMPLEX_MECHANISM"))
+                .findFirst().orElseThrow(() -> new AssertionError("Missing original arcane recipe mechanism_complex"));
+        same("BASEARTIFICE", recipe.research);
+        same(50, recipe.vis);
+        same(6, recipe.crystalMask); // Ignis1+Aqua1, not Ordo or Machina.
+        var expected = List.of("EMPTY", "SIMPLE_MECHANISM", "EMPTY", "THAUMIUM_PLATE", "PISTON",
+                "THAUMIUM_PLATE", "EMPTY", "SIMPLE_MECHANISM", "EMPTY");
+        same(expected, recipe.pattern().stream().map(Enum::name).toList());
+        int[] grid = masks(expected);
+        same(true, recipe.matches(grid));
+        for (int slot = 0; slot < 9; slot++) {
+            int original = grid[slot];
+            for (var ingredient : GolemComponentRecipes.Ingredient.values()) {
+                grid[slot] = GolemComponentRecipes.bit(ingredient);
+                same(grid[slot] == original, recipe.matches(grid));
+            }
+            grid[slot] = original;
+        }
+        var knowledge = new PlayerKnowledgeData();
+        knowledge.addResearch("MINDBIOTHAUMIC");
+        same(false, knowledge.isResearchKnown(recipe.research));
+        knowledge.addResearch("BASEARTIFICE");
+        same(true, knowledge.isResearchKnown(recipe.research));
     }
 
     private static void checkModule(String name, String research, int crystalMask, String golden) {

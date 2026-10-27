@@ -52,6 +52,11 @@ public final class GolemModule {
             INGREDIENTS.register("golem_ingot", () -> new IngredientType<>(GolemPlateIngredient.CODEC));
     private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ThaumcraftPort.MOD_ID);
     private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<Block, dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlock> LEVITATOR = BLOCKS.register("levitator",
+            () -> new dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlock(BlockBehaviour.Properties.of().strength(2F).noOcclusion()));
+    public static final DeferredItem<BlockItem> LEVITATOR_ITEM = ITEMS.registerSimpleBlockItem(LEVITATOR, new Item.Properties());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlockEntity>> LEVITATOR_ENTITY = BLOCK_ENTITIES.register(
+            "levitator", () -> BlockEntityType.Builder.of(dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlockEntity::new, LEVITATOR.get()).build(null));
     public static final DeferredHolder<Block, GolemPressBlock> PRESS = BLOCKS.register("golem_builder",
             () -> new GolemPressBlock(BlockBehaviour.Properties.of().strength(3.5F)));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GolemPressBlockEntity>> PRESS_ENTITY = BLOCK_ENTITIES.register(
@@ -71,6 +76,8 @@ public final class GolemModule {
     public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_CAULDRON = placeholder("placeholder_cauldron", Part.CAULDRON);
     public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_TABLE = placeholder("placeholder_table", Part.TABLE);
     public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
+    public static final DeferredItem<Item> COMPLEX_MECHANISM = ITEMS.registerSimpleItem("mechanism_complex");
+    public static final DeferredItem<Item> ZOMBIE_BRAIN = ITEMS.registerSimpleItem("brain");
     /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
     public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
     /** Source mind@1; its infusion acquisition belongs to the M06 integration. */
@@ -142,6 +149,7 @@ public final class GolemModule {
         bus.addListener(GolemModule::attributes);
         bus.addListener(dev.ehtid.thaumcraft.golem.network.GolemSealSync::register);
         bus.addListener(GolemModule::creativeContents);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.ehtid.thaumcraft.golem.crafting.GolemBrainDrops::livingDrops);
     }
 
     private static void capabilities(RegisterCapabilitiesEvent event) {
@@ -165,7 +173,10 @@ public final class GolemModule {
             event.accept(GUARD_SEAL.get()); event.accept(GUARD_ADVANCED_SEAL.get()); event.accept(BUTCHER_SEAL.get()); event.accept(USE_SEAL.get()); event.accept(BREAKER_ADVANCED_SEAL.get()); event.accept(LUMBER_SEAL.get()); event.accept(BREAKER_SEAL.get()); event.accept(HARVEST_SEAL.get()); event.accept(PICKUP_ADVANCED_SEAL.get()); event.accept(FILL_ADVANCED_SEAL.get());
             event.accept(PRESS_ITEM.get());
             event.accept(STONE_TABLE_ITEM.get());
+            event.accept(LEVITATOR_ITEM.get());
             event.accept(SIMPLE_MECHANISM.get());
+            event.accept(COMPLEX_MECHANISM.get());
+            event.accept(ZOMBIE_BRAIN.get());
             event.accept(CLOCKWORK_MIND.get());
             event.accept(BIOTHAUMIC_MIND.get()); event.accept(VISION_MODULE.get()); event.accept(AGGRESSION_MODULE.get());
         }

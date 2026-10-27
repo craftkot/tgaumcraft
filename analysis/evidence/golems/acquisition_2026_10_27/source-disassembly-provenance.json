@@ -1,0 +1,12 @@
+{
+  "source-TileLevitator.javap": {
+    "sha256": "0723ccaae1ae384d7dd24aee6c1cf397769ec109f4b94b71681a3e43cf02580d",
+    "executor_reference": "/workspace/reference/javap/m60-source-TileLevitator.javap",
+    "redistributed": false
+  },
+  "source-BlockLevitator.javap": {
+    "sha256": "2ae7719f9d965e9431bfb8771173280ac8693c43d1b6ef40a9e208d3d6ceda75",
+    "executor_reference": "/workspace/reference/javap/m60-source-BlockLevitator.javap",
+    "redistributed": false
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "artifact": "/workspace/tgaumcraft/build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "0801093c07d52c15a71a87bd4891aa5dbd4f58d98abb860b49fe7dd52cac6716",
+  "bytes": 2855010,
+  "java21_classes": 773,
+  "zip_crc": "passed",
+  "duplicate_entries": 0,
+  "en_ru_unique_keys": "passed",
+  "note": "Own-branch verification artifact, not a merged release"
+}

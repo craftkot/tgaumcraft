@@ -13,6 +13,9 @@ TESTS=(
   CoreParityTest
   LegacyGolemConstructionTest
   GolemAcquisitionRecipeTest
+  GolemBrainDropRulesTest
+  GolemLevitatorAcquisitionRecipeTest
+  GolemLevitatorRulesTest
   LegacyGolemTaskTest
   CrystalFarmerParityTest
   CrystalGrowthParityTest
@@ -64,6 +67,9 @@ done <<'CHECKS'
 CoreParityTest|Core parity tests: OK (
 LegacyGolemConstructionTest|BETA26 golem construction: OK
 GolemAcquisitionRecipeTest|BETA26 golem module acquisition: OK
+GolemBrainDropRulesTest|BETA26 brain acquisition: OK
+GolemLevitatorAcquisitionRecipeTest|BETA26 levitator acquisition: OK
+GolemLevitatorRulesTest|BETA26 levitator rules: OK
 LegacyGolemTaskTest|BETA26 golem task rules, six-face seal areas and exclusive server leases: OK
 CrystalFarmerParityTest|Crystal farmer BETA26 parity: OK
 CrystalGrowthParityTest|Crystal growth BETA26 parity: OK

@@ -455,5 +455,9 @@
   "menu.thaumcraft.golem_seal.guard_players_on": "Игроки: вкл.",
   "menu.thaumcraft.golem_seal.guard_players_off": "Игроки: выкл.",
   "menu.thaumcraft.golem_seal.guard_animals_help": "Включая монстров и жителей.",
-  "entity.thaumcraft.golem_dart": "Дротик голема"
+  "entity.thaumcraft.golem_dart": "Дротик голема",
+  "item.thaumcraft.mechanism_complex": "Сложный магический механизм",
+  "item.thaumcraft.brain": "Мозг зомби",
+  "block.thaumcraft.levitator": "Левитатор",
+  "block.thaumcraft.levitator.range": "Дальность: %s блоков; расход: %s зарядов Вис на существо"
 }

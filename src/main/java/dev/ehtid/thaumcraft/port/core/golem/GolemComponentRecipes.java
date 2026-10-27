@@ -7,7 +7,7 @@ public final class GolemComponentRecipes {
     private GolemComponentRecipes() {}
     public enum Ingredient {
         EMPTY, BRASS_PLATE, IRON_PLATE, WOODEN_ROD, GLASS_PANE, SIMPLE_MECHANISM, COMPARATOR,
-        GLASS_BOTTLE, FERMENTED_SPIDER_EYE, BLAZE_POWDER
+        GLASS_BOTTLE, FERMENTED_SPIDER_EYE, BLAZE_POWDER, THAUMIUM_PLATE, PISTON, WOODEN_PLANK, NITOR
     }
     public static int bit(Ingredient ingredient) { return 1 << ingredient.ordinal(); }
 
@@ -16,6 +16,10 @@ public final class GolemComponentRecipes {
                 Ingredient.EMPTY, Ingredient.BRASS_PLATE, Ingredient.EMPTY,
                 Ingredient.IRON_PLATE, Ingredient.WOODEN_ROD, Ingredient.IRON_PLATE,
                 Ingredient.EMPTY, Ingredient.BRASS_PLATE, Ingredient.EMPTY)),
+        COMPLEX_MECHANISM("BASEARTIFICE", 50, 0b000110, List.of(
+                Ingredient.EMPTY, Ingredient.SIMPLE_MECHANISM, Ingredient.EMPTY,
+                Ingredient.THAUMIUM_PLATE, Ingredient.PISTON, Ingredient.THAUMIUM_PLATE,
+                Ingredient.EMPTY, Ingredient.SIMPLE_MECHANISM, Ingredient.EMPTY)),
         CLOCKWORK_MIND("MINDCLOCKWORK@2", 25, 0b010010, List.of(
                 Ingredient.EMPTY, Ingredient.GLASS_PANE, Ingredient.EMPTY,
                 Ingredient.GLASS_PANE, Ingredient.SIMPLE_MECHANISM, Ingredient.GLASS_PANE,
@@ -24,6 +28,10 @@ public final class GolemComponentRecipes {
                 Ingredient.GLASS_BOTTLE, Ingredient.EMPTY, Ingredient.GLASS_BOTTLE,
                 Ingredient.FERMENTED_SPIDER_EYE, Ingredient.EMPTY, Ingredient.FERMENTED_SPIDER_EYE,
                 Ingredient.BRASS_PLATE, Ingredient.SIMPLE_MECHANISM, Ingredient.BRASS_PLATE)),
+        LEVITATOR("LEVITATOR", 35, 0b000001, List.of(
+                Ingredient.WOODEN_PLANK, Ingredient.THAUMIUM_PLATE, Ingredient.WOODEN_PLANK,
+                Ingredient.IRON_PLATE, Ingredient.NITOR, Ingredient.IRON_PLATE,
+                Ingredient.WOODEN_PLANK, Ingredient.SIMPLE_MECHANISM, Ingredient.WOODEN_PLANK)),
         AGGRESSION_MODULE("SEALGUARD", 50, 0b000010, List.of(
                 Ingredient.EMPTY, Ingredient.GLASS_PANE, Ingredient.EMPTY,
                 Ingredient.GLASS_PANE, Ingredient.BLAZE_POWDER, Ingredient.GLASS_PANE,

@@ -1,0 +1,20 @@
+E
+======================================================================
+ERROR: test_original_recipe_costs_inputs_order_and_distinct_metadata_products (__main__.GolemInfusionRecipesTest.test_original_recipe_costs_inputs_order_and_distinct_metadata_products)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/tgaumcraft/tools/test_golem_infusion_recipes.py", line 19, in test_original_recipe_costs_inputs_order_and_distinct_metadata_products
+    actual = json.loads(RESOURCE.read_text(encoding="utf-8"))
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1027, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/pathlib.py", line 1013, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/workspace/tgaumcraft/src/main/resources/data/thaumcraft/golem/infusion_recipes.json'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+FAILED (errors=1)

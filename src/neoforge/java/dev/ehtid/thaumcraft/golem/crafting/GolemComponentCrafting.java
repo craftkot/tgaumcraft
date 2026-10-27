@@ -10,6 +10,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
+import net.minecraft.tags.ItemTags;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -23,6 +25,7 @@ public final class GolemComponentCrafting {
     private static TagKey<Item> tag(String id) { return TagKey.create(Registries.ITEM, ResourceLocation.parse(id)); }
     private static final TagKey<Item> BRASS = tag("c:plates/brass"), IRON = tag("c:plates/iron");
     private static final TagKey<Item> OLD_BRASS = tag("forge:plates/brass"), OLD_IRON = tag("forge:plates/iron");
+    private static final TagKey<Item> THAUMIUM = tag("c:plates/thaumium"), OLD_THAUMIUM = tag("forge:plates/thaumium");
     private static final TagKey<Item> RODS = tag("thaumcraft:golem_bell_sticks");
     private static final TagKey<Item> PANES = tag("c:glass_panes"), VANILLA_PANES = tag("minecraft:glass_panes");
 
@@ -35,6 +38,10 @@ public final class GolemComponentCrafting {
             int metadata = PlateItem.legacyMetadata(stack);
             if (metadata == 0 || stack.is(BRASS) || stack.is(OLD_BRASS)) masks[slot] |= bit(BRASS_PLATE);
             if (metadata == 1 || stack.is(IRON) || stack.is(OLD_IRON)) masks[slot] |= bit(IRON_PLATE);
+            if (metadata == 2 || stack.is(THAUMIUM) || stack.is(OLD_THAUMIUM)) masks[slot] |= bit(THAUMIUM_PLATE);
+            if (stack.is(Items.PISTON)) masks[slot] |= bit(PISTON);
+            if (stack.is(ItemTags.PLANKS)) masks[slot] |= bit(WOODEN_PLANK);
+            if (ThaumcraftBlocks.NITOR.values().stream().anyMatch(block -> stack.is(block.get().asItem()))) masks[slot] |= bit(NITOR);
             if (stack.is(Items.STICK) || stack.is(RODS)) masks[slot] |= bit(WOODEN_ROD);
             if (stack.is(Items.GLASS_PANE) || stack.is(PANES) || stack.is(VANILLA_PANES)) masks[slot] |= bit(GLASS_PANE);
             if (stack.is(GolemModule.SIMPLE_MECHANISM.get())) masks[slot] |= bit(SIMPLE_MECHANISM);
@@ -50,14 +57,18 @@ public final class GolemComponentCrafting {
     public static ItemStack product(Recipe recipe) {
         return recipe == null ? ItemStack.EMPTY : new ItemStack(switch (recipe) {
             case SIMPLE_MECHANISM -> GolemModule.SIMPLE_MECHANISM.get();
+            case COMPLEX_MECHANISM -> GolemModule.COMPLEX_MECHANISM.get();
             case CLOCKWORK_MIND -> GolemModule.CLOCKWORK_MIND.get();
             case VISION_MODULE -> GolemModule.VISION_MODULE.get();
             case AGGRESSION_MODULE -> GolemModule.AGGRESSION_MODULE.get();
+            case LEVITATOR -> GolemModule.LEVITATOR_ITEM.get();
         });
     }
 
     public static boolean isProduct(ItemStack stack) {
         return stack.is(GolemModule.SIMPLE_MECHANISM.get()) || stack.is(GolemModule.CLOCKWORK_MIND.get())
+                || stack.is(GolemModule.COMPLEX_MECHANISM.get())
+                || stack.is(GolemModule.LEVITATOR_ITEM.get())
                 || stack.is(GolemModule.VISION_MODULE.get()) || stack.is(GolemModule.AGGRESSION_MODULE.get());
     }
 

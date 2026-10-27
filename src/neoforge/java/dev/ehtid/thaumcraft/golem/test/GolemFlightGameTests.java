@@ -91,11 +91,73 @@ public final class GolemFlightGameTests {
         h.succeedWhen(()->{ var drops=h.getLevel().getEntitiesOfClass(ItemEntity.class,h.getBounds(),e->e.getItem().is(Items.DIAMOND)); h.assertTrue(h.getLevel().isEmptyBlock(key.pos().above())&&g.rankXp()==1&&drops.stream().mapToInt(e->e.getItem().getCount()).sum()==1,"Actual air path meets original block XYZ reach and native harvest yields diamond1; xp="+g.rankXp()+", worker="+g.position()+", pathDone="+g.getNavigation().isDone()+", motion="+g.getDeltaMovement()); data.remove(key.pos(),key.face(),owner); drops.forEach(ItemEntity::discard); g.discard(); });
     }
     @GameTest(template="golem_climb_test",batch="flight_acquisition",timeoutTicks=80)
-    public static void missingOriginalLevitatorCannotBecomeFreePressProductButActualTestPlacerChargesOnce(GameTestHelper h) {
-        floor(h); var owner=FakePlayerFactory.get(h.getLevel(),new GameProfile(UUID.randomUUID(),"FlyerBuilder")); owner.setGameMode(GameType.SURVIVAL); owner.getInventory().clearContent(); owner.moveTo(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(6,1,5)))); var k=owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(); GolemRuntimeRules.research(design()).forEach(k::addResearch); h.setBlock(new BlockPos(5,1,5),GolemModule.PRESS.get()); var press=(GolemPressBlockEntity)h.getLevel().getBlockEntity(h.absolutePos(new BlockPos(5,1,5)));
-        h.assertTrue(press.select(owner,3,1)&&press.select(owner,3,1)&&press.selection().equals(design()),"Known wheels then source flyer selected; unresearched climber skipped");
-        int slot=0,missing=0; for(var component:GolemAssembly.components(design())) { var stack=GolemComponents.stack(component); if(stack.isEmpty()) { h.assertTrue(component.legacyItemId().equals("thaumcraft:levitator"),"Only source unported levitator dependency is missing"); missing++; } else owner.getInventory().setItem(slot++,stack); }
-        int before=owner.getInventory().items.stream().mapToInt(ItemStack::getCount).sum(); h.assertTrue(missing==1&&!press.start(owner)&&!press.job().active()&&press.isEmpty()&&owner.getInventory().items.stream().mapToInt(ItemStack::getCount).sum()==before,"No substitute levitator/free product or partial input debit");
-        owner.getInventory().clearContent(); owner.setItemInHand(InteractionHand.MAIN_HAND,GolemPlacerItem.stack(design(),0)); var pos=h.absolutePos(new BlockPos(9,0,8)); var ctx=new UseOnContext(owner,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos).add(0,.5,0),Direction.UP,pos,false)); h.assertTrue(GolemModule.GOLEM_PLACER.get().useOn(ctx).consumesAction()&&owner.getMainHandItem().isEmpty(),"Actual separately supplied test placer consumed once, not a survival acquisition claim"); var entities=h.getLevel().getEntitiesOfClass(ThaumcraftGolem.class,h.getBounds()); h.assertTrue(entities.size()==1&&entities.getFirst().isNoGravity()&&entities.getFirst().getNavigation() instanceof GolemFlightNavigation&&!entities.getFirst().isNoAi(),"One actual enabled flying entity from supported placer"); entities.getFirst().discard(); h.succeed();
+    public static void registeredLevitatorIsDebitedByActualFlyerPressAndEarnedPlacerCreatesWorker(GameTestHelper h) {
+        floor(h); var owner=FakePlayerFactory.get(h.getLevel(),new GameProfile(UUID.randomUUID(),"FlyerBuilder"));
+        owner.setGameMode(GameType.SURVIVAL); owner.getInventory().clearContent();
+        var earnedLevitator=earnLevitator(h,owner);
+        owner.moveTo(Vec3.atBottomCenterOf(h.absolutePos(new BlockPos(6,1,5))));
+        var knowledge=owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        GolemRuntimeRules.research(design()).forEach(knowledge::addResearch);
+        h.setBlock(new BlockPos(5,1,5),GolemModule.PRESS.get());
+        var press=(GolemPressBlockEntity)h.getLevel().getBlockEntity(h.absolutePos(new BlockPos(5,1,5)));
+        h.assertTrue(press.select(owner,3,1)&&press.select(owner,3,1)&&press.selection().equals(design()),
+                "Known wheels then source flyer selected; unresearched climber skipped");
+        int slot=0,levitatorSlot=-1;
+        for(var component:GolemAssembly.components(design())) {
+            var stack=GolemComponents.stack(component);
+            h.assertTrue(!stack.isEmpty(),"Every source flyer component resolves to its real registered item");
+            if(component.legacyItemId().equals("thaumcraft:levitator")) {
+                h.assertTrue(stack.is(GolemModule.LEVITATOR_ITEM.get())&&stack.getCount()==1,"Source flyer requires exactly one actual levitator");
+                stack=earnedLevitator;
+                levitatorSlot=slot;
+            }
+            owner.getInventory().setItem(slot++,stack);
+        }
+        h.assertTrue(levitatorSlot>=0,"Actual source leg3 bill of materials contains levitator");
+        var levitator=owner.getInventory().removeItemNoUpdate(levitatorSlot);
+        int before=owner.getInventory().items.stream().mapToInt(ItemStack::getCount).sum();
+        h.assertTrue(!press.start(owner)&&!press.job().active()&&press.isEmpty()
+                &&owner.getInventory().items.stream().mapToInt(ItemStack::getCount).sum()==before,
+                "Missing physical levitator refuses construction without free output or partial input debit");
+        owner.getInventory().setItem(levitatorSlot,levitator);
+        h.assertTrue(press.start(owner)&&press.job().active()&&owner.getInventory().isEmpty(),
+                "Real registered levitator and every source component are consumed exactly once by actual Press");
+        int cost=press.job().maximum();
+        for(int unit=0;unit<cost;unit++) {
+            h.assertTrue(press.addTransport("machina",1,Direction.DOWN)==1,"One actual accepted Machina credit pays source construction");
+            for(int tick=0;tick<5;tick++) GolemPressBlockEntity.tick(h.getLevel(),press.getBlockPos(),press.getBlockState(),press);
+        }
+        var product=press.removeItem(0,1);
+        h.assertTrue(!press.job().active()&&press.isEmpty()&&ItemStack.isSameItemSameComponents(product,GolemPlacerItem.stack(design(),0)),
+                "Source Machina completes exactly one earned configured flyer placer");
+        owner.setItemInHand(InteractionHand.MAIN_HAND,product);
+        var pos=h.absolutePos(new BlockPos(9,0,8));
+        var context=new UseOnContext(owner,InteractionHand.MAIN_HAND,new BlockHitResult(Vec3.atCenterOf(pos).add(0,.5,0),Direction.UP,pos,false));
+        h.assertTrue(GolemModule.GOLEM_PLACER.get().useOn(context).consumesAction()&&owner.getMainHandItem().isEmpty(),
+                "Actual paid Press output is consumed once by placement");
+        var entities=h.getLevel().getEntitiesOfClass(ThaumcraftGolem.class,h.getBounds());
+        h.assertTrue(entities.size()==1&&entities.getFirst().isNoGravity()&&entities.getFirst().getNavigation() instanceof GolemFlightNavigation&&!entities.getFirst().isNoAi(),
+                "Earned configured output creates one actual enabled flying worker");
+        entities.getFirst().discard(); h.succeed();
+    }
+
+    private static ItemStack earnLevitator(GameTestHelper h,net.minecraft.server.level.ServerPlayer owner) {
+        var relative=new BlockPos(2,1,2); h.setBlock(relative,dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.ARCANE_WORKBENCH.get());
+        var bench=(dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity)h.getLevel().getBlockEntity(h.absolutePos(relative));
+        owner.moveTo(Vec3.atBottomCenterOf(h.absolutePos(relative).east()));
+        owner.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().addResearch("LEVITATOR");
+        for(int slot:new int[]{0,2,6,8}) bench.setItem(slot,new ItemStack(Items.OAK_PLANKS));
+        bench.setItem(1,dev.ehtid.thaumcraft.item.PlateItem.create(2));
+        for(int slot:new int[]{3,5}) bench.setItem(slot,dev.ehtid.thaumcraft.item.PlateItem.create(1));
+        bench.setItem(4,new ItemStack(dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.NITOR_YELLOW.get()));
+        bench.setItem(7,new ItemStack(GolemModule.SIMPLE_MECHANISM.get()));
+        bench.setItem(9,dev.ehtid.thaumcraft.item.CrystalEssenceItem.ofAspect("aer")); bench.setVis(35);
+        var menu=new dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu(31,owner.getInventory(),bench);
+        menu.broadcastChanges(); menu.clicked(0,0,net.minecraft.world.inventory.ClickType.PICKUP,owner);
+        var earned=menu.getCarried(); menu.setCarried(ItemStack.EMPTY);
+        h.assertTrue(earned.is(GolemModule.LEVITATOR_ITEM.get())&&earned.getCount()==1&&bench.getVis()==0&&bench.getItem(9).isEmpty(),
+                "Source arcane menu grants real levitator only after35Vis/Aer1 payment");
+        for(int slot=0;slot<9;slot++) h.assertTrue(bench.getItem(slot).isEmpty(),"Every source levitator ingredient paid before flyer assembly");
+        return earned;
     }
 }

@@ -903,3 +903,14 @@ Full survival route пока требует M07 общего прохожден�
 FinalCore40016construction/204module/2909task/allrunner;286/33/4FD/fullbuild3m32s/exit0; freshcoldWRITE/READ и independentdisk; actualTCP0/0/0/rawframes/sourcehashes/762Java21classes/JAR — [полная проверка](evidence/golems/parallel_completion_2026_10_26/README.md). Никакой intermediatefailure не выдан за PASS.
 
 Остаток остаётся конкретным: generic M07 advancement, Greatwood acquisition M12, M06 biothaumic mind/infusion seals, M08 levitator; original art/full custom-seal API и M43 shared engine crash protocol. Новые модули и API доступны с уже существующими корректными gates; free unlock/material replacements не добавлены.
+
+
+## M10.60 — получение компонентов и связь с общей инфузией
+
+Сложный механизм переиспользует существующий arcane workbench/menu с исходными BASEARTIFICE/50Vis/Ignis1/Aqua1. Мозг добавляется к реальному событию лута недавно атакованного Zombie по исходному nextInt10−Looting<1; будущие Brainy-типы исключаются отдельным optional tag. Это не перенос всего M13.
+
+Левитатор реализован отдельными Core rules и block/entity в golem-модуле: общий AuraSavedData,1200 credits/Vis, цена2×range на сущность, шесть направлений, диапазоны4/8/16/32, opacity scan, redstone, source motion/sneak-UP и range/vis NBT. Защита от загрузки отсутствующего чанка и неверного saved range адаптирована к современному серверу. Собственная модель, modern look placement и полноформатное empty-hand переключение дальности заменяют старый knob hit target; точный исходный визуал не заявлен.
+
+Данные SealHarvest/SealButcher/SealBreak/MindBiothaumic находятся в `data/thaumcraft/golem/infusion_recipes.json`. Golem-ветка не вводит собственную копию матрицы и не импортирует новый infusion runtime. M06-адаптер загружает этот необязательный модуль по согласованной схеме. Независимые ветки компилируются отдельно; четыре реальных оплаченных ритуала проверены на source overlay без изменения Git-истории. По30 эссенции у печатей,75 у разума; один output и120 native ticks без повторной выдачи.
+
+Java21 Core/full build/295required native PASS; отдельный combined4required/full build PASS. Реальная arcane→levitator→Press/Machina→flyer цепочка проверяет расход входов и появление работника. Fixtures исследований не заменяют Survival-прогрессию. [M60 evidence, команды, адаптации и границы](evidence/golems/acquisition_2026_10_27/README.md).

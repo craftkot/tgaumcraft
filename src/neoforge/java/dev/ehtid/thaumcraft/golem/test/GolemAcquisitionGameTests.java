@@ -38,6 +38,64 @@ public final class GolemAcquisitionGameTests {
     private GolemAcquisitionGameTests() {}
     private record Fixture(ArcaneWorkbenchBlockEntity bench, FakePlayer player, ArcaneWorkbenchMenu menu) {}
 
+    @GameTest(template="golem_test", batch="acquisition_levitator", timeoutTicks=40)
+    public static void levitatorActualMenuPaysSourcePlanksPlatesNitorMechanismAerAnd35Vis(GameTestHelper h) {
+        var f = fixture(h);
+        for (int slot : new int[]{0, 2, 6, 8}) f.bench.setItem(slot, new ItemStack(Items.OAK_PLANKS, 2));
+        var thaumium = PlateItem.create(2); thaumium.setCount(2); f.bench.setItem(1, thaumium);
+        for (int slot : new int[]{3, 5}) { var iron = PlateItem.create(1); iron.setCount(2); f.bench.setItem(slot, iron); }
+        f.bench.setItem(4, new ItemStack(ThaumcraftBlocks.NITOR_YELLOW.get(), 2));
+        f.bench.setItem(7, new ItemStack(GolemModule.SIMPLE_MECHANISM.get(), 2));
+        crystals(f.bench, 2); f.bench.setVis(70); f.menu.broadcastChanges();
+        h.assertTrue(f.menu.getSlot(0).getItem().isEmpty() && f.menu.displayedVisCost() == 35 && f.menu.requiredCrystalMask() == 1,
+                "Original LEVITATOR research gate,35Vis andAer1 are visible");
+        knowledge(f).addResearch("LEVITATOR");
+        f.bench.setItem(9, ItemStack.EMPTY);
+        h.assertTrue(GolemComponentCrafting.preview(f.bench, f.player, 0).isEmpty(), "Other primal crystals cannot replace Aer");
+        var aer = CrystalEssenceItem.ofAspect("aer"); aer.setCount(2); f.bench.setItem(9, aer);
+        f.bench.setItem(4, new ItemStack(Items.TORCH, 2));
+        h.assertTrue(GolemComponentCrafting.preview(f.bench, f.player, 0).isEmpty(), "Torch cannot replace source nitor");
+        f.bench.setItem(4, new ItemStack(ThaumcraftBlocks.NITOR.get(net.minecraft.world.item.DyeColor.BLUE).get(), 2));
+        f.menu.broadcastChanges(); f.menu.clicked(0, 0, ClickType.PICKUP, f.player);
+        h.assertTrue(f.menu.getCarried().is(GolemModule.LEVITATOR_ITEM.get()) && f.bench.getVis() == 35
+                && f.bench.getItem(9).getCount() == 1 && f.bench.getItem(10).getCount() == 2,
+                "Real output debits35Vis/Aer1 and accepts original all-colour nitor ingredient");
+        for (int slot = 0; slot < 9; slot++) h.assertTrue(f.bench.getItem(slot).getCount() == 1, "All nine occupied source slots paid once");
+        f.menu.setCarried(ItemStack.EMPTY); f.menu.quickMoveStack(f.player, 0);
+        h.assertTrue(count(f, GolemModule.LEVITATOR_ITEM.get()) == 1 && f.bench.getVis() == 0
+                && f.bench.getItem(9).isEmpty(), "Shift take pays second whole levitator");
+        f.player.getInventory().clearContent(); h.succeed();
+    }
+
+    @GameTest(template="golem_test", batch="acquisition_complex", timeoutTicks=40)
+    public static void complexMechanismPaysTwoSimpleMechanismsThaumiumOrdinaryPistonAndBothCrystals(GameTestHelper h) {
+        var f = fixture(h);
+        for (int slot : new int[]{1, 7}) f.bench.setItem(slot, new ItemStack(GolemModule.SIMPLE_MECHANISM.get(), 2));
+        for (int slot : new int[]{3, 5}) { var plate = PlateItem.create(2); plate.setCount(2); f.bench.setItem(slot, plate); }
+        f.bench.setItem(4, new ItemStack(Items.PISTON, 2)); crystals(f.bench, 2); f.bench.setVis(100);
+        f.menu.broadcastChanges();
+        h.assertTrue(f.menu.getSlot(0).getItem().isEmpty() && f.menu.displayedVisCost() == 50 && f.menu.requiredCrystalMask() == 6,
+                "Source complex mechanism shows50Vis/Ignis1/Aqua1 while BASEARTIFICE locked");
+        knowledge(f).addResearch("BASEARTIFICE");
+        f.bench.setItem(4, new ItemStack(Items.STICKY_PISTON, 2));
+        h.assertTrue(GolemComponentCrafting.preview(f.bench, f.player, 0).isEmpty(), "Sticky piston is not source ordinary piston");
+        f.bench.setItem(4, new ItemStack(Items.PISTON, 2)); f.bench.setItem(3, PlateItem.create(0));
+        h.assertTrue(GolemComponentCrafting.preview(f.bench, f.player, 0).isEmpty(), "Brass cannot replace source thaumium plate");
+        var plate = PlateItem.create(2); plate.setCount(2); f.bench.setItem(3, plate); f.bench.setItem(11, ItemStack.EMPTY);
+        h.assertTrue(GolemComponentCrafting.preview(f.bench, f.player, 0).isEmpty(), "Ignis alone cannot pay Aqua");
+        f.bench.setItem(11, CrystalEssenceItem.ofAspect("aqua")); f.bench.getItem(11).setCount(2);
+        f.menu.broadcastChanges(); f.menu.clicked(0, 0, ClickType.PICKUP, f.player);
+        h.assertTrue(f.menu.getCarried().is(GolemModule.COMPLEX_MECHANISM.get()) && f.menu.getCarried().getCount() == 1
+                && f.bench.getVis() == 50 && f.bench.getItem(10).getCount() == 1 && f.bench.getItem(11).getCount() == 1
+                && f.bench.getItem(9).getCount() == 2, "Actual menu debits50Vis and exactly Ignis1/Aqua1");
+        for (int slot : new int[]{1, 3, 4, 5, 7}) h.assertTrue(f.bench.getItem(slot).getCount() == 1, "Five occupied source slots debited once");
+        f.menu.setCarried(ItemStack.EMPTY); f.menu.quickMoveStack(f.player, 0);
+        h.assertTrue(count(f, GolemModule.COMPLEX_MECHANISM.get()) == 1 && f.bench.getVis() == 0
+                && f.bench.getItem(10).isEmpty() && f.bench.getItem(11).isEmpty(), "Actual shift craft pays second whole complex mechanism");
+        f.menu.broadcastChanges(); h.assertTrue(f.menu.getSlot(0).getItem().isEmpty(), "Paid source inputs cannot replay");
+        f.player.getInventory().clearContent(); h.succeed();
+    }
+
     @GameTest(template="golem_test", batch="acquisition_vision", timeoutTicks=40)
     public static void visionModuleUsesOriginalArcaneGateBottlesFermentedEyesAndAqua(GameTestHelper h) {
         var f = fixture(h); vision(f.bench, 2); crystals(f.bench, 3); f.bench.setVis(100);
