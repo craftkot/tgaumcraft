@@ -222,3 +222,11 @@ Fresh HEAD: `main=a4280834adc5a20b6951098af937d30ca4aeca56`, `feature/infusion=2
 ### Необходимая правка общего CI
 
 После обычного push функционального1a8af82 GitHub Actions run40560919689 упал на шаге18: устаревший grep искал прежние Crystal Farmer methods. CircleCI#512 verify-connection SUCCESS подтверждает только подключение. Причина проверена настоящим job log; никаких фиктивных старых method names/comments в production не добавлялось. Два старых grep-блока .github/workflows/ci.yml заменены исполнением реального generic Core regression; tools/verify_source_caster.py проверяет фактический compatibility delegate и новый adapter. Это минимальная необходимая общая правка для координатора, отдельный commit. Все статические run-шаги workflow локально PASS/exit0; Java runtime/проверенные артефакты не менялись. Удалённый CI после нового push проверяется отдельно.
+
+- `951ae9361e2715f2cc2e60265e1ffe7d682db223` — минимальная необходимая CI-правка stale source greps; все workflow static steps локально PASS. Gameplay после1a8af82 не менялся.
+
+Удалённый GitHub Actions Thaumcraft Port CI для проверенного source HEAD `951ae9361e2715f2cc2e60265e1ffe7d682db223`: [run40561533951](https://github.com/craftkot/tgaumcraft/actions/runs/40561533951) и [run40561523794](https://github.com/craftkot/tgaumcraft/actions/runs/40561523794) — SUCCESS (включая full build и dedicated smoke). Полные локальные native/Core/cold результаты перечислены отдельно.
+
+Связанный проверенный код: golems `b50226a`, infusion `1a8af82`, необходимая CI-правка `951ae93`. Draft PR#3 и#1 обновлены и остаются open/draft, merged=false. Main свежепроверен: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+
+Завершающий публикационный commit (эта запись) меняет только журнал и evidence статусов. Его HEAD определяется `git rev-parse HEAD`; игровой код не меняется. `[skip ci]` применяется только к этому docs-only commit, чтобы не повторять полные сборки уже проверенного исходного снимка. Следующий этап — исходные события нестабильности инфузии и дальнейшая Survival-интеграция; полные M06/M10 ещё открыты.
