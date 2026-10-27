@@ -1,0 +1,21 @@
+SERVER original log excerpt (UTC)
+[20:20:44] [Server thread/INFO] [minecraft/PlayerList]: Dev[/127.0.0.1:54274] logged in with entity id 1 at (-1.5, -60.0, 6.5)
+[20:20:45] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_FIXTURE_READY
+[20:21:01] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_OFFHAND_WALL_READY
+[20:21:09] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_SERVER_CROUCH_OBSERVED
+[20:21:24] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_EDIT_MENU_READY
+[20:21:32] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_SERVER_EDIT_ASSERTIONS_OK
+[20:21:57] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_BELL_REMOVE_READY
+[20:22:04] [Server thread/INFO] [de.eh.th.go.te.GolemSealClientProbe/]: GOLEM_CLIENT_SEAL_SERVER_REMOVE_ASSERTIONS_OK
+[20:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 3m 24s
+CLIENT original log excerpt (UTC)
+[20:20:47] [Render thread/INFO] [de.eh.th.cl.GolemSealClientAssertions/]: GOLEM_CLIENT_SEAL_REMOTE_CONNECTION_OBSERVED
+[20:20:47] [Render thread/INFO] [de.eh.th.cl.GolemSealClientAssertions/]: GOLEM_CLIENT_SEAL_SNAPSHOT_ASSERTIONS_OK
+[20:20:47] [Render thread/INFO] [de.eh.th.cl.GolemSealOverlay/]: GOLEM_CLIENT_SEAL_OVERLAY_RENDER_OBSERVED entries=3 areas=2
+[20:21:01] [Render thread/INFO] [de.eh.th.cl.GolemSealOverlay/]: GOLEM_CLIENT_SEAL_OFFHAND_RENDER_OBSERVED
+[20:21:09] [Render thread/INFO] [de.eh.th.cl.GolemSealRenderTypes$1/]: GOLEM_CLIENT_SEAL_EXPLICIT_DEPTH_DISABLED previous=true
+[20:21:09] [Render thread/INFO] [de.eh.th.cl.GolemSealOverlay/]: GOLEM_CLIENT_SEAL_THROUGH_RENDER_OBSERVED
+[20:21:32] [Render thread/INFO] [de.eh.th.cl.GolemSealClientAssertions/]: GOLEM_CLIENT_SEAL_UPDATE_ASSERTIONS_OK
+[20:22:04] [Render thread/INFO] [de.eh.th.cl.GolemSealClientAssertions/]: GOLEM_CLIENT_SEAL_REMOVE_ASSERTIONS_OK
+[20:24:06] [Render thread/INFO] [minecraft/Minecraft]: Stopping!

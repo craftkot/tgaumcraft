@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " QQ",
+    " QQ",
+    "S  "
+  ],
+  "key": {
+    "Q": {
+      "tag": "thaumcraft:golem_bell_quartz"
+    },
+    "S": {
+      "tag": "thaumcraft:golem_bell_sticks"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:golem_bell",
+    "count": 1
+  }
+}

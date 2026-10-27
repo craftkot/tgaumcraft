@@ -1,0 +1,26 @@
+src/test/java/dev/ehtid/thaumcraft/port/core/GolemBrainDropRulesTest.java:3: error: cannot find symbol
+import dev.ehtid.thaumcraft.port.core.golem.GolemBrainDropRules;
+                                           ^
+  symbol:   class GolemBrainDropRules
+  location: package dev.ehtid.thaumcraft.port.core.golem
+src/test/java/dev/ehtid/thaumcraft/port/core/GolemBrainDropRulesTest.java:13: error: cannot find symbol
+                if (GolemBrainDropRules.shouldDrop(true, false, true, looting, roll) != expected)
+                    ^
+  symbol:   variable GolemBrainDropRules
+  location: class GolemBrainDropRulesTest
+src/test/java/dev/ehtid/thaumcraft/port/core/GolemBrainDropRulesTest.java:16: error: cannot find symbol
+                if (GolemBrainDropRules.shouldDrop(false, false, true, looting, roll)
+                    ^
+  symbol:   variable GolemBrainDropRules
+  location: class GolemBrainDropRulesTest
+src/test/java/dev/ehtid/thaumcraft/port/core/GolemBrainDropRulesTest.java:17: error: cannot find symbol
+                        || GolemBrainDropRules.shouldDrop(true, true, true, looting, roll)
+                           ^
+  symbol:   variable GolemBrainDropRules
+  location: class GolemBrainDropRulesTest
+src/test/java/dev/ehtid/thaumcraft/port/core/GolemBrainDropRulesTest.java:18: error: cannot find symbol
+                        || GolemBrainDropRules.shouldDrop(true, false, false, looting, roll))
+                           ^
+  symbol:   variable GolemBrainDropRules
+  location: class GolemBrainDropRulesTest
+5 errors

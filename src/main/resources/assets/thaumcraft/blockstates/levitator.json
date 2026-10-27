@@ -1,0 +1,29 @@
+{
+  "variants": {
+    "facing=up": {
+      "model": "thaumcraft:block/levitator"
+    },
+    "facing=down": {
+      "model": "thaumcraft:block/levitator",
+      "x": 180
+    },
+    "facing=north": {
+      "model": "thaumcraft:block/levitator",
+      "x": 90
+    },
+    "facing=south": {
+      "model": "thaumcraft:block/levitator",
+      "x": 270
+    },
+    "facing=west": {
+      "model": "thaumcraft:block/levitator",
+      "x": 90,
+      "y": 270
+    },
+    "facing=east": {
+      "model": "thaumcraft:block/levitator",
+      "x": 90,
+      "y": 90
+    }
+  }
+}

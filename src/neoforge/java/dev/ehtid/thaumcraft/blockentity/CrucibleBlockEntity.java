@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.port.core.AspectData;
+import dev.ehtid.thaumcraft.golem.crafting.GolemSealCrafting;
+import dev.ehtid.thaumcraft.port.core.golem.GolemSealRecipes;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleDissolution;
@@ -114,6 +116,9 @@ public final class CrucibleBlockEntity extends BlockEntity {
                 : player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         int consumed = 0;
         while (consumed < remaining) {
+            var seal = waterMb > 0 ? GolemSealCrafting.conversion(stack, knowledge, aspects, ASPECTS) : null;
+            var beforeSealAspects = seal == null ? null : aspects.copy();
+            int beforeSealWater = waterMb;
             var recipe = iron && waterMb > 0
                     ? LegacyCrucibleCatalystLogic.bestIronRecipe(knowledge, aspects, METALLURGY)
                     : null;
@@ -159,6 +164,10 @@ public final class CrucibleBlockEntity extends BlockEntity {
                 aspects = LegacyAlumentumCrucibleRecipe.afterCraft(aspects, ASPECTS);
                 waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
                 product = new ItemStack(ThaumcraftItems.ALUMENTUM.get());
+            } else if (seal != null) {
+                aspects = GolemSealRecipes.afterCraft(aspects, seal, ASPECTS);
+                waterMb = LegacyCrucibleCatalystLogic.waterAfterCraft(waterMb);
+                product = GolemSealCrafting.product(seal);
             } else if (LegacyCrucibleDissolution.canDissolve(heat, waterMb, tags)) {
                 aspects = LegacyCrucibleDissolution.dissolve(aspects, tags, 1);
             } else break;
@@ -168,7 +177,11 @@ public final class CrucibleBlockEntity extends BlockEntity {
                         worldPosition.getY() + 1.13D,
                         worldPosition.getZ() + 0.5D, product);
                 ejected.setDeltaMovement(new Vec3(0.12D, 0.22D, 0.12D));
-                server.addFreshEntity(ejected);
+                if (!server.addFreshEntity(ejected) && seal != null) {
+                    aspects = beforeSealAspects;
+                    waterMb = beforeSealWater;
+                    break; // An output rejected by a server event must not charge this seal craft.
+                }
             }
             consumed++;
         }

@@ -1,0 +1,11 @@
+# M49 — опыт за попытку Harvest и завершение lease
+
+Повторная read-only сверка официального BETA26: SealHarvest.onTaskCompletion после BlockUtils.harvestBlock игнорирует boolean (`pop`) и начисляет XP1/взмах; в конце исходный task suspended. Это подтверждённое правило попытки сбора, в отличие от replant, где XP1 только после SUCCESS. Source BlockUtils force=true может пропускать старый Forge break event: этот обход не переносится, modern owner-protection сохраняется. Обработка исключений standard-break в этом изменении не расширялась.
+
+Native Harvest теперь завершает состоявшуюся попытку и начисляет XP1 даже при boolean false. Отменённое разрушение сохраняет crop/seed/пустой урожай и не создаёт оплачиваемого replant. Старая завершённая lease не вызывает callback/XP повторно; новый scan создаёт новое задание после разрешения защиты. Placement по-прежнему требует действительный native результат/реальный расход семени.
+
+Проверки: **248/248 required native PASS1m44s** (20.10.2026 21:44:32UTC), затем **4/4 external Farmer’s Delight PASS1m8s** (21.10.2026 05:53:35UTC). Это отдельные запуски. В native cancellation fixture проверены XP1/старый lease refusal/новый scan harvest XP2; external actual BreakEvent сохраняет ripe cabbage/paidseeds2/fruit0 и source attemptedXP1. Мутация, cancellation event и предметы настоящие, не фиктивный PASS. [Actual excerpts](assertions.txt).
+
+Воспроизведение Java21/Gradle9.2.1: `gradle --offline --init-script tools/golems.gradle build -x test runGolemGameTest`, затем отдельный `runGolemCropIntegration` с проверенным официальным JAR в integration mods-dir. [Происхождение внешнего мода](../external_crops_2026_10_20/README.md). Старый M48 protectionXP0 — исторический результат, заменён M49, а не переименован в новый успешный запуск.
+
+[Final JAR QA](jar.json): CRC, все705class major65, expected registry/farm/probe/resource/AT entries, uniqueENRU JSON; внешний мод не вложен. Core39962/2909 остался неизменён после M44 и подтверждён прежним полным run_core_parity.sh. Cold M47/M48 прошёл до этого маленького изменения refused-harvest branch; повторное холодное испытание M49 не выполнялось. Последний graphicalclient M42 предшествует crop API. Split-save duplicate hazard26/34 остаётся открытым общим persistence вопросом.

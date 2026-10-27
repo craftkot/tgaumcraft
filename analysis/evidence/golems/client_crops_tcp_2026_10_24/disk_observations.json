@@ -1,0 +1,32 @@
+{
+  "read_only": true,
+  "world": "golem-crop-server-m52b",
+  "workers": 1,
+  "uuid": [
+    -1240507127,
+    -830386636,
+    -1892689845,
+    -172525581
+  ],
+  "rankXP": 2,
+  "actualHandItems": [
+    {
+      "components": {
+        "minecraft:custom_name": "\"M52 graphical paid seed\""
+      },
+      "count": 1,
+      "id": "thaumcraft:adapter_probe_no_debit"
+    },
+    {}
+  ],
+  "target": {
+    "Properties": {
+      "age": "0"
+    },
+    "Name": "minecraft:wheat"
+  },
+  "seals": 1,
+  "pending": 0,
+  "groundCallbackSeeds": 0,
+  "groundWheat": 1
+}

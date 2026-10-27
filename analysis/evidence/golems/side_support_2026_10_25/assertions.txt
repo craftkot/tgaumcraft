@@ -1,0 +1,42 @@
+/workspace/reference/golems-m56-core.log
+BETA26 golem construction: OK (39962 assertions)
+BETA26 golem task rules, six-face seal areas and exclusive server leases: OK (2909 assertions)
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK
+
+/workspace/reference/golems-m56-green.log
+[20:08:58] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_INITIAL_READY sourceTicket=31 sideTicket=32 sideLoaded=true sideEntityTicking=false
+[20:09:05] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_PAUSE_ASSERTIONS_OK rejectedClaims=100 seed=2 xp=1 pending=1 sourceTicket=31 sideTicket=32 forcedSide=false
+[20:09:06] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_NATIVE_UNLOAD_OBSERVED sourceChunk=false sideChunk=false worker=false removal=UNLOADED_TO_CHUNK
+[20:09:08] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_FIXTURE_RELOAD_REQUESTED absentTicks=40
+[20:09:08] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_RELOADED_ASSERTIONS_OK sameUuid=true differentObject=true seed=2 xp=1 nativeAiEnabled=true
+[20:09:14] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_SUPPORT_ASSERTIONS_OK blockedClaims=100 absentTicks=40 nativeReload=true seed=1 plant=1 xp=2 pending=0 noReplayTicks=100
+[20:09:18] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 1m 2s
+
+/workspace/reference/golems-m56-mutant.log
+[20:11:30] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_INITIAL_READY sourceTicket=31 sideTicket=32 sideLoaded=true sideEntityTicking=false
+[20:11:31] [Server thread/ERROR] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_SUPPORT_ASSERTIONS_FAILED phase=2
+java.lang.AssertionError: Inactive side support must refuse the real candidate lease
+[20:11:35] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 58s
+
+/workspace/reference/golems-m56-mutation-result.log
+Temporarily removed one inactive-support guard for isolated mutation validation
+Observed intended assertion failure at inactive-support lease claim
+Restored original GolemFarm source SHA256=68b45906adce4771026eaf622b2577a5e1d8bec2a1ec85de8d53a2509d88c1bd
+
+/workspace/reference/golems-m56-final.log
+[20:13:55] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[20:14:02] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[20:14:50] [Server thread/INFO] [minecraft/GameTestServer]: All 252 required tests passed :)
+[20:14:53] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[20:15:02] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[20:15:08] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[20:15:21] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_INITIAL_READY sourceTicket=31 sideTicket=32 sideLoaded=true sideEntityTicking=false
+[20:15:29] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_PAUSE_ASSERTIONS_OK rejectedClaims=100 seed=2 xp=1 pending=1 sourceTicket=31 sideTicket=32 forcedSide=false
+[20:15:29] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_NATIVE_UNLOAD_OBSERVED sourceChunk=false sideChunk=false worker=false removal=UNLOADED_TO_CHUNK
+[20:15:31] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_FIXTURE_RELOAD_REQUESTED absentTicks=40
+[20:15:32] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_RELOADED_ASSERTIONS_OK sameUuid=true differentObject=true seed=2 xp=1 nativeAiEnabled=true
+[20:15:37] [Server thread/INFO] [de.eh.th.go.te.GolemSideSupportProbe/]: GOLEM_SIDE_SUPPORT_ASSERTIONS_OK blockedClaims=100 absentTicks=40 nativeReload=true seed=1 plant=1 xp=2 pending=0 noReplayTicks=100
+[20:15:41] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 3m 3s

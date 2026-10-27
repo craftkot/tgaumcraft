@@ -1,0 +1,10 @@
+{
+  "jar": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "47b2d81d93a9b709b2e471aa4eb16c65c101628e3b856868c282d4cb71ce7411",
+  "crc": "PASS",
+  "java_major": 65,
+  "class_count": 705,
+  "expected_entries": 6,
+  "unique_en_ru_json": "PASS",
+  "foreign_binary_bundled": false
+}

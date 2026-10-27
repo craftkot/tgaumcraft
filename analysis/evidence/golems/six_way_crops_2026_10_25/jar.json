@@ -1,0 +1,13 @@
+{
+  "jar": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "1bfee21b1a816f4c4ec250fc167d74d8300fc9f20b20540706704cfb941f6858",
+  "crc_ok": true,
+  "classes": 731,
+  "all_java21": true,
+  "expected_classes_present": [
+    "dev/ehtid/thaumcraft/golem/test/GolemSixWayPlantGameTests.class",
+    "dev/ehtid/thaumcraft/golem/test/GolemPlantAdapterItems$SixWayPlant.class",
+    "dev/ehtid/thaumcraft/golem/test/GolemPlantAdapterItems$SixWaySeed.class"
+  ],
+  "en_ru_unique_json": true
+}

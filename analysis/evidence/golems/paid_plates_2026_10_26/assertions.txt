@@ -1,0 +1,39 @@
+## golems-m58-red.log
+[22:05:56] [Server thread/ERROR] [minecraft/LogTestReporter]: brassrowpaysthreeactualingotsforthreeplateswithoutresearch failed at -4768867, -60, -2459498! Missing original paid recipe thaumcraft:brassplate
+[22:05:59] [Server thread/ERROR] [minecraft/LogTestReporter]: voidmetadataonecannotbecomefreebrassandpaysforplatemetadatathree failed at -4768935, -60, -2459444! Missing original paid recipe thaumcraft:voidplate
+[22:06:16] [Server thread/ERROR] [minecraft/LogTestReporter]: mixedmetalsincompleterowsandextrainputsrejectwithoutpayment failed at -4768816, -60, -2459174! Missing original paid recipe thaumcraft:brassplate
+[22:06:22] [Server thread/ERROR] [minecraft/LogTestReporter]: bareandexplicitthaumiumrowsbothpayforplatemetadatatwo failed at -4768850, -60, -2459048! Missing original paid recipe thaumcraft:thaumiumplate
+[22:06:22] [Server thread/ERROR] [minecraft/LogTestReporter]: ninepaidbrassplatesfeedthreemechanismsandoneclockworkmind failed at -4768833, -60, -2459048! Missing original paid recipe thaumcraft:brassplate
+[22:06:22] [Server thread/ERROR] [minecraft/LogTestReporter]: legacymetadataallowsnamedingotsbutrejectsmalformedandwrongvariants failed at -4768935, -60, -2459012! Missing original paid recipe thaumcraft:brassplate
+[22:06:24] [Server thread/INFO] [minecraft/GameTestServer]: 6 required tests failed :(
+BUILD FAILED in 1m 16s
+
+## golems-m58-green.log
+/workspace/tgaumcraft/src/neoforge/java/dev/ehtid/thaumcraft/golem/crafting/GolemPlateIngredient.java:55: error: cannot find symbol
+/workspace/tgaumcraft/src/neoforge/java/dev/ehtid/thaumcraft/golem/crafting/GolemPlateIngredient.java:56: error: cannot find symbol
+  /workspace/tgaumcraft/src/neoforge/java/dev/ehtid/thaumcraft/golem/crafting/GolemPlateIngredient.java:55: error: cannot find symbol
+  /workspace/tgaumcraft/src/neoforge/java/dev/ehtid/thaumcraft/golem/crafting/GolemPlateIngredient.java:56: error: cannot find symbol
+BUILD FAILED in 14s
+
+## golems-m58-green-final.log
+[08:41:56] [Server thread/ERROR] [minecraft/LogTestReporter]: brassrowpaysthreeactualingotsforthreeplateswithoutresearch failed at -10147743, -60, 10310043! Registered brass recipe preview
+[08:42:00] [Server thread/ERROR] [minecraft/LogTestReporter]: voidmetadataonecannotbecomefreebrassandpaysforplatemetadatathree failed at -10147811, -60, 10310097! Void input selects void plate recipe
+[08:42:23] [Server thread/ERROR] [minecraft/LogTestReporter]: bareandexplicitthaumiumrowsbothpayforplatemetadatatwo failed at -10147726, -60, 10310493! Bare metadata0 and explicit metadata0 both yield thaumium plates at every row offset
+[08:42:23] [Server thread/ERROR] [minecraft/LogTestReporter]: ninepaidbrassplatesfeedthreemechanismsandoneclockworkmind failed at -10147709, -60, 10310493! Each source row pays for three actual brass plates
+[08:42:24] [Server thread/ERROR] [minecraft/LogTestReporter]: legacymetadataallowsnamedingotsbutrejectsmalformedandwrongvariants failed at -10147811, -60, 10310529! Original ore ingredient ignores unrelated ingot NBT
+[08:42:25] [Server thread/INFO] [minecraft/GameTestServer]: 5 required tests failed :(
+BUILD FAILED in 1m 51s
+
+## golems-m58-final.log
+> Task :jarJar NO-SOURCE
+> Task :compileJava
+> Task :jar
+> Task :runGolemGameTest
+[08:45:29] [Server thread/INFO] [minecraft/GameTestServer]: ========= 269 GAME TESTS COMPLETE IN 46.59 s ======================
+[08:45:29] [Server thread/INFO] [minecraft/GameTestServer]: All 269 required tests passed :)
+BUILD SUCCESSFUL in 1m 24s
+
+## golems-m58-core.log
+BETA26 golem construction: OK (39962 assertions)
+BETA26 golem task rules, six-face seal areas and exclusive server leases: OK (2909 assertions)
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK

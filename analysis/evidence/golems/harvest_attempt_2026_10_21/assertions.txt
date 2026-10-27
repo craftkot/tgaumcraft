@@ -1,0 +1,14 @@
+# golems-harvest-attempt-native
+[21:44:03] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'farm_break_cancel:0' (1 tests)...
+[21:44:32] [Server thread/INFO] [minecraft/GameTestServer]: ========= 248 GAME TESTS COMPLETE IN 42.00 s ======================
+[21:44:32] [Server thread/INFO] [minecraft/GameTestServer]: All 248 required tests passed :)
+BUILD SUCCESSFUL in 1m 44s
+# golems-external-crops-attempt-native
+		Farmer's Delight 1.3.4 (farmersdelight)
+[05:53:33] [Server thread/INFO] [de.eh.th.go.te.GolemExternalCropGameTests/]: GOLEM_EXTERNAL_TOMATO_ASSERTIONS_OK tomato=1 age=0 iron=13 xp=1 noReplant=true
+[05:53:34] [Server thread/INFO] [de.eh.th.go.te.GolemExternalCropGameTests/]: GOLEM_EXTERNAL_CABBAGE_ASSERTIONS_OK fruit=1 namedSeed=1 plant=1 xp=2
+[05:53:34] [Server thread/INFO] [de.eh.th.go.te.GolemExternalCropGameTests/]: GOLEM_EXTERNAL_ONION_AI_ASSERTIONS_OK ordinaryOnion=5 namedSeed=1 plant=1 xp=2
+[05:53:35] [Server thread/INFO] [de.eh.th.go.te.GolemExternalCropGameTests/]: GOLEM_EXTERNAL_PROTECTION_ASSERTIONS_OK cancelled=1 paidSeeds=2 fruit=0 xp=1 sourceAttempt=true
+[05:53:35] [Server thread/INFO] [minecraft/GameTestServer]: ========= 4 GAME TESTS COMPLETE IN 3.551 s ======================
+[05:53:35] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+BUILD SUCCESSFUL in 1m 8s

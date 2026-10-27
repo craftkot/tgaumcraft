@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "thaumcraft:brainy_zombie", "required": false },
+    { "id": "thaumcraft:giant_brainy_zombie", "required": false }
+  ]
+}

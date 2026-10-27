@@ -1,0 +1,82 @@
+## golems-m59-core-red.log
+Exception in thread "main" java.lang.AssertionError: Missing original arcane recipe VISION_MODULE
+
+## golems-m59-native-red.log
+[11:55:09] [Server thread/ERROR] [minecraft/LogTestReporter]: areataskinsidehomecanworkwhenitssealanchorisoutside failed at 8390552, -60, 11957809! Source AIGotoBlock checks the task position against home, permitting this actual mining
+[11:55:14] [Server thread/ERROR] [minecraft/LogTestReporter]: butchercountsassignableclassesratherthandistinctregistrytypes failed at 8390518, -60, 11957899! No value present
+[11:55:14] [Server thread/ERROR] [minecraft/LogTestReporter]: modulepaymentretainsexactexpectedproductanddiscountrules failed at 8390552, -60, 11957899! Source integer truncation charges37vis plus full Aqua1/mechanism1
+[11:55:20] [Server thread/ERROR] [minecraft/LogTestReporter]: earnedarcanevisionmoduleisdebitedbyactualscoutpressjob failed at 8390535, -60, 11957935! Transfer actual paid module into actual player inventory
+[11:55:21] [Server thread/ERROR] [minecraft/LogTestReporter]: aggressionmoduleusessealguardgateglasspanesblazepowderandignis failed at 8390501, -60, 11957971! GOLEMCOMBATADV cannot replace source SEALGUARD recipe gate
+[11:55:37] [Server thread/ERROR] [minecraft/LogTestReporter]: arrivingpickupwaitsforcurrentfillthenautomationcontinues failed at 8390569, -60, 11958169! New pickup must wait until the current Fill task delivers its carried item
+[11:55:39] [Server thread/ERROR] [minecraft/LogTestReporter]: moduleproductscannotbeswappedthroughstaleprevieworfulloutputspace failed at 8390603, -60, 11958205! Capture real vision preview
+[11:55:40] [Server thread/ERROR] [minecraft/LogTestReporter]: visionmoduleusesoriginalarcanegatebottlesfermentedeyesandaqua failed at 8390552, -60, 11958223! Original vision arcane costs visible before research
+[11:55:45] [Server thread/INFO] [minecraft/GameTestServer]: 8 required tests failed :(
+BUILD FAILED in 2m 7s
+
+## golems-m59-core-green.log
+BETA26 golem construction: OK (40016 assertions)
+BETA26 golem module acquisition: OK (204 assertions)
+BETA26 golem task rules, six-face seal areas and exclusive server leases: OK (2909 assertions)
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK
+
+## golems-m59-native-green.log
+[12:00:44] [Server thread/INFO] [minecraft/GameTestServer]: All 283 required tests passed :)
+BUILD SUCCESSFUL in 2m 32s
+
+## golems-m59-provider-red.log
+[12:07:27] [Server thread/ERROR] [minecraft/LogTestReporter]: providerentitypublicationexcludesaddonreentryandkeepsfundedcargo failed at -9510169, -60, 2693616! Actual provider entity publication debits first and excludes nested addon detach/hold
+[12:07:27] [Server thread/ERROR] [minecraft/LogTestReporter]: canceledproviderdropretainschangedactualpayloadwithoutoverwritingfunding failed at -9510152, -60, 2693616! Canceled provider publication empties the rejected entity and reports no delivered cargo
+[12:07:41] [Server thread/INFO] [minecraft/GameTestServer]: 2 required tests failed :(
+BUILD FAILED in 1m 20s
+
+## golems-m59-final-write.log
+[12:11:09] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[12:12:29] [Server thread/INFO] [minecraft/GameTestServer]: All 285 required tests passed :)
+[12:12:32] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[12:13:39] [Server thread/INFO] [de.eh.th.go.te.GolemRestartProbe/]: GOLEM_RESTART_WRITE_ASSERTIONS_OK
+BUILD SUCCESSFUL in 4m 59s
+
+## golems-m59-cold-read.log
+[12:15:57] [Server thread/INFO] [de.eh.th.go.te.GolemRestartProbe/]: GOLEM_RESTART_READ_ASSERTIONS_OK
+BUILD SUCCESSFUL in 55s
+
+## golems-m59-producer-red.log
+[12:18:52] [Server thread/ERROR] [minecraft/LogTestReporter]: butchercountercontinueswhilereservedandpausesforpoweredticks failed at 1546234, -60, -8658046! Second Butcher scan must count200 active ticks plus40 powered ticks; actual elapsed=200
+[12:18:58] [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
+BUILD FAILED in 1m 27s
+
+## golems-m59-final-green.log
+[12:22:11] [Server thread/INFO] [minecraft/GameTestServer]: ========= 33 GAME TESTS COMPLETE IN 24.62 s ======================
+[12:22:11] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[12:23:50] [Server thread/INFO] [minecraft/GameTestServer]: ========= 4 GAME TESTS COMPLETE IN 5.607 s ======================
+[12:23:50] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[12:23:48] [Server thread/INFO] [minecraft/GameTestServer]: ========= 286 GAME TESTS COMPLETE IN 2.058 min ======================
+[12:23:48] [Server thread/INFO] [minecraft/GameTestServer]: All 286 required tests passed :)
+BUILD SUCCESSFUL in 3m 32s
+
+## real TCP server.log
+[12:04:49] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_GALLERY_READY materials=6 entities=7 fundedCargo=11
+[12:04:58] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_MENU_READY recipe=brassplate container=1
+[12:04:58] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_CLICK_ASSERTIONS_OK recipe=brassplate inputPaid=3 output=3
+[12:04:58] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_MENU_READY recipe=thaumiumplate container=2
+[12:04:59] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_CLICK_ASSERTIONS_OK recipe=thaumiumplate inputPaid=3 output=3
+[12:04:59] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_MENU_READY recipe=voidplate container=3
+[12:04:59] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_PLATE_CLICK_ASSERTIONS_OK recipe=voidplate inputPaid=3 output=3
+[12:04:59] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_AI_ENABLED originalWorker=0b983689-c119-40d3-91ed-000000000010 cargo=11
+[12:05:02] [Server thread/INFO] [de.eh.th.go.te.GolemPartsClientProbe/]: GOLEM_PARTS_SERVER_ASSERTIONS_OK materials=6 recipes=3 sourceIngotsPaid=9 plates=9 depositedIron=11 sameWorker=true
+
+## real TCP client.log
+[12:04:52] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_RECIPE_SYNC_ASSERTIONS_OK recipes=3 testedNativeMetadata=9 actualTCP=true
+[12:04:52] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_GALLERY_ASSERTIONS_OK materials=6 heads=5 arms=5 legs=4 addons=4
+[12:04:55] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_GALLERY_FRAME_OBSERVED actualRenderedMaterials=6 heads=5 arms=5 legs=4 addons=4
+[12:04:58] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_PLATE_CLICK_ASSERTIONS_OK recipe=brassplate paid=3 received=3
+[12:04:58] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_PLATE_CLICK_ASSERTIONS_OK recipe=thaumiumplate paid=3 received=3
+[12:04:59] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_PLATE_CLICK_ASSERTIONS_OK recipe=voidplate paid=3 received=3
+[12:05:00] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_MOVING_CARGO_ASSERTIONS_OK worker=0b983689-c119-40d3-91ed-000000000010 actualIron=11 position=(5.322835286458333, 120.0, 9.5)
+[12:05:00] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_CARGO_FRAME_OBSERVED actualIron=11 workerVisible=true raisedCarryArms=true wheelRotationChanged=true
+[12:05:03] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_FINAL_ASSERTIONS_OK materials=6 recipes=3 paidIngots=9 paidPlates=9 actualBarrelIron=11
+[12:05:03] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_FINAL_FRAME_OBSERVED actualBarrelIron=11
+[12:05:18] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_STOP_AFTER_REMOTE_PROOF
+[12:05:18] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_STOP_AFTER_REMOTE_PROOF
+[12:05:18] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_STOP_AFTER_REMOTE_PROOF
+

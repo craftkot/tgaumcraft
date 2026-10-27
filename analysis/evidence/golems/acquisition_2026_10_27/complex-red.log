@@ -1,0 +1,10 @@
+== Java parity: CoreParityTest
+Core parity tests: OK (10046 assertions)
+== Java parity: LegacyGolemConstructionTest
+BETA26 golem construction: OK (40016 assertions)
+== Java parity: GolemAcquisitionRecipeTest
+Exception in thread "main" java.lang.AssertionError: Missing original arcane recipe mechanism_complex
+	at dev.ehtid.thaumcraft.port.core.GolemAcquisitionRecipeTest.lambda$checkComplexMechanism$1(GolemAcquisitionRecipeTest.java:22)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at dev.ehtid.thaumcraft.port.core.GolemAcquisitionRecipeTest.checkComplexMechanism(GolemAcquisitionRecipeTest.java:22)
+	at dev.ehtid.thaumcraft.port.core.GolemAcquisitionRecipeTest.main(GolemAcquisitionRecipeTest.java:16)

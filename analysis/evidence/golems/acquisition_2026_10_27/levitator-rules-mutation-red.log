@@ -1,0 +1,3 @@
+Exception in thread "main" java.lang.AssertionError: 1200 != 600
+	at dev.ehtid.thaumcraft.port.core.GolemLevitatorRulesTest.equal(GolemLevitatorRulesTest.java:48)
+	at dev.ehtid.thaumcraft.port.core.GolemLevitatorRulesTest.main(GolemLevitatorRulesTest.java:27)

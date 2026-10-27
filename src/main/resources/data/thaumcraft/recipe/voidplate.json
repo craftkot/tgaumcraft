@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "thaumcraft:voidplate",
+  "pattern": [
+    "BBB"
+  ],
+  "key": {
+    "B": {
+      "type": "thaumcraft:golem_ingot",
+      "metal": "void"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:plate",
+    "count": 3,
+    "components": {
+      "minecraft:custom_data": "{LegacyPlateMeta:3}",
+      "minecraft:custom_model_data": 3
+    }
+  }
+}

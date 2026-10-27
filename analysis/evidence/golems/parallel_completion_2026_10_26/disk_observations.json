@@ -1,0 +1,79 @@
+{
+  "world": "build/golem-parts-server-m59/world",
+  "golems": 7,
+  "unique_original_uuids": "PASS",
+  "gallery": [
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000000",
+      "props": 0,
+      "fixture_main_hand": {
+        "count": 1,
+        "id": "minecraft:iron_ingot"
+      }
+    },
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000001",
+      "props": 1103823438081,
+      "fixture_main_hand": {
+        "count": 2,
+        "id": "minecraft:gold_ingot"
+      }
+    },
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000002",
+      "props": 2207646876162,
+      "fixture_main_hand": {
+        "count": 3,
+        "id": "minecraft:iron_ingot"
+      }
+    },
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000003",
+      "props": 3311470314243,
+      "fixture_main_hand": {
+        "count": 4,
+        "id": "minecraft:gold_ingot"
+      }
+    },
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000004",
+      "props": 4398046774276,
+      "fixture_main_hand": {
+        "count": 5,
+        "id": "minecraft:iron_ingot"
+      }
+    },
+    {
+      "uuid": "0b983689-c119-40d3-91ed-000000000005",
+      "props": 5501869883397,
+      "fixture_main_hand": {
+        "count": 6,
+        "id": "minecraft:gold_ingot"
+      }
+    }
+  ],
+  "worker_uuid": "0b983689-c119-40d3-91ed-000000000010",
+  "worker_exact_design": "PASS",
+  "worker_hands_empty": true,
+  "all_recovery_empty": true,
+  "ground_item_entities": 0,
+  "barrel_iron": 11,
+  "player_plate_metadata_count": [
+    [
+      0,
+      3
+    ],
+    [
+      2,
+      3
+    ],
+    [
+      3,
+      3
+    ]
+  ],
+  "player_native_ingots": 0,
+  "owner_uuids": [
+    "777ca1f3-85a1-3aa7-b41c-3a98dfd53db3"
+  ]
+}

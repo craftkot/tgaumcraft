@@ -1,0 +1,35 @@
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=13 barrier=false actualTicks=57 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=12 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=10 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=11 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=9 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=14 barrier=false actualTicks=60 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=3 barrier=false actualTicks=57 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=1 barrier=false actualTicks=57 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=4 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=7 barrier=false actualTicks=59 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=2 barrier=false actualTicks=60 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=6 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=0 barrier=false actualTicks=58 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=15 barrier=false actualTicks=70 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=8 barrier=false actualTicks=65 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=0 barrier=true actualTicks=74 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=5 barrier=false actualTicks=76 diamond=1 xp=1
+[21:20:19] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=1 barrier=true actualTicks=144 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=4 barrier=true actualTicks=159 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=8 barrier=true actualTicks=180 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=12 barrier=true actualTicks=181 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=3 barrier=true actualTicks=200 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=15 barrier=true actualTicks=201 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=14 barrier=true actualTicks=201 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=2 barrier=true actualTicks=232 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=6 barrier=true actualTicks=243 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=13 barrier=true actualTicks=256 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=5 barrier=true actualTicks=273 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=10 barrier=true actualTicks=272 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=7 barrier=true actualTicks=321 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=11 barrier=true actualTicks=332 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_PENDING seed=9 barrier=true ticks=350 position=(-1999090.5829288322, -55.373099968453204, 4872209.482883959) pathDone=false xp=0
+[21:20:20] [Server thread/INFO] [de.eh.th.go.te.GolemFlightStressGameTests/]: GOLEM_FLIGHT_MATRIX_DONE seed=9 barrier=true actualTicks=354 diamond=1 xp=1
+[21:20:20] [Server thread/INFO] [minecraft/GameTestServer]: All 32 required tests passed :)
+BUILD SUCCESSFUL in 45s
