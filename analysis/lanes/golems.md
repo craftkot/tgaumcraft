@@ -971,3 +971,11 @@ Read-only remote audit: researcha33245c всё ещё read-only research page б
 Свежие Core assertions: construction40088, acquisition409, brain574, levitator recipe132/rules263, task rules2909; весь runner завершён exit0. Python golden проверяет четыре source descriptor. JAR:773 класса Java21, CRC/уникальные entries и EN/RU проверены; SHA записан в jar-audit.json. Отдельные plant-adapter33/FD4 и новый графический клиент без относящихся к ним изменений не повторялись.
 
 Следующий функциональный этап: source-перенос событий нестабильности в M06 и завершение Survival-зависимостей M07/M12, затем сквозная Survival-приёмка сборки/инфузии. Полные M10/M06 не объявлены завершёнными. Ветка и Draft PR#3 сохраняются без merge.
+
+- `b50226a64d0bf2bbb03b74d6adc3bf018e48b0ff` — исходное получение сложного механизма/мозга, настоящий левитатор и четыре инфузионных descriptor; Core, full build,295 native и combined4 PASS. Включены архитектура и реальные доказательства; дальнейшая публикационная запись меняет только документацию.
+
+Удалённый GitHub Actions Thaumcraft Port CI для проверенного source HEAD `b50226a64d0bf2bbb03b74d6adc3bf018e48b0ff`: [run40560878967](https://github.com/craftkot/tgaumcraft/actions/runs/40560878967) и [run40560871788](https://github.com/craftkot/tgaumcraft/actions/runs/40560871788) — SUCCESS (включая full build и dedicated smoke). Полные локальные native/Core/cold результаты перечислены отдельно.
+
+Связанный проверенный код: golems `b50226a`, infusion `1a8af82`, необходимая CI-правка `951ae93`. Draft PR#3 и#1 обновлены и остаются open/draft, merged=false. Main свежепроверен: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+
+Завершающий публикационный commit (эта запись) меняет только журнал и evidence статусов. Его HEAD определяется `git rev-parse HEAD`; игровой код не меняется. `[skip ci]` применяется только к этому docs-only commit, чтобы не повторять полные сборки уже проверенного исходного снимка. Следующий этап — исходные события нестабильности инфузии и дальнейшая Survival-интеграция; полные M06/M10 ещё открыты.
