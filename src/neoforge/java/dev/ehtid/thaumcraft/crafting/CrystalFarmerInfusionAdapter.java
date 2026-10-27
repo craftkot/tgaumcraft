@@ -15,8 +15,9 @@ import net.minecraft.world.item.Items;
  * Actual 1.21.1 ItemStack adapter to the seven BETA26 Crystal Farmer recipes.
  * Reads REAL pedestal inventory and source-era Crystal Essence CUSTOM_DATA.
  *
- * Preview only: the seven BlockCrystal outputs and networked essentia jars
- * are not yet ported. Do NOT grant items or set crafting from this method.
+ * Legacy crystal-specific read-only preview retained for callers. The live
+ * matrix now uses InfusionRecipeAdapter for the shared registered recipe path.
+ * This preview never consumes resources or grants output.
  */
 public final class CrystalFarmerInfusionAdapter {
     private CrystalFarmerInfusionAdapter() {}

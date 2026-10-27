@@ -106,6 +106,18 @@ public final class LegacyInfusionRitualLedger {
         return restore(recipeId, initial, current, paid);
     }
 
+    /** Validate the saved price against the registered source recipe, never saved output data. */
+    public static LegacyInfusionRitualLedger restoreVerified(String recipeId,
+            Map<String,Integer> initial, Map<String,Integer> current, int paid, float multiplier) {
+        var recipe = LegacyInfusionRecipeCatalog.find(recipeId);
+        if (recipe == null || !Float.isFinite(multiplier) || multiplier < 0.5F)
+            throw new IllegalArgumentException("Unknown recipe or invalid multiplier");
+        var expected = begin(recipeId, LegacyInfusionStartPlanner.calculateEssentia(recipe.essentia(), multiplier));
+        if (!expected.requested().equals(initial))
+            throw new IllegalArgumentException("Saved price differs from registered recipe");
+        return restore(recipeId, initial, current, paid);
+    }
+
     public String recipeId() { return recipeId; }
     public Map<String,Integer> requested() { return requested; }
     public Map<String,Integer> remaining() { return remaining; }

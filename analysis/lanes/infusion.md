@@ -1,6 +1,6 @@
 # Направление: инфузия / feature/infusion
 
-**Статус:** 🟡 M06.1 — реальный оплаченный ритуал Crystal Farmer, проверка сохранения и восстановления.
+**Статус:** 🟡 M06 — обобщённый оплаченный runtime; 7 Crystal Farmer и cold JVM проверены, полный M06/Survival ещё не завершён.
 **Основной план:** [ROADMAP_RU.md](../../ROADMAP_RU.md).
 **Общий аудит:** [PROGRESS_AUDIT_2026_10_16.md](../PROGRESS_AUDIT_2026_10_16.md) — M06 5/11, проект 59/100, без пересчёта.
 
@@ -9,7 +9,7 @@
 - Настоящая активация матрицы Basic Caster на собранной структуре.
 - Оригинальные семь Crystal Farmer: центр — аспектный кристалл, боковые пьедесталы — пшеничные семена и Salis Mundus; исходная стоимость при множителе 1.0 — **25** эссенции (10 конкретного аспекта, 10 Vitreus, 5 Vinculum).
 - Серверный адаптер списывает по одной единице из реально находящихся в мире банок. Пьедесталы удаляют настоящие ингредиенты только после countdown. Результат помещается на центральный пьедестал через однократную reservation/checkpoint.
-- **Это подтверждение путём чтения реализации**, НЕ новым end-to-end тестом в Minecraft. Атомарность сохранения между несколькими BlockEntity пока не гарантирована; авария между сохранениями может остановить ритуал или потерять материалы.
+- Свежие серверные доказательства 27.10.2026 перечислены ниже; полная Survival-прогрессия остаётся отдельной непроверенной границей. Атомарность сохранения между несколькими BlockEntity пока не гарантирована; авария между сохранениями может остановить ритуал или потерять материалы.
 
 ## 18.10.2026 — первый подход M06.1
 
@@ -28,7 +28,7 @@ CI: базовый GitHub Actions на исходном коммите #748 бы
 
 ## Оставшиеся шаги
 
-1. 🟡 **M06.1** — выполнить `InfusionRitualLedgerParityTest` через CoreParity CI и полную NeoForge сборку, затем настоящий survival ритуал от построенного алтаря до выданного кристалла: сравнить начальный/конечный jar баланс, два реальных input item и отсутствие второго результата после рестарта.
+1. 🟡 **M06.1** — после локальных Core/full-build/paid-server/cold PASS27.10 пройти настоящую Survival-цепочку получения исследования и графическую клиентскую приёмку; fixture research не заменяет её.
 2. **M06.1** — подтвердить неконсистентные checkpoint-сценарии с фактическим world save/unload/reload. Устранить потери материалов в окне нескольких BlockEntity; консервативный STALLED безопаснее дюпа, но ещё не соответствует полному критерию.
 3. **M06.2** — нестабильность, аварии и побочные эффекты исходного TileInfusionMatrix.
 4. **M06.3** — остальные оригинальные рецепты, эффекты/звук/анимации.
@@ -175,3 +175,43 @@ Fresh HEAD: `main=a4280834adc5a20b6951098af937d30ca4aeca56`, `feature/infusion=2
 - `908acb2` — записан **отдельный, ещё не пройденный** строгий [план игрового приёмочного испытания](infusion_M06_1_GAME_ACCEPTANCE_RU.md): правильный реальный исследовательский gate `CRYSTALFARMER`, реальные item stacks, семь исходных продуктов, запись источников и cost-ledger, canonical output receipt, реальные Survival и cold world save/reload/abrupt-kill. Без настоящих логов не выдавать за PASS.
 
 **Границы:** сегодня **НЕ выполнены** actual player-paid Survival crafting, измерения реального jar before/after world save, cold world restart/crash-loss test. Output provenance предотвращает ложное признание заранее поставленного блока после restart, но **НЕ делает jar/matrix/center транзакцию атомарной между BlockEntity/chunks**; STALLED с неполной записью остаётся без второй выдачи и возможна потеря ресурсов. Не закрывать M06.1 до честного игрового подтверждения; проект 59/100, M06 5/11, [draft PR #1](https://github.com/craftkot/tgaumcraft/pull/1), никаких merge на main.
+
+## 27.10.2026 — обобщение реального ритуала (работа в процессе)
+
+Авторизация текущего пользователя: одновременно големы + полноценная инфузия. Рабочая ветка `feature/infusion`, исходный HEAD `2e334a967e7740067bbb18e65b4d2e81aead2283`; основной ROADMAP/AGENTS/parallel workflow перечитаны, общие файлы не изменяются этой командой.
+
+Первый аудит: несмотря на универсальный `LegacyInfusionRecipeMatcher`, реальная матрица (914 строк) была привязана к двум ингредиентам и семи Crystal Farmer в start, progress, snapshot, restore и finish. Данные големов без изменения runtime не могли стать оплачиваемыми рецептами.
+
+Текущий конкретный интерфейс:
+- `LegacyInfusionRecipeCatalog.Recipe(legacyId,research,center,components,outputItemId,outputCount,aspects,instability)`, `Ingredient(itemIds,tagIds,crystalAspect)`; повторный ID запрещён, стоимость валидируется исходным реестром аспектов.
+- Неизменяемые source descriptors: центр, упорядоченные 1..30 боковых ингредиентов (сопоставление остаётся неупорядоченным 1:1), research key, реальные registry/tag IDs. Поддержаны **только обычные output ItemStack count=1**; dynamic/enchantment/component outputs не выдаются по приблизительному совпадению.
+- `InfusionRecipeAdapter` преобразует descriptors в настоящие ItemStack predicates, неизвестный output registry ID отключает рецепт (не заменяет на AIR). Опциональный source-модуль `/data/thaumcraft/golem/infusion_recipes.json` поставляется веткой големов; malformed присутствующий файл вызывает явную ошибку. Нет imports классов големов.
+- Матрица теперь выполняет общий `beginVerifiedInfusionFromCaster`, тот же физический jar debit, source countdown и consumption N боковых пьедесталов с UUID receipts; выдача только после полной оплаты и одноразового checkpoint. Старый caster entrypoint оставлен delegate для совместимости.
+- NBT `Format=2`, `SidePedestals:long[]`, `OriginalSideInputs` source-order. Для старых Crystal Farmer без Format читаются `SeedsPedestal`/`SalisPedestal`; биты 1/2 и существующие физические receipts сохраняют значения. Старые core-классы и регрессии сохранены.
+
+Исходник независимо прочитан через `javap -c -p ConfigRecipes` официального `/workspace/reference/Thaumcraft-1.12.2-6.1.BETA26.jar`: SealHarvest offsets0..151 (6 боковых), SealButcher154..298 (6; **bestia/sensus/humanus10, instability0**), SealBreak301..400 (3), MindBiothaumic3804..3902 (cognitio50,machina25,instability4). Данные и современные item mappings согласованы с владельцем големов. Его ресурс остаётся в его ветке; наличие production loader не является доказательством интегрированной регистрации/игры.
+
+Проверка в процессе: новый `InfusionGenericRuntimeTest` сначала RED (отсутствующий общий runtime), затем чистая Java21 компиляция + GREEN: реальные переходы countdown→consumed для 2/3/6/12/30 inputs, невозможные mask/countdown, полная верификация всех physical receipts до recovery, точные 7 CrystalFarmer цены при x1.35 и отказ другой цены. Это **не Minecraft proof**. Внешняя команда проверки готовит настоящий GameTest с реальным caster, банками/предметами и NBT save/load; результаты будут добавлены только после фактического запуска. Gradle только по выделенному root build slot.
+
+Остаток: полный исходный каталог, dynamic outputs/enchantments, контейнерные остатки ингредиентов (пока такие рецепты отклоняются при старте), полный runtime нестабильности/аварий, исходные визуальные эффекты/renderer, настоящая Survival прогрессия research, холодный restart/межчанковая crash durability. **Нет обещания глобальной атомарности** jar→matrix→pedestal; подтверждение уже существующего output не создаёт новый. M06 остаётся 🟡, прежняя оценка не повышена.
+
+
+## 27.10.2026 — две команды, финальная проверка generic runtime
+
+Пользователь явно активировал инфузию параллельно големам. Existing feature/infusion продолжена от2e334a9 в отдельном worktree; maina4280834/feature/golems/история других веток не изменяются. Прежние Draft PR#1/#3 сохраняются.
+
+- Реализованы generic catalog/adapter и1..30 физических боковых входов; Format2 checkpoint/legacy formatless crystal migration/полные ItemStack snapshots и UUID receipts. Семь оригинальных Crystal Farmer сохранены; optional golem descriptor загружается без Java-зависимости на golem-классы.
+- Независимое ревью нашло Important: same-ID изменённый рецепт мог воспользоваться ранее оплаченной ценой. Добавлен полный RecipeFingerprint, focused RED→GREEN и два настоящих native restore-negative tests. После исправления новых Critical/Important не найдено; known split-BE save window остаётся открытым.
+- Java21 fullCore PASS/exit0; финальный direct-API generic test отдельно PASS. Full NeoForge build+10/10 required native PASS/exit0 (3m35s):7 paid variants, old formatless migration без нового fingerprint, missing/altered identity rejection. Каждый положительный случай проходит actual caster/research denial/25 реальных jar debits/side receipts/one output/120native no-replay ticks. Исследования явно fixture-seeded.
+- Fresh cold WRITE paid8/25 → отдельная READ JVM paid25/output1/120ticks PASS/exit0(1m15s READ), UUIDe4af369f-99cb-4f3d-8958-fb2741d13799. Independent raw MCA parser подтвердил один crystal_aer, пустые side slots с receipts bits1/2 того же UUID,3jars0,craftingfalse/noledger.
+- Совместный source overlay двух веток без git merge: full build и4/4 required GameTest PASS/exit0 за1m25s. Настоящие caster/world ticks, SealHarvest/SealButcher/SealBreak по30 и MindBiothaumic75 эссенции, exact receipts/output, unrelated Aer7 не затронут,120native no-replay ticks.
+- Не проверены заново: графический клиент новой инфузии, Survival-research, chunk unload, hard-kill split persistence. Не перенесены: полные instability effects/аварии, полный каталог/компонентные output/container remainders. Все-cost1 при x0.5 пока unsupported edge generic ledger; текущие11 source recipes не затронуты.59/100 не повышается.
+
+Доказательства: [generic evidence](../evidence/infusion/generic_2026_10_27/README.md), [архитектура](../INFUSION_RUNTIME_DESIGN_RU.md). Source commits/HEAD будут записаны после фиксации проверенного снимка.
+
+
+## Публикация проверенного снимка — 27.10.2026
+
+Совместная проверка не меняет историю веток: отдельный каталог исходников содержит golem tree и только infusion delta от main. Единственное пересечение — Core runner, его регистрации объединены только в тестовой копии. Полный manifest и лог приложены в evidence. Четыре golem-теста остаются в отдельном namespace и запускаются task runGolemInfusionGameTest; без реального golem-модуля они не объявляются пройденными.
+
+Собственный JAR инфузии:469 классов Java21; CRC, отсутствие duplicate entries и уникальные EN/RU ключи проверены. Точные SHA в jar-audit.json. Архитектура, тестовые команды и границы описаны в INFUSION_RUNTIME_DESIGN_RU.md и evidence README. Full instabilities/аварии, весь каталог, component-output/remainders и полная Survival-прогрессия остаются следующим этапом. Общая crash-атомарность нескольких BlockEntity не заявлена. Main/общий roadmap/build.gradle/CI не менялись; Draft PR#1 остаётся открытым и не сливается. Source SHA и итоговый HEAD будут записаны после коммитов.

@@ -12,20 +12,16 @@ import dev.ehtid.thaumcraft.port.core.LegacyInfusionEssentiaCycle;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionRitualLedger;
-import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerIngredientProgress;
-import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerFinishCheckpoint;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionIngredientProgress;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionFinishCheckpoint;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog;
-import dev.ehtid.thaumcraft.crafting.CrystalFarmerInfusionAdapter;
-import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.crafting.InfusionRecipeAdapter;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
-import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Items;
 import dev.ehtid.thaumcraft.crafting.InfusionJarSourceBridge;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import net.minecraft.world.item.ItemStack;
-import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.Map;
@@ -52,7 +48,7 @@ import java.util.UUID;
  * - invalid structures deactivate after the original 100-tick interval;
  * - original active/crafting/stability/recipeinst NBT keys survive saves;
  * - BASIC caster can now activate the actual structure and request only
- *   verified Crystal Farmer recipes; other caster foci are not yet ported.
+ *   registered research-gated source recipes; other caster foci are not yet ported.
  *
  * Activation is intentionally not exposed as an ordinary empty-hand click;
  * BETA26 invokes it from ItemCaster via IInteractWithCaster.
@@ -65,20 +61,20 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     private LegacyInfusionRitualLedger ritualLedger;
     /** Unique physical payment identity, saved with the matrix ledger. */
     private UUID activeInfusionRitual;
+    /** Frozen full recipe identity; an upgraded same-ID recipe cannot inherit payment. */
+    private String ritualRecipeFingerprint;
     /** Original cost multiplier frozen when the player starts this ritual. */
     private float ritualStartCostMultiplier = 1.0F;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
-    private LegacyCrystalFarmerIngredientProgress itemProgress;
+    private LegacyInfusionIngredientProgress itemProgress;
     /** Exact real pedestal positions verified at start; never a newly found replacement. */
-    private BlockPos seedsPedestal;
-    private BlockPos salisPedestal;
+    private List<BlockPos> sidePedestals = List.of();
     /** Original actual center ItemStack, including every data component. */
     private ItemStack originalCentralInput = ItemStack.EMPTY;
-    /** Two original one-item side stacks, preserving data components and order. */
-    private ItemStack originalSeedInput = ItemStack.EMPTY;
-    private ItemStack originalSalisInput = ItemStack.EMPTY;
-    private LegacyCrystalFarmerFinishCheckpoint.State finishCheckpoint =
-            LegacyCrystalFarmerFinishCheckpoint.initial();
+    /** Original side stacks in source recipe order, including every data component. */
+    private List<ItemStack> originalSideInputs = List.of();
+    private LegacyInfusionFinishCheckpoint.State finishCheckpoint =
+            LegacyInfusionFinishCheckpoint.initial();
     private boolean active;
     private boolean crafting;
     private float stability;
@@ -265,180 +261,108 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
      * The recipe has to match real pedestals, source aspect components and
      * player research at this very moment. Nothing is spent on start.
      */
+    /** Compatibility entry point for the existing Basic Caster. */
     public boolean beginVerifiedCrystalFarmerFromFutureCaster(ServerPlayer player) {
+        return beginVerifiedInfusionFromCaster(player);
+    }
+
+    public boolean beginVerifiedInfusionFromCaster(ServerPlayer player) {
         if (player == null || level != player.serverLevel() || !active
                 || crafting || ritualLedger != null || !validLocation()) return false;
-        PlayerKnowledgeData knowledge =
-                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
-        var preview = CrystalFarmerInfusionAdapter.prepare(this, knowledge);
+        var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        var preview = InfusionRecipeAdapter.prepare(this, knowledge);
         if (preview == null) return false;
-        // RecipeMatcher assigns occupied pedestal index -> recipe ingredient
-        // index. Preserve that actual physical identity through NBT reload:
-        // scanning for ANY replacement input later would permit free output.
-        List<BlockPos> occupiedPositions = new ArrayList<>();
-        for (BlockPos pos : nearbyPedestals()) {
-            if (level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal
-                    && pedestal.isOccupied())
-                occupiedPositions.add(pos.immutable());
-        }
+        List<BlockPos> occupied = new ArrayList<>();
+        for (BlockPos pos : nearbyPedestals())
+            if (level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal && pedestal.isOccupied())
+                occupied.add(pos.immutable());
         int[] assignment = preview.matching().ingredientIndices();
-        if (occupiedPositions.size() != 2 || assignment.length != 2) return false;
-        BlockPos matchedSeeds = null, matchedSalis = null;
-        for (int i = 0; i < assignment.length; i++) {
-            if (assignment[i] == 0) matchedSeeds = occupiedPositions.get(i);
-            else if (assignment[i] == 1) matchedSalis = occupiedPositions.get(i);
-            else return false;
+        int size = preview.recipe().components().size();
+        if (occupied.size() != size || assignment.length != size) return false;
+        var positions = new ArrayList<BlockPos>(java.util.Collections.nCopies(size,null));
+        var inputs = new ArrayList<ItemStack>(java.util.Collections.nCopies(size,ItemStack.EMPTY));
+        for (int i = 0; i < size; i++) {
+            int index = assignment[i];
+            if (index < 0 || index >= size || positions.get(index) != null
+                    || !(level.getBlockEntity(occupied.get(i)) instanceof PedestalBlockEntity pedestal)) return false;
+            ItemStack input = pedestal.displayedItem().copy();
+            if (!InfusionRecipeAdapter.matches(preview.recipe().components().get(index),input)
+                    || input.hasCraftingRemainingItem()) return false;
+            positions.set(index,occupied.get(i)); inputs.set(index,input);
         }
-        if (matchedSeeds == null || matchedSalis == null
-                || matchedSeeds.equals(matchedSalis)) return false;
-        if (!(level.getBlockEntity(worldPosition.below(2))
-                instanceof PedestalBlockEntity originalCenter)
-                || !(level.getBlockEntity(matchedSeeds) instanceof PedestalBlockEntity originalSeeds)
-                || !(level.getBlockEntity(matchedSalis) instanceof PedestalBlockEntity originalSalis))
-            return false;
-        ItemStack capturedCenter = originalCenter.displayedItem().copy();
-        ItemStack capturedSeeds = originalSeeds.displayedItem().copy();
-        ItemStack capturedSalis = originalSalis.displayedItem().copy();
-        if (capturedCenter.getCount() != 1
-                || !capturedCenter.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !CrystalEssenceItem.isOriginalInfusionCrystal(
-                        capturedCenter, preview.recipe().aspectTag())
-                || capturedSeeds.getCount() != 1 || !capturedSeeds.is(Items.WHEAT_SEEDS)
-                || capturedSalis.getCount() != 1
-                || !capturedSalis.is(ThaumcraftItems.SALIS_MUNDUS.get()))
-            return false;
-        seedsPedestal = matchedSeeds;
-        salisPedestal = matchedSalis;
-        originalCentralInput = capturedCenter;
-        originalSeedInput = capturedSeeds;
-        originalSalisInput = capturedSalis;
-        ritualLedger = LegacyInfusionRitualLedger.begin(
-                preview.recipe().legacyId(), preview.matching().cost());
+        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return false;
+        ItemStack centerInput = center.displayedItem().copy();
+        if (!InfusionRecipeAdapter.matches(preview.recipe().center(),centerInput)) return false;
+        sidePedestals = List.copyOf(positions); originalSideInputs = List.copyOf(inputs);
+        originalCentralInput = centerInput;
+        ritualLedger = LegacyInfusionRitualLedger.begin(preview.recipe().legacyId(),preview.matching().cost());
         activeInfusionRitual = UUID.randomUUID();
+        ritualRecipeFingerprint = preview.recipe().checkpointFingerprint();
         ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
-        itemProgress = LegacyCrystalFarmerIngredientProgress.initial();
-        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+        itemProgress = LegacyInfusionIngredientProgress.initial(size);
+        finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
         recipeInstability = preview.matching().instability();
         crafting = true;
-        changedAndSync(); // checkpoint BEFORE any real jar is debited
-        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_RESEARCH_GATED_START");
+        changedAndSync();
+        markRitual("RESEARCH_GATED_START");
         return true;
     }
 
+    private void markRitual(String event) {
+        boolean crystal = ritualLedger != null && LegacyInfusionCrystalFarmerCatalog.all().stream()
+                .anyMatch(r -> r.legacyId().equals(ritualLedger.recipeId()));
+        ThaumcraftSmokeAudit.mark((crystal ? "INFUSION_CRYSTAL_" : "INFUSION_RECIPE_") + event);
+    }
+
     private boolean trackedPedestalsValid() {
-        if (seedsPedestal == null || salisPedestal == null
-                || seedsPedestal.equals(salisPedestal)) return false;
-        return isTrackedSidePosition(seedsPedestal)
-                && isTrackedSidePosition(salisPedestal);
+        if (sidePedestals.isEmpty() || sidePedestals.size() != originalSideInputs.size()
+                || new java.util.HashSet<>(sidePedestals).size() != sidePedestals.size()) return false;
+        return sidePedestals.stream().allMatch(this::isTrackedSidePosition);
     }
 
     private boolean isTrackedSidePosition(BlockPos where) {
-        return LegacyInfusionMatrixLayout.withinScanVolume(
-                new LegacyInfusionMatrixLayout.Offset(
-                        where.getX() - worldPosition.getX(),
-                        where.getY() - worldPosition.getY(),
-                        where.getZ() - worldPosition.getZ()));
+        return where != null && LegacyInfusionMatrixLayout.withinScanVolume(
+                new LegacyInfusionMatrixLayout.Offset(where.getX() - worldPosition.getX(),
+                        where.getY() - worldPosition.getY(),where.getZ() - worldPosition.getZ()));
     }
 
-    /**
-     * A pedestal can save its EMPTY slot and exact receipt before the matrix
-     * saves the resulting ingredient mask. Restore precisely this one missed
-     * transition instead of losing already-consumed materials.
-     *
-     * Only the originally matched side position, a matching ritual UUID,
-     * verified full essentia payment and the expected opposite pedestal
-     * permit acknowledgement. The matrix may have saved any earlier 0..5
-     * countdown; the receipt proves removal regardless of that stale timer.
-     * No new item or additional debit is performed.
-     */
-    private void recoverSavedSideItemDebit() {
-        if (!(level instanceof ServerLevel) || !active || !crafting
-                || !finishCheckpoint.canReserve() || activeInfusionRitual == null
-                || ritualLedger == null || !ritualLedger.readyForIngredients()
-                || itemProgress == null || itemProgress.readyToFinish()
-                || !validLocation() || !trackedPedestalsValid()
-                || originalCentralInput.isEmpty())
-            return;
-        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)
-                || !ItemStack.isSameItemSameComponents(
-                        center.displayedItem(), originalCentralInput))
-            return;
-        if (!level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
-                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seeds)
-                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salis))
-            return;
-        boolean seedReceipt = seeds.hasInfusionRemovalReceipt(activeInfusionRitual,
-                LegacyCrystalFarmerIngredientProgress.SEEDS_BIT);
-        boolean salisReceipt = salis.hasInfusionRemovalReceipt(activeInfusionRitual,
-                LegacyCrystalFarmerIngredientProgress.SALIS_BIT);
-        boolean untouchedSalis = ItemStack.isSameItemSameComponents(
-                salis.displayedItem(), originalSalisInput);
-        int earlierMask = itemProgress.consumedMask();
-        // Only the original UUID receipts may advance persisted progress.
-        // A matrix that saved BEFORE both pedestal debits may skip from
-        // mask=0 straight to mask=3, but NEVER consume either input twice.
-        if ((earlierMask == 0 && (!seedReceipt
-                || (salisReceipt == untouchedSalis)))
-                || (earlierMask == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                && (!seedReceipt || !salisReceipt || untouchedSalis)))
-            return;
-        itemProgress = itemProgress.afterSavedWorldReceipts(
-                seedReceipt, salisReceipt, untouchedSalis);
-        changedAndSync();
-        if ((earlierMask & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) == 0)
-            ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SEEDS_DEBIT_RECOVERED");
-        if ((earlierMask & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) == 0
-                && (itemProgress.consumedMask()
-                    & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0)
-            ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SALIS_DEBIT_RECOVERED");
+    /** Capture complete physical proof first; never partially acknowledge a damaged set of receipts. */
+    private LegacyInfusionIngredientProgress verifiedSideProgress() {
+        if (level == null || itemProgress == null || activeInfusionRitual == null || !trackedPedestalsValid()) return null;
+        boolean[] receipts = new boolean[sidePedestals.size()];
+        boolean[] present = new boolean[sidePedestals.size()];
+        for (int i = 0; i < sidePedestals.size(); i++) {
+            var pos = sidePedestals.get(i);
+            if (!level.hasChunkAt(pos) || !(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal)) return null;
+            ItemStack item = pedestal.displayedItem();
+            receipts[i] = pedestal.hasInfusionRemovalReceipt(activeInfusionRitual,1 << i);
+            present[i] = item.getCount() == 1 && ItemStack.isSameItemSameComponents(item,originalSideInputs.get(i));
+        }
+        try { return itemProgress.recoverSavedReceipts(receipts,present); }
+        catch (IllegalArgumentException | IllegalStateException mismatch) { return null; }
     }
 
-    /** A moved/removed center or missing side item must pause debit, never grant output. */
-    private boolean realInputsRemain() {
+    private boolean originalCenterPresent() {
         if (level == null || ritualLedger == null || !validLocation()) return false;
-        var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
-                .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
-                .findFirst().orElse(null);
-        if (spec == null) return false;
-        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)
-                || center.displayedItem().getCount() != 1
-                || !center.displayedItem().is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !CrystalEssenceItem.isOriginalInfusionCrystal(
-                        center.displayedItem(), spec.aspectTag())
-                || originalCentralInput.isEmpty()
-                || !ItemStack.isSameItemSameComponents(
-                        originalCentralInput, center.displayedItem()))
-            return false;
-        // Do not force-load a vanished side chunk. A consumed input MUST
-        // still be absent at its originally assigned pedestal after reload.
-        if (itemProgress == null || !trackedPedestalsValid()
-                || !level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
-                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seedTile)
-                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salisTile))
-            return false;
-        ItemStack seedStack = seedTile.displayedItem();
-        ItemStack salisStack = salisTile.displayedItem();
-        if ((!seedStack.isEmpty() && (seedStack.getCount() != 1 || !seedStack.is(Items.WHEAT_SEEDS)))
-                || (!salisStack.isEmpty() && (salisStack.getCount() != 1
-                        || !salisStack.is(ThaumcraftItems.SALIS_MUNDUS.get()))))
-            return false;
-        return activeInfusionRitual != null
-                && itemProgress.matchesLivePedestals(!seedStack.isEmpty(), !salisStack.isEmpty())
-                && itemProgress.matchesSavedReceipts(
-                        seedTile.hasInfusionRemovalReceipt(activeInfusionRitual,
-                                LegacyCrystalFarmerIngredientProgress.SEEDS_BIT),
-                        salisTile.hasInfusionRemovalReceipt(activeInfusionRitual,
-                                LegacyCrystalFarmerIngredientProgress.SALIS_BIT))
-                && originalSeedInput.getCount() == 1
-                && originalSalisInput.getCount() == 1
-                && (!seedStack.isEmpty()
-                        ? ItemStack.isSameItemSameComponents(seedStack, originalSeedInput)
-                        : (itemProgress.consumedMask()
-                                & LegacyCrystalFarmerIngredientProgress.SEEDS_BIT) != 0)
-                && (!salisStack.isEmpty()
-                        ? ItemStack.isSameItemSameComponents(salisStack, originalSalisInput)
-                        : (itemProgress.consumedMask()
-                                & LegacyCrystalFarmerIngredientProgress.SALIS_BIT) != 0);
+        var recipe = InfusionRecipeAdapter.recipe(ritualLedger.recipeId());
+        return recipe != null && level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center
+                && InfusionRecipeAdapter.matches(recipe.center(),center.displayedItem())
+                && ItemStack.isSameItemSameComponents(originalCentralInput,center.displayedItem());
+    }
+
+    private void recoverSavedSideItemDebit() {
+        if (!(level instanceof ServerLevel) || !active || !crafting || !finishCheckpoint.canReserve()
+                || ritualLedger == null || !ritualLedger.readyForIngredients() || !originalCenterPresent()) return;
+        var recovered = verifiedSideProgress();
+        if (recovered != null && !recovered.equals(itemProgress)) {
+            itemProgress = recovered;
+            changedAndSync();
+            markRitual("SIDE_DEBIT_RECOVERED");
+        }
+    }
+
+    private boolean realInputsRemain() {
+        return originalCenterPresent() && itemProgress != null && itemProgress.equals(verifiedSideProgress());
     }
 
     /**
@@ -469,7 +393,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             // Only a successful REAL jar debit may advance the checkpoint.
             ritualLedger = ritualLedger.afterWorldDebit(result.consumed().tag());
             if (ritualLedger.readyForIngredients())
-                ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID");
+                markRitual("ESSENTIA_FULLY_PAID");
         }
         if (result.action() == LegacyInfusionEssentiaCycle.Action.FAILED_ALL)
             surroundingsInitialized = false;
@@ -481,178 +405,62 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     }
 
 
-    /**
-     * Real original five-cycle ingestion of the two verified BETA26
-     * Crystal Farmer ingredients. Result issuance is a separate operation
-     * guarded by the full paid ledger, two physical receipts and reservation.
-     *
-     * A countdown only progresses while a matching actual ItemStack still
-     * sits on a loaded side pedestal. On the CONSUME cycle the pedestal is
-     * modified FIRST and the restart-safe mask is committed immediately
-     * afterwards. A crash between these steps can stall the ritual, but
-     * cannot grant an output or duplicate the consumed input.
-     */
-    private void advanceVerifiedCrystalFarmerIngredient() {
-        if (!(level instanceof ServerLevel) || !active || !crafting
-                || !finishCheckpoint.canReserve()
-                || ritualLedger == null || !ritualLedger.readyForIngredients()
-                || itemProgress == null || itemProgress.readyToFinish()
-                || !realInputsRemain()) return;
-        int nextBit = itemProgress.nextIngredientBit();
-        BlockPos assigned = nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? seedsPedestal : salisPedestal;
-        if (assigned == null || !level.hasChunkAt(assigned)
-                || !(level.getBlockEntity(assigned) instanceof PedestalBlockEntity chosen))
-            return;
-        ItemStack captured = chosen.displayedItem().copy();
-        if (captured.getCount() != 1 || !(nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                ? captured.is(Items.WHEAT_SEEDS)
-                : captured.is(ThaumcraftItems.SALIS_MUNDUS.get()))) return;
+    /** Source five-cycle ingestion, retaining exact captured components and physical identity. */
+    private void advanceVerifiedInfusionIngredient() {
+        if (!(level instanceof ServerLevel) || !active || !crafting || !finishCheckpoint.canReserve()
+                || ritualLedger == null || !ritualLedger.readyForIngredients() || itemProgress == null
+                || itemProgress.readyToFinish() || !realInputsRemain()) return;
+        int bit = itemProgress.nextIngredientBit();
+        int index = Integer.numberOfTrailingZeros(bit);
+        if (!(level.getBlockEntity(sidePedestals.get(index)) instanceof PedestalBlockEntity pedestal)) return;
         switch (itemProgress.nextAction()) {
             case SOURCE_EFFECT, COUNTDOWN -> {
-                itemProgress = itemProgress.afterValidatedCountdown();
-                changedAndSync();
+                itemProgress = itemProgress.afterValidatedCountdown(); changedAndSync();
             }
             case CONSUME -> {
-                // Both original recipe inputs have no crafting remainder.
-                // Never consume without checking the original data components.
-                if (chosen.consumeInfusionIngredientWithReceipt(
-                        captured, activeInfusionRitual, nextBit)) {
-                    itemProgress = itemProgress.afterActualPedestalRemoval(nextBit);
-                    changedAndSync();
-                    ThaumcraftSmokeAudit.mark(nextBit == LegacyCrystalFarmerIngredientProgress.SEEDS_BIT
-                            ? "INFUSION_CRYSTAL_SEEDS_REMOVED"
-                            : "INFUSION_CRYSTAL_SALIS_REMOVED");
+                if (pedestal.consumeInfusionIngredientWithReceipt(originalSideInputs.get(index),activeInfusionRitual,bit)) {
+                    itemProgress = itemProgress.afterActualPedestalRemoval(bit); changedAndSync();
+                    markRitual("SIDE_ITEM_REMOVED");
+                    if (LegacyInfusionCrystalFarmerCatalog.all().stream().anyMatch(r -> r.legacyId().equals(ritualLedger.recipeId())))
+                        markRitual(index == 0 ? "SEEDS_REMOVED" : "SALIS_REMOVED");
                 }
             }
-            case READY -> { /* Remaining finish/output work is deliberately gated. */ }
+            case READY -> { }
         }
     }
 
-
-    /** Exact catalogued Crystal Farmer BlockItem, never a saved-NBT output. */
-    private static net.minecraft.world.item.Item crystalFarmerOutput(String aspect) {
-        return switch (aspect) {
-            case "aer" -> ThaumcraftItems.CRYSTAL_AER.get();
-            case "ignis" -> ThaumcraftItems.CRYSTAL_IGNIS.get();
-            case "aqua" -> ThaumcraftItems.CRYSTAL_AQUA.get();
-            case "terra" -> ThaumcraftItems.CRYSTAL_TERRA.get();
-            case "ordo" -> ThaumcraftItems.CRYSTAL_ORDO.get();
-            case "perditio" -> ThaumcraftItems.CRYSTAL_PERDITIO.get();
-            case "vitium" -> ThaumcraftItems.CRYSTAL_VITIUM.get();
-            default -> null;
-        };
+    private void clearCompletedInfusion() {
+        crafting = false; recipeInstability = 0; ritualLedger = null; activeInfusionRitual = null;
+        ritualRecipeFingerprint = null;
+        itemProgress = null; sidePedestals = List.of(); originalSideInputs = List.of();
+        originalCentralInput = ItemStack.EMPTY; ritualStartCostMultiplier = 1.0F;
+        finishCheckpoint = LegacyInfusionFinishCheckpoint.initial(); changedAndSync();
     }
 
-    /** Clears only accounting after the result is already on the pedestal. */
-    private void clearCompletedCrystalFarmer() {
-        crafting = false;
-        recipeInstability = 0;
-        ritualLedger = null;
-        activeInfusionRitual = null;
-        itemProgress = null;
-        seedsPedestal = null;
-        salisPedestal = null;
-        originalCentralInput = ItemStack.EMPTY;
-        originalSeedInput = ItemStack.EMPTY;
-        originalSalisInput = ItemStack.EMPTY;
-        ritualStartCostMultiplier = 1.0F;
-        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
-        changedAndSync();
+    /** A reservation never authorizes replay. Only the original physical publication can be acknowledged. */
+    private void acknowledgeRecoveredInfusionOutput() {
+        if (!(level instanceof ServerLevel) || !active || !crafting || ritualLedger == null
+                || !ritualLedger.readyForIngredients() || itemProgress == null || !itemProgress.readyToFinish()
+                || finishCheckpoint.phase() != LegacyInfusionFinishCheckpoint.Phase.STALLED
+                || !validLocation() || !itemProgress.equals(verifiedSideProgress())
+                || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return;
+        ItemStack output = InfusionRecipeAdapter.output(InfusionRecipeAdapter.recipe(ritualLedger.recipeId()));
+        if (output.isEmpty() || !center.hasInfusionOutputReceipt(activeInfusionRitual,output)) return;
+        finishCheckpoint = finishCheckpoint.acknowledgeAlreadyPublished(true,true,true);
+        if (!finishCheckpoint.finished()) return;
+        markRitual("SAVED_OUTPUT_ACKNOWLEDGED"); clearCompletedInfusion();
     }
 
-    /**
-     * Crash window: matrix saved RESERVED but central pedestal already saved
-     * its genuine BlockItem output. Restoring RESERVED yields STALLED, so
-     * NEVER call craftingFinish again. We can ACK the existing output only
-     * after checking the paid ledger, consumed mask, fixed side positions and
-     * the exact center result PLUS same-UUID proof that the result was
-     * actually published by this infusion in the real loaded world.
-     *
-     * Otherwise leave STALLED untouched for manual recovery. No items,
-     * essentia, or world chunks are generated/loaded by this method.
-     */
-    private void acknowledgeRecoveredCrystalFarmerOutput() {
-        if (!(level instanceof ServerLevel) || !active || !crafting
-                || ritualLedger == null || !ritualLedger.readyForIngredients()
-                || itemProgress == null || !itemProgress.readyToFinish()
-                || finishCheckpoint.phase() != LegacyCrystalFarmerFinishCheckpoint.Phase.STALLED
-                || !validLocation() || !trackedPedestalsValid()
-                || !level.hasChunkAt(seedsPedestal) || !level.hasChunkAt(salisPedestal)
-                || !(level.getBlockEntity(seedsPedestal) instanceof PedestalBlockEntity seeds)
-                || !(level.getBlockEntity(salisPedestal) instanceof PedestalBlockEntity salis)
-                || !seeds.displayedItem().isEmpty()
-                || !salis.displayedItem().isEmpty()
-                || activeInfusionRitual == null
-                || !seeds.hasInfusionRemovalReceipt(activeInfusionRitual,
-                        LegacyCrystalFarmerIngredientProgress.SEEDS_BIT)
-                || !salis.hasInfusionRemovalReceipt(activeInfusionRitual,
-                        LegacyCrystalFarmerIngredientProgress.SALIS_BIT)
-                || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
-            return;
-        var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
-                .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
-                .findFirst().orElse(null);
-        if (spec == null) return;
-        net.minecraft.world.item.Item expected = crystalFarmerOutput(spec.aspectTag());
-        ItemStack present = center.displayedItem();
-        if (expected == null || present.getCount() != 1 || !present.is(expected)
-                || !center.hasInfusionOutputReceipt(
-                        activeInfusionRitual, new ItemStack(expected)))
-            return;
-        var ack = finishCheckpoint.acknowledgeAlreadyPublished(
-                ritualLedger.readyForIngredients(),
-                itemProgress.readyToFinish(), true);
-        if (!ack.finished()) return;
-        finishCheckpoint = ack;
-        clearCompletedCrystalFarmer();
-        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_SAVED_OUTPUT_ACKNOWLEDGED");
-    }
-
-    /**
-     * BETA26 finish for the ONLY catalogued original infusion outputs:
-     * seven aspect-specific CrystalCluster BlockItems, one each. Source
-     * recipe matching, real jar payment and real pedestal removals must all
-     * have completed before this method can reserve an output.
-     *
-     * The matrix writes a one-use reservation BEFORE mutating the center.
-     * This forbids duplicate output on repeated ticks and on NBT reload.
-     * A crash between separate block-entity saves can lose the output;
-     * RESERVED deliberately never retries after reload (fail closed).
-     */
-    private void finishVerifiedCrystalFarmer() {
-        if (!(level instanceof ServerLevel) || !active || !crafting
-                || ritualLedger == null || !ritualLedger.readyForIngredients()
-                || itemProgress == null || !itemProgress.readyToFinish()
-                || !finishCheckpoint.canReserve() || !realInputsRemain())
-            return;
-        var recipe = LegacyInfusionCrystalFarmerCatalog.all().stream()
-                .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
-                .findFirst().orElse(null);
-        if (recipe == null) return;
-        // Only source-era crystal BlockItems, never an output parsed from
-        // user-controlled NBT or a new invented recipe.
-        net.minecraft.world.item.Item outputItem = crystalFarmerOutput(recipe.aspectTag());
-        if (outputItem == null) return;
-        if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center))
-            return;
-        ItemStack expected = center.displayedItem().copy();
-        if (expected.getCount() != 1
-                || !expected.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                || !CrystalEssenceItem.isOriginalInfusionCrystal(
-                        expected, recipe.aspectTag()))
-            return;
-
-        // Reservation is checkpointed before the real central inventory
-        // write. Reloaded RESERVED may not publish anything automatically.
-        finishCheckpoint = finishCheckpoint.reserve(true,true,true);
-        changedAndSync();
-        if (!center.publishInfusionResultWithReceipt(
-                expected, new ItemStack(outputItem), activeInfusionRitual)) return;
-
+    private void finishVerifiedInfusion() {
+        if (!(level instanceof ServerLevel) || !active || !crafting || ritualLedger == null
+                || !ritualLedger.readyForIngredients() || itemProgress == null || !itemProgress.readyToFinish()
+                || !finishCheckpoint.canReserve() || !realInputsRemain()) return;
+        ItemStack output = InfusionRecipeAdapter.output(InfusionRecipeAdapter.recipe(ritualLedger.recipeId()));
+        if (output.isEmpty() || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return;
+        finishCheckpoint = finishCheckpoint.reserve(true,true,true); changedAndSync();
+        if (!center.publishInfusionResultWithReceipt(originalCentralInput,output,activeInfusionRitual)) return;
         finishCheckpoint = finishCheckpoint.finishAfterActualCenterReplacement(true);
-        clearCompletedCrystalFarmer();
-        ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED");
+        markRitual("REAL_OUTPUT_COMMITTED"); clearCompletedInfusion();
     }
 
     private void changedAndSync() {
@@ -671,8 +479,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         // Restored RESERVED is STALLED. Acknowledge ONLY a pre-existing,
         // fully paid output; never call the original finish a second time.
         if (tile.crafting && tile.finishCheckpoint.phase()
-                == LegacyCrystalFarmerFinishCheckpoint.Phase.STALLED)
-            tile.acknowledgeRecoveredCrystalFarmerOutput();
+                == LegacyInfusionFinishCheckpoint.Phase.STALLED)
+            tile.acknowledgeRecoveredInfusionOutput();
         // Source stage: one REAL unit at most per original matrix craft cycle.
         // A legacy 'crafting:1' tag without our verified checkpoint never
         // drains resources. The post-payment ingredient and finish stages
@@ -684,12 +492,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (tile.crafting && tile.ritualLedger != null
                 && tile.ritualLedger.readyForIngredients()
                 && tile.ticks % Math.max(1, tile.cycleTime) == 0)
-            tile.advanceVerifiedCrystalFarmerIngredient();
+            tile.advanceVerifiedInfusionIngredient();
         if (tile.crafting && tile.ritualLedger != null
                 && tile.ritualLedger.readyForIngredients()
                 && tile.itemProgress != null && tile.itemProgress.readyToFinish()
                 && tile.ticks % Math.max(1, tile.cycleTime) == 0)
-            tile.finishVerifiedCrystalFarmer();
+            tile.finishVerifiedInfusion();
         // BETA26 initializes surrounding stabilizers once on world load.
         if (!tile.surroundingsInitialized && tile.validLocation())
             tile.refreshWorldStability();
@@ -736,6 +544,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (crafting && ritualLedger != null) {
             CompoundTag pending = new CompoundTag();
             pending.putString("Recipe", ritualLedger.recipeId());
+            if (ritualRecipeFingerprint != null)
+                pending.putString("RecipeFingerprint",ritualRecipeFingerprint);
             if (activeInfusionRitual != null)
                 pending.putUUID("RitualId", activeInfusionRitual);
             pending.putInt("Paid", ritualLedger.paid());
@@ -754,18 +564,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 ContainerHelper.saveAllItems(savedInput, slot, lookup);
                 pending.put("OriginalCenterInput", savedInput);
             }
-            if (!originalSeedInput.isEmpty() && !originalSalisInput.isEmpty()) {
-                var sideSlots = NonNullList.withSize(2, ItemStack.EMPTY);
-                sideSlots.set(0, originalSeedInput.copy());
-                sideSlots.set(1, originalSalisInput.copy());
-                CompoundTag savedSides = new CompoundTag();
-                ContainerHelper.saveAllItems(savedSides, sideSlots, lookup);
-                pending.put("OriginalSideInputs", savedSides);
-            }
-            if (trackedPedestalsValid()) {
-                pending.putLong("SeedsPedestal", seedsPedestal.asLong());
-                pending.putLong("SalisPedestal", salisPedestal.asLong());
-            }
+            pending.putInt("Format",2);
+            var sideSlots = NonNullList.withSize(originalSideInputs.size(),ItemStack.EMPTY);
+            for (int i = 0; i < originalSideInputs.size(); i++) sideSlots.set(i,originalSideInputs.get(i).copy());
+            CompoundTag savedSides = new CompoundTag();
+            ContainerHelper.saveAllItems(savedSides,sideSlots,lookup);
+            pending.put("OriginalSideInputs",savedSides);
+            pending.putLongArray("SidePedestals",sidePedestals.stream().mapToLong(BlockPos::asLong).toArray());
             if (itemProgress != null) {
                 pending.putInt("ConsumedItems", itemProgress.consumedMask());
                 pending.putInt("ItemCountdown", itemProgress.countdown());
@@ -789,14 +594,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         surroundingsInitialized = false;
         ritualLedger = null;
         activeInfusionRitual = null;
+        ritualRecipeFingerprint = null;
         itemProgress = null;
-        seedsPedestal = null;
-        salisPedestal = null;
+        sidePedestals = List.of();
         originalCentralInput = ItemStack.EMPTY;
-        originalSeedInput = ItemStack.EMPTY;
-        originalSalisInput = ItemStack.EMPTY;
+        originalSideInputs = List.of();
         ritualStartCostMultiplier = 1.0F;
-        finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+        finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
         // An old/corrupt 'crafting:1' without a verified ledger cannot craft.
         if (crafting && !tag.contains("PortInfusionLedger", Tag.TAG_COMPOUND))
             crafting = false;
@@ -812,9 +616,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         || !pending.contains("ItemCountdown", Tag.TAG_INT)
                         || !pending.contains("FinishPhase", Tag.TAG_STRING)
                         || !pending.contains("OriginalCenterInput", Tag.TAG_COMPOUND)
-                        || !pending.contains("OriginalSideInputs", Tag.TAG_COMPOUND)
-                        || !pending.contains("SeedsPedestal", Tag.TAG_LONG)
-                        || !pending.contains("SalisPedestal", Tag.TAG_LONG))
+                        || !pending.contains("OriginalSideInputs", Tag.TAG_COMPOUND))
                     throw new IllegalArgumentException("Incomplete original infusion checkpoint");
                 // Legacy checkpoints did not contain a frozen multiplier; use
                 // their saved costMult only for migration, and still require
@@ -838,15 +640,23 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 }
                 String id = pending.getString("Recipe");
                 activeInfusionRitual = pending.getUUID("RitualId");
-                ritualLedger = LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                var spec = InfusionRecipeAdapter.recipe(id);
+                if (spec == null) throw new IllegalArgumentException("Unregistered infusion recipe");
+                if (pending.contains("Format") || pending.contains("RecipeFingerprint")) {
+                    if (!pending.contains("RecipeFingerprint",Tag.TAG_STRING))
+                        throw new IllegalArgumentException("Missing infusion recipe definition fingerprint");
+                    spec.verifyCheckpointFingerprint(pending.getString("RecipeFingerprint"));
+                }
+                ritualRecipeFingerprint = spec.checkpointFingerprint();
+                ritualLedger = LegacyInfusionRitualLedger.restoreVerified(
                         id, initialCosts, leftCosts, pending.getInt("Paid"),
                         ritualStartCostMultiplier);
-                finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.restore(
+                finishCheckpoint = LegacyInfusionFinishCheckpoint.restore(
                         pending.getString("FinishPhase"));
                 if (finishCheckpoint.finished())
                     throw new IllegalArgumentException("Completed ritual is not crafting");
 
-                itemProgress = new LegacyCrystalFarmerIngredientProgress(
+                itemProgress = new LegacyInfusionIngredientProgress(spec.components().size(),
                         pending.getInt("ConsumedItems"),
                         pending.getInt("ItemCountdown"));
                 if (itemProgress.consumedMask() != 0
@@ -855,32 +665,33 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 if (!finishCheckpoint.consistentWithPaidProgress(
                         ritualLedger.readyForIngredients(), itemProgress.readyToFinish()))
                     throw new IllegalArgumentException("Reserved result with unpaid inputs");
-                seedsPedestal = BlockPos.of(pending.getLong("SeedsPedestal"));
-                salisPedestal = BlockPos.of(pending.getLong("SalisPedestal"));
-                if (!trackedPedestalsValid())
-                    throw new IllegalArgumentException("Invalid persisted side pedestal positions");
-                var centerSlot = NonNullList.withSize(1, ItemStack.EMPTY);
-                ContainerHelper.loadAllItems(
-                        pending.getCompound("OriginalCenterInput"), centerSlot, lookup);
+                if (pending.contains("Format")) {
+                    if (!pending.contains("Format",Tag.TAG_INT) || pending.getInt("Format") != 2
+                            || !pending.contains("SidePedestals",Tag.TAG_LONG_ARRAY))
+                        throw new IllegalArgumentException("Unsupported infusion checkpoint format");
+                    long[] positions = pending.getLongArray("SidePedestals");
+                    if (positions.length != spec.components().size()) throw new IllegalArgumentException("Wrong side count");
+                    sidePedestals = java.util.Arrays.stream(positions).mapToObj(BlockPos::of).toList();
+                } else {
+                    // Explicit migration of existing crystal-only NBT and bit identities (1 seeds, 2 Salis).
+                    if (LegacyInfusionCrystalFarmerCatalog.all().stream().noneMatch(r -> r.legacyId().equals(id))
+                            || !pending.contains("SeedsPedestal",Tag.TAG_LONG) || !pending.contains("SalisPedestal",Tag.TAG_LONG))
+                        throw new IllegalArgumentException("Incomplete legacy crystal checkpoint");
+                    sidePedestals = List.of(BlockPos.of(pending.getLong("SeedsPedestal")),BlockPos.of(pending.getLong("SalisPedestal")));
+                }
+                var centerSlot = NonNullList.withSize(1,ItemStack.EMPTY);
+                ContainerHelper.loadAllItems(pending.getCompound("OriginalCenterInput"),centerSlot,lookup);
                 originalCentralInput = centerSlot.get(0).copy();
-                var sideSlots = NonNullList.withSize(2, ItemStack.EMPTY);
-                ContainerHelper.loadAllItems(
-                        pending.getCompound("OriginalSideInputs"), sideSlots, lookup);
-                originalSeedInput = sideSlots.get(0).copy();
-                originalSalisInput = sideSlots.get(1).copy();
-                if (originalSeedInput.getCount() != 1
-                        || !originalSeedInput.is(Items.WHEAT_SEEDS)
-                        || originalSalisInput.getCount() != 1
-                        || !originalSalisInput.is(ThaumcraftItems.SALIS_MUNDUS.get()))
-                    throw new IllegalArgumentException("Invalid original side ingredient snapshots");
-                var spec = LegacyInfusionCrystalFarmerCatalog.all().stream()
-                        .filter(r -> r.legacyId().equals(ritualLedger.recipeId()))
-                        .findFirst().orElse(null);
-                if (spec == null || originalCentralInput.getCount() != 1
-                        || !originalCentralInput.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                        || !CrystalEssenceItem.isOriginalInfusionCrystal(
-                                originalCentralInput, spec.aspectTag()))
-                    throw new IllegalArgumentException("Original central crystal snapshot differs from recipe");
+                var sideSlots = NonNullList.withSize(spec.components().size(),ItemStack.EMPTY);
+                ContainerHelper.loadAllItems(pending.getCompound("OriginalSideInputs"),sideSlots,lookup);
+                originalSideInputs = sideSlots.stream().map(ItemStack::copy).toList();
+                if (!trackedPedestalsValid()) throw new IllegalArgumentException("Invalid tracked pedestal positions");
+                for (int i = 0; i < originalSideInputs.size(); i++)
+                    if (!InfusionRecipeAdapter.matches(spec.components().get(i),originalSideInputs.get(i))
+                            || originalSideInputs.get(i).hasCraftingRemainingItem())
+                        throw new IllegalArgumentException("Invalid original ingredient snapshot");
+                if (!InfusionRecipeAdapter.matches(spec.center(),originalCentralInput))
+                    throw new IllegalArgumentException("Invalid original center snapshot");
                 if (recipeInstability != spec.instability())
                     throw new IllegalArgumentException("Saved infusion instability differs from original recipe");
             } catch (IllegalArgumentException malformed) {
@@ -888,13 +699,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 crafting = false;
                 ritualLedger = null;
                 activeInfusionRitual = null;
+                ritualRecipeFingerprint = null;
                 itemProgress = null;
-                seedsPedestal = null;
-                salisPedestal = null;
+                sidePedestals = List.of();
                 originalCentralInput = ItemStack.EMPTY;
-                originalSeedInput = ItemStack.EMPTY;
-                originalSalisInput = ItemStack.EMPTY;
-                finishCheckpoint = LegacyCrystalFarmerFinishCheckpoint.initial();
+                originalSideInputs = List.of();
+                finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
             }
         }
         if (tag.contains("OriginalInfusionRecipe", Tag.TAG_COMPOUND)) {

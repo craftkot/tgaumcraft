@@ -11,6 +11,7 @@ mapfile -t CORE_SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -n
 TEST_ROOT=src/test/java/dev/ehtid/thaumcraft/port/core
 TESTS=(
   CoreParityTest
+  InfusionGenericRuntimeTest
   CrystalFarmerParityTest
   CrystalGrowthParityTest
   CrystalMeshParityTest
@@ -59,6 +60,7 @@ while IFS='|' read -r cls expected; do
   }
 done <<'CHECKS'
 CoreParityTest|Core parity tests: OK (
+InfusionGenericRuntimeTest|BETA26 generic infusion runtime: OK
 CrystalFarmerParityTest|Crystal farmer BETA26 parity: OK
 CrystalGrowthParityTest|Crystal growth BETA26 parity: OK
 CrystalMeshParityTest|CrystalModel seeded selection parity OK

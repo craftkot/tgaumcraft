@@ -1,7 +1,7 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
-import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerPedestalReceipt;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalReceipt;
 import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerOutputReceipt;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class PedestalBlockEntity extends BlockEntity implements Container {
     private final NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
     /** Receipt is saved atomically WITH the emptied pedestal slot. */
-    private LegacyCrystalFarmerPedestalReceipt infusionRemovalReceipt;
+    private LegacyInfusionPedestalReceipt infusionRemovalReceipt;
     /** Saved in the SAME center pedestal NBT as the one published output. */
     private LegacyCrystalFarmerOutputReceipt infusionOutputReceipt;
 
@@ -76,7 +76,7 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     }
 
     /**
-     * Crystal Farmer side item debit plus its identity in ONE pedestal
+     * Source infusion side item debit plus its identity in ONE pedestal
      * BlockEntity NBT snapshot. A matrix that saved countdown=1 immediately
      * before a crash can recover ONLY from this matching receipt and EMPTY
      * slot. External inventory changes invalidate the receipt.
@@ -85,7 +85,7 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
                                                           UUID ritualId, int ingredientBit) {
         if (level == null || level.isClientSide || ritualId == null
                 || expected == null || expected.isEmpty() || expected.getCount() != 1
-                || (ingredientBit != 1 && ingredientBit != 2))
+                || (ingredientBit <= 0 || ingredientBit > (1 << 29) || Integer.bitCount(ingredientBit) != 1))
             return false;
         ItemStack now = items.get(0);
         if (now.isEmpty() || now.getCount() != 1
@@ -93,7 +93,7 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
             return false;
         items.set(0, ItemStack.EMPTY);
         infusionOutputReceipt = null;
-        infusionRemovalReceipt = new LegacyCrystalFarmerPedestalReceipt(
+        infusionRemovalReceipt = new LegacyInfusionPedestalReceipt(
                 ritualId, ingredientBit);
         changedAndSync();
         return true;
@@ -269,9 +269,9 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
                 && tag.contains("PortInfusionRemovalRitual", Tag.TAG_INT_ARRAY)
                 && tag.contains("PortInfusionRemovalBit", Tag.TAG_INT)) {
             int bit = tag.getInt("PortInfusionRemovalBit");
-            if (bit == 1 || bit == 2) {
+            if (bit > 0 && bit <= (1 << 29) && Integer.bitCount(bit) == 1) {
                 try {
-                    infusionRemovalReceipt = new LegacyCrystalFarmerPedestalReceipt(
+                    infusionRemovalReceipt = new LegacyInfusionPedestalReceipt(
                             tag.getUUID("PortInfusionRemovalRitual"), bit);
                 } catch (IllegalArgumentException malformed) {
                     clearInfusionRemovalReceipt();
