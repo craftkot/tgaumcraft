@@ -33,7 +33,8 @@ assert "context.getLevel().isClientSide()" in item
 assert "if (!matrix.active())" in item and "else if (!matrix.crafting())" in item
 assert "matrix.tryActivateFromCaster()" in item
 assert "matrix.beginVerifiedCrystalFarmerFromFutureCaster(serverPlayer)" in item
-assert "CrystalFarmerInfusionAdapter.prepare(this, knowledge)" in matrix
+assert "return beginVerifiedInfusionFromCaster(player);" in matrix
+assert "InfusionRecipeAdapter.prepare(this, knowledge)" in matrix
 assert "player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA)" in matrix
 assert "ritualLedger = LegacyInfusionRitualLedger.begin" in matrix
 assert "public boolean tryActivateFromCaster()" in matrix

@@ -63,3 +63,8 @@ chunk unload/hard-kill, безубыточная атомарность неск
 полные instability events, весь исходный каталог, component-bearing outputs
 и crafting remainders. Generic edge с одними base-cost1 при multiplier0.5
 остаётся unsupported; текущие семь Crystal Farmer и четыре golem descriptor его не используют.
+
+
+## GitHub CI после публикации
+
+Source commit1a8af82 обнаружил старый inline grep-контракт в GitHub Actions: step18 ожидал удалённые имена Crystal Farmer methods. Это ошибка source verifier, а не падение оплаченного native сценария. Небольшой отдельный CI-патч заменяет два устаревших блока исполняемым InfusionGenericRuntimeTest и обновляет caster route verifier. Все run-проверки workflow, кроме отдельно уже доказанных Core/build/server tasks, локально исполнены: ALL_WORKFLOW_STATIC_CHECKS_OK/exit0. Gameplay-код и проверенные JAR не менялись; полный native прогон без source delta не повторялся. Ссылки на failed run и exact шаг в github-ci-failure.json, полный локальный лог приложен.

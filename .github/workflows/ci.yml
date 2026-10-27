@@ -423,24 +423,12 @@ jobs:
           grep -q 'jarSources.drainOne' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
           grep -q 'ritualLedger = ritualLedger.afterWorldDebit' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
 
-      - name: Verify live Crystal Farmer pedestal debit is gated
+      - name: Verify paid infusion progress, receipts and finish reservation
         shell: bash
         run: |
-          grep -q 'itemProgress.afterActualPedestalRemoval(nextBit)' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'chosen.replaceInfusionIngredientIfUnchanged' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'pending.putInt("ConsumedItems"' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'pending.putInt("ItemCountdown"' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'readyForIngredients()' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-
-      - name: Verify exactly-once Crystal Farmer finish gate
-        shell: bash
-        run: |
-          grep -q 'finishCheckpoint = finishCheckpoint.reserve(true,true,true)' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'pending.putString("FinishPhase"' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'center.replaceInfusionIngredientIfUnchanged' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'finishCheckpoint.finishAfterActualCenterReplacement' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'tile.finishVerifiedCrystalFarmer()' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
-          grep -q 'LegacyCrystalFarmerFinishCheckpoint.restore' src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java
+          javac --release 21 -cp build/core-test-classes -d build/core-test-classes \
+            src/test/java/dev/ehtid/thaumcraft/port/core/InfusionGenericRuntimeTest.java
+          java -cp build/core-test-classes dev.ehtid.thaumcraft.port.core.InfusionGenericRuntimeTest
 
       - name: Verify source BASIC caster and server-only infusion activation
         run: python3 tools/verify_source_caster.py
