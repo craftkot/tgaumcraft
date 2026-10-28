@@ -1,5 +1,12 @@
 # Главный координатор — chore/coordination
 
+## Аудит 28.10.2026 23:45 МСК — CI на точном HEAD координатора
+
+- HEAD без изменений перед записью: main `a4280834`, coordination `33372958`, alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c`, golems `165188bf`. PR #1/#2/#3 открыты Draft. Main...feature: +33/+39/+84/+157, behind 0; 7/35/47/381 changed paths. Единственное точное пересечение feature-веток — `tools/run_core_parity.sh` между M06 и M10; M06 отдельно меняет `.github/workflows/ci.yml`.
+- **Новая проверенная CI-информация после предыдущего аудита:** на точном coordination HEAD `33372958` [GitHub Actions PR #40755346508](https://github.com/craftkot/tgaumcraft/actions/runs/40755346508) и [push #40755336267](https://github.com/craftkot/tgaumcraft/actions/runs/40755336267) завершились SUCCESS 28.10.2026. Через jobs API проверены успешные шаги Core parity, NeoForge build, dedicated server smoke и upload built jars. Это **проверка координационной ветки на её собственном исходном снимке**, не объединение четырёх feature-веток и не GUI client/GameTests/cold-save.
+- На том же HEAD [CircleCI #516](https://circleci.com/gh/craftkot/tgaumcraft/516) сообщает SUCCESS через GitHub commit status `ci/circleci: verify-connection` (**только Core**); прямой CircleCI job log недоступен. На последних docs-only HEAD M06 `d3f3ee9c` и M10 `165188bf` отдельных CircleCI statuses нет; ранее подтверждённые GitHub Actions M06 `951ae936` и M10 `b50226a6` остаются SUCCESS на более ранних source-коммитах.
+- [Real Client Smoke #40560906999](https://github.com/craftkot/tgaumcraft/actions/runs/40560906999) на M06 по-прежнему FAILURE: `PHIAL_JAR_WITHDRAWN` не подтверждён, причина неизвестна. Общая четырёхветочная NeoForge/JAR, dedicated server, TCP/GUI client, cold/crash world-save не проверены. M43 split-save 13→26 iron / 17→34 gold открыт. Оценка 59/100 без пересчёта. Не объявлять M06/M10 готовыми; merge не выполнять.
+
 ## Аудит 28.10.2026 22:31 МСК — обнаружен неучтённый FAILED графического client smoke
 
 - Свежие HEAD не изменились: main `a4280834`, coordination `623c560a` (до этой записи), alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c`, golems `165188bf`. PR #1/#2/#3 открыты Draft. Compare main: alchemy +33, research +39, infusion +84, golems +157, behind=0; полные списки изменённых файлов 7/35/47/381, единственное точное пересечение feature-веток — `tools/run_core_parity.sh` у infusion/golems. Ветка infusion также меняет общий `.github/workflows/ci.yml`.
