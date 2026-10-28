@@ -1,5 +1,13 @@
 # Главный координатор — chore/coordination
 
+## Аудит 28.10.2026 19:48 МСК — исправлен устаревший текущий статус M06
+
+- Повторно сверены HEAD: main `a4280834`, coordination `d9d1b6ce` (до этой записи), alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c` (docs-only; проверенный source `951ae936`), golems `165188bf` (docs-only; проверенный source `b50226a6`). Все три PR #1/#2/#3 открыты Draft, новых feature-коммитов нет.
+- Compare main...feature: ahead 33/39/84/157, behind 0, полные changed paths 7/35/47/381. Единственное точное пересечение — `tools/run_core_parity.sh` у M06/M10; при интеграции сохранить оба набора регистраций. M06 отдельно меняет общий `.github/workflows/ci.yml`. Семантическая совместимость четырёх направлений не проверена.
+- В текущей таблице `ROADMAP_RU.md` оставалась формулировка «M06.1 — оплаченный ритуал и сохранение; не проверены в мире», хотя последующие evidence/CI подтверждают более узкий, но существенный прогресс. Строка исправлена: [GitHub Actions M06 #40561533951](https://github.com/craftkot/tgaumcraft/actions/runs/40561533951) SUCCESS на source `951ae936` (Core, full NeoForge/JAR, dedicated server smoke); авторские native 10/10 и cold WRITE/READ — не независимый прогон координатора. Графический клиент, Survival и меж-BlockEntity crash-атомарность остаются открытыми.
+- [GitHub Actions M10 #40560878967](https://github.com/craftkot/tgaumcraft/actions/runs/40560878967) и [coordination #40562631502](https://github.com/craftkot/tgaumcraft/actions/runs/40562631502) SUCCESS на своих более ранних source/docs снимках с Core, NeoForge/JAR и server smoke. На текущих docs-only HEAD M06/M10/coordination отдельных CI статусов нет. CircleCI по GitHub statuses: main #232, alchemy #357, research #470, M06 source #513, M10 source #511 — SUCCESS для `verify-connection`/Core; прямые CircleCI журналы не прочитаны.
+- Общая четырёхветочная full NeoForge/JAR сборка, dedicated server, TCP GUI client и общий cold/crash world-save не доказаны. M43 split-save 13→26 iron и 17→34 gold открыт; индекс 59/100 без пересчёта. Только организационные документы `chore/coordination`, без изменения игровых механик, чужих веток, main, merge, force-push или удаления файлов.
+
 ## Дополнение 27.10.2026, после 21:40 МСК — CI координатора и сверка счётчиков
 
 - HEAD перед записью: main `a4280834`, coordination `a4a8eaa3`, alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c`, golems `165188bf`; новых коммитов feature-веток с прошлого аудита нет. Открыты три Draft PR (#1/#2/#3), merge не выполнялся.
