@@ -1,5 +1,11 @@
 # Главный координатор — chore/coordination
 
+## Аудит 29.10.2026 08:13 МСК — устаревший статус клиентского smoke в Draft PR #1
+
+- Повторно проверены свежие HEAD: main `a4280834`, coordination `f45e15ef` (до этой записи), alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c`, golems `165188bf`. Три PR открыты/Draft; main...feature ahead 33/39/84/157, behind 0. Полные changed paths PR #1/#3 — 47/381; единственное точное пересечение feature-веток — `tools/run_core_parity.sh` (M06/M10).
+- **Новая документальная несогласованность:** в текущем [Draft PR #1](https://github.com/craftkot/tgaumcraft/pull/1) до сих пор написано, что прежний client-smoke «ещё выполняется». На самом деле [GitHub Actions #40560906999](https://github.com/craftkot/tgaumcraft/actions/runs/40560906999) уже завершился **FAILURE** 27.10.2026: отсутствует `PHIAL_JAR_WITHDRAWN`; причина (механика или автоматизация) не установлена. PR #1/feature/infusion **не изменять** координатором; требуется актуализация описания владельцем M06 до интеграционного review. PR #2 и журнал координатора сохраняют правильный статус.
+- Новых Actions после 28.10.2026 для feature-HEAD нет. [Actions coordination #40755346508](https://github.com/craftkot/tgaumcraft/actions/runs/40755346508) SUCCESS на предыдущем `33372958`: Core, NeoForge/JAR, dedicated server smoke, **не** client/save. M06 [#40561533951](https://github.com/craftkot/tgaumcraft/actions/runs/40561533951) и M10 [#40560878967](https://github.com/craftkot/tgaumcraft/actions/runs/40560878967) SUCCESS на более ранних source-HEAD. CircleCI по GitHub commit statuses SUCCESS для Core на соответствующих source; прямые журналы недоступны. Общая четырёхветочная сборка, графический клиент и совместный cold/crash world-save не подтверждены; M43 split-save 13→26 iron /17→34 gold открыт. Индекс 59/100 без пересчёта; merge/force/delete не выполнялись.
+
 ## Аудит 28.10.2026 23:45 МСК — CI на точном HEAD координатора
 
 - HEAD без изменений перед записью: main `a4280834`, coordination `33372958`, alchemy `633e0887`, research `a33245ca`, infusion `d3f3ee9c`, golems `165188bf`. PR #1/#2/#3 открыты Draft. Main...feature: +33/+39/+84/+157, behind 0; 7/35/47/381 changed paths. Единственное точное пересечение feature-веток — `tools/run_core_parity.sh` между M06 и M10; M06 отдельно меняет `.github/workflows/ci.yml`.
