@@ -5014,8 +5014,10 @@ public final class CoreParityTest {
         eq(0, plan.ingredientIndices()[1]);
         var costs = plan.cost();
         eq(6, costs.getAmount(aspects.FIRE)); // (int)(13*0.5) = 6
-        eq(0, costs.getAmount(aspects.ENERGY)); // 1*0.5 -> 0, omitted
-        eq(1, costs.size());
+        eq(0, costs.getAmount(aspects.ENERGY)); // 1*0.5 -> 0, retained by original AspectList.add
+        eq(0, costs.getAmount(aspects.ENTROPY));
+        // BETA26 retains all three keys, so a missing ingredient can add a unit to a zero balance.
+        eq(3, costs.size());
         eq(13, original.getAmount(aspects.FIRE)); // never mutate source
         eq(1, original.getAmount(aspects.ENERGY));
         costs.add(aspects.FIRE, 1000);

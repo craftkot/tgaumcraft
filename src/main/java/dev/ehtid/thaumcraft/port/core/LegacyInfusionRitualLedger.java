@@ -10,7 +10,7 @@ import java.util.Objects;
  * against an original recipe. A separate real caster/start adapter must
  * authorize it: this ledger is NOT a recipe registry or a way to grant output.
  *
- * Its critical invariant is sum(requested)-sum(remaining)=paid. The caller
+ * Its invariant is sum(requested)+sum(surchargeCosts)-sum(remaining)=paid. The caller
  * may persist the ledger only AFTER the associated real jar debit succeeds.
  * Reloaded records cannot silently refill already-paid resources.
  */
@@ -18,29 +18,44 @@ public final class LegacyInfusionRitualLedger {
     private final String recipeId;
     private final Map<String,Integer> requested;
     private final Map<String,Integer> remaining;
+    private final Map<String,Integer> surchargeCosts;
     private final int paid;
 
     private LegacyInfusionRitualLedger(String recipeId, Map<String,Integer> requested,
                                       Map<String,Integer> remaining, int paid) {
+        this(recipeId,requested,remaining,paid,false);
+    }
+    private LegacyInfusionRitualLedger(String recipeId, Map<String,Integer> requested,
+                                      Map<String,Integer> remaining, int paid, boolean verifiedZeroCost) {
+        this(recipeId,requested,remaining,paid,verifiedZeroCost,Map.of());
+    }
+    private LegacyInfusionRitualLedger(String recipeId, Map<String,Integer> requested,
+                                      Map<String,Integer> remaining, int paid, boolean verifiedZeroCost,
+                                      Map<String,Integer> surchargeCosts) {
         if (recipeId == null || recipeId.isBlank()) throw new IllegalArgumentException("recipe");
         this.recipeId = recipeId;
-        this.requested = immutableAmounts(requested);
-        this.remaining = immutableAmounts(remaining);
+        this.requested = immutableAmounts(requested,verifiedZeroCost);
+        this.remaining = immutableAmounts(remaining,verifiedZeroCost);
+        this.surchargeCosts = immutableAmounts(surchargeCosts,true);
         if (!this.requested.keySet().equals(this.remaining.keySet()))
             throw new IllegalArgumentException("Aspect keys changed");
+        if (!this.requested.keySet().containsAll(this.surchargeCosts.keySet())
+                || this.surchargeCosts.values().stream().anyMatch(amount -> amount <= 0))
+            throw new IllegalArgumentException("Surcharge differs from original source aspect keys");
         long computed = 0;
         for (var entry : this.requested.entrySet()) {
             int left = this.remaining.get(entry.getKey());
-            if (left > entry.getValue())
-                throw new IllegalArgumentException("Remaining exceeds original cost");
-            computed += (long) entry.getValue() - left;
+            long authorized = (long) entry.getValue() + this.surchargeCosts.getOrDefault(entry.getKey(),0);
+            if (left > authorized)
+                throw new IllegalArgumentException("Remaining exceeds source cost and recorded surcharge");
+            computed += authorized - left;
         }
         if (computed != paid || computed > Integer.MAX_VALUE || paid < 0)
             throw new IllegalArgumentException("Paid/remaining mismatch");
         this.paid = paid;
     }
 
-    private static Map<String,Integer> immutableAmounts(Map<String,Integer> input) {
+    private static Map<String,Integer> immutableAmounts(Map<String,Integer> input, boolean verifiedZeroCost) {
         Objects.requireNonNull(input);
         var out = new LinkedHashMap<String,Integer>();
         for (var entry : input.entrySet()) {
@@ -50,7 +65,7 @@ public final class LegacyInfusionRitualLedger {
                     || count > 100000 || out.putIfAbsent(key, count) != null)
                 throw new IllegalArgumentException("Invalid aspect costs");
         }
-        if (out.isEmpty()) throw new IllegalArgumentException("Empty recipe essence");
+        if (out.isEmpty() && !verifiedZeroCost) throw new IllegalArgumentException("Empty recipe essence");
         return Collections.unmodifiableMap(out);
     }
 
@@ -63,7 +78,7 @@ public final class LegacyInfusionRitualLedger {
                     || amounts.putIfAbsent(aspect.tag(), costs.getAmount(aspect)) != null)
                 throw new IllegalArgumentException("Duplicate/unknown aspect");
         }
-        return new LegacyInfusionRitualLedger(verifiedRecipe, amounts, amounts, 0);
+        return new LegacyInfusionRitualLedger(verifiedRecipe, amounts, amounts, 0,true);
     }
 
     /** Read a persisted checkpoint but reject invented/deleted units. */
@@ -103,24 +118,39 @@ public final class LegacyInfusionRitualLedger {
             expectedCosts.put(aspect.tag(), expected.getAmount(aspect));
         if (!expectedCosts.equals(initial))
             throw new IllegalArgumentException("Saved infusion price differs from real recipe");
-        return restore(recipeId, initial, current, paid);
+        return new LegacyInfusionRitualLedger(recipeId,initial,current,paid,true);
     }
 
     /** Validate the saved price against the registered source recipe, never saved output data. */
     public static LegacyInfusionRitualLedger restoreVerified(String recipeId,
             Map<String,Integer> initial, Map<String,Integer> current, int paid, float multiplier) {
         var recipe = LegacyInfusionRecipeCatalog.find(recipeId);
+        return restoreVerified(recipe,initial,current,paid,multiplier);
+    }
+
+    /** Caller resolves dynamic source rules from the original central snapshot, never from saved prices. */
+    public static LegacyInfusionRitualLedger restoreVerified(LegacyInfusionRecipeCatalog.Recipe recipe,
+            Map<String,Integer> initial, Map<String,Integer> current, int paid, float multiplier) {
+        return restoreVerified(recipe,initial,current,paid,multiplier,Map.of());
+    }
+
+    /** Penalties cannot replace the original source price or add aspects absent from that source price. */
+    public static LegacyInfusionRitualLedger restoreVerified(LegacyInfusionRecipeCatalog.Recipe recipe,
+            Map<String,Integer> initial, Map<String,Integer> current, int paid, float multiplier,
+            Map<String,Integer> surchargeCosts) {
         if (recipe == null || !Float.isFinite(multiplier) || multiplier < 0.5F)
             throw new IllegalArgumentException("Unknown recipe or invalid multiplier");
+        String recipeId = recipe.legacyId();
         var expected = begin(recipeId, LegacyInfusionStartPlanner.calculateEssentia(recipe.essentia(), multiplier));
         if (!expected.requested().equals(initial))
             throw new IllegalArgumentException("Saved price differs from registered recipe");
-        return restore(recipeId, initial, current, paid);
+        return new LegacyInfusionRitualLedger(recipeId,initial,current,paid,true,surchargeCosts);
     }
 
     public String recipeId() { return recipeId; }
     public Map<String,Integer> requested() { return requested; }
     public Map<String,Integer> remaining() { return remaining; }
+    public Map<String,Integer> surchargeCosts() { return surchargeCosts; }
     public int paid() { return paid; }
 
     public int unitsLeft() {
@@ -139,6 +169,17 @@ public final class LegacyInfusionRitualLedger {
             throw new IllegalArgumentException("Not an outstanding aspect");
         var next = new LinkedHashMap<>(remaining);
         next.put(aspect, next.get(aspect) - 1);
-        return new LegacyInfusionRitualLedger(recipeId, requested, next, paid + 1);
+        return new LegacyInfusionRitualLedger(recipeId, requested, next, paid + 1,true,surchargeCosts);
+    }
+
+    /** Source craftCycle adds one to a retained source aspect when a required side ingredient is missing. */
+    public LegacyInfusionRitualLedger withPenalty(String aspect) {
+        if (aspect == null || !remaining.containsKey(aspect))
+            throw new IllegalArgumentException("Penalty aspect was not in the original source price");
+        if (remaining.get(aspect) >= 100000 || surchargeCosts.getOrDefault(aspect,0) >= 100000)
+            throw new IllegalArgumentException("Infusion surcharge exceeds persisted amount bound");
+        var next = new LinkedHashMap<>(remaining); next.put(aspect,next.get(aspect) + 1);
+        var surcharges = new LinkedHashMap<>(surchargeCosts); surcharges.merge(aspect,1,Integer::sum);
+        return new LegacyInfusionRitualLedger(recipeId,requested,next,paid,true,surcharges);
     }
 }
