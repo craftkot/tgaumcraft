@@ -12,6 +12,12 @@ TEST_ROOT=src/test/java/dev/ehtid/thaumcraft/port/core
 TESTS=(
   CoreParityTest
   InfusionGenericRuntimeTest
+  InfusionInstabilityParityTest
+  InfusionOutputParityTest
+  InfusionIngredientQueueTest
+  InfusionSurroundingsParityTest
+  InfusionStabilityRecipeParityTest
+  InfusionMitigationParityTest
   CrystalFarmerParityTest
   CrystalGrowthParityTest
   CrystalMeshParityTest
@@ -61,6 +67,12 @@ while IFS='|' read -r cls expected; do
 done <<'CHECKS'
 CoreParityTest|Core parity tests: OK (
 InfusionGenericRuntimeTest|BETA26 generic infusion runtime: OK
+InfusionInstabilityParityTest|BETA26 infusion instability: OK
+InfusionOutputParityTest|BETA26 infusion output semantics: OK
+InfusionIngredientQueueTest|BETA26 infusion ingredient queue: OK
+InfusionSurroundingsParityTest|BETA26 infusion surroundings: OK
+InfusionStabilityRecipeParityTest|BETA26 stability arcane recipes: OK
+InfusionMitigationParityTest|BETA26 infusion mitigation: OK
 CrystalFarmerParityTest|Crystal farmer BETA26 parity: OK
 CrystalGrowthParityTest|Crystal growth BETA26 parity: OK
 CrystalMeshParityTest|CrystalModel seeded selection parity OK

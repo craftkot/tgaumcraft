@@ -426,9 +426,13 @@ jobs:
       - name: Verify paid infusion progress, receipts and finish reservation
         shell: bash
         run: |
-          javac --release 21 -cp build/core-test-classes -d build/core-test-classes \
-            src/test/java/dev/ehtid/thaumcraft/port/core/InfusionGenericRuntimeTest.java
-          java -cp build/core-test-classes dev.ehtid.thaumcraft.port.core.InfusionGenericRuntimeTest
+          for test in InfusionGenericRuntimeTest InfusionOutputParityTest InfusionIngredientQueueTest \
+              InfusionInstabilityParityTest InfusionSurroundingsParityTest InfusionMitigationParityTest \
+              InfusionStabilityRecipeParityTest; do
+            javac --release 21 -cp build/core-test-classes -d build/core-test-classes \
+              "src/test/java/dev/ehtid/thaumcraft/port/core/${test}.java"
+            java -cp build/core-test-classes "dev.ehtid.thaumcraft.port.core.${test}"
+          done
 
       - name: Verify source BASIC caster and server-only infusion activation
         run: python3 tools/verify_source_caster.py
