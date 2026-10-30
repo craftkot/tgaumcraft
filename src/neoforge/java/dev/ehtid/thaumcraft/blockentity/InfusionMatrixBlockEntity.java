@@ -2,8 +2,6 @@ package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.block.InfusionPillarBlock;
 import dev.ehtid.thaumcraft.block.PedestalBlock;
-import dev.ehtid.thaumcraft.block.TallowCandleBlock;
-import net.minecraft.world.level.block.AbstractSkullBlock;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixLayout;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionMatrixIdle;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionStability;
@@ -12,10 +10,13 @@ import dev.ehtid.thaumcraft.port.core.LegacyInfusionEssentiaCycle;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionRitualLedger;
-import dev.ehtid.thaumcraft.port.core.LegacyInfusionIngredientProgress;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionIngredientQueue;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionFinishCheckpoint;
 import dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog;
 import dev.ehtid.thaumcraft.crafting.InfusionRecipeAdapter;
+import dev.ehtid.thaumcraft.crafting.InfusionStabilizerAdapter;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionInstability;
+import dev.ehtid.thaumcraft.infusion.InfusionInstabilityEffects;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import net.minecraft.server.level.ServerPlayer;
@@ -66,11 +67,13 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     /** Original cost multiplier frozen when the player starts this ritual. */
     private float ritualStartCostMultiplier = 1.0F;
     /** Source five-cycle per ingredient, persisted separately from paid essentia. */
-    private LegacyInfusionIngredientProgress itemProgress;
-    /** Exact real pedestal positions verified at start; never a newly found replacement. */
+    private LegacyInfusionIngredientQueue itemProgress;
+    /** Physical payment positions; unpaid entries may follow a matching moved ingredient. */
     private List<BlockPos> sidePedestals = List.of();
     /** Original actual center ItemStack, including every data component. */
     private ItemStack originalCentralInput = ItemStack.EMPTY;
+    /** Source output is evaluated once; saved random enchantment results never reroll on reload. */
+    private ItemStack plannedOutput = ItemStack.EMPTY;
     /** Original side stacks in source recipe order, including every data component. */
     private List<ItemStack> originalSideInputs = List.of();
     private LegacyInfusionFinishCheckpoint.State finishCheckpoint =
@@ -129,82 +132,15 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 .toList();
     }
 
-    /**
-     * BETA26 getSurroundings: count every nearby pedestal, match pairs
-     * at (x,y,z) and (-x,y,-z), and apply corner pillar bonuses.
-     * This covers the registered pedestal variants; other stabilisers,
-     * skulls and matrix-speed/cost glyphs are still pending.
-     */
+    /** Source scan includes provider blocks, skulls, candles, inlay and corner glyphs. */
     private void refreshWorldStability() {
         if (level == null || level.isClientSide || !validLocation()) return;
-        var corners = new ArrayList<LegacyInfusionStability.Pillar>();
-        for (var offset : LegacyInfusionMatrixLayout.requiredPillarOffsets()) {
-            var block = level.getBlockState(worldPosition.offset(
-                    offset.x(), offset.y(), offset.z())).getBlock();
-            var type = ((InfusionPillarBlock) block).variant();
-            corners.add(switch (type) {
-                case ARCANE -> LegacyInfusionStability.Pillar.ARCANE;
-                case ANCIENT -> LegacyInfusionStability.Pillar.ANCIENT;
-                case ELDRITCH -> LegacyInfusionStability.Pillar.ELDRITCH;
-            });
-        }
-        var mods = LegacyInfusionStability.cornerModifiers(corners);
-        int ancients = 0;
-        int eldritch = 0;
-        Map<LegacyInfusionMatrixLayout.Offset, LegacyInfusionStability.Stabilizer>
-                ring = new HashMap<>();
-        for (var offset : LegacyInfusionMatrixLayout.scanPedestals(where -> {
-            BlockPos at = worldPosition.offset(where.x(),where.y(),where.z());
-            if (!level.hasChunkAt(at)) return LegacyInfusionMatrixLayout.Part.OTHER;
-            return level.getBlockState(at).getBlock() instanceof PedestalBlock
-                    ? LegacyInfusionMatrixLayout.Part.PEDESTAL
-                    : LegacyInfusionMatrixLayout.Part.OTHER;
-        })) {
-            var worldAt = worldPosition.offset(offset.x(),offset.y(),offset.z());
-            var block = level.getBlockState(worldAt).getBlock();
-            if (!(block instanceof PedestalBlock pedestal)) continue;
-            if (block == ThaumcraftBlocks.PEDESTAL_ANCIENT.get()) ancients++;
-            if (block == ThaumcraftBlocks.PEDESTAL_ELDRITCH.get()) eldritch++;
-            boolean occupied = level.getBlockEntity(worldAt) instanceof PedestalBlockEntity tile
-                    && tile.isOccupied();
-            ring.put(offset, new LegacyInfusionStability.Stabilizer(
-                    BuiltInRegistries.BLOCK.getKey(block).toString(),
-                    pedestal.getStabilizationAmount(), occupied,
-                    pedestal.getSymmetryPenalty()));
-        }
-        // BETA26 getSurroundings scans X/Z -8..8, matrix Y-7..Y+3.
-        // Original BETA26 also counts vanilla Blocks.SKULL as a stabilizer
-        // (strength 0.1); in 1.21 skull types are separate registered blocks,
-        // but source SKULL had one shared block id across all six metadata
-        // variants. Treat all modern skull/head variants as the same source
-        // stabilizer key, including wall skulls, regardless of rotation.
-        // Existing balancer applies opposite symmetry and diminishing returns.
-        for (int dx = -8; dx <= 8; dx++) for (int dz = -8; dz <= 8; dz++) {
-            if (dx == 0 && dz == 0) continue;
-            for (int dy = -7; dy <= 3; dy++) {
-                var at = worldPosition.offset(dx, dy, dz);
-                if (!level.hasChunkAt(at)) continue;
-                var block = level.getBlockState(at).getBlock();
-                if (block instanceof TallowCandleBlock candle) {
-                    ring.put(new LegacyInfusionMatrixLayout.Offset(dx, dy, dz),
-                            new LegacyInfusionStability.Stabilizer(
-                                    BuiltInRegistries.BLOCK.getKey(block).toString(),
-                                    candle.getStabilizationAmount(), false, 0.0F));
-                } else if (block instanceof AbstractSkullBlock) {
-                    ring.put(new LegacyInfusionMatrixLayout.Offset(dx, dy, dz),
-                            new LegacyInfusionStability.Stabilizer(
-                                    "minecraft:skull",
-                                    LegacyInfusionStability.DEFAULT_UNMATCHED_STRENGTH,
-                                    false, 0.0F));
-                }
-            }
-        }
-        mods = LegacyInfusionStability.withPedestals(mods,ancients,eldritch);
-        var balance = LegacyInfusionStability.pedestalBalance(ring);
+        var surroundings = InfusionStabilizerAdapter.scan(level, worldPosition);
+        var mods = surroundings.modifiers();
         cycleTime = mods.cycleTime();
         countDelay = mods.countDelay();
         essentiaCostMult = mods.essentiaCostMult();
-        stabilityReplenish = mods.replenish() + balance.replenishment();
+        stabilityReplenish = surroundings.replenishment();
         surroundingsInitialized = true;
         changedAndSync();
     }
@@ -269,6 +205,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     public boolean beginVerifiedInfusionFromCaster(ServerPlayer player) {
         if (player == null || level != player.serverLevel() || !active
                 || crafting || ritualLedger != null || !validLocation()) return false;
+        refreshWorldStability();
         var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         var preview = InfusionRecipeAdapter.prepare(this, knowledge);
         if (preview == null) return false;
@@ -286,20 +223,22 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             if (index < 0 || index >= size || positions.get(index) != null
                     || !(level.getBlockEntity(occupied.get(i)) instanceof PedestalBlockEntity pedestal)) return false;
             ItemStack input = pedestal.displayedItem().copy();
-            if (!InfusionRecipeAdapter.matches(preview.recipe().components().get(index),input)
-                    || input.hasCraftingRemainingItem()) return false;
+            if (!InfusionRecipeAdapter.matches(preview.recipe().components().get(index),input)) return false;
             positions.set(index,occupied.get(i)); inputs.set(index,input);
         }
         if (!(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return false;
         ItemStack centerInput = center.displayedItem().copy();
         if (!InfusionRecipeAdapter.matches(preview.recipe().center(),centerInput)) return false;
+        ItemStack result = InfusionRecipeAdapter.output(preview.recipe(), centerInput, level.registryAccess(), level.random::nextInt);
+        if (result.isEmpty()) return false;
+        plannedOutput = result.copy();
         sidePedestals = List.copyOf(positions); originalSideInputs = List.copyOf(inputs);
         originalCentralInput = centerInput;
         ritualLedger = LegacyInfusionRitualLedger.begin(preview.recipe().legacyId(),preview.matching().cost());
         activeInfusionRitual = UUID.randomUUID();
         ritualRecipeFingerprint = preview.recipe().checkpointFingerprint();
         ritualStartCostMultiplier = preview.matching().effectiveMultiplier();
-        itemProgress = LegacyInfusionIngredientProgress.initial(size);
+        itemProgress = LegacyInfusionIngredientQueue.initial(size);
         finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
         recipeInstability = preview.matching().instability();
         crafting = true;
@@ -327,15 +266,21 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     }
 
     /** Capture complete physical proof first; never partially acknowledge a damaged set of receipts. */
-    private LegacyInfusionIngredientProgress verifiedSideProgress() {
+    private LegacyInfusionIngredientQueue verifiedSideProgress() {
         if (level == null || itemProgress == null || activeInfusionRitual == null || !trackedPedestalsValid()) return null;
         boolean[] receipts = new boolean[sidePedestals.size()];
         boolean[] present = new boolean[sidePedestals.size()];
         for (int i = 0; i < sidePedestals.size(); i++) {
             var pos = sidePedestals.get(i);
-            if (!level.hasChunkAt(pos) || !(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal)) return null;
+            if (!level.hasChunkAt(pos)) return null;
+            if (!(level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal)) {
+                if ((itemProgress.consumedMask() & (1 << i)) != 0) return null;
+                // Source searches other loaded pedestals for an unpaid ingredient after its old tile is removed.
+                continue;
+            }
             ItemStack item = pedestal.displayedItem();
-            receipts[i] = pedestal.hasInfusionRemovalReceipt(activeInfusionRitual,1 << i);
+            receipts[i] = pedestal.hasInfusionRemovalReceipt(activeInfusionRitual,1 << i,
+                    InfusionRecipeAdapter.remainder(originalSideInputs.get(i)));
             present[i] = item.getCount() == 1 && ItemStack.isSameItemSameComponents(item,originalSideInputs.get(i));
         }
         try { return itemProgress.recoverSavedReceipts(receipts,present); }
@@ -344,7 +289,8 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
 
     private boolean originalCenterPresent() {
         if (level == null || ritualLedger == null || !validLocation()) return false;
-        var recipe = InfusionRecipeAdapter.recipe(ritualLedger.recipeId());
+        var recipe = InfusionRecipeAdapter.effectiveRecipe(
+                InfusionRecipeAdapter.recipe(ritualLedger.recipeId()), originalCentralInput);
         return recipe != null && level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center
                 && InfusionRecipeAdapter.matches(recipe.center(),center.displayedItem())
                 && ItemStack.isSameItemSameComponents(originalCentralInput,center.displayedItem());
@@ -377,7 +323,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     public LegacyInfusionEssentiaCycle.Result drainVerifiedInfusionEssentia() {
         if (!(level instanceof ServerLevel server) || !active || !crafting
                 || !finishCheckpoint.canReserve()
-                || ritualLedger == null || !realInputsRemain()
+                || ritualLedger == null || !originalCenterPresent()
                 || ritualLedger.readyForIngredients()) return null;
         AspectListData remaining = new AspectListData();
         for (var entry : ritualLedger.remaining().entrySet()) {
@@ -405,27 +351,65 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     }
 
 
-    /** Source five-cycle ingestion, retaining exact captured components and physical identity. */
+    /** Source searches each remaining ingredient, skipping missing inputs while retaining one countdown. */
     private void advanceVerifiedInfusionIngredient() {
-        if (!(level instanceof ServerLevel) || !active || !crafting || !finishCheckpoint.canReserve()
+        if (!(level instanceof ServerLevel server) || !active || !crafting || !finishCheckpoint.canReserve()
                 || ritualLedger == null || !ritualLedger.readyForIngredients() || itemProgress == null
                 || itemProgress.readyToFinish() || !realInputsRemain()) return;
-        int bit = itemProgress.nextIngredientBit();
-        int index = Integer.numberOfTrailingZeros(bit);
-        if (!(level.getBlockEntity(sidePedestals.get(index)) instanceof PedestalBlockEntity pedestal)) return;
-        switch (itemProgress.nextAction()) {
-            case SOURCE_EFFECT, COUNTDOWN -> {
-                itemProgress = itemProgress.afterValidatedCountdown(); changedAndSync();
-            }
-            case CONSUME -> {
-                if (pedestal.consumeInfusionIngredientWithReceipt(originalSideInputs.get(index),activeInfusionRitual,bit)) {
-                    itemProgress = itemProgress.afterActualPedestalRemoval(bit); changedAndSync();
-                    markRitual("SIDE_ITEM_REMOVED");
-                    if (LegacyInfusionCrystalFarmerCatalog.all().stream().anyMatch(r -> r.legacyId().equals(ritualLedger.recipeId())))
-                        markRitual(index == 0 ? "SEEDS_REMOVED" : "SALIS_REMOVED");
+        var recipe = InfusionRecipeAdapter.effectiveRecipe(
+                InfusionRecipeAdapter.recipe(ritualLedger.recipeId()), originalCentralInput);
+        if (recipe == null) return;
+        int remainingIndex = 0;
+        for (int index = 0; index < itemProgress.ingredientCount(); index++) {
+            int bit = 1 << index;
+            if ((itemProgress.consumedMask() & bit) != 0) continue;
+            BlockPos selected = null;
+            for (BlockPos pos : nearbyPedestals()) {
+                int tracked = sidePedestals.indexOf(pos);
+                // A prior physical debit's receipt must remain available for save recovery.
+                if (tracked >= 0 && (itemProgress.consumedMask() & (1 << tracked)) != 0) continue;
+                if (level.getBlockEntity(pos) instanceof PedestalBlockEntity pedestal
+                        && InfusionRecipeAdapter.matches(recipe.components().get(index), pedestal.displayedItem())) {
+                    selected = pos; break;
                 }
             }
-            case READY -> { }
+            if (selected == null) {
+                if (server.random.nextInt(1 + remainingIndex) == 0 && !ritualLedger.remaining().isEmpty()) {
+                    var aspects = new ArrayList<>(ritualLedger.remaining().keySet());
+                    ritualLedger = ritualLedger.withPenalty(aspects.get(server.random.nextInt(aspects.size())));
+                    stability -= .25F;
+                }
+                changedAndSync();
+                remainingIndex++;
+                continue;
+            }
+            var pedestal = (PedestalBlockEntity) level.getBlockEntity(selected);
+            if (!selected.equals(sidePedestals.get(index))) {
+                var positions = new ArrayList<>(sidePedestals);
+                int other = positions.indexOf(selected);
+                if (other >= 0) positions.set(other, positions.get(index));
+                positions.set(index, selected.immutable());
+                sidePedestals = List.copyOf(positions);
+            }
+            var inputs = new ArrayList<>(originalSideInputs);
+            inputs.set(index, pedestal.displayedItem().copy());
+            originalSideInputs = List.copyOf(inputs);
+            itemProgress = itemProgress.select(index);
+            switch (itemProgress.nextAction()) {
+                case SOURCE_EFFECT, COUNTDOWN -> {
+                    itemProgress = itemProgress.afterValidatedCountdown(); changedAndSync();
+                }
+                case CONSUME -> {
+                    if (pedestal.consumeInfusionIngredientWithReceipt(originalSideInputs.get(index), activeInfusionRitual, bit)) {
+                        itemProgress = itemProgress.afterActualPedestalRemoval(bit); changedAndSync();
+                        markRitual("SIDE_ITEM_REMOVED");
+                        if (LegacyInfusionCrystalFarmerCatalog.all().stream().anyMatch(r -> r.legacyId().equals(ritualLedger.recipeId())))
+                            markRitual(index == 0 ? "SEEDS_REMOVED" : "SALIS_REMOVED");
+                    }
+                }
+                case READY -> { }
+            }
+            return; // Source handles at most one available side item in this cycle.
         }
     }
 
@@ -433,7 +417,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         crafting = false; recipeInstability = 0; ritualLedger = null; activeInfusionRitual = null;
         ritualRecipeFingerprint = null;
         itemProgress = null; sidePedestals = List.of(); originalSideInputs = List.of();
-        originalCentralInput = ItemStack.EMPTY; ritualStartCostMultiplier = 1.0F;
+        originalCentralInput = ItemStack.EMPTY; plannedOutput = ItemStack.EMPTY; ritualStartCostMultiplier = 1.0F;
         finishCheckpoint = LegacyInfusionFinishCheckpoint.initial(); changedAndSync();
     }
 
@@ -444,7 +428,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 || finishCheckpoint.phase() != LegacyInfusionFinishCheckpoint.Phase.STALLED
                 || !validLocation() || !itemProgress.equals(verifiedSideProgress())
                 || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return;
-        ItemStack output = InfusionRecipeAdapter.output(InfusionRecipeAdapter.recipe(ritualLedger.recipeId()));
+        ItemStack output = plannedOutput.copy();
         if (output.isEmpty() || !center.hasInfusionOutputReceipt(activeInfusionRitual,output)) return;
         finishCheckpoint = finishCheckpoint.acknowledgeAlreadyPublished(true,true,true);
         if (!finishCheckpoint.finished()) return;
@@ -455,12 +439,46 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (!(level instanceof ServerLevel) || !active || !crafting || ritualLedger == null
                 || !ritualLedger.readyForIngredients() || itemProgress == null || !itemProgress.readyToFinish()
                 || !finishCheckpoint.canReserve() || !realInputsRemain()) return;
-        ItemStack output = InfusionRecipeAdapter.output(InfusionRecipeAdapter.recipe(ritualLedger.recipeId()));
+        ItemStack output = plannedOutput.copy();
         if (output.isEmpty() || !(level.getBlockEntity(worldPosition.below(2)) instanceof PedestalBlockEntity center)) return;
         finishCheckpoint = finishCheckpoint.reserve(true,true,true); changedAndSync();
         if (!center.publishInfusionResultWithReceipt(originalCentralInput,output,activeInfusionRitual)) return;
         finishCheckpoint = finishCheckpoint.finishAfterActualCenterReplacement(true);
         markRitual("REAL_OUTPUT_COMMITTED"); clearCompletedInfusion();
+    }
+
+    /** Source ordering: stability/event, then exactly one resource or ingredient stage. */
+    private void craftCycle(ServerLevel server) {
+        if (!active || !validLocation()) return;
+        var random = new LegacyInfusionInstability.RandomSource() {
+            public int nextInt(int bound) { return server.random.nextInt(bound); }
+            public float nextFloat() { return server.random.nextFloat(); }
+            public boolean nextBoolean() { return server.random.nextBoolean(); }
+        };
+        var cycle = LegacyInfusionInstability.beginCycle(stability, recipeInstability,
+                stabilityReplenish, LegacyInfusionStability.CAP, originalCenterPresent(), random);
+        stability = cycle.stability();
+        if (cycle.event() != LegacyInfusionInstability.Event.NONE) {
+            InfusionInstabilityEffects.perform(server, worldPosition, cycle.event(), nearbyPedestals(), random);
+            stability = LegacyInfusionInstability.recoverAfterEvent(stability, random);
+        }
+        if (cycle.abortRecipe()) {
+            // Original fail branch consumes no replacement item and never refunds snapshots.
+            clearCompletedInfusion();
+            return;
+        }
+        changedAndSync();
+        if (!cycle.continueRecipe()) return;
+        countDelay = Math.max(1, cycleTime / 2);
+        if (!ritualLedger.readyForIngredients()) {
+            drainVerifiedInfusionEssentia();
+            return;
+        }
+        if (itemProgress != null && !itemProgress.readyToFinish()) {
+            advanceVerifiedInfusionIngredient();
+            return;
+        }
+        finishVerifiedInfusion();
     }
 
     private void changedAndSync() {
@@ -472,6 +490,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
     public static void serverTick(ServerLevel level, BlockPos pos, BlockState state,
                                   InfusionMatrixBlockEntity tile) {
         tile.ticks++;
+        if (!tile.surroundingsInitialized && tile.validLocation()) tile.refreshWorldStability();
+        if (LegacyInfusionMatrixIdle.checkNow(tile.ticks, tile.crafting) && !tile.validLocation()) {
+            tile.active = false;
+            tile.changedAndSync();
+            return;
+        }
         if (tile.crafting && tile.itemProgress != null
                 && tile.ritualLedger != null
                 && tile.ritualLedger.readyForIngredients())
@@ -481,26 +505,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         if (tile.crafting && tile.finishCheckpoint.phase()
                 == LegacyInfusionFinishCheckpoint.Phase.STALLED)
             tile.acknowledgeRecoveredInfusionOutput();
-        // Source stage: one REAL unit at most per original matrix craft cycle.
-        // A legacy 'crafting:1' tag without our verified checkpoint never
-        // drains resources. The post-payment ingredient and finish stages
-        // are separately gated by original physical pedestal receipts.
-        if (tile.crafting && tile.ritualLedger != null
-                && !tile.ritualLedger.readyForIngredients()
-                && tile.ticks % Math.max(1, tile.cycleTime) == 0)
-            tile.drainVerifiedInfusionEssentia();
-        if (tile.crafting && tile.ritualLedger != null
-                && tile.ritualLedger.readyForIngredients()
-                && tile.ticks % Math.max(1, tile.cycleTime) == 0)
-            tile.advanceVerifiedInfusionIngredient();
-        if (tile.crafting && tile.ritualLedger != null
-                && tile.ritualLedger.readyForIngredients()
-                && tile.itemProgress != null && tile.itemProgress.readyToFinish()
-                && tile.ticks % Math.max(1, tile.cycleTime) == 0)
-            tile.finishVerifiedInfusion();
-        // BETA26 initializes surrounding stabilizers once on world load.
-        if (!tile.surroundingsInitialized && tile.validLocation())
-            tile.refreshWorldStability();
+        if (tile.crafting && tile.ritualLedger != null && tile.finishCheckpoint.canReserve()
+                && tile.ticks % Math.max(1, tile.countDelay) == 0)
+            tile.craftCycle(level);
         // Original idle stability replenishes every max(5,countDelay) ticks;
         // do not advance unfinished crafting/essentia consumption.
         float next = LegacyInfusionStability.idleRecharge(tile.stability, tile.ticks,
@@ -509,16 +516,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             tile.stability = next;
             tile.changedAndSync();
         }
-        if (!LegacyInfusionMatrixIdle.checkNow(tile.ticks, tile.crafting)) return;
-        if (LegacyInfusionMatrixIdle.deactivate(tile.active, tile.validLocation())) {
-            tile.active = false;
-            tile.surroundingsInitialized = false;
-            tile.changedAndSync();
-        } else if (tile.active && !tile.crafting) {
-            // Recheck neighboring pedestals periodically until block-event
-            // notifications for all supported stabilizers are restored.
-            tile.refreshWorldStability();
-        }
+
     }
 
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
@@ -556,6 +554,9 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             ritualLedger.remaining().forEach(remaining::putInt);
             pending.put("Initial", initial);
             pending.put("Remaining", remaining);
+            CompoundTag surcharges = new CompoundTag();
+            ritualLedger.surchargeCosts().forEach(surcharges::putInt);
+            pending.put("Surcharges", surcharges);
             pending.putString("FinishPhase", finishCheckpoint.phase().name());
             if (!originalCentralInput.isEmpty()) {
                 var slot = NonNullList.withSize(1, ItemStack.EMPTY);
@@ -564,7 +565,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 ContainerHelper.saveAllItems(savedInput, slot, lookup);
                 pending.put("OriginalCenterInput", savedInput);
             }
-            pending.putInt("Format",2);
+            pending.putInt("Format",3);
+            var outputSlot = NonNullList.withSize(1, ItemStack.EMPTY);
+            outputSlot.set(0, plannedOutput.copy());
+            CompoundTag savedOutput = new CompoundTag();
+            ContainerHelper.saveAllItems(savedOutput, outputSlot, lookup);
+            pending.put("PlannedOutput", savedOutput);
             var sideSlots = NonNullList.withSize(originalSideInputs.size(),ItemStack.EMPTY);
             for (int i = 0; i < originalSideInputs.size(); i++) sideSlots.set(i,originalSideInputs.get(i).copy());
             CompoundTag savedSides = new CompoundTag();
@@ -574,6 +580,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
             if (itemProgress != null) {
                 pending.putInt("ConsumedItems", itemProgress.consumedMask());
                 pending.putInt("ItemCountdown", itemProgress.countdown());
+                pending.putInt("ActiveIngredient", itemProgress.activeIndex());
             }
             tag.put("PortInfusionLedger", pending);
         }
@@ -591,6 +598,12 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         essentiaCostMult = tag.contains("costMult") ? tag.getFloat("costMult") : 1.0F;
         cycleTime = tag.contains("cycleTime") ? tag.getInt("cycleTime") : 10;
         countDelay = tag.contains("countDelay") ? tag.getInt("countDelay") : 5;
+        if (!Float.isFinite(stability) || !Float.isFinite(stabilityReplenish)
+                || !Float.isFinite(essentiaCostMult) || cycleTime < 1 || cycleTime > 100
+                || countDelay < 1 || countDelay > 100) {
+            active = false; crafting = false; stability = 0; stabilityReplenish = 0;
+            essentiaCostMult = 1; cycleTime = 10; countDelay = 5;
+        }
         surroundingsInitialized = false;
         ritualLedger = null;
         activeInfusionRitual = null;
@@ -598,6 +611,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
         itemProgress = null;
         sidePedestals = List.of();
         originalCentralInput = ItemStack.EMPTY;
+        plannedOutput = ItemStack.EMPTY;
         originalSideInputs = List.of();
         ritualStartCostMultiplier = 1.0F;
         finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
@@ -638,9 +652,22 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                     if (!remaining.contains(name, Tag.TAG_INT)) throw new IllegalArgumentException("Invalid remaining");
                     leftCosts.put(name, remaining.getInt(name));
                 }
+                var surcharges = new java.util.LinkedHashMap<String,Integer>();
+                if (pending.contains("Surcharges")) {
+                    if (!pending.contains("Surcharges", Tag.TAG_COMPOUND))
+                        throw new IllegalArgumentException("Invalid infusion surcharges");
+                    CompoundTag extra = pending.getCompound("Surcharges");
+                    for (String key : extra.getAllKeys()) {
+                        if (!extra.contains(key, Tag.TAG_INT)) throw new IllegalArgumentException("Invalid surcharge amount");
+                        surcharges.put(key, extra.getInt(key));
+                    }
+                }
                 String id = pending.getString("Recipe");
                 activeInfusionRitual = pending.getUUID("RitualId");
-                var spec = InfusionRecipeAdapter.recipe(id);
+                var centerSlot = NonNullList.withSize(1,ItemStack.EMPTY);
+                ContainerHelper.loadAllItems(pending.getCompound("OriginalCenterInput"),centerSlot,lookup);
+                originalCentralInput = centerSlot.get(0).copy();
+                var spec = InfusionRecipeAdapter.effectiveRecipe(InfusionRecipeAdapter.recipe(id), originalCentralInput);
                 if (spec == null) throw new IllegalArgumentException("Unregistered infusion recipe");
                 if (pending.contains("Format") || pending.contains("RecipeFingerprint")) {
                     if (!pending.contains("RecipeFingerprint",Tag.TAG_STRING))
@@ -649,24 +676,26 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 }
                 ritualRecipeFingerprint = spec.checkpointFingerprint();
                 ritualLedger = LegacyInfusionRitualLedger.restoreVerified(
-                        id, initialCosts, leftCosts, pending.getInt("Paid"),
-                        ritualStartCostMultiplier);
+                        spec, initialCosts, leftCosts, pending.getInt("Paid"),
+                        ritualStartCostMultiplier, surcharges);
                 finishCheckpoint = LegacyInfusionFinishCheckpoint.restore(
                         pending.getString("FinishPhase"));
                 if (finishCheckpoint.finished())
                     throw new IllegalArgumentException("Completed ritual is not crafting");
 
-                itemProgress = new LegacyInfusionIngredientProgress(spec.components().size(),
-                        pending.getInt("ConsumedItems"),
-                        pending.getInt("ItemCountdown"));
+                if (pending.getInt("Format") == 3 && !pending.contains("ActiveIngredient", Tag.TAG_INT))
+                    throw new IllegalArgumentException("Missing selected infusion ingredient");
+                itemProgress = LegacyInfusionIngredientQueue.restore(spec.components().size(),
+                        pending.getInt("ConsumedItems"), pending.getInt("ItemCountdown"),
+                        pending.contains("ActiveIngredient", Tag.TAG_INT) ? pending.getInt("ActiveIngredient") : null);
                 if (itemProgress.consumedMask() != 0
-                        && !ritualLedger.readyForIngredients())
+                        && ritualLedger.paid() < ritualLedger.requested().values().stream().mapToInt(Integer::intValue).sum())
                     throw new IllegalArgumentException("Items consumed before full essence payment");
                 if (!finishCheckpoint.consistentWithPaidProgress(
                         ritualLedger.readyForIngredients(), itemProgress.readyToFinish()))
                     throw new IllegalArgumentException("Reserved result with unpaid inputs");
                 if (pending.contains("Format")) {
-                    if (!pending.contains("Format",Tag.TAG_INT) || pending.getInt("Format") != 2
+                    if (!pending.contains("Format",Tag.TAG_INT) || (pending.getInt("Format") != 2 && pending.getInt("Format") != 3)
                             || !pending.contains("SidePedestals",Tag.TAG_LONG_ARRAY))
                         throw new IllegalArgumentException("Unsupported infusion checkpoint format");
                     long[] positions = pending.getLongArray("SidePedestals");
@@ -679,21 +708,30 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                         throw new IllegalArgumentException("Incomplete legacy crystal checkpoint");
                     sidePedestals = List.of(BlockPos.of(pending.getLong("SeedsPedestal")),BlockPos.of(pending.getLong("SalisPedestal")));
                 }
-                var centerSlot = NonNullList.withSize(1,ItemStack.EMPTY);
-                ContainerHelper.loadAllItems(pending.getCompound("OriginalCenterInput"),centerSlot,lookup);
-                originalCentralInput = centerSlot.get(0).copy();
+
                 var sideSlots = NonNullList.withSize(spec.components().size(),ItemStack.EMPTY);
                 ContainerHelper.loadAllItems(pending.getCompound("OriginalSideInputs"),sideSlots,lookup);
                 originalSideInputs = sideSlots.stream().map(ItemStack::copy).toList();
                 if (!trackedPedestalsValid()) throw new IllegalArgumentException("Invalid tracked pedestal positions");
                 for (int i = 0; i < originalSideInputs.size(); i++)
-                    if (!InfusionRecipeAdapter.matches(spec.components().get(i),originalSideInputs.get(i))
-                            || originalSideInputs.get(i).hasCraftingRemainingItem())
+                    if (!InfusionRecipeAdapter.matches(spec.components().get(i),originalSideInputs.get(i)))
                         throw new IllegalArgumentException("Invalid original ingredient snapshot");
                 if (!InfusionRecipeAdapter.matches(spec.center(),originalCentralInput))
                     throw new IllegalArgumentException("Invalid original center snapshot");
                 if (recipeInstability != spec.instability())
                     throw new IllegalArgumentException("Saved infusion instability differs from original recipe");
+                if (pending.getInt("Format") == 3) {
+                    if (!pending.contains("PlannedOutput", Tag.TAG_COMPOUND))
+                        throw new IllegalArgumentException("Missing frozen infusion output");
+                    var slot = NonNullList.withSize(1, ItemStack.EMPTY);
+                    ContainerHelper.loadAllItems(pending.getCompound("PlannedOutput"), slot, lookup);
+                    plannedOutput = slot.get(0).copy();
+                } else {
+                    // Only pre-existing plain fixed results can migrate without a saved output.
+                    plannedOutput = InfusionRecipeAdapter.output(spec);
+                }
+                if (!InfusionRecipeAdapter.isValidOutput(spec, originalCentralInput, plannedOutput, lookup))
+                    throw new IllegalArgumentException("Saved infusion output differs from source recipe");
             } catch (IllegalArgumentException malformed) {
                 // Corrupt/newer NBT must never make a free-running ritual.
                 crafting = false;
@@ -703,6 +741,7 @@ public final class InfusionMatrixBlockEntity extends BlockEntity {
                 itemProgress = null;
                 sidePedestals = List.of();
                 originalCentralInput = ItemStack.EMPTY;
+                plannedOutput = ItemStack.EMPTY;
                 originalSideInputs = List.of();
                 finishCheckpoint = LegacyInfusionFinishCheckpoint.initial();
             }

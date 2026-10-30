@@ -31,7 +31,7 @@ import net.minecraft.world.phys.shapes.Shapes;
 /**
  * Original BETA26 BlockPedestal:
  * - a base, neck, top-cap block model (non-solid, undefined face shape),
- * - CHARGE 0..15 for the infusion inlay network (no inlay port yet),
+ * - CHARGE 0..15 for the source infusion inlay network,
  * - empty slot + held item -> exactly one item, held stack shrinks,
  * - occupied slot -> drop entire item at clicking player, regardless of hand,
  * - all three variants share the same authentic one-slot TilePedestal.
@@ -121,6 +121,19 @@ public final class PedestalBlock extends BaseEntityBlock {
     private static void playClick(Level level, BlockPos pos) {
         level.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS,
                 0.2F, (1F + (level.random.nextFloat() - level.random.nextFloat()) * 0.7F) * 1.6F);
+    }
+
+    @Override protected void onPlace(BlockState state, Level level, BlockPos pos,
+                                      BlockState oldState, boolean moving) {
+        super.onPlace(state, level, pos, oldState, moving);
+        if (!level.isClientSide) InfusionInlayBlock.updateSurroundingInlay(level, pos, state);
+    }
+
+    @Override protected void neighborChanged(BlockState state, Level level, BlockPos pos,
+                                               net.minecraft.world.level.block.Block block,
+                                               BlockPos fromPos, boolean moving) {
+        super.neighborChanged(state, level, pos, block, fromPos, moving);
+        if (!level.isClientSide) InfusionInlayBlock.updateSurroundingInlay(level, pos, state);
     }
 
     @Override protected void onRemove(BlockState original, Level level, BlockPos pos,

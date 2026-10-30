@@ -1,0 +1,384 @@
+[
+  {
+    "legacyId": "thaumcraft:RunicArmor",
+    "research": "RUNICSHIELDING",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "thaumcraft:salis_mundus"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "thaumcraft:amber"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_chestplate",
+    "outputCount": 1,
+    "aspects": {
+      "praemunio": 40,
+      "vitreus": 20,
+      "potentia": 20
+    },
+    "instability": 5,
+    "output": {
+      "mode": "RUNIC"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:MirrorEssentia",
+    "research": "MIRRORESSENTIA",
+    "center": {
+      "itemIds": [
+        "thaumcraft:mirrored_glass"
+      ],
+      "tagIds": [],
+      "crystalAspect": null
+    },
+    "components": [
+      {
+        "itemIds": [],
+        "tagIds": [
+          "c:ingots/iron"
+        ],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [],
+        "tagIds": [
+          "c:ingots/iron"
+        ],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [],
+        "tagIds": [
+          "c:ingots/iron"
+        ],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:ender_pearl"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "thaumcraft:mirror_essentia",
+    "outputCount": 1,
+    "aspects": {
+      "motus": 25,
+      "aqua": 25,
+      "permutatio": 25
+    },
+    "instability": 2
+  },
+  {
+    "legacyId": "thaumcraft:IEBURROWING",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:rabbit_foot"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "sensus": 80,
+      "terra": 150
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "BURROWING"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IECOLLECTOR",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:lead"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "desiderium": 80,
+      "aqua": 100
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "COLLECTOR"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IEDESTRUCTIVE",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:tnt"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "aversio": 200,
+      "perditio": 250
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "DESTRUCTIVE"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IEREFINING",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "thaumcraft:salis_mundus"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "ordo": 80,
+      "permutatio": 60
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "REFINING"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IESOUNDING",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:map"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "sensus": 40,
+      "ignis": 60
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "SOUNDING"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IEARCING",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:redstone_block"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_sword",
+    "outputCount": 1,
+    "aspects": {
+      "potentia": 40,
+      "aer": 60
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "ARCING"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IEESSENCE",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "thaumcraft:crystal_essence"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_sword",
+    "outputCount": 1,
+    "aspects": {
+      "bestia": 40,
+      "vitium": 60
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "ESSENCE"
+    }
+  },
+  {
+    "legacyId": "thaumcraft:IELAMPLIGHT",
+    "research": "INFUSIONENCHANTMENT",
+    "center": {
+      "itemIds": [],
+      "tagIds": [],
+      "crystalAspect": null,
+      "any": true
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:enchanted_book"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [],
+        "tagIds": [
+          "thaumcraft:nitor"
+        ],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "minecraft:iron_pickaxe",
+    "outputCount": 1,
+    "aspects": {
+      "lux": 80,
+      "aer": 20
+    },
+    "instability": 4,
+    "output": {
+      "mode": "INFUSION_ENCHANTMENT",
+      "enchantmentId": "LAMPLIGHT"
+    }
+  }
+]

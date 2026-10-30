@@ -55,6 +55,13 @@ final class PaidInfusionFixture {
         for (BlockPos p : pedestals) level.setBlockAndUpdate(p, ThaumcraftBlocks.PEDESTAL_ARCANE.get().defaultBlockState());
         for (int x : new int[]{-1,1}) for (int z : new int[]{-1,1})
             level.setBlockAndUpdate(matrixPos.offset(x,-2,z), ThaumcraftBlocks.PILLAR_ARCANE.get().defaultBlockState());
+        // Physical source stabilizers keep paid-path tests deterministic with real instability enabled.
+        // Six opposite skull pairs approach .329 refill/cycle; vitium starts at 0, so let real idle
+        // ticks below precharge the matrix before the researched caster click.
+        for (int x = 2; x <= 7; x++) {
+            level.setBlockAndUpdate(matrixPos.offset(x,-3,3), net.minecraft.world.level.block.Blocks.SKELETON_SKULL.defaultBlockState());
+            level.setBlockAndUpdate(matrixPos.offset(-x,-3,-3), net.minecraft.world.level.block.Blocks.SKELETON_SKULL.defaultBlockState());
+        }
         pedestal(0).insertFromPlayer(CrystalEssenceItem.ofAspect(aspect));
         pedestal(1).insertFromPlayer(new ItemStack(Items.WHEAT_SEEDS));
         pedestal(2).insertFromPlayer(new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get()));
@@ -74,6 +81,9 @@ final class PaidInfusionFixture {
         var knowledge = actor.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         knowledge.addResearch("CRYSTALFARMER"); // Explicit prerequisite fixture; not a research-progression acceptance claim.
         LogUtils.getLogger().info("INFUSION_TEST_RESEARCH_FIXTURE aspect={} key=CRYSTALFARMER seeded=true",aspect);
+        // Drive actual idle server logic, with no seeded stability NBT or disabled hazards.
+        for (int idle = 0; idle < 400; idle++)
+            InfusionMatrixBlockEntity.serverTick(level, matrixPos, matrix().getBlockState(), matrix());
         snapshot("BEFORE_START"); casterClick();
         require(matrix().crafting(), "Researched actual Basic Caster click starts physical recipe");
         CompoundTag start = ledger(); ritual = start.getUUID("RitualId");
