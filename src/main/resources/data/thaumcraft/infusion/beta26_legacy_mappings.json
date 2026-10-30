@@ -1,0 +1,844 @@
+{
+  "schema": 1,
+  "source_jar_sha256": "9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f",
+  "source_asset_family_check": {
+    "families_with_concrete_tc_id": 77,
+    "matching_original_model_or_blockstate": 77
+  },
+  "field_count": 128,
+  "fields": {
+    "net/minecraft/init/Blocks.field_150325_L": {
+      "legacy_id": "minecraft:wool",
+      "mcp_name": "WOOL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv",
+      "metadata_required": true
+    },
+    "net/minecraft/init/Blocks.field_150335_W": {
+      "legacy_id": "minecraft:tnt",
+      "mcp_name": "TNT",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Blocks.field_150434_aF": {
+      "legacy_id": "minecraft:cactus",
+      "mcp_name": "CACTUS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Blocks.field_150451_bX": {
+      "legacy_id": "minecraft:redstone_block",
+      "mcp_name": "REDSTONE_BLOCK",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151005_D": {
+      "legacy_id": "minecraft:golden_pickaxe",
+      "mcp_name": "GOLDEN_PICKAXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151006_E": {
+      "legacy_id": "minecraft:golden_axe",
+      "mcp_name": "GOLDEN_AXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151008_G": {
+      "legacy_id": "minecraft:feather",
+      "mcp_name": "FEATHER",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151011_C": {
+      "legacy_id": "minecraft:golden_shovel",
+      "mcp_name": "GOLDEN_SHOVEL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151014_N": {
+      "legacy_id": "minecraft:wheat_seeds",
+      "mcp_name": "WHEAT_SEEDS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151015_O": {
+      "legacy_id": "minecraft:wheat",
+      "mcp_name": "WHEAT",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151021_T": {
+      "legacy_id": "minecraft:leather_boots",
+      "mcp_name": "LEATHER_BOOTS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151035_b": {
+      "legacy_id": "minecraft:iron_pickaxe",
+      "mcp_name": "IRON_PICKAXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151039_o": {
+      "legacy_id": "minecraft:wooden_pickaxe",
+      "mcp_name": "WOODEN_PICKAXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151041_m": {
+      "legacy_id": "minecraft:wooden_sword",
+      "mcp_name": "WOODEN_SWORD",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151043_k": {
+      "legacy_id": "minecraft:gold_ingot",
+      "mcp_name": "GOLD_INGOT",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151046_w": {
+      "legacy_id": "minecraft:diamond_pickaxe",
+      "mcp_name": "DIAMOND_PICKAXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151047_v": {
+      "legacy_id": "minecraft:diamond_shovel",
+      "mcp_name": "DIAMOND_SHOVEL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151049_t": {
+      "legacy_id": "minecraft:stone_axe",
+      "mcp_name": "STONE_AXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151050_s": {
+      "legacy_id": "minecraft:stone_pickaxe",
+      "mcp_name": "STONE_PICKAXE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151052_q": {
+      "legacy_id": "minecraft:stone_sword",
+      "mcp_name": "STONE_SWORD",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151058_ca": {
+      "legacy_id": "minecraft:lead",
+      "mcp_name": "LEAD",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151068_bn": {
+      "legacy_id": "minecraft:potion",
+      "mcp_name": "POTIONITEM",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151070_bp": {
+      "legacy_id": "minecraft:spider_eye",
+      "mcp_name": "SPIDER_EYE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151073_bk": {
+      "legacy_id": "minecraft:ghast_tear",
+      "mcp_name": "GHAST_TEAR",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151079_bi": {
+      "legacy_id": "minecraft:ender_pearl",
+      "mcp_name": "ENDER_PEARL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151080_bb": {
+      "legacy_id": "minecraft:pumpkin_seeds",
+      "mcp_name": "PUMPKIN_SEEDS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151081_bc": {
+      "legacy_id": "minecraft:melon_seeds",
+      "mcp_name": "MELON_SEEDS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151082_bd": {
+      "legacy_id": "minecraft:beef",
+      "mcp_name": "BEEF",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151099_bA": {
+      "legacy_id": "minecraft:writable_book",
+      "mcp_name": "WRITABLE_BOOK",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151100_aR": {
+      "legacy_id": "minecraft:dye",
+      "mcp_name": "DYE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv",
+      "metadata_required": true
+    },
+    "net/minecraft/init/Items.field_151111_aL": {
+      "legacy_id": "minecraft:compass",
+      "mcp_name": "COMPASS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151115_aP": {
+      "legacy_id": "minecraft:fish",
+      "mcp_name": "FISH",
+      "source": "mcp_stable-39-1.12.zip:fields.csv",
+      "metadata_required": true
+    },
+    "net/minecraft/init/Items.field_151117_aB": {
+      "legacy_id": "minecraft:milk_bucket",
+      "mcp_name": "MILK_BUCKET",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151120_aE": {
+      "legacy_id": "minecraft:reeds",
+      "mcp_name": "REEDS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151123_aH": {
+      "legacy_id": "minecraft:slime_ball",
+      "mcp_name": "SLIME_BALL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151131_as": {
+      "legacy_id": "minecraft:water_bucket",
+      "mcp_name": "WATER_BUCKET",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151134_bR": {
+      "legacy_id": "minecraft:enchanted_book",
+      "mcp_name": "ENCHANTED_BOOK",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151144_bL": {
+      "legacy_id": "minecraft:skull",
+      "mcp_name": "SKULL",
+      "source": "mcp_stable-39-1.12.zip:fields.csv",
+      "metadata_required": true
+    },
+    "net/minecraft/init/Items.field_151147_al": {
+      "legacy_id": "minecraft:porkchop",
+      "mcp_name": "PORKCHOP",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151148_bJ": {
+      "legacy_id": "minecraft:map",
+      "mcp_name": "MAP",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151153_ao": {
+      "legacy_id": "minecraft:golden_apple",
+      "mcp_name": "GOLDEN_APPLE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151156_bN": {
+      "legacy_id": "minecraft:nether_star",
+      "mcp_name": "NETHER_STAR",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151166_bC": {
+      "legacy_id": "minecraft:emerald",
+      "mcp_name": "EMERALD",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151170_bI": {
+      "legacy_id": "minecraft:poisonous_potato",
+      "mcp_name": "POISONOUS_POTATO",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_151172_bF": {
+      "legacy_id": "minecraft:carrot",
+      "mcp_name": "CARROT",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_179555_bs": {
+      "legacy_id": "minecraft:rabbit_hide",
+      "mcp_name": "RABBIT_HIDE",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_179556_br": {
+      "legacy_id": "minecraft:rabbit_foot",
+      "mcp_name": "RABBIT_FOOT",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_179561_bm": {
+      "legacy_id": "minecraft:mutton",
+      "mcp_name": "MUTTON",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_185163_cU": {
+      "legacy_id": "minecraft:beetroot_seeds",
+      "mcp_name": "BEETROOT_SEEDS",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "net/minecraft/init/Items.field_190929_cY": {
+      "legacy_id": "minecraft:totem_of_undying",
+      "mcp_name": "TOTEM_OF_UNDYING",
+      "source": "mcp_stable-39-1.12.zip:fields.csv"
+    },
+    "thaumcraft/api/items/ItemsTC.primordialPearl": {
+      "legacy_id": "thaumcraft:primordial_pearl",
+      "source": "thaumcraft.common.items.curios.ItemPrimordialPearl.<init>",
+      "config_registration_offset": 60,
+      "metadata_semantics": "crafting damage 0..7, not distinct registry entries"
+    },
+    "thaumcraft/api/items/ItemsTC.quicksilver": {
+      "legacy_id": "thaumcraft:quicksilver",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 140
+    },
+    "thaumcraft/api/items/ItemsTC.nuggets": {
+      "legacy_id": "thaumcraft:nugget",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 262,
+      "metadata_variants": {
+        "0": "iron",
+        "1": "copper",
+        "2": "tin",
+        "3": "silver",
+        "4": "lead",
+        "5": "quicksilver",
+        "6": "thaumium",
+        "7": "void",
+        "8": "brass",
+        "9": "quartz",
+        "10": "rareearth"
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.fabric": {
+      "legacy_id": "thaumcraft:fabric",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 351
+    },
+    "thaumcraft/api/items/ItemsTC.visResonator": {
+      "legacy_id": "thaumcraft:vis_resonator",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 374
+    },
+    "thaumcraft/api/items/ItemsTC.mechanismComplex": {
+      "legacy_id": "thaumcraft:mechanism_complex",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 445
+    },
+    "thaumcraft/api/items/ItemsTC.morphicResonator": {
+      "legacy_id": "thaumcraft:morphic_resonator",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 537
+    },
+    "thaumcraft/api/items/ItemsTC.salisMundus": {
+      "legacy_id": "thaumcraft:salis_mundus",
+      "source": "thaumcraft.common.items.resources.ItemMagicDust.<init>",
+      "config_registration_offset": 554
+    },
+    "thaumcraft/api/items/ItemsTC.mirroredGlass": {
+      "legacy_id": "thaumcraft:mirrored_glass",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 578
+    },
+    "thaumcraft/api/items/ItemsTC.voidSeed": {
+      "legacy_id": "thaumcraft:void_seed",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 602
+    },
+    "thaumcraft/api/items/ItemsTC.mind": {
+      "legacy_id": "thaumcraft:mind",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 638,
+      "metadata_variants": {
+        "0": "clockwork",
+        "1": "biothaumic"
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.crystalEssence": {
+      "legacy_id": "thaumcraft:crystal_essence",
+      "source": "thaumcraft.common.items.resources.ItemCrystalEssence.<init>",
+      "config_registration_offset": 691
+    },
+    "thaumcraft/api/items/ItemsTC.tripleMeatTreat": {
+      "legacy_id": "thaumcraft:triple_meat_treat",
+      "source": "thaumcraft.common.items.consumables.ItemTripleMeatTreat.<init>",
+      "config_registration_offset": 725
+    },
+    "thaumcraft/api/items/ItemsTC.brain": {
+      "legacy_id": "thaumcraft:brain",
+      "source": "thaumcraft.common.items.consumables.ItemZombieBrain.<init>",
+      "config_registration_offset": 742
+    },
+    "thaumcraft/api/items/ItemsTC.alumentum": {
+      "legacy_id": "thaumcraft:alumentum",
+      "source": "thaumcraft.common.items.consumables.ItemAlumentum.<init>",
+      "config_registration_offset": 793
+    },
+    "thaumcraft/api/items/ItemsTC.turretPlacer": {
+      "legacy_id": "thaumcraft:turret",
+      "source": "thaumcraft.common.entities.construct.ItemTurretPlacer.<init>",
+      "config_registration_offset": 885,
+      "metadata_variants": {
+        "0": "basic",
+        "1": "advanced",
+        "2": "bore"
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.causalityCollapser": {
+      "legacy_id": "thaumcraft:causality_collapser",
+      "source": "thaumcraft.common.items.consumables.ItemCausalityCollapser.<init>",
+      "config_registration_offset": 902
+    },
+    "thaumcraft/api/items/ItemsTC.handMirror": {
+      "legacy_id": "thaumcraft:hand_mirror",
+      "source": "thaumcraft.common.items.tools.ItemHandMirror.<init>",
+      "config_registration_offset": 987
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumAxe": {
+      "legacy_id": "thaumcraft:thaumium_axe",
+      "source": "thaumcraft.common.items.tools.ItemThaumiumAxe.<init>",
+      "config_registration_offset": 1007
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumSword": {
+      "legacy_id": "thaumcraft:thaumium_sword",
+      "source": "thaumcraft.common.items.tools.ItemThaumiumSword.<init>",
+      "config_registration_offset": 1027
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumShovel": {
+      "legacy_id": "thaumcraft:thaumium_shovel",
+      "source": "thaumcraft.common.items.tools.ItemThaumiumShovel.<init>",
+      "config_registration_offset": 1047
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumPick": {
+      "legacy_id": "thaumcraft:thaumium_pick",
+      "source": "thaumcraft.common.items.tools.ItemThaumiumPickaxe.<init>",
+      "config_registration_offset": 1067
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumHoe": {
+      "legacy_id": "thaumcraft:thaumium_hoe",
+      "source": "thaumcraft.common.items.tools.ItemThaumiumHoe.<init>",
+      "config_registration_offset": 1087
+    },
+    "thaumcraft/api/items/ItemsTC.voidShovel": {
+      "legacy_id": "thaumcraft:void_shovel",
+      "source": "thaumcraft.common.items.tools.ItemVoidShovel.<init>",
+      "config_registration_offset": 1147
+    },
+    "thaumcraft/api/items/ItemsTC.voidPick": {
+      "legacy_id": "thaumcraft:void_pick",
+      "source": "thaumcraft.common.items.tools.ItemVoidPickaxe.<init>",
+      "config_registration_offset": 1167
+    },
+    "thaumcraft/api/items/ItemsTC.elementalAxe": {
+      "legacy_id": "thaumcraft:elemental_axe",
+      "source": "thaumcraft.common.items.tools.ItemElementalAxe.<init>",
+      "config_registration_offset": 1207
+    },
+    "thaumcraft/api/items/ItemsTC.elementalSword": {
+      "legacy_id": "thaumcraft:elemental_sword",
+      "source": "thaumcraft.common.items.tools.ItemElementalSword.<init>",
+      "config_registration_offset": 1227
+    },
+    "thaumcraft/api/items/ItemsTC.elementalShovel": {
+      "legacy_id": "thaumcraft:elemental_shovel",
+      "source": "thaumcraft.common.items.tools.ItemElementalShovel.<init>",
+      "config_registration_offset": 1247
+    },
+    "thaumcraft/api/items/ItemsTC.elementalPick": {
+      "legacy_id": "thaumcraft:elemental_pick",
+      "source": "thaumcraft.common.items.tools.ItemElementalPickaxe.<init>",
+      "config_registration_offset": 1267
+    },
+    "thaumcraft/api/items/ItemsTC.elementalHoe": {
+      "legacy_id": "thaumcraft:elemental_hoe",
+      "source": "thaumcraft.common.items.tools.ItemElementalHoe.<init>",
+      "config_registration_offset": 1287
+    },
+    "thaumcraft/api/items/ItemsTC.primalCrusher": {
+      "legacy_id": "thaumcraft:primal_crusher",
+      "source": "thaumcraft.common.items.tools.ItemPrimalCrusher.<init>",
+      "config_registration_offset": 1304
+    },
+    "thaumcraft/api/items/ItemsTC.goggles": {
+      "legacy_id": "thaumcraft:goggles",
+      "source": "thaumcraft.common.items.armor.ItemGoggles.<init>",
+      "config_registration_offset": 1403
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumHelm": {
+      "legacy_id": "thaumcraft:thaumium_helm",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1430
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumChest": {
+      "legacy_id": "thaumcraft:thaumium_chest",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1457
+    },
+    "thaumcraft/api/items/ItemsTC.thaumiumLegs": {
+      "legacy_id": "thaumcraft:thaumium_legs",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1484
+    },
+    "thaumcraft/api/items/ItemsTC.clothChest": {
+      "legacy_id": "thaumcraft:cloth_chest",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1538
+    },
+    "thaumcraft/api/items/ItemsTC.clothLegs": {
+      "legacy_id": "thaumcraft:cloth_legs",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1565
+    },
+    "thaumcraft/api/items/ItemsTC.travellerBoots": {
+      "legacy_id": "thaumcraft:traveller_boots",
+      "source": "thaumcraft.common.items.armor.ItemBootsTraveller.<init>",
+      "config_registration_offset": 1609
+    },
+    "thaumcraft/api/items/ItemsTC.fortressHelm": {
+      "legacy_id": "thaumcraft:fortress_helm",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1636
+    },
+    "thaumcraft/api/items/ItemsTC.fortressChest": {
+      "legacy_id": "thaumcraft:fortress_chest",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1663
+    },
+    "thaumcraft/api/items/ItemsTC.fortressLegs": {
+      "legacy_id": "thaumcraft:fortress_legs",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1690
+    },
+    "thaumcraft/api/items/ItemsTC.voidHelm": {
+      "legacy_id": "thaumcraft:void_helm",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1717
+    },
+    "thaumcraft/api/items/ItemsTC.voidChest": {
+      "legacy_id": "thaumcraft:void_chest",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1744
+    },
+    "thaumcraft/api/items/ItemsTC.voidLegs": {
+      "legacy_id": "thaumcraft:void_legs",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1771
+    },
+    "thaumcraft/api/items/ItemsTC.voidRobeHelm": {
+      "legacy_id": "thaumcraft:void_robe_helm",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1825
+    },
+    "thaumcraft/api/items/ItemsTC.voidRobeChest": {
+      "legacy_id": "thaumcraft:void_robe_chest",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1852
+    },
+    "thaumcraft/api/items/ItemsTC.voidRobeLegs": {
+      "legacy_id": "thaumcraft:void_robe_legs",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 1879
+    },
+    "thaumcraft/api/items/ItemsTC.baubles": {
+      "legacy_id": "thaumcraft:baubles",
+      "source": "thaumcraft.common.items.baubles.ItemBaubles.<init>",
+      "config_registration_offset": 2147,
+      "metadata_variants": {
+        "0": "amulet_mundane",
+        "1": "ring_mundane",
+        "2": "girdle_mundane",
+        "3": "ring_apprentice",
+        "4": "amulet_fancy",
+        "5": "ring_fancy",
+        "6": "girdle_fancy"
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.amuletVis": {
+      "legacy_id": "thaumcraft:amulet_vis",
+      "source": "thaumcraft.common.items.baubles.ItemAmuletVis.<init>",
+      "config_registration_offset": 2164,
+      "metadata_variants": {
+        "0": "found",
+        "1": "crafted"
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.charmVerdant": {
+      "legacy_id": "thaumcraft:verdant_charm",
+      "source": "thaumcraft.common.items.baubles.ItemVerdantCharm.<init>",
+      "config_registration_offset": 2181,
+      "component_variants": {
+        "type": {
+          "nbt_type": "byte",
+          "values": {
+            "0": "base",
+            "1": "life",
+            "2": "sustain"
+          }
+        }
+      }
+    },
+    "thaumcraft/api/items/ItemsTC.bandCuriosity": {
+      "legacy_id": "thaumcraft:curiosity_band",
+      "source": "thaumcraft.common.items.baubles.ItemCuriosityBand.<init>",
+      "config_registration_offset": 2198
+    },
+    "thaumcraft/api/items/ItemsTC.charmVoidseer": {
+      "legacy_id": "thaumcraft:voidseer_charm",
+      "source": "thaumcraft.common.items.baubles.ItemVoidseerCharm.<init>",
+      "config_registration_offset": 2215
+    },
+    "thaumcraft/api/items/ItemsTC.ringCloud": {
+      "legacy_id": "thaumcraft:cloud_ring",
+      "source": "thaumcraft.common.items.baubles.ItemCloudRing.<init>",
+      "config_registration_offset": 2232
+    },
+    "thaumcraft/api/items/ItemsTC.charmUndying": {
+      "legacy_id": "thaumcraft:charm_undying",
+      "source": "thaumcraft.common.items.baubles.ItemCharmUndying.<init>",
+      "config_registration_offset": 2249
+    },
+    "thaumcraft/api/items/ItemsTC.focus1": {
+      "legacy_id": "thaumcraft:focus_1",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 2326
+    },
+    "thaumcraft/api/items/ItemsTC.focus2": {
+      "legacy_id": "thaumcraft:focus_2",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 2348
+    },
+    "thaumcraft/api/items/ItemsTC.focus3": {
+      "legacy_id": "thaumcraft:focus_3",
+      "source": "ConfigItems.initItems",
+      "config_registration_offset": 2370
+    },
+    "thaumcraft/api/items/ItemsTC.seals": {
+      "legacy_id": "thaumcraft:seal",
+      "source": "thaumcraft.common.golems.seals.ItemSealPlacer.<init>",
+      "config_registration_offset": 2438,
+      "metadata_variants": {
+        "0": "blank"
+      },
+      "metadata_semantics": "0 blank; >0 dynamic registered-seal order + 1; preserve seal key for symbolic helper output",
+      "default_original_seal_metadata": {
+        "0": "blank",
+        "1": "thaumcraft:pickup",
+        "2": "thaumcraft:pickup_advanced",
+        "3": "thaumcraft:fill",
+        "4": "thaumcraft:fill_advanced",
+        "5": "thaumcraft:empty",
+        "6": "thaumcraft:empty_advanced",
+        "7": "thaumcraft:harvest",
+        "8": "thaumcraft:butcher",
+        "9": "thaumcraft:guard",
+        "10": "thaumcraft:guard_advanced",
+        "11": "thaumcraft:lumber",
+        "12": "thaumcraft:breaker",
+        "13": "thaumcraft:use",
+        "14": "thaumcraft:provider",
+        "15": "thaumcraft:stock",
+        "16": "thaumcraft:breaker_advanced"
+      },
+      "seal_metadata_source": "ConfigItems.preInitSeals@0..157; SealHandler.types LinkedHashMap; each Seal*.getKey; ItemSealPlacer.getVariantNames index +1"
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalAir": {
+      "legacy_id": "thaumcraft:crystal_aer",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 74
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalFire": {
+      "legacy_id": "thaumcraft:crystal_ignis",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 92
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalWater": {
+      "legacy_id": "thaumcraft:crystal_aqua",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 110
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalEarth": {
+      "legacy_id": "thaumcraft:crystal_terra",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 128
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalOrder": {
+      "legacy_id": "thaumcraft:crystal_ordo",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 146
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalEntropy": {
+      "legacy_id": "thaumcraft:crystal_perditio",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 164
+    },
+    "thaumcraft/api/blocks/BlocksTC.crystalTaint": {
+      "legacy_id": "thaumcraft:crystal_vitium",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 182
+    },
+    "thaumcraft/api/blocks/BlocksTC.stoneArcane": {
+      "legacy_id": "thaumcraft:stone_arcane",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 261
+    },
+    "thaumcraft/api/blocks/BlocksTC.shimmerleaf": {
+      "legacy_id": "thaumcraft:shimmerleaf",
+      "source": "thaumcraft.common.blocks.world.plants.BlockPlantShimmerleaf.<init>",
+      "config_registration_offset": 1042
+    },
+    "thaumcraft/api/blocks/BlocksTC.plankGreatwood": {
+      "legacy_id": "thaumcraft:plank_greatwood",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 1084
+    },
+    "thaumcraft/api/blocks/BlocksTC.metalBlockVoid": {
+      "legacy_id": "thaumcraft:metal_void",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 1809
+    },
+    "thaumcraft/api/blocks/BlocksTC.lampArcane": {
+      "legacy_id": "thaumcraft:lamp_arcane",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2404
+    },
+    "thaumcraft/api/blocks/BlocksTC.lampFertility": {
+      "legacy_id": "thaumcraft:lamp_fertility",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2423
+    },
+    "thaumcraft/api/blocks/BlocksTC.lampGrowth": {
+      "legacy_id": "thaumcraft:lamp_growth",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2442
+    },
+    "thaumcraft/api/blocks/BlocksTC.jarNormal": {
+      "legacy_id": "thaumcraft:jar_normal",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2743
+    },
+    "thaumcraft/api/blocks/BlocksTC.jarBrain": {
+      "legacy_id": "thaumcraft:jar_brain",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2787
+    },
+    "thaumcraft/api/blocks/BlocksTC.mirror": {
+      "legacy_id": "thaumcraft:mirror",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2915
+    },
+    "thaumcraft/api/blocks/BlocksTC.mirrorEssentia": {
+      "legacy_id": "thaumcraft:mirror_essentia",
+      "source": "ConfigBlocks.initBlocks",
+      "config_registration_offset": 2937
+    },
+    "thaumcraft/api/blocks/BlocksTC.voidSiphon": {
+      "legacy_id": "thaumcraft:void_siphon",
+      "source": "thaumcraft.common.blocks.crafting.BlockVoidSiphon.<init>",
+      "config_registration_offset": 3137
+    },
+    "thaumcraft/api/blocks/BlocksTC.nitor": {
+      "legacy_id": null,
+      "kind": "color_indexed_block_map",
+      "source": "ConfigBlocks.initBlocks@2195..2265",
+      "entries": {
+        "white": "thaumcraft:nitor_white",
+        "orange": "thaumcraft:nitor_orange",
+        "magenta": "thaumcraft:nitor_magenta",
+        "lightblue": "thaumcraft:nitor_lightblue",
+        "yellow": "thaumcraft:nitor_yellow",
+        "lime": "thaumcraft:nitor_lime",
+        "pink": "thaumcraft:nitor_pink",
+        "gray": "thaumcraft:nitor_gray",
+        "silver": "thaumcraft:nitor_silver",
+        "cyan": "thaumcraft:nitor_cyan",
+        "purple": "thaumcraft:nitor_purple",
+        "blue": "thaumcraft:nitor_blue",
+        "brown": "thaumcraft:nitor_brown",
+        "green": "thaumcraft:nitor_green",
+        "red": "thaumcraft:nitor_red",
+        "black": "thaumcraft:nitor_black"
+      },
+      "modern_enum_names": {
+        "lightblue": "light_blue",
+        "silver": "light_gray"
+      }
+    }
+  },
+  "vanilla_metadata_to_modern_item": {
+    "minecraft:fish": {
+      "0": "minecraft:cod",
+      "1": "minecraft:salmon",
+      "2": "minecraft:tropical_fish",
+      "3": "minecraft:pufferfish"
+    },
+    "minecraft:dye": {
+      "0": "minecraft:ink_sac",
+      "1": "minecraft:red_dye",
+      "2": "minecraft:green_dye",
+      "3": "minecraft:cocoa_beans",
+      "4": "minecraft:lapis_lazuli",
+      "5": "minecraft:purple_dye",
+      "6": "minecraft:cyan_dye",
+      "7": "minecraft:light_gray_dye",
+      "8": "minecraft:gray_dye",
+      "9": "minecraft:pink_dye",
+      "10": "minecraft:lime_dye",
+      "11": "minecraft:yellow_dye",
+      "12": "minecraft:light_blue_dye",
+      "13": "minecraft:magenta_dye",
+      "14": "minecraft:orange_dye",
+      "15": "minecraft:bone_meal"
+    },
+    "minecraft:skull": {
+      "0": "minecraft:skeleton_skull",
+      "1": "minecraft:wither_skeleton_skull",
+      "2": "minecraft:zombie_head",
+      "3": "minecraft:player_head",
+      "4": "minecraft:creeper_head",
+      "5": "minecraft:dragon_head"
+    },
+    "minecraft:wool": {
+      "0": "minecraft:white_wool",
+      "1": "minecraft:orange_wool",
+      "2": "minecraft:magenta_wool",
+      "3": "minecraft:light_blue_wool",
+      "4": "minecraft:yellow_wool",
+      "5": "minecraft:lime_wool",
+      "6": "minecraft:pink_wool",
+      "7": "minecraft:gray_wool",
+      "8": "minecraft:light_gray_wool",
+      "9": "minecraft:cyan_wool",
+      "10": "minecraft:purple_wool",
+      "11": "minecraft:blue_wool",
+      "12": "minecraft:brown_wool",
+      "13": "minecraft:green_wool",
+      "14": "minecraft:red_wool",
+      "15": "minecraft:black_wool"
+    }
+  },
+  "aspect_tags": {
+    "AIR": "aer",
+    "EARTH": "terra",
+    "FIRE": "ignis",
+    "WATER": "aqua",
+    "ORDER": "ordo",
+    "ENTROPY": "perditio",
+    "VOID": "vacuos",
+    "LIGHT": "lux",
+    "MOTION": "motus",
+    "COLD": "gelum",
+    "CRYSTAL": "vitreus",
+    "METAL": "metallum",
+    "LIFE": "victus",
+    "DEATH": "mortuus",
+    "ENERGY": "potentia",
+    "EXCHANGE": "permutatio",
+    "MAGIC": "praecantatio",
+    "AURA": "auram",
+    "ALCHEMY": "alkimia",
+    "FLUX": "vitium",
+    "DARKNESS": "tenebrae",
+    "ELDRITCH": "alienis",
+    "FLIGHT": "volatus",
+    "PLANT": "herba",
+    "TOOL": "instrumentum",
+    "CRAFT": "fabrico",
+    "MECHANISM": "machina",
+    "TRAP": "vinculum",
+    "SOUL": "spiritus",
+    "MIND": "cognitio",
+    "SENSES": "sensus",
+    "AVERSION": "aversio",
+    "PROTECT": "praemunio",
+    "DESIRE": "desiderium",
+    "UNDEAD": "exanimis",
+    "BEAST": "bestia",
+    "MAN": "humanus"
+  },
+  "source_class_sha256": {
+    "thaumcraft/common/config/ConfigRecipes": "487d32f43df9277fa845c129bc549da0126f34902a2d5089f9d97d204eb0f4e2",
+    "thaumcraft/common/lib/crafting/InfusionRunicAugmentRecipe": "19a1112da7369144410d0009d88fa442440282ee627c49e90aa1a5a6c9e00231",
+    "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe": "5367e0c2136c601ea5f68bf2e03e14c9a79bfa13c851710831dd9bda7261652c",
+    "thaumcraft/common/lib/enchantment/EnumInfusionEnchantment": "a235212468df2cea88e634225473e7dacd7b7b658ce51fd936ec18a88bbceae9"
+  }
+}
