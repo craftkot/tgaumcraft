@@ -1,0 +1,4226 @@
+{
+  "schema": "thaumcraft:beta26_infusion_source/v1",
+  "source_version": "6.1.BETA26",
+  "source_method": "thaumcraft.common.config.ConfigRecipes.initializeInfusionRecipes",
+  "legacy_mappings": "beta26_legacy_mappings.json",
+  "source_jar_sha256": "9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f",
+  "source_bytecode_sha256": "a7244608b35632a8c24789f3cb5e82f4ab3cd48aee6d22efc8ffeb409dc8e109",
+  "recipe_count": 56,
+  "fake_recipe_count": 11,
+  "fake_recipe_ids": [
+    "thaumcraft:RunicArmorFake0",
+    "thaumcraft:RunicArmorFake1",
+    "thaumcraft:RunicArmorFake2",
+    "thaumcraft:IEBURROWINGFAKE",
+    "thaumcraft:IECOLLECTORFAKE",
+    "thaumcraft:IEDESTRUCTIVEFAKE",
+    "thaumcraft:IEREFININGFAKE",
+    "thaumcraft:IESOUNDINGFAKE",
+    "thaumcraft:IEARCINGFAKE",
+    "thaumcraft:IEESSENCEFAKE",
+    "thaumcraft:IELAMPLIGHTFAKE"
+  ],
+  "recipes": [
+    {
+      "id": "thaumcraft:SealHarvest",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 148,
+        "registration_offset": 151
+      },
+      "research": "SEALHARVEST",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "seal_stack",
+          "seal": "thaumcraft:harvest",
+          "count": 1,
+          "helper": "thaumcraft/api/golems/GolemHelper.getSealStack"
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "PLANT": 10,
+        "SENSES": 10,
+        "MAN": 10
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.seals"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151080_bb"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151081_bc"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_185163_cU"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151120_aE"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150434_aF"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:SealButcher",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 295,
+        "registration_offset": 298
+      },
+      "research": "SEALBUTCHER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "seal_stack",
+          "seal": "thaumcraft:butcher",
+          "count": 1,
+          "helper": "thaumcraft/api/golems/GolemHelper.getSealStack"
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "BEAST": 10,
+        "SENSES": 10,
+        "MAN": 10
+      },
+      "center": {
+        "kind": "seal_stack",
+        "seal": "thaumcraft:guard",
+        "count": 1,
+        "helper": "thaumcraft/api/golems/GolemHelper.getSealStack"
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "leather"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150325_L"
+          },
+          "count": 1,
+          "metadata": 32767
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_179555_bs"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151147_al"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_179561_bm"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151082_bd"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:SealBreak",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 397,
+        "registration_offset": 400
+      },
+      "research": "SEALBREAK",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "seal_stack",
+          "seal": "thaumcraft:breaker",
+          "count": 1,
+          "helper": "thaumcraft/api/golems/GolemHelper.getSealStack"
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "TOOL": 10,
+        "ENTROPY": 10,
+        "MAN": 10
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.seals"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151006_E"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151005_D"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151011_C"
+          }
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterAir",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 497,
+        "registration_offset": 500
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalAir"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "AIR": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "AIR",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterFire",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 597,
+        "registration_offset": 600
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalFire"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "FIRE": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "FIRE",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterWater",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 697,
+        "registration_offset": 700
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalWater"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "WATER": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "WATER",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterEarth",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 797,
+        "registration_offset": 800
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalEarth"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "EARTH": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "EARTH",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterOrder",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 897,
+        "registration_offset": 900
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalOrder"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "ORDER": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "ORDER",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterEntropy",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 997,
+        "registration_offset": 1000
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalEntropy"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 0,
+      "aspects": {
+        "ENTROPY": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "ENTROPY",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CrystalClusterFlux",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1097,
+        "registration_offset": 1100
+      },
+      "research": "CRYSTALFARMER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.crystalTaint"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "FLUX": 10,
+        "CRYSTAL": 10,
+        "TRAP": 5
+      },
+      "center": {
+        "kind": "aspect_crystal",
+        "aspect": "FLUX",
+        "count": 1,
+        "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151014_N"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:focus_2",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1213,
+        "registration_offset": 1216
+      },
+      "research": "FOCUSADVANCED@1",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.focus2"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 3,
+      "aspects": {
+        "MAGIC": 25,
+        "ORDER": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.focus1"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.quicksilver"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "gemDiamond"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.quicksilver"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151079_bi"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:focus_3",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1340,
+        "registration_offset": 1343
+      },
+      "research": "FOCUSGREATER@1",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.focus3"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "MAGIC": 25,
+        "ORDER": 50,
+        "VOID": 100
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.focus2"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.quicksilver"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.primordialPearl"
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.quicksilver"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151156_bN"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:JarBrain",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1471,
+        "registration_offset": 1474
+      },
+      "research": "JARBRAIN",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.jarBrain"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "MIND": 25,
+        "SENSES": 25,
+        "UNDEAD": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.jarNormal"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.brain"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151070_bp"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151131_as"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151070_bp"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VisAmulet",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1614,
+        "registration_offset": 1617
+      },
+      "research": "VISAMULET",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.amuletVis"
+          },
+          "count": 1,
+          "metadata": 1
+        }
+      },
+      "instability": 6,
+      "aspects": {
+        "AURA": 50,
+        "ENERGY": 100,
+        "VOID": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.baubles"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.visResonator"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "FIRE",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "WATER",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "EARTH",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "ORDER",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:RunicArmor",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionRunicAugmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1624,
+        "registration_offset": 1639
+      },
+      "research": "RUNICSHIELDING",
+      "instability": {
+        "formula": "5 + trunc(oldRunic / 2)"
+      },
+      "aspects": {
+        "formula": "PROTECT=20+int(20*pow(2,oldRunic)); CRYSTAL=ENERGY=trunc(PROTECT/2)"
+      },
+      "center": {
+        "kind": "armor_or_bauble"
+      },
+      "sides": [
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          }
+        },
+        {
+          "kind": "ore",
+          "alias": "gemAmber",
+          "count_formula": "1 + max(0, oldRunic)"
+        }
+      ],
+      "output": {
+        "kind": "copy_center_runic",
+        "key": "TC.RUNIC",
+        "nbt_type": "byte",
+        "formula": "oldRunic + 1"
+      }
+    },
+    {
+      "id": "thaumcraft:Mirror",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1830,
+        "registration_offset": 1833
+      },
+      "research": "MIRROR",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.mirror"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "MOTION": 25,
+        "DARKNESS": 25,
+        "EXCHANGE": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.mirroredGlass"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "ingotGold"
+        },
+        {
+          "kind": "ore",
+          "alias": "ingotGold"
+        },
+        {
+          "kind": "ore",
+          "alias": "ingotGold"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151079_bi"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MirrorHand",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 1933,
+        "registration_offset": 1936
+      },
+      "research": "MIRRORHAND",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.handMirror"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "TOOL": 50,
+        "MOTION": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.mirror"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "stickWood"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151111_aL"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151148_bJ"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MirrorEssentia",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2043,
+        "registration_offset": 2046
+      },
+      "research": "MIRRORESSENTIA",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.mirrorEssentia"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 2,
+      "aspects": {
+        "MOTION": 25,
+        "WATER": 25,
+        "EXCHANGE": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.mirroredGlass"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "ingotIron"
+        },
+        {
+          "kind": "ore",
+          "alias": "ingotIron"
+        },
+        {
+          "kind": "ore",
+          "alias": "ingotIron"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151079_bi"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ElementalAxe",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2177,
+        "registration_offset": 2180
+      },
+      "research": "ELEMENTALTOOLS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalAxe"
+          },
+          "count": 1,
+          "metadata": 0,
+          "infusion_enchantments": [
+            {
+              "enchantment": "COLLECTOR",
+              "level": 1
+            },
+            {
+              "enchantment": "BURROWING",
+              "level": 1
+            }
+          ]
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "WATER": 60,
+        "PLANT": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumAxe"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "WATER",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.WATER_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "WATER",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.WATER_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ElementalPick",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2319,
+        "registration_offset": 2322
+      },
+      "research": "ELEMENTALTOOLS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalPick"
+          },
+          "count": 1,
+          "metadata": 0,
+          "infusion_enchantments": [
+            {
+              "enchantment": "REFINING",
+              "level": 1
+            },
+            {
+              "enchantment": "SOUNDING",
+              "level": 2
+            }
+          ]
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "FIRE": 30,
+        "METAL": 30,
+        "SENSES": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumPick"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "FIRE",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.FIRE_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "FIRE",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.FIRE_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ElementalSword",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2453,
+        "registration_offset": 2456
+      },
+      "research": "ELEMENTALTOOLS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalSword"
+          },
+          "count": 1,
+          "metadata": 0,
+          "infusion_enchantments": [
+            {
+              "enchantment": "ARCING",
+              "level": 2
+            }
+          ]
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "AIR": 30,
+        "MOTION": 30,
+        "AVERSION": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumSword"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.AIR_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.AIR_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ElementalShovel",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2582,
+        "registration_offset": 2585
+      },
+      "research": "ELEMENTALTOOLS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalShovel"
+          },
+          "count": 1,
+          "metadata": 0,
+          "infusion_enchantments": [
+            {
+              "enchantment": "DESTRUCTIVE",
+              "level": 1
+            }
+          ]
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "EARTH": 60,
+        "CRAFT": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumShovel"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "EARTH",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.EARTH_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "EARTH",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.EARTH_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ElementalHoe",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2706,
+        "registration_offset": 2709
+      },
+      "research": "ELEMENTALTOOLS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalHoe"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "ORDER": 30,
+        "PLANT": 30,
+        "ENTROPY": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumHoe"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "ORDER",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.ORDER_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "ENTROPY",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.ENTROPY_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:IEBURROWING",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2780,
+        "registration_offset": 2797
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "SENSES": 80,
+        "EARTH": 150
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "axe",
+          "pickaxe"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_179556_br"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "BURROWING",
+        "ordinal": 2,
+        "max_level": 1,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IECOLLECTOR",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 2899,
+        "registration_offset": 2916
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "DESIRE": 80,
+        "WATER": 100
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "axe",
+          "pickaxe",
+          "shovel",
+          "weapon"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151058_ca"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "COLLECTOR",
+        "ordinal": 0,
+        "max_level": 1,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IEDESTRUCTIVE",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3020,
+        "registration_offset": 3037
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "AVERSION": 200,
+        "ENTROPY": 250
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "axe",
+          "pickaxe",
+          "shovel"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150335_W"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "DESTRUCTIVE",
+        "ordinal": 1,
+        "max_level": 1,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IEREFINING",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3139,
+        "registration_offset": 3156
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "ORDER": 80,
+        "EXCHANGE": 60
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "pickaxe"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "REFINING",
+        "ordinal": 4,
+        "max_level": 4,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IESOUNDING",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3258,
+        "registration_offset": 3275
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "SENSES": 40,
+        "FIRE": 60
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "pickaxe"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151148_bJ"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "SOUNDING",
+        "ordinal": 3,
+        "max_level": 4,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IEARCING",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3377,
+        "registration_offset": 3394
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "ENERGY": 40,
+        "AIR": 60
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "weapon"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150451_bX"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "ARCING",
+        "ordinal": 5,
+        "max_level": 4,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IEESSENCE",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3496,
+        "registration_offset": 3513
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "BEAST": 40,
+        "FLUX": 60
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "weapon"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.crystalEssence"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "ESSENCE",
+        "ordinal": 6,
+        "max_level": 5,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:IELAMPLIGHT",
+      "recipe_class": "thaumcraft/common/lib/crafting/InfusionEnchantmentRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3608,
+        "registration_offset": 3625
+      },
+      "research": "INFUSIONENCHANTMENT",
+      "instability": 4,
+      "aspects": {
+        "LIGHT": 80,
+        "AIR": 20
+      },
+      "aspect_multiplier": "float(oldLevel + 1) + float(otherInfusionEnchantmentCount) * 0.33f",
+      "center": {
+        "kind": "infusion_enchantable",
+        "tool_classes": [
+          "axe",
+          "pickaxe",
+          "shovel"
+        ]
+      },
+      "sides": [
+        {
+          "kind": "stack_nbt",
+          "stack": {
+            "kind": "stack",
+            "item": {
+              "kind": "item",
+              "legacy_field": "net/minecraft/init/Items.field_151134_bR"
+            },
+            "count": 1,
+            "metadata": 0
+          }
+        },
+        {
+          "kind": "ore",
+          "alias": "nitor"
+        }
+      ],
+      "output": {
+        "kind": "copy_center_infusion_enchantment",
+        "enchantment": "LAMPLIGHT",
+        "ordinal": 12,
+        "max_level": 1,
+        "level_formula": "oldLevel + 1",
+        "warp": {
+          "key": "TC.WARP",
+          "type": "byte",
+          "increment": 1,
+          "condition": "random.nextInt(10) < existingInfusionEnchantmentCount"
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:BootsTraveller",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3798,
+        "registration_offset": 3801
+      },
+      "research": "BOOTSTRAVELLER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.travellerBoots"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "FLIGHT": 100,
+        "MOTION": 100
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "net/minecraft/init/Items.field_151021_T"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.AIR_CRYSTAL"
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.AIR_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151008_G"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151115_aP"
+          },
+          "count": 1,
+          "metadata": 32767
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MindBiothaumic",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 3899,
+        "registration_offset": 3902
+      },
+      "research": "MINDBIOTHAUMIC",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.mind"
+          },
+          "count": 1,
+          "metadata": 1
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "MIND": 50,
+        "MECHANISM": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.mind"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.brain"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.mechanismComplex"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ArcaneBore",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4091,
+        "registration_offset": 4094
+      },
+      "research": "ARCANEBORE",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.turretPlacer"
+          },
+          "count": 1,
+          "metadata": 2
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "ENERGY": 25,
+        "EARTH": 25,
+        "MECHANISM": 100,
+        "VOID": 25,
+        "MOTION": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.turretPlacer"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.plankGreatwood"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.mechanismComplex"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateBrass"
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151046_w"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151047_v"
+          }
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.morphicResonator"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:LampGrowth",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4249,
+        "registration_offset": 4252
+      },
+      "research": "LAMPGROWTH",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.lampGrowth"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "PLANT": 20,
+        "LIGHT": 15,
+        "LIFE": 15,
+        "TOOL": 15
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.lampArcane"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151100_aR"
+          },
+          "count": 1,
+          "metadata": 15
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "EARTH",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.EARTH_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151100_aR"
+          },
+          "count": 1,
+          "metadata": 15
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "EARTH",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.EARTH_CRYSTAL"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:LampFertility",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4401,
+        "registration_offset": 4404
+      },
+      "research": "LAMPFERTILITY",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.lampFertility"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 4,
+      "aspects": {
+        "BEAST": 20,
+        "LIGHT": 15,
+        "LIFE": 15,
+        "DESIRE": 15
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.lampArcane"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151015_O"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "FIRE",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.FIRE_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151172_bF"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "FIRE",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.FIRE_CRYSTAL"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ThaumiumFortressHelm",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4535,
+        "registration_offset": 4538
+      },
+      "research": "ARMORFORTRESS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fortressHelm"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 3,
+      "aspects": {
+        "METAL": 50,
+        "PROTECT": 20,
+        "ENERGY": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumHelm"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151166_bC"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ThaumiumFortressChest",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4662,
+        "registration_offset": 4665
+      },
+      "research": "ARMORFORTRESS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fortressChest"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 3,
+      "aspects": {
+        "METAL": 50,
+        "PROTECT": 30,
+        "ENERGY": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumChest"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:ThaumiumFortressLegs",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4782,
+        "registration_offset": 4785
+      },
+      "research": "ARMORFORTRESS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fortressLegs"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 3,
+      "aspects": {
+        "METAL": 50,
+        "PROTECT": 25,
+        "ENERGY": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.thaumiumLegs"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateThaumium"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151043_k"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VoidRobeHelm",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 4969,
+        "registration_offset": 4972
+      },
+      "research": "VOIDROBEARMOR",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidRobeHelm"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 6,
+      "aspects": {
+        "METAL": 25,
+        "SENSES": 25,
+        "PROTECT": 25,
+        "ENERGY": 25,
+        "ELDRITCH": 25,
+        "VOID": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.voidHelm"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.goggles"
+          },
+          "count": 1,
+          "metadata": 32767
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VoidRobeChest",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5123,
+        "registration_offset": 5126
+      },
+      "research": "VOIDROBEARMOR",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidRobeChest"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 6,
+      "aspects": {
+        "METAL": 35,
+        "PROTECT": 35,
+        "ENERGY": 25,
+        "ELDRITCH": 25,
+        "VOID": 35
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.voidChest"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.clothChest"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateVoid"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateVoid"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VoidRobeLegs",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5277,
+        "registration_offset": 5280
+      },
+      "research": "VOIDROBEARMOR",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidRobeLegs"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 6,
+      "aspects": {
+        "METAL": 30,
+        "PROTECT": 30,
+        "ENERGY": 25,
+        "ELDRITCH": 25,
+        "VOID": 30
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.voidLegs"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.clothLegs"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateVoid"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateVoid"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.salisMundus"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.fabric"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:HelmGoggles",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5401,
+        "registration_offset": 5404
+      },
+      "research": "FORTRESSMASK",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "goggles",
+        "value": {
+          "kind": "nbt",
+          "type": "byte",
+          "value": 1
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "SENSES": 40,
+        "AURA": 20,
+        "PROTECT": 20
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.fortressHelm"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151123_aH"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.goggles"
+          },
+          "count": 1,
+          "metadata": 32767
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MaskGrinningDevil",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5556,
+        "registration_offset": 5559
+      },
+      "research": "FORTRESSMASK",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "mask",
+        "value": {
+          "kind": "nbt",
+          "type": "int",
+          "value": 0
+        }
+      },
+      "instability": 8,
+      "aspects": {
+        "MIND": 80,
+        "LIFE": 80,
+        "PROTECT": 20
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.fortressHelm"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151100_aR"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.shimmerleaf"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.brain"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MaskAngryGhost",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5714,
+        "registration_offset": 5717
+      },
+      "research": "FORTRESSMASK",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "mask",
+        "value": {
+          "kind": "nbt",
+          "type": "int",
+          "value": 1
+        }
+      },
+      "instability": 8,
+      "aspects": {
+        "ENTROPY": 80,
+        "DEATH": 80,
+        "PROTECT": 20
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.fortressHelm"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151100_aR"
+          },
+          "count": 1,
+          "metadata": 15
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151170_bI"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151144_bL"
+          },
+          "count": 1,
+          "metadata": 1
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MaskSippingFiend",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 5869,
+        "registration_offset": 5872
+      },
+      "research": "FORTRESSMASK",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "mask",
+        "value": {
+          "kind": "nbt",
+          "type": "int",
+          "value": 2
+        }
+      },
+      "instability": 8,
+      "aspects": {
+        "UNDEAD": 80,
+        "LIFE": 80,
+        "PROTECT": 20
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.fortressHelm"
+        },
+        "count": 1,
+        "metadata": 32767
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151100_aR"
+          },
+          "count": 1,
+          "metadata": 1
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        },
+        {
+          "kind": "ore",
+          "alias": "leather"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151073_bk"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151117_aB"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateIron"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:PrimalCrusher",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6035,
+        "registration_offset": 6038
+      },
+      "research": "PRIMALCRUSHER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.primalCrusher"
+          },
+          "count": 1,
+          "metadata": 0,
+          "infusion_enchantments": [
+            {
+              "enchantment": "DESTRUCTIVE",
+              "level": 1
+            },
+            {
+              "enchantment": "REFINING",
+              "level": 1
+            }
+          ]
+        }
+      },
+      "instability": 6,
+      "aspects": {
+        "EARTH": 75,
+        "TOOL": 75,
+        "ENTROPY": 50,
+        "VOID": 50,
+        "AVERSION": 50,
+        "ELDRITCH": 50,
+        "DESIRE": 50
+      },
+      "center": {
+        "kind": "item_any_metadata",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.primordialPearl"
+        }
+      },
+      "sides": [
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidPick"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidShovel"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalPick"
+          }
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.elementalShovel"
+          }
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VerdantHeart",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6163,
+        "registration_offset": 6166
+      },
+      "research": "VERDANTCHARMS",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.charmVerdant"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "LIFE": 60,
+        "ORDER": 30,
+        "PLANT": 60
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.baubles"
+        },
+        "count": 1,
+        "metadata": 4
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.nuggets"
+          },
+          "count": 1,
+          "metadata": 10
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "LIFE",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151117_aB"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "PLANT",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VerdantHeartLife",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6311,
+        "registration_offset": 6314
+      },
+      "research": "VERDANTCHARMS",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "type",
+        "value": {
+          "kind": "nbt",
+          "type": "byte",
+          "value": 1
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "LIFE": 80,
+        "MAN": 80
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.charmVerdant"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151153_ao"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "LIFE",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151068_bn"
+          },
+          "count": 1,
+          "metadata": 0,
+          "nbt": {
+            "Potion": {
+              "kind": "nbt",
+              "type": "string",
+              "value": "minecraft:strong_healing"
+            }
+          }
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "MAN",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VerdantHeartSustain",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6459,
+        "registration_offset": 6462
+      },
+      "research": "VERDANTCHARMS",
+      "output": {
+        "kind": "copy_center_set_nbt",
+        "key": "type",
+        "value": {
+          "kind": "nbt",
+          "type": "byte",
+          "value": 2
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "DESIRE": 80,
+        "AIR": 80
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.charmVerdant"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.tripleMeatTreat"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "DESIRE",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151068_bn"
+          },
+          "count": 1,
+          "metadata": 0,
+          "nbt": {
+            "Potion": {
+              "kind": "nbt",
+              "type": "string",
+              "value": "minecraft:strong_regeneration"
+            }
+          }
+        },
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "helper": "thaumcraft/api/ThaumcraftApiHelper.makeCrystal"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CLOUDRING",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6543,
+        "registration_offset": 6546
+      },
+      "research": "CLOUDRING",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.ringCloud"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 1,
+      "aspects": {
+        "AIR": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.baubles"
+        },
+        "count": 1,
+        "metadata": 1
+      },
+      "sides": [
+        {
+          "kind": "aspect_crystal",
+          "aspect": "AIR",
+          "count": 1,
+          "legacy_field": "thaumcraft/common/config/ConfigItems.AIR_CRYSTAL"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151008_G"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CuriosityBand",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6733,
+        "registration_offset": 6736
+      },
+      "research": "CURIOSITYBAND",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.bandCuriosity"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 5,
+      "aspects": {
+        "MIND": 150,
+        "VOID": 50,
+        "TRAP": 100
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.baubles"
+        },
+        "count": 1,
+        "metadata": 6
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151166_bC"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151099_bA"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151166_bC"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151099_bA"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151166_bC"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151099_bA"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151166_bC"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151099_bA"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CHARMUNDYING",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 6802,
+        "registration_offset": 6805
+      },
+      "research": "CHARMUNDYING",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.charmUndying"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 2,
+      "aspects": {
+        "LIFE": 25
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "net/minecraft/init/Items.field_190929_cY"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "ore",
+          "alias": "plateBrass"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:CausalityCollapser",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 7040,
+        "registration_offset": 7043
+      },
+      "research": "RIFTCLOSER",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.causalityCollapser"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 8,
+      "aspects": {
+        "ELDRITCH": 50,
+        "FLUX": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "net/minecraft/init/Blocks.field_150335_W"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.morphicResonator"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150451_bX"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.alumentum"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "any_of",
+          "alternatives": [
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "WHITE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "ORANGE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "MAGENTA"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "LIGHT_BLUE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "YELLOW"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "LIME"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "PINK"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "GRAY"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "SILVER"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "CYAN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "PURPLE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BLUE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BROWN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "GREEN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "RED"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BLACK"
+              },
+              "count": 1,
+              "metadata": 0
+            }
+          ]
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.visResonator"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150451_bX"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.alumentum"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "any_of",
+          "alternatives": [
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "WHITE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "ORANGE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "MAGENTA"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "LIGHT_BLUE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "YELLOW"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "LIME"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "PINK"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "GRAY"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "SILVER"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "CYAN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "PURPLE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BLUE"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BROWN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "GREEN"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "RED"
+              },
+              "count": 1,
+              "metadata": 0
+            },
+            {
+              "kind": "stack",
+              "item": {
+                "kind": "block",
+                "legacy_field": "thaumcraft/api/blocks/BlocksTC.nitor",
+                "map_key": "BLACK"
+              },
+              "count": 1,
+              "metadata": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VoidSiphon",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 7193,
+        "registration_offset": 7196
+      },
+      "research": "VOIDSIPHON",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.voidSiphon"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 7,
+      "aspects": {
+        "ELDRITCH": 50,
+        "ENTROPY": 50,
+        "VOID": 100,
+        "CRAFT": 50
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.metalBlockVoid"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.stoneArcane"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.stoneArcane"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.mechanismComplex"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "plateBrass"
+        },
+        {
+          "kind": "ore",
+          "alias": "plateBrass"
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "net/minecraft/init/Items.field_151156_bN"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:VoidseerPearl",
+      "recipe_class": "thaumcraft/api/crafting/InfusionRecipe",
+      "source": {
+        "method": "initializeInfusionRecipes",
+        "constructor_offset": 7325,
+        "registration_offset": 7328
+      },
+      "research": "VOIDSEERPEARL",
+      "output": {
+        "kind": "stack",
+        "stack": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.charmVoidseer"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      },
+      "instability": 8,
+      "aspects": {
+        "MIND": 150,
+        "VOID": 150,
+        "MAGIC": 100
+      },
+      "center": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.baubles"
+        },
+        "count": 1,
+        "metadata": 4
+      },
+      "sides": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.brain"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.voidSeed"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.brain"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.primordialPearl"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.crafting;
 
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaSourceOrder;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionJarDebitEvidence;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 
@@ -66,9 +68,21 @@ public final class InfusionJarSourceBridge {
             if (!level.hasChunkAt(pos)) continue;
             if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar)
                     || jar.blocked()) continue;
-            // takeForInfusion performs an atomic sufficient-balance check and
-            // persists/syncs the exact one-unit debit on the server.
-            if (jar.takeForInfusion(aspect, 1)) return true;
+            // This comparison is against the LIVE jar BlockEntity, not the
+            // matrix's own requested-cost ledger or a fabricated snapshot.
+            // In particular, the final unit must clear the jar's aspect.
+            var before = jar.snapshot();
+            if (!jar.takeForInfusion(aspect, 1)) continue;
+            var after = jar.snapshot();
+            if (!LegacyInfusionJarDebitEvidence.exactlyOne(
+                    aspect, before, after, true)) {
+                // A reported debit without exact physical balance movement
+                // is not permission to reduce ledger cost or mint an output.
+                ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_JAR_DEBIT_INCONSISTENT");
+                return false;
+            }
+            ThaumcraftSmokeAudit.mark("INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN");
+            return true;
         }
 
         // Same 10-second backoff as original EssentiaHandler after no source

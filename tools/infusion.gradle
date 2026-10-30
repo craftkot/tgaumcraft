@@ -1,0 +1,42 @@
+// Isolated M06 test sources and opt-in runs; shared build/CI configuration remains untouched.
+// gradle --init-script tools/infusion.gradle runInfusionGameTest
+allprojects {
+    afterEvaluate { project ->
+        def neo = project.extensions.findByName('neoForge')
+        if (neo != null) {
+            project.sourceSets.main.java.srcDir 'infusion/test/java'
+            project.sourceSets.main.resources.srcDir 'infusion/test/resources'
+            neo.runs.create('infusionGameTest') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('infusion-gametest')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.findProperty('infusionGameTestNamespaces') ?: 'thaumcraft,thaumcraft_infusion_regression'
+            }
+            // Requires a combined source snapshot with the real golem content module.
+            neo.runs.create('golemInfusionGameTest') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-infusion-gametest')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_infusion'
+            }
+            neo.runs.create('infusionClient') {
+                client()
+                gameDirectory = project.layout.buildDirectory.dir('infusion-client')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.infusionClientProbe', 'true'
+            }
+            neo.runs.create('infusionClientServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('infusion-client-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.infusionClientProbe', 'true'
+            }
+            neo.runs.create('infusionRestart') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('infusion-restart')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.infusionRestartPhase', project.findProperty('infusionRestartPhase') ?: ''
+            }
+        }
+    }
+}

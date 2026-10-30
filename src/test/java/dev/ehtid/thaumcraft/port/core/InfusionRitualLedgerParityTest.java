@@ -60,6 +60,51 @@ public final class InfusionRitualLedgerParityTest {
         eq(10,immutable.remaining().get("vitreus"));
         bad(()->immutable.remaining().put("aer",8));
         bad(()->LegacyInfusionRitualLedger.restore("",restoredOriginal,preCheckpoint.remaining(),10));
+        // Restart verification must check the ACTUAL BETA26 recipe price,
+        // not just arithmetic consistency of an attacker/corrupt save.
+        for (var spec : LegacyInfusionCrystalFarmerCatalog.all()) {
+            var originalPrice = LegacyInfusionCrystalFarmerCatalog.essentia(spec, aspects);
+            for (float multiplier : new float[] { 0.5F, 1.0F, 1.35F }) {
+                var actualPrice = LegacyInfusionStartPlanner.calculateEssentia(
+                        originalPrice, multiplier);
+                var real = LegacyInfusionRitualLedger.begin(spec.legacyId(), actualPrice);
+                var verified = LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), real.requested(), real.remaining(), 0, multiplier);
+                eq(real.requested(), verified.requested());
+                eq(real.unitsLeft(), verified.unitsLeft());
+                String firstAspect = verified.requested().keySet().iterator().next();
+                var afterDebit = verified.afterWorldDebit(firstAspect);
+                eq(1, LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), afterDebit.requested(), afterDebit.remaining(),
+                        1, multiplier).paid());
+
+                var noCost = new LinkedHashMap<String,Integer>();
+                real.requested().forEach((tag,count) -> noCost.put(tag, 0));
+                bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), noCost, noCost, 0, multiplier));
+                var reduced = new LinkedHashMap<>(real.requested());
+                reduced.put(firstAspect, reduced.get(firstAspect) - 1);
+                bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), reduced, reduced, 0, multiplier));
+                var extra = new LinkedHashMap<>(real.requested());
+                extra.put("ignis".equals(firstAspect) ? "aer" : "ignis", 100);
+                bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), extra, extra, 0, multiplier));
+                bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                        spec.legacyId(), real.requested(), real.remaining(), 0,
+                        Float.NaN));
+            }
+        }
+        var catalogAir = LegacyInfusionCrystalFarmerCatalog.all().get(0);
+        var genuine = LegacyInfusionRitualLedger.begin(catalogAir.legacyId(),
+                LegacyInfusionCrystalFarmerCatalog.essentia(catalogAir, aspects));
+        bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                "thaumcraft:nonexistent", genuine.requested(), genuine.remaining(), 0, 1));
+        bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                genuine.recipeId(), genuine.requested(), genuine.remaining(), 0, 0.49F));
+        bad(() -> LegacyInfusionRitualLedger.restoreVerifiedCrystalFarmer(
+                genuine.recipeId(), genuine.requested(), genuine.remaining(), 0,
+                Float.POSITIVE_INFINITY));
         System.out.println("BETA26 infusion ritual resource ledger: OK ("+checks+" assertions)");
     }
 }
