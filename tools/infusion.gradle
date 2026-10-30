@@ -10,7 +10,7 @@ allprojects {
                 type = 'gameTestServer'
                 gameDirectory = project.layout.buildDirectory.dir('infusion-gametest')
                 jvmArguments.add '-Xmx1G'
-                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft'
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.findProperty('infusionGameTestNamespaces') ?: 'thaumcraft,thaumcraft_infusion_regression'
             }
             // Requires a combined source snapshot with the real golem content module.
             neo.runs.create('golemInfusionGameTest') {
@@ -18,6 +18,18 @@ allprojects {
                 gameDirectory = project.layout.buildDirectory.dir('golem-infusion-gametest')
                 jvmArguments.add '-Xmx1G'
                 systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_infusion'
+            }
+            neo.runs.create('infusionClient') {
+                client()
+                gameDirectory = project.layout.buildDirectory.dir('infusion-client')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.infusionClientProbe', 'true'
+            }
+            neo.runs.create('infusionClientServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('infusion-client-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.infusionClientProbe', 'true'
             }
             neo.runs.create('infusionRestart') {
                 server()

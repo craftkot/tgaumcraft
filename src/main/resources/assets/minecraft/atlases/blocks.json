@@ -1,0 +1,9 @@
+{
+  "sources": [
+    {
+      "type": "minecraft:single",
+      "resource": "thaumcraft:entity/armor/caster_basic",
+      "sprite": "thaumcraft:entity/armor/caster_basic"
+    }
+  ]
+}
