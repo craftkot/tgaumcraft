@@ -1,3 +1,5 @@
+> **Справка:** ниже частично сохранено историческое описание Stage 9 и старые счётчики. **Текущий индекс 59/100**, официальный источник — ROADMAP и аудит; [индекс документов](analysis/DOCUMENT_INDEX_RU.md).
+>
 > **Главный актуальный план проекта:** [🧭 ROADMAP_RU.md — дорожная карта с 🟢/🟡/🔴 статусами](ROADMAP_RU.md).
 > Параллельные чаты работают только в своих ветках — [feature/alchemy](../../tree/feature/alchemy), [feature/research](../../tree/feature/research), [feature/infusion](../../tree/feature/infusion); основной план и правила: [AGENTS.md](AGENTS.md) и [порядок параллельной работы](analysis/PARALLEL_WORKFLOW_RU.md).
 >
