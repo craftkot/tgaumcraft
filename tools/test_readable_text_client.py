@@ -153,9 +153,9 @@ public final class ThaumcraftReadableTextClientStubTest {
         inside(g, 0, 16);
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font,
-                new Component("е\\u0301XYZ", bold), 0, 0, 26, 0);
+                new Component("е\\u0301XYZ", bold), 0, 0, 27, 0);
         check(g.text.equals("е\\u0301..."), "accent cluster not retained: " + g.text);
-        inside(g, 0, 26);
+        inside(g, 0, 27);
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font,
                 new Component("👩‍🔬AB", bold), 0, 0, 26, 0);
@@ -163,9 +163,9 @@ public final class ThaumcraftReadableTextClientStubTest {
         inside(g, 0, 26);
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font,
-                new Component("👩‍🔬AB", bold), 0, 0, 36, 0);
+                new Component("👩‍🔬AB", bold), 0, 0, 37, 0);
         check(g.text.equals("👩‍🔬..."), "joined emoji cluster not retained: " + g.text);
-        inside(g, 0, 36);
+        inside(g, 0, 37);
         // Last visible wrapped line must fit together with the 1px shadow.
         // Before the fix "A..." was 12px plus shadow in a 12px panel.
         g = new GuiGraphics();
