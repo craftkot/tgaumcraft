@@ -4,8 +4,10 @@ import dev.ehtid.thaumcraft.port.core.ReadableTextLayout;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -52,20 +54,59 @@ public final class ThaumcraftReadableText {
     }
 
     /**
-     * Draw up to maxLines without shrinking fonts. Any overflowing content
-     * is truncated with a visible ellipsis (never spills into inventory slots).
+     * Draw up to maxLines without shrinking fonts. When the final line overflows,
+     * reserve its own pixel budget for an ellipsis, preserving per-glyph styles.
+     * The previous implementation drew dots over a full line and could spill left
+     * of the panel for widths smaller than the marker itself.
      */
     public static void wrapped(GuiGraphics graphics, Font font,
                                Component message, int x, int y,
                                int maxWidth, int maxLines, int color) {
+        if (maxWidth <= 0 || maxLines <= 0) return;
         List<FormattedCharSequence> lines = font.split(message, maxWidth);
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
-            graphics.drawString(font, lines.get(i), x, y + i * 10, color, true);
+            FormattedCharSequence visible = lines.get(i);
+            if (i == count - 1 && lines.size() > maxLines)
+                visible = lastLineWithEllipsis(font, visible, maxWidth);
+            graphics.drawString(font, visible, x, y + i * 10, color, true);
         }
-        if (lines.size() > maxLines && maxLines > 0) {
-            graphics.drawString(font, "...", x + maxWidth - font.width("..."),
-                    y + (maxLines - 1) * 10, color, true);
-        }
+    }
+
+    private record StyledGlyph(int codePoint, Style style) {}
+
+    private static FormattedCharSequence lastLineWithEllipsis(
+            Font font, FormattedCharSequence line, int maxWidth) {
+        List<StyledGlyph> glyphs = new ArrayList<>();
+        line.accept((index, style, codePoint) -> {
+            glyphs.add(new StyledGlyph(codePoint, style));
+            return true;
+        });
+        String suffix = "...";
+        while (!suffix.isEmpty() && font.width(suffix) > maxWidth)
+            suffix = suffix.substring(1);
+        if (suffix.isEmpty()) return sink -> true;
+
+        String marker = suffix;
+        int prefix = ReadableTextLayout.longestPrefixWithSuffix(glyphs.size(), maxWidth,
+                keep -> font.width(withSuffix(glyphs, keep, marker)));
+        return prefix < 0 ? sink -> true : withSuffix(glyphs, prefix, marker);
+    }
+
+    /** Build a styled visual prefix without cutting surrogate pairs or losing text colors. */
+    private static FormattedCharSequence withSuffix(
+            List<StyledGlyph> glyphs, int keep, String suffix) {
+        return sink -> {
+            int index = 0;
+            for (int i = 0; i < keep; i++) {
+                StyledGlyph glyph = glyphs.get(i);
+                if (!sink.accept(index, glyph.style(), glyph.codePoint())) return false;
+                index += Character.charCount(glyph.codePoint());
+            }
+            for (int i = 0; i < suffix.length(); i++) {
+                if (!sink.accept(index++, Style.EMPTY, suffix.charAt(i))) return false;
+            }
+            return true;
+        };
     }
 }
