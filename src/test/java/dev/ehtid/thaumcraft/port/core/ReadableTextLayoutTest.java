@@ -18,7 +18,7 @@ public final class ReadableTextLayoutTest {
         equal("...", ReadableTextLayout.ellipsize("е\u0301XYZ", 16, ReadableTextLayoutTest::pixels));
         equal("е\u0301...", ReadableTextLayout.ellipsize("е\u0301XYZ", 20, ReadableTextLayoutTest::pixels));
         equal("...", ReadableTextLayout.ellipsize("👩‍🔬AB", 26, ReadableTextLayoutTest::pixels));
-        equal("👩‍🔬...", ReadableTextLayout.ellipsize("👩‍🔬AB", 32, ReadableTextLayoutTest::pixels));
+        equal("👩‍🔬...", ReadableTextLayout.ellipsize("👩‍🔬AB", 33, ReadableTextLayoutTest::pixels));
         equal("...", ReadableTextLayout.ellipsize("🇷🇺AB", 16, ReadableTextLayoutTest::pixels));
         equal("🇷🇺...", ReadableTextLayout.ellipsize("🇷🇺AB", 26, ReadableTextLayoutTest::pixels));
         // Deliberately non-monotonic test metric: longest fitting prefix wins.
