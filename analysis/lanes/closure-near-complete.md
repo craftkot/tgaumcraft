@@ -186,3 +186,8 @@
 **Audit:** fixed baseline remains **59/100**, M16 **4/6**. One scan particle lifetime bug fixed in code; no M16-wide audio/FX acceptance or point increase. PR #4 stays Draft and must not be merged without owner approval.
 
 **Next:** check exact-head isolated M16 and full NeoForge/JAR/server CI. If compilation fails, repair it first. Then add a real Minecraft-client scan-particle lifetime probe (block=45 ticks, player-height target=81 ticks) and inspect actual frames/logs; continue cataloguing original BETA26 audio/FX only after verifying this regression.
+
+
+**CI follow-up (exact code SHA `e5d0009`):** [M16 isolated regression #41300784421](https://github.com/craftkot/tgaumcraft/actions/runs/41300784421) **SUCCESS**. Its actual job log reports 2003 text-core assertions, 54 GUI-helper stub assertions, 118 label-tint assertions and **13 source-derived scan-rune duration assertions**. [Full NeoForge/JAR/server #41300784470](https://github.com/craftkot/tgaumcraft/actions/runs/41300784470) was **IN PROGRESS** (NeoForge build step) at last check; [real label client #41300784472](https://github.com/craftkot/tgaumcraft/actions/runs/41300784472) was **IN PROGRESS** and does not test scan-rune lifetime.
+
+**Sound inventory (scope warning):** pinned original `SoundsTC.registerSounds` declares **65** named events, current port `ThaumcraftSounds` declares only **1** (`scan`). This is an observed registry gap of **64**, not a claim that every one is needed by currently implemented gameplay or that 64 new OGGs may be copied without checking provenance/licensing. Keep M16 at 4/6.
