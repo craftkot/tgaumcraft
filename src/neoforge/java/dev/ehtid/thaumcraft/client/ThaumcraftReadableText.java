@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.client;
 
+import dev.ehtid.thaumcraft.port.core.ReadableTextLayout;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -43,13 +44,9 @@ public final class ThaumcraftReadableText {
     public static void centeredLabel(GuiGraphics graphics, Font font,
                                      Component message, int x, int y,
                                      int availableWidth, int color) {
-        String full = message.getString();
-        String display = full;
-        if (font.width(display) > availableWidth) {
-            String suffix = "...";
-            display = font.plainSubstrByWidth(display,
-                    Math.max(0, availableWidth - font.width(suffix))) + suffix;
-        }
+        String display = ReadableTextLayout.ellipsize(
+                message.getString(), availableWidth, font::width);
+        if (display.isEmpty()) return;
         graphics.drawString(font, display,
                 x + (availableWidth - font.width(display)) / 2, y, color, true);
     }
