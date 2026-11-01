@@ -19,10 +19,43 @@ body = r'''
   # A fixed platform avoids falling during the timed particle observation.
   send_chat '/time set noon'
   send_chat '/weather clear'
-  send_chat '/fill -4 149 -4 4 149 7 minecraft:stone'
-  send_chat '/setblock 0 151 4 minecraft:gold_block'
+  # Real CI #41314620065: the fresh world spawned far from 0,0.
+  # /fill and /setblock were rejected with "That position is not loaded",
+  # leaving the Thaumometer pointing at empty water. Force-load FIRST,
+  # then require an actual vanilla block predicate before any right-click.
+  send_chat '/forceload add 0 0'
+  sleep 5
+  target_ready=0
+  for attempt in 1 2 3; do
+    send_chat '/fill -4 149 -4 4 149 7 minecraft:stone'
+    send_chat '/setblock 0 151 4 minecraft:gold_block'
+    send_chat '/execute if block 0 151 4 minecraft:gold_block run say RUNE_TARGET_GOLD_OK'
+    if grep -Fq 'RUNE_TARGET_GOLD_OK' client-smoke/client.log; then
+      target_ready=1
+      break
+    fi
+    sleep 3
+  done
+  if (( target_ready != 1 )); then
+    echo 'RUNE_WORLD_TARGET_NOT_CONFIRMED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'RUNE_REAL_WORLD_TARGET=PASS' | tee -a client-smoke-status.txt
   send_chat '/tp @p 0.5 150 0.5 0 0'
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'
+  item_ready=0
+  for attempt in 1 2 3; do
+    send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'
+    send_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say RUNE_ITEM_READY'
+    if grep -Fq 'RUNE_ITEM_READY' client-smoke/client.log; then
+      item_ready=1
+      break
+    fi
+  done
+  if (( item_ready != 1 )); then
+    echo 'RUNE_REAL_ITEM_NOT_CONFIRMED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'RUNE_REAL_ITEM=PASS' | tee -a client-smoke-status.txt
   xdotool key --clearmodifiers 1
   sleep 3
 
