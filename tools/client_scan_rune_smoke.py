@@ -95,7 +95,8 @@ created = re.findall(
     r"x=(-?[\d.Ee]+) y=(-?[\d.Ee]+) z=(-?[\d.Ee]+)", log)
 rendered = re.findall(r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\d)", log)
 expired = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\d) age=(\d+) lifetime=(\d+)", log)
+    r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\d) age=(\d+) lifetime=(\d+) "
+    r"drift=([0-9.Ee+-]+)", log)
 if len(created) < 10:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
 if not rendered:
@@ -123,8 +124,10 @@ for face, life, x, y, z in created:
     faces.add(face)
 if len(faces) < 2:
     raise SystemExit(f"RUNE_FACE_VARIETY_MISSING faces={faces}")
-if any(int(age) != 45 or int(life) != 45 for _, age, life in expired):
+if any(int(age) != 45 or int(life) != 45 for _, age, life, _ in expired):
     raise SystemExit("RUNE_ACTUAL_CLIENT_EXPIRY_TICK_WRONG")
+if any(float(drift) > 0.0001 for _, _, _, drift in expired):
+    raise SystemExit("RUNE_HORIZONTAL_DRIFT_FROM_VANILLA_CONSTRUCTOR")
 print(f"RUNE_ACTUAL_CLIENT_SPAWN=PASS count={len(created)} faces={sorted(faces)}")
 print(f"RUNE_ACTUAL_CLIENT_RENDER=PASS count={len(rendered)}")
 print(f"RUNE_ACTUAL_CLIENT_EXPIRY=PASS count={len(expired)}")
