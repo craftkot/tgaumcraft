@@ -230,3 +230,19 @@
 
 
 **Full-build follow-up:** [Thaumcraft Port CI #41309819818](https://github.com/craftkot/tgaumcraft/actions/runs/41309819818) **SUCCESS** on exact code+test SHA `4862724`: full NeoForge build, dedicated-server smoke and JAR upload completed successfully. This proves compilation and server startup, **not** scan-rune rendering in a real Minecraft client. M16 4/6 and total historical 59/100 remain unchanged.
+
+
+## 01.11.2026 — M16: real-client Thaumometer scan-rune acceptance harness
+
+**Why this iteration:** earlier rune geometry/lifetime assertions compiled the actual Java class with synthetic Minecraft API stubs, but did **not** prove that the particles were created, rendered and expired in a real 1.21.1 client. The previous label screenshots do not cover the rune effect. Original comparison remains pinned to `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb`, `FXBlockRunes` / `FXDispatcher.blockRunes`.
+
+**Changed code, isolated to M16:**
+- `src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java`: opt-in `THAUMCRAFT_SMOKE=1` diagnostics from the **real** particle constructor, its render-orientation callback and the tick that expires it. Silent during normal gameplay; no registry, physics, rotation, color or duration changes. Code commit [dbfbe6f](https://github.com/craftkot/tgaumcraft/commit/dbfbe6fcb9b5341595a094ffda2d9c5b5b411c97).
+- `tools/client_scan_rune_smoke.py`: reuses the proven integrated-world/creative/commands bootstrap without editing shared `tools/client_smoke.sh`. Places a real gold-block target in front of the player, equips the Thaumometer, right-clicks in the live client, captures before/during/after PNGs, validates actual constructor/render/expiry log markers, 45-tick lifetime and all sampled face-space coordinates, and checks framebuffer pixel changes. Commit [52df1fa](https://github.com/craftkot/tgaumcraft/commit/52df1fab67a18e9ad61bcf1328640aea1a103523).
+- `.github/workflows/closure-scan-rune-client.yml`: independent real Minecraft/Xvfb/Mesa workflow, artifacts even on failure. Commit [47f67a8](https://github.com/craftkot/tgaumcraft/commit/47f67a8fb3ccb2a7dca30559498fd2528bbc77e4).
+
+**Validation at journal write:** real-client [Actions #41314620065](https://github.com/craftkot/tgaumcraft/actions/runs/41314620065), full NeoForge/JAR/server [#41314620052](https://github.com/craftkot/tgaumcraft/actions/runs/41314620052) and isolated M16 [#41314620063](https://github.com/craftkot/tgaumcraft/actions/runs/41314620063) were **IN PROGRESS** on exact code+workflow SHA `47f67a8`. No successful real-client rune render/timing claim until the run finishes and its log/screenshots are examined. Earlier exact-head `49c5b8b` [full CI #41310024723](https://github.com/craftkot/tgaumcraft/actions/runs/41310024723) SUCCESS is a **previous revision**, not proof for this new probe.
+
+**Safety and audit:** no modifications to `main`, foreign feature branches or their PRs; PR #4 stays Draft. Fixed historical index **59/100**, M16 **4/6**. New instrumentation/test is not by itself completion of the category or a gameplay repair.
+
+**Next action:** inspect #41314620065 step logs and screenshots; if the new real-client smoke fails, identify whether it is client input/world setup, particle rendering or the acceptance probe and repair that specific blocker before starting unrelated sounds/FX. If it passes, record exact real-world evidence and move to the next small BETA26 visual/audio mismatch.
