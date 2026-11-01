@@ -11,6 +11,8 @@ on:
       - 'tools/client_curio_learn_sound_smoke.py'
       - 'tools/match_curio_audio_pcm.py'
       - 'tools/test_curio_learn_sound.py'
+      - 'tools/check_curio_pitch_parity.py'
+      - 'tools/test_curio_pitch_parity.py'
       - '.github/workflows/closure-curio-learn-client.yml'
   pull_request:
     branches: [main]
@@ -22,6 +24,8 @@ on:
       - 'tools/client_curio_learn_sound_smoke.py'
       - 'tools/match_curio_audio_pcm.py'
       - 'tools/test_curio_learn_sound.py'
+      - 'tools/check_curio_pitch_parity.py'
+      - 'tools/test_curio_pitch_parity.py'
       - '.github/workflows/closure-curio-learn-client.yml'
   workflow_dispatch:
 
@@ -55,6 +59,7 @@ jobs:
         run: |
           python -m pip install numpy==2.2.6
           python tools/test_curio_learn_sound.py
+          python tools/test_curio_pitch_parity.py
       - name: Generate real client script and validate Bash
         run: |
           python3 tools/client_curio_learn_sound_smoke.py > client-curio-generated.sh

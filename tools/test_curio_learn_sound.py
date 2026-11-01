@@ -20,7 +20,8 @@ assert sounds["learn"] == {
 registry = (root / "src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java").read_text()
 item = (root / "src/neoforge/java/dev/ehtid/thaumcraft/item/CurioItem.java").read_text()
 assert 'SOUND_EVENTS.register("learn"' in registry
-assert 'ThaumcraftSounds.LEARN.get(), SoundSource.NEUTRAL, 0.5F' in item
+assert 'ThaumcraftSounds.LEARN.get(), SoundSource.NEUTRAL, 0.5F, requestedPitch' in item
+assert 'TC_SMOKE_CURIO_LEARN_REQUESTED_PITCH=' in item
 assert '0.4F / (LEARN_SOUND_RANDOM.nextFloat() * 0.4F + 0.8F)' in item
 assert item.index("level.playSound(null,") < item.index("if (index == 6 && actualWarp <= 20)")
 assert item.index("if (level.isClientSide)") < item.index("level.playSound(null,")

@@ -45,6 +45,8 @@ body = r'''
     client-smoke/curio-baseline.pcm client-smoke/curio-event.pcm \
     src/main/resources/assets/thaumcraft/sounds/learn.ogg \
     | tee client-smoke/curio-source-match.txt
+  python3 tools/check_curio_pitch_parity.py client-smoke/client.log client-smoke/curio-source-match.txt \
+    | tee client-smoke/curio-pitch-parity.txt
   echo 'CURIO_LEARN_REAL_PCM=PASS' | tee -a client-smoke-status.txt
   count="$(grep -Fc 'TC_SMOKE_CURIO_LEARN_SOUND_DISPATCHED=YES' client-smoke/client.log || true)"
   if (( count != 1 )); then

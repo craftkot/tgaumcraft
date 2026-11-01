@@ -99,9 +99,14 @@ public final class CurioItem extends Item {
         // checking the Crimson Rites warp gate; even a denied rite makes the sound.
         // Server-side only: Level.playSound(null, ...) sends one event to nearby
         // clients, avoiding duplicate playback on the local integrated client.
+        float requestedPitch = 0.4F / (LEARN_SOUND_RANDOM.nextFloat() * 0.4F + 0.8F);
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                ThaumcraftSounds.LEARN.get(), SoundSource.NEUTRAL, 0.5F,
-                0.4F / (LEARN_SOUND_RANDOM.nextFloat() * 0.4F + 0.8F));
+                ThaumcraftSounds.LEARN.get(), SoundSource.NEUTRAL, 0.5F, requestedPitch);
+        // Both BETA26 Minecraft 1.12 SoundManager and modern SoundEngine
+        // clamp playback pitch to [0.5, 2.0]. Preserve the original RNG.
+        if ("1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            System.out.println("TC_SMOKE_CURIO_LEARN_REQUESTED_PITCH=" + requestedPitch);
+        }
         ThaumcraftSmokeAudit.mark("CURIO_LEARN_SOUND_DISPATCHED");
 
         var state = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
