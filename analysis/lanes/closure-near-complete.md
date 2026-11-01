@@ -227,3 +227,6 @@
 
 
 **Exact-code test follow-up:** [M16 #41309819796](https://github.com/craftkot/tgaumcraft/actions/runs/41309819796) **SUCCESS** at code+test SHA `4862724`. Actual job log: **1409 ScanRuneOrientationTest assertions PASS**, now including face-space offsets and first-frame coordinates; 2003 text-core, 54 GUI-stub, 118 tint and 13 duration assertions also PASS. [Full NeoForge #41309819818](https://github.com/craftkot/tgaumcraft/actions/runs/41309819818) was still **IN PROGRESS** at the `NeoForge build` step when checked. No rendered scan-rune smoke; score unchanged.
+
+
+**Full-build follow-up:** [Thaumcraft Port CI #41309819818](https://github.com/craftkot/tgaumcraft/actions/runs/41309819818) **SUCCESS** on exact code+test SHA `4862724`: full NeoForge build, dedicated-server smoke and JAR upload completed successfully. This proves compilation and server startup, **not** scan-rune rendering in a real Minecraft client. M16 4/6 and total historical 59/100 remain unchanged.
