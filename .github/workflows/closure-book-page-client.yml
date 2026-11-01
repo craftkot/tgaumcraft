@@ -6,12 +6,14 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
       - '.github/workflows/closure-book-page-client.yml'
   pull_request:
     branches: [main]
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
       - '.github/workflows/closure-book-page-client.yml'
   workflow_dispatch:
 
@@ -36,13 +38,23 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             xvfb x11-utils xdotool openbox mesa-utils \
-            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
       - name: Generate isolated real-client script and validate Bash
         run: |
           python3 tools/client_book_page_sound_smoke.py > client-page-smoke-generated.sh
           bash -n client-page-smoke-generated.sh
-      - name: Test real book use, client sound manager and visible GUI
-        run: bash client-page-smoke-generated.sh
+      - name: Start virtual PulseAudio sink and test real client PCM
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_page_sink rate=48000 channels=2
+          pactl set-default-sink tc_page_sink
+          pactl info
+          pactl list short sinks
+          bash client-page-smoke-generated.sh
       - name: Upload real game screenshots and diagnostics
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Isolated real Minecraft Thaumonomicon page sound dispatch and loaded-resource smoke.
+"""Isolated real Minecraft Thaumonomicon GUI, sound dispatch and PCM smoke.
 
-The null OpenAL driver in CI prevents audible/PCM verification. This checks the
-real client sound manager's loaded event, actual item right-click and GUI pixels.
+Runs OpenAL Soft through a PulseAudio virtual sink and measures monitor PCM.
+A non-silent monitor plus resource resolution proves a playback path, but
+not exact perceptual parity with BETA26 clips.
 """
 from pathlib import Path
 import sys
@@ -11,7 +12,9 @@ source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 anchor = "  # The initial world is already creative + peaceful, as established"
 if source.count(anchor) != 1:
     raise SystemExit("World boot hook changed; refusing unsafe smoke injection")
-head = source.split(anchor, 1)[0]
+if source.count("export ALSOFT_DRIVERS=null") != 1:
+    raise SystemExit("OpenAL backend hook changed; refusing an unverified audio smoke")
+head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
 body = r'''
   echo 'PAGE_REAL_INTEGRATED_WORLD=YES' | tee -a client-smoke-status.txt
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumonomicon 1'
@@ -24,8 +27,25 @@ body = r'''
   xdotool key --clearmodifiers 1
   sleep 3
   import -display :99 -window root -silent client-smoke/screenshots/80-page-before-use.png
+  # PulseAudio monitor is a genuine PCM stream, unlike the old null OpenAL driver.
+  # Capture the quiet pre-event baseline separately to reject a permanently noisy sink.
+  pactl info > client-smoke/pulse-info.txt
+  pactl list short sinks | grep -Fq 'tc_page_sink'
+  timeout --signal=TERM 2s parec --device=tc_page_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/page-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_page_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/page-event.pcm &
+  page_audio_capture_pid=$!
+  sleep 0.6
   xdotool click 3
   sleep 5
+  wait "$page_audio_capture_pid" || test "$?" -eq 124
+  python3 tools/check_page_audio_pcm.py \
+    client-smoke/page-baseline.pcm client-smoke/page-event.pcm \
+    | tee client-smoke/page-pcm-check.txt
+  echo 'PAGE_REAL_CLIENT_PCM=PASS' | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/81-page-book-open.png
   for event in THAUMONOMICON_PAGE_SOUND_DISPATCHED THAUMONOMICON_PAGE_SOUND_RESOLVED THAUMONOMICON_GUI_OPENED; do
     count="$(grep -Fc "TC_SMOKE_${event}=YES" client-smoke/client.log || true)"
