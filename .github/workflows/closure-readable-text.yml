@@ -10,6 +10,11 @@ on:
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
       - 'tools/test_readable_text_layout.sh'
       - 'tools/test_readable_text_client.py'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'tools/verify_label_brace_source_art.py'
       - '.github/workflows/closure-readable-text.yml'
   pull_request:
     paths:
@@ -18,6 +23,11 @@ on:
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
       - 'tools/test_readable_text_layout.sh'
       - 'tools/test_readable_text_client.py'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'tools/verify_label_brace_source_art.py'
       - '.github/workflows/closure-readable-text.yml'
 
 jobs:
@@ -34,3 +44,5 @@ jobs:
         run: bash tools/test_readable_text_layout.sh
       - name: Compile real NeoForge GUI helper against minimal test stubs
         run: python3 tools/test_readable_text_client.py
+      - name: Verify original BETA26 jar brace and blank/filled label art
+        run: python3 tools/verify_label_brace_source_art.py
