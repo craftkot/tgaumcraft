@@ -21,7 +21,7 @@ EXPECTED_BLOBS = {
 for filename, expected in EXPECTED_BLOBS.items():
     data = (ASSETS / "sounds" / filename).read_bytes()
     assert data.startswith(b"OggS"), filename + " must be original Ogg Vorbis"
-    git_sha = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\\0" + data).hexdigest()
+    git_sha = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
     assert git_sha == expected, (filename, git_sha, expected)
 
 sounds = json.loads((ASSETS / "sounds.json").read_text(encoding="utf-8"))
