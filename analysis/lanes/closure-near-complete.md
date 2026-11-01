@@ -86,3 +86,16 @@
 
 
 **Verification follow-up:** [M16 isolated regression Actions #41271605217](https://github.com/craftkot/tgaumcraft/actions/runs/41271605217) completed **SUCCESS** on `71e7baa`. Actual logs: `Readable text pixel bounds: OK (2003 assertions)` and `Client styled GUI layout stubs: OK (38 assertions)`. Full NeoForge/JAR/server Actions [#41271605240](https://github.com/craftkot/tgaumcraft/actions/runs/41271605240) remained **IN PROGRESS** at inspection. No real-client screenshot; 59/100 and M16 4/6 remain unchanged.
+
+
+## 01.11.2026 — M16: unsplittable glyph in a narrow wrapped label
+
+**Code defect:** `ThaumcraftReadableText.wrapped` trusted every visible `Font.split` line to fit `maxWidth - 1`, except the final line when more lines were hidden. A single indivisible glyph (e.g. emoji/CJK) can be wider than the split width. With `maxLines=1` and only one returned line, it was drawn unbounded, including the shadow, outside the panel.
+
+**Fix:** `src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java` now passes every ordinary visible line through the existing grapheme-safe, styled, pixel-bounded `fitStyledLine` helper. For the last visible line with additional hidden lines, the existing explicit ellipsis path is unchanged. No changes to global registries, world logic, CI settings or other teams' files.
+
+**Regression:** `tools/test_readable_text_client.py` now exercises the real GUI helper against synthetic Minecraft API stubs with one unsplittable 6px glyph inside a 5px shadow-inclusive box (expected two dots), and a 7px box where the full glyph fits. This test is not a real Minecraft client. Commits: code `21acb388d05b3849ebeb8f7989187052c54e2dda`, test `581920cd4de7ee1c674499707b831928f6b24b72`.
+
+**CI baseline:** the immediately preceding HEAD `4764057` had [M16 regression #41271654773](https://github.com/craftkot/tgaumcraft/actions/runs/41271654773) **SUCCESS** and [full NeoForge/JAR/dedicated server #41271654740](https://github.com/craftkot/tgaumcraft/actions/runs/41271654740) **SUCCESS**. New exact-head runs on `581920c` started: [M16 regression #41276053884](https://github.com/craftkot/tgaumcraft/actions/runs/41276053884) queued and [full CI #41276053888](https://github.com/craftkot/tgaumcraft/actions/runs/41276053888) in progress at observation. Do not claim either new run passed before checking it.
+
+**Audit:** 59/100, M16 4/6 unchanged. The fix prevents a specific overflow but does not prove graphical RU/EN rendering, original sound/particle/asset parity or end-to-end gameplay. PR #4 stays Draft; no merge. Next: inspect both exact-head CI results; obtain actual client screenshot evidence and identify a missing original visual/audio asset without overlapping the feature teams.
