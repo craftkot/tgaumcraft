@@ -16,6 +16,21 @@ public final class ReadableTextLayoutTest {
         equal("Сканирование", ReadableTextLayout.ellipsize("Сканирование", 100, ReadableTextLayoutTest::pixels));
         equal("", ReadableTextLayout.ellipsize("", 10, ReadableTextLayoutTest::pixels));
 
+        // The final visible wrapped line must fit WITH its ellipsis, not draw dots
+        // on top of an already-full line or to the left of a narrow rectangle.
+        equal(2, ReadableTextLayout.longestPrefixWithSuffix(4, 10, n -> 6 + n * 2));
+        equal(0, ReadableTextLayout.longestPrefixWithSuffix(4, 6, n -> 6 + n * 2));
+        equal(-1, ReadableTextLayout.longestPrefixWithSuffix(4, 5, n -> 6 + n * 2));
+        equal(-1, ReadableTextLayout.longestPrefixWithSuffix(4, -1, n -> 0));
+        equal(0, ReadableTextLayout.longestPrefixWithSuffix(0, 6, n -> 6));
+        // A styled font can have non-monotonic advances (kerning): do not binary search.
+        int[] styledWidths = {6, 12, 9, 13};
+        equal(2, ReadableTextLayout.longestPrefixWithSuffix(3, 10, n -> styledWidths[n]));
+        boolean rejected = false;
+        try { ReadableTextLayout.longestPrefixWithSuffix(-1, 10, n -> 0); }
+        catch (IllegalArgumentException expected) { rejected = true; }
+        check(rejected, "negative glyph count accepted");
+
         for (String text : new String[]{"Алхимия и исследования", "FIRSTSTEPS", "👾Кристаллы🔮", "a", ""}) {
             for (int limit = -1; limit <= 150; limit++) {
                 String result = ReadableTextLayout.ellipsize(text, limit, ReadableTextLayoutTest::pixels);
@@ -51,5 +66,9 @@ public final class ReadableTextLayoutTest {
 
     private static void equal(String expected, String actual) {
         check(expected.equals(actual), "expected '" + expected + "', got '" + actual + "'");
+    }
+
+    private static void equal(int expected, int actual) {
+        check(expected == actual, "expected " + expected + ", got " + actual);
     }
 }
