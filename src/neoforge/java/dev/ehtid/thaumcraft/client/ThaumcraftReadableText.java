@@ -7,8 +7,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
 
+import java.text.BreakIterator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Readability improvements for Thaumcraft's intentionally dark 1.12 GUIs.
@@ -100,13 +102,38 @@ public final class ThaumcraftReadableText {
             suffix = suffix.substring(1);
         if (suffix.isEmpty()) return sink -> true;
 
+        // Measure only complete visual grapheme clusters, not arbitrary glyph
+        // boundaries. Cutting after the base of an accented letter or inside a
+        // ZWJ emoji changes what the player sees in localized GUI text.
+        List<Integer> prefixes = graphemePrefixCounts(glyphs);
         String marker = suffix;
-        int prefix = ReadableTextLayout.longestPrefixWithSuffix(glyphs.size(), maxWidth,
-                keep -> font.width(withSuffix(glyphs, keep, marker)));
-        return prefix < 0 ? sink -> true : withSuffix(glyphs, prefix, marker);
+        int clusterPrefix = ReadableTextLayout.longestPrefixWithSuffix(
+                prefixes.size() - 1, maxWidth,
+                keep -> font.width(withSuffix(glyphs, prefixes.get(keep), marker)));
+        return clusterPrefix < 0 ? sink -> true
+                : withSuffix(glyphs, prefixes.get(clusterPrefix), marker);
     }
 
-    /** Build a styled visual prefix without cutting surrogate pairs or losing text colors. */
+    private static List<Integer> graphemePrefixCounts(List<StyledGlyph> glyphs) {
+        StringBuilder visual = new StringBuilder();
+        for (StyledGlyph glyph : glyphs) visual.appendCodePoint(glyph.codePoint());
+        BreakIterator clusters = BreakIterator.getCharacterInstance(Locale.ROOT);
+        clusters.setText(visual.toString());
+        List<Integer> prefixes = new ArrayList<>();
+        prefixes.add(0);
+        int glyphIndex = 0;
+        int utf16End = 0;
+        for (int boundary = clusters.next(); boundary != BreakIterator.DONE;
+             boundary = clusters.next()) {
+            while (glyphIndex < glyphs.size() && utf16End < boundary) {
+                utf16End += Character.charCount(glyphs.get(glyphIndex++).codePoint());
+            }
+            if (utf16End == boundary) prefixes.add(glyphIndex);
+        }
+        return prefixes;
+    }
+
+    /** Build a styled visual prefix without cutting grapheme clusters or losing text colors. */
     private static FormattedCharSequence withSuffix(
             List<StyledGlyph> glyphs, int keep, String suffix) {
         return sink -> {
