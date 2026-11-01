@@ -5,6 +5,8 @@ on:
     branches: [feature/closure-near-complete]
     paths:
       - 'tools/client_scan_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
       - 'tools/match_scan_audio_pcm.py'
       - 'tools/test_scan_audio_match.py'
       - '.github/workflows/closure-scan-sound-client.yml'
@@ -12,6 +14,8 @@ on:
     branches: [main]
     paths:
       - 'tools/client_scan_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
       - 'tools/match_scan_audio_pcm.py'
       - 'tools/test_scan_audio_match.py'
       - '.github/workflows/closure-scan-sound-client.yml'
@@ -42,6 +46,7 @@ jobs:
             pulseaudio pulseaudio-utils
       - name: Generate isolated real-client script and check syntax
         run: |
+          python3 tools/test_pcm_capture_validation.py
           python3 tools/client_scan_sound_smoke.py > client-scan-sound-generated.sh
           bash -n client-scan-sound-generated.sh
       - name: Start PulseAudio and capture actual Minecraft scan audio
