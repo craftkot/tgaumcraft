@@ -66,3 +66,5 @@
 **Safety/audit:** changes only in this lane's two layout classes and two dedicated tests. `main`, other feature branches, CI and registries untouched. PR #4 stays Draft. Fixed readiness rubric **59/100**, M16 **4/6** (no +1 for isolated layout corrections).
 
 **Next:** inspect latest GitHub Actions, run `tools/test_readable_text_layout.sh` and `tools/test_readable_text_client.py` in a suitable checkout, then obtain actual Minecraft GUI screenshots to verify font shaping and the visual bounds. Continue missing visual/audio parity after the GUI smoke.
+
+**CI follow-up:** [GitHub Actions #41268171341](https://github.com/craftkot/tgaumcraft/actions/runs/41268171341) **SUCCESS** on `1070c5a`: Core parity, NeoForge build/JAR, dedicated-server smoke and JAR upload. The later `258f643` client stub test and `8c155c4` corrected test fixture were not part of that exact run; their workflows were still in progress. Separate local Java 21 reconstruction of the styled-grapheme prefix mapping passed **6/6** targeted cases. This is algorithm-level evidence, not a run of the actual Minecraft client.
