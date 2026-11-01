@@ -177,6 +177,19 @@ public final class ThaumcraftReadableTextClientStubTest {
         ThaumcraftReadableText.wrapped(g, font,
                 new Component("AB\\nCD", Style.EMPTY), 0, 0, 1, 1, 0);
         check(g.draws == 0, "1px panel cannot contain a shadowed glyph");
+        // A single indivisible glyph can exceed Font.split's width budget.
+        // Previously wrapped() only ellipsized when lines.size() > maxLines;
+        // a one-line oversized glyph was drawn past the panel edge.
+        g = new GuiGraphics();
+        ThaumcraftReadableText.wrapped(g, font,
+                new Component("🔮", Style.EMPTY), 3, 0, 5, 1, 0);
+        check(g.text.equals(".."), "oversized single glyph not clamped: " + g.text);
+        inside(g, 3, 5);
+        g = new GuiGraphics();
+        ThaumcraftReadableText.wrapped(g, font,
+                new Component("🔮", Style.EMPTY), 3, 0, 7, 1, 0);
+        check(g.text.equals("🔮"), "fitting single glyph was altered: " + g.text);
+        inside(g, 3, 7);
         System.out.println("Client styled GUI layout stubs: OK (" + checks + " assertions)");
     }
 }'''
