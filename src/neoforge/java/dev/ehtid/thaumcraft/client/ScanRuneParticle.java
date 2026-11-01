@@ -23,6 +23,11 @@ public final class ScanRuneParticle extends TextureSheetParticle {
     // around local Z. A vanilla billboard's roll rotates around the camera
     // instead, changing the rune's appearance as the player looks around.
     private final float legacyWorldYaw;
+    // Opt-in CI evidence from the ACTUAL client particle, never a mock render.
+    // This is silent in normal gameplay and does not change particle behavior.
+    private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private final int smokeFace;
+    private boolean smokeRendered;
 
     private ScanRuneParticle(ClientLevel level, double x, double y, double z,
                              double red, double durationUnits, double blue, SpriteSet sprites) {
@@ -34,6 +39,7 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.lifetime = LegacyScanRuneDuration.lifetimeTicks(durationUnits);
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
         int yawQuarter = this.random.nextInt(4);
+        this.smokeFace = yawQuarter;
         this.legacyWorldYaw = yawQuarter * Mth.HALF_PI;
         this.roll = this.oRoll = 0.0F;
         this.alpha = 0.0F;
@@ -57,14 +63,28 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.xo = this.x;
         this.yo = this.y;
         this.zo = this.z;
+        if (SMOKE_PROBE) {
+            System.out.println("TC_SMOKE_SCAN_RUNE_CREATED=YES face=" + smokeFace
+                    + " lifetime=" + lifetime + " x=" + x() + " y=" + y() + " z=" + z());
+        }
     }
+
+    // Keep probe formatting independent from Minecraft API getters.
+    private double x() { return this.x; }
+    private double y() { return this.y; }
+    private double z() { return this.z; }
 
     @Override
     public SingleQuadParticle.FacingCameraMode getFacingCameraMode() {
         // FXBlockRunes.renderParticle: glRotatef(rotation, 0,1,0),
         // then glRotatef(90, 0,0,1). No camera-facing billboard.
-        return (rotation, camera, partialTick) ->
-                rotation.rotationY(this.legacyWorldYaw).rotateZ(Mth.HALF_PI);
+        return (rotation, camera, partialTick) -> {
+            rotation.rotationY(this.legacyWorldYaw).rotateZ(Mth.HALF_PI);
+            if (SMOKE_PROBE && !smokeRendered) {
+                smokeRendered = true;
+                System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace);
+            }
+        };
     }
 
     @Override
@@ -81,6 +101,10 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.alpha = Math.max(0.0F, legacyAlpha * 0.5F);
 
         if (this.age++ >= this.lifetime) {
+            if (SMOKE_PROBE) {
+                System.out.println("TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=" + smokeFace
+                        + " age=" + (this.age - 1) + " lifetime=" + lifetime);
+            }
             this.remove();
             return;
         }
