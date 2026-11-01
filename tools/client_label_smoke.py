@@ -51,13 +51,23 @@ body = r'''
   label_capture 64-all-four-in-real-inventory
   xdotool key --clearmodifiers e
 
-  # The original smoke enforces guiScale:2, 1024x768 Minecraft window.
-  # Hotbar slot 0 center is GUI (width/2 - 81, height - 11). Compare only
-  # its item-icon pixels, not the moving world/sky or fading chat.
+  # guiScale:2: a 16x16 item icon is 32 physical pixels. The earlier
+  # crop used Y+HEIGHT-22 and captured only the LOWER HALF of the icon plus
+  # the hotbar border. Real run #41287870087 showed this; move the crop
+  # center 20 pixels up to include the entire item, not the slot decoration.
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
   hotbar_x=$((X + WIDTH / 2 - 162))
-  hotbar_y=$((Y + HEIGHT - 22))
+  hotbar_y=$((Y + HEIGHT - 42))
+  read -r screen_width screen_height < <(
+    identify -format '%w %h' client-smoke/screenshots/60-jar-brace.png
+  )
+  if (( hotbar_x < 16 || hotbar_y < 16 ||
+        hotbar_x + 16 > screen_width || hotbar_y + 16 > screen_height )); then
+    echo "LABEL_ICON_CROP_OUTSIDE_SCREEN=x:$hotbar_x y:$hotbar_y screen:${screen_width}x${screen_height}" \
+      | tee -a client-smoke-status.txt
+    exit 1
+  fi
   for name in 60-jar-brace 61-blank-label 62-aer-label 63-ignis-label; do
     convert "client-smoke/screenshots/$name.png" \
       -crop "32x32+$((hotbar_x-16))+$((hotbar_y-16))" +repage \
@@ -82,6 +92,23 @@ body = r'''
   label_diff 61-blank-label 62-aer-label
   label_diff 61-blank-label 63-ignis-label
   label_diff 62-aer-label 63-ignis-label
+
+  # A nonzero pixel difference alone is weak evidence: camera movement,
+  # chat or a shifting highlight can make a broken model look "different".
+  # Check the CENTER of the rendered icon, away from the hotbar frame.
+  # Ignis must be substantially redder than Aer (original aspect colors).
+  aer_red_minus_green="$(convert client-smoke/screenshots/62-aer-label-slot0.png \
+    -crop 16x16+8+8 +repage -format '%[fx:mean.r-mean.g]' info:)"
+  ignis_red_minus_green="$(convert client-smoke/screenshots/63-ignis-label-slot0.png \
+    -crop 16x16+8+8 +repage -format '%[fx:mean.r-mean.g]' info:)"
+  echo "LABEL_AER_RED_MINUS_GREEN=$aer_red_minus_green" | tee -a client-smoke-status.txt
+  echo "LABEL_IGNIS_RED_MINUS_GREEN=$ignis_red_minus_green" | tee -a client-smoke-status.txt
+  if ! awk -v aer="$aer_red_minus_green" -v ignis="$ignis_red_minus_green" \
+      'BEGIN { exit !(ignis - aer > 0.12 && ignis > 0.14 && aer < 0.14) }'; then
+    echo 'LABEL_ASPECT_COLOR_PARITY_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS' | tee -a client-smoke-status.txt
 
   if grep -Eiq "Unable to load model.*thaumcraft:item/(label|label_filled|jar_brace)|Unable to load texture.*(label_overlay|jar_brace)" \
     client-smoke/client.log run/logs/latest.log 2>/dev/null; then
