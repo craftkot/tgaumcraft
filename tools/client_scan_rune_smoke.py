@@ -27,7 +27,7 @@ body = r'''
   sleep 5
   target_ready=0
   for attempt in 1 2 3; do
-    send_chat '/fill -4 149 -4 4 149 7 minecraft:stone'
+    send_chat '/fill -4 149 -4 4 149 10 minecraft:stone'
     send_chat '/setblock 0 151 4 minecraft:gold_block'
     send_chat '/execute if block 0 151 4 minecraft:gold_block run say RUNE_TARGET_GOLD_OK'
     if grep -Fq 'RUNE_TARGET_GOLD_OK' client-smoke/client.log; then
@@ -80,6 +80,36 @@ body = r'''
   rune_capture 72-rune-fading
   sleep 12
   rune_capture 73-rune-after-expiry
+
+  # Independent opposite-face view: prove the real rune effect is visible
+  # from both Z directions, not merely one favorable camera angle. The
+  # target is the same block; the second viewpoint is on the platform.
+  send_chat '/tp @p 0.5 150 8.5 180 0'
+  send_chat '/execute if entity @p[x=0,y=150,z=8,dx=1,dy=2,dz=1] run say RUNE_OPPOSITE_POSITION_OK'
+  if ! grep -Fq 'RUNE_OPPOSITE_POSITION_OK' client-smoke/client.log; then
+    echo 'RUNE_OPPOSITE_REAL_TELEPORT_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'RUNE_OPPOSITE_REAL_TELEPORT=PASS' | tee -a client-smoke-status.txt
+  sleep 3
+  rune_capture 74-rune-opposite-before-use
+  first_view_created="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_CREATED=YES' client-smoke/client.log || true)"
+  for attempt in 1 2 3 4; do
+    xdotool click 3
+    sleep 0.3
+  done
+  sleep 0.5
+  rune_capture 75-rune-opposite-during-use
+  sleep 12
+  rune_capture 76-rune-opposite-after-expiry
+  second_view_created="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_CREATED=YES' client-smoke/client.log || true)"
+  if (( second_view_created < first_view_created + 10 )); then
+    echo "RUNE_OPPOSITE_ACTUAL_PARTICLE_SPAWN_MISSING=before:$first_view_created after:$second_view_created" \
+      | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RUNE_OPPOSITE_ACTUAL_PARTICLE_SPAWN=PASS count=$((second_view_created-first_view_created))" \
+    | tee -a client-smoke-status.txt
   xdotool key --clearmodifiers F1
 
   # Real-client diagnostics are emitted from the actual ScanRuneParticle
@@ -139,7 +169,8 @@ PY
   eval "$geometry"
   crop_x=$((X + WIDTH / 2 - 150))
   crop_y=$((Y + HEIGHT / 2 - 150))
-  for name in 70-rune-before-use 71-rune-during-use; do
+  for name in 70-rune-before-use 71-rune-during-use \
+              74-rune-opposite-before-use 75-rune-opposite-during-use; do
     convert "client-smoke/screenshots/$name.png" \
       -crop "300x300+$crop_x+$crop_y" +repage \
       "client-smoke/screenshots/$name-target.png"
@@ -153,6 +184,20 @@ PY
     exit 1
   fi
   echo "RUNE_REAL_FRAMEBUFFER_DIFFERENCE=PASS pixels=$pixel_diff" | tee -a client-smoke-status.txt
+  # A second independent before/after framebuffer pair from the opposite
+  # side. Do not compare frames across camera angles: that would produce
+  # a false positive from the changed terrain/background.
+  opposite_diff="$(compare -metric AE \
+    client-smoke/screenshots/74-rune-opposite-before-use-target.png \
+    client-smoke/screenshots/75-rune-opposite-during-use-target.png null: 2>&1 || true)"
+  opposite_diff="${opposite_diff%% *}"
+  if ! [[ "$opposite_diff" =~ ^[0-9]+$ ]] || (( opposite_diff < 40 )); then
+    echo "RUNE_OPPOSITE_REAL_FRAMEBUFFER_DIFFERENCE_MISSING=$opposite_diff" \
+      | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RUNE_OPPOSITE_REAL_FRAMEBUFFER_DIFFERENCE=PASS pixels=$opposite_diff" \
+    | tee -a client-smoke-status.txt
   if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' \
     client-smoke/client.log; then
     echo 'RUNE_CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
