@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.client;
 
+import dev.ehtid.thaumcraft.port.core.LegacyScanRuneDuration;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
@@ -12,17 +13,19 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * BETA26 FXBlockRunes projection for Thaumometer scan feedback:
- * lifetime=3*15, gravity=.03, fullbright, random one of sixteen original rune sprites,
+ * lifetime=3*m (m=15 for blocks, floor(entity height*15) for entities),
+ * gravity=.03, fullbright, random one of sixteen original rune sprites,
  * quarter-turn rotation, 0.3 scale with gaussian variation and the exact fade curve.
  */
 public final class ScanRuneParticle extends TextureSheetParticle {
     private ScanRuneParticle(ClientLevel level, double x, double y, double z,
-                             double red, double green, double blue, SpriteSet sprites) {
+                             double red, double durationUnits, double blue, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
-        this.setColor((float) red, (float) green, (float) blue);
+        // Y-speed is a duration transport slot, never the rune's green pigment.
+        this.setColor((float) red, 0.0F, (float) blue);
         this.gravity = 0.03F;
         this.hasPhysics = false;
-        this.lifetime = 45;
+        this.lifetime = LegacyScanRuneDuration.lifetimeTicks(durationUnits);
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
         this.roll = this.oRoll = this.random.nextInt(4) * Mth.HALF_PI;
         this.alpha = 0.0F;
@@ -76,8 +79,8 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         @Override
         public @Nullable Particle createParticle(SimpleParticleType type, ClientLevel level,
                                                  double x, double y, double z,
-                                                 double red, double green, double blue) {
-            return new ScanRuneParticle(level, x, y, z, red, green, blue, sprites);
+                                                 double red, double durationUnits, double blue) {
+            return new ScanRuneParticle(level, x, y, z, red, durationUnits, blue, sprites);
         }
     }
 }
