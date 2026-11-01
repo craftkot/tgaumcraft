@@ -71,8 +71,13 @@ public final class GuiGraphics {
     public String text = "";
     public List<Boolean> bold = new ArrayList<>();
     public int draws, x, drawnWidth;
+    public int fills;
+    public List<int[]> rectangles = new ArrayList<>();
     public boolean shadow;
-    public void fill(int x1, int y1, int x2, int y2, int color) {}
+    public void fill(int x1, int y1, int x2, int y2, int color) {
+        fills++;
+        rectangles.add(new int[] {x1, y1, x2, y2});
+    }
     public void drawString(Font font, FormattedCharSequence seq, int x, int y, int color, boolean shadow) {
         StringBuilder out = new StringBuilder();
         bold.clear();
@@ -104,6 +109,26 @@ public final class ThaumcraftReadableTextClientStubTest {
         Font font = new Font();
         Style bold = new Style(true);
         GuiGraphics g = new GuiGraphics();
+        // GUI panel borders must not create inverted or zero-area fill calls.
+        ThaumcraftReadableText.panel(g, 4, 5, 0, 20);
+        check(g.fills == 0, "zero-width panel submitted a fill");
+        ThaumcraftReadableText.panel(g, 4, 5, 20, -1);
+        check(g.fills == 0, "negative-height panel submitted a fill");
+        ThaumcraftReadableText.panel(g, 4, 5, 1, 1);
+        check(g.fills == 1, "one-pixel panel must paint border only");
+        ThaumcraftReadableText.panel(g, 4, 5, 2, 2);
+        check(g.fills == 2, "two-pixel panel must paint border only");
+        ThaumcraftReadableText.panel(g, 4, 5, 3, 3);
+        check(g.fills == 4, "three-pixel panel needs border and valid interior");
+        for (int[] rect : g.rectangles) {
+            check(rect[2] > rect[0] && rect[3] > rect[1],
+                    "panel submitted an inverted/empty fill rectangle");
+        }
+        int[] interior = g.rectangles.get(3);
+        check(interior[0] == 5 && interior[1] == 6
+                        && interior[2] == 6 && interior[3] == 7,
+                "three-pixel panel interior coordinates changed");
+        g = new GuiGraphics();
         Component label = new Component("Жирный текст", bold);
         ThaumcraftReadableText.centeredLabel(g, font, label, 40, 0, 35, 0xFFFFFF);
         check(g.text.equals("Жи..."), "styled truncation lost: " + g.text);

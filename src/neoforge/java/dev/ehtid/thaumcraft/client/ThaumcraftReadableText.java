@@ -30,8 +30,13 @@ public final class ThaumcraftReadableText {
     private ThaumcraftReadableText() {}
 
     public static void panel(GuiGraphics graphics, int x, int y, int width, int height) {
+        // Zero-sized or collapsed panels must not submit inverted rectangles:
+        // GuiGraphics.fill is not a clipping API and can paint outside the GUI.
+        if (width <= 0 || height <= 0) return;
         graphics.fill(x, y, x + width, y + height, BORDER);
-        graphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, BACKGROUND);
+        // A 1-2px panel has no interior; preserve its border only.
+        if (width > 2 && height > 2)
+            graphics.fill(x + 1, y + 1, x + width - 1, y + height - 1, BACKGROUND);
     }
 
     /** Uses the current Minecraft font and its normal shadow, never 0.5 scale. */

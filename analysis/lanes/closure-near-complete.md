@@ -156,3 +156,14 @@
 **Следующее:** проверить точный клиентский CI на `a81f726`; при падении исправить конкретную ошибку. Затем взять отдельный оригинальный BETA26 звук или FX, которого не хватает в игре, с независимым подтверждением и без пересечений с M06/M07/M10/M04.
 
 **Follow-up к тестовому коммиту:** [`a2989f2`](https://github.com/craftkot/tgaumcraft/commit/a2989f275138de007b41c6e343fe9016b24cc0bd) добавляет завершающий newline в `identify -format '%w %h\\n'`: без него Bash `read` под `set -e` мог вернуть EOF/exit 1 даже при полученных размерах. Локально на фактическом PNG 1280×800 проверены `read`, crop-in-bounds и цветовой порог (PASS). На этом SHA [GitHub Actions #41291923168](https://github.com/craftkot/tgaumcraft/actions/runs/41291923168) был QUEUED, [M16 GUI regression #41291923218](https://github.com/craftkot/tgaumcraft/actions/runs/41291923218) IN PROGRESS; новый графический прогон **не подтверждён**. Отдельный `closure-label-client` workflow должен быть проверен после запуска.
+
+
+## 01.11.2026 — M16: collapsed panel geometry regression
+
+**Observed code defect:** the existing `ThaumcraftReadableText.panel` always called its interior `GuiGraphics.fill` even for a 0px, 1px or 2px panel. At width=1 it submitted `(x+1, y+1) -> (x, y)`, an inverted rectangle; at width=0 even the border was zero-area. Such draw commands are not safe clipping and may paint outside narrow UI bounds. This is a modern GUI-helper bug, not a claim that an original BETA26 gameplay feature was missing.
+
+**Fix:** in the existing M16-owned helper, skip non-positive panel sizes and only draw the inner rectangle when both dimensions exceed 2. Normal panels (3px and larger) keep the exact original two fills and colors. Dedicated Java client-stub regression now records each real helper `fill` call, asserts no inverted/empty rectangles, and checks the 3x3 interior coordinates. No shared registry, sound/FX, Gradle, other lane, or `main` edits.
+
+**Verification status at commit creation:** structural review complete; GitHub Actions must verify the exact commit. The prior branch HEAD `056995d` had real label client #41291945725 SUCCESS, M16 regression #41291945686 SUCCESS, full NeoForge/JAR/server #41291945670 SUCCESS. Those are *baseline* results, not tests of this patch. The prior label in-game evidence covers brace/blank/Aer/Ignis only. **Audit remains 59/100, M16 4/6**; no parity credit for guarding a collapsed rectangle.
+
+**Next:** inspect exact-head M16 Java regression and full NeoForge CI; if green, resume missing original BETA26 FX/audio work with independent asset provenance and real client evidence. PR #4 stays Draft; no merge.
