@@ -48,12 +48,15 @@ public final class ThaumcraftReadableText {
     public static void centeredLabel(GuiGraphics graphics, Font font,
                                      Component message, int x, int y,
                                      int availableWidth, int color) {
-        if (availableWidth <= 0) return;
+        // Minecraft's shadow pass draws one pixel to the right of the glyphs.
+        // Reserve that pixel as part of the label's real visual footprint.
+        if (availableWidth <= 1) return;
+        int textWidth = availableWidth - 1;
         // Component.getString() discards bold, color, and bidirectional ordering.
         // Truncate the actual visual glyph sequence instead, measuring it with
         // the same font and styles used by GuiGraphics.drawString.
         FormattedCharSequence display = fitStyledLine(
-                font, message.getVisualOrderText(), availableWidth);
+                font, message.getVisualOrderText(), textWidth);
         int renderedWidth = font.width(display);
         if (renderedWidth <= 0) return;
         graphics.drawString(font, display,
@@ -69,13 +72,15 @@ public final class ThaumcraftReadableText {
     public static void wrapped(GuiGraphics graphics, Font font,
                                Component message, int x, int y,
                                int maxWidth, int maxLines, int color) {
-        if (maxWidth <= 0 || maxLines <= 0) return;
-        List<FormattedCharSequence> lines = font.split(message, maxWidth);
+        // The split width must also include the 1px shadow drawn by GuiGraphics.
+        if (maxWidth <= 1 || maxLines <= 0) return;
+        int textWidth = maxWidth - 1;
+        List<FormattedCharSequence> lines = font.split(message, textWidth);
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
             FormattedCharSequence visible = lines.get(i);
             if (i == count - 1 && lines.size() > maxLines)
-                visible = lastLineWithEllipsis(font, visible, maxWidth);
+                visible = lastLineWithEllipsis(font, visible, textWidth);
             graphics.drawString(font, visible, x, y + i * 10, color, true);
         }
     }
