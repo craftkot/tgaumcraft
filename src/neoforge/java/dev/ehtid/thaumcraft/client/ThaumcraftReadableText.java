@@ -79,8 +79,15 @@ public final class ThaumcraftReadableText {
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
             FormattedCharSequence visible = lines.get(i);
-            if (i == count - 1 && lines.size() > maxLines)
+            if (i == count - 1 && lines.size() > maxLines) {
                 visible = lastLineWithEllipsis(font, visible, textWidth);
+            } else {
+                // Font.split normally respects the width, but an indivisible
+                // glyph can be wider than the entire box (emoji, CJK, or a
+                // very narrow UI column). Clamp EVERY visible line, not only
+                // the last line when additional lines are hidden.
+                visible = fitStyledLine(font, visible, textWidth);
+            }
             graphics.drawString(font, visible, x, y + i * 10, color, true);
         }
     }
