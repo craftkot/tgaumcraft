@@ -15,6 +15,10 @@ on:
       - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
       - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
       - 'tools/verify_label_brace_source_art.py'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
+      - 'tools/test_label_tint.sh'
       - '.github/workflows/closure-readable-text.yml'
   pull_request:
     paths:
@@ -28,6 +32,10 @@ on:
       - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
       - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
       - 'tools/verify_label_brace_source_art.py'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
+      - 'tools/test_label_tint.sh'
       - '.github/workflows/closure-readable-text.yml'
 
 jobs:
@@ -46,3 +54,5 @@ jobs:
         run: python3 tools/test_readable_text_client.py
       - name: Verify original BETA26 jar brace and blank/filled label art
         run: python3 tools/verify_label_brace_source_art.py
+      - name: Test all 37 original aspect colors and label layer isolation
+        run: bash tools/test_label_tint.sh

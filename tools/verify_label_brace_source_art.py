@@ -40,4 +40,11 @@ assert filled["textures"] == {
 item = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/JarLabelItem.java").read_text(encoding="utf-8")
 assert "DataComponents.CUSTOM_MODEL_DATA" in item
 assert "new CustomModelData(1)" in item
-print("BETA26 jar-brace/label PNG SHA-256 and blank/filled item models: OK")
+# The original filled-label overlay is a separate layer; it must be tinted
+# from the NBT-selected aspect, while the blank label stays unchanged.
+client = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java").read_text(encoding="utf-8")
+assert "@EventBusSubscriber" in client and "RegisterColorHandlersEvent.Item" in client
+assert "JarLabelItem.selectedAspect(stack)" in client
+assert "LegacyLabelTint.colorFor" in client
+assert "ThaumcraftItems.JAR_LABEL.get()" in client
+print("BETA26 jar-brace/label source art, item models and aspect-tint event wiring: OK")

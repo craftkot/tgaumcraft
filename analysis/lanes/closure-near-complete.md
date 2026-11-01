@@ -116,3 +116,15 @@
 **Safety:** no changed-file overlap with open PR #1/#3 or current feature/alchemy comparison; no other branch or main modified; PR #4 remains Draft. Fixed audit **59/100**, M16 **4/6** unchanged.
 
 **Next:** check exact-head CI and obtain in-client screenshot of brace, blank label and filled label; then implement correct aspect overlay tint if needed.
+
+## 01.11.2026 — M16: BETA26 filled label overlay tint (source change)
+
+**Defect:** Original filled label overlay PNG/model were restored, but no client ItemColor handler colored layer1 from the saved one-aspect label NBT. All 37 filled labels therefore rendered the same neutral overlay, even though the original Aspect colors already exist in the source-derived `AspectRegistry`.
+
+**Change:** Added isolated client MOD-bus `JarLabelColorEvents` subscriber (no shared registry edits) registering ItemColor for `ThaumcraftItems.JAR_LABEL`. It calls the existing validated `JarLabelItem.selectedAspect(stack)` and new loader-neutral `LegacyLabelTint.colorFor`: tint index 1 gets `0xFF000000 | AspectData.color()`; index 0 (paper base), unrelated layers, blank/invalid NBT stay white. The original 16x16 PNGs and the two-layer item model remain byte-identical to the previous commit.
+
+**Durable regression:** `tools/test_label_tint.sh` compiles the REAL `AspectRegistry`, `AspectData`, new helper and `LegacyLabelTintTest` under Java 21. Covers all 37 source colors, base/other layers, blank and invalid aspects. `verify_label_brace_source_art.py` also checks event wiring. The existing isolated M16 Actions workflow now runs both checks. Full NeoForge and real-client validation must be inspected on the exact new HEAD before claiming success.
+
+**Safety/audit:** No overlap with current M06/M10/alchemy/research changed files for these paths; no merge, no main changes. Historic rubric stays **59/100**, M16 **4/6**. Real in-game GUI screenshots of all filled-label states and client restart still missing.
+
+**Next:** inspect Actions on the exact HEAD and correct any compile or client failure; obtain a real Minecraft-client screenshot showing distinct Aer/Ignis filled labels alongside blank label and jar brace, then continue other original FX/sound gaps.
