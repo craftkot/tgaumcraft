@@ -35,3 +35,15 @@
 **Audit:** unchanged **59/100**, M16 **4/6**. One overflow path fixed, but no real GUI proof or full visual/audio/resource parity.
 
 **Next:** inspect CI on the exact latest branch HEAD, fix any real NeoForge compile failure, then obtain real Minecraft client screenshots of narrow and multiline RU/EN text; audit remaining untranslated/placeholder M16 assets without modifying other workstreams.
+
+## 01.11.2026 — centeredLabel: retain styled visual glyphs
+
+**Defect:** `ThaumcraftReadableText.centeredLabel` converted a rich `Component` to `message.getString()` before truncation and rendering. This discards formatting (including bold/color) and the resolved visual ordering for bidirectional text; width could be computed for different glyph advances than the source Component. The old routine's code-point-safe truncation was not enough for styled text.
+
+**Implementation:** `centeredLabel` now consumes `Component.getVisualOrderText()` and measures/renders the same `FormattedCharSequence`. The existing styled ellipsis routine is reused for narrow labels; full labels retain all original styles and visual order. Empty/zero-width labels do not draw. No unrelated screen/registries or other teams' code was changed.
+
+**Durable regression:** new `tools/test_readable_text_client.py` compiles the **actual** `ThaumcraftReadableText.java` and `ReadableTextLayout.java` with minimal test-only Minecraft API stubs under Java 21. Local result **18 assertions PASS**: bold Cyrillic truncation and centering, unchanged bold full label, visual-order permutation, supplementary emoji, zero/one/two-pixel boundaries. Stub font metrics are synthetic: this verifies our code's data flow and bounds, **not** NeoForge ABI, a Minecraft client, actual glyph widths or screenshots.
+
+**Code commit:** `a08deca494cb350e6069a7d1d5c3b3f142f732f9`. Test commit: `07ef01cca7685b093bdd90a9dc8aee7c5bc70ed7`. [PR #4](https://github.com/craftkot/tgaumcraft/pull/4) remains Draft. GitHub Actions #41264118817 / #41264115339 started on test HEAD; final results must be inspected before claiming full compile/server success. CircleCI #533 was pending at last check. Historical rating **59/100**, M16 **4/6**, unchanged.
+
+**Next:** verify exact HEAD GitHub Actions full NeoForge/JAR/server and investigate any failures; obtain a real Minecraft-client RU/EN visual smoke (bold, mixed-style, narrow labels, bidi). Then audit missing original visual/audio resources and choose the next independent M16 gap; do not claim complete asset parity from this fix.
