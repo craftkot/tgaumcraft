@@ -7,6 +7,8 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
       - 'tools/check_page_audio_pcm.py'
+      - 'tools/match_page_audio_pcm.py'
+      - 'tools/test_page_audio_match.py'
       - '.github/workflows/closure-book-page-client.yml'
   pull_request:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
       - 'tools/check_page_audio_pcm.py'
+      - 'tools/match_page_audio_pcm.py'
+      - 'tools/test_page_audio_match.py'
       - '.github/workflows/closure-book-page-client.yml'
   workflow_dispatch:
 
@@ -55,6 +59,17 @@ jobs:
           pactl info
           pactl list short sinks
           bash client-page-smoke-generated.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Attribute actual monitor PCM to original BETA26 page1/page2
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/test_page_audio_match.py
+          python tools/match_page_audio_pcm.py \
+            client-smoke/page-baseline.pcm client-smoke/page-event.pcm \
+            src/main/resources/assets/thaumcraft/sounds \
+            | tee client-smoke/page-source-match.txt
       - name: Upload real game screenshots and diagnostics
         if: always()
         uses: actions/upload-artifact@v4
