@@ -24,6 +24,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
       - 'tools/test_scan_rune_duration.sh'
+      - 'tools/test_scan_rune_orientation.py'
       - '.github/workflows/closure-readable-text.yml'
   pull_request:
     paths:
@@ -46,6 +47,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
       - 'tools/test_scan_rune_duration.sh'
+      - 'tools/test_scan_rune_orientation.py'
       - '.github/workflows/closure-readable-text.yml'
 
 jobs:
@@ -68,3 +70,5 @@ jobs:
         run: bash tools/test_label_tint.sh
       - name: Check source-derived BETA26 entity-height scan rune lifetime
         run: bash tools/test_scan_rune_duration.sh
+      - name: Compile actual scan-rune particle and verify BETA26 world orientation
+        run: python3 tools/test_scan_rune_orientation.py
