@@ -194,3 +194,18 @@
 
 
 **Full NeoForge follow-up:** [Actions #41300784470](https://github.com/craftkot/tgaumcraft/actions/runs/41300784470) **SUCCESS** on code/workflow SHA `e5d0009f`. Job steps explicitly passed Core parity, **NeoForge build**, **dedicated-server smoke** and JAR upload. This proves compilation and server startup, **not** the new entity-height particle duration in a rendered Minecraft client. Label-only client #41300784472 was still running at this observation.
+
+
+## 01.11.2026 — M16: world-space scan rune orientation (BETA26 source parity)
+
+**Verified original:** pinned `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb`, `FXBlockRunes.renderParticle` applies `glRotatef(rotation, 0,1,0)` and then `glRotatef(90, 0,0,1)`. `rotation` is a random multiple of 90 degrees. The old NeoForge `ScanRuneParticle` instead stored the random turn in `roll`, which rotates a camera-facing billboard in the view plane. Looking around therefore changed the apparent rune plane relative to the world: **not** the BETA26 geometry.
+
+**Fix:** `ScanRuneParticle.getFacingCameraMode()` now supplies the original world-space Y-quarter-turn followed by a Z 90-degree tip via the 1.21.1 `SingleQuadParticle.FacingCameraMode` quaternion. Billboard `roll` is zero; alpha, sprite, duration and gravity are unchanged. No common registries, research/alchemy/infusion/golem files, or `main` modified.
+
+**Code:** [4420341](https://github.com/craftkot/tgaumcraft/commit/4420341ff08b4c2c8ee01fa561dd0dd784a2eafb). **Regression:** [2c61096](https://github.com/craftkot/tgaumcraft/commit/2c61096de475db75b58bfbc50bb6e076e455db70) adds `tools/test_scan_rune_orientation.py`, which compiles the **actual** particle class and core duration helper with Java 21 API stubs, instantiates 128 particles, checks four world-Y quarter turns, exact 90-degree Z tip, no billboard roll, fixed orientation across camera/partial ticks and 45-tick block duration. This is a client-class regression using synthetic API stubs, **not a real rendered screenshot**. [a95ec6e](https://github.com/craftkot/tgaumcraft/commit/a95ec6e96f0da3963e1e713d64a76481f823a2da) wires the test into isolated M16 CI.
+
+**Validation at journal write:** [M16 workflow #41304894278](https://github.com/craftkot/tgaumcraft/actions/runs/41304894278) QUEUED and [full NeoForge #41304894262](https://github.com/craftkot/tgaumcraft/actions/runs/41304894262) QUEUED on test/workflow HEAD `a95ec6e`. The earlier M16 GUI #41304868320 was SUCCESS on code-only `4420341`, but did not include the new orientation regression. **Do not claim exact-head PASS until logs are inspected.** Existing label-client smoke is unrelated to rune world orientation.
+
+**Audit:** fixed historical baseline **59/100**, M16 **4/6**. No +1 without real in-game particle visual acceptance and broader M16 audio/FX coverage. PR #4 remains Draft; no merge.
+
+**Next:** inspect exact-head M16 and NeoForge jobs; repair any compile/test failure first. Then build a genuine in-world scan-rune screenshot/timing probe to distinguish camera-facing billboards from original world-space runes. Continue original sound events after this visual check.
