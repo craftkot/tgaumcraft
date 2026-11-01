@@ -68,3 +68,18 @@
 **Next:** inspect latest GitHub Actions, run `tools/test_readable_text_layout.sh` and `tools/test_readable_text_client.py` in a suitable checkout, then obtain actual Minecraft GUI screenshots to verify font shaping and the visual bounds. Continue missing visual/audio parity after the GUI smoke.
 
 **CI follow-up:** [GitHub Actions #41268171341](https://github.com/craftkot/tgaumcraft/actions/runs/41268171341) **SUCCESS** on `1070c5a`: Core parity, NeoForge build/JAR, dedicated-server smoke and JAR upload. The later `258f643` client stub test and `8c155c4` corrected test fixture were not part of that exact run; their workflows were still in progress. Separate local Java 21 reconstruction of the styled-grapheme prefix mapping passed **6/6** targeted cases. This is algorithm-level evidence, not a run of the actual Minecraft client.
+
+
+## 01.11.2026 — account for Minecraft's one-pixel font shadow (M16)
+
+**Rendering defect:** both `centeredLabel` and `wrapped` used `font.width(...)` as the entire drawable rectangle, yet called `GuiGraphics.drawString(..., true)`. Minecraft's shadow pass adds one pixel at the right and bottom. A glyph run whose measured width exactly equaled the panel width therefore still drew one pixel beyond its right boundary. The previous regression checked glyph widths, not the shadow footprint.
+
+**Actual source fix:** `src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java` reserves one pixel before truncating centered labels and before splitting/wrapping text. Widths 0–1 skip drawing. Original font size, colors, glyph order, style and gameplay logic are unchanged.
+
+**Durable regression:** `tools/test_readable_text_client.py` now records whether the real helper requested a shadow pass and checks `drawnWidth + 1` against the available width. Boundary tests cover a bold emoji label at exactly 16/17 pixels, one-dot fallback at 2/3 pixels, and a multiline `wrapped` label at 12 pixels. Added a narrowly scoped `.github/workflows/closure-readable-text.yml` to run the existing pure Java pixel/grapheme test and the real GUI-helper compilation against minimal Minecraft API stubs. This workflow is NOT a real Minecraft client and does not replace full NeoForge CI.
+
+**Commits:** `7267ac5` actual client fix; `452f26d` and `843baf6` regression and threshold adjustments; `71e7baa` independent test workflow. A standalone Java 21 synthetic boundary reproduction passed; **do not report the repository stub suite or latest NeoForge CI as passed until the new GitHub Actions runs finish**.
+
+**Safety/audit:** work is confined to this lane's existing GUI helper, dedicated test and new independent workflow. No other feature branch or `main` was modified. Historical audit stays **59/100**, M16 **4/6**. No real Minecraft GUI screenshot or BETA26-wide visual/audio parity proof yet.
+
+**Next:** inspect the exact-head regression workflow and full NeoForge CI, fix any actual failure; then add real client GUI screenshot evidence for narrow RU/EN labels, and move to missing original models/FX/audio after verified GUI acceptance.
