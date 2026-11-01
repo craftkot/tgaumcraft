@@ -103,3 +103,16 @@
 **Exact-head regression result:** [Actions #41276053884](https://github.com/craftkot/tgaumcraft/actions/runs/41276053884) **SUCCESS** on `581920c`; job logs report `Readable text pixel bounds: OK (2003 assertions)` and `Client styled GUI layout stubs: OK (44 assertions)`. Full NeoForge/JAR/server [#41276053888](https://github.com/craftkot/tgaumcraft/actions/runs/41276053888) was still in progress at this check. This is not real graphical client proof.
 
 **Full CI follow-up:** [Actions #41276053888](https://github.com/craftkot/tgaumcraft/actions/runs/41276053888) completed **SUCCESS** on exact code+test commit `581920c` (NeoForge build/JAR and dedicated-server smoke workflow). This is still not a graphical Minecraft client. Readiness remains **59/100**, M16 **4/6**.
+
+
+## 01.11.2026 — M16: source-faithful jar brace and label item art
+
+**Defect:** jar brace used vanilla iron-ingot art and labels used vanilla paper, despite dedicated source BETA26 sprites. The original JAR SHA-256 is \`9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f\`.
+
+**Change:** imported exact 16x16 BETA26 PNGs \`jar_brace\`, \`label\`, \`label_overlay\` into modern \`textures/item\`. Restored original jar-brace layer and blank-label layer. Added \`label_filled.json\` with original base+overlay layers; \`label.json\` selects it through \`custom_model_data:1\`, which existing \`JarLabelItem.filled\` already sets. No gameplay classes changed.
+
+**Checks:** local \`python3 tools/verify_label_brace_source_art.py\` passed on staged files; verifies source PNG SHA-256/dimensions, model mappings and Java model-data contract. This is NOT a real client render. Aspect-dependent overlay tint is not implemented; do not call filled-label parity complete. Full NeoForge/JAR/server and graphical screenshots on this HEAD remain to be verified.
+
+**Safety:** no changed-file overlap with open PR #1/#3 or current feature/alchemy comparison; no other branch or main modified; PR #4 remains Draft. Fixed audit **59/100**, M16 **4/6** unchanged.
+
+**Next:** check exact-head CI and obtain in-client screenshot of brace, blank label and filled label; then implement correct aspect overlay tint if needed.
