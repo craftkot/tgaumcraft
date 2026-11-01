@@ -1,5 +1,9 @@
 package dev.ehtid.thaumcraft.port.core;
 
+import java.text.BreakIterator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.function.IntUnaryOperator;
 import java.util.function.ToIntFunction;
@@ -25,17 +29,22 @@ public final class ReadableTextLayout {
             marker = marker.substring(1);
         if (marker.isEmpty()) return "";
 
-        int low = 0;
-        int high = text.codePointCount(0, text.length());
-        while (low < high) {
-            int middle = low + (high - low + 1) / 2;
-            int end = text.offsetByCodePoints(0, middle);
-            if (width.applyAsInt(text.substring(0, end) + marker) <= maxPixels)
-                low = middle;
-            else
-                high = middle - 1;
+        // A code point is not necessarily a visible character: a Cyrillic accent,
+        // emoji modifier, flag or ZWJ sequence must remain attached to its base.
+        // Java 21 BreakIterator uses extended grapheme-cluster boundaries.
+        BreakIterator clusters = BreakIterator.getCharacterInstance(Locale.ROOT);
+        clusters.setText(text);
+        List<Integer> ends = new ArrayList<>();
+        for (int end = clusters.first(); end != BreakIterator.DONE; end = clusters.next())
+            ends.add(end);
+
+        // Do not assume monotonic widths: the active font may use kerning.
+        // Test complete grapheme prefixes from longest to shortest.
+        for (int i = ends.size() - 1; i >= 0; i--) {
+            String candidate = text.substring(0, ends.get(i)) + marker;
+            if (width.applyAsInt(candidate) <= maxPixels) return candidate;
         }
-        return text.substring(0, text.offsetByCodePoints(0, low)) + marker;
+        return "";
     }
 
     /**
