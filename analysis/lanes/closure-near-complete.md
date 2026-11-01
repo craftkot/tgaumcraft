@@ -169,3 +169,20 @@
 **Next:** inspect exact-head M16 Java regression and full NeoForge CI; if green, resume missing original BETA26 FX/audio work with independent asset provenance and real client evidence. PR #4 stays Draft; no merge.
 
 **Exact-code verification follow-up (commit [68e81c9](https://github.com/craftkot/tgaumcraft/commit/68e81c9bb3aa0adca2f5f31cb654b3f1f175514c)):** [M16 regression #41296376309](https://github.com/craftkot/tgaumcraft/actions/runs/41296376309) **SUCCESS** with 2003 readable-layout assertions, **54** real-class GUI-stub assertions (10 more than the previous 44), and 118 label-tint assertions. [Full NeoForge/JAR/server #41296372165](https://github.com/craftkot/tgaumcraft/actions/runs/41296372165) **SUCCESS**, including Core parity, NeoForge build, dedicated-server smoke and JAR upload. A separate exact-code graphical [client run #41296376246](https://github.com/craftkot/tgaumcraft/actions/runs/41296376246) remained **IN PROGRESS** when checked; it exercises label artwork, not collapsed panel geometry. The standalone Java 21 geometry reproduction also passed, but is not the real client. No score change: **59/100, M16 4/6**.
+
+
+## 01.11.2026 — M16: restore BETA26 entity-height scan rune lifetime
+
+**Source comparison (pinned original):** `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb`, `ItemThaumometer.drawFX` calls `FXDispatcher.blockRunes` with duration units `(int)(target.height * 15)` for entity targets and `15` for block targets. `FXBlockRunes` sets `particleMaxAge = 3 * m`. Its dispatcher adds 0.5 to each incoming position, so the existing modern entity/block anchor coordinates are already correct; **do not offset them again**.
+
+**Defect:** `ScanRuneParticle` hard-coded `lifetime=45` for both target types. The modern entity scan therefore expired too early for tall targets and too late for small ones, unlike BETA26. This is a real visual timing mismatch, not a missing sound file.
+
+**Implementation:** `ThaumometerRuneFx` passes source-derived entity duration units to `ClientLevel.addParticle` (15 for blocks). `ScanRuneParticle.Provider` decodes the otherwise-unused Y-speed slot as duration units, forces original green color channel to zero, and applies `3*m` ticks. `LegacyScanRuneDuration` keeps the exact integer truncation for normal positive entity heights, with guards for zero/invalid/oversized values. No global particle/sound registry, original textures, other feature branches or `main` changed.
+
+**Changes:** `src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java`, `src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java`, new `src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDuration.java`, `src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java`, `tools/test_scan_rune_duration.sh`, dedicated `.github/workflows/closure-readable-text.yml` and this lane journal.
+
+**Commits:** core `c0e2116`, test `ea2629f`, harness `4674257`, actual FX `a1d8e5b`, particle `79a9d5f`, isolated CI `e5d0009`. Standalone Java 21 regression **13/13 PASS locally** (`bash tools/test_scan_rune_duration.sh`). This validates timing math only. **Exact-head NeoForge compile, dedicated server and actual Minecraft-client rune timing are not yet confirmed**; inspect the workflows triggered by the code changes. The earlier real label-client #41296376246 is SUCCESS on the *previous* `68e81c9` and does not test the new scan-rune behavior.
+
+**Audit:** fixed baseline remains **59/100**, M16 **4/6**. One scan particle lifetime bug fixed in code; no M16-wide audio/FX acceptance or point increase. PR #4 stays Draft and must not be merged without owner approval.
+
+**Next:** check exact-head isolated M16 and full NeoForge/JAR/server CI. If compilation fails, repair it first. Then add a real Minecraft-client scan-particle lifetime probe (block=45 ticks, player-height target=81 ticks) and inspect actual frames/logs; continue cataloguing original BETA26 audio/FX only after verifying this regression.
