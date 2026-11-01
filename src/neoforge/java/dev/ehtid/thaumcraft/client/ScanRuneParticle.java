@@ -27,11 +27,17 @@ public final class ScanRuneParticle extends TextureSheetParticle {
     // This is silent in normal gameplay and does not change particle behavior.
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private final int smokeFace;
+    private final double smokeStartX;
+    private final double smokeStartZ;
     private boolean smokeRendered;
 
     private ScanRuneParticle(ClientLevel level, double x, double y, double z,
                              double red, double durationUnits, double blue, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
+        // Minecraft's velocity constructor randomizes motion EVEN for zero
+        // arguments. Original FXBlockRunes explicitly resets motionX/Y/Z=0;
+        // without this the runes drift away from the scanned block in-game.
+        this.xd = this.yd = this.zd = 0.0D;
         // Y-speed is a duration transport slot, never the rune's green pigment.
         this.setColor((float) red, 0.0F, (float) blue);
         this.gravity = 0.03F;
@@ -63,6 +69,8 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.xo = this.x;
         this.yo = this.y;
         this.zo = this.z;
+        this.smokeStartX = this.x;
+        this.smokeStartZ = this.z;
         if (SMOKE_PROBE) {
             System.out.println("TC_SMOKE_SCAN_RUNE_CREATED=YES face=" + smokeFace
                     + " lifetime=" + lifetime + " x=" + x() + " y=" + y() + " z=" + z());
@@ -103,7 +111,8 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         if (this.age++ >= this.lifetime) {
             if (SMOKE_PROBE) {
                 System.out.println("TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=" + smokeFace
-                        + " age=" + (this.age - 1) + " lifetime=" + lifetime);
+                        + " age=" + (this.age - 1) + " lifetime=" + lifetime
+                        + " drift=" + Math.hypot(this.x - smokeStartX, this.z - smokeStartZ));
             }
             this.remove();
             return;
