@@ -83,3 +83,6 @@
 **Safety/audit:** work is confined to this lane's existing GUI helper, dedicated test and new independent workflow. No other feature branch or `main` was modified. Historical audit stays **59/100**, M16 **4/6**. No real Minecraft GUI screenshot or BETA26-wide visual/audio parity proof yet.
 
 **Next:** inspect the exact-head regression workflow and full NeoForge CI, fix any actual failure; then add real client GUI screenshot evidence for narrow RU/EN labels, and move to missing original models/FX/audio after verified GUI acceptance.
+
+
+**Verification follow-up:** [M16 isolated regression Actions #41271605217](https://github.com/craftkot/tgaumcraft/actions/runs/41271605217) completed **SUCCESS** on `71e7baa`. Actual logs: `Readable text pixel bounds: OK (2003 assertions)` and `Client styled GUI layout stubs: OK (38 assertions)`. Full NeoForge/JAR/server Actions [#41271605240](https://github.com/craftkot/tgaumcraft/actions/runs/41271605240) remained **IN PROGRESS** at inspection. No real-client screenshot; 59/100 and M16 4/6 remain unchanged.
