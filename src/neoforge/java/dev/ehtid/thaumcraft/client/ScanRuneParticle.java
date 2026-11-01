@@ -33,15 +33,30 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.lifetime = LegacyScanRuneDuration.lifetimeTicks(durationUnits);
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
-        this.legacyWorldYaw = this.random.nextInt(4) * Mth.HALF_PI;
+        int yawQuarter = this.random.nextInt(4);
+        this.legacyWorldYaw = yawQuarter * Mth.HALF_PI;
         this.roll = this.oRoll = 0.0F;
         this.alpha = 0.0F;
         this.pickSprite(sprites);
 
-        // Original FXBlockRunes local offsets: ofx=[0,.2), ofy=[-.3,.3).
-        this.x += this.random.nextFloat() * 0.2F;
-        this.y += -0.3F + this.random.nextFloat() * 0.6F;
-        this.setPos(this.x, this.y, this.z);
+        // BETA26 FXBlockRunes.renderParticle translates (ofx, ofy, -0.51)
+        // AFTER rotating the quad by world-Y (0/90/180/270) and local-Z 90.
+        // Moving the offsets directly in world X/Y loses the -0.51 face
+        // displacement and makes runes appear inside the scanned block.
+        double ofx = this.random.nextFloat() * 0.2F;
+        double ofy = -0.3F + this.random.nextFloat() * 0.6F;
+        double dx, dz;
+        switch (yawQuarter) {
+            case 0 -> { dx = -ofy; dz = -0.51D; }
+            case 1 -> { dx = -0.51D; dz = ofy; }
+            case 2 -> { dx = ofy; dz = 0.51D; }
+            default -> { dx = 0.51D; dz = -ofy; }
+        }
+        this.setPos(this.x + dx, this.y + ofx, this.z + dz);
+        // Prevent first-frame interpolation from the unshifted spawn anchor.
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
     }
 
     @Override
