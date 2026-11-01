@@ -3,12 +3,12 @@ package dev.ehtid.thaumcraft.port.core;
 import java.util.Objects;
 import java.util.function.ToIntFunction;
 
-/** Pixel-bounded, Unicode-safe labels for the original Thaumcraft GUIs. */
+/** Pixel-bounded, code-point-safe labels for the original Thaumcraft GUIs. */
 public final class ReadableTextLayout {
     private ReadableTextLayout() {}
 
     /**
-     * Truncate by rendered glyph width, not UTF-16 code units. The original
+     * Truncate by rendered glyph width without splitting UTF-16 surrogate pairs. The original
      * three-dot marker is shortened when even the marker cannot fit, so narrow
      * GUI buttons never draw outside their allotted width. The caller supplies
      * the active Minecraft font's String width function.
