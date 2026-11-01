@@ -6,5 +6,12 @@
         "stream": false
       }
     ]
+  },
+  "page": {
+    "category": "master",
+    "sounds": [
+      "thaumcraft:page1",
+      "thaumcraft:page2"
+    ]
   }
 }

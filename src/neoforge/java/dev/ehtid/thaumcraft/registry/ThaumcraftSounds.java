@@ -20,6 +20,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "scan")));
 
+    // BETA26 SoundsTC.page, used on every Thaumonomicon right-click.
+    public static final Supplier<SoundEvent> PAGE = SOUND_EVENTS.register("page",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "page")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }

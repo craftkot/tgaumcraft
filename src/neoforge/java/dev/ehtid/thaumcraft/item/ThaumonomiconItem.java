@@ -1,5 +1,7 @@
 package dev.ehtid.thaumcraft.item;
 
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +22,10 @@ public final class ThaumonomiconItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide()) {
+            // BETA26 ItemThaumonomicon#onItemRightClick: play the original
+            // randomized page sound locally at the player's position, then open.
+            level.playLocalSound(player.getX(), player.getY(), player.getZ(),
+                    ThaumcraftSounds.PAGE.get(), SoundSource.PLAYERS, 1.0F, 1.0F, false);
             ClientOnly.open();
         }
         return InteractionResultHolder.success(player.getItemInHand(hand));
