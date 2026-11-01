@@ -44,6 +44,9 @@ public class Particle {
   public boolean removed;
   public Particle(ClientLevel level, double x, double y, double z) {
     this.x=x; this.y=y; this.z=z;
+    // Deliberately model Minecraft's nonzero randomized velocity from the
+    // (level,x,y,z,dx,dy,dz) constructor, even when dx/dy/dz are zero.
+    this.xd=0.07; this.yd=0.03; this.zd=-0.05;
   }
   public void setColor(float r,float g,float b) {}
   public void setPos(double x,double y,double z) {this.x=x;this.y=y;this.z=z;}
@@ -150,6 +153,8 @@ public final class ScanRuneOrientationTest {
       check(particle.roll==0.0F && particle.oRoll==0.0F,
           "billboard roll must not rotate world-space runes");
       check(particle.lifetime==45, "block scan lifetime must stay 45 ticks");
+      check(particle.xd==0.0 && particle.yd==0.0 && particle.zd==0.0,
+          "BETA26 rune starts stationary despite vanilla random velocity");
       // BETA26: glRotatef(worldYaw,Y); glRotatef(90,Z);
       // glTranslated(ofx, ofy, -0.51). The -0.51 displacement must be
       // rotated onto one of four block faces, not left at the block center.
@@ -179,6 +184,9 @@ public final class ScanRuneOrientationTest {
       }
       check(particle.xo==particle.x && particle.yo==particle.y &&
             particle.zo==particle.z, "no first-frame interpolation from anchor");
+      particle.tick();
+      check(particle.x==px && particle.z==pz,
+          "rune must not drift horizontally after a real tick");
       Quaternionf second = new Quaternionf();
       particle.getFacingCameraMode().setRotation(second,new Camera(),0.9F);
       check(first.yaw==second.yaw && first.tip==second.tip,
