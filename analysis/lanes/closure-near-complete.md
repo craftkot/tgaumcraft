@@ -49,3 +49,20 @@
 **Next:** verify exact HEAD GitHub Actions full NeoForge/JAR/server and investigate any failures; obtain a real Minecraft-client RU/EN visual smoke (bold, mixed-style, narrow labels, bidi). Then audit missing original visual/audio resources and choose the next independent M16 gap; do not claim complete asset parity from this fix.
 
 **CI follow-up on code commit `a08deca`:** [GitHub Actions #41264022328](https://github.com/craftkot/tgaumcraft/actions/runs/41264022328) **SUCCESS**: Core parity, full NeoForge build, dedicated-server smoke, JAR upload. This verifies the actual client class compiles in the NeoForge build, but does not run the graphical Minecraft client. The subsequent test-only commit `07ef01c` had CI still in progress at this observation. No extra readiness points.
+
+
+## 01.11.2026 — M16: Unicode grapheme-safe ellipsis (accent/ZWJ/flag)
+
+**Observed code defect:** Previous `ReadableTextLayout.ellipsize` truncated at Unicode code-point boundaries, and `ThaumcraftReadableText.lastLineWithEllipsis` truncated at individual `FormattedCharSequence` glyph boundaries. Both could leave a base Cyrillic letter without its combining accent, a partial joined emoji, or one regional indicator of a flag. This is a genuine layout bug even though it did not split UTF-16 surrogate pairs.
+
+**Implementation:**
+- `ReadableTextLayout.java`: Java 21 `BreakIterator.getCharacterInstance(Locale.ROOT)` determines extended grapheme-cluster boundaries; descending pixel-width check selects the longest fitting *complete* prefix, without assuming monotonic kerning.
+- `ThaumcraftReadableText.java`: reconstruct visual code points from styled glyphs, map grapheme UTF-16 boundaries back to styled glyph-prefix counts, and only truncate at those boundaries. Preserve the original `Style` of retained glyphs.
+- `ReadableTextLayoutTest.java`: regression for Cyrillic combining accent, woman-scientist ZWJ emoji, Russian flag and non-monotonic synthetic width.
+- `tools/test_readable_text_client.py`: stub-based tests for styled combining accents and joined emoji, with both narrow and fitting widths.
+
+**Commits:** core `c807a30`, client `226cd63`, core regression `1070c5a`, client regression `258f643`, corrected synthetic ZWJ width `8c155c4`. Local Java 21 reproduction of the grapheme algorithm and seven focused regression cases: **7/7 PASS**. This is a locally reconstructed focused harness, **not** a run of the repository's full test script. GitHub Actions full NeoForge build/JAR/server on latest code was still **IN PROGRESS** when this entry was written; inspect exact run status before declaring success. Real Minecraft GUI/client has **not** been launched for this change.
+
+**Safety/audit:** changes only in this lane's two layout classes and two dedicated tests. `main`, other feature branches, CI and registries untouched. PR #4 stays Draft. Fixed readiness rubric **59/100**, M16 **4/6** (no +1 for isolated layout corrections).
+
+**Next:** inspect latest GitHub Actions, run `tools/test_readable_text_layout.sh` and `tools/test_readable_text_client.py` in a suitable checkout, then obtain actual Minecraft GUI screenshots to verify font shaping and the visual bounds. Continue missing visual/audio parity after the GUI smoke.
