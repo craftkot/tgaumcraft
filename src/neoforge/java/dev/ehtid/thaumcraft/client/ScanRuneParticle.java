@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.port.core.LegacyScanRuneDuration;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -18,6 +19,11 @@ import org.jetbrains.annotations.Nullable;
  * quarter-turn rotation, 0.3 scale with gaussian variation and the exact fade curve.
  */
 public final class ScanRuneParticle extends TextureSheetParticle {
+    // BETA26 rotates the rune's XY quad around WORLD Y, then tips it 90°
+    // around local Z. A vanilla billboard's roll rotates around the camera
+    // instead, changing the rune's appearance as the player looks around.
+    private final float legacyWorldYaw;
+
     private ScanRuneParticle(ClientLevel level, double x, double y, double z,
                              double red, double durationUnits, double blue, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
@@ -27,7 +33,8 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.lifetime = LegacyScanRuneDuration.lifetimeTicks(durationUnits);
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
-        this.roll = this.oRoll = this.random.nextInt(4) * Mth.HALF_PI;
+        this.legacyWorldYaw = this.random.nextInt(4) * Mth.HALF_PI;
+        this.roll = this.oRoll = 0.0F;
         this.alpha = 0.0F;
         this.pickSprite(sprites);
 
@@ -35,6 +42,14 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.x += this.random.nextFloat() * 0.2F;
         this.y += -0.3F + this.random.nextFloat() * 0.6F;
         this.setPos(this.x, this.y, this.z);
+    }
+
+    @Override
+    public SingleQuadParticle.FacingCameraMode getFacingCameraMode() {
+        // FXBlockRunes.renderParticle: glRotatef(rotation, 0,1,0),
+        // then glRotatef(90, 0,0,1). No camera-facing billboard.
+        return (rotation, camera, partialTick) ->
+                rotation.rotationY(this.legacyWorldYaw).rotateZ(Mth.HALF_PI);
     }
 
     @Override
