@@ -10,6 +10,9 @@ import dev.ehtid.thaumcraft.port.core.ResearchCategoryData;
 import dev.ehtid.thaumcraft.port.core.ResearchProgressionService;
 import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -38,6 +41,8 @@ import java.util.List;
  */
 public final class CurioItem extends Item {
     private static final String VARIANT_TAG = "LegacyCurioMeta";
+    // BETA26 ItemCurio.itemRand is separate from the knowledge-reward RNG.
+    private static final java.util.Random LEARN_SOUND_RANDOM = new java.util.Random();
     private static final List<String> CATEGORIES =
             BuiltInResearchCategories.create(new AspectRegistry()).values().stream()
                     .map(ResearchCategoryData::key).toList();
@@ -89,6 +94,15 @@ public final class CurioItem extends Item {
         if (index < 0) return InteractionResultHolder.fail(held);
         if (level.isClientSide) return InteractionResultHolder.success(held);
         if (!(user instanceof ServerPlayer player)) return InteractionResultHolder.pass(held);
+
+        // BETA26 ItemCurio#onItemRightClick broadcasts SoundsTC.learn BEFORE
+        // checking the Crimson Rites warp gate; even a denied rite makes the sound.
+        // Server-side only: Level.playSound(null, ...) sends one event to nearby
+        // clients, avoiding duplicate playback on the local integrated client.
+        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                ThaumcraftSounds.LEARN.get(), SoundSource.NEUTRAL, 0.5F,
+                0.4F / (LEARN_SOUND_RANDOM.nextFloat() * 0.4F + 0.8F));
+        ThaumcraftSmokeAudit.mark("CURIO_LEARN_SOUND_DISPATCHED");
 
         var state = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
         // The original getActualWarp includes only NORMAL and PERMANENT.

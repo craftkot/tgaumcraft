@@ -1,0 +1,88 @@
+name: M16 real Minecraft Curio learn sound smoke
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/CurioItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/learn.ogg'
+      - 'tools/client_curio_learn_sound_smoke.py'
+      - 'tools/match_curio_audio_pcm.py'
+      - 'tools/test_curio_learn_sound.py'
+      - '.github/workflows/closure-curio-learn-client.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/CurioItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/learn.ogg'
+      - 'tools/client_curio_learn_sound_smoke.py'
+      - 'tools/match_curio_audio_pcm.py'
+      - 'tools/test_curio_learn_sound.py'
+      - '.github/workflows/closure-curio-learn-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-curio-learn-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install graphics and PulseAudio tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Source asset and pitched PCM unit regression
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/test_curio_learn_sound.py
+      - name: Generate real client script and validate Bash
+        run: |
+          python3 tools/client_curio_learn_sound_smoke.py > client-curio-generated.sh
+          bash -n client-curio-generated.sh
+      - name: Start virtual PulseAudio and real Minecraft client
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_curio_sink rate=48000 channels=2
+          pactl set-default-sink tc_curio_sink
+          bash client-curio-generated.sh
+      - name: Match actual audio to original BETA26 learn.ogg at random pitch
+        run: |
+          python tools/match_curio_audio_pcm.py \
+            client-smoke/curio-baseline.pcm client-smoke/curio-event.pcm \
+            src/main/resources/assets/thaumcraft/sounds/learn.ogg \
+            | tee client-smoke/curio-source-match.txt
+      - name: Upload real game audio and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-real-curio-learn-sound-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

@@ -25,6 +25,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "page")));
 
+    // BETA26 SoundsTC.learn: Curio right-click knowledge/warp reveal.
+    public static final Supplier<SoundEvent> LEARN = SOUND_EVENTS.register("learn",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "learn")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }
