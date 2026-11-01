@@ -130,6 +130,27 @@ public final class ThaumcraftReadableTextClientStubTest {
         ThaumcraftReadableText.centeredLabel(g, font, label, 0, 0, 2, 0);
         check(g.text.equals("."), "one-dot fallback missing");
         inside(g, 0, 2);
+        // A code-point-safe prefix can still split a single visible grapheme.
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font,
+                new Component("е\\u0301XYZ", bold), 0, 0, 16, 0);
+        check(g.text.equals("..."), "orphaned accent: " + g.text);
+        inside(g, 0, 16);
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font,
+                new Component("е\\u0301XYZ", bold), 0, 0, 26, 0);
+        check(g.text.equals("е\\u0301..."), "accent cluster not retained: " + g.text);
+        inside(g, 0, 26);
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font,
+                new Component("👩‍🔬AB", bold), 0, 0, 26, 0);
+        check(g.text.equals("..."), "split joined emoji: " + g.text);
+        inside(g, 0, 26);
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font,
+                new Component("👩‍🔬AB", bold), 0, 0, 36, 0);
+        check(g.text.equals("👩‍🔬..."), "joined emoji cluster not retained: " + g.text);
+        inside(g, 0, 36);
         System.out.println("Client styled GUI layout stubs: OK (" + checks + " assertions)");
     }
 }'''
