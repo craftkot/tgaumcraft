@@ -16,7 +16,7 @@ from match_page_audio_pcm import RATE, decode, active_clip, best_match
 ORIGINAL_GIT_BLOB = "abe84e11186ff87d133b9f8aeeede5b85a9e2be6"
 MIN_CORRELATION = 0.20
 MIN_MARGIN = 0.08
-PITCHES = np.linspace(1 / 3, 1 / 2, 35)
+PITCHES = np.linspace(1 / 3, 1 / 2, 1001)
 
 
 def stretched(source: np.ndarray, pitch: float) -> np.ndarray:
