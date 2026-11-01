@@ -56,7 +56,10 @@ public final class Font {
         return width[0];
     }
     public List<FormattedCharSequence> split(Component message, int maxWidth) {
-        return List.of(message.getVisualOrderText());
+        // Explicit newline gives two visual lines for the wrapped/ellipsis test.
+        return java.util.Arrays.stream(message.getString()
+                .split(Character.toString((char)10), -1))
+                .map(s -> new Component(s, Style.EMPTY).getVisualOrderText()).toList();
     }
 }''',
     'net/minecraft/client/gui/GuiGraphics.java': '''package net.minecraft.client.gui;
@@ -68,12 +71,14 @@ public final class GuiGraphics {
     public String text = "";
     public List<Boolean> bold = new ArrayList<>();
     public int draws, x, drawnWidth;
+    public boolean shadow;
     public void fill(int x1, int y1, int x2, int y2, int color) {}
     public void drawString(Font font, FormattedCharSequence seq, int x, int y, int color, boolean shadow) {
         StringBuilder out = new StringBuilder();
         bold.clear();
         seq.accept((index, style, cp) -> { out.appendCodePoint(cp); bold.add(style.bold); return true; });
-        this.text = out.toString(); this.x = x; this.drawnWidth = font.width(seq); draws++;
+        this.text = out.toString(); this.x = x; this.drawnWidth = font.width(seq);
+        this.shadow = shadow; draws++;
     }
     public void drawString(Font font, Component msg, int x, int y, int color, boolean shadow) {
         drawString(font, msg.getVisualOrderText(), x, y, color, shadow);
@@ -92,7 +97,8 @@ public final class ThaumcraftReadableTextClientStubTest {
     }
     private static void inside(GuiGraphics g, int x, int width) {
         check(g.x >= x, "left overflow: " + g.text);
-        check(g.x + g.drawnWidth <= x + width, "right overflow: " + g.text);
+        check(g.x + g.drawnWidth + (g.shadow ? 1 : 0) <= x + width,
+                "right shadow overflow: " + g.text);
     }
     public static void main(String[] args) {
         Font font = new Font();
@@ -117,8 +123,14 @@ public final class ThaumcraftReadableTextClientStubTest {
         check(g.text.equals("cba"), "visual bidi order ignored");
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font,
-                new Component("🔮Magic", bold), 0, 0, 16, 0);
+                new Component("🔮Magic", bold), 0, 0, 17, 0);
         check(g.text.equals("🔮..."), "supplementary code point split: " + g.text);
+        inside(g, 0, 17);
+        // At 16px the 16px glyphs would fit, but their 1px shadow would not.
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font,
+                new Component("🔮Magic", bold), 0, 0, 16, 0);
+        check(g.text.equals("..."), "shadow pixel was not reserved: " + g.text);
         inside(g, 0, 16);
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font, label, 0, 0, 0, 0);
@@ -128,8 +140,11 @@ public final class ThaumcraftReadableTextClientStubTest {
         check(g.draws == 0, "sub-dot width should not draw");
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font, label, 0, 0, 2, 0);
+        check(g.draws == 0, "two pixels cannot contain a dot plus shadow");
+        g = new GuiGraphics();
+        ThaumcraftReadableText.centeredLabel(g, font, label, 0, 0, 3, 0);
         check(g.text.equals("."), "one-dot fallback missing");
-        inside(g, 0, 2);
+        inside(g, 0, 3);
         // A code-point-safe prefix can still split a single visible grapheme.
         g = new GuiGraphics();
         ThaumcraftReadableText.centeredLabel(g, font,
@@ -151,6 +166,17 @@ public final class ThaumcraftReadableTextClientStubTest {
                 new Component("👩‍🔬AB", bold), 0, 0, 36, 0);
         check(g.text.equals("👩‍🔬..."), "joined emoji cluster not retained: " + g.text);
         inside(g, 0, 36);
+        // Last visible wrapped line must fit together with the 1px shadow.
+        // Before the fix "A..." was 12px plus shadow in a 12px panel.
+        g = new GuiGraphics();
+        ThaumcraftReadableText.wrapped(g, font,
+                new Component("AB\\nCD", Style.EMPTY), 0, 0, 12, 1, 0);
+        check(g.text.equals("..."), "wrapped shadow budget ignored: " + g.text);
+        inside(g, 0, 12);
+        g = new GuiGraphics();
+        ThaumcraftReadableText.wrapped(g, font,
+                new Component("AB\\nCD", Style.EMPTY), 0, 0, 1, 1, 0);
+        check(g.draws == 0, "1px panel cannot contain a shadowed glyph");
         System.out.println("Client styled GUI layout stubs: OK (" + checks + " assertions)");
     }
 }'''
