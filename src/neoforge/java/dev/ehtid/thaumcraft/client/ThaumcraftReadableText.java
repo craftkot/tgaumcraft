@@ -46,11 +46,16 @@ public final class ThaumcraftReadableText {
     public static void centeredLabel(GuiGraphics graphics, Font font,
                                      Component message, int x, int y,
                                      int availableWidth, int color) {
-        String display = ReadableTextLayout.ellipsize(
-                message.getString(), availableWidth, font::width);
-        if (display.isEmpty()) return;
+        if (availableWidth <= 0) return;
+        // Component.getString() discards bold, color, and bidirectional ordering.
+        // Truncate the actual visual glyph sequence instead, measuring it with
+        // the same font and styles used by GuiGraphics.drawString.
+        FormattedCharSequence display = fitStyledLine(
+                font, message.getVisualOrderText(), availableWidth);
+        int renderedWidth = font.width(display);
+        if (renderedWidth <= 0) return;
         graphics.drawString(font, display,
-                x + (availableWidth - font.width(display)) / 2, y, color, true);
+                x + (availableWidth - renderedWidth) / 2, y, color, true);
     }
 
     /**
@@ -71,6 +76,14 @@ public final class ThaumcraftReadableText {
                 visible = lastLineWithEllipsis(font, visible, maxWidth);
             graphics.drawString(font, visible, x, y + i * 10, color, true);
         }
+    }
+
+    /** Retain Component styles and visual glyph order when centering narrow labels. */
+    private static FormattedCharSequence fitStyledLine(
+            Font font, FormattedCharSequence line, int maxWidth) {
+        if (maxWidth <= 0) return sink -> true;
+        return font.width(line) <= maxWidth
+                ? line : lastLineWithEllipsis(font, line, maxWidth);
     }
 
     private record StyledGlyph(int codePoint, Style style) {}
