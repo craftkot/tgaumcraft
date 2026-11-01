@@ -13,6 +13,18 @@ public final class ReadableTextLayoutTest {
         equal("A...", ReadableTextLayout.ellipsize("ABCDE", 12, ReadableTextLayoutTest::pixels));
         equal("Ал...", ReadableTextLayout.ellipsize("Алхимия", 20, ReadableTextLayoutTest::pixels));
         equal("👾...", ReadableTextLayout.ellipsize("👾XYZ", 16, ReadableTextLayoutTest::pixels));
+        // UTF-16/code-point safety is insufficient: a visible grapheme may contain
+        // multiple code points (combining accents, ZWJ emoji or flag pairs).
+        equal("...", ReadableTextLayout.ellipsize("е\u0301XYZ", 16, ReadableTextLayoutTest::pixels));
+        equal("е\u0301...", ReadableTextLayout.ellipsize("е\u0301XYZ", 20, ReadableTextLayoutTest::pixels));
+        equal("...", ReadableTextLayout.ellipsize("👩‍🔬AB", 26, ReadableTextLayoutTest::pixels));
+        equal("👩‍🔬...", ReadableTextLayout.ellipsize("👩‍🔬AB", 32, ReadableTextLayoutTest::pixels));
+        equal("...", ReadableTextLayout.ellipsize("🇷🇺AB", 16, ReadableTextLayoutTest::pixels));
+        equal("🇷🇺...", ReadableTextLayout.ellipsize("🇷🇺AB", 26, ReadableTextLayoutTest::pixels));
+        // Deliberately non-monotonic test metric: longest fitting prefix wins.
+        equal("abcd...", ReadableTextLayout.ellipsize("abcd", 10, candidate ->
+                candidate.equals("abcd") ? 14 : candidate.equals("abcd...") ? 9
+                        : candidate.equals("...") ? 6 : 13));
         equal("Сканирование", ReadableTextLayout.ellipsize("Сканирование", 100, ReadableTextLayoutTest::pixels));
         equal("", ReadableTextLayout.ellipsize("", 10, ReadableTextLayoutTest::pixels));
 
