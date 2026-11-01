@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Require a distinct real PCM signal on a virtual PulseAudio sink after book use.
+"""Validate captured OpenAL/PulseAudio PCM before source-clip attribution.
 
-Measures PCM energy, not waveform identity or human-perceived BETA26 parity.
+Energy is a capture-health diagnostic, not an event identity test. Minecraft
+ambient/menu sounds can make the pre-click recording louder than the desired
+sound; the downstream original-OGG cross-correlation is the acceptance gate.
 """
 from array import array
 import math
@@ -37,9 +39,9 @@ def check(baseline: Path, event: Path):
     print(f"PAGE_PCM_EVENT duration={e_duration:.2f}s max_100ms_rms={e_rms:.5f} peak={e_peak:.5f}")
     if b_duration < 1.2 or e_duration < 3.0:
         raise AssertionError("PCM capture incomplete: PulseAudio monitor or parec failed")
-    if e_rms < max(0.006, b_rms * 2.5 + 0.003) or e_peak < 0.025:
-        raise AssertionError("No sufficiently distinct PCM signal after Thaumonomicon use")
-    print("PAGE_REAL_CLIENT_PCM_SIGNAL=PASS (not source-clip identity proof)")
+    if e_rms < 0.001 or e_peak < 0.003:
+        raise AssertionError("Event PCM capture is effectively silent")
+    print("PAGE_PCM_CAPTURE=PASS (event identity requires downstream original-OGG matcher)")
 
 
 if __name__ == "__main__":
