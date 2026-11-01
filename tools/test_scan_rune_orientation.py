@@ -150,6 +150,35 @@ public final class ScanRuneOrientationTest {
       check(particle.roll==0.0F && particle.oRoll==0.0F,
           "billboard roll must not rotate world-space runes");
       check(particle.lifetime==45, "block scan lifetime must stay 45 ticks");
+      // BETA26: glRotatef(worldYaw,Y); glRotatef(90,Z);
+      // glTranslated(ofx, ofy, -0.51). The -0.51 displacement must be
+      // rotated onto one of four block faces, not left at the block center.
+      double px = particle.x;
+      double py = particle.y - 64.0;
+      double pz = particle.z;
+      check(py>=-0.00001 && py<0.20001,
+          "local ofx must become world vertical offset [0,.2)");
+      switch (quarter) {
+        case 0 -> {
+          check(Math.abs(pz+0.51)<0.00001, "north face offset");
+          check(Math.abs(px)<0.30001, "north tangential jitter");
+        }
+        case 1 -> {
+          check(Math.abs(px+0.51)<0.00001, "west face offset");
+          check(Math.abs(pz)<0.30001, "west tangential jitter");
+        }
+        case 2 -> {
+          check(Math.abs(pz-0.51)<0.00001, "south face offset");
+          check(Math.abs(px)<0.30001, "south tangential jitter");
+        }
+        case 3 -> {
+          check(Math.abs(px-0.51)<0.00001, "east face offset");
+          check(Math.abs(pz)<0.30001, "east tangential jitter");
+        }
+        default -> throw new AssertionError("invalid quarter");
+      }
+      check(particle.xo==particle.x && particle.yo==particle.y &&
+            particle.zo==particle.z, "no first-frame interpolation from anchor");
       Quaternionf second = new Quaternionf();
       particle.getFacingCameraMode().setRotation(second,new Camera(),0.9F);
       check(first.yaw==second.yaw && first.tip==second.tip,
