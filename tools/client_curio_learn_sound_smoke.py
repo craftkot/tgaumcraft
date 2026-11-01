@@ -39,9 +39,12 @@ body = r'''
   sleep 5
   wait "$curio_capture_pid" || test "$?" -eq 124
   import -display :99 -window root -silent client-smoke/screenshots/96-curio-after.png
-  python3 tools/check_page_audio_pcm.py \
+  # Curio's BETA26 pitch is only 0.33-0.50; a fixed page-sound RMS
+  # threshold is inappropriate. Require ORIGINAL waveform attribution instead.
+  python3 tools/match_curio_audio_pcm.py \
     client-smoke/curio-baseline.pcm client-smoke/curio-event.pcm \
-    | tee client-smoke/curio-pcm-level.txt
+    src/main/resources/assets/thaumcraft/sounds/learn.ogg \
+    | tee client-smoke/curio-source-match.txt
   echo 'CURIO_LEARN_REAL_PCM=PASS' | tee -a client-smoke-status.txt
   count="$(grep -Fc 'TC_SMOKE_CURIO_LEARN_SOUND_DISPATCHED=YES' client-smoke/client.log || true)"
   if (( count != 1 )); then
