@@ -7,6 +7,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
       - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
       - 'tools/match_page_audio_pcm.py'
       - 'tools/test_page_audio_match.py'
       - '.github/workflows/closure-book-page-client.yml'
@@ -16,6 +17,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/ThaumonomiconItem.java'
       - 'tools/client_book_page_sound_smoke.py'
       - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
       - 'tools/match_page_audio_pcm.py'
       - 'tools/test_page_audio_match.py'
       - '.github/workflows/closure-book-page-client.yml'
@@ -46,6 +48,7 @@ jobs:
             pulseaudio pulseaudio-utils
       - name: Generate isolated real-client script and validate Bash
         run: |
+          python3 tools/test_pcm_capture_validation.py
           python3 tools/client_book_page_sound_smoke.py > client-page-smoke-generated.sh
           bash -n client-page-smoke-generated.sh
       - name: Start virtual PulseAudio sink and test real client PCM
