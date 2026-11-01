@@ -1,0 +1,36 @@
+name: M16 readable GUI text regression
+
+on:
+  push:
+    branches:
+      - feature/closure-near-complete
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayout.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/test_readable_text_client.py'
+      - '.github/workflows/closure-readable-text.yml'
+  pull_request:
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayout.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/test_readable_text_client.py'
+      - '.github/workflows/closure-readable-text.yml'
+
+jobs:
+  readable-text:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Pixel and grapheme core regression
+        run: bash tools/test_readable_text_layout.sh
+      - name: Compile real NeoForge GUI helper against minimal test stubs
+        run: python3 tools/test_readable_text_client.py
