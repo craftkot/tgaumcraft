@@ -19,6 +19,11 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
       - 'tools/test_label_tint.sh'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDuration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
+      - 'tools/test_scan_rune_duration.sh'
       - '.github/workflows/closure-readable-text.yml'
   pull_request:
     paths:
@@ -36,6 +41,11 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
       - 'tools/test_label_tint.sh'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDuration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
+      - 'tools/test_scan_rune_duration.sh'
       - '.github/workflows/closure-readable-text.yml'
 
 jobs:
@@ -56,3 +66,5 @@ jobs:
         run: python3 tools/verify_label_brace_source_art.py
       - name: Test all 37 original aspect colors and label layer isolation
         run: bash tools/test_label_tint.sh
+      - name: Check source-derived BETA26 entity-height scan rune lifetime
+        run: bash tools/test_scan_rune_duration.sh
