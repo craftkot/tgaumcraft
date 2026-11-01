@@ -60,7 +60,7 @@ body = r'''
   hotbar_x=$((X + WIDTH / 2 - 162))
   hotbar_y=$((Y + HEIGHT - 42))
   read -r screen_width screen_height < <(
-    identify -format '%w %h' client-smoke/screenshots/60-jar-brace.png
+    identify -format '%w %h\n' client-smoke/screenshots/60-jar-brace.png
   )
   if (( hotbar_x < 16 || hotbar_y < 16 ||
         hotbar_x + 16 > screen_width || hotbar_y + 16 > screen_height )); then
