@@ -101,3 +101,5 @@
 **Audit:** 59/100, M16 4/6 unchanged. The fix prevents a specific overflow but does not prove graphical RU/EN rendering, original sound/particle/asset parity or end-to-end gameplay. PR #4 stays Draft; no merge. Next: inspect both exact-head CI results; obtain actual client screenshot evidence and identify a missing original visual/audio asset without overlapping the feature teams.
 
 **Exact-head regression result:** [Actions #41276053884](https://github.com/craftkot/tgaumcraft/actions/runs/41276053884) **SUCCESS** on `581920c`; job logs report `Readable text pixel bounds: OK (2003 assertions)` and `Client styled GUI layout stubs: OK (44 assertions)`. Full NeoForge/JAR/server [#41276053888](https://github.com/craftkot/tgaumcraft/actions/runs/41276053888) was still in progress at this check. This is not real graphical client proof.
+
+**Full CI follow-up:** [Actions #41276053888](https://github.com/craftkot/tgaumcraft/actions/runs/41276053888) completed **SUCCESS** on exact code+test commit `581920c` (NeoForge build/JAR and dedicated-server smoke workflow). This is still not a graphical Minecraft client. Readiness remains **59/100**, M16 **4/6**.
