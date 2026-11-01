@@ -49,6 +49,42 @@ public final class InteractionResultHolder<T> {
   }
 }
 """,
+"net/minecraft/sounds/SoundEvent.java": """
+package net.minecraft.sounds;
+public final class SoundEvent {
+  public String getLocation() { return "thaumcraft:page"; }
+}
+""",
+"net/minecraft/client/sounds/SoundManager.java": """
+package net.minecraft.client.sounds;
+public final class SoundManager {
+  public boolean available = true;
+  public int lookups;
+  public Object getSoundEvent(String location) {
+    lookups++;
+    return available && "thaumcraft:page".equals(location) ? new Object() : null;
+  }
+}
+""",
+"net/minecraft/client/Minecraft.java": """
+package net.minecraft.client;
+import net.minecraft.client.sounds.SoundManager;
+public final class Minecraft {
+  private static final Minecraft INSTANCE = new Minecraft();
+  private final SoundManager sounds = new SoundManager();
+  public static Minecraft getInstance() { return INSTANCE; }
+  public SoundManager getSoundManager() { return sounds; }
+}
+""",
+"dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java": """
+package dev.ehtid.thaumcraft.util;
+import java.util.ArrayList;
+import java.util.List;
+public final class ThaumcraftSmokeAudit {
+  public static final List<String> markers = new ArrayList<>();
+  public static void mark(String marker) { markers.add(marker); }
+}
+""",
 "net/minecraft/sounds/SoundSource.java": """
 package net.minecraft.sounds;
 public enum SoundSource { PLAYERS }
@@ -106,9 +142,10 @@ public class Level {
 "dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java": """
 package dev.ehtid.thaumcraft.registry;
 import java.util.function.Supplier;
+import net.minecraft.sounds.SoundEvent;
 public final class ThaumcraftSounds {
-  public static final Object PAGE_EVENT = new Object();
-  public static final Supplier<Object> PAGE = () -> PAGE_EVENT;
+  public static final SoundEvent PAGE_EVENT = new SoundEvent();
+  public static final Supplier<SoundEvent> PAGE = () -> PAGE_EVENT;
 }
 """,
 "dev/ehtid/thaumcraft/client/FirstStepsBookScreen.java": """
@@ -122,6 +159,8 @@ public final class FirstStepsBookScreen {
 package dev.ehtid.thaumcraft.item;
 import dev.ehtid.thaumcraft.client.FirstStepsBookScreen;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
+import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -145,11 +184,24 @@ public final class ThaumonomiconPageSoundTest {
     check(client.volume==1.0f && client.pitch==1.0f,"BETA26 volume and pitch");
     check(!client.distanceDelay,"no distance delay");
     check(FirstStepsBookScreen.opens==1,"client must still open book");
+    check(ThaumcraftSmokeAudit.markers.contains("THAUMONOMICON_PAGE_SOUND_DISPATCHED"),"local dispatch probe");
+    check(ThaumcraftSmokeAudit.markers.contains("THAUMONOMICON_PAGE_SOUND_RESOLVED"),"loaded client sound definition");
+    check(ThaumcraftSmokeAudit.markers.contains("THAUMONOMICON_GUI_OPENED"),"client GUI probe");
+    check(Minecraft.getInstance().getSoundManager().lookups==1,"exactly one resource lookup");
     Level server = new Level(false);
     var serverResult = item.use(server,player,InteractionHand.MAIN_HAND);
     check(serverResult.object==player.held,"server returns held stack");
     check(server.plays==0,"server must not double-play local sound");
     check(FirstStepsBookScreen.opens==1,"server must not open client GUI");
+    check(Minecraft.getInstance().getSoundManager().lookups==1,"server must not touch client sound manager");
+    check(ThaumcraftSmokeAudit.markers.size()==3,"server must not emit client sound markers");
+    Minecraft.getInstance().getSoundManager().available = false;
+    var second = item.use(new Level(true),player,InteractionHand.MAIN_HAND);
+    check(second.object==player.held,"missing sound must not block item use");
+    check(FirstStepsBookScreen.opens==2,"missing sound must not block GUI");
+    check(Minecraft.getInstance().getSoundManager().lookups==2,"missing sound checked on next use");
+    check(ThaumcraftSmokeAudit.markers.stream().filter(x -> x.equals("THAUMONOMICON_PAGE_SOUND_RESOLVED")).count()==1,
+        "missing resource must never be reported as resolved");
     System.out.println("ThaumonomiconPageSoundTest PASS: "+checks+" assertions");
   }
 }

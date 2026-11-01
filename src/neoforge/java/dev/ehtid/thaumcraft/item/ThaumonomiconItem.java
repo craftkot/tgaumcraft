@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -26,6 +27,8 @@ public final class ThaumonomiconItem extends Item {
             // randomized page sound locally at the player's position, then open.
             level.playLocalSound(player.getX(), player.getY(), player.getZ(),
                     ThaumcraftSounds.PAGE.get(), SoundSource.PLAYERS, 1.0F, 1.0F, false);
+            // Opt-in real-client evidence: the local sound call returned, not proof of audible output.
+            ThaumcraftSmokeAudit.mark("THAUMONOMICON_PAGE_SOUND_DISPATCHED");
             ClientOnly.open();
         }
         return InteractionResultHolder.success(player.getItemInHand(hand));
@@ -33,7 +36,13 @@ public final class ThaumonomiconItem extends Item {
     /** This nested class is not loaded by the dedicated server JVM. */
     private static final class ClientOnly {
         static void open() {
+            // Check the actual loaded client sound definition, not merely the server registry.
+            if (net.minecraft.client.Minecraft.getInstance().getSoundManager()
+                    .getSoundEvent(ThaumcraftSounds.PAGE.get().getLocation()) != null) {
+                ThaumcraftSmokeAudit.mark("THAUMONOMICON_PAGE_SOUND_RESOLVED");
+            }
             dev.ehtid.thaumcraft.client.FirstStepsBookScreen.open();
+            ThaumcraftSmokeAudit.mark("THAUMONOMICON_GUI_OPENED");
         }
     }
 
