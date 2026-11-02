@@ -22,6 +22,15 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   wait "$dust_capture_pid" || test "$?" -eq 124
 """
 head = source.split(end, 1)[0].replace(anchor, replacement)
+# The bookshelf is at (2,151,12); the shared fixture originally records
+# from z=8.5, attenuating this intentionally quiet BETA26 0.33-volume sound.
+# Move only this isolated sound probe nearer the real interaction target.
+# Do not alter the canonical multi-feature client smoke script.
+far = "  send_chat '/tp @p 2.5 150 8.5 0 0'\\n"
+near = "  send_chat '/tp @p 2.5 150 11.5 0 0'\\n"
+if head.count(far) != 1:
+    raise SystemExit("Salis teleport fixture changed; refuse unverified relocation")
+head = head.replace(far, near)
 head = head.replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
 tail = """  python3 tools/match_dust_audio_pcm.py \\
     client-smoke/dust-baseline.pcm client-smoke/dust-event.pcm \\
