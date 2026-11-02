@@ -6,10 +6,10 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
 import org.joml.Vector3f;
 
 /**
@@ -27,13 +27,15 @@ public final class SalisMundusSparkles {
 
     public static void sendToActor(ServerLevel level, ServerPlayer player, BlockPos pos, InteractionHand hand) {
         Vec3 forward = player.getLookAngle();
-        Vec3 right = new Vec3(forward.z, 0.0D, -forward.x);
-        right = right.lengthSqr() > 1.0E-6D ? right.normalize() : new Vec3(1.0D, 0.0D, 0.0D);
-        boolean rightHand = player.getMainArm() == HumanoidArm.RIGHT;
-        if (hand == InteractionHand.OFF_HAND) rightHand = !rightHand;
-        double side = rightHand ? 1.0D : -1.0D;
-        Vec3 start = player.getEyePosition().add(forward.scale(0.45D))
-                .add(right.scale(side * 0.28D)).add(0.0D, -0.38D, 0.0D);
+        // BETA26 ItemMagicDust uses EntityUtils.posToHand: chest height,
+        // yaw-based hand side and a 0.3 look-vector offset. The previous
+        // eye-position approximation shifted the trail and changed with the
+        // preferred main arm; the original distinguishes MAIN/OFF_HAND only.
+        double[] origin = SalisSparkleHandOrigin.position(
+                player.getX(), player.getBoundingBox().minY, player.getBbHeight(),
+                player.getZ(), player.getYRot(),
+                forward.x, forward.y, forward.z, hand == InteractionHand.OFF_HAND);
+        Vec3 start = new Vec3(origin[0], origin[1], origin[2]);
         Vec3 travel = Vec3.atCenterOf(pos).subtract(start);
 
         for (int i = 0; i < TRAIL_COUNT; i++) {

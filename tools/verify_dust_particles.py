@@ -19,6 +19,13 @@ assert "if (context.getLevel() instanceof ServerLevel level && player instanceof
 assert "SalisMundusSparkles.sendToActor(level, serverPlayer, pos, context.getHand())" in item
 
 assert "TRAIL_COUNT = 50" in fx
+assert "SalisSparkleHandOrigin.position(" in fx
+assert "player.getBoundingBox().minY" in fx
+assert "player.getBbHeight()" in fx
+assert "player.getYRot()" in fx
+assert "hand == InteractionHand.OFF_HAND" in fx
+assert "HumanoidArm" not in fx
+assert "player.getEyePosition()" not in fx
 assert "for (Direction face : Direction.values())" in fx
 assert "SalisSparkleFaceLayout.particlesPerFace(" in fx
 assert "neighbor.isSolidRender(level, adjacent)" in fx
