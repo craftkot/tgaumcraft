@@ -64,7 +64,7 @@ jobs:
           bash -n client-crystal-generated.sh
       - name: Launch Minecraft and capture original crystal audio
         run: |
-          export XDG_RUNTIME_DIR=/tmp/thaumcraft-crystal-runtime
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
           chmod 700 "$XDG_RUNTIME_DIR"
           pulseaudio --start --exit-idle-time=-1
