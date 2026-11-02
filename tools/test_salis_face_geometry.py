@@ -14,12 +14,10 @@ public class SalisSparkleFaceLayoutTest {
         if (Math.abs(a - b) > 1e-12) throw new AssertionError(a + " != " + b);
     }
     public static void main(String[] args) {
-        eq(.1, SalisSparkleFaceLayout.BOUNDS_EXPANSION);
+        // BETA26's discarded AxisAlignedBB.grow() return leaves original bounds.
         eq(40, SalisSparkleFaceLayout.particlesPerFace(1,1,1));
-        // Full cube after original FXDispatcher bs.grow(0.1) => 48/face.
-        eq(48, SalisSparkleFaceLayout.particlesPerFace(1.2,1.2,1.2));
-        eq(-.01, SalisSparkleFaceLayout.coordinate(-.1,1.1,-1,0));
-        eq(1.01, SalisSparkleFaceLayout.coordinate(-.1,1.1,1,0));
+        eq(0, SalisSparkleFaceLayout.coordinate(0,1,-1,0));
+        eq(1, SalisSparkleFaceLayout.coordinate(0,1,1,0));
         // A partial shape still clamps to its own expanded bounds.
         eq(.15, SalisSparkleFaceLayout.coordinate(.15,.85,-1,0));
         eq(.85, SalisSparkleFaceLayout.coordinate(.15,.85,1,0));
