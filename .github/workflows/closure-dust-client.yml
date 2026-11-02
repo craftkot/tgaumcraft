@@ -93,6 +93,9 @@ jobs:
             client-smoke/screenshots/08k-salis-sparkles-early.png \
             client-smoke/screenshots/08k-salis-sparkles-late.png \
             --extra-early client-smoke/screenshots/08k-salis-sparkles-mid.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-peak.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-tail.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-final.png \
             | tee client-smoke/salis-visible-pixels.txt
       - name: Upload actual game evidence
         if: always()

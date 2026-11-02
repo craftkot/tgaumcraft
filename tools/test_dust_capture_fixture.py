@@ -27,16 +27,25 @@ record = unique("dust-event.pcm &")
 click = unique("  xdotool click 3\n  # BETA26 face particles now start")
 frame = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png")
 mid = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png")
-assert "  sleep 0.7\n" in generated[click:frame]
-assert "  sleep 0.55\n" in generated[frame:mid]
-assert "  sleep 0.2\n" not in generated[click:mid]
+peak = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-peak.png")
+tail = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-tail.png")
+final = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-final.png")
+assert "  sleep 0.30\n" in generated[click:frame]
+assert all("  sleep 0.18\n" in generated[a:b]
+           for a, b in ((frame, mid), (mid, peak), (peak, tail), (tail, final)))
+assert "  sleep 0.2\n" not in generated[click:final]
+assert all(f"SALIS_FRAME_{label}_CAPTURE_MS=$(date +%s%3N)" in generated
+           for label in ("EARLY", "MID", "PEAK", "TAIL", "FINAL"))
+assert all(f"test -s client-smoke/screenshots/08k-salis-sparkles-{label}.png" in generated
+           for label in ("early", "mid", "peak", "tail", "final"))
+
 wait = unique('  wait "$dust_capture_pid" || test "$?" -eq 124')
 thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize")
 base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
 particle = unique("grep -Fq 'SALIS_SPARKLES_PACKETS_SENT' client-smoke/client.log")
 delayed = unique("grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log")
 matcher = unique("python3 tools/match_dust_audio_pcm.py")
-assert music < ambient < launch < baseline < record < click < frame < mid < wait < thumbnail < base64 < particle < delayed < matcher
+assert music < ambient < launch < baseline < record < click < frame < mid < peak < tail < final < wait < thumbnail < base64 < particle < delayed < matcher
 assert "soundCategory_players:0.0" not in generated
 assert "soundCategory_master:0.0" not in generated
 assert "capture 08k-salis-sparkles-early" not in generated

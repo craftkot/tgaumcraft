@@ -22,17 +22,33 @@ replacement = """  # Hide HUD/chat and hand swing so the transient-particle ROI 
   dust_capture_pid=$!
   sleep 0.6
   xdotool click 3
-  # BETA26 face particles now start at distance*16 + 0..4 ticks, not
-  # immediately. The old 0.2s frame missed all visible pixels on the
-  # real client even though the face-delay queue drained and dust audio played.
-  # Capture TWO short-lived frames after scheduled emission; do not change
-  # the pixel threshold or accept persistent scenery as particles.
-  sleep 0.7
+  # BETA26 face particles are staggered by distance*16 + 0..4 ticks.
+  # Capture several early frames while the short-lived fallback is visible;
+  # do not change pixel thresholds or accept persistent scenery as FX.
+  # Real client #41525689264 rendered 92 transient pixels at the first
+  # post-delay capture and zero at the second. Sample the shorter-lived
+  # interval instead of lowering the unchanged >=100-pixel acceptance gate.
+  # Log actual wall-clock capture times; import duration is variable.
+  sleep 0.30
+  echo "SALIS_FRAME_EARLY_CAPTURE_MS=$(date +%s%3N)"
   import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png
   test -s client-smoke/screenshots/08k-salis-sparkles-early.png
-  sleep 0.55
+  sleep 0.18
+  echo "SALIS_FRAME_MID_CAPTURE_MS=$(date +%s%3N)"
   import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png
   test -s client-smoke/screenshots/08k-salis-sparkles-mid.png
+  sleep 0.18
+  echo "SALIS_FRAME_PEAK_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-peak.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-peak.png
+  sleep 0.18
+  echo "SALIS_FRAME_TAIL_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-tail.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-tail.png
+  sleep 0.18
+  echo "SALIS_FRAME_FINAL_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-final.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-final.png
   # Defer ImageMagick thumbnail processing and base64 output until AFTER
   # the PCM monitor stops, avoiding interference with quiet 0.33-volume dust.
   sleep 2.65
