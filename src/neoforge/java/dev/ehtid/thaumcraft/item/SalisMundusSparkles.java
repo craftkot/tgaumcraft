@@ -10,6 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
 import org.joml.Vector3f;
 
 /**
@@ -40,7 +41,7 @@ public final class SalisMundusSparkles {
 
         for (int i = 0; i < TRAIL_COUNT; i++) {
             boolean floaty = i < TRAIL_COUNT / 3;
-            DustParticleOptions color = warmDust(level);
+            DustParticleOptions color = warmDust(level, false);
             // BETA26 FXDispatcher.drawSimpleSparkle queues each trail sprite
             // for a random 0..4 tick delay. Preserve the 50 independent
             // velocities/colors without changing the actor-only recipient.
@@ -80,7 +81,7 @@ public final class SalisMundusSparkles {
                         face.getStepY(), face.getStepY() == 0 ? level.random.nextGaussian() : 0.0D);
                 double z = SalisSparkleFaceLayout.coordinate(bounds.minZ, bounds.maxZ,
                         face.getStepZ(), face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D);
-                level.sendParticles(player, warmDust(level), false,
+                level.sendParticles(player, warmDust(level, true), false,
                         pos.getX() + x,
                         pos.getY() + y,
                         pos.getZ() + z,
@@ -91,10 +92,17 @@ public final class SalisMundusSparkles {
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SALIS_SPARKLES_PACKETS_SENT");
     }
 
-    private static DustParticleOptions warmDust(ServerLevel level) {
-        // BETA26: R=255, G=[189..255], B=[64..255], inclusive.
-        return new DustParticleOptions(new Vector3f(1.0F,
+    private static DustParticleOptions warmDust(ServerLevel level, boolean blockFace) {
+        // Evaluate the warm color first: BETA26 samples face RGB before its
+        // 0.4 + Gaussian*0.1 scale. The hand trail retains its original 0.5.
+        Vector3f color = new Vector3f(1.0F,
                 (189 + level.random.nextInt(67)) / 255.0F,
-                (64 + level.random.nextInt(192)) / 255.0F), 0.5F);
+                (64 + level.random.nextInt(192)) / 255.0F);
+        float scale = blockFace
+                ? SalisSparkleScaleRules.blockFace(level.random.nextGaussian())
+                : 0.5F;
+        // Still a vanilla-dust fallback: FXGeneric's 2-phase size and
+        // 320/512 sprite animation/lifetime are not yet reproduced.
+        return new DustParticleOptions(color, scale);
     }
 }

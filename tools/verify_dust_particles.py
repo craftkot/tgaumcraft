@@ -52,7 +52,11 @@ assert "(floaty ? 0.05D : 0.15D)" in fx
 assert "level.random.nextGaussian() * 0.05D" in fx
 assert "(189 + level.random.nextInt(67)) / 255.0F" in fx
 assert "(64 + level.random.nextInt(192)) / 255.0F" in fx
-assert re.search(r"new DustParticleOptions\(new Vector3f\(1\.0F,", fx)
+assert "new Vector3f(1.0F," in fx
+assert "new DustParticleOptions(color, scale)" in fx
+assert "warmDust(level, false)" in fx  # BETA26 0.5 hand-trail base size
+assert "warmDust(level, true)" in fx   # Gaussian face size, no fixed 0.5
+assert "SalisSparkleScaleRules.blockFace(level.random.nextGaussian())" in fx
 queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
 assert fx.count("level.sendParticles(player,") == 1  # exposed-face burst
 assert queue.count("level.sendParticles(player,") == 1  # delayed hand trail
