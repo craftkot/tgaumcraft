@@ -7,7 +7,10 @@ anchor = "  capture 08k-firststeps-real-bookshelf-before-salis\n  xdotool click 
 end = "  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post"
 if source.count(anchor) != 1 or source.count(end) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Real-client fixture changed; refuse unsafe injection")
-replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
+replacement = """  # Hide HUD/chat and hand swing so the transient-particle ROI measures world FX.
+  xdotool key --clearmodifiers F1
+  sleep 0.5
+  capture 08k-firststeps-real-bookshelf-before-salis
   pactl list short sinks | grep -Fq 'tc_dust_sink'
   timeout --signal=TERM 2s parec --device=tc_dust_sink.monitor \\
     --format=s16le --rate=48000 --channels=2 --raw \\
@@ -28,8 +31,18 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   test -s client-smoke/screenshots/08k-salis-sparkles-early.png
   sleep 3.8
   wait "$dust_capture_pid" || test "$?" -eq 124
-  # At >4s after use the temporary trail should have expired. Capture a
-  # negative temporal control without moving the player or changing camera.
+  # Salis CONSUMES the bookshelf: without restoring the test fixture, the
+  # late screenshot shows distant sky/terrain, not the original scene.
+  # Rebuild only the disposable bookshelf after the real use/audio capture.
+  # Keep the player and camera unchanged; this is a visual negative control,
+  # not a second gameplay acceptance or evidence of BETA26 sprite parity.
+  xdotool key --clearmodifiers F1
+  send_chat '/setblock 2 151 12 minecraft:bookshelf'
+  send_chat '/execute if block 2 151 12 minecraft:bookshelf run say SALIS_TEMPORAL_CONTROL_RESTORED'
+  grep -Fq 'SALIS_TEMPORAL_CONTROL_RESTORED' client-smoke/client.log
+  xdotool key --clearmodifiers F1
+  sleep 1
+  # At >4s after use, with the same shelf restored, FX must have expired.
   import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-late.png
   test -s client-smoke/screenshots/08k-salis-sparkles-late.png
   identify client-smoke/screenshots/08k-salis-sparkles-early.png
