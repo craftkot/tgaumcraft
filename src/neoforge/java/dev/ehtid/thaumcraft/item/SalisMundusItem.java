@@ -48,6 +48,9 @@ public final class SalisMundusItem extends Item {
                     BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ThaumcraftSounds.DUST.get()),
                     SoundSource.PLAYERS, pos.getX(), pos.getY(), pos.getZ(),
                     0.33F, pitch, level.getRandom().nextLong()));
+            // Original BETA26 doSparkles also draws 50 hand-to-block sparkles
+            // and a clicked-block burst; keep both actor-only like its sound.
+            SalisMundusSparkles.sendToActor(level, serverPlayer, pos, context.getHand());
             // BETA26 ItemMagicDust consumes the dust before DustTrigger.execute() fires the crafting event
             // and queues the 50-tick swap. Keep that order even though normal execution cannot fail here.
             if (!player.getAbilities().instabuild) stack.shrink(1);
