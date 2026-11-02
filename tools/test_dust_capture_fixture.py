@@ -27,8 +27,9 @@ record = unique("dust-event.pcm &")
 click = unique("  xdotool click 3\n  # BETA26 face particles now start")
 frame = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png")
 mid = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png")
-assert "  sleep 0.7\n" in generated and "  sleep 0.55\n" in generated
-assert "  sleep 0.2\n" not in generated
+assert "  sleep 0.7\n" in generated[click:frame]
+assert "  sleep 0.55\n" in generated[frame:mid]
+assert "  sleep 0.2\n" not in generated[click:mid]
 wait = unique('  wait "$dust_capture_pid" || test "$?" -eq 124')
 thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize")
 base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
