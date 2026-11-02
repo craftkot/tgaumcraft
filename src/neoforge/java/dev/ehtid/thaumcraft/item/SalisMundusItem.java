@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.port.core.FirstStepsBootstrapLogic;
 import dev.ehtid.thaumcraft.port.core.FirstStepsServerProgression;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
@@ -9,6 +10,7 @@ import dev.ehtid.thaumcraft.world.SalisMundusTransformQueue;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -34,6 +36,14 @@ public final class SalisMundusItem extends Item {
         if (target == FirstStepsBootstrapLogic.DustTarget.NONE) return InteractionResult.PASS;
 
         player.swing(context.getHand(), true);
+        // BETA26 ItemMagicDust#doSparkles: successful dust triggers play locally
+        // on the acting client, not as a server-broadcast or on rejected targets.
+        if (context.getLevel().isClientSide) {
+            var pos = context.getClickedPos();
+            context.getLevel().playLocalSound(pos.getX(), pos.getY(), pos.getZ(),
+                    ThaumcraftSounds.DUST.get(), SoundSource.PLAYERS, 0.33F,
+                    1.0F + (float) context.getLevel().getRandom().nextGaussian() * 0.05F, false);
+        }
         if (context.getLevel() instanceof ServerLevel level && player instanceof ServerPlayer serverPlayer) {
             // BETA26 ItemMagicDust consumes the dust before DustTrigger.execute() fires the crafting event
             // and queues the 50-tick swap. Keep that order even though normal execution cannot fail here.

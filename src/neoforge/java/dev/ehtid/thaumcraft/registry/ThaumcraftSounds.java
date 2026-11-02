@@ -35,6 +35,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crystal")));
 
+    // BETA26 ItemMagicDust#doSparkles, valid Salis Mundus use only.
+    public static final Supplier<SoundEvent> DUST = SOUND_EVENTS.register("dust",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "dust")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }
