@@ -51,7 +51,11 @@ public final class SalisMundusSparkles {
         // occluded by the solid bookshelf and did not match the source effect.
         // Original: 2 * floor(20 * mean edge length) per visible face.
         var shape = level.getBlockState(pos).getShape(level, pos);
-        AABB bounds = shape.isEmpty() ? new AABB(0, 0, 0, 1, 1, 1) : shape.bounds();
+        // BETA26 FXDispatcher.drawBlockSparkles grows the target AABB by 0.1
+        // before counting and clamping sparkles. Without that expansion,
+        // full-cube particles spawn at 0/1 and can be hidden in the face.
+        AABB bounds = (shape.isEmpty() ? new AABB(0, 0, 0, 1, 1, 1) : shape.bounds())
+                .inflate(SalisSparkleFaceLayout.BOUNDS_EXPANSION);
         int perFace = SalisSparkleFaceLayout.particlesPerFace(
                 bounds.getXsize(), bounds.getYsize(), bounds.getZsize());
         for (Direction face : Direction.values()) {

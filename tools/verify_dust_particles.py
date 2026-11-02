@@ -30,6 +30,8 @@ assert fx.count("SalisSparkleFaceLayout.coordinate(") == 3
 assert "Math.max(1" not in fx
 layout = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java").read_text()
 assert "SPARKLES_PER_EDGE = 20.0D" in layout
+assert "BOUNDS_EXPANSION = 0.1D" in layout
+assert ".inflate(SalisSparkleFaceLayout.BOUNDS_EXPANSION)" in fx
 assert "0.5D + faceStep * FACE_OFFSET" in layout
 assert "FACE_OFFSET = 0.51D" in layout
 assert "SPREAD = 0.6D" in layout
@@ -46,4 +48,4 @@ assert re.search(r"new DustParticleOptions\(new Vector3f\(1\.0F,", fx)
 assert fx.count("level.sendParticles(player,") == 2
 assert "level.sendParticles(warmDust" not in fx
 assert "SALIS_SPARKLES_PACKETS_SENT" in fx
-print("BETA26 Salis 50-trail + exact face-coordinate/count rules + exposed-face sparkle color, actor-only gate: PASS")
+print("BETA26 Salis 50-trail + 0.1-expanded exposed-face bounds/count + sparkle color, actor-only gate: PASS")

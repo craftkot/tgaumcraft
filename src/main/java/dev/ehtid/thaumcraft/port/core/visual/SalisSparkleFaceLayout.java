@@ -2,6 +2,8 @@ package dev.ehtid.thaumcraft.port.core.visual;
 
 /** BETA26 FXDispatcher.drawBlockSparkles face coordinates, without Minecraft dependencies. */
 public final class SalisSparkleFaceLayout {
+    // BETA26 FXDispatcher.drawBlockSparkles: bs.grow(0.1, 0.1, 0.1).
+    public static final double BOUNDS_EXPANSION = 0.1D;
     private static final double FACE_OFFSET = 0.51D;
     private static final double SPREAD = 0.6D;
     private static final double SPARKLES_PER_EDGE = 20.0D;
@@ -9,7 +11,7 @@ public final class SalisSparkleFaceLayout {
     private SalisSparkleFaceLayout() {}
 
     public static int particlesPerFace(double xSize, double ySize, double zSize) {
-        // 2 * floor(20 * average edge length); tiny shapes may emit zero.
+        // Caller passes the BETA26-expanded AABB. 2 * floor(20 * mean edge); tiny shapes may emit zero.
         return 2 * (int) (((xSize + ySize + zSize) / 3.0D) * SPARKLES_PER_EDGE);
     }
 
