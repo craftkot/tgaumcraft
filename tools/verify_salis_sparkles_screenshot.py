@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Real-client Salis particle evidence: transient warm pixels, not persistent scene changes.
 
-Fixed 1280x800 camera: monitor the lower-left trail AND the visible bookshelf
-face. BETA26 chest-anchored particles can fall outside the old trail-only crop.
-Compare before, early (~0.2s after use), and late (>4s after use, bookshelf
-fixture restored) screenshots. The late frame MUST have the same scene.
+Fixed 1280x800 camera: monitor the hand trail, bookshelf face AND viewport
+perimeter. The near-field audio fixture puts the bookshelf against the camera:
+real CI #41535397358 shows transient Salis sparkles mostly along the LEFT/TOP
+screen edges, outside the old face/trail ROIs (6384 warm pixels at the peak
+with the perimeter included, zero within the old ROIs). Compare the pre-use
+frame, five timed early frames, and the restored >4s late control.
 This is evidence of transient pixels, not original BETA26 sprite parity.
 """
 import argparse
@@ -16,15 +18,19 @@ from PIL import Image
 def sparkle_regions(width: int, height: int) -> tuple[tuple[int, int, int, int], ...]:
     if width < 640 or height < 400:
         raise ValueError(f"unexpected game framebuffer {width}x{height}")
-    # Non-overlapping ROIs for the fixed smoke camera. The central face ROI
-    # excludes the bottom-right moving hand, HUD and bookshelf frame edges.
-    # Keep the original trail ROI to avoid regressing previously valid runs.
+    # Five disjoint ROIs. Preserve the original trail and face gates;
+    # additionally include the viewport rim, where real near-field bookshelf
+    # face particles appear. Exclude the bottom-centre hand/GUI region, and
+    # keep the SAME scene-stability, late-decay and warm-pixel thresholds.
     return tuple(
         (int(width * left / 1280), int(height * top / 800),
          int(width * right / 1280), int(height * bottom / 800))
         for left, top, right, bottom in (
             (100, 690, 300, 760),    # hand-to-block trail
             (320, 110, 1040, 570),  # visible bookshelf face burst
+            (0, 0, 180, 690),       # left rim (CI #41535397358)
+            (180, 0, 1100, 100),    # top rim, disjoint from left/right
+            (1100, 0, 1280, 690),   # right rim for mirrored camera angles
         )
     )
 
