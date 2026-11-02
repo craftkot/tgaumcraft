@@ -14,6 +14,7 @@ on:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java'
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleHandOrigin.java'
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleDelayRules.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceDelayRules.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
       - '.github/workflows/closure-dust-client.yml'
   pull_request:
@@ -68,6 +69,7 @@ jobs:
           python tools/test_salis_face_geometry.py
           python tools/test_salis_hand_origin.py
           python tools/test_salis_trail_delay.py
+          python tools/test_salis_face_delay.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py

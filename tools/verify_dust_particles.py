@@ -58,9 +58,11 @@ assert "warmDust(level, false)" in fx  # BETA26 0.5 hand-trail base size
 assert "warmDust(level, true)" in fx   # Gaussian face size, no fixed 0.5
 assert "SalisSparkleScaleRules.blockFace(level.random.nextGaussian())" in fx
 queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
-assert fx.count("level.sendParticles(player,") == 1  # exposed-face burst
+assert fx.count("level.sendParticles(player,") == 0  # face burst now queued
 assert queue.count("level.sendParticles(player,") == 1  # delayed hand trail
 assert "SalisSparkleTrailQueue.emitOrQueue(" in fx
+assert "SalisSparkleTrailQueue.emitFaceOrQueue(" in fx
+assert "SalisSparkleFaceDelayRules.delayTicks(" in fx
 assert "level.random.nextInt(5)" in fx
 assert "SALIS_TRAIL_DELAY_QUEUE_DRAINED" in queue
 assert "level.sendParticles(warmDust" not in fx

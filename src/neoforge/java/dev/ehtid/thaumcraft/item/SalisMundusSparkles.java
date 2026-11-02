@@ -11,6 +11,7 @@ import net.minecraft.world.phys.AABB;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 import org.joml.Vector3f;
 
 /**
@@ -38,6 +39,13 @@ public final class SalisMundusSparkles {
                 forward.x, forward.y, forward.z, hand == InteractionHand.OFF_HAND);
         Vec3 start = new Vec3(origin[0], origin[1], origin[2]);
         Vec3 travel = Vec3.atCenterOf(pos).subtract(start);
+        // BETA26 measures face-sparkle delay from the clicked hit point.
+        // The use-on-item call currently does not pass hit coordinates (PR #3
+        // also owns that item file). Reconstruct the ray/box intersection;
+        // the block center is a safe fallback, not exact hit-position parity.
+        Vec3 eye = player.getEyePosition();
+        Vec3 faceStart = new AABB(pos).clip(eye, eye.add(forward.scale(6.0D)))
+                .orElse(Vec3.atCenterOf(pos));
 
         for (int i = 0; i < TRAIL_COUNT; i++) {
             boolean floaty = i < TRAIL_COUNT / 3;
@@ -81,14 +89,17 @@ public final class SalisMundusSparkles {
                         face.getStepY(), face.getStepY() == 0 ? level.random.nextGaussian() : 0.0D);
                 double z = SalisSparkleFaceLayout.coordinate(bounds.minZ, bounds.maxZ,
                         face.getStepZ(), face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D);
-                level.sendParticles(player, warmDust(level, true), false,
-                        pos.getX() + x,
-                        pos.getY() + y,
-                        pos.getZ() + z,
-                        0, 0.0D, 0.0025D, 0.0D, 1.0D);
+                Vec3 spawn = new Vec3(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
+                DustParticleOptions dust = warmDust(level, true);
+                // Original drawBlockSparkles: (int)(rand.nextInt(5) + distance*16).
+                // Queue on server ticks instead of immediately sending all faces.
+                int delayTicks = SalisSparkleFaceDelayRules.delayTicks(
+                        level.random.nextInt(5), spawn.distanceTo(faceStart));
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, player, dust, spawn,
+                        new Vec3(0.0D, 0.0025D, 0.0D), delayTicks);
             }
         }
-        // Diagnostic only: packet emission is not proof of visible client rendering.
+        // Diagnostic only: scheduled/emitted particles are not proof of client rendering.
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SALIS_SPARKLES_PACKETS_SENT");
     }
 

@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleDelayRules;
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.resources.ResourceKey;
@@ -21,14 +22,15 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Actor-only, short-lived delayed Salis trail fallback.
+ * Actor-only, short-lived delayed Salis trail and block-face fallback.
  * BETA26 FXDispatcher delays each drawSimpleSparkle by 0..4 ticks.
  * This does not yet reproduce its original 320/512 sprite/alpha animation.
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class SalisSparkleTrailQueue {
     private record Pending(ResourceKey<Level> dimension, UUID playerId,
-                           DustParticleOptions color, Vec3 origin, Vec3 velocity, long dueTick) {}
+                           DustParticleOptions color, Vec3 origin, Vec3 velocity,
+                           long dueTick, boolean face) {}
 
     private static final List<Pending> PENDING = new ArrayList<>();
 
@@ -37,19 +39,31 @@ public final class SalisSparkleTrailQueue {
     public static void emitOrQueue(ServerLevel level, ServerPlayer player, DustParticleOptions color,
                                    Vec3 origin, Vec3 velocity, int delayTicks) {
         long due = SalisSparkleDelayRules.dueTick(level.getGameTime(), delayTicks);
-        if (delayTicks == 0) {
+        enqueueOrEmit(level, player, color, origin, velocity, due, false);
+    }
+
+    public static void emitFaceOrQueue(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+                                       Vec3 origin, Vec3 velocity, int delayTicks) {
+        long due = SalisSparkleFaceDelayRules.dueTick(level.getGameTime(), delayTicks);
+        enqueueOrEmit(level, player, color, origin, velocity, due, true);
+    }
+
+    private static void enqueueOrEmit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+                                      Vec3 origin, Vec3 velocity, long due, boolean face) {
+        if (due == level.getGameTime()) {
             emit(level, player, color, origin, velocity);
             return;
         }
         // No chunk tickets or cross-player broadcasts; the short queue expires
         // naturally on server ticks and is cleared on server shutdown.
-        PENDING.add(new Pending(level.dimension(), player.getUUID(), color, origin, velocity, due));
+        PENDING.add(new Pending(level.dimension(), player.getUUID(), color, origin, velocity, due, face));
     }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
-        int emitted = 0;
+        int trailEmitted = 0;
+        int faceEmitted = 0;
         Iterator<Pending> iterator = PENDING.iterator();
         while (iterator.hasNext()) {
             Pending pending = iterator.next();
@@ -63,9 +77,11 @@ public final class SalisSparkleTrailQueue {
             ServerPlayer player = server.getPlayerList().getPlayer(pending.playerId());
             if (player == null || player.level() != level) continue;
             emit(level, player, pending.color(), pending.origin(), pending.velocity());
-            emitted++;
+            if (pending.face()) faceEmitted++;
+            else trailEmitted++;
         }
-        if (emitted > 0) ThaumcraftSmokeAudit.mark("SALIS_TRAIL_DELAY_QUEUE_DRAINED");
+        if (trailEmitted > 0) ThaumcraftSmokeAudit.mark("SALIS_TRAIL_DELAY_QUEUE_DRAINED");
+        if (faceEmitted > 0) ThaumcraftSmokeAudit.mark("SALIS_FACE_DELAY_QUEUE_DRAINED");
     }
 
     @SubscribeEvent
