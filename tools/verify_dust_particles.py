@@ -53,7 +53,12 @@ assert "level.random.nextGaussian() * 0.05D" in fx
 assert "(189 + level.random.nextInt(67)) / 255.0F" in fx
 assert "(64 + level.random.nextInt(192)) / 255.0F" in fx
 assert re.search(r"new DustParticleOptions\(new Vector3f\(1\.0F,", fx)
-assert fx.count("level.sendParticles(player,") == 2
+queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
+assert fx.count("level.sendParticles(player,") == 1  # exposed-face burst
+assert queue.count("level.sendParticles(player,") == 1  # delayed hand trail
+assert "SalisSparkleTrailQueue.emitOrQueue(" in fx
+assert "level.random.nextInt(5)" in fx
+assert "SALIS_TRAIL_DELAY_QUEUE_DRAINED" in queue
 assert "level.sendParticles(warmDust" not in fx
 assert "SALIS_SPARKLES_PACKETS_SENT" in fx
 print("BETA26 Salis 50-trail + unexpanded exposed-face bounds/count + sparkle color, actor-only gate: PASS")
