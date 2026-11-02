@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Positive and adversarial screenshot gates: spatial and temporal controls."""
 from PIL import Image, ImageDraw
-from verify_salis_sparkles_screenshot import new_warm_pixels, transient_warm_pixels
+from verify_salis_sparkles_screenshot import (new_warm_pixels,
+    transient_warm_pixels, scene_change_fraction)
 
 base = Image.new("RGB", (1280, 800), (85, 62, 45))
 assert new_warm_pixels(base, base) == 0
@@ -32,4 +33,16 @@ assert transient_warm_pixels(base, warm, base) == (700, 0)
 assert transient_warm_pixels(base, warm, warm) == (700, 700)
 # A late-only flash must not satisfy the early-effect gate.
 assert transient_warm_pixels(base, base, warm) == (0, 700)
-print("Salis transient-particle screenshot gate: 8/8 PASS")
+# The actual failed CI #41450839661 compared a bookshelf to open sky after
+# Salis consumed the block. That must be rejected as a changed scene.
+assert scene_change_fraction(base, base) == 0
+assert abs(scene_change_fraction(base, warm) - 0.05) < 1e-9
+sky = Image.new("RGB", (1280, 800), (160, 195, 240))
+assert scene_change_fraction(base, sky) == 1
+try:
+    scene_change_fraction(base, Image.new("RGB", (640, 400)))
+except ValueError:
+    pass
+else:
+    raise AssertionError("late scene size mismatch must fail")
+print("Salis transient-particle screenshot gate: 12/12 PASS")
