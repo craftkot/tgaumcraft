@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Evidence gate for visible Salis sparkles in a real Minecraft screenshot pair.
+"""Real-client Salis particle evidence: transient warm pixels, not persistent scene changes.
 
-The crop is intentionally confined to the lower-left hand-to-target trail in
-our fixed 1280x800 smoke camera. It excludes the swinging item and the block
-that will transform later. This tests visibility, NOT BETA26 sprite parity.
+Fixed 1280x800 camera, lower-left hand-to-target crop. Compare before, early
+(~0.2s after use), and late (>4s after use) screenshots. This is evidence of
+visible transient particles, not proof of original BETA26 sprite parity.
 """
 import argparse
 from pathlib import Path
@@ -16,7 +16,7 @@ def new_warm_pixels(before: Image.Image, after: Image.Image) -> int:
     width, height = before.size
     if width < 640 or height < 400:
         raise ValueError(f"unexpected game framebuffer {width}x{height}")
-    # Relative crop corresponds to x=100..300, y=690..760 at 1280x800.
+    # Excludes hand swing and the bookshelf transformation in the fixed camera.
     box = (int(width * 100 / 1280), int(height * 690 / 800),
            int(width * 300 / 1280), int(height * 760 / 800))
     a = before.convert("RGB").crop(box).tobytes()
@@ -32,20 +32,33 @@ def new_warm_pixels(before: Image.Image, after: Image.Image) -> int:
     return count
 
 
+def transient_warm_pixels(before: Image.Image, early: Image.Image,
+                          late: Image.Image) -> tuple[int, int]:
+    """Counts new warm pixels at both times against the SAME pre-use frame."""
+    return new_warm_pixels(before, early), new_warm_pixels(before, late)
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("before", type=Path)
-    p.add_argument("after", type=Path)
+    p.add_argument("early", type=Path)
+    p.add_argument("late", type=Path)
     p.add_argument("--min-pixels", type=int, default=100)
+    p.add_argument("--max-late-fraction", type=float, default=0.25)
     args = p.parse_args()
     if args.min_pixels <= 0:
         p.error("--min-pixels must be positive")
-    with Image.open(args.before) as before, Image.open(args.after) as after:
-        n = new_warm_pixels(before, after)
-    print(f"SALIS_NEW_WARM_PIXELS={n} threshold={args.min_pixels}")
-    if n < args.min_pixels:
+    if not (0 <= args.max_late_fraction < 1):
+        p.error("--max-late-fraction must be >=0 and <1")
+    with Image.open(args.before) as before, Image.open(args.early) as early, Image.open(args.late) as late:
+        early_count, late_count = transient_warm_pixels(before, early, late)
+    print(f"SALIS_NEW_WARM_PIXELS={early_count} threshold={args.min_pixels}")
+    print(f"SALIS_LATE_WARM_PIXELS={late_count} max_fraction={args.max_late_fraction}")
+    if early_count < args.min_pixels:
         raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: no convincing new warm trail pixels")
-    print("SALIS_VISIBLE_SPARKLES=PASS (screen pixels, not exact BETA26 sprite parity)")
+    if late_count > early_count * args.max_late_fraction:
+        raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: warm pixels persist after particle lifetime")
+    print("SALIS_VISIBLE_SPARKLES=PASS (transient screen pixels, not BETA26 sprite parity)")
 
 
 if __name__ == "__main__":

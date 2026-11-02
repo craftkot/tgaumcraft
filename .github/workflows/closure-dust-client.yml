@@ -83,6 +83,7 @@ jobs:
           python tools/verify_salis_sparkles_screenshot.py \
             client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \
             client-smoke/screenshots/08k-salis-sparkles-early.png \
+            client-smoke/screenshots/08k-salis-sparkles-late.png \
             | tee client-smoke/salis-visible-pixels.txt
       - name: Upload actual game evidence
         if: always()

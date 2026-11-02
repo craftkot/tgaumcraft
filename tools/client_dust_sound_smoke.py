@@ -28,6 +28,10 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   test -s client-smoke/screenshots/08k-salis-sparkles-early.png
   sleep 3.8
   wait "$dust_capture_pid" || test "$?" -eq 124
+  # At >4s after use the temporary trail should have expired. Capture a
+  # negative temporal control without moving the player or changing camera.
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-late.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-late.png
   identify client-smoke/screenshots/08k-salis-sparkles-early.png
   convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize 512x320 -colors 64 \\
     PNG8:client-smoke/screenshots/08k-salis-sparkles-early-thumb.png
