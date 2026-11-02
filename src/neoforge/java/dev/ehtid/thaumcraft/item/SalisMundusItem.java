@@ -7,6 +7,7 @@ import dev.ehtid.thaumcraft.port.core.FirstStepsBootstrapLogic;
 import dev.ehtid.thaumcraft.port.core.FirstStepsServerProgression;
 import dev.ehtid.thaumcraft.port.core.PlayerKnowledgeData;
 import dev.ehtid.thaumcraft.world.SalisMundusTransformQueue;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -36,15 +37,17 @@ public final class SalisMundusItem extends Item {
         if (target == FirstStepsBootstrapLogic.DustTarget.NONE) return InteractionResult.PASS;
 
         player.swing(context.getHand(), true);
-        // BETA26 ItemMagicDust#doSparkles: successful dust triggers play locally
-        // on the acting client, not as a server-broadcast or on rejected targets.
-        if (context.getLevel().isClientSide) {
-            var pos = context.getClickedPos();
-            context.getLevel().playLocalSound(pos.getX(), pos.getY(), pos.getZ(),
-                    ThaumcraftSounds.DUST.get(), SoundSource.PLAYERS, 0.33F,
-                    1.0F + (float) context.getLevel().getRandom().nextGaussian() * 0.05F, false);
-        }
         if (context.getLevel() instanceof ServerLevel level && player instanceof ServerPlayer serverPlayer) {
+            // Client knowledge may lag behind the server after the wake trigger.
+            // BETA26 plays dust only for a valid use, and only to the actor.
+            // Send an actor-only vanilla sound packet AFTER the authoritative
+            // DustTarget gate; a client-local gate could silently miss the sound.
+            var pos = context.getClickedPos();
+            float pitch = 1.0F + (float) level.getRandom().nextGaussian() * 0.05F;
+            serverPlayer.connection.send(new ClientboundSoundPacket(
+                    BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ThaumcraftSounds.DUST.get()),
+                    SoundSource.PLAYERS, pos.getX(), pos.getY(), pos.getZ(),
+                    0.33F, pitch, level.getRandom().nextLong()));
             // BETA26 ItemMagicDust consumes the dust before DustTrigger.execute() fires the crafting event
             // and queues the 50-tick swap. Keep that order even though normal execution cannot fail here.
             if (!player.getAbilities().instabuild) stack.shrink(1);
