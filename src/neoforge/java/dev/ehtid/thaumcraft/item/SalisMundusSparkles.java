@@ -1,25 +1,28 @@
 package dev.ehtid.thaumcraft.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
 /**
  * Actor-only visual fallback for BETA26 ItemMagicDust#doSparkles.
  *
  * The original emits 50 warm-colored sparkles from the hand toward the clicked
- * block, then a separate block sparkle. Until the original FXDispatcher sprite
+ * block, then a face-aware block sparkle burst. Until the original FXDispatcher sprite
  * and particle lifetime are ported, use tinted vanilla dust particles instead.
  * This is NOT exact visual parity with the original renderer.
  */
 public final class SalisMundusSparkles {
     private static final int TRAIL_COUNT = 50;
-    private static final int BLOCK_COUNT = 12;
+    private static final int LEGACY_BLOCK_SPARKLES_PER_EDGE = 20;
 
     private SalisMundusSparkles() {}
 
@@ -44,14 +47,39 @@ public final class SalisMundusSparkles {
                     travel.z / 6.0D + level.random.nextGaussian() * 0.05D, 1.0D);
         }
 
-        // IDustTrigger.sparkle defaults to the clicked block for simple/ore triggers.
-        // This is a bounded vanilla approximation of FXDispatcher.drawBlockSparkles.
-        for (int i = 0; i < BLOCK_COUNT; i++) {
-            level.sendParticles(player, warmDust(level), false,
-                    pos.getX() + level.random.nextDouble(),
-                    pos.getY() + level.random.nextDouble(),
-                    pos.getZ() + level.random.nextDouble(),
-                    0, 0.0D, 0.025D, 0.0D, 1.0D);
+        // BETA26 FXDispatcher.drawBlockSparkles: only EXPOSED block faces
+        // emit sparkles. The previous 12 random interior positions were often
+        // occluded by the solid bookshelf and did not match the source effect.
+        // Original: 2 * floor(20 * mean edge length) per visible face.
+        var shape = level.getBlockState(pos).getShape(level, pos);
+        AABB bounds = shape.isEmpty() ? new AABB(0, 0, 0, 1, 1, 1) : shape.bounds();
+        int perFace = 2 * Math.max(1, (int) ((bounds.getXsize()
+                + bounds.getYsize() + bounds.getZsize()) / 3.0D
+                * LEGACY_BLOCK_SPARKLES_PER_EDGE));
+        for (Direction face : Direction.values()) {
+            BlockPos adjacent = pos.relative(face);
+            var neighbor = level.getBlockState(adjacent);
+            if (neighbor.isSolidRender(level, adjacent)
+                    || neighbor.isFaceSturdy(level, adjacent, face.getOpposite())) {
+                continue;
+            }
+
+            double cx = (bounds.minX + bounds.maxX) * 0.5D;
+            double cy = (bounds.minY + bounds.maxY) * 0.5D;
+            double cz = (bounds.minZ + bounds.maxZ) * 0.5D;
+            for (int i = 0; i < perFace; i++) {
+                double x = cx + face.getStepX() * (bounds.getXsize() * 0.5D + 0.01D);
+                double y = cy + face.getStepY() * (bounds.getYsize() * 0.5D + 0.01D);
+                double z = cz + face.getStepZ() * (bounds.getZsize() * 0.5D + 0.01D);
+                if (face.getStepX() == 0) x += level.random.nextGaussian() * 0.6D;
+                if (face.getStepY() == 0) y += level.random.nextGaussian() * 0.6D;
+                if (face.getStepZ() == 0) z += level.random.nextGaussian() * 0.6D;
+                level.sendParticles(player, warmDust(level), false,
+                        pos.getX() + Mth.clamp(x, bounds.minX, bounds.maxX),
+                        pos.getY() + Mth.clamp(y, bounds.minY, bounds.maxY),
+                        pos.getZ() + Mth.clamp(z, bounds.minZ, bounds.maxZ),
+                        0, 0.0D, 0.0025D, 0.0D, 1.0D);
+            }
         }
         // Diagnostic only: packet emission is not proof of visible client rendering.
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SALIS_SPARKLES_PACKETS_SENT");
