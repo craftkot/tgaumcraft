@@ -2,22 +2,31 @@
 """Positive and adversarial screenshot gates: spatial and temporal controls."""
 from PIL import Image, ImageDraw
 from verify_salis_sparkles_screenshot import (new_warm_pixels,
-    transient_warm_pixels, scene_change_fraction)
+    transient_warm_pixels, scene_change_fraction, sparkle_regions)
 
 base = Image.new("RGB", (1280, 800), (85, 62, 45))
+assert sparkle_regions(1280, 800) == ((100, 690, 300, 760), (320, 110, 1040, 570))
 assert new_warm_pixels(base, base) == 0
 
 warm = base.copy()
 ImageDraw.Draw(warm).rectangle((140, 700, 174, 719), fill=(239, 202, 135))
 assert new_warm_pixels(base, warm) == 35 * 20
 
-# A moving hand is outside the restricted trail crop.
+# The real BETA26 hand-origin run shows the burst on the bookshelf face,
+# outside the previous lower-left-only ROI.
+face = base.copy()
+ImageDraw.Draw(face).rectangle((600, 300, 634, 319), fill=(239, 202, 135))
+assert new_warm_pixels(base, face) == 35 * 20
+assert transient_warm_pixels(base, face, base) == (700, 0)
+assert transient_warm_pixels(base, face, face) == (700, 700)
+
+# A moving hand is outside BOTH monitored regions.
 hand = base.copy()
 ImageDraw.Draw(hand).rectangle((600, 600, 750, 750), fill=(239, 202, 135))
 assert new_warm_pixels(base, hand) == 0
 
 cold = base.copy()
-ImageDraw.Draw(cold).rectangle((140, 700, 174, 719), fill=(70, 100, 220))
+ImageDraw.Draw(cold).rectangle((600, 300, 634, 319), fill=(70, 100, 220))
 assert new_warm_pixels(base, cold) == 0
 
 try:
@@ -36,7 +45,9 @@ assert transient_warm_pixels(base, base, warm) == (0, 700)
 # The actual failed CI #41450839661 compared a bookshelf to open sky after
 # Salis consumed the block. That must be rejected as a changed scene.
 assert scene_change_fraction(base, base) == 0
-assert abs(scene_change_fraction(base, warm) - 0.05) < 1e-9
+region_area = sum((right-left) * (bottom-top) for left, top, right, bottom in sparkle_regions(1280, 800))
+assert abs(scene_change_fraction(base, warm) - 700 / region_area) < 1e-9
+assert abs(scene_change_fraction(base, face) - 700 / region_area) < 1e-9
 sky = Image.new("RGB", (1280, 800), (160, 195, 240))
 assert scene_change_fraction(base, sky) == 1
 try:
@@ -45,4 +56,4 @@ except ValueError:
     pass
 else:
     raise AssertionError("late scene size mismatch must fail")
-print("Salis transient-particle screenshot gate: 12/12 PASS")
+print("Salis transient-particle screenshot gate: 17/17 PASS")

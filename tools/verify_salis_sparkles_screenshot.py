@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Real-client Salis particle evidence: transient warm pixels, not persistent scene changes.
 
-Fixed 1280x800 camera, lower-left hand-to-target crop. Compare before, early
-(~0.2s after use), and late (>4s after use, bookshelf fixture restored)
-screenshots. The late frame MUST have the same scene; otherwise comparing warm
-pixels against the pre-use frame confuses distant terrain with particles.
+Fixed 1280x800 camera: monitor the lower-left trail AND the visible bookshelf
+face. BETA26 chest-anchored particles can fall outside the old trail-only crop.
+Compare before, early (~0.2s after use), and late (>4s after use, bookshelf
+fixture restored) screenshots. The late frame MUST have the same scene.
 This is evidence of transient pixels, not original BETA26 sprite parity.
 """
 import argparse
@@ -12,50 +12,58 @@ from pathlib import Path
 from PIL import Image
 
 
+def sparkle_regions(width: int, height: int) -> tuple[tuple[int, int, int, int], ...]:
+    if width < 640 or height < 400:
+        raise ValueError(f"unexpected game framebuffer {width}x{height}")
+    # Non-overlapping ROIs for the fixed smoke camera. The central face ROI
+    # excludes the bottom-right moving hand, HUD and bookshelf frame edges.
+    # Keep the original trail ROI to avoid regressing previously valid runs.
+    return tuple(
+        (int(width * left / 1280), int(height * top / 800),
+         int(width * right / 1280), int(height * bottom / 800))
+        for left, top, right, bottom in (
+            (100, 690, 300, 760),    # hand-to-block trail
+            (320, 110, 1040, 570),  # visible bookshelf face burst
+        )
+    )
+
+
 def new_warm_pixels(before: Image.Image, after: Image.Image) -> int:
     if before.size != after.size:
         raise ValueError(f"different screenshot sizes: {before.size} != {after.size}")
-    width, height = before.size
-    if width < 640 or height < 400:
-        raise ValueError(f"unexpected game framebuffer {width}x{height}")
-    # Excludes hand swing and the bookshelf transformation in the fixed camera.
-    box = (int(width * 100 / 1280), int(height * 690 / 800),
-           int(width * 300 / 1280), int(height * 760 / 800))
-    a = before.convert("RGB").crop(box).tobytes()
-    b = after.convert("RGB").crop(box).tobytes()
+    a = before.convert("RGB")
+    b = after.convert("RGB")
     count = 0
-    for i in range(0, len(a), 3):
-        r0, g0, b0 = a[i:i+3]
-        r1, g1, b1 = b[i:i+3]
-        warm = r1 >= 155 and g1 >= 125 and r1 >= b1 + 25 and g1 >= b1 - 5
-        changed = max(abs(r1-r0), abs(g1-g0), abs(b1-b0)) >= 45
-        if warm and changed:
-            count += 1
+    for box in sparkle_regions(*before.size):
+        old = a.crop(box).tobytes()
+        new = b.crop(box).tobytes()
+        for i in range(0, len(old), 3):
+            r0, g0, b0 = old[i:i + 3]
+            r1, g1, b1 = new[i:i + 3]
+            warm = r1 >= 155 and g1 >= 125 and r1 >= b1 + 25 and g1 >= b1 - 5
+            changed = max(abs(r1 - r0), abs(g1 - g0), abs(b1 - b0)) >= 45
+            if warm and changed:
+                count += 1
     return count
 
 
 def scene_change_fraction(before: Image.Image, late: Image.Image) -> float:
-    """Fraction of target ROI with a large RGB change in the late control.
-
-    Salis consumes the bookshelf; comparing a late SKY frame to a pre-use
-    BOOKSHELF frame is invalid. The smoke must restore the disposable fixture
-    before this check. Reject changed scenes instead of granting a false PASS.
-    """
+    """Fraction of BOTH monitored ROIs changed in the restored late control."""
     if before.size != late.size:
         raise ValueError(f"different screenshot sizes: {before.size} != {late.size}")
-    width, height = before.size
-    if width < 640 or height < 400:
-        raise ValueError(f"unexpected game framebuffer {width}x{height}")
-    box = (int(width * 100 / 1280), int(height * 690 / 800),
-           int(width * 300 / 1280), int(height * 760 / 800))
-    a = before.convert("RGB").crop(box).tobytes()
-    b = late.convert("RGB").crop(box).tobytes()
-    changed = sum(
-        max(abs(a[i] - b[i]), abs(a[i + 1] - b[i + 1]),
-            abs(a[i + 2] - b[i + 2])) >= 45
-        for i in range(0, len(a), 3)
-    )
-    return changed / (len(a) // 3)
+    a = before.convert("RGB")
+    b = late.convert("RGB")
+    changed = total = 0
+    for box in sparkle_regions(*before.size):
+        old = a.crop(box).tobytes()
+        new = b.crop(box).tobytes()
+        total += len(old) // 3
+        changed += sum(
+            max(abs(old[i] - new[i]), abs(old[i + 1] - new[i + 1]),
+                abs(old[i + 2] - new[i + 2])) >= 45
+            for i in range(0, len(old), 3)
+        )
+    return changed / total
 
 
 def transient_warm_pixels(before: Image.Image, early: Image.Image,
@@ -88,7 +96,7 @@ def main() -> None:
     if late_scene_change > args.max_scene_change_fraction:
         raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: late control has different scene; restore bookshelf before capture")
     if early_count < args.min_pixels:
-        raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: no convincing new warm trail pixels")
+        raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: no convincing new warm trail or bookshelf-face pixels")
     if late_count > early_count * args.max_late_fraction:
         raise SystemExit("SALIS_VISIBLE_SPARKLES=FAIL: warm pixels persist after particle lifetime")
     print("SALIS_VISIBLE_SPARKLES=PASS (transient screen pixels, not BETA26 sprite parity)")
