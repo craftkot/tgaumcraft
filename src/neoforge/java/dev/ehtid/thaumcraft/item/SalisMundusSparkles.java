@@ -53,6 +53,8 @@ public final class SalisMundusSparkles {
                     pos.getZ() + level.random.nextDouble(),
                     0, 0.0D, 0.025D, 0.0D, 1.0D);
         }
+        // Diagnostic only: packet emission is not proof of visible client rendering.
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SALIS_SPARKLES_PACKETS_SENT");
     }
 
     private static DustParticleOptions warmDust(ServerLevel level) {
