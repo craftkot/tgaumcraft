@@ -73,6 +73,7 @@ head = head.replace(far, near)
 head = head.replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
 tail = """  # Report server particle dispatch independently, even if PCM attribution fails.
   grep -Fq 'SALIS_SPARKLES_PACKETS_SENT' client-smoke/client.log
+  grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log
   echo 'SALIS_SPARKLES_PACKETS_SENT=PASS' | tee -a client-smoke-status.txt
   python3 tools/match_dust_audio_pcm.py \\
     client-smoke/dust-baseline.pcm client-smoke/dust-event.pcm \\

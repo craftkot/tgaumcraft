@@ -41,11 +41,15 @@ public final class SalisMundusSparkles {
         for (int i = 0; i < TRAIL_COUNT; i++) {
             boolean floaty = i < TRAIL_COUNT / 3;
             DustParticleOptions color = warmDust(level);
-            // count=0 means one particle with the supplied exact velocity.
-            level.sendParticles(player, color, false, start.x, start.y, start.z, 0,
+            // BETA26 FXDispatcher.drawSimpleSparkle queues each trail sprite
+            // for a random 0..4 tick delay. Preserve the 50 independent
+            // velocities/colors without changing the actor-only recipient.
+            Vec3 velocity = new Vec3(
                     travel.x / 6.0D + level.random.nextGaussian() * 0.05D,
                     travel.y / 6.0D + level.random.nextGaussian() * 0.05D + (floaty ? 0.05D : 0.15D),
-                    travel.z / 6.0D + level.random.nextGaussian() * 0.05D, 1.0D);
+                    travel.z / 6.0D + level.random.nextGaussian() * 0.05D);
+            SalisSparkleTrailQueue.emitOrQueue(level, player, color, start, velocity,
+                    level.random.nextInt(5));
         }
 
         // BETA26 FXDispatcher.drawBlockSparkles: only EXPOSED block faces
