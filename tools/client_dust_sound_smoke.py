@@ -18,7 +18,9 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   dust_capture_pid=$!
   sleep 0.6
   xdotool click 3
-  sleep 4
+  sleep 0.2
+  capture 08k-salis-sparkles-early
+  sleep 3.8
   wait "$dust_capture_pid" || test "$?" -eq 124
 """
 head = source.split(end, 1)[0].replace(anchor, replacement)
@@ -40,6 +42,8 @@ tail = """  python3 tools/match_dust_audio_pcm.py \\
     echo 'DUST_CLIENT_SOUND_LOAD_ERROR=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
+  grep -Fq 'SALIS_SPARKLES_PACKETS_SENT' client-smoke/client.log
+  echo 'SALIS_SPARKLES_PACKETS_SENT=PASS' | tee -a client-smoke-status.txt
   echo 'DUST_REAL_SALIS_BOOKSHELF_AND_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
   exit 0
 fi
