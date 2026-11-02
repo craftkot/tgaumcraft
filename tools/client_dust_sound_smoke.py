@@ -22,14 +22,20 @@ replacement = """  # Hide HUD/chat and hand swing so the transient-particle ROI 
   dust_capture_pid=$!
   sleep 0.6
   xdotool click 3
-  sleep 0.2
-  # Take the actual early game frame while the effect exists, but defer
-  # ImageMagick thumbnail processing and base64 log output until AFTER the
-  # PCM monitor has stopped. Those CPU-heavy operations overlapped the quiet
-  # 0.33-volume dust sound in the previous failed run.
+  # BETA26 face particles now start at distance*16 + 0..4 ticks, not
+  # immediately. The old 0.2s frame missed all visible pixels on the
+  # real client even though the face-delay queue drained and dust audio played.
+  # Capture TWO short-lived frames after scheduled emission; do not change
+  # the pixel threshold or accept persistent scenery as particles.
+  sleep 0.7
   import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png
   test -s client-smoke/screenshots/08k-salis-sparkles-early.png
-  sleep 3.8
+  sleep 0.55
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-mid.png
+  # Defer ImageMagick thumbnail processing and base64 output until AFTER
+  # the PCM monitor stops, avoiding interference with quiet 0.33-volume dust.
+  sleep 2.65
   wait "$dust_capture_pid" || test "$?" -eq 124
   # Salis CONSUMES the bookshelf: without restoring the test fixture, the
   # late screenshot shows distant sky/terrain, not the original scene.
