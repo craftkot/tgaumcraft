@@ -30,6 +30,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "learn")));
 
+    // BETA26 SoundsTC.CRYSTAL: one original event for all five block sounds.
+    public static final Supplier<SoundEvent> CRYSTAL = SOUND_EVENTS.register("crystal",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crystal")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }

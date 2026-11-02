@@ -11,6 +11,9 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.sounds.SoundEvent;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,12 +30,27 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * mesh/outline and original crystal SoundType still require client parity.
  */
 public final class CrystalClusterBlock extends Block {
+    // BETA26 SoundsTC.CRYSTAL: 0.5 volume, 1.0 pitch, crystal event for
+    // break, step, place, hit and fall. Resolve the DeferredRegister lazily:
+    // block constructors can run before the sound registry is populated.
+    private static final SoundType ORIGINAL_CRYSTAL_SOUND = new SoundType(
+            0.5F, 1.0F,
+            SoundType.GLASS.getBreakSound(), SoundType.GLASS.getStepSound(),
+            SoundType.GLASS.getPlaceSound(), SoundType.GLASS.getHitSound(),
+            SoundType.GLASS.getFallSound()) {
+        @Override public SoundEvent getBreakSound() { return ThaumcraftSounds.CRYSTAL.get(); }
+        @Override public SoundEvent getStepSound() { return ThaumcraftSounds.CRYSTAL.get(); }
+        @Override public SoundEvent getPlaceSound() { return ThaumcraftSounds.CRYSTAL.get(); }
+        @Override public SoundEvent getHitSound() { return ThaumcraftSounds.CRYSTAL.get(); }
+        @Override public SoundEvent getFallSound() { return ThaumcraftSounds.CRYSTAL.get(); }
+    };
+
     public static final IntegerProperty SIZE=IntegerProperty.create("size",0,3);
     public static final IntegerProperty GENERATION=IntegerProperty.create("gen",1,4);
     private static final VoxelShape OUTLINE=box(2,0,2,14,14,14);
     private final String aspectTag;
     public CrystalClusterBlock(BlockBehaviour.Properties props,String aspectTag) {
-        super(props);
+        super(props.sound(ORIGINAL_CRYSTAL_SOUND));
         this.aspectTag=aspectTag;
         registerDefaultState(stateDefinition.any().setValue(SIZE,0).setValue(GENERATION,1));
     }
