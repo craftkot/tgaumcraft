@@ -6,7 +6,10 @@ from verify_salis_sparkles_screenshot import (new_warm_pixels,
     strongest_stable_early)
 
 base = Image.new("RGB", (1280, 800), (85, 62, 45))
-assert sparkle_regions(1280, 800) == ((100, 690, 300, 760), (320, 110, 1040, 570))
+assert sparkle_regions(1280, 800) == (
+    (100, 690, 300, 760), (320, 110, 1040, 570),
+    (0, 0, 180, 690), (180, 0, 1100, 100), (1100, 0, 1280, 690),
+)
 assert new_warm_pixels(base, base) == 0
 
 warm = base.copy()
@@ -21,7 +24,21 @@ assert new_warm_pixels(base, face) == 35 * 20
 assert transient_warm_pixels(base, face, base) == (700, 0)
 assert transient_warm_pixels(base, face, face) == (700, 700)
 
-# A moving hand is outside BOTH monitored regions.
+# CI #41535397358 had 0 warm pixels in BOTH old ROIs, but its real
+# 08k-salis-sparkles-mid.png has 4711 at the left rim and 1673 at the
+# top rim. Verify all three non-overlapping perimeter bands independently.
+for bounds in ((10, 340, 44, 359), (600, 10, 634, 29),
+               (1200, 340, 1234, 359)):
+    perimeter = base.copy()
+    ImageDraw.Draw(perimeter).rectangle(bounds, fill=(239, 202, 135))
+    assert new_warm_pixels(base, perimeter) == 700
+    assert transient_warm_pixels(base, perimeter, base) == (700, 0)
+    assert transient_warm_pixels(base, perimeter, perimeter) == (700, 700)
+    selected, scores = strongest_stable_early(base, [base, perimeter], base, 0.15)
+    assert selected == 700 and scores[1] == (700, 700 / sum(
+        (r-l) * (b-t) for l, t, r, b in sparkle_regions(1280, 800)))
+
+# A moving hand is outside BOTH monitored interior and perimeter regions.
 hand = base.copy()
 ImageDraw.Draw(hand).rectangle((600, 600, 750, 750), fill=(239, 202, 135))
 assert new_warm_pixels(base, hand) == 0
@@ -75,4 +92,4 @@ except ValueError:
 else:
     raise AssertionError("empty early frame sequence must fail")
 
-print("Salis transient-particle screenshot gate: 21/21 PASS")
+print("Salis transient-particle screenshot gate: PASS (face, trail, perimeter, negatives)")
