@@ -10,6 +10,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
       - 'tools/*dust*'
+      - 'tools/*salis*'
       - '.github/workflows/closure-dust-client.yml'
   pull_request:
     branches: [main]
@@ -20,6 +21,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
       - 'tools/*dust*'
+      - 'tools/*salis*'
       - '.github/workflows/closure-dust-client.yml'
   workflow_dispatch:
 
@@ -55,6 +57,7 @@ jobs:
           python tools/verify_dust_sound.py
           python tools/verify_dust_particles.py
           python tools/test_dust_audio_match.py
+          python tools/test_salis_sparkles_screenshot.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py
@@ -69,6 +72,12 @@ jobs:
           pactl load-module module-null-sink sink_name=tc_dust_sink rate=48000 channels=2
           pactl set-default-sink tc_dust_sink
           bash client-dust-generated.sh
+      - name: Verify real-client visible Salis particles
+        run: |
+          python tools/verify_salis_sparkles_screenshot.py \
+            client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \
+            client-smoke/screenshots/08k-salis-sparkles-early.png \
+            | tee client-smoke/salis-visible-pixels.txt
       - name: Upload actual game evidence
         if: always()
         uses: actions/upload-artifact@v4
