@@ -12,6 +12,7 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   timeout --signal=TERM 2s parec --device=tc_dust_sink.monitor \\
     --format=s16le --rate=48000 --channels=2 --raw \\
     > client-smoke/dust-baseline.pcm || test "$?" -eq 124
+  python3 tools/check_dust_capture_noise.py client-smoke/dust-baseline.pcm
   timeout --signal=TERM 5s parec --device=tc_dust_sink.monitor \\
     --format=s16le --rate=48000 --channels=2 --raw \\
     > client-smoke/dust-event.pcm &
@@ -34,7 +35,15 @@ replacement = """  capture 08k-firststeps-real-bookshelf-before-salis
   base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png
   echo
 """
+# Isolate the quiet actor-only dust sound from randomly starting world music.
+# The real Minecraft options are written before gradle runClient starts.
+# Keep PLAYERS/master audible: those categories carry thaumcraft:dust.
+options = "printf 'guiScale:2\\n' > run/options.txt"
+if source.count(options) != 1:
+    raise SystemExit("Minecraft options fixture changed; refuse unsafe audio injection")
 head = source.split(end, 1)[0].replace(anchor, replacement)
+head = head.replace(options,
+    "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt")
 # The bookshelf is at (2,151,12); the shared fixture originally records
 # from z=8.5, attenuating this intentionally quiet BETA26 0.33-volume sound.
 # Move only this isolated sound probe nearer the real interaction target.
