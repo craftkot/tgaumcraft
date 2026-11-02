@@ -25,7 +25,10 @@ assert "player.getBbHeight()" in fx
 assert "player.getYRot()" in fx
 assert "hand == InteractionHand.OFF_HAND" in fx
 assert "HumanoidArm" not in fx
-# The hand trail must use the BETA26 chest/hand origin, not the eye.\n# Eye position is legitimate only for approximating the clicked face hit.\nassert "Vec3 start = new Vec3(origin[0], origin[1], origin[2]);" in fx\nassert "Vec3 eye = player.getEyePosition();" in fx
+# The hand trail must use the BETA26 chest/hand origin, not the eye.
+# Eye position is legitimate only for approximating the clicked face hit.
+assert "Vec3 start = new Vec3(origin[0], origin[1], origin[2]);" in fx
+assert "Vec3 eye = player.getEyePosition();" in fx
 assert "for (Direction face : Direction.values())" in fx
 assert "SalisSparkleFaceLayout.particlesPerFace(" in fx
 assert "neighbor.isSolidRender(level, adjacent)" in fx
