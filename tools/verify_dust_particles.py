@@ -23,9 +23,9 @@ assert "for (Direction face : Direction.values())" in fx
 assert "SalisSparkleFaceLayout.particlesPerFace(" in fx
 assert "neighbor.isSolidRender(level, adjacent)" in fx
 assert "neighbor.isFaceSturdy(level, adjacent, face.getOpposite())" in fx
-assert "if (face.getStepX() == 0)" in fx
-assert "if (face.getStepY() == 0)" in fx
-assert "if (face.getStepZ() == 0)" in fx
+assert "face.getStepX() == 0 ? level.random.nextGaussian() : 0.0D" in fx
+assert "face.getStepY() == 0 ? level.random.nextGaussian() : 0.0D" in fx
+assert "face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D" in fx
 assert fx.count("SalisSparkleFaceLayout.coordinate(") == 3
 assert "Math.max(1" not in fx
 layout = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java").read_text()
