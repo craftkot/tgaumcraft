@@ -57,6 +57,7 @@ jobs:
           python tools/test_dust_audio_match.py
       - name: Generate and syntax-check client Salis smoke
         run: |
+          python tools/test_dust_capture_fixture.py
           python tools/client_dust_sound_smoke.py > client-dust-generated.sh
           bash -n client-dust-generated.sh
       - name: Launch real Minecraft and record Salis bookshelf sound
