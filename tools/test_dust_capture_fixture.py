@@ -24,15 +24,18 @@ ambient = unique("soundCategory_ambient:0.0")
 launch = unique("gradle runClient")
 baseline = unique("python3 tools/check_dust_capture_noise.py client-smoke/dust-baseline.pcm")
 record = unique("dust-event.pcm &")
-click = unique("  xdotool click 3\n  sleep 0.2\n")
+click = unique("  xdotool click 3\n  # BETA26 face particles now start")
 frame = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png")
+mid = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png")
+assert "  sleep 0.7\n" in generated and "  sleep 0.55\n" in generated
+assert "  sleep 0.2\n" not in generated
 wait = unique('  wait "$dust_capture_pid" || test "$?" -eq 124')
 thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize")
 base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
 particle = unique("grep -Fq 'SALIS_SPARKLES_PACKETS_SENT' client-smoke/client.log")
 delayed = unique("grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log")
 matcher = unique("python3 tools/match_dust_audio_pcm.py")
-assert music < ambient < launch < baseline < record < click < frame < wait < thumbnail < base64 < particle < delayed < matcher
+assert music < ambient < launch < baseline < record < click < frame < mid < wait < thumbnail < base64 < particle < delayed < matcher
 assert "soundCategory_players:0.0" not in generated
 assert "soundCategory_master:0.0" not in generated
 assert "capture 08k-salis-sparkles-early" not in generated
