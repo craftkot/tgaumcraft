@@ -57,6 +57,7 @@ jobs:
           python tools/verify_dust_sound.py
           python tools/verify_dust_particles.py
           python tools/test_dust_audio_match.py
+          python tools/test_dust_capture_noise.py
           python tools/test_salis_sparkles_screenshot.py
       - name: Generate and syntax-check client Salis smoke
         run: |
