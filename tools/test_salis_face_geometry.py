@@ -18,13 +18,11 @@ public class SalisSparkleFaceLayoutTest {
         eq(40, SalisSparkleFaceLayout.particlesPerFace(1,1,1));
         eq(0, SalisSparkleFaceLayout.coordinate(0,1,-1,0));
         eq(1, SalisSparkleFaceLayout.coordinate(0,1,1,0));
-        // A partial shape still clamps to its own expanded bounds.
+        // A partial shape still clamps to its own original bounds.
         eq(.15, SalisSparkleFaceLayout.coordinate(.15,.85,-1,0));
         eq(.85, SalisSparkleFaceLayout.coordinate(.15,.85,1,0));
         eq(32, SalisSparkleFaceLayout.particlesPerFace(1,.5,1));
         eq(0, SalisSparkleFaceLayout.particlesPerFace(.01,.01,.01));
-        eq(0, SalisSparkleFaceLayout.coordinate(0,1,-1,0));
-        eq(1, SalisSparkleFaceLayout.coordinate(0,1,1,0));
         eq(.5, SalisSparkleFaceLayout.coordinate(0,1,0,0));
         eq(.75, SalisSparkleFaceLayout.coordinate(.25,.75,1,0));
         eq(.25, SalisSparkleFaceLayout.coordinate(.25,.75,-1,0));
