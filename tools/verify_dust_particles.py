@@ -19,7 +19,18 @@ assert "if (context.getLevel() instanceof ServerLevel level && player instanceof
 assert "SalisMundusSparkles.sendToActor(level, serverPlayer, pos, context.getHand())" in item
 
 assert "TRAIL_COUNT = 50" in fx
-assert "BLOCK_COUNT = 12" in fx
+assert "LEGACY_BLOCK_SPARKLES_PER_EDGE = 20" in fx
+assert "for (Direction face : Direction.values())" in fx
+assert "2 * Math.max(1, (int) ((bounds.getXsize()" in fx
+assert "neighbor.isSolidRender(level, adjacent)" in fx
+assert "neighbor.isFaceSturdy(level, adjacent, face.getOpposite())" in fx
+assert "if (face.getStepX() == 0)" in fx
+assert "if (face.getStepY() == 0)" in fx
+assert "if (face.getStepZ() == 0)" in fx
+assert fx.count("Mth.clamp(") == 3
+assert "pos.getX() + level.random.nextDouble()" not in fx
+assert "pos.getY() + level.random.nextDouble()" not in fx
+assert "pos.getZ() + level.random.nextDouble()" not in fx
 assert "i < TRAIL_COUNT / 3" in fx
 assert "travel.x / 6.0D" in fx and "travel.y / 6.0D" in fx and "travel.z / 6.0D" in fx
 assert "(floaty ? 0.05D : 0.15D)" in fx
@@ -30,4 +41,4 @@ assert re.search(r"new DustParticleOptions\(new Vector3f\(1\.0F,", fx)
 assert fx.count("level.sendParticles(player,") == 2
 assert "level.sendParticles(warmDust" not in fx
 assert "SALIS_SPARKLES_PACKETS_SENT" in fx
-print("BETA26 Salis 50-particle geometry/color, actor-only gate and audit contract: PASS")
+print("BETA26 Salis 50-trail + exposed-face block sparkle geometry/color, actor-only gate: PASS")
