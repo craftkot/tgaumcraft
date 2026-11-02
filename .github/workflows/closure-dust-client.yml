@@ -11,6 +11,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
       - 'tools/*dust*'
       - 'tools/*salis*'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java'
       - '.github/workflows/closure-dust-client.yml'
   pull_request:
     branches: [main]
@@ -22,6 +23,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
       - 'tools/*dust*'
       - 'tools/*salis*'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java'
       - '.github/workflows/closure-dust-client.yml'
   workflow_dispatch:
 
@@ -59,6 +61,7 @@ jobs:
           python tools/test_dust_audio_match.py
           python tools/test_dust_capture_noise.py
           python tools/test_salis_sparkles_screenshot.py
+          python tools/test_salis_face_geometry.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py
@@ -76,6 +79,7 @@ jobs:
       - name: Verify real-client visible Salis particles
         if: ${{ always() }}
         run: |
+          set -o pipefail
           python tools/verify_salis_sparkles_screenshot.py \
             client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \
             client-smoke/screenshots/08k-salis-sparkles-early.png \

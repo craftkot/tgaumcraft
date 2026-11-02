@@ -9,7 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.util.Mth;
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import org.joml.Vector3f;
 
 /**
@@ -22,7 +22,6 @@ import org.joml.Vector3f;
  */
 public final class SalisMundusSparkles {
     private static final int TRAIL_COUNT = 50;
-    private static final int LEGACY_BLOCK_SPARKLES_PER_EDGE = 20;
 
     private SalisMundusSparkles() {}
 
@@ -53,9 +52,8 @@ public final class SalisMundusSparkles {
         // Original: 2 * floor(20 * mean edge length) per visible face.
         var shape = level.getBlockState(pos).getShape(level, pos);
         AABB bounds = shape.isEmpty() ? new AABB(0, 0, 0, 1, 1, 1) : shape.bounds();
-        int perFace = 2 * Math.max(1, (int) ((bounds.getXsize()
-                + bounds.getYsize() + bounds.getZsize()) / 3.0D
-                * LEGACY_BLOCK_SPARKLES_PER_EDGE));
+        int perFace = SalisSparkleFaceLayout.particlesPerFace(
+                bounds.getXsize(), bounds.getYsize(), bounds.getZsize());
         for (Direction face : Direction.values()) {
             BlockPos adjacent = pos.relative(face);
             var neighbor = level.getBlockState(adjacent);
@@ -64,20 +62,19 @@ public final class SalisMundusSparkles {
                 continue;
             }
 
-            double cx = (bounds.minX + bounds.maxX) * 0.5D;
-            double cy = (bounds.minY + bounds.maxY) * 0.5D;
-            double cz = (bounds.minZ + bounds.maxZ) * 0.5D;
+            // BETA26 uses block-local 0.5 +/- 0.51, then clamps to the
+            // shape. The old midpoint-of-shape formula moved asymmetric FX.
             for (int i = 0; i < perFace; i++) {
-                double x = cx + face.getStepX() * (bounds.getXsize() * 0.5D + 0.01D);
-                double y = cy + face.getStepY() * (bounds.getYsize() * 0.5D + 0.01D);
-                double z = cz + face.getStepZ() * (bounds.getZsize() * 0.5D + 0.01D);
-                if (face.getStepX() == 0) x += level.random.nextGaussian() * 0.6D;
-                if (face.getStepY() == 0) y += level.random.nextGaussian() * 0.6D;
-                if (face.getStepZ() == 0) z += level.random.nextGaussian() * 0.6D;
+                double x = SalisSparkleFaceLayout.coordinate(bounds.minX, bounds.maxX,
+                        face.getStepX(), face.getStepX() == 0 ? level.random.nextGaussian() : 0.0D);
+                double y = SalisSparkleFaceLayout.coordinate(bounds.minY, bounds.maxY,
+                        face.getStepY(), face.getStepY() == 0 ? level.random.nextGaussian() : 0.0D);
+                double z = SalisSparkleFaceLayout.coordinate(bounds.minZ, bounds.maxZ,
+                        face.getStepZ(), face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D);
                 level.sendParticles(player, warmDust(level), false,
-                        pos.getX() + Mth.clamp(x, bounds.minX, bounds.maxX),
-                        pos.getY() + Mth.clamp(y, bounds.minY, bounds.maxY),
-                        pos.getZ() + Mth.clamp(z, bounds.minZ, bounds.maxZ),
+                        pos.getX() + x,
+                        pos.getY() + y,
+                        pos.getZ() + z,
                         0, 0.0D, 0.0025D, 0.0D, 1.0D);
             }
         }

@@ -19,15 +19,20 @@ assert "if (context.getLevel() instanceof ServerLevel level && player instanceof
 assert "SalisMundusSparkles.sendToActor(level, serverPlayer, pos, context.getHand())" in item
 
 assert "TRAIL_COUNT = 50" in fx
-assert "LEGACY_BLOCK_SPARKLES_PER_EDGE = 20" in fx
 assert "for (Direction face : Direction.values())" in fx
-assert "2 * Math.max(1, (int) ((bounds.getXsize()" in fx
+assert "SalisSparkleFaceLayout.particlesPerFace(" in fx
 assert "neighbor.isSolidRender(level, adjacent)" in fx
 assert "neighbor.isFaceSturdy(level, adjacent, face.getOpposite())" in fx
 assert "if (face.getStepX() == 0)" in fx
 assert "if (face.getStepY() == 0)" in fx
 assert "if (face.getStepZ() == 0)" in fx
-assert fx.count("Mth.clamp(") == 3
+assert fx.count("SalisSparkleFaceLayout.coordinate(") == 3
+assert "Math.max(1" not in fx
+layout = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java").read_text()
+assert "SPARKLES_PER_EDGE = 20.0D" in layout
+assert "0.5D + faceStep * FACE_OFFSET" in layout
+assert "FACE_OFFSET = 0.51D" in layout
+assert "SPREAD = 0.6D" in layout
 assert "pos.getX() + level.random.nextDouble()" not in fx
 assert "pos.getY() + level.random.nextDouble()" not in fx
 assert "pos.getZ() + level.random.nextDouble()" not in fx
@@ -41,4 +46,4 @@ assert re.search(r"new DustParticleOptions\(new Vector3f\(1\.0F,", fx)
 assert fx.count("level.sendParticles(player,") == 2
 assert "level.sendParticles(warmDust" not in fx
 assert "SALIS_SPARKLES_PACKETS_SENT" in fx
-print("BETA26 Salis 50-trail + exposed-face block sparkle geometry/color, actor-only gate: PASS")
+print("BETA26 Salis 50-trail + exact face-coordinate/count rules + exposed-face sparkle color, actor-only gate: PASS")
