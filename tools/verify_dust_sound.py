@@ -14,8 +14,14 @@ assert sounds["dust"] == {"category": "block", "sounds": [{"name": "thaumcraft:d
 registry = Path("src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java").read_text()
 assert 'DUST = SOUND_EVENTS.register("dust"' in registry
 item = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java").read_text()
-assert item.index("DustTarget.NONE") < item.index("playLocalSound(")
-assert "if (context.getLevel().isClientSide)" in item
-assert re.search(r"playLocalSound\([\s\S]*?ThaumcraftSounds.DUST.get\(\), SoundSource.PLAYERS, 0\.33F,[\s\S]*?nextGaussian\(\) \* 0\.05F, false\)", item)
+# Server knowledge is authoritative; client-side attachment snapshots can lag.
+# The original effect is actor-only, not a broadcast to nearby players.
+assert item.index("DustTarget.NONE") < item.index("new ClientboundSoundPacket(")
+assert "if (context.getLevel() instanceof ServerLevel level && player instanceof ServerPlayer serverPlayer)" in item
+assert "serverPlayer.connection.send(new ClientboundSoundPacket(" in item
+assert "BuiltInRegistries.SOUND_EVENT.wrapAsHolder(ThaumcraftSounds.DUST.get())" in item
+assert re.search(r"float pitch = 1\.0F \+ \(float\) level\.getRandom\(\)\.nextGaussian\(\) \* 0\.05F;", item)
+assert re.search(r"SoundSource\.PLAYERS, pos\.getX\(\), pos\.getY\(\), pos\.getZ\(\),\s*0\.33F, pitch", item)
+assert "playLocalSound(" not in item
 assert "playSound(null" not in item
-print("BETA26 original dust.ogg, registration, successful-client-only Salis trigger: PASS")
+print("BETA26 original dust.ogg, valid server-side gate, actor-only sound packet: PASS")
