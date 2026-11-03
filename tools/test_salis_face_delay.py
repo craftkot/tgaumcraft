@@ -44,7 +44,12 @@ assert "pending.dimension() != level.dimension()" in unload_body
 assert "BlockPos.containing(pending.origin())" in unload_body
 assert "iterator.remove();" in unload_body
 assert 'ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");' in unload_body
-assert "getChunk(" not in unload_body and "setChunkForced" not in unload_body
+# event.getChunk() only reads the chunk supplied by the unload event;
+# forbid level/server chunk retrieval, which could trigger a load.
+assert "event.getChunk().getPos()" in unload_body
+assert "level.getChunk(" not in unload_body
+assert "server.getChunk(" not in unload_body
+assert "setChunkForced" not in unload_body
 
 harness = r'''
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
