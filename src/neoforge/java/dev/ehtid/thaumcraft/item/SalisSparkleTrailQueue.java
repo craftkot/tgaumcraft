@@ -82,6 +82,8 @@ public final class SalisSparkleTrailQueue {
             // the due tick, an old visual effect must not reappear there.
             if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))) {
                 iterator.remove();
+                // Server-side evidence of cancellation, not evidence of a client packet.
+                ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");
                 continue;
             }
             if (level.getGameTime() < pending.dueTick()) continue;
