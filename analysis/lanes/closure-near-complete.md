@@ -759,3 +759,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Changed only src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java (commit 4f814878771709c1a345527065fc7071c4ea1c6c) and tools/test_salis_face_delay.py (commit 8c751f2c06b8eebb7ade09448c069dad5007bff6). Regression checks unload subscriber and dimension/chunk scoping but remains source-level, not live gameplay.
 - **Validation pending on new SHA**: NeoForge compile, dedicated server and real chunk-unload/reload smoke have not yet been observed. If compile fails, fix NeoForge ChunkEvent API usage first. Need runtime marker plus no-packet/no-ticket assertion before claiming acceptance. Audit stays historical 59/100 and M16 4/6. PR #4 Draft; no merge.
 - Next: inspect exact-head CI and fix any compile errors; add deterministic native unload→reload test and verify zero packets, then resume original FXGeneric 320/512 sprite/alpha parity.
+
+
+## 03.11.2026 — M16: repair Salis unload regression gate
+
+- Fresh main `a4280834`, closure HEAD before change `6fba1654`; reviewed AGENTS, ROADMAP, parallel workflow, audit, lane and open PR #1–4. No foreign branches or shared CI changed.
+- Exact-head GitHub Actions: full NeoForge CI [#41632857221](https://github.com/craftkot/tgaumcraft/actions/runs/41632857221) SUCCESS, but Salis real-client workflow [#41632857377](https://github.com/craftkot/tgaumcraft/actions/runs/41632857377) FAILURE. Job log shows source test assertion `"getChunk(" not in unload_body` falsely rejects legitimate `event.getChunk().getPos()`. Screenshot verification also fails because preceding step did not produce `client-smoke/` evidence; do not count this as runtime visual failure or acceptance.
+- Fixed `tools/test_salis_face_delay.py` to explicitly allow `event.getChunk()` while rejecting `level.getChunk(`, `server.getChunk(` and `setChunkForced`. Commit [495e475](https://github.com/craftkot/tgaumcraft/commit/495e4755fab225a528f3432cb6d111c880abde7f). Java gameplay code unchanged.
+- New exact-head CI and test execution remain pending at writing; no actual unload/reload, no packet/ticket assertion. Historical rubric stays 59/100, M16 4/6. Next: confirm CI and actual Salis client workflow on new SHA; then implement native unload→reload-before-due smoke with packet absence evidence. PR #4 remains Draft, no merge.
