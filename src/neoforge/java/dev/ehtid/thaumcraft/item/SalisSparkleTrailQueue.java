@@ -51,6 +51,9 @@ public final class SalisSparkleTrailQueue {
     private static void enqueueOrEmit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
                                       Vec3 origin, Vec3 velocity, long due, boolean face) {
         if (due == level.getGameTime()) {
+            // Apply the same loaded-chunk guard to zero-delay particles.
+            // A stale caller must never emit into a chunk that is no longer loaded.
+            if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
             emit(level, player, color, origin, velocity);
             return;
         }
