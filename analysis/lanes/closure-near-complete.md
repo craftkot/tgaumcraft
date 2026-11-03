@@ -717,3 +717,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Found remaining narrow gap: already-unloaded source chunks were still admitted to the delayed queue and discarded only on expiry. `SalisSparkleTrailQueue.enqueueOrEmit` now checks `hasChunkAt` before `PENDING.add` as well as before immediate send and delayed dispatch. No chunk tickets are created. Source-order regression added in `tools/test_salis_face_delay.py`.
 - Code commit `642636c9845e12fb0d1c8bb35a4c00ef964165cd`; test commit `ba13129af559b700eba8447dbb232878ad0d930a`. **New exact-head Java 21 test, NeoForge compile/server and actual chunk-unload gameplay have not yet been observed**; do not promote a score based on source assertions.
 - Fixed audit unchanged **59/100**, M16 **4/6**. Next: inspect exact-head CI, build real unload-before-due smoke; then implement original FXGeneric 320/512 sprite/alpha animation in an isolated client path. No merge.
+
+
+## 03.11.2026 — exact-head CI verification for unloaded-origin queue guard
+
+- Verified commit `34019ed9ae4a00b9fc6d08ba073ed708c0fd7bc5` with GitHub Actions commit-associated runs, not earlier-head extrapolation. Full Thaumcraft Port CI [#41575816164](https://github.com/craftkot/tgaumcraft/actions/runs/41575816164) **SUCCESS**. Real Minecraft Salis dust/audio [#41575816186](https://github.com/craftkot/tgaumcraft/actions/runs/41575816186) **SUCCESS**. Ten other associated M16 workflows also concluded SUCCESS.
+- This establishes CI/build and existing Salis-client smoke on the code including all three chunk guards (queue admission, immediate emission, due-time dispatch). It **does not** establish actual chunk unload-before-due behavior: no unload-specific runtime assertion or artifact was inspected. No new Java code was changed in this verification iteration.
+- Fixed audit remains **59/100**, M16 **4/6**. Next engineering iteration must add an unload-before-due native/server gameplay test (assert no particle dispatch, no chunk ticket and queue expiry) before claiming that edge case verified. FXGeneric 320/512 sprite/alpha/lifetime parity remains outstanding. PR #4 Draft; no merge.
