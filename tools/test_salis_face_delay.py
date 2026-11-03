@@ -20,6 +20,8 @@ assert "level.sendParticles(player, color, false" in queue
 assert "level.sendParticles(player," not in fx
 assert "PENDING.clear()" in queue
 assert "player.level() != level" in queue
+assert "level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))" in queue
+assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pending.color()")
 
 harness = r'''
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
