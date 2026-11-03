@@ -24,6 +24,8 @@ assert "level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()
 assert "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;" in queue
 assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") < queue.index("emit(level, player, color, origin, velocity);")
 assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pending.color()")
+assert queue.count("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") == 2
+assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;", queue.index("PENDING.add(") - 250) < queue.index("PENDING.add(")
 
 harness = r'''
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
