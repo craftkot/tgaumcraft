@@ -750,3 +750,12 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Extended `tools/test_salis_face_delay.py` with marker-presence and placement assertions. Commits: `bc2695963c4a4d0bf4c0f7cefc04e393cb9a7f5c`, `ff622ff9779dc45f08c131d13febd646a5b785d1`.
 - Validation: source inspected through GitHub; **test execution, NeoForge compile and real unload/reload smoke not yet verified on this SHA**. Do not award readiness points. Historical rubric 59/100, M16 4/6.
 - Next: run exact-head CI; create a deterministic server smoke that queues a delayed effect, unloads its origin chunk before dueTick, verifies this marker, confirms no forced ticket or packet, then reloads and checks no stale emission. Continue FXGeneric parity after acceptance.
+
+
+## 03.11.2026 — M16 Salis: cancel unload/reload between server ticks
+
+- Fresh-read main AGENTS, ROADMAP, parallel workflow and fixed audit; reviewed own lane, current Salis queue, open PR #1–4 and exact-head CI for preceding aebac183 (12/12 GitHub Actions SUCCESS, including NeoForge and Salis smoke). This success is for **preceding** code, not the new change.
+- Real gap: onServerTick-only hasChunkAt checks cannot observe a chunk unloaded and reloaded between successive server ticks. Added ChunkEvent.Unload subscriber in SalisSparkleTrailQueue, canceling pending entries for the event's ServerLevel dimension and ChunkPos immediately; existing tick-time guard remains as fallback. No chunk ticket or force-load API introduced.
+- Changed only src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java (commit 4f814878771709c1a345527065fc7071c4ea1c6c) and tools/test_salis_face_delay.py (commit 8c751f2c06b8eebb7ade09448c069dad5007bff6). Regression checks unload subscriber and dimension/chunk scoping but remains source-level, not live gameplay.
+- **Validation pending on new SHA**: NeoForge compile, dedicated server and real chunk-unload/reload smoke have not yet been observed. If compile fails, fix NeoForge ChunkEvent API usage first. Need runtime marker plus no-packet/no-ticket assertion before claiming acceptance. Audit stays historical 59/100 and M16 4/6. PR #4 Draft; no merge.
+- Next: inspect exact-head CI and fix any compile errors; add deterministic native unload→reload test and verify zero packets, then resume original FXGeneric 320/512 sprite/alpha parity.
