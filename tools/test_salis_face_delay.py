@@ -21,6 +21,11 @@ assert "level.sendParticles(player," not in fx
 assert "PENDING.clear()" in queue
 assert "player.level() != level" in queue
 assert "level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))" in queue
+# A chunk unloaded before the due tick must cancel the effect immediately;
+# otherwise unload/reload within the delay window resurrects stale particles.
+tick_body = queue.split("public static void onServerTick(", 1)[1].split("public static void onServerStopped(", 1)[0]
+assert tick_body.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin())))") < tick_body.index("if (level.getGameTime() < pending.dueTick()) continue;")
+assert tick_body.index("iterator.remove();", tick_body.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin())))")) < tick_body.index("if (level.getGameTime() < pending.dueTick()) continue;")
 assert "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;" in queue
 assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") < queue.index("emit(level, player, color, origin, velocity);")
 assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pending.color()")
