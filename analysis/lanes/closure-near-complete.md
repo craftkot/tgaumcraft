@@ -709,3 +709,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Changed `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java` and `tools/test_salis_face_delay.py` (source-order regression). Code commit `97e94fa87288919cd7756d04daa969d8b5271b85`; test commit `2cf930e74fd0e89e0d4ecde904a1b3eaa029624d`.
 - Previous exact-head `1de790b2939b688c444c2bb925d7cee619a3637a` GitHub Actions returned SUCCESS across full NeoForge CI and Salis client smoke (among other workflows). This validates the preceding delayed guard only, **not** this zero-delay change. New compile/CI and actual unload-before-due gameplay acceptance are pending. Source-order assertion is not a native GameTest.
 - Audit unchanged **59/100, M16 4/6**. Remaining: prove unload/reload in real server/client; original 320/512 sprite animation, alpha/lifetime and packet batching. PR #4 Draft; no merge.
+
+
+## 03.11.2026 — M16 Salis: avoid queueing already unloaded origins
+
+- Verified prior exact SHA `3b4f3677568e68920bf6a2f47e919f5ebdaa273d`: GitHub Actions full NeoForge/JAR/server [#41570387785](https://github.com/craftkot/tgaumcraft/actions/runs/41570387785) SUCCESS; real Minecraft Salis dust/audio [#41570387764](https://github.com/craftkot/tgaumcraft/actions/runs/41570387764) SUCCESS. Neither constitutes a real chunk-unload-before-due acceptance test.
+- Found remaining narrow gap: already-unloaded source chunks were still admitted to the delayed queue and discarded only on expiry. `SalisSparkleTrailQueue.enqueueOrEmit` now checks `hasChunkAt` before `PENDING.add` as well as before immediate send and delayed dispatch. No chunk tickets are created. Source-order regression added in `tools/test_salis_face_delay.py`.
+- Code commit `642636c9845e12fb0d1c8bb35a4c00ef964165cd`; test commit `ba13129af559b700eba8447dbb232878ad0d930a`. **New exact-head Java 21 test, NeoForge compile/server and actual chunk-unload gameplay have not yet been observed**; do not promote a score based on source assertions.
+- Fixed audit unchanged **59/100**, M16 **4/6**. Next: inspect exact-head CI, build real unload-before-due smoke; then implement original FXGeneric 320/512 sprite/alpha animation in an isolated client path. No merge.
