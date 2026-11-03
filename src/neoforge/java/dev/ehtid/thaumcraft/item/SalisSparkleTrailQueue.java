@@ -76,6 +76,9 @@ public final class SalisSparkleTrailQueue {
             iterator.remove();
             ServerPlayer player = server.getPlayerList().getPlayer(pending.playerId());
             if (player == null || player.level() != level) continue;
+            // A delayed effect must not resurrect or address an unloaded chunk.
+            // hasChunkAt is a loaded-chunk check, not a ticket or force-load.
+            if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))) continue;
             emit(level, player, pending.color(), pending.origin(), pending.velocity());
             if (pending.face()) faceEmitted++;
             else trailEmitted++;
