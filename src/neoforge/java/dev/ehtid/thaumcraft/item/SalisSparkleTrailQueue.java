@@ -78,6 +78,12 @@ public final class SalisSparkleTrailQueue {
                 iterator.remove();
                 continue;
             }
+            // Cancel as soon as the origin chunk unloads. If it reloads before
+            // the due tick, an old visual effect must not reappear there.
+            if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))) {
+                iterator.remove();
+                continue;
+            }
             if (level.getGameTime() < pending.dueTick()) continue;
             iterator.remove();
             ServerPlayer player = server.getPlayerList().getPlayer(pending.playerId());
