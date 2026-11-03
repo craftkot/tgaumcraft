@@ -34,6 +34,18 @@ assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pendi
 assert queue.count("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") == 2
 assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;", queue.index("PENDING.add(") - 250) < queue.index("PENDING.add(")
 
+# ChunkEvent.Unload closes the unload/reload-between-ticks gap: cancel by
+# dimension and chunk position immediately, without requesting chunk loads.
+unload_body = queue.split("public static void onChunkUnload(", 1)[1].split("public static void onServerStopped(", 1)[0]
+assert "ChunkEvent.Unload" in queue
+assert "event.getLevel() instanceof ServerLevel level" in unload_body
+assert "event.getChunk().getPos()" in unload_body
+assert "pending.dimension() != level.dimension()" in unload_body
+assert "BlockPos.containing(pending.origin())" in unload_body
+assert "iterator.remove();" in unload_body
+assert 'ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");' in unload_body
+assert "getChunk(" not in unload_body and "setChunkForced" not in unload_body
+
 harness = r'''
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 public final class FaceDelayTest {
