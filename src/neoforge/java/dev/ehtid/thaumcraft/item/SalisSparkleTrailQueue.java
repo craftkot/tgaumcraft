@@ -14,6 +14,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayList;
@@ -99,6 +100,23 @@ public final class SalisSparkleTrailQueue {
         }
         if (trailEmitted > 0) ThaumcraftSmokeAudit.mark("SALIS_TRAIL_DELAY_QUEUE_DRAINED");
         if (faceEmitted > 0) ThaumcraftSmokeAudit.mark("SALIS_FACE_DELAY_QUEUE_DRAINED");
+    }
+
+    /** Cancel immediately on the actual chunk-unload event, including unload/reload
+     * cycles occurring between server ticks. Tick-time checks remain a fallback.
+     */
+    @SubscribeEvent
+    public static void onChunkUnload(ChunkEvent.Unload event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        var chunkPos = event.getChunk().getPos();
+        Iterator<Pending> iterator = PENDING.iterator();
+        while (iterator.hasNext()) {
+            Pending pending = iterator.next();
+            if (pending.dimension() != level.dimension()) continue;
+            if (!new net.minecraft.world.level.ChunkPos(net.minecraft.core.BlockPos.containing(pending.origin())).equals(chunkPos)) continue;
+            iterator.remove();
+            ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");
+        }
     }
 
     @SubscribeEvent
