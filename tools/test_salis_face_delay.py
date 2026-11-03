@@ -15,6 +15,7 @@ assert "SalisSparkleTrailQueue.emitFaceOrQueue(" in fx
 assert "SalisSparkleFaceDelayRules.dueTick(" in queue
 assert "pending.face()" in queue
 assert "SALIS_FACE_DELAY_QUEUE_DRAINED" in queue
+assert 'ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");' in queue
 assert "grep -Fq 'SALIS_FACE_DELAY_QUEUE_DRAINED' client-smoke/client.log" in smoke
 assert "level.sendParticles(player, color, false" in queue
 assert "level.sendParticles(player," not in fx
@@ -26,6 +27,7 @@ assert "level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()
 tick_body = queue.split("public static void onServerTick(", 1)[1].split("public static void onServerStopped(", 1)[0]
 assert tick_body.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin())))") < tick_body.index("if (level.getGameTime() < pending.dueTick()) continue;")
 assert tick_body.index("iterator.remove();", tick_body.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin())))")) < tick_body.index("if (level.getGameTime() < pending.dueTick()) continue;")
+assert tick_body.index('ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");') < tick_body.index("if (level.getGameTime() < pending.dueTick()) continue;")
 assert "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;" in queue
 assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") < queue.index("emit(level, player, color, origin, velocity);")
 assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pending.color()")
