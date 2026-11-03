@@ -59,6 +59,9 @@ public final class SalisSparkleTrailQueue {
         }
         // No chunk tickets or cross-player broadcasts; the short queue expires
         // naturally on server ticks and is cleared on server shutdown.
+        // Discard effects whose source is already unloaded rather than retaining
+        // them in the pending queue until their scheduled tick.
+        if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
         PENDING.add(new Pending(level.dimension(), player.getUUID(), color, origin, velocity, due, face));
     }
 
