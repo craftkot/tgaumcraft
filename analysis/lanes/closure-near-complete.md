@@ -724,3 +724,13 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Verified commit `34019ed9ae4a00b9fc6d08ba073ed708c0fd7bc5` with GitHub Actions commit-associated runs, not earlier-head extrapolation. Full Thaumcraft Port CI [#41575816164](https://github.com/craftkot/tgaumcraft/actions/runs/41575816164) **SUCCESS**. Real Minecraft Salis dust/audio [#41575816186](https://github.com/craftkot/tgaumcraft/actions/runs/41575816186) **SUCCESS**. Ten other associated M16 workflows also concluded SUCCESS.
 - This establishes CI/build and existing Salis-client smoke on the code including all three chunk guards (queue admission, immediate emission, due-time dispatch). It **does not** establish actual chunk unload-before-due behavior: no unload-specific runtime assertion or artifact was inspected. No new Java code was changed in this verification iteration.
 - Fixed audit remains **59/100**, M16 **4/6**. Next engineering iteration must add an unload-before-due native/server gameplay test (assert no particle dispatch, no chunk ticket and queue expiry) before claiming that edge case verified. FXGeneric 320/512 sprite/alpha/lifetime parity remains outstanding. PR #4 Draft; no merge.
+
+
+## 03.11.2026 — cancel stale Salis particles on unload before due tick
+
+- Fresh-read main AGENTS, ROADMAP, parallel workflow, audit, own lane; inspected open PR search. This lane only modifies its existing Salis queue, dedicated test, and journal. No main/foreign branch merge.
+- **Defect:** due-time-only chunk guard allowed a queued effect to survive an unload/reload cycle when the chunk reloaded before its due tick. That stale effect could appear after the world had changed.
+- **Change:** in `SalisSparkleTrailQueue.onServerTick`, check source chunk loaded **before** due-time comparison and remove pending effects immediately when unloaded. The due-time guard remains, and no force-load/ticket is used. Commit `ebb6ca28ab4e5a542c1204304da3154349db0b45`.
+- **Regression:** `tools/test_salis_face_delay.py` now asserts that the unloaded-origin removal occurs before the due-time early-continue. Commit `3599373e5744de0fde9dec24a7c791f8c87fff5d`. This is a source-order assertion, **not** a live unload/reload GameTest.
+- **Validation:** GitHub writes confirmed; local checkout/test execution blocked because github.com DNS resolution failed in the execution container. New exact-SHA NeoForge/CI and live unload/reload remain **unverified**. Prior CI success cannot be transferred to this SHA.
+- **Audit:** unchanged 59/100, M16 4/6. Next: inspect exact-head Actions, then build a native unload→reload-before-due test verifying zero sends and no tickets. Continue original FXGeneric 320/512 animation/alpha parity afterward.
