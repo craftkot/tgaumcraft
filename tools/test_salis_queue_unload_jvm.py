@@ -26,6 +26,8 @@ import net.minecraft.world.level.Level; import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions; import net.minecraft.resources.ResourceKey;
 public class ServerLevel extends Level {
  public long time; public boolean loaded=true; public int sends;
+ public net.minecraft.server.MinecraftServer server;
+ public net.minecraft.server.MinecraftServer getServer(){return server;}
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
  public boolean hasChunkAt(BlockPos p){return loaded;}
@@ -74,7 +76,7 @@ public class SalisQueueTest {
  static void tick(MinecraftServer s){SalisSparkleTrailQueue.onServerTick(new ServerTickEvent.Post(s));}
  public static void main(String[] args){
   var s=new MinecraftServer(); var a=new ServerLevel(); var b=new ServerLevel();
-  s.worlds.put(a.key,a);s.worlds.put(b.key,b);
+  s.worlds.put(a.key,a);s.worlds.put(b.key,b);a.server=s;b.server=s;
   var p=new ServerPlayer(a);s.players.put(p.id,p);
   var dust=new DustParticleOptions();var origin=new Vec3(17,64,17);var v=new Vec3(0,0,0);
   // Between-ticks unload/reload: only the event can see this transition.
@@ -147,6 +149,14 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   p.world=a; a.time=38; tick(s);
   check(a.sends==1,"stale delayed request emitted after player returned");
+  // Immediate calls must reject disconnected and replaced player sessions.
+  s.players.remove(p.id); p.world=a;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
+  check(a.sends==1,"disconnected actor received immediate effect");
+  s.players.put(p.id,new ServerPlayer(a,p.id));
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
+  check(a.sends==1,"replaced session received stale immediate effect");
+  s.players.put(p.id,p);
   // A valid zero-delay call still emits immediately in the player's world.
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
