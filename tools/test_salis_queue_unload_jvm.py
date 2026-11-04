@@ -19,7 +19,7 @@ STUBS = {
 "net/minecraft/resources/ResourceKey.java": "package net.minecraft.resources; public class ResourceKey<T> {}",
 "net/minecraft/world/level/Level.java": "package net.minecraft.world.level; public class Level {}",
 "net/minecraft/world/level/ChunkPos.java": "package net.minecraft.world.level; import net.minecraft.core.BlockPos; public record ChunkPos(int x,int z) {public ChunkPos(BlockPos p){this(Math.floorDiv(p.x(),16),Math.floorDiv(p.z(),16));}}",
-"net/minecraft/world/phys/Vec3.java": "package net.minecraft.world.phys; public record Vec3(double x,double y,double z) {}",
+"net/minecraft/world/phys/Vec3.java": "package net.minecraft.world.phys; public class Vec3 {public final double x,y,z; public Vec3(double x,double y,double z){this.x=x;this.y=y;this.z=z;}}",
 "net/minecraft/server/level/ServerLevel.java": """package net.minecraft.server.level;
 import net.minecraft.world.level.Level; import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions; import net.minecraft.resources.ResourceKey;
