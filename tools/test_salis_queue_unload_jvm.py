@@ -2,6 +2,7 @@
 """Execute the real NeoForge Salis queue against minimal API doubles.
 
 This is a JVM unit regression, NOT a Minecraft GameTest or client smoke.
+It does not instrument native chunk tickets or establish absence of force-loading.
 """
 from pathlib import Path
 import subprocess
@@ -24,7 +25,7 @@ STUBS = {
 import net.minecraft.world.level.Level; import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions; import net.minecraft.resources.ResourceKey;
 public class ServerLevel extends Level {
- public long time; public boolean loaded=true; public int sends, loadRequests;
+ public long time; public boolean loaded=true; public int sends;
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
  public boolean hasChunkAt(BlockPos p){return loaded;}
@@ -93,7 +94,6 @@ public class SalisQueueTest {
   a.loaded=false;SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   a.loaded=true;a.time=20;tick(s);check(a.sends==1,"unloaded origin admitted");
-  check(a.loadRequests==0 && b.loadRequests==0,"chunk was force loaded");
   // Disconnect before due tick: no packet must be sent to a departed player.
   a.loaded=true; a.time=21;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
@@ -110,7 +110,6 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
   a.time=33; tick(s);
   check(a.sends==1,"pending effect survived server shutdown");
-  check(a.loadRequests==0 && b.loadRequests==0,"chunk was force loaded after lifecycle tests");
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
