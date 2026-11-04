@@ -103,7 +103,7 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(-1,-2))));
   a.time=23;tick(s);
   check(a.sends==1,"negative chunk unload resurrected stale particle");
-  check(ThaumcraftSmokeAudit.cancelled==2,"negative chunk unload not detected");
+  check(ThaumcraftSmokeAudit.cancelled==3,"negative chunk unload not detected: expected earlier event, tick-time cancellation, and negative-chunk event");
   // A neighboring negative chunk must not cancel the correctly indexed effect.
   a.time=23;
   SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,negativeOrigin,v,3);
