@@ -55,6 +55,9 @@ public final class SalisSparkleTrailQueue {
             // Apply the same loaded-chunk guard to zero-delay particles.
             // A stale caller must never emit into a chunk that is no longer loaded.
             if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
+            // Zero-delay effects must obey the same world/actor guard as queued ones.
+            // A stale caller may hold a player that has already changed dimension.
+            if (player.level() != level) return;
             emit(level, player, color, origin, velocity);
             return;
         }
