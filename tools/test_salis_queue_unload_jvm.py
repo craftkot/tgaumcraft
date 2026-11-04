@@ -115,7 +115,12 @@ public class SalisQueueTest {
   p.world=b; a.time=34;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==1 && b.sends==0,"immediate cross-dimension stale effect emitted");
-  // A valid zero-delay call still emits immediately in the player\'s world.
+  // Stale delayed call must not queue work that could emit if player returns before due.
+  p.world=b; a.time=35;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
+  p.world=a; a.time=38; tick(s);
+  check(a.sends==1,"stale delayed request emitted after player returned");
+  // A valid zero-delay call still emits immediately in the player's world.
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==2,"valid immediate effect suppressed");
