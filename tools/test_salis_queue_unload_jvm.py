@@ -54,8 +54,8 @@ public class MinecraftServer {
 import net.minecraft.world.level.*; import net.minecraft.server.level.ServerLevel;
 public class ChunkEvent {
  public record Chunk(ChunkPos pos){public ChunkPos getPos(){return pos;}}
- public record Unload(ServerLevel level,Chunk chunk) {
- public ServerLevel getLevel(){return level;} public Chunk getChunk(){return chunk;}
+ public record Unload(Level level,Chunk chunk) {
+ public Level getLevel(){return level;} public Chunk getChunk(){return chunk;}
  }
 }""",
 "test/SalisQueueTest.java": """package test;
