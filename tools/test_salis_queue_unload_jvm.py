@@ -95,6 +95,23 @@ public class SalisQueueTest {
   a.loaded=false;SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   a.loaded=true;a.time=20;tick(s);check(a.sends==1,"unloaded origin admitted");
+  // Negative-coordinate chunk regression: floorDiv(-1,16)=-1, not zero.
+  // A real unload/reload event must cancel a pending effect at a negative edge.
+  var negativeOrigin=new Vec3(-1,64,-17);
+  a.time=20;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,negativeOrigin,v,3);
+  SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(-1,-2))));
+  a.time=23;tick(s);
+  check(a.sends==1,"negative chunk unload resurrected stale particle");
+  check(ThaumcraftSmokeAudit.cancelled==2,"negative chunk unload not detected");
+  // A neighboring negative chunk must not cancel the correctly indexed effect.
+  a.time=23;
+  SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,negativeOrigin,v,3);
+  SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(-2,-2))));
+  a.time=26;tick(s);
+  check(a.sends==2,"neighbor negative chunk incorrectly cancelled effect");
+  // Restore the baseline count for the remaining independent assertions.
+  a.sends=1;
   // Disconnect before due tick: no packet must be sent to a departed player.
   a.loaded=true; a.time=21;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
