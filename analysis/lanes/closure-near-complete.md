@@ -812,3 +812,14 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Inspected [Actions #41777349528](https://github.com/craftkot/tgaumcraft/actions/runs/41777349528), job `salis-queue-unload` (126400677571): Java 21 executed `python3 tools/test_salis_queue_unload_jvm.py`; log reports `SALIS_QUEUE_UNLOAD_JVM=PASS` at 05:08:06 UTC. This verifies the expanded disconnect, dimension-change and shutdown JVM scenarios on PR merge ref `51d4d0c` containing code commit `87238b2`; it is not a native GameTest.
 - Found misleading `loadRequests==0` checks: the stub never incremented that counter, so those checks were tautologies and **not evidence of no force-load**. Removed the counter and both assertions in [ecceaab3](https://github.com/craftkot/tgaumcraft/commit/ecceaab3f273a0de8d3ab3f6d5ae76bc99e13fa6). Explicitly document native ticket instrumentation still required. This is a test-integrity correction, not a gameplay fix.
 - Exact new SHA CI remains unverified at writing; historical fixed rubric **59/100**, M16 **4/6** unchanged. Next: verify CI for `ecceaab3`, then implement real NeoForge chunk unload/reload-before-due and packet/ticket assertions. PR #4 Draft; no merge.
+
+
+## 04.11.2026 — M16: zero-delay Salis particle after player dimension switch
+
+**Scenario:** unlike queued particles, `enqueueOrEmit` zero-delay path checked the origin chunk but did not validate that the actor still belonged to that `ServerLevel`. A stale caller could address a player after a dimension switch. This is a narrow defensive behavior correction, not proof of BETA26-wide visual parity.
+
+**Code:** `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java` now returns without sending when `player.level() != level` on the immediate path. Commit `42e5cac3c23608750dd1b17ce21ade7454d67d5f`.
+
+**Regression:** `tools/test_salis_queue_unload_jvm.py` now invokes the real queue with a moved player and zero delay, checks no `sendParticles`, and verifies a valid same-world zero-delay effect still sends. Commit `96c03e19b6ac2614010b17786bd52c09c760e0d6`.
+
+**Verification:** preceding `7f02a6b` GitHub Actions included 13 successful workflows, including isolated JVM and full NeoForge CI. The NEW commits are **not yet proven** by those runs. Local repository checkout blocked by `Could not resolve host: github.com`; no local JVM/NeoForge execution and no real Minecraft-client proof claimed. Need inspect exact-head CI and correct any failure before native chunk-unload GameTest. Existing fixed audit remains **59/100, M16 4/6**, no score increment. PR #4 remains unmerged; other branches untouched.
