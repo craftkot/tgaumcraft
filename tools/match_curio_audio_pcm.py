@@ -39,6 +39,19 @@ def check_samples(quiet: np.ndarray, played: np.ndarray,
     if not candidates:
         raise AssertionError("PCM event shorter than pitched original learn.ogg")
     correlation, offset, pitch, template = max(candidates, key=lambda x: x[0])
+    # Preserve BETA26 pitch limits and acceptance threshold; expose why a
+    # borderline real-client recording failed instead of relaxing the gate.
+    top = sorted(candidates, key=lambda x: x[0], reverse=True)[:5]
+    print("CURIO_LEARN_TOP_PITCHES=" + ", ".join(
+        f"{p:.4f}:{corr:.4f}@{off:.3f}s"
+        for corr, off, p, _ in top), flush=True)
+    if abs(pitch - PITCHES[0]) < 1e-8 or abs(pitch - PITCHES[-1]) < 1e-8:
+        print("CURIO_LEARN_PITCH_BOUNDARY=YES", flush=True)
+    print(f"CURIO_LEARN_PCM_DIAGNOSTICS event_duration={len(played)/RATE:.3f}s "
+          f"baseline_duration={len(quiet)/RATE:.3f}s "
+          f"template_duration={len(template)/RATE:.3f}s "
+          f"event_rms={np.sqrt(np.mean(played**2)):.6f} "
+          f"baseline_rms={np.sqrt(np.mean(quiet**2)):.6f}", flush=True)
     baseline = best_match(quiet, template)
     background = baseline[0] if baseline else 0.0
     print(f"CURIO_LEARN_SOURCE_CANDIDATE correlation={correlation:.4f} "
