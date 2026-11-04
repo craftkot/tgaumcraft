@@ -806,3 +806,9 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Code/test commit: [87238b2](https://github.com/craftkot/tgaumcraft/commit/87238b2cf3c67fa804be04d3306255e94ab995e2); changed `tools/test_salis_queue_unload_jvm.py` only.
 - Previous [Actions #41771433210](https://github.com/craftkot/tgaumcraft/actions/runs/41771433210) succeeded on older HEAD `65e4872`; this is **not** proof of the new test cases. Check Actions for the new SHA before marking PASS.
 - This is a JVM unit regression, **not** a real NeoForge client/server unload/reload smoke. No M16 4/6 or global 59/100 increase. Next: inspect exact-head CI and implement native chunk lifecycle/network packet GameTest.
+
+
+### 2026-11-04 — verify expanded JVM lifecycle CI; remove vacuous ticket assertion
+- Inspected [Actions #41777349528](https://github.com/craftkot/tgaumcraft/actions/runs/41777349528), job `salis-queue-unload` (126400677571): Java 21 executed `python3 tools/test_salis_queue_unload_jvm.py`; log reports `SALIS_QUEUE_UNLOAD_JVM=PASS` at 05:08:06 UTC. This verifies the expanded disconnect, dimension-change and shutdown JVM scenarios on PR merge ref `51d4d0c` containing code commit `87238b2`; it is not a native GameTest.
+- Found misleading `loadRequests==0` checks: the stub never incremented that counter, so those checks were tautologies and **not evidence of no force-load**. Removed the counter and both assertions in [ecceaab3](https://github.com/craftkot/tgaumcraft/commit/ecceaab3f273a0de8d3ab3f6d5ae76bc99e13fa6). Explicitly document native ticket instrumentation still required. This is a test-integrity correction, not a gameplay fix.
+- Exact new SHA CI remains unverified at writing; historical fixed rubric **59/100**, M16 **4/6** unchanged. Next: verify CI for `ecceaab3`, then implement real NeoForge chunk unload/reload-before-due and packet/ticket assertions. PR #4 Draft; no merge.
