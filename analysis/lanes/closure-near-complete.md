@@ -851,3 +851,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Added a JVM regression that replaces the server player-list mapping before due tick and asserts no stale emission. Test commit [e2890a2](https://github.com/craftkot/tgaumcraft/commit/e2890a2bb26325e3eca58cf4e32cb195d117560f). Test uses a replacement instance returned under the old UUID lookup key; it validates session identity, not full authentication/reconnection behavior.
 - New commits have **not** been confirmed by CI or native Minecraft GameTest at time of writing. No claim of PASS for this new case. Next first inspect exact-head JVM and NeoForge CI; fix failures, then native unload/reload-before-due with packet/ticket instrumentation and original BETA26 sprite/alpha parity.
 - Fixed historical rubric unchanged: **59/100, M16 4/6**. PR #4 not merged.
+
+
+## 04.11.2026 — M16 Salis reconnect regression fixture fidelity
+
+- Verified prior exact PR HEAD `8ec66d6347d82e216b60032e080a77ec9979e5c0`: GitHub Actions [Salis JVM #41812355448](https://github.com/craftkot/tgaumcraft/actions/runs/41812355448) and [full NeoForge CI #41812355501](https://github.com/craftkot/tgaumcraft/actions/runs/41812355501) both completed SUCCESS. This confirms the preceding production guard at CI level, not a real game reconnect/unload acceptance.
+- Found a misleading reconnect test fixture: replacement `ServerPlayer` had a freshly random UUID while being manually inserted under the original player's UUID map key. Changed the test double to accept an explicit UUID, construct the replacement with the *same* UUID, and assert UUID equality. This now models the same-UUID/new-object invariant actually involved in Minecraft reconnect. Test-only commit `bdd2b83aa634b8d1f0a29706bf9c1cbeece8fe17`; production Java unchanged.
+- **New test execution not yet confirmed** at writing. Verify exact-head `M16 Salis queue unload JVM regression` and full NeoForge CI before claiming PASS. This remains an API-double regression, not native Minecraft packet/ticket instrumentation.
+- Historical fixed rubric **59/100**, M16 **4/6**, unchanged. Next: native unload→reload-before-due GameTest with real outgoing particle packets and chunk tickets, followed by original BETA26 visual alpha/sprite acceptance. PR #4 Draft; no merge or foreign branch writes.
