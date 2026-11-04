@@ -99,6 +99,14 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   s.players.remove(p.id); a.time=24; tick(s);
   check(a.sends==1,"disconnected player received delayed effect");
+  // Reconnect with the same UUID must not inherit an old session's pending effect.
+  a.time=24;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
+  var replacement=new ServerPlayer(a);
+  s.players.put(p.id,replacement); // map lookup returns new session for old UUID
+  a.time=27; tick(s);
+  check(a.sends==1,"reconnected player inherited old session's delayed effect");
+  s.players.put(p.id,p);
   // Dimension switch before due tick: never send a stale effect to another world.
   s.players.put(p.id,p); p.world=a; a.time=25;
   SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,origin,v,3);
