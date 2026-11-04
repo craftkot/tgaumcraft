@@ -933,3 +933,12 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Verified [full NeoForge CI #41912812812](https://github.com/craftkot/tgaumcraft/actions/runs/41912812812): `verify` **SUCCESS**, including Core parity, NeoForge build, dedicated server smoke and JAR upload. This does not establish the missing chunk-unload in-game acceptance.
 - Reviewed production `SalisSparkleTrailQueue.java`: existing unload-event cancellation, tick-time loaded-chunk guard, actor/session guard, and actor-only `sendParticles` are present. The outstanding proof is a **native** unload/reload with actual chunk state, outgoing particle packets, and ticket observation. Do not award M16 parity points for JVM API doubles.
 - No production source changed this iteration. Historical rubric remains **59/100**, M16 **4/6**. Next: implement an isolated native Salis unload/reload GameTest or controlled client/server smoke with actual packet/ticket evidence; avoid foreign lane files, global CI and registries. PR #4 stays Draft and unmerged.
+
+
+### 05.11.2026 — zero-delay Salis stale-session guard
+- Fresh-read main roadmap/AGENTS/parallel workflow/fixed audit, closure lane and the existing Salis queue; open PR ownership remains separated. Historical rubric remains 59/100, M16 4/6.
+- Found a concrete gap: queued effects verify current server PlayerList identity at due tick, but the zero-delay path only checked player.level()==level. A disconnected/replaced ServerPlayer retaining that level could still be addressed by an immediate sendParticles call.
+- Production fix: `SalisSparkleTrailQueue.enqueueOrEmit` now checks that the server PlayerList resolves the exact actor object before zero-delay send. No chunk tickets or global registries added.
+- Regression: `tools/test_salis_queue_unload_jvm.py` adds disconnected and same-UUID replacement cases for immediate emission, while preserving existing positive immediate case. Test harness ServerLevel now exposes getServer().
+- Commits: production `520336d6c713b36a58f7c77397c3915ae937c815`, regression `943849926f301176816872cc594406c44b91bb02`. **CI for these exact commits pending verification**; no local native Minecraft smoke or packet/ticket inspection claimed. This is a narrow session-safety fix, not full BETA26 visual parity.
+- Next: check exact-head Salis JVM and full NeoForge build. If green, implement native unload/reload packet and chunk-ticket test; if red, resolve first. PR #4 stays Draft and unmerged.
