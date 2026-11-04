@@ -33,8 +33,9 @@ public class ServerLevel extends Level {
 }""",
 "net/minecraft/server/level/ServerPlayer.java": """package net.minecraft.server.level;
 import java.util.UUID; public class ServerPlayer {
- public final UUID id=UUID.randomUUID(); public ServerLevel world;
- public ServerPlayer(ServerLevel w){world=w;} public UUID getUUID(){return id;}
+ public final UUID id; public ServerLevel world;
+ public ServerPlayer(ServerLevel w){this(w,UUID.randomUUID());}
+ public ServerPlayer(ServerLevel w,UUID uuid){world=w;id=uuid;} public UUID getUUID(){return id;}
  public ServerLevel level(){return world;}
 }""",
 "net/minecraft/server/MinecraftServer.java": """package net.minecraft.server;
@@ -102,8 +103,9 @@ public class SalisQueueTest {
   // Reconnect with the same UUID must not inherit an old session's pending effect.
   a.time=24;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
-  var replacement=new ServerPlayer(a);
-  s.players.put(p.id,replacement); // map lookup returns new session for old UUID
+  var replacement=new ServerPlayer(a,p.id);
+  check(replacement.getUUID().equals(p.getUUID()),"reconnect fixture UUID differs");
+  s.players.put(p.id,replacement); // actual same-UUID new session
   a.time=27; tick(s);
   check(a.sends==1,"reconnected player inherited old session's delayed effect");
   s.players.put(p.id,p);
