@@ -799,3 +799,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - For commit `81b9c0241091543139754fde5417c2b93f9ed276`, [Actions run 41764746394](https://github.com/craftkot/tgaumcraft/actions/runs/41764746394) is SUCCESS; 12 other associated workflows also report SUCCESS, including Thaumcraft Port CI and existing Minecraft smoke workflows. Their names do **not** establish native unload/reload packet/ticket acceptance.
 - Scope: real production queue Java compiled and executed with test API doubles, checking cancellation and no mock `sendParticles` calls. The harness does not use real NeoForge chunk events, network capture or Minecraft client. Its `loadRequests` counter is a test double, not a native chunk-ticket measurement. Do not claim full gameplay parity or score increase.
 - Historical fixed rubric remains **59/100, M16 4/6**. No gameplay production code changed. Next: native NeoForge/Minecraft unload→reload-before-due scenario with actual particle packet/ticket instrumentation; then original BETA26 sprite/alpha animation parity. PR #4 Draft, do not merge without permission.
+
+
+### 2026-11-04 — Salis queue lifecycle regression extension
+- Added executable JVM cases for player disconnect before due tick, player dimension switch before due tick, and server shutdown clearing pending effects; also assert no force-load requests. Real production class is compiled against test API doubles.
+- Code/test commit: [87238b2](https://github.com/craftkot/tgaumcraft/commit/87238b2cf3c67fa804be04d3306255e94ab995e2); changed `tools/test_salis_queue_unload_jvm.py` only.
+- Previous [Actions #41771433210](https://github.com/craftkot/tgaumcraft/actions/runs/41771433210) succeeded on older HEAD `65e4872`; this is **not** proof of the new test cases. Check Actions for the new SHA before marking PASS.
+- This is a JVM unit regression, **not** a real NeoForge client/server unload/reload smoke. No M16 4/6 or global 59/100 increase. Next: inspect exact-head CI and implement native chunk lifecycle/network packet GameTest.
