@@ -111,6 +111,15 @@ public class SalisQueueTest {
   a.time=33; tick(s);
   check(a.sends==1,"pending effect survived server shutdown");
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
+  // Zero-delay call from a stale world reference must not address a moved player.
+  p.world=b; a.time=34;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
+  check(a.sends==1 && b.sends==0,"immediate cross-dimension stale effect emitted");
+  // A valid zero-delay call still emits immediately in the player\'s world.
+  p.world=a;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
+  check(a.sends==2,"valid immediate effect suppressed");
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
 }"""
