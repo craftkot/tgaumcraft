@@ -58,6 +58,8 @@ public final class SalisSparkleTrailQueue {
             // Zero-delay effects must obey the same world/actor guard as queued ones.
             // A stale caller may hold a player that has already changed dimension.
             if (player.level() != level) return;
+            // An obsolete player session may still reference the same level.
+            if (level.getServer().getPlayerList().getPlayer(player.getUUID()) != player) return;
             emit(level, player, color, origin, velocity);
             return;
         }
