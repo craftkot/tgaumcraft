@@ -1,0 +1,28 @@
+name: M16 Salis queue unload JVM regression
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'tools/test_salis_queue_unload_jvm.py'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - '.github/workflows/closure-salis-queue-jvm.yml'
+  pull_request:
+    paths:
+      - 'tools/test_salis_queue_unload_jvm.py'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - '.github/workflows/closure-salis-queue-jvm.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  salis-queue-unload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile and execute actual Salis queue with JVM API doubles
+        run: python3 tools/test_salis_queue_unload_jvm.py
