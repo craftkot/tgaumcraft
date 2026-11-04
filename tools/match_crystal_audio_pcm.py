@@ -33,12 +33,24 @@ def check_samples(quiet: np.ndarray, event: np.ndarray,
             candidates.append((found[0], found[1], float(pitch), template))
     if not candidates:
         raise AssertionError("Event shorter than original crystal clip")
-    corr, offset, pitch, template = max(candidates, key=lambda x: x[0])
+    ranked = sorted(candidates, key=lambda x: x[0], reverse=True)
+    corr, offset, pitch, template = ranked[0]
     background = best_match(quiet, template)
     baseline = background[0] if background else 0.0
     print(f"CRYSTAL_SOURCE_CANDIDATE correlation={corr:.4f} "
           f"baseline={baseline:.4f} offset={offset:.3f}s pitch={pitch:.4f}")
     if corr < MIN_CORRELATION or corr - baseline < MIN_MARGIN:
+        print("CRYSTAL_SOURCE_DIAGNOSTICS "
+              f"event_rms={np.sqrt(np.mean(event * event)):.6f} "
+              f"quiet_rms={np.sqrt(np.mean(quiet * quiet)):.6f} "
+              f"source_rms={np.sqrt(np.mean(source * source)):.6f} "
+              f"event_duration={len(event) / RATE:.3f}s "
+              f"source_duration={len(source) / RATE:.3f}s")
+        for rank, (score, candidate_offset, candidate_pitch, _) in enumerate(ranked[:5], 1):
+            print(f"CRYSTAL_SOURCE_TOP_{rank} correlation={score:.4f} "
+                  f"offset={candidate_offset:.3f}s pitch={candidate_pitch:.4f}")
+        if pitch in (float(PITCHES[0]), float(PITCHES[-1])):
+            print("CRYSTAL_SOURCE_PITCH_BOUNDARY=YES")
         raise AssertionError("Game PCM not attributable to original crystal.ogg")
     if not np.any(np.abs(event) > 0.001):
         raise AssertionError("Game PCM is silent")
