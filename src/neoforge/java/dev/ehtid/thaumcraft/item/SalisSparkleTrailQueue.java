@@ -66,6 +66,8 @@ public final class SalisSparkleTrailQueue {
         // Discard effects whose source is already unloaded rather than retaining
         // them in the pending queue until their scheduled tick.
         if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
+        // Do not queue a delayed effect for a player who has already left this level.
+        if (player.level() != level) return;
         PENDING.add(new Pending(level.dimension(), player.getUUID(), color, origin, velocity, due, face));
     }
 
