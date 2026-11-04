@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class SalisSparkleTrailQueue {
-    private record Pending(ResourceKey<Level> dimension, UUID playerId,
+    private record Pending(ResourceKey<Level> dimension, UUID playerId, ServerPlayer actor,
                            DustParticleOptions color, Vec3 origin, Vec3 velocity,
                            long dueTick, boolean face) {}
 
@@ -68,7 +68,7 @@ public final class SalisSparkleTrailQueue {
         if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
         // Do not queue a delayed effect for a player who has already left this level.
         if (player.level() != level) return;
-        PENDING.add(new Pending(level.dimension(), player.getUUID(), color, origin, velocity, due, face));
+        PENDING.add(new Pending(level.dimension(), player.getUUID(), player, color, origin, velocity, due, face));
     }
 
     @SubscribeEvent
@@ -95,7 +95,9 @@ public final class SalisSparkleTrailQueue {
             if (level.getGameTime() < pending.dueTick()) continue;
             iterator.remove();
             ServerPlayer player = server.getPlayerList().getPlayer(pending.playerId());
-            if (player == null || player.level() != level) continue;
+            // A reconnect can reuse the same UUID with a new player session.
+            // Effects from the old session must not leak into the new one.
+            if (player == null || player != pending.actor() || player.level() != level) continue;
             // A delayed effect must not resurrect or address an unloaded chunk.
             // hasChunkAt is a loaded-chunk check, not a ticket or force-load.
             if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))) continue;
