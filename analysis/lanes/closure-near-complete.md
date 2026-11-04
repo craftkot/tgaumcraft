@@ -841,3 +841,13 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Regression: `tools/test_salis_queue_unload_jvm.py` queues from an old world while actor is elsewhere, returns actor to that world before due tick, and asserts no emission. Commit `54ae8f321c7d2ad1cdde7b456f566a70cbbca4e5`.
 - **Verification pending**: this run has not executed the new JVM test or native Minecraft smoke. Earlier green workflows are not proof for these commits. Next: check exact-head Salis JVM and full NeoForge CI; if red, fix first. Then implement native unload/reload-before-due packet/ticket acceptance, followed by BETA26 sprite/alpha parity.
 - Fixed audit remains **59/100**, M16 **4/6** (historical; no increment). PR #4 remains open and unmerged; no main or foreign lane writes.
+
+
+## 04.11.2026 — M16 delayed Salis particle after player reconnect
+
+- Fresh-read main AGENTS, ROADMAP, parallel workflow, fixed audit, closure lane and open PR list. PR #4 remains open; no changes to other lanes or main.
+- Verified exact prior HEAD `ad13ec5a343c295d32c4b7b4e018e3e9f3dc9bc2`: GitHub Actions reports 13 completed SUCCESS runs, including isolated Salis JVM regression and full Thaumcraft Port CI. This verifies the previous delayed-enqueue guard at workflow level, not native chunk tickets or client behavior.
+- Found a distinct lifecycle risk: pending effects identify a player only by UUID; a disconnect followed by reconnect with the same UUID before the due tick can address the new session. Queue now also stores the original `ServerPlayer` identity and rejects a replacement session on drain. Gameplay code commit [1b5b71c](https://github.com/craftkot/tgaumcraft/commit/1b5b71c2c65d1308f1764e5d94dcc9d9b206d36e).
+- Added a JVM regression that replaces the server player-list mapping before due tick and asserts no stale emission. Test commit [e2890a2](https://github.com/craftkot/tgaumcraft/commit/e2890a2bb26325e3eca58cf4e32cb195d117560f). Test uses a replacement instance returned under the old UUID lookup key; it validates session identity, not full authentication/reconnection behavior.
+- New commits have **not** been confirmed by CI or native Minecraft GameTest at time of writing. No claim of PASS for this new case. Next first inspect exact-head JVM and NeoForge CI; fix failures, then native unload/reload-before-due with packet/ticket instrumentation and original BETA26 sprite/alpha parity.
+- Fixed historical rubric unchanged: **59/100, M16 4/6**. PR #4 not merged.
