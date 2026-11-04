@@ -94,6 +94,23 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   a.loaded=true;a.time=20;tick(s);check(a.sends==1,"unloaded origin admitted");
   check(a.loadRequests==0 && b.loadRequests==0,"chunk was force loaded");
+  // Disconnect before due tick: no packet must be sent to a departed player.
+  a.loaded=true; a.time=21;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
+  s.players.remove(p.id); a.time=24; tick(s);
+  check(a.sends==1,"disconnected player received delayed effect");
+  // Dimension switch before due tick: never send a stale effect to another world.
+  s.players.put(p.id,p); p.world=a; a.time=25;
+  SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,origin,v,3);
+  p.world=b; a.time=28; tick(s);
+  check(a.sends==1 && b.sends==0,"cross-dimension stale effect emitted");
+  // Shutdown clears pending work even when a new server reuses the same dimension key.
+  p.world=a; a.time=29;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
+  a.time=33; tick(s);
+  check(a.sends==1,"pending effect survived server shutdown");
+  check(a.loadRequests==0 && b.loadRequests==0,"chunk was force loaded after lifecycle tests");
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
