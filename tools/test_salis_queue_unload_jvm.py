@@ -157,6 +157,16 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==1,"replaced session received stale immediate effect");
   s.players.put(p.id,p);
+  // A stale delayed caller must be rejected at enqueue, even if the same actor
+  // is restored to the player list before the due tick (no stale queue entry).
+  s.players.remove(p.id); a.time=39;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
+  s.players.put(p.id,p); a.time=42; tick(s);
+  check(a.sends==1,"disconnected actor queued delayed effect that fired after rejoin");
+  s.players.put(p.id,new ServerPlayer(a,p.id)); a.time=43;
+  SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,origin,v,3);
+  s.players.put(p.id,p); a.time=46; tick(s);
+  check(a.sends==1,"replaced actor queued delayed effect that fired after restoration");
   // A valid zero-delay call still emits immediately in the player's world.
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
