@@ -19,7 +19,12 @@ assert 'ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");' in queue
 assert "grep -Fq 'SALIS_FACE_DELAY_QUEUE_DRAINED' client-smoke/client.log" in smoke
 assert "level.sendParticles(player, color, false" in queue
 assert "level.sendParticles(player," not in fx
-assert "PENDING.clear()" in queue
+# ServerStopped must isolate cleanup to the stopped server, not wipe the JVM-static queue.
+stop_body = queue.split("public static void onServerStopped(ServerStoppedEvent event) {", 1)[1].split("\n    }", 1)[0]
+assert "MinecraftServer stopped = event.getServer();" in stop_body
+assert "PENDING.removeIf(" in stop_body
+assert "pending.sourceLevel().getServer() == stopped" in stop_body
+assert "PENDING.clear()" not in stop_body
 assert "player.level() != level" in queue
 assert "level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin()))" in queue
 # A chunk unloaded before the due tick must cancel the effect immediately;
