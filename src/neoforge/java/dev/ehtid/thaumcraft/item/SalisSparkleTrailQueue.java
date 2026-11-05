@@ -51,6 +51,10 @@ public final class SalisSparkleTrailQueue {
 
     private static void enqueueOrEmit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
                                       Vec3 origin, Vec3 velocity, long due, boolean face) {
+        // Reject callers holding a ServerLevel that the server has already replaced.
+        // This applies to immediate FX too: the queued path alone previously
+        // rejected replaced worlds, but a zero-delay send could still target one.
+        if (level.getServer().getLevel(level.dimension()) != level) return;
         if (due == level.getGameTime()) {
             // Apply the same loaded-chunk guard to zero-delay particles.
             // A stale caller must never emit into a chunk that is no longer loaded.
