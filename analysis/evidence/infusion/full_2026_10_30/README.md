@@ -103,9 +103,11 @@ Production-сборку следует делать в свежем рабоче
 архивный 12-секундный build использовал готовые результаты и не был clean build.
 
 ```bash
-gradle --offline --no-daemon clean build
+gradle --offline --no-daemon clean build -x test
 sha256sum build/libs/thaumcraft-6.1.BETA26-port.stage9.jar
 ```
+
+`-x test` соответствует существующей проектной CI-команде: Core запускается main-based runner отдельно, а vanilla GameTests — настоящим сервером. Plain `build` в Gradle9 отказывает при отсутствии JUnit discovery; это не заменяется фиктивным успехом.
 
 Затем native suite и, отдельно при необходимости, два menu regression tests:
 
