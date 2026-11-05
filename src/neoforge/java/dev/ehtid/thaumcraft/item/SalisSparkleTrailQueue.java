@@ -29,7 +29,7 @@ import java.util.UUID;
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class SalisSparkleTrailQueue {
-    private record Pending(ResourceKey<Level> dimension, UUID playerId, ServerPlayer actor,
+    private record Pending(ResourceKey<Level> dimension, ServerLevel sourceLevel, UUID playerId, ServerPlayer actor,
                            DustParticleOptions color, Vec3 origin, Vec3 velocity,
                            long dueTick, boolean face) {}
 
@@ -73,7 +73,7 @@ public final class SalisSparkleTrailQueue {
         // Reject a disconnected or replaced actor at enqueue time as well as at due tick.
         // Otherwise an obsolete caller can enqueue effects that survive a brief reconnect.
         if (level.getServer().getPlayerList().getPlayer(player.getUUID()) != player) return;
-        PENDING.add(new Pending(level.dimension(), player.getUUID(), player, color, origin, velocity, due, face));
+        PENDING.add(new Pending(level.dimension(), level, player.getUUID(), player, color, origin, velocity, due, face));
     }
 
     @SubscribeEvent
@@ -85,7 +85,9 @@ public final class SalisSparkleTrailQueue {
         while (iterator.hasNext()) {
             Pending pending = iterator.next();
             ServerLevel level = server.getLevel(pending.dimension());
-            if (level == null) {
+            if (level == null || level != pending.sourceLevel()) {
+                // Dimension keys are shared across server instances; never replay an
+                // old world's pending FX against a replacement ServerLevel.
                 iterator.remove();
                 continue;
             }
@@ -124,7 +126,7 @@ public final class SalisSparkleTrailQueue {
         Iterator<Pending> iterator = PENDING.iterator();
         while (iterator.hasNext()) {
             Pending pending = iterator.next();
-            if (pending.dimension() != level.dimension()) continue;
+            if (pending.dimension() != level.dimension() || pending.sourceLevel() != level) continue;
             if (!new net.minecraft.world.level.ChunkPos(net.minecraft.core.BlockPos.containing(pending.origin())).equals(chunkPos)) continue;
             iterator.remove();
             ThaumcraftSmokeAudit.mark("SALIS_DELAY_UNLOADED_CANCELLED");
