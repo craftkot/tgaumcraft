@@ -1,0 +1,23 @@
+{
+  "server_exit": 0,
+  "client_exit": 0,
+  "verified": true,
+  "xvfb_exit": 0,
+  "captures": [
+    {
+      "marker": "[11:13:28] [Render thread/INFO] [de.eh.th.in.te.InfusionClientAssertions/]: INFUSION_CLIENT_CRAFTING_FRAME_OBSERVED actualProductionDraws=70",
+      "screenshot": "crafting.png",
+      "sha256": "8e6d950cfeb643439ed0af8a5ab195fd17608e569019297d4ba9999c90d63b61",
+      "captured_utc": "2026-10-30T11:13:28.487693+00:00"
+    },
+    {
+      "marker": "[11:13:33] [Render thread/INFO] [de.eh.th.in.te.InfusionClientAssertions/]: INFUSION_CLIENT_OUTPUT_FRAME_OBSERVED actualProductionDraws=30",
+      "screenshot": "output.png",
+      "sha256": "9abfdcc126dfd0d136158e1497524d0518d87c8a38ab78bb217ca35613d50b52",
+      "captured_utc": "2026-10-30T11:13:33.833318+00:00"
+    }
+  ],
+  "server_directory": "/workspace/tgaumcraft-infusion/build/infusion-client-server-full20261030-atlas",
+  "client_directory": "/workspace/tgaumcraft-infusion/build/infusion-client-full20261030-atlas",
+  "observed_utc": "2026-10-30T11:13:47.942228+00:00"
+}

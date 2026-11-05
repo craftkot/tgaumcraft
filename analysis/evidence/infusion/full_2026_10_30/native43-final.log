@@ -1,0 +1,1293 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.2.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because the set of Gradle properties has changed: 'infusionGameTestNamespaces' was removed.
+> Task :generateModMetadata UP-TO-DATE
+> Task :createMinecraftArtifacts UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :downloadAssets UP-TO-DATE
+> Task :writeInfusionGameTestLegacyClasspath UP-TO-DATE
+> Task :prepareInfusionGameTestRun
+
+> Task :compileJava
+/workspace/tgaumcraft-infusion/src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientEvents.java:30: warning: [removal] bus() in EventBusSubscriber has been deprecated and marked for removal
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+                                                   ^
+/workspace/tgaumcraft-infusion/src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientEvents.java:30: warning: [removal] Bus in EventBusSubscriber has been deprecated and marked for removal
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+                                                                           ^
+2 warnings
+
+> Task :classes
+
+> Task :runInfusionGameTest
+WARN StatusConsoleListener Advanced terminal features are not available in this environment
+[11:21:44] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.44, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.250, --fml.neoFormVersion, 20240808.144430]
+[11:21:44] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.12.1+1-LTS
+[11:21:44] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.12.1 by Eclipse Adoptium; OS Linux arch amd64 version 6.18.55
+[11:21:44] [main/INFO] [ne.ne.fm.lo.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[11:21:45] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/workspace/.gradle-golems/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[11:21:45] [main/INFO] [ne.ne.fm.lo.mo.lo.JarInJarDependencyLocator/]: Found 2 dependencies adding them to mods collection
+[11:21:45] [main/INFO] [ne.ne.fm.lo.mo.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.250 (neoforge)
+		Thaumcraft 6 Port 6.1.BETA26-port.stage9 (thaumcraft)
+[11:21:46] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, .]
+[11:21:47] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[11:21:59] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[11:21:59] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[11:21:59] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[11:21:59] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[11:21:59] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[11:21:59] [modloading-worker-0/INFO] [ne.ne.ne.co.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.250, for MC 1.21.1
+[11:22:01] [main/INFO] [mojang/YggdrasilAuthenticationService]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[11:22:02] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/workspace/tgaumcraft-infusion/build/moddev/artifacts/neoforge-21.1.250.jar%23125!/assets/.mcassetsroot' uses unexpected schema
+[11:22:02] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/workspace/tgaumcraft-infusion/build/moddev/artifacts/neoforge-21.1.250.jar%23125!/data/.mcassetsroot' uses unexpected schema
+[11:22:02] [main/INFO] [ne.ne.ne.ga.GameTestHooks/]: Enabled Gametest Namespaces: [thaumcraft_infusion_regression, thaumcraft]
+[11:22:04] [main/INFO] [minecraft/RecipeManager]: Loaded 1336 recipes
+[11:22:04] [main/INFO] [minecraft/AdvancementTree]: Loaded 1400 advancements
+[11:22:06] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld
+[11:22:06] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 2%
+[11:22:07] [Server thread/INFO] [minecraft/LoggerChunkProgressListener]: Time elapsed: 415 ms
+[11:22:07] [Server thread/INFO] [minecraft/GameTestServer]: Started game test server
+[11:22:07] [Server thread/INFO] [ne.ne.ne.se.pe.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[11:22:07] [Yggdrasil Key Fetcher/ERROR] [mojang/YggdrasilServicesKeyInfo]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Connection refused
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?] {}
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?] {}
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?] {}
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?] {}
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?] {}
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?] {}
+Caused by: java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.Net.pollConnect(Native Method) ~[?:?] {}
+	at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:694) ~[?:?] {}
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:549) ~[?:?] {}
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592) ~[?:?] {}
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327) ~[?:?] {}
+	at java.base/java.net.Socket.connect(Socket.java:751) ~[?:?] {}
+	at java.base/sun.security.ssl.SSLSocketImpl.connect(SSLSocketImpl.java:304) ~[?:?] {}
+	at java.base/sun.net.NetworkClient.doConnect(NetworkClient.java:178) ~[?:?] {}
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:539) ~[?:?] {}
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:644) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsClient.<init>(HttpsClient.java:265) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsClient.New(HttpsClient.java:378) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.getNewHttpClient(AbstractDelegateHttpsURLConnection.java:196) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect0(HttpURLConnection.java:1305) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:1146) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.connect(HttpURLConnection.java:1075) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:181) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?] {}
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?] {}
+	... 9 more
+[11:22:07] [Server thread/INFO] [minecraft/GameTestServer]: 43 tests are now running at position -14121056, -59, 10239195!
+[11:22:08] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_mitigation:0' (1 tests)...
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [                                           ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [                                           ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [                                           ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [                                           ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:08] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [_                                          ]
+[11:22:09] [Server thread/INFO] [de.eh.th.in.te.InfusionMitigationGameTests/]: INFUSION_MITIGATION_NATIVE_OK recharge=15 flux=3.75 debit=15 savedEnergy=5 sourceRemoval=drained
+[11:22:09] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_cycle:0' (2 tests)...
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [+                                          ]
+[11:22:09] [Server thread/INFO] [minecraft/GameTestServer]: [+                                          ]
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239203}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239205}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;1261875880,1101679551,-1647450512,469122791],SidePedestals:[L;-3881555829818753078L,-3881554180551311414L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239203}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239203}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239205}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;-1006285049,-692762839,-1902018505,1317849072],SidePedestals:[L;-3881547858359451702L,-3881546209092010038L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239203}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239207}
+[11:22:10] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239205}
+[11:22:10] [Server thread/INFO] [minecraft/GameTestServer]: [++_                                        ]
+[11:22:10] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_dynamic_paid:0' (3 tests)...
+[11:22:10] [Server thread/INFO] [minecraft/GameTestServer]: [+++                                        ]
+TC_SMOKE_INFUSION_RECIPE_RESEARCH_GATED_START=YES
+[11:22:10] [Server thread/INFO] [minecraft/GameTestServer]: [+++_                                       ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_RESEARCH_GATED_START=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++__                                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_RESEARCH_GATED_START=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:11] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_REAL_OUTPUT_COMMITTED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++___                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_ESSENTIA_FULLY_PAID=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_RECIPE_ESSENTIA_FULLY_PAID=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_RECIPE_REAL_OUTPUT_COMMITTED=YES
+TC_SMOKE_INFUSION_RECIPE_SIDE_ITEM_REMOVED=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+TC_SMOKE_INFUSION_RECIPE_REAL_OUTPUT_COMMITTED=YES
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++__+                                     ]
+[11:22:12] [Server thread/INFO] [minecraft/GameTestServer]: [+++_++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_output:0' (4 tests)...
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++                                     ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++                                   ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_workbench_regression:0' (2 tests)...
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++                                 ]
+[11:22:13] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++                                 ]
+[11:22:14] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_stability:0' (2 tests)...
+[11:22:14] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++                               ]
+[11:22:14] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++                               ]
+[11:22:14] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++                              ]
+[11:22:14] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_paid:0' (7 tests)...
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++                             ]
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aqua key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120870,y:-52,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aqua"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120870,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START jar0={Amount:10s,Aspect:"aqua",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120874,y:-54,z:10239235}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120873,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120870,y:-54,z:10239233}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120867,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120866,y:-54,z:10239235}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aqua:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aqua"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aqua"}]},Recipe:"thaumcraft:CrystalClusterWater",RecipeCostMult:1.0f,RecipeFingerprint:"4ed2827dd076d87bcf6d70afac377642ff22ab61e830e9515348031c6c96cf99",Remaining:{aqua:10,vinculum:5,vitreus:10},RitualId:[I;-1198177699,-690271669,-1555589422,-884889420],SidePedestals:[L;-3881515972522123318L,-3881514323254681654L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120870,y:-52,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aqua"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120870,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED jar0={Amount:10s,Aspect:"aqua",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120874,y:-54,z:10239235}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120873,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120870,y:-54,z:10239233}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120867,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120866,y:-54,z:10239235}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=ordo key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ordo"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START jar0={Amount:10s,Aspect:"ordo",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239235}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239233}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239235}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{ordo:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ordo"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ordo"}]},Recipe:"thaumcraft:CrystalClusterOrder",RecipeCostMult:1.0f,RecipeFingerprint:"b750c3ba7154f704121578b34dcdbc18dc57ca7e39b8fd5fc3ff3518e8c4967b",Remaining:{ordo:10,vinculum:5,vitreus:10},RitualId:[I;631004310,-1371782782,-2118117831,1992962139],SidePedestals:[L;-3881508001062821942L,-3881506351795380278L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ordo"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED jar0={Amount:10s,Aspect:"ordo",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239235}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239233}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239237}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239235}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=terra key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"terra"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START jar0={Amount:10s,Aspect:"terra",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{terra:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"terra"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_terra"}]},Recipe:"thaumcraft:CrystalClusterEarth",RecipeCostMult:1.0f,RecipeFingerprint:"37d5de038eed40192cf693a48f70aebcf2c8101417baafbd0b3217607d9c71e9",Remaining:{terra:10,vinculum:5,vitreus:10},RitualId:[I;1892692409,12011443,-1612947957,-1066994671],SidePedestals:[L;-3881563801277808694L,-3881562152010367030L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"terra"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED jar0={Amount:10s,Aspect:"terra",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=vitium key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"vitium"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START jar0={Amount:10s,Aspect:"vitium",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{vinculum:5,vitium:10,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"vitium"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_vitium"}]},Recipe:"thaumcraft:CrystalClusterFlux",RecipeCostMult:1.0f,RecipeFingerprint:"638ce0d7eec56eda22ab29394be5ed9d6c5008c1535e4727ae3dbe6f09378329",Remaining:{vinculum:5,vitium:10,vitreus:10},RitualId:[I;-1647838489,-394837494,-1327218327,1747729591],SidePedestals:[L;-3881555829818507318L,-3881554180551065654L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:4,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"vitium"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED jar0={Amount:10s,Aspect:"vitium",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++____                         ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=perditio key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"perditio"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START jar0={Amount:10s,Aspect:"perditio",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{perditio:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"perditio"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_perditio"}]},Recipe:"thaumcraft:CrystalClusterEntropy",RecipeCostMult:1.0f,RecipeFingerprint:"a9a2a825ac3b7ea6c4e67c4fbd398ba31060ecdf02a0004aa5cc72592d060f9a",Remaining:{perditio:10,vinculum:5,vitreus:10},RitualId:[I;451204161,1187594290,-1700903372,-1341734130],SidePedestals:[L;-3881547858359205942L,-3881546209091764278L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"perditio"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED jar0={Amount:10s,Aspect:"perditio",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=ignis key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120957,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ignis"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120957,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START jar0={Amount:10s,Aspect:"ignis",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120961,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120960,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120957,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120954,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120953,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{ignis:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ignis"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ignis"}]},Recipe:"thaumcraft:CrystalClusterFire",RecipeCostMult:1.0f,RecipeFingerprint:"1def90d31861964c9d73cc405919aed1a94672a0a10c18c6e99257a544d589d5",Remaining:{ignis:10,vinculum:5,vitreus:10},RitualId:[I;-1648747221,2084980385,-1635933579,869463490],SidePedestals:[L;-3881539886899904566L,-3881538237632462902L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120957,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"ignis"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120957,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED jar0={Amount:10s,Aspect:"ignis",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120961,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120960,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120957,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120954,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120953,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120928,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120928,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120932,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120931,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120928,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120925,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120924,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;-557996920,2125022334,-1608703473,577348115],SidePedestals:[L;-3881531915440603190L,-3881530266173161526L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120928,y:-52,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120928,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120932,y:-54,z:10239265}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120931,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120928,y:-54,z:10239263}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120925,y:-54,z:10239267}
+[11:22:15] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120924,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:15] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120870,y:-52,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aqua"}],PortInfusionOutputItem:"thaumcraft:crystal_aqua",PortInfusionOutputRitual:[I;-1198177699,-690271669,-1555589422,-884889420],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aqua"},id:"thaumcraft:pedestal",x:-14120870,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120874,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1198177699,-690271669,-1555589422,-884889420],id:"thaumcraft:pedestal",x:-14120873,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120870,y:-54,z:10239233}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1198177699,-690271669,-1555589422,-884889420],id:"thaumcraft:pedestal",x:-14120867,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120866,y:-54,z:10239235}
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ordo"}],PortInfusionOutputItem:"thaumcraft:crystal_ordo",PortInfusionOutputRitual:[I;631004310,-1371782782,-2118117831,1992962139],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_ordo"},id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;631004310,-1371782782,-2118117831,1992962139],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239233}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;631004310,-1371782782,-2118117831,1992962139],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239235}
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_terra"}],PortInfusionOutputItem:"thaumcraft:crystal_terra",PortInfusionOutputRitual:[I;1892692409,12011443,-1612947957,-1066994671],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_terra"},id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;1892692409,12011443,-1612947957,-1066994671],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;1892692409,12011443,-1612947957,-1066994671],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:20.592382f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_vitium"}],PortInfusionOutputItem:"thaumcraft:crystal_vitium",PortInfusionOutputRitual:[I;-1647838489,-394837494,-1327218327,1747729591],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_vitium"},id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1647838489,-394837494,-1327218327,1747729591],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1647838489,-394837494,-1327218327,1747729591],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_perditio"}],PortInfusionOutputItem:"thaumcraft:crystal_perditio",PortInfusionOutputRitual:[I;451204161,1187594290,-1700903372,-1341734130],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_perditio"},id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;451204161,1187594290,-1700903372,-1341734130],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;451204161,1187594290,-1700903372,-1341734130],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120957,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ignis"}],PortInfusionOutputItem:"thaumcraft:crystal_ignis",PortInfusionOutputRitual:[I;-1648747221,2084980385,-1635933579,869463490],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_ignis"},id:"thaumcraft:pedestal",x:-14120957,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120961,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1648747221,2084980385,-1635933579,869463490],id:"thaumcraft:pedestal",x:-14120960,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120957,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1648747221,2084980385,-1635933579,869463490],id:"thaumcraft:pedestal",x:-14120954,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120953,y:-54,z:10239265}
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120928,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;-557996920,2125022334,-1608703473,577348115],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:-14120928,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120932,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-557996920,2125022334,-1608703473,577348115],id:"thaumcraft:pedestal",x:-14120931,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120928,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-557996920,2125022334,-1608703473,577348115],id:"thaumcraft:pedestal",x:-14120925,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120924,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++_______                      ]
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120870,y:-52,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aqua"}],PortInfusionOutputItem:"thaumcraft:crystal_aqua",PortInfusionOutputRitual:[I;-1198177699,-690271669,-1555589422,-884889420],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aqua"},id:"thaumcraft:pedestal",x:-14120870,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120874,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1198177699,-690271669,-1555589422,-884889420],id:"thaumcraft:pedestal",x:-14120873,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120870,y:-54,z:10239233}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1198177699,-690271669,-1555589422,-884889420],id:"thaumcraft:pedestal",x:-14120867,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aqua phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120866,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=aqua paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ordo"}],PortInfusionOutputItem:"thaumcraft:crystal_ordo",PortInfusionOutputRitual:[I;631004310,-1371782782,-2118117831,1992962139],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_ordo"},id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;631004310,-1371782782,-2118117831,1992962139],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239233}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;631004310,-1371782782,-2118117831,1992962139],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239237}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ordo phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239235}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=ordo paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++_____                      ]
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_terra"}],PortInfusionOutputItem:"thaumcraft:crystal_terra",PortInfusionOutputRitual:[I;1892692409,12011443,-1612947957,-1066994671],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_terra"},id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;1892692409,12011443,-1612947957,-1066994671],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;1892692409,12011443,-1612947957,-1066994671],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=terra phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=terra paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_vitium"}],PortInfusionOutputItem:"thaumcraft:crystal_vitium",PortInfusionOutputRitual:[I;-1647838489,-394837494,-1327218327,1747729591],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_vitium"},id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1647838489,-394837494,-1327218327,1747729591],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1647838489,-394837494,-1327218327,1747729591],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=vitium phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=vitium paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_perditio"}],PortInfusionOutputItem:"thaumcraft:crystal_perditio",PortInfusionOutputRitual:[I;451204161,1187594290,-1700903372,-1341734130],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_perditio"},id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;451204161,1187594290,-1700903372,-1341734130],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;451204161,1187594290,-1700903372,-1341734130],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=perditio phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=perditio paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120957,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_ignis"}],PortInfusionOutputItem:"thaumcraft:crystal_ignis",PortInfusionOutputRitual:[I;-1648747221,2084980385,-1635933579,869463490],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_ignis"},id:"thaumcraft:pedestal",x:-14120957,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120961,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1648747221,2084980385,-1635933579,869463490],id:"thaumcraft:pedestal",x:-14120960,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120957,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1648747221,2084980385,-1635933579,869463490],id:"thaumcraft:pedestal",x:-14120954,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=ignis phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120953,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=ignis paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120928,y:-52,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;-557996920,2125022334,-1608703473,577348115],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:-14120928,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120932,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-557996920,2125022334,-1608703473,577348115],id:"thaumcraft:pedestal",x:-14120931,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120928,y:-54,z:10239263}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-557996920,2125022334,-1608703473,577348115],id:"thaumcraft:pedestal",x:-14120925,y:-54,z:10239267}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120924,y:-54,z:10239265}
+[11:22:16] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=aer paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:17] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_hazards:0' (6 tests)...
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++                      ]
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++                      ]
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++                    ]
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++_++                 ]
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++_+++                ]
+[11:22:17] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_receipts:0' (7 tests)...
+[11:22:17] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++                ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++               ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++              ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++           ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_stability_arcane:0' (4 tests)...
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++         ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++        ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++      ]
+[11:22:18] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_hazards_player:0' (1 tests)...
+[11:22:18] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++     ]
+[11:22:19] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_legacy_checkpoint:0' (1 tests)...
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++    ]
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++    ]
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239325}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239323}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239325}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;207813987,469255207,-1081365449,-867437964],SidePedestals:[L;-3881508001062453302L,-3881506351795011638L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239325}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239323}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239325}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:8,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:2,vinculum:5,vitreus:10},RitualId:[I;207813987,469255207,-1081365449,-867437964],SidePedestals:[L;-3881508001062453302L,-3881506351795011638L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED jar0={Amount:2s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239325}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239323}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239327}
+[11:22:19] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=LEGACY_CHECKPOINT_MIGRATED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239325}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:19] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;207813987,469255207,-1081365449,-867437964],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239325}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;207813987,469255207,-1081365449,-867437964],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239323}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;207813987,469255207,-1081365449,-867437964],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239325}
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++_   ]
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120841,y:-52,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;207813987,469255207,-1081365449,-867437964],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:-14120841,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120845,y:-54,z:10239325}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;207813987,469255207,-1081365449,-867437964],id:"thaumcraft:pedestal",x:-14120844,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120841,y:-54,z:10239323}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;207813987,469255207,-1081365449,-867437964],id:"thaumcraft:pedestal",x:-14120838,y:-54,z:10239327}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120837,y:-54,z:10239325}
+[11:22:20] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_PAID_NATIVE_ASSERTIONS_OK aspect=aer paid=25 output=1 replayTicks=120 research=explicit_fixture
+[11:22:20] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_checkpoint_identity:0' (2 tests)...
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++   ]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++   ]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++   ]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++   ]
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239355}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;-1357504159,770853273,-1808019130,801226334],SidePedestals:[L;-3881555829818138678L,-3881554180550697014L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121015,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121015,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121019,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121018,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121015,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121012,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121011,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239355}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;-588288424,195316676,-1514355851,-463681328],SidePedestals:[L;-3881563801277440054L,-3881562152009998390L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14121044,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14121044,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121048,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14121047,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121044,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14121041,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14121040,y:-54,z:10239355}
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++__ ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++__ ]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++__ ]
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_INVALID_RECIPE_IDENTITY_REJECTED altered=false paid=8 observationTicks=30
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionGameTests/]: INFUSION_INVALID_RECIPE_IDENTITY_REJECTED altered=true paid=8 observationTicks=30
+[11:22:21] [Server thread/INFO] [minecraft/GameTestRunner]: Running test batch 'infusion_cycle_retry:0' (1 tests)...
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++ ]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++ ]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++ ]
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_RESEARCH_FIXTURE aspect=aer key=CRYSTALFARMER seeded=true
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=BEFORE_START jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239355}
+TC_SMOKE_INFUSION_CRYSTAL_RESEARCH_GATED_START=YES
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:0,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:10,vinculum:5,vitreus:10},RitualId:[I;1895579694,-1906553635,-2106078967,1738650031],SidePedestals:[L;-3881547858358837302L,-3881546209091395638L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:-14120986,y:-52,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:-14120986,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar0={Amount:10s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120990,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:-14120989,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120986,y:-54,z:10239353}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:-14120983,y:-54,z:10239357}
+[11:22:21] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=STARTED jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:-14120982,y:-54,z:10239355}
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [++++++++++++++++++++++++++++++++++++++++++_]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: [+++++++++++++++++++++++++++++++++++++++++++]
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: ========= 43 GAME TESTS COMPLETE IN 14.50 s ======================
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: All 43 required tests passed :)
+[11:22:21] [Server thread/INFO] [minecraft/GameTestServer]: ====================================================
+[11:22:21] [Server thread/INFO] [minecraft/MinecraftServer]: Stopping server
+[11:22:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving players
+[11:22:21] [Server thread/INFO] [minecraft/MinecraftServer]: Saving worlds
+[11:22:22] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:overworld
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:the_end
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[Test Level]'/minecraft:the_nether
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[11:22:24] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[11:22:24] [Server thread/INFO] [minecraft/GameTestServer]: Game test server shutting down
+
+[Incubating] Problems report is available at: file:///workspace/tgaumcraft-infusion/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 57s
+8 actionable tasks: 3 executed, 5 up-to-date
+Configuration cache entry stored.

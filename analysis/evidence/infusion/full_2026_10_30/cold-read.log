@@ -1,0 +1,154 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.2.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+Calculating task graph as configuration cache cannot be reused because init script 'tools/infusion.gradle' has changed.
+> Task :createMinecraftArtifacts UP-TO-DATE
+> Task :generateModMetadata UP-TO-DATE
+> Task :processResources UP-TO-DATE
+> Task :downloadAssets UP-TO-DATE
+> Task :writeInfusionRestartLegacyClasspath UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :prepareInfusionRestartRun
+
+> Task :runInfusionRestart
+WARN StatusConsoleListener Advanced terminal features are not available in this environment
+[15:03:32] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher running: args [--launchTarget, forgeserverdev, --gameDir, ., --fml.fmlVersion, 4.0.44, --fml.mcVersion, 1.21.1, --fml.neoForgeVersion, 21.1.250, --fml.neoFormVersion, 20240808.144430]
+[15:03:32] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: JVM identified as Eclipse Adoptium OpenJDK 64-Bit Server VM 21.0.12.1+1-LTS
+[15:03:32] [main/INFO] [cp.mo.mo.Launcher/MODLAUNCHER]: ModLauncher 11.0.5+main.901c6ea8 starting: java version 21.0.12.1 by Eclipse Adoptium; OS Linux arch amd64 version 6.18.55
+[15:03:33] [main/INFO] [ne.ne.fm.lo.ImmediateWindowHandler/]: ImmediateWindowProvider not loading because launch target is forgeserverdev
+[15:03:33] [main/INFO] [mixin/]: SpongePowered MIXIN Subsystem Version=0.8.7 Source=union:/workspace/.gradle-golems/caches/modules-2/files-2.1/net.fabricmc/sponge-mixin/0.15.2+mixin.0.8.7/2af2f021d8e02a0220dc27a7a72b4666d66d44ca/sponge-mixin-0.15.2+mixin.0.8.7.jar%2394!/ Service=ModLauncher Env=SERVER
+[15:03:33] [main/INFO] [ne.ne.fm.lo.mo.lo.JarInJarDependencyLocator/]: Found 2 dependencies adding them to mods collection
+[15:03:33] [main/INFO] [ne.ne.fm.lo.mo.ModDiscoverer/]: 
+     Mod List:
+		Name Version (Mod Id)
+
+		Minecraft 1.21.1 (minecraft)
+		NeoForge 21.1.250 (neoforge)
+		Thaumcraft 6 Port 6.1.BETA26-port.stage9 (thaumcraft)
+[15:03:35] [main/INFO] [cp.mo.mo.LaunchServiceHandler/MODLAUNCHER]: Launching target 'forgeserverdev' with arguments [--gameDir, .]
+[15:03:36] [main/INFO] [MixinExtras|Service/]: Initializing MixinExtras via com.llamalad7.mixinextras.service.MixinExtrasServiceImpl(version=0.5.3).
+[15:03:48] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[15:03:48] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, location] and [teleport, targets] with inputs: [0.1 -0.5 .9, 0 0 0]
+[15:03:48] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, destination] and [teleport, targets] with inputs: [Player, 0123, @e, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[15:03:48] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets] and [teleport, destination] with inputs: [Player, 0123, dd12be42-52a9-4a91-a8a1-11c01849e498]
+[15:03:48] [main/WARN] [minecraft/Commands]: Ambiguity between arguments [teleport, targets, location] and [teleport, targets, destination] with inputs: [0.1 -0.5 .9, 0 0 0]
+[15:03:48] [modloading-worker-0/INFO] [ne.ne.ne.co.NeoForgeMod/NEOFORGE-MOD]: NeoForge mod loading, version 21.1.250, for MC 1.21.1
+[15:03:51] [main/INFO] [mojang/YggdrasilAuthenticationService]: Environment: Environment[sessionHost=https://sessionserver.mojang.com, servicesHost=https://api.minecraftservices.com, name=PROD]
+[15:03:51] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/workspace/tgaumcraft-infusion/build/moddev/artifacts/neoforge-21.1.250.jar%23125!/assets/.mcassetsroot' uses unexpected schema
+[15:03:51] [main/WARN] [minecraft/VanillaPackResourcesBuilder]: Assets URL 'union:/workspace/tgaumcraft-infusion/build/moddev/artifacts/neoforge-21.1.250.jar%23125!/data/.mcassetsroot' uses unexpected schema
+[15:03:54] [main/INFO] [minecraft/RecipeManager]: Loaded 1335 recipes
+[15:03:54] [main/INFO] [minecraft/AdvancementTree]: Loaded 1399 advancements
+[15:03:56] [Server thread/INFO] [minecraft/DedicatedServer]: Starting minecraft server version 1.21.1
+[15:03:56] [Server thread/INFO] [minecraft/DedicatedServer]: Loading properties
+[15:03:56] [Server thread/INFO] [minecraft/DedicatedServer]: Default game type: SURVIVAL
+[15:03:56] [Server thread/INFO] [minecraft/MinecraftServer]: Generating keypair
+[15:03:56] [Yggdrasil Key Fetcher/ERROR] [mojang/YggdrasilServicesKeyInfo]: Failed to request yggdrasil public key
+com.mojang.authlib.exceptions.MinecraftClientException: Failed to read from https://api.minecraftservices.com/publickeys due to Connection refused
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:108) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.get(MinecraftClient.java:57) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo.fetch(YggdrasilServicesKeyInfo.java:114) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.yggdrasil.YggdrasilServicesKeyInfo$1.run(YggdrasilServicesKeyInfo.java:89) ~[authlib-6.0.54.jar%2377!/:?] {}
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572) ~[?:?] {}
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317) ~[?:?] {}
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304) ~[?:?] {}
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144) ~[?:?] {}
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642) ~[?:?] {}
+	at java.base/java.lang.Thread.run(Thread.java:1583) [?:?] {}
+Caused by: java.net.ConnectException: Connection refused
+	at java.base/sun.nio.ch.Net.pollConnect(Native Method) ~[?:?] {}
+	at java.base/sun.nio.ch.Net.pollConnectNow(Net.java:694) ~[?:?] {}
+	at java.base/sun.nio.ch.NioSocketImpl.timedFinishConnect(NioSocketImpl.java:549) ~[?:?] {}
+	at java.base/sun.nio.ch.NioSocketImpl.connect(NioSocketImpl.java:592) ~[?:?] {}
+	at java.base/java.net.SocksSocketImpl.connect(SocksSocketImpl.java:327) ~[?:?] {}
+	at java.base/java.net.Socket.connect(Socket.java:751) ~[?:?] {}
+	at java.base/sun.security.ssl.SSLSocketImpl.connect(SSLSocketImpl.java:304) ~[?:?] {}
+	at java.base/sun.net.NetworkClient.doConnect(NetworkClient.java:178) ~[?:?] {}
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:539) ~[?:?] {}
+	at java.base/sun.net.www.http.HttpClient.openServer(HttpClient.java:644) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsClient.<init>(HttpsClient.java:265) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsClient.New(HttpsClient.java:378) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.getNewHttpClient(AbstractDelegateHttpsURLConnection.java:196) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect0(HttpURLConnection.java:1305) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.plainConnect(HttpURLConnection.java:1146) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.connect(HttpURLConnection.java:1075) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.AbstractDelegateHttpsURLConnection.connect(AbstractDelegateHttpsURLConnection.java:181) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream0(HttpURLConnection.java:1707) ~[?:?] {}
+	at java.base/sun.net.www.protocol.http.HttpURLConnection.getInputStream(HttpURLConnection.java:1632) ~[?:?] {}
+	at java.base/java.net.HttpURLConnection.getResponseCode(HttpURLConnection.java:531) ~[?:?] {}
+	at java.base/sun.net.www.protocol.https.HttpsURLConnectionImpl.getResponseCode(HttpsURLConnectionImpl.java:307) ~[?:?] {}
+	at MC-BOOTSTRAP/authlib@6.0.54/com.mojang.authlib.minecraft.client.MinecraftClient.readInputStream(MinecraftClient.java:84) ~[authlib-6.0.54.jar%2377!/:?] {}
+	... 9 more
+[15:03:56] [Server thread/INFO] [minecraft/DedicatedServer]: Starting Minecraft server on 127.0.0.1:25631
+[15:03:56] [Server thread/INFO] [minecraft/ServerConnectionListener]: Using epoll channel type
+[15:03:56] [Server thread/WARN] [minecraft/DedicatedServer]: **** SERVER IS RUNNING IN OFFLINE/INSECURE MODE!
+[15:03:56] [Server thread/WARN] [minecraft/DedicatedServer]: The server will make no attempt to authenticate usernames. Beware.
+[15:03:56] [Server thread/WARN] [minecraft/DedicatedServer]: While this makes the game possible to play without internet access, it also opens up the ability for hackers to connect with any username they choose.
+[15:03:56] [Server thread/WARN] [minecraft/DedicatedServer]: To change this, set "online-mode" to "true" in the server.properties file.
+[15:03:56] [Server thread/INFO] [minecraft/DedicatedServer]: Preparing level "world"
+[15:03:57] [Server thread/INFO] [minecraft/MinecraftServer]: Preparing start region for dimension minecraft:overworld
+[15:03:57] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 0%
+[15:03:57] [worldgen/INFO] [minecraft/LoggerChunkProgressListener]: Preparing spawn area: 0%
+[15:03:57] [Server thread/INFO] [minecraft/LoggerChunkProgressListener]: Time elapsed: 607 ms
+[15:03:57] [Server thread/INFO] [minecraft/DedicatedServer]: Done (0.902s)! For help, type "help"
+[15:03:57] [Server thread/INFO] [ne.ne.ne.ga.GameTestHooks/]: Enabled Gametest Namespaces: []
+[15:03:57] [Server thread/INFO] [ne.ne.ne.se.pe.PermissionAPI/]: Successfully initialized permission handler neoforge:default_handler
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS matrix={PortInfusionLedger:{ActiveIngredient:0,ConsumedItems:0,FinishPhase:"WAITING",Format:3,Initial:{aer:10,vinculum:5,vitreus:10},ItemCountdown:0,OriginalCenterInput:{Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}]},OriginalSideInputs:{Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"},{Slot:1b,count:1,id:"thaumcraft:salis_mundus"}]},Paid:8,PlannedOutput:{Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}]},Recipe:"thaumcraft:CrystalClusterAir",RecipeCostMult:1.0f,RecipeFingerprint:"d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",Remaining:{aer:2,vinculum:5,vitreus:10},RitualId:[I;-1905443299,1020282433,-1274392905,-885531392],SidePedestals:[L;1374389567614L,3023657009278L],Surcharges:{}},active:1b,costMult:1.0f,countDelay:5,crafting:1b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:8,y:128,z:8}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS pedestal0={Items:[{Slot:0b,components:{"minecraft:custom_data":{Aspects:[{amount:1,key:"aer"}]}},count:1,id:"thaumcraft:crystal_essence"}],id:"thaumcraft:pedestal",x:8,y:126,z:8}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS jar0={Amount:2s,Aspect:"aer",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:4,y:126,z:6}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS pedestal1={Items:[{Slot:0b,count:1,id:"minecraft:wheat_seeds"}],id:"thaumcraft:pedestal",x:5,y:126,z:8}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS jar1={Amount:10s,Aspect:"vitreus",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:8,y:126,z:4}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS pedestal2={Items:[{Slot:0b,count:1,id:"thaumcraft:salis_mundus"}],id:"thaumcraft:pedestal",x:11,y:126,z:8}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_LOADED_BEFORE_TICKS jar2={Amount:5s,Aspect:"vinculum",blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:12,y:126,z:6}
+[15:03:57] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionRestartProbe/]: INFUSION_COLD_LOAD_PARTIAL_ASSERTIONS_OK paid=8 ritual=8e6d3e1d-3cd0-4641-b40a-4eb7cb37dd00
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_JAR_ONE_UNIT_DEBIT_PROVEN=YES
+TC_SMOKE_INFUSION_CRYSTAL_ESSENTIA_FULLY_PAID=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SEEDS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SIDE_ITEM_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_SALIS_REMOVED=YES
+TC_SMOKE_INFUSION_CRYSTAL_REAL_OUTPUT_COMMITTED=YES
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:8,y:128,z:8}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;-1905443299,1020282433,-1274392905,-885531392],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:8,y:126,z:8}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:4,y:126,z:6}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1905443299,1020282433,-1274392905,-885531392],id:"thaumcraft:pedestal",x:5,y:126,z:8}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:8,y:126,z:4}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1905443299,1020282433,-1274392905,-885531392],id:"thaumcraft:pedestal",x:11,y:126,z:8}
+[15:04:05] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_CONTINUATION_FINISHED jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:12,y:126,z:6}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS matrix={active:1b,costMult:1.0f,countDelay:5,crafting:0b,cycleTime:10,id:"thaumcraft:infusion_matrix",recipeinst:0,stability:25.0f,stabilityReplenish:0.3288086f,x:8,y:128,z:8}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS pedestal0={Items:[{Slot:0b,count:1,id:"thaumcraft:crystal_aer"}],PortInfusionOutputItem:"thaumcraft:crystal_aer",PortInfusionOutputRitual:[I;-1905443299,1020282433,-1274392905,-885531392],PortInfusionOutputStack:{count:1,id:"thaumcraft:crystal_aer"},id:"thaumcraft:pedestal",x:8,y:126,z:8}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS jar0={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:4,y:126,z:6}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS pedestal1={Items:[],PortInfusionRemovalBit:1,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1905443299,1020282433,-1274392905,-885531392],id:"thaumcraft:pedestal",x:5,y:126,z:8}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS jar1={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:8,y:126,z:4}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS pedestal2={Items:[],PortInfusionRemovalBit:2,PortInfusionRemovalRemainder:{},PortInfusionRemovalRitual:[I;-1905443299,1020282433,-1274392905,-885531392],id:"thaumcraft:pedestal",x:11,y:126,z:8}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionFixture/]: INFUSION_TEST_SNAPSHOT aspect=aer phase=COLD_NO_REPLAY_120_TICKS jar2={Amount:0s,blocked:0b,facing:2b,id:"thaumcraft:jar_normal",x:12,y:126,z:6}
+[15:04:11] [Server thread/INFO] [de.eh.th.in.te.PaidInfusionRestartProbe/]: INFUSION_PAID_RESTART_READ_ASSERTIONS_OK paid=25 output=1 replayTicks=120 ritual=8e6d3e1d-3cd0-4641-b40a-4eb7cb37dd00
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Stopping server
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Saving players
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Saving worlds
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:overworld
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_nether
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: Saving chunks for level 'ServerLevel[world]'/minecraft:the_end
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (world): All chunks are saved
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM-1): All chunks are saved
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage (DIM1): All chunks are saved
+[15:04:11] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+
+BUILD SUCCESSFUL in 1m 1s
+8 actionable tasks: 2 executed, 6 up-to-date
+Configuration cache entry stored.

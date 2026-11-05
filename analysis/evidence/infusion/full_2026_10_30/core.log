@@ -1,0 +1,85 @@
+== Java parity: CoreParityTest
+Core parity tests: OK (10047 assertions)
+== Java parity: InfusionGenericRuntimeTest
+BETA26 generic infusion runtime: OK
+== Java parity: InfusionInstabilityParityTest
+BETA26 infusion instability: OK (198 assertions)
+== Java parity: InfusionOutputParityTest
+BETA26 infusion output semantics: OK
+== Java parity: InfusionIngredientQueueTest
+BETA26 infusion ingredient queue: OK (379 assertions)
+== Java parity: InfusionSurroundingsParityTest
+BETA26 infusion surroundings: OK (20 assertions)
+== Java parity: InfusionStabilityRecipeParityTest
+BETA26 stability arcane recipes: OK (1229 assertions)
+== Java parity: InfusionMitigationParityTest
+BETA26 infusion mitigation: OK (4111 assertions)
+== Java parity: CrystalFarmerParityTest
+Crystal farmer BETA26 parity: OK (602 assertions)
+== Java parity: CrystalGrowthParityTest
+Crystal growth BETA26 parity: OK (110 assertions)
+== Java parity: CrystalMeshParityTest
+CrystalModel seeded selection parity OK (88 assertions)
+== Java parity: EssentiaJarParityTest
+BETA26 jar parity: OK (40 assertions)
+== Java parity: LegacyVoidJarParityTest
+BETA26 void jar parity: OK (36 assertions)
+== Java parity: LegacyWardedJarRecipeParityTest
+BETA26 warded/void jar arcane recipes: OK (35 assertions)
+== Java parity: InfusionSkullStabilityParityTest
+BETA26 skull infusion stabilizers: OK (9 assertions)
+== Java parity: LegacyEssentiaTubeParityTest
+BETA26 essentia tube pressure and one-unit transfer: OK (32 assertions)
+== Java parity: LegacyEssentiaTubeRecipeTest
+BETA26 eight-tube arcane crafting: OK (20 assertions)
+== Java parity: LegacyEssentiaTubeUpgradeRecipesTest
+BETA26 tube upgrades: OK (15 assertions)
+== Java parity: LegacyBellowsArcaneRecipeTest
+BETA26 bellows arcane crafting: OK (10 assertions)
+== Java parity: LegacyTubeBufferArcaneRecipeTest
+BETA26 essentia buffer arcane crafting: OK (17 assertions)
+== Java parity: LegacyAlembicArcaneRecipeTest
+BETA26 alembic arcane crafting: OK (19 assertions)
+== Java parity: LegacyAlchemyFilterArcaneRecipeTest
+BETA26 alchemy filter arcane crafting: OK (22 assertions)
+== Java parity: LegacyTubeFilterArcaneRecipeTest
+BETA26 filtered tube arcane crafting: OK (11 assertions)
+== Java parity: LegacyAlchemyConstructArcaneRecipeTest
+BETA26 alchemical construct arcane crafting: OK (19 checks)
+== Java parity: LegacyUpgradedSmelterArcaneRecipeTest
+BETA26 upgraded smelter arcane crafting: OK (22 checks)
+== Java parity: LegacyAdvancedAlchemyConstructArcaneRecipeTest
+BETA26 advanced alchemical construct arcane crafting: OK (31 checks)
+== Java parity: LegacySmelterAttachmentArcaneRecipeTest
+BETA26 smelter attachment arcane crafting: OK (36 assertions)
+== Java parity: LegacyEssentiaMirrorLogicTest
+BETA26 essentia mirror link and instability parity: OK (72 assertions)
+== Java parity: LegacyTubeVariantParityTest
+BETA26 filter valve restrict oneway suction and direction: OK (9 assertions)
+== Java parity: LegacyTubeBufferParityTest
+BETA26 mixed essentia buffer, choke, and priority: OK (29 assertions)
+== Java parity: LegacyAlembicParityTest
+BETA26 alembic two-pass column and extraction: OK (22 assertions)
+== Java parity: LegacySmelterParityTest
+BETA26 smelter retention, speed and capacity: OK (16 assertions)
+== Java parity: AlchemyTransportCycleParityTest
+BETA26 smelter-alembic-tube-jar conservation: OK (35 assertions)
+== Java parity: LegacySmelterArcaneRecipeTest
+BETA26 basic smelter arcane crafting: OK (19 assertions)
+== Java parity: PhialJarExchangeTest
+BETA26 phial/jar conservation: OK (22 checks)
+== Java parity: EssentiaSourceOrderParityTest
+BETA26 essentia source search parity: OK (15062 assertions)
+== Java parity: InfusionRitualLedgerParityTest
+BETA26 infusion ritual resource ledger: OK (170 assertions)
+== Java parity: CrystalFarmerIngredientProgressTest
+BETA26 Crystal Farmer ingredient countdown: OK (193 assertions)
+== Java parity: CrystalFarmerFinishCheckpointTest
+BETA26 Crystal Farmer finish reservation: OK (396 assertions)
+== Java parity: LegacyTheorycraftSourceVisParityTest
+Original BETA26 CardInfuse explicit ore-tag Vis: OK
+== Java parity: LegacyTheorycraftSeedDataIntegrityParityTest
+BETA26 seeded alchemy and celestial card integrity: OK
+== Java parity: LegacyTheorycraftSessionFieldIntegrityParityTest
+BETA26 session-dependent theory card integrity: OK
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK
