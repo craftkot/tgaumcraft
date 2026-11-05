@@ -26,7 +26,9 @@ import java.util.UUID;
 @EventBusSubscriber(modid=ThaumcraftPort.MOD_ID)
 public final class PaidInfusionRestartProbe {
     private static final String PHASE=System.getProperty("thaumcraft.infusionRestartPhase","");
+    private static final boolean MIRRORS=Boolean.getBoolean("thaumcraft.infusionMirrorRestart");
     private static final BlockPos MATRIX=new BlockPos(8,128,8);
+    private static final BlockPos REMOTE_MIRROR=MATRIX.south(32);
     private static MinecraftServer server;
     private static PaidInfusionFixture fixture;
     private static int ticks;
@@ -39,13 +41,28 @@ public final class PaidInfusionRestartProbe {
         try {
             var level=server.overworld();
             // Source scan and all physical blocks fit within this forced fixture chunk and its neighbours.
-            for(int x=-1;x<=1;x++) for(int z=-1;z<=1;z++) { level.setChunkForced(x,z,true); level.getChunk(x,z); }
-            fixture=new PaidInfusionFixture(level,MATRIX,"aer");
+            for(int x=-1;x<=1;x++) for(int z=-1;z<=(MIRRORS?3:1);z++) { level.setChunkForced(x,z,true); level.getChunk(x,z); }
+            fixture=MIRRORS ? new PaidInfusionFixture(level,MATRIX,"aer",java.util.List.of(
+                    REMOTE_MIRROR.offset(-1,2,0),REMOTE_MIRROR.above(2),REMOTE_MIRROR.offset(1,2,0)))
+                    : new PaidInfusionFixture(level,MATRIX,"aer");
             if(PHASE.equals("write")) {
                 PaidInfusionFixture.require(!Files.exists(manifest()),"Fresh isolated restart world required");
+                if(MIRRORS) {
+                    var state=dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.MIRROR_ESSENTIA.get().defaultBlockState()
+                            .setValue(dev.ehtid.thaumcraft.block.EssentiaMirrorBlock.FACING,net.minecraft.core.Direction.UP);
+                    level.setBlockAndUpdate(MATRIX.east(2),state); level.setBlockAndUpdate(REMOTE_MIRROR,state);
+                    PaidInfusionFixture.require(((dev.ehtid.thaumcraft.blockentity.EssentiaMirrorBlockEntity)
+                            level.getBlockEntity(MATRIX.east(2))).linkTo(level.dimension().location().toString(),REMOTE_MIRROR),
+                            "Real linked mirror pair supplies remote fixture jars");
+                }
                 fixture.constructAndStart();
             } else {
                 var saved=new Properties(); try(var in=Files.newInputStream(manifest())) { saved.load(in); }
+                PaidInfusionFixture.require(Boolean.parseBoolean(saved.getProperty("mirrors","false"))==MIRRORS,
+                        "Read phase uses the same physical source topology");
+                if(MIRRORS) PaidInfusionFixture.require(level.getBlockEntity(MATRIX.east(2))
+                        instanceof dev.ehtid.thaumcraft.blockentity.EssentiaMirrorBlockEntity mirror && mirror.hasValidLink(),
+                        "Disk-loaded reciprocal mirror link is valid without repair or relinking");
                 fixture.ritual=UUID.fromString(saved.getProperty("ritual"));
                 fixture.lastPaid=Integer.parseInt(saved.getProperty("paid"));
                 PaidInfusionFixture.require(fixture.matrix()!=null && fixture.matrix().crafting(),"Actual saved incomplete ritual loaded before native ticks");
@@ -73,12 +90,13 @@ public final class PaidInfusionRestartProbe {
                 if(fixture.lastPaid<8) return;
                 PaidInfusionFixture.require(fixture.lastPaid<25,"Save while incomplete");
                 var saved=new Properties(); saved.setProperty("ritual",fixture.ritual.toString()); saved.setProperty("paid",Integer.toString(fixture.lastPaid));
+                saved.setProperty("mirrors",Boolean.toString(MIRRORS));
                 for(int i=0;i<3;i++) saved.setProperty("jar"+i,Integer.toString(fixture.jar(i).snapshot().amount()));
                 try(var out=Files.newOutputStream(manifest())) { saved.store(out,"Paid infusion explicit test fixture; new JVM read must match these physical balances"); }
                 fixture.snapshot("BEFORE_NORMAL_SAVE_STOP");
                 PaidInfusionFixture.require(server.saveEverything(true,true,true),"Normal server saveEverything(flush=true) succeeds");
                 done=true;
-                LogUtils.getLogger().info("INFUSION_PAID_RESTART_WRITE_ASSERTIONS_OK paid={} ritual={}",fixture.lastPaid,fixture.ritual);
+                LogUtils.getLogger().info("INFUSION_PAID_RESTART_WRITE_ASSERTIONS_OK paid={} ritual={} mirrors={}",fixture.lastPaid,fixture.ritual,MIRRORS);
                 server.halt(false); // Graceful stop saves world; runner must start a separate JVM with phase=read.
             } else if(!fixture.matrix().crafting()) {
                 fixture.verifyFinished();
@@ -88,7 +106,7 @@ public final class PaidInfusionRestartProbe {
                 }
                 if(ticks-fixture.completionTick>=120) {
                     fixture.verifyFinished(); fixture.snapshot("COLD_NO_REPLAY_120_TICKS"); done=true;
-                    LogUtils.getLogger().info("INFUSION_PAID_RESTART_READ_ASSERTIONS_OK paid=25 output=1 replayTicks=120 ritual={}",fixture.ritual);
+                    LogUtils.getLogger().info("INFUSION_PAID_RESTART_READ_ASSERTIONS_OK paid=25 output=1 replayTicks=120 ritual={} mirrors={}",fixture.ritual,MIRRORS);
                     server.halt(false);
                 }
             }

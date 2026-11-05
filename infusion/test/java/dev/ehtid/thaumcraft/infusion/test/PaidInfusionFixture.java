@@ -39,9 +39,14 @@ final class PaidInfusionFixture {
     int completionTick = -1;
 
     PaidInfusionFixture(ServerLevel level, BlockPos matrixPos, String aspect) {
+        this(level, matrixPos, aspect, List.of(matrixPos.offset(-4,-2,-2),
+                matrixPos.offset(0,-2,-4), matrixPos.offset(4,-2,-2)));
+    }
+    PaidInfusionFixture(ServerLevel level, BlockPos matrixPos, String aspect, List<BlockPos> sourceJars) {
         this.level = level; this.matrixPos = matrixPos; this.aspect = aspect;
         pedestals = List.of(matrixPos.below(2), matrixPos.offset(-3,-2,0), matrixPos.offset(3,-2,0));
-        jars = List.of(matrixPos.offset(-4,-2,-2), matrixPos.offset(0,-2,-4), matrixPos.offset(4,-2,-2));
+        jars = List.copyOf(sourceJars);
+        require(jars.size()==3,"Three independently balanced fixture jars required");
     }
     InfusionMatrixBlockEntity matrix() { return (InfusionMatrixBlockEntity) level.getBlockEntity(matrixPos); }
     PedestalBlockEntity pedestal(int i) { return (PedestalBlockEntity) level.getBlockEntity(pedestals.get(i)); }
