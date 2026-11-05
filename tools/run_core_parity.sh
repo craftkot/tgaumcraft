@@ -18,6 +18,7 @@ TESTS=(
   InfusionSurroundingsParityTest
   InfusionStabilityRecipeParityTest
   InfusionMitigationParityTest
+  InfusionSourceVolumeTest
   CrystalFarmerParityTest
   CrystalGrowthParityTest
   CrystalMeshParityTest
@@ -70,6 +71,7 @@ InfusionGenericRuntimeTest|BETA26 generic infusion runtime: OK
 InfusionInstabilityParityTest|BETA26 infusion instability: OK
 InfusionOutputParityTest|BETA26 infusion output semantics: OK
 InfusionIngredientQueueTest|BETA26 infusion ingredient queue: OK
+InfusionSourceVolumeTest|BETA26 infusion source volume: OK
 InfusionSurroundingsParityTest|BETA26 infusion surroundings: OK
 InfusionStabilityRecipeParityTest|BETA26 stability arcane recipes: OK
 InfusionMitigationParityTest|BETA26 infusion mitigation: OK

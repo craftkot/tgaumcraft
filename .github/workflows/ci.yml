@@ -406,7 +406,7 @@ jobs:
       - name: Verify resource-backed infusion jar bridge
         shell: bash
         run: |
-          grep -q 'LegacyEssentiaSourceOrder.nullFacing(range)' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
+          grep -q 'LegacyInfusionSourceVolume.offsets(range, scanFacing)' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
           grep -q 'jar.takeForInfusion(aspect, 1)' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
           grep -q 'jar.blocked()' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
           grep -q 'level.hasChunkAt' src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java
@@ -428,7 +428,7 @@ jobs:
         run: |
           for test in InfusionGenericRuntimeTest InfusionOutputParityTest InfusionIngredientQueueTest \
               InfusionInstabilityParityTest InfusionSurroundingsParityTest InfusionMitigationParityTest \
-              InfusionStabilityRecipeParityTest; do
+              InfusionStabilityRecipeParityTest InfusionSourceVolumeTest; do
             javac --release 21 -cp build/core-test-classes -d build/core-test-classes \
               "src/test/java/dev/ehtid/thaumcraft/port/core/${test}.java"
             java -cp build/core-test-classes "dev.ehtid.thaumcraft.port.core.${test}"
