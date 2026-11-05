@@ -52,7 +52,7 @@ public class MinecraftServer {
 }""",
 "net/neoforged/bus/api/SubscribeEvent.java": "package net.neoforged.bus.api; public @interface SubscribeEvent {}",
 "net/neoforged/fml/common/EventBusSubscriber.java": "package net.neoforged.fml.common; public @interface EventBusSubscriber {String modid();}",
-"net/neoforged/neoforge/event/server/ServerStoppedEvent.java": "package net.neoforged.neoforge.event.server; public class ServerStoppedEvent {}",
+"net/neoforged/neoforge/event/server/ServerStoppedEvent.java": "package net.neoforged.neoforge.event.server; import net.minecraft.server.MinecraftServer; public record ServerStoppedEvent(MinecraftServer server) {public MinecraftServer getServer(){return server;}}",
 "net/neoforged/neoforge/event/tick/ServerTickEvent.java": "package net.neoforged.neoforge.event.tick; import net.minecraft.server.MinecraftServer; public class ServerTickEvent {public record Post(MinecraftServer server){public MinecraftServer getServer(){return server;}}}",
 "net/neoforged/neoforge/event/level/ChunkEvent.java": """package net.neoforged.neoforge.event.level;
 import net.minecraft.world.level.*; import net.minecraft.server.level.ServerLevel;
@@ -119,9 +119,16 @@ public class SalisQueueTest {
   var cPlayer=new ServerPlayer(c); cServer.players.put(cPlayer.id,cPlayer);
   c.time=30;
   SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,3);
+  // Another server's tick must not discard this pending particle.
+  a.time=31; tick(s);
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(1,1))));
   c.time=33; tick(cServer);
   check(c.sends==1,"unload in another server cancelled same-dimension pending FX");
+  // Stopping server A must not erase server C's pending particle.
+  c.time=33; SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,2);
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
+  c.time=35; tick(cServer);
+  check(c.sends==2,"other server shutdown cleared pending FX");
   // A different ServerLevel with the same dimension key must not inherit
   // old pending work after server world replacement.
   c.time=34;
@@ -130,7 +137,7 @@ public class SalisQueueTest {
   replacementWorld.key=c.key; replacementWorld.server=cServer;
   cServer.worlds.put(c.key,replacementWorld);
   c.time=37; tick(cServer);
-  check(c.sends==1 && replacementWorld.sends==0,"replacement level inherited old Salis FX");
+  check(c.sends==2 && replacementWorld.sends==0,"replacement level inherited old Salis FX");
   // Restore the baseline count for the remaining independent assertions.
   a.sends=1;
   // Disconnect before due tick: no packet must be sent to a departed player.
@@ -155,10 +162,10 @@ public class SalisQueueTest {
   // Shutdown clears pending work even when a new server reuses the same dimension key.
   p.world=a; a.time=29;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
-  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   a.time=33; tick(s);
   check(a.sends==1,"pending effect survived server shutdown");
-  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   // Zero-delay call from a stale world reference must not address a moved player.
   p.world=b; a.time=34;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
@@ -190,7 +197,7 @@ public class SalisQueueTest {
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==2,"valid immediate effect suppressed");
-  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent());
+  SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
 }"""
