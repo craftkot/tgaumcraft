@@ -9,7 +9,13 @@ queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue
 fx = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java").read_text()
 assert "@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)" in queue
 assert "ServerTickEvent.Post" in queue and "ServerStoppedEvent" in queue
-assert "PENDING.clear()" in queue
+# Shutdown must remove only entries belonging to the stopped MinecraftServer.
+# The JVM-static queue can contain effects owned by other server instances.
+stop_method = queue.split("public static void onServerStopped(ServerStoppedEvent event) {", 1)[1].split("\n    }", 1)[0]
+assert "MinecraftServer stopped = event.getServer();" in stop_method
+assert "PENDING.removeIf(" in stop_method
+assert "pending.sourceLevel().getServer() == stopped" in stop_method
+assert "PENDING.clear()" not in stop_method
 assert "player.level() != level" in queue
 assert "server.getPlayerList().getPlayer(pending.playerId())" in queue
 assert "level.sendParticles(player, color, false" in queue
