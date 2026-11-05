@@ -84,6 +84,9 @@ public final class SalisSparkleTrailQueue {
         Iterator<Pending> iterator = PENDING.iterator();
         while (iterator.hasNext()) {
             Pending pending = iterator.next();
+            // The queue is JVM-static; ticks from other servers must not
+            // consume pending effects owned by this server instance.
+            if (pending.sourceLevel().getServer() != server) continue;
             ServerLevel level = server.getLevel(pending.dimension());
             if (level == null || level != pending.sourceLevel()) {
                 // Dimension keys are shared across server instances; never replay an
@@ -135,7 +138,8 @@ public final class SalisSparkleTrailQueue {
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
-        PENDING.clear();
+        MinecraftServer stopped = event.getServer();
+        PENDING.removeIf(pending -> pending.sourceLevel().getServer() == stopped);
     }
 
     private static void emit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
