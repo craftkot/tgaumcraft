@@ -32,7 +32,15 @@ assert "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) r
 assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") < queue.index("emit(level, player, color, origin, velocity);")
 assert queue.index("level.hasChunkAt(") < queue.index("emit(level, player, pending.color()")
 assert queue.count("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;") == 2
-assert queue.index("if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;", queue.index("PENDING.add(") - 250) < queue.index("PENDING.add(")
+# Both zero-delay and delayed paths must reject unloaded origins before dispatch.
+# Inspect the enqueue method rather than a fixed 250-character window:
+# adding unrelated session guards must not break this source contract.
+enqueue_body = queue.split("private static void enqueueOrEmit(", 1)[1].split("@SubscribeEvent", 1)[0]
+pending_at = enqueue_body.index("PENDING.add(")
+loaded_guard = "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;"
+assert enqueue_body[:pending_at].count(loaded_guard) == 2
+assert enqueue_body.index(loaded_guard) < enqueue_body.index("emit(level, player, color, origin, velocity);")
+assert enqueue_body.rfind(loaded_guard, 0, pending_at) > enqueue_body.index("emit(level, player, color, origin, velocity);")
 
 # ChunkEvent.Unload closes the unload/reload-between-ticks gap: cancel by
 # dimension and chunk position immediately, without requesting chunk loads.
