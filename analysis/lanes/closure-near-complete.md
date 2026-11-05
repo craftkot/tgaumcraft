@@ -942,3 +942,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Regression: `tools/test_salis_queue_unload_jvm.py` adds disconnected and same-UUID replacement cases for immediate emission, while preserving existing positive immediate case. Test harness ServerLevel now exposes getServer().
 - Commits: production `520336d6c713b36a58f7c77397c3915ae937c815`, regression `943849926f301176816872cc594406c44b91bb02`. **CI for these exact commits pending verification**; no local native Minecraft smoke or packet/ticket inspection claimed. This is a narrow session-safety fix, not full BETA26 visual parity.
 - Next: check exact-head Salis JVM and full NeoForge build. If green, implement native unload/reload packet and chunk-ticket test; if red, resolve first. PR #4 stays Draft and unmerged.
+
+
+### 05.11.2026 — stale delayed Salis actor enqueue regression
+- Fresh-read main roadmap, AGENTS, parallel workflow and fixed audit; closure branch and open PR ownership checked. Main remains at the shared integration base, no foreign branch or shared registry edited.
+- Verified exact HEAD d9fd9943 GitHub Actions: 13/13 completed SUCCESS including Salis JVM 41931187999 and full NeoForge CI 41931187927. This proves the prior immediate-session fix compiles and passes JVM regression, not native unload/reload packet/ticket acceptance.
+- Found a separate stale-session gap: delayed enqueue checked actor.level() but not current PlayerList identity. A disconnected/replaced actor could enqueue a delayed effect, then be restored as the same actor before due tick; the old event would emit. Now delayed enqueue rejects non-current actor at admission, mirroring zero-delay path.
+- Regression covers disconnected and same-UUID replaced callers restored before due tick, asserting no particles; existing positive immediate case retained. Production/test commits: cc6af57b8c88b40a295be3511dca6fa2974dd517, 72acdd88c09762f517e863d2407ea19f681ea35d.
+- Exact-head CI for these new changes pending; no local NeoForge/client run and no native chunk-ticket or outgoing packet observation claimed. Historical audit 59/100, M16 4/6 unchanged. Next: verify new Salis JVM and full NeoForge CI; then implement native unload/reload with packet and chunk-ticket evidence. PR #4 unmerged.
