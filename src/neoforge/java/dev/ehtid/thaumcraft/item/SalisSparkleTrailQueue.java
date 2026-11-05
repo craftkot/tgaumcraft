@@ -70,6 +70,9 @@ public final class SalisSparkleTrailQueue {
         if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;
         // Do not queue a delayed effect for a player who has already left this level.
         if (player.level() != level) return;
+        // Reject a disconnected or replaced actor at enqueue time as well as at due tick.
+        // Otherwise an obsolete caller can enqueue effects that survive a brief reconnect.
+        if (level.getServer().getPlayerList().getPlayer(player.getUUID()) != player) return;
         PENDING.add(new Pending(level.dimension(), player.getUUID(), player, color, origin, velocity, due, face));
     }
 
