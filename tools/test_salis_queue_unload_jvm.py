@@ -112,6 +112,25 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(-2,-2))));
   a.time=26;tick(s);
   check(a.sends==2,"neighbor negative chunk incorrectly cancelled effect");
+  // Same dimension key on a separate server is NOT the same loaded world.
+  // An unload on server A must not cancel server C's pending particle.
+  var cServer=new MinecraftServer(); var c=new ServerLevel();
+  c.key=a.key; c.server=cServer; cServer.worlds.put(c.key,c);
+  var cPlayer=new ServerPlayer(c); cServer.players.put(cPlayer.id,cPlayer);
+  c.time=30;
+  SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,3);
+  SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(1,1))));
+  c.time=33; tick(cServer);
+  check(c.sends==1,"unload in another server cancelled same-dimension pending FX");
+  // A different ServerLevel with the same dimension key must not inherit
+  // old pending work after server world replacement.
+  c.time=34;
+  SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,3);
+  var replacementWorld=new ServerLevel();
+  replacementWorld.key=c.key; replacementWorld.server=cServer;
+  cServer.worlds.put(c.key,replacementWorld);
+  c.time=37; tick(cServer);
+  check(c.sends==1 && replacementWorld.sends==0,"replacement level inherited old Salis FX");
   // Restore the baseline count for the remaining independent assertions.
   a.sends=1;
   // Disconnect before due tick: no packet must be sent to a departed player.
