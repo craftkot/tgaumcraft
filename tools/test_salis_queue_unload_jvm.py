@@ -138,6 +138,18 @@ public class SalisQueueTest {
   cServer.worlds.put(c.key,replacementWorld);
   c.time=37; tick(cServer);
   check(c.sends==2 && replacementWorld.sends==0,"replacement level inherited old Salis FX");
+  // Admission must reject a stale world even for zero-delay FX. A former
+  // ServerLevel can remain loaded and keep a valid player reference briefly.
+  c.time=38;
+  SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,0);
+  check(c.sends==2 && replacementWorld.sends==0,"stale world immediate effect emitted");
+  // A delayed call made against the replaced world must not be retained even
+  // if the server later restores the same ServerLevel before the due tick.
+  SalisSparkleTrailQueue.emitFaceOrQueue(c,cPlayer,dust,origin,v,3);
+  cServer.worlds.put(c.key,c);
+  c.time=41; tick(cServer);
+  check(c.sends==2,"stale world queued effect resurrected after restoration");
+  cServer.worlds.put(c.key,replacementWorld);
   // Restore the baseline count for the remaining independent assertions.
   a.sends=1;
   // Disconnect before due tick: no packet must be sent to a departed player.
