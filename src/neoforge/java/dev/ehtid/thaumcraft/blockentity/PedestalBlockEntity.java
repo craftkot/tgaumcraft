@@ -1,10 +1,15 @@
 package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import dev.ehtid.thaumcraft.port.core.LegacyInfusionPedestalReceipt;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalFarmerOutputReceipt;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import java.util.UUID;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -14,12 +19,17 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * BETA26 TilePedestal: exactly one synced inventory slot with max stack
- * size 1. Inventory saves to normal Items NBT and is sent on block updates.
- * The infusion matrix may later use putFromInfusion during an actual ritual.
+ * BETA26 TilePedestal: one synced inventory slot. Player insertion is limited
+ * to one item, while a completed infusion retains its complete result stack.
  */
 public final class PedestalBlockEntity extends BlockEntity implements Container {
     private final NonNullList<ItemStack> items = NonNullList.withSize(1, ItemStack.EMPTY);
+    /** Receipt is saved atomically WITH the actual crafting remainder. */
+    private LegacyInfusionPedestalReceipt infusionRemovalReceipt;
+    private ItemStack infusionRemovalRemainder = ItemStack.EMPTY;
+    /** Saved in the SAME center pedestal NBT as the complete published output. */
+    private LegacyCrystalFarmerOutputReceipt infusionOutputReceipt;
+    private ItemStack infusionPublishedOutput = ItemStack.EMPTY;
 
     public PedestalBlockEntity(BlockPos pos, BlockState state) {
         super(ThaumcraftBlockEntities.PEDESTAL.get(), pos, state);
@@ -66,6 +76,102 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
         return true;
     }
 
+    /**
+     * Source infusion side item debit plus its identity in ONE pedestal
+     * BlockEntity NBT snapshot. A matrix that saved countdown=1 immediately
+     * before a crash can recover ONLY from this matching receipt and the exact
+     * crafting remainder. External inventory changes invalidate the receipt.
+     */
+    public boolean consumeInfusionIngredientWithReceipt(ItemStack expected,
+                                                          UUID ritualId, int ingredientBit) {
+        if (level == null || level.isClientSide || ritualId == null
+                || expected == null || expected.isEmpty() || expected.getCount() != 1
+                || (ingredientBit <= 0 || ingredientBit > (1 << 29) || Integer.bitCount(ingredientBit) != 1))
+            return false;
+        if (infusionRemovalReceipt != null && infusionRemovalReceipt.ritualId().equals(ritualId))
+            return false;
+        ItemStack now = items.get(0);
+        if (now.isEmpty() || now.getCount() != 1
+                || !ItemStack.isSameItemSameComponents(now, expected))
+            return false;
+        // BETA26 replaces the entire side slot with the item's actual container
+        // stack. The copy protects the verified source from item implementations.
+        ItemStack remainder = expected.copy().getCraftingRemainingItem();
+        items.set(0, remainder.copy());
+        clearInfusionOutputReceipt();
+        infusionRemovalReceipt = new LegacyInfusionPedestalReceipt(
+                ritualId, ingredientBit);
+        infusionRemovalRemainder = remainder.copy();
+        changedAndSync();
+        return true;
+    }
+
+    /**
+     * Atomically publish the complete original result plus the active ritual's
+     * output provenance in this pedestal's persistent inventory state.
+     * External inventory writes always erase the proof.
+     */
+    public boolean publishInfusionResultWithReceipt(ItemStack expectedInput,
+                                                     ItemStack exactOutput, UUID ritualId) {
+        if (level == null || level.isClientSide || ritualId == null
+                || expectedInput == null || expectedInput.getCount() != 1
+                || exactOutput == null || exactOutput.getCount() <= 0
+                || expectedInput.isEmpty() || exactOutput.isEmpty())
+            return false;
+        if (infusionOutputReceipt != null && infusionOutputReceipt.ritualId().equals(ritualId))
+            return false;
+        ItemStack current = items.get(0);
+        if (current.getCount() != 1
+                || !ItemStack.isSameItemSameComponents(current, expectedInput))
+            return false;
+        String outputId = BuiltInRegistries.ITEM.getKey(exactOutput.getItem()).toString();
+        if (outputId.isBlank()) return false;
+        var proof = new LegacyCrystalFarmerOutputReceipt(ritualId, outputId);
+        items.set(0, exactOutput.copy());
+        clearInfusionRemovalReceipt();
+        infusionOutputReceipt = proof;
+        infusionPublishedOutput = exactOutput.copy();
+        changedAndSync();
+        return true;
+    }
+
+    /** An existing matching ItemStack WITHOUT a receipt cannot authorize ACK. */
+    public boolean hasInfusionOutputReceipt(UUID ritualId, ItemStack expectedOutput) {
+        if (infusionOutputReceipt == null || expectedOutput == null
+                || expectedOutput.isEmpty())
+            return false;
+        boolean exactPhysicalOutput = ItemStack.matches(items.get(0), expectedOutput)
+                && ItemStack.matches(infusionPublishedOutput, expectedOutput);
+        return infusionOutputReceipt.provesSavedPublication(
+                ritualId,
+                BuiltInRegistries.ITEM.getKey(expectedOutput.getItem()).toString(),
+                exactPhysicalOutput);
+    }
+
+    public boolean hasInfusionRemovalReceipt(UUID ritualId, int ingredientBit) {
+        return hasInfusionRemovalReceipt(ritualId, ingredientBit, ItemStack.EMPTY);
+    }
+
+    public boolean hasInfusionRemovalReceipt(UUID ritualId, int ingredientBit,
+                                             ItemStack expectedRemainder) {
+        return infusionRemovalReceipt != null
+                && expectedRemainder != null
+                && infusionRemovalReceipt.provesSavedRemoval(
+                        ritualId, ingredientBit,
+                        ItemStack.matches(items.get(0), expectedRemainder)
+                                && ItemStack.matches(infusionRemovalRemainder, expectedRemainder));
+    }
+
+    private void clearInfusionRemovalReceipt() {
+        infusionRemovalReceipt = null;
+        infusionRemovalRemainder = ItemStack.EMPTY;
+    }
+
+    private void clearInfusionOutputReceipt() {
+        infusionOutputReceipt = null;
+        infusionPublishedOutput = ItemStack.EMPTY;
+    }
+
     /** Infusion writes are server authoritative; caller owns cost validation. */
     public void putFromInfusion(ItemStack ingredient) {
         if (level == null || level.isClientSide)
@@ -87,13 +193,21 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override public ItemStack removeItem(int slot, int amount) {
         if (slot != 0 || amount <= 0) return ItemStack.EMPTY;
         ItemStack result = ContainerHelper.removeItem(items, slot, amount);
-        if (!result.isEmpty()) changedAndSync();
+        if (!result.isEmpty()) {
+            clearInfusionRemovalReceipt();
+            clearInfusionOutputReceipt();
+            changedAndSync();
+        }
         return result;
     }
     @Override public ItemStack removeItemNoUpdate(int slot) {
         if (slot != 0) return ItemStack.EMPTY;
         ItemStack result = ContainerHelper.takeItem(items, slot);
-        if (!result.isEmpty()) changedAndSync();
+        if (!result.isEmpty()) {
+            clearInfusionRemovalReceipt();
+            clearInfusionOutputReceipt();
+            changedAndSync();
+        }
         return result;
     }
     @Override public void setItem(int slot, ItemStack stack) {
@@ -101,6 +215,8 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
         ItemStack one = stack.copy();
         if (!one.isEmpty()) one.setCount(1);
         items.set(0, one);
+        clearInfusionRemovalReceipt();
+        clearInfusionOutputReceipt();
         changedAndSync();
     }
     @Override public int getMaxStackSize() { return 1; }
@@ -114,12 +230,20 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
                         worldPosition.getZ() + 0.5) <= 64.0;
     }
     @Override public void clearContent() {
-        if (isOccupied()) {
+        if (isOccupied() || infusionRemovalReceipt != null || infusionOutputReceipt != null) {
             items.set(0, ItemStack.EMPTY);
+            clearInfusionRemovalReceipt();
+            clearInfusionOutputReceipt();
             changedAndSync();
         }
     }
     @Override public void setChanged() {
+        // Container callers may mutate the live getItem() stack before marking
+        // the inventory dirty; those writes must not retain historical proof.
+        if (infusionRemovalReceipt != null && !ItemStack.matches(items.get(0), infusionRemovalRemainder))
+            clearInfusionRemovalReceipt();
+        if (infusionOutputReceipt != null && !ItemStack.matches(items.get(0), infusionPublishedOutput))
+            clearInfusionOutputReceipt();
         super.setChanged();
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
@@ -133,13 +257,80 @@ public final class PedestalBlockEntity extends BlockEntity implements Container 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         ContainerHelper.saveAllItems(tag, items, registries);
+        if (infusionRemovalReceipt != null && ItemStack.matches(items.get(0), infusionRemovalRemainder)) {
+            tag.putUUID("PortInfusionRemovalRitual", infusionRemovalReceipt.ritualId());
+            tag.putInt("PortInfusionRemovalBit", infusionRemovalReceipt.ingredientBit());
+            tag.put("PortInfusionRemovalRemainder", infusionRemovalRemainder.saveOptional(registries));
+        }
+        if (infusionOutputReceipt != null && !items.get(0).isEmpty()
+                && ItemStack.matches(items.get(0), infusionPublishedOutput)
+                && BuiltInRegistries.ITEM.getKey(items.get(0).getItem()).toString()
+                        .equals(infusionOutputReceipt.itemId())) {
+            tag.putUUID("PortInfusionOutputRitual", infusionOutputReceipt.ritualId());
+            tag.putString("PortInfusionOutputItem", infusionOutputReceipt.itemId());
+            tag.put("PortInfusionOutputStack", infusionPublishedOutput.saveOptional(registries));
+        }
     }
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        clearInfusionRemovalReceipt();
+        clearInfusionOutputReceipt();
         items.set(0, ItemStack.EMPTY);
         ContainerHelper.loadAllItems(tag, items, registries);
-        // Malformed old-world ItemStacks cannot create multi-stack pedestals.
-        if (!items.get(0).isEmpty() && items.get(0).getCount() > 1)
+        if (!items.get(0).isEmpty()
+                && tag.contains("PortInfusionOutputRitual", Tag.TAG_INT_ARRAY)
+                && tag.contains("PortInfusionOutputItem", Tag.TAG_STRING)) {
+            try {
+                var saved = new LegacyCrystalFarmerOutputReceipt(
+                        tag.getUUID("PortInfusionOutputRitual"),
+                        tag.getString("PortInfusionOutputItem"));
+                // Legacy publication receipts only ever allowed count one. The
+                // matrix still compares their full actual stack with its frozen
+                // expected output before ACK. Multi-count outputs require the
+                // new explicit snapshot; malformed snapshots never migrate.
+                ItemStack snapshot = tag.contains("PortInfusionOutputStack")
+                        ? (tag.contains("PortInfusionOutputStack", Tag.TAG_COMPOUND)
+                            ? parseReceiptStack(tag.getCompound("PortInfusionOutputStack"), registries) : null)
+                        : (items.get(0).getCount() == 1 ? items.get(0).copy() : null);
+                if (snapshot != null && saved.provesSavedPublication(saved.ritualId(),
+                        BuiltInRegistries.ITEM.getKey(items.get(0).getItem()).toString(),
+                        ItemStack.matches(items.get(0), snapshot))) {
+                    infusionOutputReceipt = saved;
+                    infusionPublishedOutput = snapshot;
+                }
+            } catch (IllegalArgumentException malformed) {
+                clearInfusionOutputReceipt();
+            }
+        }
+        if (infusionOutputReceipt == null && tag.contains("PortInfusionRemovalRitual", Tag.TAG_INT_ARRAY)
+                && tag.contains("PortInfusionRemovalBit", Tag.TAG_INT)) {
+            int bit = tag.getInt("PortInfusionRemovalBit");
+            if (bit > 0 && bit <= (1 << 29) && Integer.bitCount(bit) == 1) {
+                try {
+                    // Older empty-slot receipts are safe to migrate. A nonempty
+                    // remainder always requires its separately saved exact stack.
+                    ItemStack snapshot = tag.contains("PortInfusionRemovalRemainder")
+                            ? (tag.contains("PortInfusionRemovalRemainder", Tag.TAG_COMPOUND)
+                                ? parseReceiptStack(tag.getCompound("PortInfusionRemovalRemainder"), registries) : null)
+                            : ItemStack.EMPTY;
+                    if (snapshot != null && ItemStack.matches(items.get(0), snapshot)) {
+                        infusionRemovalReceipt = new LegacyInfusionPedestalReceipt(
+                                tag.getUUID("PortInfusionRemovalRitual"), bit);
+                        infusionRemovalRemainder = snapshot;
+                    }
+                } catch (IllegalArgumentException malformed) {
+                    clearInfusionRemovalReceipt();
+                }
+            }
+        }
+        // Only an exact saved publication/remainder may retain more than one
+        // item; unchecked inventory NBT still follows normal pedestal capacity.
+        if (infusionOutputReceipt == null && infusionRemovalReceipt == null
+                && !items.get(0).isEmpty() && items.get(0).getCount() > 1)
             items.get(0).setCount(1);
+    }
+
+    private static ItemStack parseReceiptStack(CompoundTag saved, HolderLookup.Provider registries) {
+        return saved.isEmpty() ? ItemStack.EMPTY : ItemStack.parse(registries, saved).orElse(null);
     }
 }

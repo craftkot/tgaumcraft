@@ -47,6 +47,21 @@ public final class LegacyInfusionCrystalFarmerCatalog {
 
     public static List<Recipe> all() { return ORIGINAL; }
 
+    /**
+     * Source IngredientNBTTC compares the actual makeCrystal(aspect) payload,
+     * NOT just the first aspect key. A forged crystal with an extra aspect
+     * row or a different amount must not match a paid original recipe.
+     * Raw NBT list entries (without duplicate-merging) are required.
+     */
+    public static boolean exactOriginalCrystalEntries(
+            String expectedAspect, List<LegacyContainedAspectTags.Entry> raw) {
+        if (expectedAspect == null || forAspect(expectedAspect) == null
+                || raw == null || raw.size() != 1 || raw.get(0) == null)
+            return false;
+        var only = raw.get(0);
+        return expectedAspect.equals(only.key()) && only.amount() == 1;
+    }
+
     public static Recipe forAspect(String aspectTag) {
         for (Recipe spec : ORIGINAL)
             if (spec.aspectTag().equals(aspectTag)) return spec;

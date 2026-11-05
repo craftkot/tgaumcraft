@@ -318,5 +318,13 @@
   "block.thaumcraft.metal_alchemical": "Alchemical Construct",
   "block.thaumcraft.metal_alchemical_advanced": "Advanced Alchemical Construct",
   "item.thaumcraft.primordial_pearl": "Primordial Pearl",
-  "block.thaumcraft.mirror_essentia": "Essentia Mirror"
+  "block.thaumcraft.mirror_essentia": "Essentia Mirror",
+  "block.thaumcraft.inlay": "Inlay",
+  "block.thaumcraft.stabilizer": "Infusion Stabilizer",
+  "block.thaumcraft.matrix_speed": "Infusion Speed Stone",
+  "block.thaumcraft.matrix_cost": "Infusion Cost Stone",
+  "block.thaumcraft.flux_goo": "Flux Goo",
+  "effect.thaumcraft.flux_taint": "Flux Taint",
+  "effect.thaumcraft.vis_exhaust": "Vis Exhaustion",
+  "item.thaumcraft.mirrored_glass": "Mirrored Glass"
 }

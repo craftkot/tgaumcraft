@@ -1,0 +1,15 @@
+{
+  "artifact": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "bytes": 1816239,
+  "sha256": "a20e525bf2525acf9c3de7342e69fcaf6be0e88d6a9642aee93ae4d2ddbad571",
+  "classes": 511,
+  "class_major_versions": [
+    65
+  ],
+  "crc_ok": true,
+  "duplicate_entries": [],
+  "test_classes_or_templates": false,
+  "build_command": "gradle --offline build -x test",
+  "core_and_native_tests": "Executed separately; 50 required GameTests passed",
+  "source_commit": "45d2f8e54cd4de4ceeb8e571a473d30552960669"
+}

@@ -21,8 +21,36 @@ public final class LegacyCrystalFarmerFinishCheckpoint {
     public record State(Phase phase) {
         public State { Objects.requireNonNull(phase); }
         public boolean canReserve() { return phase == Phase.WAITING; }
+
+        /**
+         * A checkpoint after reservation cannot legitimately have unpaid
+         * essentia or outstanding pedestal ingredients. Reject corrupted
+         * saves before they can debit more world resources.
+         */
+        public boolean consistentWithPaidProgress(boolean allEssentiaPaid,
+                                                  boolean allInputsConsumed) {
+            return phase == Phase.WAITING || (allEssentiaPaid && allInputsConsumed);
+        }
         public boolean mayPublishOneItem() { return phase == Phase.RESERVED; }
         public boolean finished() { return phase == Phase.FINISHED; }
+
+        /**
+         * A RESERVED matrix checkpoint loaded as STALLED may already have
+         * published the original output to the real center pedestal before
+         * the crash. This is acknowledgement ONLY, never another inventory
+         * mutation. All three facts must be independently verified in-world.
+         *
+         * If the center still holds the reagent or an unexpected item,
+         * recovery stays STALLED: retrying output would risk a duplicate.
+         */
+        public State acknowledgeAlreadyPublished(boolean allEssentiaPaid,
+                                                  boolean allInputsConsumed,
+                                                  boolean expectedOutputPresent) {
+            if (phase == Phase.STALLED && allEssentiaPaid && allInputsConsumed
+                    && expectedOutputPresent)
+                return new State(Phase.FINISHED);
+            return this;
+        }
         public State reserve(boolean allEssentiaPaid, boolean twoItemsConsumed,
                              boolean centralCrystalVerified) {
             if (!canReserve() || !allEssentiaPaid || !twoItemsConsumed
