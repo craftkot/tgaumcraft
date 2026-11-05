@@ -74,10 +74,15 @@ public final class SalisMundusSparkles {
                 bounds.getXsize(), bounds.getYsize(), bounds.getZsize());
         for (Direction face : Direction.values()) {
             BlockPos adjacent = pos.relative(face);
-            var neighbor = level.getBlockState(adjacent);
-            if (neighbor.isSolidRender(level, adjacent)
-                    || neighbor.isFaceSturdy(level, adjacent, face.getOpposite())) {
-                continue;
+            // A face may border an unloaded chunk. Reading its block state
+            // can synchronously load that chunk just to draw cosmetic FX.
+            // Treat an unknown neighbor as exposed; never request its state.
+            if (level.hasChunkAt(adjacent)) {
+                var neighbor = level.getBlockState(adjacent);
+                if (neighbor.isSolidRender(level, adjacent)
+                        || neighbor.isFaceSturdy(level, adjacent, face.getOpposite())) {
+                    continue;
+                }
             }
 
             // BETA26 uses block-local 0.5 +/- 0.51, then clamps to the
