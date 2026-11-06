@@ -1076,3 +1076,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Latest attempt of [crystal placement #42215270883](https://github.com/craftkot/tgaumcraft/actions/runs/42215270883) completed **SUCCESS**, job `127909616249`; step `Launch Minecraft and record genuine Aqua placement sound` completed successfully. Evidence artifact: [13504323890](https://github.com/craftkot/tgaumcraft/actions/runs/42215270883/artifacts/13504323890).
 - These are actual client workflow executions, not merely Java compile or source contracts. The artifacts have not been independently listened to in this iteration; workflow success alone is not a BETA26-wide audio parity acceptance.
 - No production Java or test changes in this iteration. Remaining Salis acceptance gap: native chunk unload/reload with independently observed chunk tickets and outbound packets. Historical audit remains **59/100**, M16 **4/6**. Draft PR #4 remains unmerged.
+
+
+## 2026-11-06 — M16 label real-client rerun verified
+
+- Rechecked the previously cancelled [M16 label art/tint workflow #42231012256](https://github.com/craftkot/tgaumcraft/actions/runs/42231012256). Attempt 2, job `127968169583`, completed **SUCCESS** at `2026-11-06T15:13:20Z`. Both dependency installation and `Run REAL Minecraft client and capture original art and aspect colors` completed successfully. This closes the prior infrastructure cancellation, not the full M16 visual acceptance.
+- Inspected `SalisMundusSparkles.java`, `SalisSparkleTrailQueue.java` and source-level guard regression on this lane. Existing clicked/neighbor-chunk guards and `ChunkEvent.Unload` cancellation are present. The dispatch marker still establishes only a server `sendParticles` call; **no independent outbound packet capture or chunk-ticket accounting** was run. Do not claim unload/reload game acceptance from source checks.
+- No production code or test changes in this iteration. Fixed rubric remains **59/100**, M16 **4/6**; next concrete engineering task is a native Minecraft unload/reload smoke that records loaded-chunk state and outgoing particle packets, with evidence in logs/artifacts. PR #4 remains unmerged.
