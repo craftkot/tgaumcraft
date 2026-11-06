@@ -11,9 +11,9 @@ source = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.j
 # The clicked block must be loaded before any trail is queued or shape read.
 method = source[source.index("public static void sendToActor("):]
 entry = re.search(
-    r"public static void sendToActor\\([^)]*\\)\\s*\\{\\s*"
-    r"(?://[^\\n]*\\n\\s*)*"
-    r"if \\(!level\\.hasChunkAt\\(pos\\)\\) \\{\\s*return;\\s*\\}",
+    r"public static void sendToActor\([^)]*\)\s*\{\s*"
+    r"(?://[^\n]*\n\s*)*"
+    r"if \(!level\.hasChunkAt\(pos\)\) \{\s*return;\s*\}",
     method,
 )
 assert entry, "Clicked chunk must be checked before Salis FX enqueue/shape access"
