@@ -69,5 +69,12 @@ assert "SalisSparkleFaceDelayRules.delayTicks(" in fx
 assert "level.random.nextInt(5)" in fx
 assert "SALIS_TRAIL_DELAY_QUEUE_DRAINED" in queue
 assert "level.sendParticles(warmDust" not in fx
-assert "SALIS_SPARKLES_PACKETS_SENT" in fx
+# The old marker was emitted at enqueue time and falsely claimed packets were sent.
+# The new marker belongs to the actual ServerLevel.sendParticles invocation path.
+assert "SALIS_SPARKLES_PACKETS_SENT" not in fx
+assert "SALIS_PARTICLE_SEND_INVOKED" in queue
+send_call = queue.index("level.sendParticles(player,")
+marker = queue.index('ThaumcraftSmokeAudit.mark("SALIS_PARTICLE_SEND_INVOKED")')
+assert send_call < marker
+assert queue.count("SALIS_PARTICLE_SEND_INVOKED") == 1
 print("BETA26 Salis 50-trail + unexpanded exposed-face bounds/count + sparkle color, actor-only gate: PASS")
