@@ -1027,3 +1027,16 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Job 127684266473 failed in `tools/test_salis_neighbor_chunk_guard.py:19` on `assert entry`. The test's new regex was over-escaped (literal backslash patterns), so it did not match the actual early `if (!level.hasChunkAt(pos)) { return; }` guard. Production Java guard is present; this is a test bug, not evidence of missing gameplay behavior.
 - Corrected only the lane-owned source-contract test. Initial commit `b3bb3ea085d31273d615b0effa608a072d11e1c4` still had double-escaped patterns; corrected immediately in `2499fb07431c41e77c7fe92984daaa219a1da298`. A standalone Python regex reproduction against the observed Java method shape returned true; **this is not a run of the repository test or a native Minecraft check**.
 - Exact-head CI after the correction must be checked next. No native chunk unload/reload, outgoing particle packet capture or chunk-ticket accounting. Fixed audit stays **59/100**, M16 **4/6**; PR #4 remains Draft, no merge.
+
+
+## 06.11.2026 — M16: correct server-side Salis dispatch evidence
+
+**Observed test defect:** `SALIS_SPARKLES_PACKETS_SENT` was emitted at the end of `SalisMundusSparkles.sendToActor` after scheduling FX, not after `ServerLevel.sendParticles`. Therefore a green marker could be produced without a single send invocation (e.g. if all effects were discarded). The name also incorrectly implied proven packet delivery.
+
+**Changes (own lane):** `SalisSparkleTrailQueue.emit` now marks `SALIS_PARTICLE_SEND_INVOKED` after the actual `sendParticles` call; the scheduling-path marker was removed. `tools/client_dust_sound_smoke.py` requires the new server-side marker, and `tools/test_salis_neighbor_chunk_guard.py` enforces placement and the smoke contract. No changes to gameplay timing, recipient, resource registries, other lanes or main.
+
+**Commits:** `55b576a48fbeef1fe88102a2a35c517ac505fbe8` (dispatch), `77a8f9703ce668f6b75526d329e90b4c16503cdd` (remove false marker), `4fe6ed8586111efdaab0dbe25a65a702d75d8024` (client smoke), `de0058cb4bc169c41414a52c3c1b53ba992054d0` (source regression).
+
+**Evidence boundary:** this marker establishes a server API call, **not** a network packet captured at the transport layer, delivery to the client, or absence of chunk tickets. The existing real-client visual screenshot assertion remains separate. Git checkout is blocked by DNS in this runtime, so no local repository test/NeoForge build was executed; inspect fresh GitHub Actions for this exact head. No audit increment: historical 59/100, M16 4/6.
+
+**Next:** verify exact-head NeoForge and Salis real-client workflow, then add native chunk-unload/reload instrumentation and independent chunk-ticket/packet observation. Do not close M16 based on the new marker alone.
