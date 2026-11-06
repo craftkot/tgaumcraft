@@ -1125,3 +1125,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - `M16 real Minecraft Thaumonomicon page sound smoke` [run #42286018950](https://github.com/craftkot/tgaumcraft/actions/runs/42286018950) was CANCELLED. Requested rerun of job `128126925531`; GitHub accepted the request, outcome not yet established.
 - No production Java, test or CI workflow changes in this iteration. M16 remains **4/6**, fixed historical score **59/100**; PR #4 remains unmerged.
 - Next: check rerun result, then implement a **native** client/server unload/reload GameTest or equivalent integration harness with independent outbound packet and chunk-ticket evidence. Do not mistake the existing stubbed queue assertions for this acceptance test.
+
+
+## 07.11.2026 — verified previously cancelled audio-client reruns
+
+- Fresh-read `main` instructions/roadmap/parallel workflow/audit and own lane; compared `main` with `feature/closure-near-complete`: ahead 308, behind 0 at inspection, base `a4280834adc5a20b6951098af937d30ca4aeca56`. Existing PR #4 remains the integration vehicle; no merge.
+- Independently queried the latest attempt's jobs for [Thaumonomicon page sound #42293410210](https://github.com/craftkot/tgaumcraft/actions/runs/42293410210): job `128180151198` **SUCCESS**, including virtual PulseAudio, original BETA26 page1/page2 PCM attribution and diagnostics upload. [Curio learn sound #42293410205](https://github.com/craftkot/tgaumcraft/actions/runs/42293410205): job `128180147259` **SUCCESS**, including actual client/PulseAudio launch and pitched original learn.ogg PCM match. These are narrower audio tests, not proof of full BETA26 audio/visual parity.
+- Reviewed actual `SalisSparkleTrailQueue.java` and the stub-based `tools/test_salis_queue_unload_jvm.py`. The real class guards `hasChunkAt`, cancels on unload and uses actor-scoped `sendParticles(..., false, ..., 0, ..., 1.0)`. The harness does **not** instrument native chunk tickets or network delivery. Therefore no new M16 acceptance point.
+- This iteration changed only this lane journal; no Java/gameplay defect fixed, no new tests or CI runs. Historical score remains **59/100**, M16 **4/6**. Next engineering work must instrument real NeoForge chunk unload/reload and independently inspect outgoing particle packets and chunk tickets, without touching other PRs.
