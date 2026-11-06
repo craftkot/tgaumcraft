@@ -12,7 +12,7 @@ source = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.j
 method = source[source.index("public static void sendToActor("):]
 entry = re.search(
     r"public static void sendToActor\\([^)]*\\)\\s*\\{\\s*"
-    r"(?:\\/\\/[^\\n]*\\n\\s*)*"
+    r"(?://[^\\n]*\\n\\s*)*"
     r"if \\(!level\\.hasChunkAt\\(pos\\)\\) \\{\\s*return;\\s*\\}",
     method,
 )
