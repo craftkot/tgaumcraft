@@ -25,13 +25,13 @@ STUBS = {
 import net.minecraft.world.level.Level; import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions; import net.minecraft.resources.ResourceKey;
 public class ServerLevel extends Level {
- public long time; public boolean loaded=true; public int sends;
+ public long time; public boolean loaded=true; public int sends; public ServerPlayer lastRecipient; public boolean lastForce; public int lastCount; public double lastVx,lastVy,lastVz,lastSpeed;
  public net.minecraft.server.MinecraftServer server;
  public net.minecraft.server.MinecraftServer getServer(){return server;}
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
  public boolean hasChunkAt(BlockPos p){return loaded;}
- public void sendParticles(ServerPlayer p,DustParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;}
+ public void sendParticles(ServerPlayer p,DustParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
 }""",
 "net/minecraft/server/level/ServerPlayer.java": """package net.minecraft.server.level;
 import java.util.UUID; public class ServerPlayer {
@@ -209,6 +209,9 @@ public class SalisQueueTest {
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==2,"valid immediate effect suppressed");
+  check(a.lastRecipient==p,"particle dispatch must target the acting player only");
+  check(!a.lastForce && a.lastCount==0,"Salis must send a non-forced single particle, not a broadcast burst");
+  check(a.lastVx==0 && a.lastVy==0 && a.lastVz==0 && a.lastSpeed==1.0D,"Salis must preserve exact per-particle velocity and speed");
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
