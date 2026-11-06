@@ -110,8 +110,6 @@ public final class SalisMundusSparkles {
                         new Vec3(0.0D, 0.0025D, 0.0D), delayTicks);
             }
         }
-        // Diagnostic only: scheduled/emitted particles are not proof of client rendering.
-        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("SALIS_SPARKLES_PACKETS_SENT");
     }
 
     private static DustParticleOptions warmDust(ServerLevel level, boolean blockFace) {
