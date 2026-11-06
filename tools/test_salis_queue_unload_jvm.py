@@ -212,6 +212,20 @@ public class SalisQueueTest {
   check(a.lastRecipient==p,"particle dispatch must target the acting player only");
   check(!a.lastForce && a.lastCount==0,"Salis must send a non-forced single particle, not a broadcast burst");
   check(a.lastVx==0 && a.lastVy==0 && a.lastVz==0 && a.lastSpeed==1.0D,"Salis must preserve exact per-particle velocity and speed");
+  // A fresh effect after an unload/reload must work, but the pre-unload
+  // effect must never replay. This models an unload event between ticks.
+  a.time=50;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,5);
+  SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(1,1))));
+  a.loaded=false;
+  a.time=51; tick(s);
+  a.loaded=true;
+  a.time=52;
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,2);
+  a.time=54; tick(s);
+  check(a.sends==3,"fresh post-reload particle was lost or stale one replayed");
+  a.time=55; tick(s);
+  check(a.sends==3,"pre-unload particle replayed at original due tick");
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
