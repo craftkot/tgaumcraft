@@ -42,7 +42,7 @@ assert all(f"test -s client-smoke/screenshots/08k-salis-sparkles-{label}.png" in
 wait = unique('  wait "$dust_capture_pid" || test "$?" -eq 124')
 thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize")
 base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
-particle = unique("grep -Fq 'SALIS_SPARKLES_PACKETS_SENT' client-smoke/client.log")
+particle = unique("grep -Fq 'SALIS_PARTICLE_SEND_INVOKED' client-smoke/client.log")
 delayed = unique("grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log")
 matcher = unique("python3 tools/match_dust_audio_pcm.py")
 assert music < ambient < launch < baseline < record < click < frame < mid < peak < tail < final < wait < thumbnail < base64 < particle < delayed < matcher
