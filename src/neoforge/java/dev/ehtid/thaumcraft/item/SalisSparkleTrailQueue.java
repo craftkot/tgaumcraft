@@ -151,5 +151,7 @@ public final class SalisSparkleTrailQueue {
         // count=0 sends one particle with this exact velocity, actor only.
         level.sendParticles(player, color, false, origin.x, origin.y, origin.z, 0,
                 velocity.x, velocity.y, velocity.z, 1.0D);
+        // Server-side send invocation only: not proof of packet delivery or rendering.
+        ThaumcraftSmokeAudit.mark("SALIS_PARTICLE_SEND_INVOKED");
     }
 }
