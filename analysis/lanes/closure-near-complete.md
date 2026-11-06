@@ -1040,3 +1040,13 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 **Evidence boundary:** this marker establishes a server API call, **not** a network packet captured at the transport layer, delivery to the client, or absence of chunk tickets. The existing real-client visual screenshot assertion remains separate. Git checkout is blocked by DNS in this runtime, so no local repository test/NeoForge build was executed; inspect fresh GitHub Actions for this exact head. No audit increment: historical 59/100, M16 4/6.
 
 **Next:** verify exact-head NeoForge and Salis real-client workflow, then add native chunk-unload/reload instrumentation and independent chunk-ticket/packet observation. Do not close M16 based on the new marker alone.
+
+
+## 06.11.2026 — M16 Salis client setup timeout diagnosed and mitigated
+
+- Fresh-read main AGENTS, ROADMAP, parallel workflow and audit; checked open PRs (only own Draft #4) and compared branch against main (293 ahead, 0 behind before this change).
+- Examined retry job 127782454970 of [Actions #42179022360](https://github.com/craftkot/tgaumcraft/actions/runs/42179022360). Job started at 08:02:01 UTC and was cancelled at 08:32:15 UTC, approximately its configured 30-minute timeout. Apt downloads from azure.archive.ubuntu.com were extremely slow: 13.6 MB libflite1 took over five minutes. The log shows `The operation was canceled` during package retrieval, **not** a Java exception or failed Minecraft smoke.
+- Narrow CI-only fix in this lane-owned `.github/workflows/closure-dust-client.yml`: raise job timeout 30 -> 75 minutes and use `apt-get install --no-install-recommends` to avoid unnecessary dependency downloads while retaining the explicit Xvfb/Openbox/Mesa/ffmpeg/PulseAudio tools. Commit `82715f93c75b6c045642eb3c9f2dd231768ef280`.
+- This mitigates the known timeout, but does not guarantee apt mirror availability or prove the game client runs. Inspect new workflow CI on this exact HEAD before declaring success; if package retrieval still stalls, switch to a more reliable mirror or prebuilt image with reproducible provenance.
+- No production Java or other lane changes. No native chunk ticket or network packet capture performed. Fixed historical score remains 59/100, M16 4/6. Draft PR #4 remains unmerged.
+- Next: verify workflow on new HEAD, then implement native chunk-border unload/reload observation and packet/ticket accounting; do not award M16 points without game acceptance.
