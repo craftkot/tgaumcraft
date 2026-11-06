@@ -86,7 +86,8 @@ jobs:
           pactl set-default-sink tc_dust_sink
           bash client-dust-generated.sh
       - name: Verify real-client visible Salis particles
-        if: ${{ always() }}
+        # Screenshot assertions require a completed client run; setup cancellation is not a particle failure.
+        if: ${{ success() }}
         run: |
           set -o pipefail
           python tools/verify_salis_sparkles_screenshot.py \
