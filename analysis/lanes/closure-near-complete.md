@@ -1050,3 +1050,14 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - This mitigates the known timeout, but does not guarantee apt mirror availability or prove the game client runs. Inspect new workflow CI on this exact HEAD before declaring success; if package retrieval still stalls, switch to a more reliable mirror or prebuilt image with reproducible provenance.
 - No production Java or other lane changes. No native chunk ticket or network packet capture performed. Fixed historical score remains 59/100, M16 4/6. Draft PR #4 remains unmerged.
 - Next: verify workflow on new HEAD, then implement native chunk-border unload/reload observation and packet/ticket accounting; do not award M16 points without game acceptance.
+
+
+## 06.11.2026 — Salis real-client prerequisite regression corrected
+
+**Observed on exact HEAD `a4281d4`:** [GitHub Actions #42200130041](https://github.com/craftkot/tgaumcraft/actions/runs/42200130041) failed at `Verify exact BETA26 asset, trigger and waveform controls`, after system dependencies installed successfully. `tools/verify_dust_particles.py:72` still asserted `SALIS_SPARKLES_PACKETS_SENT` in `SalisMundusSparkles.java`, although that misleading enqueue-time marker was deliberately removed in the previous M16 work. The real Minecraft client did **not** start in this run.
+
+**Fix:** update only `tools/verify_dust_particles.py` to assert that the obsolete marker is absent, the replacement `SALIS_PARTICLE_SEND_INVOKED` exists exactly once in `SalisSparkleTrailQueue.java`, and the mark follows the actual `level.sendParticles(player,...)` invocation. Code commit `aed728cd183092722d7b90bf3bb878c257a56a9c`. No gameplay Java code changed.
+
+**Evidence/limitations:** direct GitHub Actions failure log and fresh source inspection. The corrected test and new HEAD CI have not yet completed at time of writing; a static assertion cannot prove network packet delivery, chunk-ticket neutrality, or client rendering. Historical fixed rubric **59/100**, M16 **4/6**, unchanged. PR #4 remains Draft; no merge.
+
+**Next:** inspect GitHub Actions on this exact HEAD, address any remaining prerequisite failures, then obtain real client evidence and instrument chunk unload/reload and outbound packets without force-loading.
