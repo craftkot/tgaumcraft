@@ -8,6 +8,18 @@ from pathlib import Path
 import re
 
 source = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java").read_text()
+# The clicked block must be loaded before any trail is queued or shape read.
+method = source[source.index("public static void sendToActor("):]
+entry = re.search(
+    r"public static void sendToActor\\([^)]*\\)\\s*\\{\\s*"
+    r"(?:\\/\\/[^\\n]*\\n\\s*)*"
+    r"if \\(!level\\.hasChunkAt\\(pos\\)\\) \\{\\s*return;\\s*\\}",
+    method,
+)
+assert entry, "Clicked chunk must be checked before Salis FX enqueue/shape access"
+assert method.index("if (!level.hasChunkAt(pos))") < method.index("SalisSparkleTrailQueue.emitOrQueue(")
+assert method.index("if (!level.hasChunkAt(pos))") < method.index("level.getBlockState(pos)")
+
 start = source.index("for (Direction face : Direction.values())")
 end = source.index("for (int i = 0; i < perFace; i++)", start)
 body = source[start:end]
