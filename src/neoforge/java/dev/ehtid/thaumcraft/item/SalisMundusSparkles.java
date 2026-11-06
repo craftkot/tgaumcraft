@@ -28,6 +28,12 @@ public final class SalisMundusSparkles {
     private SalisMundusSparkles() {}
 
     public static void sendToActor(ServerLevel level, ServerPlayer player, BlockPos pos, InteractionHand hand) {
+        // Cosmetic effects must not load a clicked chunk that was unloaded
+        // between the item interaction and this server-side invocation.
+        // Check before querying the shape or enqueueing any trail particles.
+        if (!level.hasChunkAt(pos)) {
+            return;
+        }
         Vec3 forward = player.getLookAngle();
         // BETA26 ItemMagicDust uses EntityUtils.posToHand: chest height,
         // yaw-based hand side and a 0.3 look-vector offset. The previous
