@@ -1117,3 +1117,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Added a narrow regression to `tools/test_salis_queue_unload_jvm.py`: queue a delayed particle, fire the actual production queue's chunk-unload event, simulate unloaded then reloaded chunk, enqueue a new delayed effect, assert exactly one fresh send and no resurrection at the stale effect's original due tick. Test invokes the real `SalisSparkleTrailQueue` Java class with stubbed Minecraft APIs.
 - Test commit: [5033f592fba7eb08ed216980c13c9cf4b7603962](https://github.com/craftkot/tgaumcraft/commit/5033f592fba7eb08ed216980c13c9cf4b7603962). **No production Java changes.** CI on this commit must be checked before claiming PASS; no local Java run was performed in this iteration.
 - Limit: the stub's `loaded` flag is not a real NeoForge chunk manager; this regression does not measure chunk tickets, capture outbound network packets or prove client-side rendering. Historical 59/100, M16 4/6 unchanged. PR #4 remains unmerged. Next: inspect exact-head CI and implement native packet/ticket instrumentation.
+
+
+## 06.11.2026 — exact-head Salis regression CI and page-sound retry
+
+- Checked exact lane HEAD `7083d1415ddf639b4284fb534c0722927a66aeaa`: 12 of 13 GitHub Actions SUCCESS, including `M16 Salis queue unload JVM regression` and `Thaumcraft Port CI`. This verifies the newly added post-reload regression on a stubbed JVM, **not** a real Minecraft chunk unload, native ticket accounting, or outbound packet delivery.
+- `M16 real Minecraft Thaumonomicon page sound smoke` [run #42286018950](https://github.com/craftkot/tgaumcraft/actions/runs/42286018950) was CANCELLED. Requested rerun of job `128126925531`; GitHub accepted the request, outcome not yet established.
+- No production Java, test or CI workflow changes in this iteration. M16 remains **4/6**, fixed historical score **59/100**; PR #4 remains unmerged.
+- Next: check rerun result, then implement a **native** client/server unload/reload GameTest or equivalent integration harness with independent outbound packet and chunk-ticket evidence. Do not mistake the existing stubbed queue assertions for this acceptance test.
