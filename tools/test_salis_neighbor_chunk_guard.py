@@ -36,4 +36,16 @@ expected = re.compile(
 assert expected.search(body), "Neighbor state must be read only when its chunk is loaded"
 assert body.count("level.getBlockState(adjacent)") == 1, "Unexpected unguarded neighbor read"
 assert "level.getBlockState(pos)" in source, "Clicked block shape source unexpectedly removed"
+
+# Smoke evidence must be emitted by the real server-side particle-send path,
+# never merely when an effect is admitted to the queue.
+queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
+marker = 'ThaumcraftSmokeAudit.mark("SALIS_PARTICLE_SEND_INVOKED");'
+assert marker in queue[queue.index("private static void emit("):], "Missing dispatch evidence"
+assert marker not in queue[:queue.index("private static void emit(")], "Dispatch marker emitted before send"
+assert queue.index("level.sendParticles(") < queue.index(marker), "Dispatch marker must follow sendParticles"
+assert "SALIS_SPARKLES_PACKETS_SENT" not in source, "Misleading queue-admission marker reintroduced"
+smoke = Path("tools/client_dust_sound_smoke.py").read_text()
+assert "SALIS_PARTICLE_SEND_INVOKED" in smoke, "Client smoke must check dispatch marker"
+
 print("SALIS_UNLOADED_NEIGHBOR_SOURCE_GUARD=PASS (source contract only)")
