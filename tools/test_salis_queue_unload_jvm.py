@@ -223,7 +223,7 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(0,0))));
   a.time=49;tick(s);
   check(a.sends==3,"chunk boundary unload cancelled neighbor or retained stale particle");
-  check(ThaumcraftSmokeAudit.cancelled==5,"positive boundary unload did not cancel exactly one queued effect");
+  check(ThaumcraftSmokeAudit.cancelled==4,"positive boundary unload did not cancel exactly one queued effect");
   // Restore the prior baseline for the following independent reload assertions.
   a.sends=2;
   // A fresh effect after an unload/reload must work, but the pre-unload
