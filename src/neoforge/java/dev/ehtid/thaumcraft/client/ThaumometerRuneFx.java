@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.registry.ThaumcraftParticles;
+import dev.ehtid.thaumcraft.port.core.LegacyScanRuneDuration;
 import dev.ehtid.thaumcraft.scanning.ThaumometerTargeting;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -26,7 +27,7 @@ public final class ThaumometerRuneFx {
                         entity.getX(),
                         entity.getY() + entity.getEyeHeight() / 2.0F + 0.5D,
                         entity.getZ(),
-                        random);
+                        random, LegacyScanRuneDuration.entityUnits(entity.getBbHeight()));
             }
             return;
         }
@@ -35,13 +36,17 @@ public final class ThaumometerRuneFx {
         if (hit.getType() == HitResult.Type.MISS) return;
         BlockPos pos = hit.getBlockPos();
         for (int i = 0; i < 10; i++) {
-            spawn(client, pos.getX() + 0.5D, pos.getY() + 0.75D, pos.getZ() + 0.5D, random);
+            spawn(client, pos.getX() + 0.5D, pos.getY() + 0.75D, pos.getZ() + 0.5D,
+                    random, LegacyScanRuneDuration.BLOCK_UNITS);
         }
     }
 
-    private static void spawn(ClientLevel level, double x, double y, double z, RandomSource random) {
+    private static void spawn(ClientLevel level, double x, double y, double z,
+                              RandomSource random, int durationUnits) {
         double red = 0.3D + random.nextFloat() * 0.7D;
         double blue = 0.3D + random.nextFloat() * 0.7D;
-        level.addParticle(ThaumcraftParticles.SCAN_RUNE.get(), x, y, z, red, 0.0D, blue);
+        // SimpleParticleType has no custom payload. Its unused Y-speed slot
+        // carries BETA26 FXBlockRunes duration units; provider restores green=0.
+        level.addParticle(ThaumcraftParticles.SCAN_RUNE.get(), x, y, z, red, durationUnits, blue);
     }
 }

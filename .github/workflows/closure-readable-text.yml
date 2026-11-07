@@ -1,0 +1,74 @@
+name: M16 readable GUI text regression
+
+on:
+  push:
+    branches:
+      - feature/closure-near-complete
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayout.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/test_readable_text_client.py'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'tools/verify_label_brace_source_art.py'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
+      - 'tools/test_label_tint.sh'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDuration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
+      - 'tools/test_scan_rune_duration.sh'
+      - 'tools/test_scan_rune_orientation.py'
+      - '.github/workflows/closure-readable-text.yml'
+  pull_request:
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayout.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftReadableText.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/ReadableTextLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/test_readable_text_client.py'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'tools/verify_label_brace_source_art.py'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTintTest.java'
+      - 'tools/test_label_tint.sh'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDuration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ScanRuneParticle.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDurationTest.java'
+      - 'tools/test_scan_rune_duration.sh'
+      - 'tools/test_scan_rune_orientation.py'
+      - '.github/workflows/closure-readable-text.yml'
+
+jobs:
+  readable-text:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Pixel and grapheme core regression
+        run: bash tools/test_readable_text_layout.sh
+      - name: Compile real NeoForge GUI helper against minimal test stubs
+        run: python3 tools/test_readable_text_client.py
+      - name: Verify original BETA26 jar brace and blank/filled label art
+        run: python3 tools/verify_label_brace_source_art.py
+      - name: Test all 37 original aspect colors and label layer isolation
+        run: bash tools/test_label_tint.sh
+      - name: Check source-derived BETA26 entity-height scan rune lifetime
+        run: bash tools/test_scan_rune_duration.sh
+      - name: Compile actual scan-rune particle and verify BETA26 world orientation
+        run: python3 tools/test_scan_rune_orientation.py

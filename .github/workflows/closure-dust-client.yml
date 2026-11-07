@@ -1,0 +1,113 @@
+name: M16 real Minecraft original Salis Mundus dust audio
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
+      - 'tools/*dust*'
+      - 'tools/*salis*'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleHandOrigin.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleDelayRules.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceDelayRules.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - '.github/workflows/closure-dust-client.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
+      - 'tools/*dust*'
+      - 'tools/*salis*'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceLayout.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleHandOrigin.java'
+      - '.github/workflows/closure-dust-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  salis-dust-real-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real client and audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
+      - name: Verify exact BETA26 asset, trigger and waveform controls
+        run: |
+          python -m pip install numpy==2.2.6 pillow==11.3.0
+          python tools/verify_dust_sound.py
+          python tools/verify_dust_particles.py
+          python tools/test_dust_audio_match.py
+          python tools/test_dust_capture_noise.py
+          python tools/test_salis_sparkles_screenshot.py
+          python tools/test_salis_face_geometry.py
+          python tools/test_salis_neighbor_chunk_guard.py
+          python tools/test_salis_hand_origin.py
+          python tools/test_salis_trail_delay.py
+          python tools/test_salis_face_delay.py
+      - name: Generate and syntax-check client Salis smoke
+        run: |
+          python tools/test_dust_capture_fixture.py
+          python tools/client_dust_sound_smoke.py > client-dust-generated.sh
+          bash -n client-dust-generated.sh
+      - name: Launch real Minecraft and record Salis bookshelf sound
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_dust_sink rate=48000 channels=2
+          pactl set-default-sink tc_dust_sink
+          bash client-dust-generated.sh
+      - name: Verify real-client visible Salis particles
+        # Screenshot assertions require a completed client run; setup cancellation is not a particle failure.
+        if: ${{ success() }}
+        run: |
+          set -o pipefail
+          python tools/verify_salis_sparkles_screenshot.py \
+            client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \
+            client-smoke/screenshots/08k-salis-sparkles-early.png \
+            client-smoke/screenshots/08k-salis-sparkles-late.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-mid.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-peak.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-tail.png \
+            --extra-early client-smoke/screenshots/08k-salis-sparkles-final.png \
+            | tee client-smoke/salis-visible-pixels.txt
+      - name: Upload actual game evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-salis-dust-original-audio-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

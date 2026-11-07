@@ -1,0 +1,85 @@
+name: M16 real Minecraft original crystal break sound
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/crystal.ogg'
+      - 'tools/verify_crystal_sound.py'
+      - 'tools/match_crystal_audio_pcm.py'
+      - 'tools/test_crystal_audio_match.py'
+      - 'tools/client_crystal_sound_smoke.py'
+      - '.github/workflows/closure-crystal-sound-client.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/crystal.ogg'
+      - 'tools/verify_crystal_sound.py'
+      - 'tools/match_crystal_audio_pcm.py'
+      - 'tools/test_crystal_audio_match.py'
+      - 'tools/client_crystal_sound_smoke.py'
+      - '.github/workflows/closure-crystal-sound-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crystal-real-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real client and audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
+      - name: Source sound integrity and matcher controls
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/verify_crystal_sound.py
+          python tools/test_crystal_audio_match.py
+      - name: Generate and syntax-check actual Minecraft smoke
+        run: |
+          python3 tools/client_crystal_sound_smoke.py > client-crystal-generated.sh
+          bash -n client-crystal-generated.sh
+      - name: Launch Minecraft and capture original crystal audio
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_crystal_sink rate=48000 channels=2
+          pactl set-default-sink tc_crystal_sink
+          bash client-crystal-generated.sh
+      - name: Upload actual client evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-crystal-original-sound-client-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

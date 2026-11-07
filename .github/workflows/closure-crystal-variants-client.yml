@@ -1,0 +1,81 @@
+name: M16 six crystal variants real placement audio
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'tools/client_crystal_variants_place_smoke.py'
+      - '.github/workflows/closure-crystal-variants-client.yml'
+      - 'tools/match_crystal_audio_pcm.py'
+      - 'tools/verify_crystal_sound.py'
+      - 'tools/test_crystal_audio_match.py'
+      - 'tools/test_crystal_variants_retry.py'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/client_crystal_variants_place_smoke.py'
+      - '.github/workflows/closure-crystal-variants-client.yml'
+      - 'tools/match_crystal_audio_pcm.py'
+      - 'tools/verify_crystal_sound.py'
+      - 'tools/test_crystal_audio_match.py'
+      - 'tools/test_crystal_variants_retry.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  six-crystal-placements:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install actual client and audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
+      - name: Verify original BETA26 audio and matcher positive/negative controls
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/verify_crystal_sound.py
+          python tools/test_crystal_audio_match.py
+      - name: Generate and syntax-check six-variant Minecraft smoke
+        run: |
+          python3 tools/client_crystal_variants_place_smoke.py > client-crystal-variants-generated.sh
+          bash -n client-crystal-variants-generated.sh
+          python3 tools/test_crystal_variants_retry.py
+          grep -Fq 'for variant in aer ignis terra ordo perditio vitium' client-crystal-variants-generated.sh
+      - name: Launch real Minecraft and capture six independent placement sounds
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_crystal_variants_sink rate=48000 channels=2
+          pactl set-default-sink tc_crystal_variants_sink
+          bash client-crystal-variants-generated.sh
+      - name: Upload world evidence, PCM, per-variant matches and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-six-crystal-variants-real-place-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/
