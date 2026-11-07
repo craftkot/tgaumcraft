@@ -212,6 +212,20 @@ public class SalisQueueTest {
   check(a.lastRecipient==p,"particle dispatch must target the acting player only");
   check(!a.lastForce && a.lastCount==0,"Salis must send a non-forced single particle, not a broadcast burst");
   check(a.lastVx==0 && a.lastVy==0 && a.lastVz==0 && a.lastSpeed==1.0D,"Salis must preserve exact per-particle velocity and speed");
+  // Adjacent chunks at the positive 15/16 block boundary are distinct.
+  // An unload of chunk (0,0) must cancel only the effect at x=15,
+  // leaving the x=16 effect in chunk (1,0) eligible to dispatch.
+  a.time=47;
+  var westEdge=new Vec3(15.99,64,0.5);
+  var eastEdge=new Vec3(16.0,64,0.5);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,westEdge,v,2);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,eastEdge,v,2);
+  SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(0,0))));
+  a.time=49;tick(s);
+  check(a.sends==3,"chunk boundary unload cancelled neighbor or retained stale particle");
+  check(ThaumcraftSmokeAudit.cancelled==5,"positive boundary unload did not cancel exactly one queued effect");
+  // Restore the prior baseline for the following independent reload assertions.
+  a.sends=2;
   // A fresh effect after an unload/reload must work, but the pre-unload
   // effect must never replay. This models an unload event between ticks.
   a.time=50;
