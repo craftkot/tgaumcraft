@@ -25,12 +25,12 @@ STUBS = {
 import net.minecraft.world.level.Level; import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions; import net.minecraft.resources.ResourceKey;
 public class ServerLevel extends Level {
- public long time; public boolean loaded=true; public int sends; public ServerPlayer lastRecipient; public boolean lastForce; public int lastCount; public double lastVx,lastVy,lastVz,lastSpeed;
+ public long time; public boolean loaded=true; public final java.util.Map<net.minecraft.world.level.ChunkPos,Boolean> chunkStates=new java.util.HashMap<>(); public int sends; public ServerPlayer lastRecipient; public boolean lastForce; public int lastCount; public double lastVx,lastVy,lastVz,lastSpeed;
  public net.minecraft.server.MinecraftServer server;
  public net.minecraft.server.MinecraftServer getServer(){return server;}
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
- public boolean hasChunkAt(BlockPos p){return loaded;}
+ public boolean hasChunkAt(BlockPos p){return chunkStates.getOrDefault(new net.minecraft.world.level.ChunkPos(p),loaded);}
  public void sendParticles(ServerPlayer p,DustParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
 }""",
 "net/minecraft/server/level/ServerPlayer.java": """package net.minecraft.server.level;
@@ -240,6 +240,16 @@ public class SalisQueueTest {
   check(a.sends==3,"fresh post-reload particle was lost or stale one replayed");
   a.time=55; tick(s);
   check(a.sends==3,"pre-unload particle replayed at original due tick");
+  // Native chunk managers track chunk availability independently. Verify that
+  // an unloaded neighbor does not suppress a loaded target's delayed FX.
+  a.time=60;
+  a.chunkStates.put(new ChunkPos(0,0),false);
+  a.chunkStates.put(new ChunkPos(1,0),true);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,new Vec3(15.99,64,0.5),v,2);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,new Vec3(16.0,64,0.5),v,2);
+  a.time=62;tick(s);
+  check(a.sends==4,"unloaded neighbor suppressed loaded target or emitted into unloaded chunk");
+  a.chunkStates.clear();
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
