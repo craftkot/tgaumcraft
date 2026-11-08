@@ -1141,3 +1141,13 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Commits: [695b301](https://github.com/craftkot/tgaumcraft/commit/695b301f1c47764e9c294ea2e6596885546874ff) (test case), [16762e2](https://github.com/craftkot/tgaumcraft/commit/16762e294c615575f3b9e5d0519d38cf9cf3c866) (correct cumulative cancellation count). File: `tools/test_salis_queue_unload_jvm.py`. The test has **not yet been confirmed passing** on this HEAD; inspect exact-commit GitHub Actions before claiming PASS.
 - This tests source queue logic against Java API doubles only. It does not prove native chunk ticket state, outbound packet delivery or visual BETA26 parity. Fixed historical 59/100 and M16 4/6 remain unchanged. Draft PR #4 stays unmerged.
 - Next: verify exact-HEAD Salis JVM workflow; if green, implement independent native NeoForge chunk unload/reload instrumentation for chunk tickets and outbound packets.
+
+
+## 09.11.2026 — M16 Salis: independent neighbor-chunk availability JVM regression
+
+- Fresh-read main AGENTS, roadmap, parallel workflow, fixed audit and own lane; PR #4 remains Draft, other feature branches untouched. At inspection main was `a4280834`, lane was ahead 312/behind 0.
+- Fixed a **test coverage gap**, not a demonstrated production bug: the Salis JVM API double previously used one global `ServerLevel.loaded` boolean, so it could not model adjacent chunks with different availability. Added per-`ChunkPos` overrides in the test double, plus a boundary scenario with chunk (0,0) unloaded and (1,0) loaded. Expected behavior: discard x=15.99 effect and deliver x=16.0 effect only.
+- File: `tools/test_salis_queue_unload_jvm.py`. Test commit: [e05289a](https://github.com/craftkot/tgaumcraft/commit/e05289aa81fda087b503ee89e7268ad92725f0fd). No production Java or shared registry changes.
+- **Verification pending**: local `git ls-remote` failed with `Could not resolve host: github.com`, so local JVM test did not run; no Actions run for this exact SHA was visible immediately after commit. The new assertion must pass in the dedicated `closure-salis-queue-jvm` CI before this regression can be counted as verified.
+- This is still an API-double test. It cannot prove native chunk-ticket accounting, real outbound packets, or BETA26 visual parity. Historical rubric unchanged: **59/100**, M16 **4/6**. PR #4 stays Draft and unmerged.
+- Next: inspect exact-head Salis CI and fix any failure first; then build real NeoForge chunk unload/reload packet/ticket instrumentation, without touching PR #3's Salis entry point.
