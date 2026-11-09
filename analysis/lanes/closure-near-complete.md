@@ -1151,3 +1151,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - **Verification pending**: local `git ls-remote` failed with `Could not resolve host: github.com`, so local JVM test did not run; no Actions run for this exact SHA was visible immediately after commit. The new assertion must pass in the dedicated `closure-salis-queue-jvm` CI before this regression can be counted as verified.
 - This is still an API-double test. It cannot prove native chunk-ticket accounting, real outbound packets, or BETA26 visual parity. Historical rubric unchanged: **59/100**, M16 **4/6**. PR #4 stays Draft and unmerged.
 - Next: inspect exact-head Salis CI and fix any failure first; then build real NeoForge chunk unload/reload packet/ticket instrumentation, without touching PR #3's Salis entry point.
+
+
+## 09.11.2026 — независимые чанки: tick-time unload/reload (M16)
+
+- В `tools/test_salis_queue_unload_jvm.py` добавлен сценарий двух соседних чанков: обе отложенные частицы поставлены в очередь, один чанк выгружается до срока, следующий тик отменяет только его частицу, чанк вновь загружается, а частица соседнего чанка должна отправиться. Проверяются точный счёт отправок и меток отмены.
+- Commit: `92a1513075129bda122c6085971ab7c05c28baaa`. Это **JVM regression с API doubles**, не нативный NeoForge GameTest и не доказательство отсутствия chunk tickets.
+- До подтверждения CI нового SHA статус теста **неизвестен**. Исторические 59/100 и M16 4/6 не повышаются. Следующая приёмка: инструментированный нативный unload/reload с независимыми packet/ticket counters.
