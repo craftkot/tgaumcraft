@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.block;
 
 import dev.ehtid.thaumcraft.port.core.LegacyBlockCrystalGrowthRules;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalOutlineBounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -47,7 +48,6 @@ public final class CrystalClusterBlock extends Block {
 
     public static final IntegerProperty SIZE=IntegerProperty.create("size",0,3);
     public static final IntegerProperty GENERATION=IntegerProperty.create("gen",1,4);
-    private static final VoxelShape OUTLINE=box(2,0,2,14,14,14);
     private final String aspectTag;
     public CrystalClusterBlock(BlockBehaviour.Properties props,String aspectTag) {
         super(props.sound(ORIGINAL_CRYSTAL_SOUND));
@@ -62,7 +62,19 @@ public final class CrystalClusterBlock extends Block {
     @Override public VoxelShape getCollisionShape(BlockState state,BlockGetter level,
         BlockPos pos, CollisionContext context) { return Shapes.empty(); }
     @Override public VoxelShape getShape(BlockState state,BlockGetter level,
-        BlockPos pos,CollisionContext context) { return OUTLINE; }
+        BlockPos pos,CollisionContext context) {
+        // BETA26 BlockCrystal#getBoundingBox: a single support face selects
+        // its corresponding half-cube; two or more use the full outline.
+        var bounds = LegacyCrystalOutlineBounds.fromSupportFaces(
+                hasCrystalSupport(level,pos,Direction.UP),
+                hasCrystalSupport(level,pos,Direction.DOWN),
+                hasCrystalSupport(level,pos,Direction.EAST),
+                hasCrystalSupport(level,pos,Direction.WEST),
+                hasCrystalSupport(level,pos,Direction.SOUTH),
+                hasCrystalSupport(level,pos,Direction.NORTH));
+        return box(bounds.minX()*16.0D,bounds.minY()*16.0D,bounds.minZ()*16.0D,
+                bounds.maxX()*16.0D,bounds.maxY()*16.0D,bounds.maxZ()*16.0D);
+    }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
         BlockState state=defaultBlockState();
         return state.canSurvive(ctx.getLevel(),ctx.getClickedPos())?state:null;
