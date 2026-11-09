@@ -1,13 +1,6 @@
 package dev.ehtid.thaumcraft.block;
 
-import com.mojang.logging.LogUtils;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.shapes.EntityCollisionContext;
-import org.slf4j.Logger;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import dev.ehtid.thaumcraft.port.core.LegacyBlockCrystalGrowthRules;
 import dev.ehtid.thaumcraft.port.core.LegacyCrystalOutlineBounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
@@ -39,8 +32,6 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * mesh/outline and original crystal SoundType still require client parity.
  */
 public final class CrystalClusterBlock extends Block {
-    private static final Logger LOGGER = LogUtils.getLogger();
-    private static final Set<String> OUTLINE_DEBUG_KEYS = ConcurrentHashMap.newKeySet();
     // BETA26 SoundsTC.CRYSTAL: 0.5 volume, 1.0 pitch, crystal event for
     // break, step, place, hit and fall. Resolve the DeferredRegister lazily:
     // block constructors can run before the sound registry is populated.
@@ -85,29 +76,6 @@ public final class CrystalClusterBlock extends Block {
         boolean north = hasCrystalSupport(level,pos,Direction.NORTH);
         var bounds = LegacyCrystalOutlineBounds.fromSupportFaces(
                 up, down, east, west, south, north);
-        if (Boolean.getBoolean("thaumcraft.crystalOutlineDebug")
-                && pos.getX() == 250 && pos.getY() == 151 && pos.getZ() == 251
-                && context instanceof EntityCollisionContext entityContext) {
-            Entity entity = entityContext.getEntity();
-            if (entity != null) {
-                String side = level instanceof Level world
-                        ? (world.isClientSide ? "client" : "server")
-                        : level.getClass().getSimpleName();
-                String mask = (up ? "U" : "-") + (down ? "D" : "-")
-                        + (east ? "E" : "-") + (west ? "W" : "-")
-                        + (south ? "S" : "-") + (north ? "N" : "-");
-                String key = side + ":" + mask + ":"
-                        + Math.round(entity.getYRot() * 10.0F) + ":"
-                        + Math.round(entity.getXRot() * 10.0F);
-                if (OUTLINE_DEBUG_KEYS.add(key)) {
-                    LOGGER.info("CRYSTAL_OUTLINE_SHAPE_DEBUG side={} mask={} bounds={} "
-                                    + "entity={} eye={} yaw={} pitch={} view={}",
-                            side, mask, bounds, entity.getClass().getSimpleName(),
-                            entity.getEyePosition(), entity.getYRot(), entity.getXRot(),
-                            entity.getViewVector(1.0F));
-                }
-            }
-        }
         return box(bounds.minX()*16.0D,bounds.minY()*16.0D,bounds.minZ()*16.0D,
                 bounds.maxX()*16.0D,bounds.maxY()*16.0D,bounds.maxZ()*16.0D);
     }

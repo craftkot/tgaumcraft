@@ -222,6 +222,8 @@ crystal_source = (
 ).read_text(encoding="utf-8")
 assert crystal_source.count("props.dynamicShape()") == 1
 assert "super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));" in crystal_source
+assert "thaumcraft.crystalOutlineDebug" not in crystal_source
+assert "CRYSTAL_OUTLINE_SHAPE_DEBUG" not in crystal_source
 
 body = build_body()
 for face, *_ in FACE_CASES:
