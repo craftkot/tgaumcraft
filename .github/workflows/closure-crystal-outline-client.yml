@@ -48,6 +48,8 @@ jobs:
           python3 tools/client_crystal_outline_smoke.py > client-crystal-outline-generated.sh
           bash -n client-crystal-outline-generated.sh
       - name: Build NeoForge and launch actual Minecraft client
+        env:
+          JAVA_TOOL_OPTIONS: -Dthaumcraft.crystalOutlineDebug=true
         run: |
           gradle build -x test --stacktrace --no-daemon
           bash client-crystal-outline-generated.sh
