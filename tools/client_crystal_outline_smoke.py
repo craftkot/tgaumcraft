@@ -2,6 +2,7 @@
 """Generate a real NeoForge-client ray-picking regression for BETA26 crystal outlines."""
 from pathlib import Path
 import math
+import re
 import sys
 
 ANCHOR = "  # The initial world is already creative + peaceful, as established"
