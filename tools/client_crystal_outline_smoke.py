@@ -30,6 +30,17 @@ FACE_CASES = (
 
 PLAYER_EYE_HEIGHT = 1.62
 CLIENT_BLOCK_PICK_REACH = 5.0
+
+def parse_block_interaction_range(log: str) -> float | None:
+    """Parse vanilla 1.21.1 /attribute get output for the live player."""
+    number = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+    matches = re.findall(
+        rf"(?:Dev has a value of|Value of attribute Block Interaction Range for entity Dev is) ({number})",
+        log,
+    )
+    return float(matches[-1]) if matches else None
+
+
 MULTI_FACE_PLAYER = (250.25, 149, 249.5)
 MULTI_FACE_AIM = (250.25, 151.25, 251.5)
 
@@ -94,14 +105,14 @@ def build_body() -> str:
   # reach value that a mod or future game mode silently changed.
   send_chat '/attribute @p minecraft:player.block_interaction_range get'
   python3 - client-smoke/client.log client-smoke-status.txt <<'PY'
-import re
 import sys
+sys.path.insert(0, "tools")
+from client_crystal_outline_smoke import parse_block_interaction_range
+
 log = open(sys.argv[1], encoding="utf-8").read()
-number = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
-matches = re.findall(rf"Dev has a value of ({number})", log)
-if not matches:
+actual = parse_block_interaction_range(log)
+if actual is None:
     raise SystemExit("CRYSTAL_OUTLINE_BLOCK_REACH_MISSING")
-actual = float(matches[-1])
 if abs(actual - 5.0) > 0.001:
     raise SystemExit(f"CRYSTAL_OUTLINE_BLOCK_REACH_MISMATCH={actual}")
 marker = f"CRYSTAL_OUTLINE_BLOCK_REACH_CONFIRMED={actual}"
