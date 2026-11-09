@@ -250,6 +250,20 @@ public class SalisQueueTest {
   a.time=62;tick(s);
   check(a.sends==4,"unloaded neighbor suppressed loaded target or emitted into unloaded chunk");
   a.chunkStates.clear();
+  // Per-chunk tick-time cancellation must be permanent even if the chunk
+  // reloads before its original due tick; a loaded neighbor still dispatches.
+  a.time=70;
+  a.chunkStates.put(new ChunkPos(0,0),true);
+  a.chunkStates.put(new ChunkPos(1,0),true);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,new Vec3(15.99,64,0.5),v,4);
+  SalisSparkleTrailQueue.emitOrQueue(a,p,dust,new Vec3(16.0,64,0.5),v,4);
+  a.chunkStates.put(new ChunkPos(0,0),false);
+  a.time=71;tick(s);
+  a.chunkStates.put(new ChunkPos(0,0),true);
+  a.time=74;tick(s);
+  check(a.sends==5,"tick-cancelled chunk resurrected after reload or loaded neighbor was lost");
+  check(ThaumcraftSmokeAudit.cancelled==6,"tick-time chunk cancellation did not record exactly one event");
+  a.chunkStates.clear();
   SalisSparkleTrailQueue.onServerStopped(new ServerStoppedEvent(s));
   System.out.println("SALIS_QUEUE_UNLOAD_JVM=PASS");
  }
