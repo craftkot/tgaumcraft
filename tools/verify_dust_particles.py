@@ -39,6 +39,12 @@ assert "SalisSparkleHandOrigin.position(" in fx
 assert "player.getBoundingBox().minY" in fx
 assert "player.getBbHeight()" in fx
 assert "player.getYRot()" in fx
+assert "player.pick(6.0D, 1.0F, false)" in fx
+assert "picked instanceof BlockHitResult blockHit" in fx
+assert "blockHit.getBlockPos().equals(pos)" in fx
+assert "faceStart = blockHit.getLocation()" in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICKED")' in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICK_FALLBACK")' in fx
 assert "hand == InteractionHand.OFF_HAND" in fx
 assert "HumanoidArm" not in fx
 assert "Vec3 start = new Vec3(origin[0], origin[1], origin[2]);" in fx

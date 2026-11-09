@@ -5,12 +5,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 
 /**
  * Actor-only BETA26 ItemMagicDust#doSparkles projection.
@@ -46,9 +48,21 @@ public final class SalisMundusSparkles {
         // The use-on-item call currently does not pass hit coordinates (PR #3
         // also owns that item file). Reconstruct the ray/box intersection;
         // the block center is a safe fallback, not exact hit-position parity.
-        Vec3 eye = player.getEyePosition();
-        Vec3 faceStart = new AABB(pos).clip(eye, eye.add(forward.scale(6.0D)))
-                .orElse(Vec3.atCenterOf(pos));
+        // BETA26 ItemMagicDust receives the actual BlockHitResult coordinates.
+        // Re-raycast the authoritative server player against the same outline shape;
+        // only accept the result if it is still the clicked block. This avoids
+        // touching SalisMundusItem.onItemUseFirst, which is shared with PR #3.
+        var picked = player.pick(6.0D, 1.0F, false);
+        Vec3 faceStart;
+        if (picked instanceof BlockHitResult blockHit && blockHit.getBlockPos().equals(pos)) {
+            faceStart = blockHit.getLocation();
+            ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICKED");
+        } else {
+            Vec3 eye = player.getEyePosition();
+            faceStart = new AABB(pos).clip(eye, eye.add(forward.scale(6.0D)))
+                    .orElse(Vec3.atCenterOf(pos));
+            ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICK_FALLBACK");
+        }
 
         for (int i = 0; i < TRAIL_COUNT; i++) {
             boolean floaty = i < TRAIL_COUNT / 3;
