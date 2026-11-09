@@ -4,7 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleDelayRules;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -25,31 +25,31 @@ import java.util.UUID;
 /**
  * Actor-only, short-lived delayed Salis trail and block-face fallback.
  * BETA26 FXDispatcher delays each drawSimpleSparkle by 0..4 ticks.
- * This does not yet reproduce its original 320/512 sprite/alpha animation.
+ * ParticleOptions keeps the queue generic for the original sprite trail and face fallback.
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
 public final class SalisSparkleTrailQueue {
     private record Pending(ResourceKey<Level> dimension, ServerLevel sourceLevel, UUID playerId, ServerPlayer actor,
-                           DustParticleOptions color, Vec3 origin, Vec3 velocity,
+                           ParticleOptions color, Vec3 origin, Vec3 velocity,
                            long dueTick, boolean face) {}
 
     private static final List<Pending> PENDING = new ArrayList<>();
 
     private SalisSparkleTrailQueue() {}
 
-    public static void emitOrQueue(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+    public static void emitOrQueue(ServerLevel level, ServerPlayer player, ParticleOptions color,
                                    Vec3 origin, Vec3 velocity, int delayTicks) {
         long due = SalisSparkleDelayRules.dueTick(level.getGameTime(), delayTicks);
         enqueueOrEmit(level, player, color, origin, velocity, due, false);
     }
 
-    public static void emitFaceOrQueue(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+    public static void emitFaceOrQueue(ServerLevel level, ServerPlayer player, ParticleOptions color,
                                        Vec3 origin, Vec3 velocity, int delayTicks) {
         long due = SalisSparkleFaceDelayRules.dueTick(level.getGameTime(), delayTicks);
         enqueueOrEmit(level, player, color, origin, velocity, due, true);
     }
 
-    private static void enqueueOrEmit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+    private static void enqueueOrEmit(ServerLevel level, ServerPlayer player, ParticleOptions color,
                                       Vec3 origin, Vec3 velocity, long due, boolean face) {
         // Reject callers holding a ServerLevel that the server has already replaced.
         // This applies to immediate FX too: the queued path alone previously
@@ -146,7 +146,7 @@ public final class SalisSparkleTrailQueue {
         PENDING.removeIf(pending -> pending.sourceLevel().getServer() == stopped);
     }
 
-    private static void emit(ServerLevel level, ServerPlayer player, DustParticleOptions color,
+    private static void emit(ServerLevel level, ServerPlayer player, ParticleOptions color,
                              Vec3 origin, Vec3 velocity) {
         // count=0 sends one particle with this exact velocity, actor only.
         level.sendParticles(player, color, false, origin.x, origin.y, origin.z, 0,

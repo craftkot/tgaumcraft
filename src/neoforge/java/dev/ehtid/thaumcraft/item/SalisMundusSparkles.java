@@ -12,15 +12,15 @@ import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
+import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
 import org.joml.Vector3f;
 
 /**
- * Actor-only visual fallback for BETA26 ItemMagicDust#doSparkles.
+ * Actor-only BETA26 ItemMagicDust#doSparkles projection.
  *
- * The original emits 50 warm-colored sparkles from the hand toward the clicked
- * block, then a face-aware block sparkle burst. Until the original FXDispatcher sprite
- * and particle lifetime are ported, use tinted vanilla dust particles instead.
- * This is NOT exact visual parity with the original renderer.
+ * The 50-particle hand-to-block trail uses the original FXGeneric 320/512
+ * animated sprite sequence and lifetime/physics. The exposed-face burst remains
+ * a vanilla-dust fallback and is not yet pixel-identical to BETA26.
  */
 public final class SalisMundusSparkles {
     private static final int TRAIL_COUNT = 50;
@@ -55,7 +55,6 @@ public final class SalisMundusSparkles {
 
         for (int i = 0; i < TRAIL_COUNT; i++) {
             boolean floaty = i < TRAIL_COUNT / 3;
-            DustParticleOptions color = warmDust(level, false);
             // BETA26 FXDispatcher.drawSimpleSparkle queues each trail sprite
             // for a random 0..4 tick delay. Preserve the 50 independent
             // velocities/colors without changing the actor-only recipient.
@@ -63,7 +62,13 @@ public final class SalisMundusSparkles {
                     travel.x / 6.0D + level.random.nextGaussian() * 0.05D,
                     travel.y / 6.0D + level.random.nextGaussian() * 0.05D + (floaty ? 0.05D : 0.15D),
                     travel.z / 6.0D + level.random.nextGaussian() * 0.05D);
-            SalisSparkleTrailQueue.emitOrQueue(level, player, color, start, velocity,
+            // SimpleParticleType has no custom payload. Preserve X/Y velocity and
+            // reserve +1000 on Z for the BETA26 floaty flag; the client provider
+            // removes the sentinel before applying actual motion.
+            Vec3 encodedVelocity = new Vec3(velocity.x, velocity.y,
+                    velocity.z + (floaty ? 1000.0D : 0.0D));
+            SalisSparkleTrailQueue.emitOrQueue(level, player,
+                    SalisSparkleParticleRegistration.TYPE, start, encodedVelocity,
                     level.random.nextInt(5));
         }
 
