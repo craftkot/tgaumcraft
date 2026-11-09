@@ -14,11 +14,26 @@ from client_crystal_outline_smoke import (
     CLIENT_BLOCK_PICK_REACH,
     build_body,
     rotation_for_ray,
+    parse_block_interaction_range,
 )
 
 assert tuple(case[0] for case in FACE_CASES) == (
     "up", "down", "east", "west", "south", "north"
 )
+
+
+# Minecraft 1.21.1's Brigadier output is "Value of attribute ... for entity Dev is 5.0",
+# not the older "Dev has a value of 5.0" wording assumed by the original smoke parser.
+assert parse_block_interaction_range(
+    "[System] [CHAT] Value of attribute Block Interaction Range for entity Dev is 5.0"
+) == 5.0
+assert parse_block_interaction_range("Dev has a value of 5.0") == 5.0
+assert parse_block_interaction_range(
+    "Value of attribute Entity Interaction Range for entity Dev is 5.0"
+) is None
+assert parse_block_interaction_range(
+    "Value of attribute Block Interaction Range for entity Dev is 4.5"
+) == 4.5
 
 
 def in_selected_half(face, point):
