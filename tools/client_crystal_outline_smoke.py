@@ -7,28 +7,29 @@ import sys
 ANCHOR = "  # The initial world is already creative + peaceful, as established"
 
 # (face, support xyz, miss player feet xyz/yaw/pitch, hit player feet xyz/yaw/pitch)
-# Player eye height is 1.62. Horizontal rays test the UP/DOWN halves; vertical
-# rays test EAST/WEST/SOUTH/NORTH halves without crossing the selected half.
+# Every origin is grounded on a fixed platform. UP and side-face rays approach
+# from below; DOWN approaches from above so the miss ray never crosses its
+# lower-half outline before reaching the excluded upper half.
 FACE_CASES = (
     # (face, support xyz, miss player xyz, miss aim xyz, hit player xyz, hit aim xyz)
     # Aim points are world-space points on the intended BETA26 half-cube.
     # Vanilla yaw/pitch is calculated from the player's eye position.
-    ("up",    (250, 152, 251), (250.5, 149.63, 249.5), (250.5, 151.25, 251.5),
-                                  (250.5, 150.13, 249.5), (250.5, 151.75, 251.5)),
-    ("down",  (250, 150, 251), (250.5, 150.13, 249.5), (250.5, 151.75, 251.5),
-                                  (250.5, 149.63, 249.5), (250.5, 151.25, 251.5)),
-    ("east",  (251, 151, 251), (250.25, 154, 251.5), (250.25, 151.5, 251.5),
-                                  (250.75, 154, 251.5), (250.75, 151.5, 251.5)),
-    ("west",  (249, 151, 251), (250.75, 154, 251.5), (250.75, 151.5, 251.5),
-                                  (250.25, 154, 251.5), (250.25, 151.5, 251.5)),
-    ("south", (250, 151, 252), (250.5, 154, 251.25), (250.5, 151.5, 251.25),
-                                  (250.5, 154, 251.75), (250.5, 151.5, 251.75)),
-    ("north", (250, 151, 250), (250.5, 154, 251.75), (250.5, 151.5, 251.75),
-                                  (250.5, 154, 251.25), (250.5, 151.5, 251.25)),
+    ("up",    (250, 152, 251), (250.5, 149, 249.5), (250.5, 151.25, 251.5),
+                                  (250.5, 149, 249.5), (250.5, 151.75, 251.5)),
+    ("down",  (250, 150, 251), (249.5, 154, 249.5), (250.5, 151.75, 251.5),
+                                  (249.5, 154, 249.5), (250.5, 151.25, 251.5)),
+    ("east",  (251, 151, 251), (250.25, 149, 251.5), (250.25, 151.5, 251.5),
+                                  (250.25, 149, 251.5), (250.75, 151.5, 251.5)),
+    ("west",  (249, 151, 251), (250.75, 149, 251.5), (250.75, 151.5, 251.5),
+                                  (250.75, 149, 251.5), (250.25, 151.5, 251.5)),
+    ("south", (250, 151, 252), (250.5, 149, 251.25), (250.5, 151.5, 251.25),
+                                  (250.5, 149, 251.25), (250.5, 151.5, 251.75)),
+    ("north", (250, 151, 250), (250.5, 149, 251.75), (250.5, 151.5, 251.75),
+                                  (250.5, 149, 251.75), (250.5, 151.5, 251.25)),
 )
 
 PLAYER_EYE_HEIGHT = 1.62
-MULTI_FACE_PLAYER = (250.25, 149.63, 249.5)
+MULTI_FACE_PLAYER = (250.25, 149, 249.5)
 MULTI_FACE_AIM = (250.25, 151.25, 251.5)
 
 
@@ -46,22 +47,22 @@ def rotation_for_ray(player_feet: tuple[float, float, float],
 
 def ray_probe_point(player_feet: tuple[float, float, float],
                     aim: tuple[float, float, float]) -> tuple[float, float, float]:
-    """Return a world point 90% along the eye-origin ray, inside the target cell."""
+    """Return a world point 98% along the eye-origin ray, inside the target cell."""
     dx = aim[0] - player_feet[0]
     dy = aim[1] - (player_feet[1] + PLAYER_EYE_HEIGHT)
     dz = aim[2] - player_feet[2]
     return (
-        player_feet[0] + dx * 0.9,
-        player_feet[1] + PLAYER_EYE_HEIGHT + dy * 0.9,
-        player_feet[2] + dz * 0.9,
+        player_feet[0] + dx * 0.98,
+        player_feet[1] + PLAYER_EYE_HEIGHT + dy * 0.98,
+        player_feet[2] + dz * 0.98,
     )
 
 
 def ray_probe_distance(player_feet: tuple[float, float, float],
                        aim: tuple[float, float, float]) -> float:
-    """Return 90% of the eye-origin ray length, safely inside the target cell."""
+    """Return 98% of the eye-origin ray length, inside even a near-top entry."""
     origin = (player_feet[0], player_feet[1] + PLAYER_EYE_HEIGHT, player_feet[2])
-    return math.dist(origin, aim) * 0.9
+    return math.dist(origin, aim) * 0.98
 
 
 def shell_number(value: int | float) -> str:
@@ -81,11 +82,8 @@ def build_body() -> str:
   send_chat '/fill 247 149 248 253 160 254 minecraft:air'
   send_chat '/fill 247 148 248 253 148 254 minecraft:stone'
 
-  # Double-tap space to enable creative flight before top-down rays.
-  xdotool key --clearmodifiers space
-  sleep 0.15
-  xdotool key --clearmodifiers space
-  sleep 1
+  # Do not depend on creative-flight key timing. Most origins stand on the
+  # y=148 floor; the DOWN case creates a separate elevated platform below.
 
   capture_outline() {
     local name="$1" width height path
@@ -195,6 +193,10 @@ PY
     send_chat '/fill 247 148 248 253 148 254 minecraft:stone'
     send_chat "/setblock $sx $sy $sz minecraft:stone"
     send_chat '/setblock 250 151 251 thaumcraft:crystal_aqua'
+    if [ "$face" = "down" ]; then
+      # Stable top-down origin; this platform is offset from the ray path.
+      send_chat '/setblock 249 153 249 minecraft:stone'
+    fi
     send_chat "/execute if block 250 151 251 thaumcraft:crystal_aqua run say CRYSTAL_OUTLINE_SETUP_$face"
     assert_outline_marker "CRYSTAL_OUTLINE_SETUP_$face"
 

@@ -40,6 +40,39 @@ def in_crystal(point):
     return 250 <= x <= 251 and 151 <= y <= 152 and 251 <= z <= 252
 
 
+def bounds_for_face(face):
+    return {
+        "up": ((250, 151.5, 251), (251, 152, 252)),
+        "down": ((250, 151, 251), (251, 151.5, 252)),
+        "east": ((250.5, 151, 251), (251, 152, 252)),
+        "west": ((250, 151, 251), (250.5, 152, 252)),
+        "south": ((250, 151, 251.5), (251, 152, 252)),
+        "north": ((250, 151, 251), (251, 152, 251.5)),
+    }[face]
+
+
+def segment_intersects_bounds(player_feet, aim, bounds):
+    """Slab-test the entire eye-to-aim segment against a world-space AABB."""
+    origin = (player_feet[0], player_feet[1] + PLAYER_EYE_HEIGHT, player_feet[2])
+    low, high = bounds
+    t_min, t_max = 0.0, 1.0
+    for axis in range(3):
+        delta = aim[axis] - origin[axis]
+        if abs(delta) < 1.0e-12:
+            if origin[axis] < low[axis] or origin[axis] > high[axis]:
+                return False
+            continue
+        first = (low[axis] - origin[axis]) / delta
+        last = (high[axis] - origin[axis]) / delta
+        if first > last:
+            first, last = last, first
+        t_min = max(t_min, first)
+        t_max = min(t_max, last)
+        if t_min > t_max:
+            return False
+    return t_max >= 0.0 and t_min <= 1.0
+
+
 def expected_direction(player_feet, aim):
     dx = aim[0] - player_feet[0]
     dy = aim[1] - (player_feet[1] + PLAYER_EYE_HEIGHT)
@@ -84,7 +117,15 @@ for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert in_crystal(miss_aim) and in_crystal(hit_aim), face
     assert not in_selected_half(face, miss_aim), (face, "miss target entered selected half")
     assert in_selected_half(face, hit_aim), (face, "hit target missed selected half")
-    assert miss != hit, face
+    assert miss == hit, (face, "miss and hit must share a grounded origin")
+    assert miss_aim != hit_aim, face
+    selected_bounds = bounds_for_face(face)
+    assert not segment_intersects_bounds(miss, miss_aim, selected_bounds), (
+        face, "miss ray crosses the selected half", miss, miss_aim
+    )
+    assert segment_intersects_bounds(hit, hit_aim, selected_bounds), (
+        face, "hit ray never enters the selected half", hit, hit_aim
+    )
     assert_ray_rotation(miss, miss_aim)
     assert_ray_rotation(hit, hit_aim)
     assert_ray_probe_inside_cell(miss, miss_aim)
@@ -103,7 +144,7 @@ assert abs(up_miss_pitch) < 1.0e-9
 vertical_case = FACE_CASES[2]
 vertical_yaw, vertical_pitch = rotation_for_ray(vertical_case[2], vertical_case[3])
 assert vertical_yaw == 0.0
-assert abs(vertical_pitch - 90.0) < 1.0e-9
+assert abs(vertical_pitch + 90.0) < 1.0e-9
 
 # With UP + EAST supports, BETA26 returns the full cube. This point is inside
 # the block but outside both one-face half-cubes.
@@ -112,6 +153,21 @@ assert not in_selected_half("up", MULTI_FACE_AIM)
 assert not in_selected_half("east", MULTI_FACE_AIM)
 assert_ray_rotation(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
 assert_ray_probe_inside_cell(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
+full_cube = ((250, 151, 251), (251, 152, 252))
+assert segment_intersects_bounds(MULTI_FACE_PLAYER, MULTI_FACE_AIM, full_cube)
+assert not segment_intersects_bounds(
+    MULTI_FACE_PLAYER, MULTI_FACE_AIM, bounds_for_face("up")
+)
+assert not segment_intersects_bounds(
+    MULTI_FACE_PLAYER, MULTI_FACE_AIM, bounds_for_face("east")
+)
+
+# The only elevated origin stands on a real platform outside the eye-ray path;
+# all other player feet positions are exactly on the y=148 stone floor.
+assert all(case[2][1] == case[4][1] == 149 for case in FACE_CASES if case[0] != "down")
+down_case = next(case for case in FACE_CASES if case[0] == "down")
+assert down_case[2] == down_case[4] == (249.5, 154, 249.5)
+assert MULTI_FACE_PLAYER[1] == 149
 
 body = build_body()
 for face, *_ in FACE_CASES:
@@ -137,6 +193,9 @@ assert body.count('send_chat "/tp @p') == 2
 assert body.count("send_chat '/tp @p") == 1
 assert "miss_aim_x" not in body and "hit_aim_x" not in body
 assert "capture_outline" in body
+assert "setblock 249 153 249 minecraft:stone" in body
+assert 'if [ "$face" = "down" ]' in body
+assert "xdotool key --clearmodifiers space" not in body
 assert 'test "$(find client-smoke/screenshots' in body
 assert body.rstrip().endswith("fi")
 print("Crystal outline client-smoke contract: PASS (6 faces + multi-face; eye-origin yaw/pitch)")
