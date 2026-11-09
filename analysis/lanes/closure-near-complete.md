@@ -1170,3 +1170,5 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Full NeoForge CI and the existing real-client crystal sound workflow are triggered by the production block change; exact-head outcomes are pending. The latter is a client launch/audio regression, not direct visual outline acceptance.
 - No shared registry, Gradle, global CI, global localization, main, or foreign feature branch changed. PR #4 remains the only open PR and remains unmerged. Fixed audit stays **59/100**, M16 **4/6**: one outline correction does not establish full OBJ/texture/FX/audio parity.
 - Next: inspect exact-head Core/NeoForge/client results; then add a real-client block-targeting/screenshot assertion for floor, ceiling and wall-only crystal outlines before considering this narrow visual behavior accepted.
+
+- CI harness compatibility correction: retained the existing exact "CrystalModel seeded selection parity OK" marker expected by main CI while also reporting the new outline assertions; no behavior changed.

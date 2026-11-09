@@ -61,7 +61,7 @@ public final class CrystalMeshParityTest {
             close(t.z()+delta.z(),sum.z());
         }
         outlineBounds();
-        System.out.println("CrystalModel seeded selection and BETA26 outline parity OK ("+assertions+" assertions)");
+        System.out.println("CrystalModel seeded selection parity OK; BETA26 outline parity OK ("+assertions+" assertions)");
     }
     private static void eq(Object a,Object b) {
         assertions++;
