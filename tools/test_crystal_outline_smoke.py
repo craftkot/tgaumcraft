@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
-"""Static and geometric contract tests for the generated real-client crystal outline smoke."""
-from client_crystal_outline_smoke import FACE_CASES, build_body
+"""Static, geometric and rotation-contract tests for crystal outline client smoke."""
+import math
+
+from client_crystal_outline_smoke import (
+    FACE_CASES,
+    MULTI_FACE_AIM,
+    MULTI_FACE_PLAYER,
+    PLAYER_EYE_HEIGHT,
+    build_body,
+    rotation_for_ray,
+)
 
 assert tuple(case[0] for case in FACE_CASES) == (
     "up", "down", "east", "west", "south", "north"
@@ -29,19 +38,66 @@ def in_crystal(point):
     return 250 <= x <= 251 and 151 <= y <= 152 and 251 <= z <= 252
 
 
+def expected_direction(player_feet, aim):
+    dx = aim[0] - player_feet[0]
+    dy = aim[1] - (player_feet[1] + PLAYER_EYE_HEIGHT)
+    dz = aim[2] - player_feet[2]
+    length = math.sqrt(dx * dx + dy * dy + dz * dz)
+    assert length > 0
+    return dx / length, dy / length, dz / length
+
+
+def direction_from_rotation(yaw, pitch):
+    yaw_r = math.radians(yaw)
+    pitch_r = math.radians(pitch)
+    return (
+        -math.sin(yaw_r) * math.cos(pitch_r),
+        -math.sin(pitch_r),
+        math.cos(yaw_r) * math.cos(pitch_r),
+    )
+
+
+def assert_ray_rotation(player_feet, aim):
+    yaw, pitch = rotation_for_ray(player_feet, aim)
+    assert -180.0 <= yaw <= 180.0, (yaw, pitch)
+    assert -90.0 <= pitch <= 90.0, (yaw, pitch)
+    actual = direction_from_rotation(yaw, pitch)
+    expected = expected_direction(player_feet, aim)
+    assert max(abs(a - b) for a, b in zip(actual, expected)) < 1.0e-9, (
+        player_feet, aim, yaw, pitch, actual, expected
+    )
+
+
 for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert len(support) == len(miss) == len(miss_aim) == len(hit) == len(hit_aim) == 3
     assert in_crystal(miss_aim) and in_crystal(hit_aim), face
     assert not in_selected_half(face, miss_aim), (face, "miss target entered selected half")
     assert in_selected_half(face, hit_aim), (face, "hit target missed selected half")
     assert miss != hit, face
+    assert_ray_rotation(miss, miss_aim)
+    assert_ray_rotation(hit, hit_aim)
 
-# With UP + EAST supports, the original BETA26 outline is the full cube.
-# This ray point is inside the block but outside both one-face half-cubes.
-multi_face_aim = (250.25, 151.25, 251.5)
-assert in_crystal(multi_face_aim)
-assert not in_selected_half("up", multi_face_aim)
-assert not in_selected_half("east", multi_face_aim)
+# UP rays are horizontal from eye height. The previous /tp facing-position
+# target was at eye height but the command's FEET anchor introduced a 1.62m
+# vertical component; the explicit rotation must now be exactly horizontal.
+up_case = FACE_CASES[0]
+up_miss_yaw, up_miss_pitch = rotation_for_ray(up_case[2], up_case[3])
+assert up_miss_yaw == 0.0
+assert abs(up_miss_pitch) < 1.0e-9
+
+# A perfectly vertical ray has no meaningful yaw; pin it to zero and retain
+# the exact downward pitch rather than emitting NaN or an unstable angle.
+vertical_case = FACE_CASES[2]
+vertical_yaw, vertical_pitch = rotation_for_ray(vertical_case[2], vertical_case[3])
+assert vertical_yaw == 0.0
+assert abs(vertical_pitch - 90.0) < 1.0e-9
+
+# With UP + EAST supports, BETA26 returns the full cube. This point is inside
+# the block but outside both one-face half-cubes.
+assert in_crystal(MULTI_FACE_AIM)
+assert not in_selected_half("up", MULTI_FACE_AIM)
+assert not in_selected_half("east", MULTI_FACE_AIM)
+assert_ray_rotation(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
 
 body = build_body()
 for face, *_ in FACE_CASES:
@@ -51,9 +107,11 @@ assert "CRYSTAL_OUTLINE_MISS_RETAINED_$face" in body
 assert "CRYSTAL_OUTLINE_HIT_REMOVED_$face" in body
 assert "CRYSTAL_OUTLINE_MULTIFACE_FULL_CUBE_HIT" in body
 assert body.count("xdotool click 1") == 3
-assert body.count(" facing ") == 3, body.count(" facing ")
-assert "miss_yaw" not in body and "hit_yaw" not in body
+assert body.count(" facing ") == 0
+assert body.count('send_chat "/tp @p') == 2
+assert body.count("send_chat '/tp @p") == 1
+assert "miss_aim_x" not in body and "hit_aim_x" not in body
 assert "capture_outline" in body
 assert 'test "$(find client-smoke/screenshots' in body
 assert body.rstrip().endswith("fi")
-print("Crystal outline client-smoke contract: PASS (6 faces + multi-face full cube; explicit ray targets)")
+print("Crystal outline client-smoke contract: PASS (6 faces + multi-face; eye-origin yaw/pitch)")

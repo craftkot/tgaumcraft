@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generate a real NeoForge-client ray-picking regression for BETA26 crystal outlines."""
 from pathlib import Path
+import math
 import sys
 
 ANCHOR = "  # The initial world is already creative + peaceful, as established"
@@ -10,9 +11,8 @@ ANCHOR = "  # The initial world is already creative + peaceful, as established"
 # rays test EAST/WEST/SOUTH/NORTH halves without crossing the selected half.
 FACE_CASES = (
     # (face, support xyz, miss player xyz, miss aim xyz, hit player xyz, hit aim xyz)
-    # Explicit /tp facing targets are points on the intended ray through the
-    # original BETA26 half-cube. Fixed yaw/pitch was not reliable in Xvfb:
-    # the first real screenshot showed the crystal above the crosshair.
+    # Aim points are world-space points on the intended BETA26 half-cube.
+    # Vanilla yaw/pitch is calculated from the player's eye position.
     ("up",    (250, 152, 251), (250.5, 149.63, 249.5), (250.5, 151.25, 251.5),
                                   (250.5, 150.13, 249.5), (250.5, 151.75, 251.5)),
     ("down",  (250, 150, 251), (250.5, 150.13, 249.5), (250.5, 151.75, 251.5),
@@ -26,6 +26,22 @@ FACE_CASES = (
     ("north", (250, 151, 250), (250.5, 154, 251.75), (250.5, 151.5, 251.75),
                                   (250.5, 154, 251.25), (250.5, 151.5, 251.25)),
 )
+
+PLAYER_EYE_HEIGHT = 1.62
+MULTI_FACE_PLAYER = (250.25, 149.63, 249.5)
+MULTI_FACE_AIM = (250.25, 151.25, 251.5)
+
+
+def rotation_for_ray(player_feet: tuple[float, float, float],
+                     aim: tuple[float, float, float]) -> tuple[float, float]:
+    """Return vanilla yaw/pitch for a ray from the player's eye to a world point."""
+    dx = aim[0] - player_feet[0]
+    dy = aim[1] - (player_feet[1] + PLAYER_EYE_HEIGHT)
+    dz = aim[2] - player_feet[2]
+    horizontal = math.hypot(dx, dz)
+    yaw = 0.0 if horizontal < 1.0e-12 else math.degrees(math.atan2(-dx, dz))
+    pitch = -math.degrees(math.atan2(dy, horizontal))
+    return yaw, pitch
 
 
 def shell_number(value: int | float) -> str:
@@ -78,10 +94,10 @@ def build_body() -> str:
     local face="$1" sx="$2" sy="$3" sz="$4"
     shift 4
     local miss_x="$1" miss_y="$2" miss_z="$3"
-    local miss_aim_x="$4" miss_aim_y="$5" miss_aim_z="$6"
-    shift 6
+    local miss_yaw="$4" miss_pitch="$5"
+    shift 5
     local hit_x="$1" hit_y="$2" hit_z="$3"
-    local hit_aim_x="$4" hit_aim_y="$5" hit_aim_z="$6"
+    local hit_yaw="$4" hit_pitch="$5"
     local geometry X Y WIDTH HEIGHT aim_x aim_y
 
     # Clear the previous crystal and all six possible supports, then reset
@@ -98,7 +114,7 @@ def build_body() -> str:
     aim_x=$((X + WIDTH / 2))
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
-    send_chat "/tp @p $miss_x $miss_y $miss_z facing $miss_aim_x $miss_aim_y $miss_aim_z"
+    send_chat "/tp @p $miss_x $miss_y $miss_z $miss_yaw $miss_pitch"
     capture_outline "crystal-outline-$face-miss"
     xdotool click 1
     sleep 1
@@ -110,7 +126,7 @@ def build_body() -> str:
     aim_x=$((X + WIDTH / 2))
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
-    send_chat "/tp @p $hit_x $hit_y $hit_z facing $hit_aim_x $hit_aim_y $hit_aim_z"
+    send_chat "/tp @p $hit_x $hit_y $hit_z $hit_yaw $hit_pitch"
     capture_outline "crystal-outline-$face-hit"
     xdotool click 1
     sleep 1
@@ -120,7 +136,10 @@ def build_body() -> str:
   }
 """
     for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
-        values = (face, *support, *miss, *miss_aim, *hit, *hit_aim)
+        miss_yaw, miss_pitch = rotation_for_ray(miss, miss_aim)
+        hit_yaw, hit_pitch = rotation_for_ray(hit, hit_aim)
+        values = (face, *support, *miss, miss_yaw, miss_pitch,
+                  *hit, hit_yaw, hit_pitch)
         body += "  run_outline_case " + " ".join(shell_number(v) for v in values) + "\n"
 
     body += r"""
@@ -136,7 +155,7 @@ def build_body() -> str:
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
   xdotool mousemove "$((X + WIDTH / 2))" "$((Y + HEIGHT / 2))"
-  send_chat '/tp @p 250.25 149.63 249.5 facing 250.25 151.25 251.5'
+  send_chat '__MULTI_FACE_TP__'
   capture_outline 'crystal-outline-multiface-full-cube'
   xdotool click 1
   sleep 1
@@ -153,7 +172,17 @@ def build_body() -> str:
   exit 0
 fi
 """
+    multi_yaw, multi_pitch = rotation_for_ray(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
+    multi_values = (*MULTI_FACE_PLAYER, multi_yaw, multi_pitch)
+    multi_command = "  send_chat '/tp @p " + " ".join(shell_number(v) for v in multi_values) + "'"
+    body = replace_once(body, "  send_chat '__MULTI_FACE_TP__'", multi_command)
     return body
+
+
+def replace_once(source: str, old: str, new: str) -> str:
+    if source.count(old) != 1:
+        raise SystemExit(f"Expected one template marker, found {source.count(old)}")
+    return source.replace(old, new)
 
 
 def build_script() -> str:
