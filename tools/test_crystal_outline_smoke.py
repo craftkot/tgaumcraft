@@ -7,7 +7,7 @@ from client_crystal_outline_smoke import (
     MULTI_FACE_AIM,
     MULTI_FACE_PLAYER,
     PLAYER_EYE_HEIGHT,
-    ray_probe_distance,
+    ray_probe_point,
     build_body,
     rotation_for_ray,
 )
@@ -70,18 +70,8 @@ def assert_ray_rotation(player_feet, aim):
 
 
 def assert_ray_probe_inside_cell(player_feet, aim):
-    direction = expected_direction(player_feet, aim)
-    distance = ray_probe_distance(player_feet, aim)
-    full_length = math.dist(
-        (player_feet[0], player_feet[1] + PLAYER_EYE_HEIGHT, player_feet[2]), aim
-    )
-    assert 0.0 < distance < full_length
-    point = (
-        player_feet[0] + direction[0] * distance,
-        player_feet[1] + PLAYER_EYE_HEIGHT + direction[1] * distance,
-        player_feet[2] + direction[2] * distance,
-    )
-    assert in_crystal(point), (player_feet, aim, distance, point)
+    point = ray_probe_point(player_feet, aim)
+    assert in_crystal(point), (player_feet, aim, point)
 
 
 for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
@@ -125,11 +115,14 @@ assert "CRYSTAL_OUTLINE_SETUP_$face" in body
 assert "CRYSTAL_OUTLINE_MISS_RETAINED_$face" in body
 assert "CRYSTAL_OUTLINE_HIT_REMOVED_$face" in body
 assert "CRYSTAL_OUTLINE_MULTIFACE_FULL_CUBE_HIT" in body
+assert body.count("assert_player_rotation()") == 1
 assert body.count("assert_ray_cell()") == 1
-assert body.count('assert_ray_cell "$face" miss "$miss_probe"') == 1
-assert body.count('assert_ray_cell "$face" hit "$hit_probe"') == 1
+assert body.count('assert_ray_cell "$face" miss "$miss_yaw" "$miss_pitch" "$miss_probe_x" "$miss_probe_y" "$miss_probe_z"') == 1
+assert body.count('assert_ray_cell "$face" hit "$hit_yaw" "$hit_pitch" "$hit_probe_x" "$hit_probe_y" "$hit_probe_z"') == 1
 assert "assert_ray_cell multiface hit" in body
-assert "anchored eyes positioned ^ ^ ^$distance" in body
+assert "execute positioned $probe_x $probe_y $probe_z if block ~ ~ ~" in body
+assert "anchored eyes positioned ^" not in body
+assert "data get entity @p Rotation" in body
 assert body.count("xdotool click 1") == 3
 assert body.count(" facing ") == 0
 assert body.count('send_chat "/tp @p') == 2

@@ -44,13 +44,17 @@ def rotation_for_ray(player_feet: tuple[float, float, float],
     return yaw, pitch
 
 
-def ray_probe_distance(player_feet: tuple[float, float, float],
-                       aim: tuple[float, float, float]) -> float:
-    """Sample 90% along the eye-origin ray, safely inside the target block cell."""
+def ray_probe_point(player_feet: tuple[float, float, float],
+                    aim: tuple[float, float, float]) -> tuple[float, float, float]:
+    """Return a world point 90% along the eye-origin ray, inside the target cell."""
     dx = aim[0] - player_feet[0]
     dy = aim[1] - (player_feet[1] + PLAYER_EYE_HEIGHT)
     dz = aim[2] - player_feet[2]
-    return math.sqrt(dx * dx + dy * dy + dz * dz) * 0.9
+    return (
+        player_feet[0] + dx * 0.9,
+        player_feet[1] + PLAYER_EYE_HEIGHT + dy * 0.9,
+        player_feet[2] + dz * 0.9,
+    )
 
 
 def shell_number(value: int | float) -> str:
@@ -99,13 +103,40 @@ def build_body() -> str:
     echo "CRYSTAL_OUTLINE_MARKER_CONFIRMED=$marker" | tee -a client-smoke-status.txt
   }
 
-  # Verify the actual server-side eye-origin look vector enters the crystal's
-  # block cell before testing its outline. A retained block after a miss alone
-  # is inconclusive: the camera may simply have missed the block entirely.
-  assert_ray_cell() {
-    local face="$1" phase="$2" distance="$3"
+  # Confirm the actual game accepted the expected eye-origin yaw/pitch, then
+  # verify the corresponding 90%-ray sample lies in the crystal block cell.
+  # Absolute coordinates avoid locale/keymap problems with caret coordinates.
+  assert_player_rotation() {
+    local expected_yaw="$1" expected_pitch="$2" label="$3"
     send_chat '/data get entity @p Rotation'
-    send_chat "/execute as @p at @s anchored eyes positioned ^ ^ ^$distance if block ~ ~ ~ thaumcraft:crystal_aqua run say CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face"
+    python3 - "$expected_yaw" "$expected_pitch" "$label" client-smoke/client.log <<'PY'
+import re
+import sys
+expected_yaw = float(sys.argv[1])
+expected_pitch = float(sys.argv[2])
+label = sys.argv[3]
+log = open(sys.argv[4], encoding="utf-8").read()
+matches = re.findall(
+    r"Dev has the following entity data: \[(-?\d+(?:\.\d+)?)f, (-?\d+(?:\.\d+)?)f\]",
+    log,
+)
+if not matches:
+    raise SystemExit("CRYSTAL_OUTLINE_ROTATION_MISSING=" + label)
+actual_yaw, actual_pitch = map(float, matches[-1])
+if abs(actual_yaw - expected_yaw) > 0.11 or abs(actual_pitch - expected_pitch) > 0.11:
+    raise SystemExit(
+        f"CRYSTAL_OUTLINE_ROTATION_MISMATCH={label}:"
+        f"expected={expected_yaw},{expected_pitch} actual={actual_yaw},{actual_pitch}"
+    )
+print(f"CRYSTAL_OUTLINE_ROTATION_CONFIRMED={label}:{actual_yaw},{actual_pitch}")
+PY
+  }
+
+  assert_ray_cell() {
+    local face="$1" phase="$2" yaw="$3" pitch="$4"
+    local probe_x="$5" probe_y="$6" probe_z="$7"
+    assert_player_rotation "$yaw" "$pitch" "$face-$phase"
+    send_chat "/execute positioned $probe_x $probe_y $probe_z if block ~ ~ ~ thaumcraft:crystal_aqua run say CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face"
     assert_outline_marker "CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face"
   }
 
@@ -113,10 +144,12 @@ def build_body() -> str:
     local face="$1" sx="$2" sy="$3" sz="$4"
     shift 4
     local miss_x="$1" miss_y="$2" miss_z="$3"
-    local miss_yaw="$4" miss_pitch="$5" miss_probe="$6"
-    shift 6
+    local miss_yaw="$4" miss_pitch="$5"
+    local miss_probe_x="$6" miss_probe_y="$7" miss_probe_z="$8"
+    shift 8
     local hit_x="$1" hit_y="$2" hit_z="$3"
-    local hit_yaw="$4" hit_pitch="$5" hit_probe="$6"
+    local hit_yaw="$4" hit_pitch="$5"
+    local hit_probe_x="$6" hit_probe_y="$7" hit_probe_z="$8"
     local geometry X Y WIDTH HEIGHT aim_x aim_y
 
     # Clear the previous crystal and all six possible supports, then reset
@@ -134,7 +167,7 @@ def build_body() -> str:
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
     send_chat "/tp @p $miss_x $miss_y $miss_z $miss_yaw $miss_pitch"
-    assert_ray_cell "$face" miss "$miss_probe"
+    assert_ray_cell "$face" miss "$miss_yaw" "$miss_pitch" "$miss_probe_x" "$miss_probe_y" "$miss_probe_z"
     capture_outline "crystal-outline-$face-miss"
     xdotool click 1
     sleep 1
@@ -147,7 +180,7 @@ def build_body() -> str:
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
     send_chat "/tp @p $hit_x $hit_y $hit_z $hit_yaw $hit_pitch"
-    assert_ray_cell "$face" hit "$hit_probe"
+    assert_ray_cell "$face" hit "$hit_yaw" "$hit_pitch" "$hit_probe_x" "$hit_probe_y" "$hit_probe_z"
     capture_outline "crystal-outline-$face-hit"
     xdotool click 1
     sleep 1
@@ -159,10 +192,10 @@ def build_body() -> str:
     for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
         miss_yaw, miss_pitch = rotation_for_ray(miss, miss_aim)
         hit_yaw, hit_pitch = rotation_for_ray(hit, hit_aim)
-        miss_probe = ray_probe_distance(miss, miss_aim)
-        hit_probe = ray_probe_distance(hit, hit_aim)
-        values = (face, *support, *miss, miss_yaw, miss_pitch, miss_probe,
-                  *hit, hit_yaw, hit_pitch, hit_probe)
+        miss_probe = ray_probe_point(miss, miss_aim)
+        hit_probe = ray_probe_point(hit, hit_aim)
+        values = (face, *support, *miss, miss_yaw, miss_pitch, *miss_probe,
+                  *hit, hit_yaw, hit_pitch, *hit_probe)
         body += "  run_outline_case " + " ".join(shell_number(v) for v in values) + "\n"
 
     body += r"""
@@ -179,7 +212,7 @@ def build_body() -> str:
   eval "$geometry"
   xdotool mousemove "$((X + WIDTH / 2))" "$((Y + HEIGHT / 2))"
   send_chat '__MULTI_FACE_TP__'
-  assert_ray_cell multiface hit __MULTI_FACE_PROBE__
+  assert_ray_cell multiface hit __MULTI_FACE_ARGS__
   capture_outline 'crystal-outline-multiface-full-cube'
   xdotool click 1
   sleep 1
@@ -197,11 +230,12 @@ def build_body() -> str:
 fi
 """
     multi_yaw, multi_pitch = rotation_for_ray(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
-    multi_probe = ray_probe_distance(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
+    multi_probe = ray_probe_point(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
     multi_values = (*MULTI_FACE_PLAYER, multi_yaw, multi_pitch)
     multi_command = "  send_chat '/tp @p " + " ".join(shell_number(v) for v in multi_values) + "'"
+    multi_args = " ".join(shell_number(v) for v in (multi_yaw, multi_pitch, *multi_probe))
     body = replace_once(body, "  send_chat '__MULTI_FACE_TP__'", multi_command)
-    body = replace_once(body, "__MULTI_FACE_PROBE__", shell_number(multi_probe))
+    body = replace_once(body, "__MULTI_FACE_ARGS__", multi_args)
     return body
 
 
