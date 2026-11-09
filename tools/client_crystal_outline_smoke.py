@@ -9,12 +9,22 @@ ANCHOR = "  # The initial world is already creative + peaceful, as established"
 # Player eye height is 1.62. Horizontal rays test the UP/DOWN halves; vertical
 # rays test EAST/WEST/SOUTH/NORTH halves without crossing the selected half.
 FACE_CASES = (
-    ("up",    (250, 152, 251), (250.5, 149.63, 249.5, 0, 0), (250.5, 150.13, 249.5, 0, 0)),
-    ("down",  (250, 150, 251), (250.5, 150.13, 249.5, 0, 0), (250.5, 149.63, 249.5, 0, 0)),
-    ("east",  (251, 151, 251), (250.25, 154, 251.5, 0, 90), (250.75, 154, 251.5, 0, 90)),
-    ("west",  (249, 151, 251), (250.75, 154, 251.5, 0, 90), (250.25, 154, 251.5, 0, 90)),
-    ("south", (250, 151, 252), (250.5, 154, 251.25, 0, 90), (250.5, 154, 251.75, 0, 90)),
-    ("north", (250, 151, 250), (250.5, 154, 251.75, 0, 90), (250.5, 154, 251.25, 0, 90)),
+    # (face, support xyz, miss player xyz, miss aim xyz, hit player xyz, hit aim xyz)
+    # Explicit /tp facing targets are points on the intended ray through the
+    # original BETA26 half-cube. Fixed yaw/pitch was not reliable in Xvfb:
+    # the first real screenshot showed the crystal above the crosshair.
+    ("up",    (250, 152, 251), (250.5, 149.63, 249.5), (250.5, 151.25, 251.5),
+                                  (250.5, 150.13, 249.5), (250.5, 151.75, 251.5)),
+    ("down",  (250, 150, 251), (250.5, 150.13, 249.5), (250.5, 151.75, 251.5),
+                                  (250.5, 149.63, 249.5), (250.5, 151.25, 251.5)),
+    ("east",  (251, 151, 251), (250.25, 154, 251.5), (250.25, 151.5, 251.5),
+                                  (250.75, 154, 251.5), (250.75, 151.5, 251.5)),
+    ("west",  (249, 151, 251), (250.75, 154, 251.5), (250.75, 151.5, 251.5),
+                                  (250.25, 154, 251.5), (250.25, 151.5, 251.5)),
+    ("south", (250, 151, 252), (250.5, 154, 251.25), (250.5, 151.5, 251.25),
+                                  (250.5, 154, 251.75), (250.5, 151.5, 251.75)),
+    ("north", (250, 151, 250), (250.5, 154, 251.75), (250.5, 151.5, 251.75),
+                                  (250.5, 154, 251.25), (250.5, 151.5, 251.25)),
 )
 
 
@@ -67,9 +77,11 @@ def build_body() -> str:
   run_outline_case() {
     local face="$1" sx="$2" sy="$3" sz="$4"
     shift 4
-    local miss_x="$1" miss_y="$2" miss_z="$3" miss_yaw="$4" miss_pitch="$5"
-    shift 5
-    local hit_x="$1" hit_y="$2" hit_z="$3" hit_yaw="$4" hit_pitch="$5"
+    local miss_x="$1" miss_y="$2" miss_z="$3"
+    local miss_aim_x="$4" miss_aim_y="$5" miss_aim_z="$6"
+    shift 6
+    local hit_x="$1" hit_y="$2" hit_z="$3"
+    local hit_aim_x="$4" hit_aim_y="$5" hit_aim_z="$6"
     local geometry X Y WIDTH HEIGHT aim_x aim_y
 
     # Clear the previous crystal and all six possible supports, then reset
@@ -86,7 +98,7 @@ def build_body() -> str:
     aim_x=$((X + WIDTH / 2))
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
-    send_chat "/tp @p $miss_x $miss_y $miss_z $miss_yaw $miss_pitch"
+    send_chat "/tp @p $miss_x $miss_y $miss_z facing $miss_aim_x $miss_aim_y $miss_aim_z"
     capture_outline "crystal-outline-$face-miss"
     xdotool click 1
     sleep 1
@@ -98,7 +110,7 @@ def build_body() -> str:
     aim_x=$((X + WIDTH / 2))
     aim_y=$((Y + HEIGHT / 2))
     xdotool mousemove "$aim_x" "$aim_y"
-    send_chat "/tp @p $hit_x $hit_y $hit_z $hit_yaw $hit_pitch"
+    send_chat "/tp @p $hit_x $hit_y $hit_z facing $hit_aim_x $hit_aim_y $hit_aim_z"
     capture_outline "crystal-outline-$face-hit"
     xdotool click 1
     sleep 1
@@ -107,8 +119,8 @@ def build_body() -> str:
     echo "CRYSTAL_OUTLINE_FACE_$face=PASS" | tee -a client-smoke-status.txt
   }
 """
-    for face, support, miss, hit in FACE_CASES:
-        values = (face, *support, *miss, *hit)
+    for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
+        values = (face, *support, *miss, *miss_aim, *hit, *hit_aim)
         body += "  run_outline_case " + " ".join(shell_number(v) for v in values) + "\n"
 
     body += r"""
@@ -124,7 +136,7 @@ def build_body() -> str:
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
   xdotool mousemove "$((X + WIDTH / 2))" "$((Y + HEIGHT / 2))"
-  send_chat '/tp @p 250.25 149.63 249.5 0 0'
+  send_chat '/tp @p 250.25 149.63 249.5 facing 250.25 151.25 251.5'
   capture_outline 'crystal-outline-multiface-full-cube'
   xdotool click 1
   sleep 1
