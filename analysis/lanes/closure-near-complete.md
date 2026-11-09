@@ -1194,3 +1194,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Updated tools/client_crystal_outline_smoke.py and tools/test_crystal_outline_smoke.py; no production Java changed. Exact-head real-client rerun is required before acceptance. The previous run remains **FAIL**; no score increase is claimed.
 - Also checked exact-head full CI [#42639882969](https://github.com/craftkot/tgaumcraft/actions/runs/42639882969) **SUCCESS** and the other M16 client checks: page sound, scan rune, Salis dust, crystal break, six crystal placements, crystal placement sound, scan sound and label smoke **SUCCESS**. Curio learn [#42639882791](https://github.com/craftkot/tgaumcraft/actions/runs/42639882791) **FAILURE** and remains a separate outstanding audio issue; do not treat it as passed.
 - Fixed historical audit remains **59/100**, M16 **4/6**. PR #4 remains Draft and unmerged. Next: inspect exact-head crystal-outline rerun artifacts and all six face markers; then investigate the Curio learn PCM failure without lowering the acceptance threshold.
+
+
+## 09.11.2026 — correct the static ray-template count before client launch
+
+- Exact-head rerun [#42648031990](https://github.com/craftkot/tgaumcraft/actions/runs/42648031990) stopped at the Python contract test, before Gradle/client launch. The failure was in the new test itself: it expected seven literal occurrences of the word "facing", but the generated shell template contains two parameterized facing commands inside the reusable function plus one multi-face command. Six face cases are emitted as function invocations, not six duplicated command strings.
+- Corrected the static contract to expect the three template commands. The six per-face invocations remain separately asserted by name, and geometric tests still validate each miss/hit aim point against the BETA26 half-cube bounds. No production code changed. This failed run is a test-authoring error; it provides no gameplay evidence.
+- Next: rerun the exact-head workflow. Only a successful run that reaches all 13 real client ray-pick assertions can accept this narrow outline behavior. Historical rubric remains 59/100, M16 4/6.

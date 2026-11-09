@@ -51,7 +51,7 @@ assert "CRYSTAL_OUTLINE_MISS_RETAINED_$face" in body
 assert "CRYSTAL_OUTLINE_HIT_REMOVED_$face" in body
 assert "CRYSTAL_OUTLINE_MULTIFACE_FULL_CUBE_HIT" in body
 assert body.count("xdotool click 1") == 3
-assert body.count(" facing ") == 7, body.count(" facing ")
+assert body.count(" facing ") == 3, body.count(" facing ")
 assert "miss_yaw" not in body and "hit_yaw" not in body
 assert "capture_outline" in body
 assert 'test "$(find client-smoke/screenshots' in body
