@@ -16,7 +16,7 @@ FACE_CASES = (
     # Vanilla yaw/pitch is calculated from the player's eye position.
     ("up",    (250, 152, 251), (250.5, 149, 249.5), (250.5, 151.25, 251.5),
                                   (250.5, 149, 249.5), (250.5, 151.75, 251.5)),
-    ("down",  (250, 150, 251), (249.5, 154, 249.5), (250.5, 151.75, 251.5),
+    ("down",  (250, 150, 251), (249.5, 154, 249.5), (250.95, 151.75, 251.5),
                                   (249.5, 154, 249.5), (250.5, 151.25, 251.5)),
     ("east",  (251, 151, 251), (250.25, 149, 251.5), (250.25, 151.5, 251.5),
                                   (250.25, 149, 251.5), (250.75, 151.5, 251.5)),
@@ -29,6 +29,7 @@ FACE_CASES = (
 )
 
 PLAYER_EYE_HEIGHT = 1.62
+CLIENT_BLOCK_PICK_REACH = 5.0
 MULTI_FACE_PLAYER = (250.25, 149, 249.5)
 MULTI_FACE_AIM = (250.25, 151.25, 251.5)
 
@@ -65,6 +66,19 @@ def ray_probe_distance(player_feet: tuple[float, float, float],
     return math.dist(origin, aim) * 0.98
 
 
+def ray_endpoint_at_reach(player_feet: tuple[float, float, float],
+                          aim: tuple[float, float, float],
+                          reach: float = CLIENT_BLOCK_PICK_REACH) -> tuple[float, float, float]:
+    """Extend the eye-origin direction to the client's full block-picking reach."""
+    origin = (player_feet[0], player_feet[1] + PLAYER_EYE_HEIGHT, player_feet[2])
+    delta = tuple(aim[i] - origin[i] for i in range(3))
+    length = math.sqrt(sum(component * component for component in delta))
+    if length <= 1.0e-12 or reach <= 0.0:
+        raise ValueError("ray and reach must be positive")
+    scale = reach / length
+    return tuple(origin[i] + delta[i] * scale for i in range(3))
+
+
 def shell_number(value: int | float) -> str:
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
@@ -75,6 +89,26 @@ def build_body() -> str:
     body = r"""
   echo 'CRYSTAL_OUTLINE_REAL_CLIENT=YES' | tee -a client-smoke-status.txt
   send_chat '/gamemode creative'
+  # Creative mode extends the vanilla block-interaction range to 5 blocks.
+  # Read the effective live attribute so the geometry test never assumes a
+  # reach value that a mod or future game mode silently changed.
+  send_chat '/attribute @p minecraft:player.block_interaction_range get'
+  python3 - client-smoke/client.log client-smoke-status.txt <<'PY'
+import re
+import sys
+log = open(sys.argv[1], encoding="utf-8").read()
+number = r"[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?"
+matches = re.findall(rf"Dev has a value of ({number})", log)
+if not matches:
+    raise SystemExit("CRYSTAL_OUTLINE_BLOCK_REACH_MISSING")
+actual = float(matches[-1])
+if abs(actual - 5.0) > 0.001:
+    raise SystemExit(f"CRYSTAL_OUTLINE_BLOCK_REACH_MISMATCH={actual}")
+marker = f"CRYSTAL_OUTLINE_BLOCK_REACH_CONFIRMED={actual}"
+print(marker)
+with open(sys.argv[2], "a", encoding="utf-8") as status:
+    status.write(marker + "\n")
+PY
   send_chat '/difficulty peaceful'
   send_chat '/time set noon'
   send_chat '/weather clear'
