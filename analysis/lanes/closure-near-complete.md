@@ -1342,3 +1342,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - The exact-head test/NeoForge/client workflows have not yet reported a run at this commit at journal update time; CircleCI `verify-connection` is pending and is not a build/test result. Next: inspect the Actions run for this SHA, require parser contract PASS and actual client launch, then examine all six miss/hit pairs and the multi-face case. Do not infer picking acceptance from the parser fix.
 - Also inspected failed crystal placement audio run [#42691790587](https://github.com/craftkot/tgaumcraft/actions/runs/42691790587): placement itself reached `CRYSTAL_REAL_PLACE_AQUA=PASS`, but PCM matching failed (`correlation=0.1916`, baseline `0.0164`, expected original-source match threshold not met). This is a separate real audio mismatch/noise issue; evidence artifact `13706709065` remains to inspect after the crystal-outline parser blocker is cleared.
 - Fixed audit remains 59/100; M16 remains 4/6. No score increase and no merge.
+
+
+## 09.11.2026 — cross-PR overlap audit
+
+- Full PR file lists were compared, not just this iteration's tool paths. PR #4 has one actual overlap with PR #3: `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java`. Patch review confirms PR #3 adds golem-press reservation/delegation inside `onItemUseFirst`, while PR #4 adds actor-only dust sound/sparkle delivery inside the same method. This is a genuine integration conflict risk even though the current parser fix touches only `tools/client_crystal_outline_smoke.py`.
+- Added an explicit integration warning to PR #4's description. Do not merge until the current PR #3 head is re-read and the combined method is reconciled. No PR #3 file or branch was modified.
+- Other changed paths in PR #4 do not intersect PR #1 or PR #2. This run's only source edit remains the missing `re` import; the PR #3 overlap is pre-existing in the branch and deliberately untouched.
