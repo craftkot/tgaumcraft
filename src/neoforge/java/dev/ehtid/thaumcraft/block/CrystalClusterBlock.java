@@ -50,7 +50,9 @@ public final class CrystalClusterBlock extends Block {
     public static final IntegerProperty GENERATION=IntegerProperty.create("gen",1,4);
     private final String aspectTag;
     public CrystalClusterBlock(BlockBehaviour.Properties props,String aspectTag) {
-        super(props.sound(ORIGINAL_CRYSTAL_SOUND));
+        // getShape depends on adjacent support blocks, not only BlockState properties.
+        // Mark the block dynamic so another position's outline is never reused from a cache.
+        super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));
         this.aspectTag=aspectTag;
         registerDefaultState(stateDefinition.any().setValue(SIZE,0).setValue(GENERATION,1));
     }

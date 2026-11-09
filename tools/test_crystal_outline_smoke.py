@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Static, geometric and rotation-contract tests for crystal outline client smoke."""
 import math
+from pathlib import Path
 
 from client_crystal_outline_smoke import (
     FACE_CASES,
@@ -170,6 +171,15 @@ down_platform = ((249, 153, 249), (250, 154, 250))
 assert not segment_intersects_bounds(down_case[2], down_case[3], down_platform)
 assert not segment_intersects_bounds(down_case[4], down_case[5], down_platform)
 assert MULTI_FACE_PLAYER[1] == 149
+
+# getShape is world-dependent: support faces are read from the live level.
+# Every CrystalClusterBlock instance must opt out of the static BlockState shape cache.
+crystal_source = (
+    Path(__file__).resolve().parents[1]
+    / "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java"
+).read_text(encoding="utf-8")
+assert crystal_source.count("props.dynamicShape()") == 1
+assert "super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));" in crystal_source
 
 body = build_body()
 for face, *_ in FACE_CASES:
