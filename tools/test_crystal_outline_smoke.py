@@ -130,7 +130,7 @@ assert "data get entity @p Pos" in body
 assert "data get entity @p Rotation" in body
 assert body.count("anchored eyes positioned ^ ^ ^$probe_distance") == 2
 assert "CRYSTAL_OUTLINE_RAY_PROBE_EXECUTED_${phase}_$face" in body
-assert "CRYSTAL_OUTLINE_RAY_CELL_\${phase}_$face" in body
+assert "CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face" in body
 assert body.count("xdotool click 1") == 3
 assert body.count(" facing ") == 0
 assert body.count('send_chat "/tp @p') == 2
