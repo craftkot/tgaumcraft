@@ -44,8 +44,9 @@ thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.pn
 base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
 particle = unique("grep -Fq 'SALIS_PARTICLE_SEND_INVOKED' client-smoke/client.log")
 delayed = unique("grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log")
+particle_log = unique("python3 tools/verify_salis_sparkle_particle_log.py client-smoke/client.log")
 matcher = unique("python3 tools/match_dust_audio_pcm.py")
-assert music < ambient < launch < baseline < record < click < frame < mid < peak < tail < final < wait < thumbnail < base64 < particle < delayed < matcher
+assert music < ambient < launch < baseline < record < click < frame < mid < peak < tail < final < wait < thumbnail < base64 < particle < delayed < particle_log < matcher
 assert "soundCategory_players:0.0" not in generated
 assert "soundCategory_master:0.0" not in generated
 assert "capture 08k-salis-sparkles-early" not in generated

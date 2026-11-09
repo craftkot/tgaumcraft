@@ -97,6 +97,7 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
   grep -Fq 'SALIS_PARTICLE_SEND_INVOKED' client-smoke/client.log
   grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log
   grep -Fq 'SALIS_FACE_DELAY_QUEUE_DRAINED' client-smoke/client.log
+  python3 tools/verify_salis_sparkle_particle_log.py client-smoke/client.log
   echo 'SALIS_PARTICLE_SEND_INVOKED=PASS' | tee -a client-smoke-status.txt
   echo 'SALIS_FACE_DELAY_QUEUE_DRAINED=PASS' | tee -a client-smoke-status.txt
   python3 tools/match_dust_audio_pcm.py \\

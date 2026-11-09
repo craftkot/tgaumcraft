@@ -16,7 +16,8 @@ STUBS = {
 "dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceDelayRules.java": "package dev.ehtid.thaumcraft.port.core.visual; public class SalisSparkleFaceDelayRules { public static long dueTick(long t,int d){return t+d;} }",
 "dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java": "package dev.ehtid.thaumcraft.util; public class ThaumcraftSmokeAudit { public static int cancelled; public static void mark(String s){if(s.equals(\"SALIS_DELAY_UNLOADED_CANCELLED\"))cancelled++;} }",
 "net/minecraft/core/BlockPos.java": "package net.minecraft.core; import net.minecraft.world.phys.Vec3; public record BlockPos(int x,int y,int z) {public static BlockPos containing(Vec3 v){return new BlockPos((int)Math.floor(v.x),(int)Math.floor(v.y),(int)Math.floor(v.z));}}",
-"net/minecraft/core/particles/DustParticleOptions.java": "package net.minecraft.core.particles; public class DustParticleOptions {}",
+"net/minecraft/core/particles/ParticleOptions.java": "package net.minecraft.core.particles; public interface ParticleOptions {}",
+"net/minecraft/core/particles/DustParticleOptions.java": "package net.minecraft.core.particles; public class DustParticleOptions implements ParticleOptions {}",
 "net/minecraft/resources/ResourceKey.java": "package net.minecraft.resources; public class ResourceKey<T> {}",
 "net/minecraft/world/level/Level.java": "package net.minecraft.world.level; public class Level {}",
 "net/minecraft/world/level/ChunkPos.java": "package net.minecraft.world.level; import net.minecraft.core.BlockPos; public record ChunkPos(int x,int z) {public ChunkPos(BlockPos p){this(Math.floorDiv(p.x(),16),Math.floorDiv(p.z(),16));}}",
@@ -31,7 +32,7 @@ public class ServerLevel extends Level {
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
  public boolean hasChunkAt(BlockPos p){return chunkStates.getOrDefault(new net.minecraft.world.level.ChunkPos(p),loaded);}
- public void sendParticles(ServerPlayer p,DustParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
+ public void sendParticles(ServerPlayer p,net.minecraft.core.particles.ParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
 }""",
 "net/minecraft/server/level/ServerPlayer.java": """package net.minecraft.server.level;
 import java.util.UUID; public class ServerPlayer {

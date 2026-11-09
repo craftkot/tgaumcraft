@@ -18,6 +18,8 @@ assert "pending.sourceLevel().getServer() == stopped" in stop_method
 assert "PENDING.clear()" not in stop_method
 assert "player.level() != level" in queue
 assert "server.getPlayerList().getPlayer(pending.playerId())" in queue
+assert "ParticleOptions color" in queue
+assert "DustParticleOptions" not in queue
 assert "level.sendParticles(player, color, false" in queue
 assert "level.sendParticles(color" not in queue
 assert "SalisSparkleDelayRules.dueTick(" in queue

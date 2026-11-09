@@ -1370,3 +1370,13 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - This cleanup changes production Java and its test contract. The new exact-head full NeoForge/client workflows must run on the resulting commit before this cleanup itself is considered verified. No global CI, Gradle, registry, shared smoke harness, main, or foreign lane was changed.
 - Fixed historical audit remains **59/100**, M16 **4/6**. The outline sub-scenario is accepted, but M16 still lacks broad original model/renderer/FX coverage, remaining assets and full EN/RU content parity. No points are added for removing diagnostics or for isolated successful sound samples.
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains Draft and unmerged. The only PR #3 integration overlap remains `SalisMundusItem.onItemUseFirst`; do not merge until that method is reconciled against PR #3's current head.
+
+## M16 iteration — original Salis hand-trail sprites (2026-11-09)
+
+- Replaced only the 50-particle hand-to-block vanilla-dust approximation with a client TextureSheetParticle using the byte-identical BETA26 particles.png atlas (Git blob f958edbcbe774c924690562a1436d12fea5846b8, 1024x1024, 64x64 UV grid).
+- Ported FXGeneric.drawSimpleSparkle: start frames 320/512 with 20/80 selection, 16-frame loop, 64–79 tick lifetime, random warm RGB, interpolated alpha keys and 0.5→1.0 scale, floaty/non-floaty gravity and drag, Gaussian drift and moon-phase wind.
+- Kept the existing actor-only delayed server queue. The floaty flag is carried in an unused SimpleParticleType Z-speed sentinel and decoded before applying actual velocity.
+- The exposed-face burst remains the existing vanilla-dust approximation; this iteration does not claim full Salis FX parity or close M16.
+- Added client log evidence for 50 created, rendered and expired particles, plus frame-index checks at ages 1/16/17/31/32. The existing closure-dust-client.yml real-client workflow will exercise the unchanged bookshelf interaction and screenshot gate.
+- Changed files: SalisMundusSparkles.java, SalisSparkleTrailQueue.java, new SalisSparkleParticle.java, new isolated particle registration/client-event classes, original particle atlas + metadata + particle description, and Salis/dust regression scripts.
+- Core commit: f9fda795e236d12202b852502a07c360cd59bad3. Test commit and CI/client results: pending.
