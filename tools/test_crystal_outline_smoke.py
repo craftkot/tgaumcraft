@@ -10,6 +10,8 @@ from client_crystal_outline_smoke import (
     PLAYER_EYE_HEIGHT,
     ray_probe_point,
     ray_probe_distance,
+    ray_endpoint_at_reach,
+    CLIENT_BLOCK_PICK_REACH,
     build_body,
     rotation_for_ray,
 )
@@ -122,10 +124,20 @@ for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert miss_aim != hit_aim, face
     selected_bounds = bounds_for_face(face)
     assert not segment_intersects_bounds(miss, miss_aim, selected_bounds), (
-        face, "miss ray crosses the selected half", miss, miss_aim
+        face, "miss target segment crosses the selected half", miss, miss_aim
     )
     assert segment_intersects_bounds(hit, hit_aim, selected_bounds), (
-        face, "hit ray never enters the selected half", hit, hit_aim
+        face, "hit target segment never enters the selected half", hit, hit_aim
+    )
+    # Minecraft's actual client continues the ray to its full block-interaction
+    # reach, even when the diagnostic sample/aim point is already inside the cell.
+    miss_pick_endpoint = ray_endpoint_at_reach(miss, miss_aim, CLIENT_BLOCK_PICK_REACH)
+    hit_pick_endpoint = ray_endpoint_at_reach(hit, hit_aim, CLIENT_BLOCK_PICK_REACH)
+    assert not segment_intersects_bounds(miss, miss_pick_endpoint, selected_bounds), (
+        face, "full client miss ray enters the selected half", miss, miss_pick_endpoint
+    )
+    assert segment_intersects_bounds(hit, hit_pick_endpoint, selected_bounds), (
+        face, "full client hit ray never enters the selected half", hit, hit_pick_endpoint
     )
     assert_ray_rotation(miss, miss_aim)
     assert_ray_rotation(hit, hit_aim)
@@ -170,6 +182,21 @@ assert down_case[2] == down_case[4] == (249.5, 154, 249.5)
 down_platform = ((249, 153, 249), (250, 154, 250))
 assert not segment_intersects_bounds(down_case[2], down_case[3], down_platform)
 assert not segment_intersects_bounds(down_case[4], down_case[5], down_platform)
+down_miss_pick_endpoint = ray_endpoint_at_reach(
+    down_case[2], down_case[3], CLIENT_BLOCK_PICK_REACH
+)
+assert not segment_intersects_bounds(
+    down_case[2], down_miss_pick_endpoint, down_platform
+)
+# Regression proof: the previous DOWN "miss" target was 4.47 blocks away;
+# creative reach continued to 5 blocks and crossed the lower half at ~4.76.
+previous_down_aim = (250.5, 151.75, 251.5)
+previous_down_endpoint = ray_endpoint_at_reach(
+    down_case[2], previous_down_aim, CLIENT_BLOCK_PICK_REACH
+)
+assert segment_intersects_bounds(
+    down_case[2], previous_down_endpoint, bounds_for_face("down")
+)
 assert MULTI_FACE_PLAYER[1] == 149
 
 # getShape is world-dependent: support faces are read from the live level.
@@ -196,6 +223,8 @@ assert body.count('assert_ray_cell "$face" hit "$hit_yaw" "$hit_pitch" "$hit_x" 
 assert "assert_ray_cell multiface hit" in body
 assert "data get entity @p Pos" in body
 assert "data get entity @p Rotation" in body
+assert body.count("minecraft:player.block_interaction_range get") == 1
+assert "CRYSTAL_OUTLINE_BLOCK_REACH_CONFIRMED" in body
 assert body.count("anchored eyes positioned ^ ^ ^$probe_distance") == 2
 assert "CRYSTAL_OUTLINE_RAY_PROBE_EXECUTED_${phase}_$face" in body
 assert "CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face" in body
