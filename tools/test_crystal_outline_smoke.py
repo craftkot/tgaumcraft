@@ -131,13 +131,12 @@ for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert_ray_probe_inside_cell(miss, miss_aim)
     assert_ray_probe_inside_cell(hit, hit_aim)
 
-# UP rays are horizontal from eye height. The previous /tp facing-position
-# target was at eye height but the command's FEET anchor introduced a 1.62m
-# vertical component; the explicit rotation must now be exactly horizontal.
+# The UP miss ray starts from the grounded floor (eyes Y=150.62) and
+# remains below the UP half-cube boundary at Y=151.5.
 up_case = FACE_CASES[0]
 up_miss_yaw, up_miss_pitch = rotation_for_ray(up_case[2], up_case[3])
 assert up_miss_yaw == 0.0
-assert abs(up_miss_pitch) < 1.0e-9
+assert abs(up_miss_pitch - (-17.484427323220704)) < 1.0e-9
 
 # A perfectly vertical ray has no meaningful yaw; pin it to zero and retain
 # the exact downward pitch rather than emitting NaN or an unstable angle.
