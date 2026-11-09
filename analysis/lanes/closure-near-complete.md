@@ -1172,3 +1172,17 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - Next: inspect exact-head Core/NeoForge/client results; then add a real-client block-targeting/screenshot assertion for floor, ceiling and wall-only crystal outlines before considering this narrow visual behavior accepted.
 
 - CI harness compatibility correction: retained the existing exact "CrystalModel seeded selection parity OK" marker expected by main CI while also reporting the new outline assertions; no behavior changed.
+
+
+## 09.11.2026 — real-client crystal outline ray-pick smoke added (M16; acceptance pending)
+
+- Re-read the original BETA26 BlockCrystal source. Its getBoundingBox counts the six support flags: exactly one support selects the corresponding half-cube; more than one selects the full cube; collision remains empty. The production change from 442ac4a implements this mapping, while 89922b6 restored the existing CI output marker.
+- Added a dedicated real Minecraft 1.21.1 client regression. For each of six single-support orientations, it creates the crystal and support in the integrated world, sends a first-person ray through the excluded half (left-click must leave the crystal), then through the selected half (left-click must remove it). A two-support case sends the ray through x<0.5 and y<0.5, requiring the original multi-face full-cube outline.
+- The client captures 13 framebuffer PNGs: miss/hit for each of six faces plus the two-face full-cube case. The authoritative assertion is actual client ray-picking plus server-observed retained/removed block state; screenshots are retained for inspection and are not claimed to have passed a pixel classifier.
+- New files: tools/client_crystal_outline_smoke.py; tools/test_crystal_outline_smoke.py; .github/workflows/closure-crystal-outline-client.yml. The workflow builds NeoForge, starts the actual client and uploads screenshots/logs.
+- Commits: [1cba5ec](https://github.com/craftkot/tgaumcraft/commit/1cba5ec07fab22b78992d0feea99716db112245b) (smoke generator); [6f3cb70](https://github.com/craftkot/tgaumcraft/commit/6f3cb703671b86af53ab92ef5a1997475a75a7f5) (contract test); [26c81d5](https://github.com/craftkot/tgaumcraft/commit/26c81d5c4c0d548e81f7c0baac68a4ae6b4194ba) (dedicated client workflow). PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) is updated, Draft, head SHA 26c81d5; no merge.
+- Local verification before commit: Python generator/test syntax PASS; contract test PASS (six single-face cases + multi-face full cube); Bash syntax PASS for the injected body inside the parent smoke's open if block. This is not a game-client result.
+- Parent code SHA 89922b6 had 13/13 GitHub Actions SUCCESS, including full NeoForge build/server and existing client regressions. Those runs do not execute the newly added outline test.
+- New exact HEAD 26c81d5: the available workflow-run connector returned no push-run records (it exposes PR-triggered runs only); combined status showed CircleCI verify-connection PENDING. Dedicated client workflow result and artifact are therefore UNVERIFIED, not PASS. No real-client acceptance is claimed.
+- No production Java, shared registry, Gradle, global CI, global localization, main, or foreign feature branch changed. Fixed audit remains 59/100; M16 remains 4/6.
+- Next: obtain the exact-head closure-crystal-outline-client workflow result, inspect all 13 screenshots and client log, and correct any ray-position or flight-control false negatives before considering the outline behavior accepted.
