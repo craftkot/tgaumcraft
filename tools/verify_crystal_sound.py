@@ -25,7 +25,8 @@ assert 'CRYSTAL = SOUND_EVENTS.register("crystal"' in registry
 assert 'ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crystal")' in registry
 
 block = (ROOT / "neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java").read_text()
-assert "super(props.sound(ORIGINAL_CRYSTAL_SOUND));" in block
+assert "super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));" in block
+assert block.count("props.dynamicShape()") == 1
 assert "new SoundType(" in block and "0.5F, 1.0F" in block
 for method in ("Break", "Step", "Place", "Hit", "Fall"):
     assert re.search(
