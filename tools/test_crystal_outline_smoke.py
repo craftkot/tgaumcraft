@@ -7,6 +7,7 @@ from client_crystal_outline_smoke import (
     MULTI_FACE_AIM,
     MULTI_FACE_PLAYER,
     PLAYER_EYE_HEIGHT,
+    ray_probe_distance,
     build_body,
     rotation_for_ray,
 )
@@ -68,6 +69,21 @@ def assert_ray_rotation(player_feet, aim):
     )
 
 
+def assert_ray_probe_inside_cell(player_feet, aim):
+    direction = expected_direction(player_feet, aim)
+    distance = ray_probe_distance(player_feet, aim)
+    full_length = math.dist(
+        (player_feet[0], player_feet[1] + PLAYER_EYE_HEIGHT, player_feet[2]), aim
+    )
+    assert 0.0 < distance < full_length
+    point = (
+        player_feet[0] + direction[0] * distance,
+        player_feet[1] + PLAYER_EYE_HEIGHT + direction[1] * distance,
+        player_feet[2] + direction[2] * distance,
+    )
+    assert in_crystal(point), (player_feet, aim, distance, point)
+
+
 for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert len(support) == len(miss) == len(miss_aim) == len(hit) == len(hit_aim) == 3
     assert in_crystal(miss_aim) and in_crystal(hit_aim), face
@@ -76,6 +92,8 @@ for face, support, miss, miss_aim, hit, hit_aim in FACE_CASES:
     assert miss != hit, face
     assert_ray_rotation(miss, miss_aim)
     assert_ray_rotation(hit, hit_aim)
+    assert_ray_probe_inside_cell(miss, miss_aim)
+    assert_ray_probe_inside_cell(hit, hit_aim)
 
 # UP rays are horizontal from eye height. The previous /tp facing-position
 # target was at eye height but the command's FEET anchor introduced a 1.62m
@@ -98,6 +116,7 @@ assert in_crystal(MULTI_FACE_AIM)
 assert not in_selected_half("up", MULTI_FACE_AIM)
 assert not in_selected_half("east", MULTI_FACE_AIM)
 assert_ray_rotation(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
+assert_ray_probe_inside_cell(MULTI_FACE_PLAYER, MULTI_FACE_AIM)
 
 body = build_body()
 for face, *_ in FACE_CASES:
@@ -106,6 +125,11 @@ assert "CRYSTAL_OUTLINE_SETUP_$face" in body
 assert "CRYSTAL_OUTLINE_MISS_RETAINED_$face" in body
 assert "CRYSTAL_OUTLINE_HIT_REMOVED_$face" in body
 assert "CRYSTAL_OUTLINE_MULTIFACE_FULL_CUBE_HIT" in body
+assert body.count("assert_ray_cell()") == 1
+assert body.count('assert_ray_cell "$face" miss "$miss_probe"') == 1
+assert body.count('assert_ray_cell "$face" hit "$hit_probe"') == 1
+assert "assert_ray_cell multiface hit" in body
+assert "anchored eyes positioned ^ ^ ^$distance" in body
 assert body.count("xdotool click 1") == 3
 assert body.count(" facing ") == 0
 assert body.count('send_chat "/tp @p') == 2
