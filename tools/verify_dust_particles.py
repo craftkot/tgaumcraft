@@ -74,6 +74,8 @@ assert "this.face ? scaleStart * 2.0F : 1.0F" in particle
 assert particle.count("this.level.random.nextGaussian()") == 3
 assert "this.random.nextGaussian()" not in particle
 assert "this.yd -= 0.04D * this.gravity" in particle
+assert "this.random.nextGaussian() * 5.0E-4D" in particle
+assert "this.random.nextGaussian() * 1.0E-3D" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_CREATED=YES" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_RENDERED=YES" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_EXPIRED=YES" in particle

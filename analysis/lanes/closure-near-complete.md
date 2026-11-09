@@ -1400,3 +1400,5 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains Draft and unmerged. PR #3's `SalisMundusItem.onItemUseFirst` overlap is unchanged and still requires integration reconciliation.
 
 - Post-commit source-guard review found two stale assertions that still expected particle-local Gaussian calls after the deliberate switch to world RNG. Removed those contradictory assertions in a follow-up test-only commit; the positive exact-count and negative no-local-RNG guards remain. No production code changed in the follow-up.
+
+- Exact-head CI exposed a self-introduced source-generation error: the helper that removed the old `warmDust` method left the literal marker `remove dust method` at the end of `SalisMundusSparkles.java`, causing `:compileJava` to fail at line 120. This was not a BETA26 or NeoForge API issue. Replaced the marker with the class closing brace in a fast-forward follow-up; the failed build is retained as evidence and is not counted as a successful check.

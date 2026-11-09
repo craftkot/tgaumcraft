@@ -117,4 +117,4 @@ public final class SalisMundusSparkles {
         }
     }
 
-remove dust method
+}
