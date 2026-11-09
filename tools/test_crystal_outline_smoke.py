@@ -138,8 +138,8 @@ up_miss_yaw, up_miss_pitch = rotation_for_ray(up_case[2], up_case[3])
 assert up_miss_yaw == 0.0
 assert abs(up_miss_pitch - (-17.484427323220704)) < 1.0e-9
 
-# A perfectly vertical ray has no meaningful yaw; pin it to zero and retain
-# the exact downward pitch rather than emitting NaN or an unstable angle.
+# A perfectly vertical upward ray has no meaningful yaw; pin it to zero
+# and retain the exact upward pitch rather than emitting NaN or an unstable angle.
 vertical_case = FACE_CASES[2]
 vertical_yaw, vertical_pitch = rotation_for_ray(vertical_case[2], vertical_case[3])
 assert vertical_yaw == 0.0
@@ -166,6 +166,9 @@ assert not segment_intersects_bounds(
 assert all(case[2][1] == case[4][1] == 149 for case in FACE_CASES if case[0] != "down")
 down_case = next(case for case in FACE_CASES if case[0] == "down")
 assert down_case[2] == down_case[4] == (249.5, 154, 249.5)
+down_platform = ((249, 153, 249), (250, 154, 250))
+assert not segment_intersects_bounds(down_case[2], down_case[3], down_platform)
+assert not segment_intersects_bounds(down_case[4], down_case[5], down_platform)
 assert MULTI_FACE_PLAYER[1] == 149
 
 body = build_body()
