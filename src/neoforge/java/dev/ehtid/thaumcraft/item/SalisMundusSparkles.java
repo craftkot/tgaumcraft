@@ -2,7 +2,6 @@ package dev.ehtid.thaumcraft.item;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -10,20 +9,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceLayout;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleHandOrigin;
-import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleFaceDelayRules;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
-import org.joml.Vector3f;
 
 /**
  * Actor-only BETA26 ItemMagicDust#doSparkles projection.
  *
- * The 50-particle hand-to-block trail uses the original FXGeneric 320/512
- * animated sprite sequence and lifetime/physics. The exposed-face burst remains
- * a vanilla-dust fallback and is not yet pixel-identical to BETA26.
+ * Both the 50-particle hand trail and exposed-face burst use the original
+ * FXGeneric 320/512 animated sprite sequence, lifetime and source-specific physics.
  */
 public final class SalisMundusSparkles {
     private static final int TRAIL_COUNT = 50;
+    private static final double FACE_PARTICLE_SENTINEL = 2000.0D;
 
     private SalisMundusSparkles() {}
 
@@ -106,28 +103,18 @@ public final class SalisMundusSparkles {
                 double z = SalisSparkleFaceLayout.coordinate(bounds.minZ, bounds.maxZ,
                         face.getStepZ(), face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D);
                 Vec3 spawn = new Vec3(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
-                DustParticleOptions dust = warmDust(level, true);
-                // Original drawBlockSparkles: (int)(rand.nextInt(5) + distance*16).
-                // Queue on server ticks instead of immediately sending all faces.
+                // FXDispatcher.drawBlockSparkles delegates to drawSimpleSparkle:
+                // scale/color/animation are sampled by the client sprite provider.
+                // X carries only a mode sentinel; the provider restores x=0 and
+                // applies the source face velocity (0, 0.0025, 0).
+                // Original delay: (int)(rand.nextInt(5) + distance*16).
                 int delayTicks = SalisSparkleFaceDelayRules.delayTicks(
                         level.random.nextInt(5), spawn.distanceTo(faceStart));
-                SalisSparkleTrailQueue.emitFaceOrQueue(level, player, dust, spawn,
-                        new Vec3(0.0D, 0.0025D, 0.0D), delayTicks);
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, player,
+                        SalisSparkleParticleRegistration.TYPE, spawn,
+                        new Vec3(FACE_PARTICLE_SENTINEL, 0.0025D, 0.0D), delayTicks);
             }
         }
     }
 
-    private static DustParticleOptions warmDust(ServerLevel level, boolean blockFace) {
-        // Evaluate the warm color first: BETA26 samples face RGB before its
-        // 0.4 + Gaussian*0.1 scale. The hand trail retains its original 0.5.
-        Vector3f color = new Vector3f(1.0F,
-                (189 + level.random.nextInt(67)) / 255.0F,
-                (64 + level.random.nextInt(192)) / 255.0F);
-        float scale = blockFace
-                ? SalisSparkleScaleRules.blockFace(level.random.nextGaussian())
-                : 0.5F;
-        // Still a vanilla-dust fallback: FXGeneric's 2-phase size and
-        // 320/512 sprite animation/lifetime are not yet reproduced.
-        return new DustParticleOptions(color, scale);
-    }
-}
+remove dust method

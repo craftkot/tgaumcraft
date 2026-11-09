@@ -48,15 +48,14 @@ public class SalisSparkleFaceLayoutTest {
             SalisSparkleFaceLayout.coordinate(0,1,2,0);
             throw new AssertionError("invalid direction accepted");
         } catch (IllegalArgumentException expected) { checks++; }
-        // BETA26 drawBlockSparkles: size = 0.4f + (float)gaussian * 0.1f.
-        // DustParticleOptions cannot represent negative or oversized scales.
+        // BETA26 FXGeneric keeps the raw 0.4 + Gaussian*0.1 scale; no dust clamp.
         feq(0.4F, SalisSparkleScaleRules.blockFace(0));
         feq(0.5F, SalisSparkleScaleRules.blockFace(1));
         feq(0.3F, SalisSparkleScaleRules.blockFace(-1));
         feq(0.8F, SalisSparkleScaleRules.blockFace(4));
-        feq(0.01F, SalisSparkleScaleRules.blockFace(-4));
-        feq(4.0F, SalisSparkleScaleRules.blockFace(100));
-        feq(0.01F, SalisSparkleScaleRules.blockFace(-100));
+        feq(0.0F, SalisSparkleScaleRules.blockFace(-4));
+        feq(10.4F, SalisSparkleScaleRules.blockFace(100));
+        feq(-9.6F, SalisSparkleScaleRules.blockFace(-100));
         invalid(Double.NaN);
         invalid(Double.POSITIVE_INFINITY);
         invalid(Double.NEGATIVE_INFINITY);
@@ -69,3 +68,17 @@ with tempfile.TemporaryDirectory(prefix="salis-face-") as tmp:
     test.write_text(harness)
     subprocess.run(["javac", "--release", "21", "-d", tmp, str(source), str(scale_source), str(test)], check=True)
     subprocess.run(["java", "-cp", tmp, "SalisSparkleFaceLayoutTest"], check=True)
+
+particle = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/SalisSparkleParticle.java").read_text()
+sparkles = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java").read_text()
+assert "FACE_SENTINEL = 2000.0D" in particle
+assert "xSpeed >= FACE_SENTINEL * 0.5D" in particle
+assert "SalisSparkleScaleRules.blockFace(level.random.nextGaussian())" in particle
+assert "this.gravity = this.face ? 0.01F" in particle
+assert "this.slowDown = this.face ? 1.0D" in particle
+assert "this.face ? scaleStart * 2.0F : 1.0F" in particle
+assert particle.count("this.level.random.nextGaussian()") == 3
+assert "this.random.nextGaussian()" not in particle
+assert "FACE_PARTICLE_SENTINEL = 2000.0D" in sparkles
+assert "new Vec3(FACE_PARTICLE_SENTINEL, 0.0025D, 0.0D)" in sparkles
+assert "DustParticleOptions" not in sparkles

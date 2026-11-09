@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.client;
 
+import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * BETA26 FXGeneric.drawSimpleSparkle projection for the 50-particle Salis hand trail.
+ * BETA26 FXGeneric.drawSimpleSparkle projection for the Salis hand trail and exposed-face burst.
  *
  * The original particles.png is a 64x64 grid of 16px sprites. BETA26 selects
  * the 16-frame sequences beginning at indices 320 (20%) or 512 (80%).
@@ -25,10 +26,14 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
     private static final int GRID_SIZE = 64;
     private static final int FRAME_COUNT = 16;
     private static final double FLOATY_SENTINEL = 1000.0D;
+    private static final double FACE_SENTINEL = 2000.0D;
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final AtomicInteger SMOKE_CREATED = new AtomicInteger();
     private static final AtomicInteger SMOKE_RENDERED = new AtomicInteger();
     private static final AtomicInteger SMOKE_EXPIRED = new AtomicInteger();
+    private static final AtomicInteger SMOKE_FACE_CREATED = new AtomicInteger();
+    private static final AtomicInteger SMOKE_FACE_RENDERED = new AtomicInteger();
+    private static final AtomicInteger SMOKE_FACE_EXPIRED = new AtomicInteger();
 
     private final TextureAtlasSprite atlas;
     private final int firstFrame;
@@ -38,6 +43,8 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
     private final double windX;
     private final double windZ;
     private final int smokeId;
+    private final int faceSmokeId;
+    private final boolean face;
     private boolean smokeRendered;
 
     private SalisSparkleParticle(ClientLevel level, double x, double y, double z,
@@ -45,27 +52,34 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
                                  SpriteSet sprites) {
         super(level, x, y, z, xSpeed, ySpeed, encodedZSpeed);
 
-        // The server queue transports BETA26's first-16-of-50 floaty flag in
-        // an otherwise unused large Z-speed sentinel. Restore real motion now.
-        boolean floaty = encodedZSpeed >= FLOATY_SENTINEL * 0.5D;
-        this.xd = xSpeed;
+        // The server queue carries the hand-trail floaty flag in Z and face mode in X.
+        // Both sentinels are removed before the particle receives any physical motion.
+        this.face = xSpeed >= FACE_SENTINEL * 0.5D;
+        boolean floaty = !this.face && encodedZSpeed >= FLOATY_SENTINEL * 0.5D;
+        this.xd = this.face ? 0.0D : xSpeed;
         this.yd = ySpeed;
-        this.zd = encodedZSpeed - (floaty ? FLOATY_SENTINEL : 0.0D);
+        this.zd = this.face ? 0.0D
+                : encodedZSpeed - (floaty ? FLOATY_SENTINEL : 0.0D);
 
-        // FXGeneric.drawSimpleSparkle: floaty particles use weaker gravity and
-        // randomized drag; the remaining 34 use the fixed 0.5 / 0.85 values.
-        this.gravity = floaty ? 0.2F : 0.5F;
-        this.slowDown = floaty ? 0.3D + level.random.nextFloat() * 0.5D : 0.85D;
-        this.firstFrame = level.random.nextFloat() < 0.2F ? 320 : 512;
-        this.lifetime = 64 + level.random.nextInt(16);
-
-        // ItemMagicDust#doSparkles samples warm RGB on the client.
+        // BETA26 ItemMagicDust/FXDispatcher sample warm RGB before drawSimpleSparkle.
         this.setColor(1.0F,
                 (189 + level.random.nextInt(67)) / 255.0F,
                 (64 + level.random.nextInt(192)) / 255.0F);
+        float scaleStart = this.face
+                ? SalisSparkleScaleRules.blockFace(level.random.nextGaussian()) : 0.5F;
+
+        // drawBlockSparkles uses gravity .01, no slowdown and scale -> 2x;
+        // the hand trail retains its 16/34 floaty/non-floaty source split.
+        this.gravity = this.face ? 0.01F : (floaty ? 0.2F : 0.5F);
+        this.slowDown = this.face ? 1.0D
+                : (floaty ? 0.3D + level.random.nextFloat() * 0.5D : 0.85D);
+        this.firstFrame = level.random.nextFloat() < 0.2F ? 320 : 512;
+        this.lifetime = 64 + level.random.nextInt(16);
+
         this.alphaFrames = buildAlphaFrames(this.lifetime, level.random);
-        this.scaleFrames = buildScaleFrames(this.lifetime);
-        this.quadSize = 0.05F;
+        this.scaleFrames = buildScaleFrames(this.lifetime, scaleStart,
+                this.face ? scaleStart * 2.0F : 1.0F);
+        this.quadSize = 0.1F * scaleStart;
         this.alpha = 0.0F;
 
         this.atlas = sprites.get(0, 1);
@@ -78,8 +92,13 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
         this.windX = Math.cos(angle) * 0.00005D;
         this.windZ = -Math.sin(angle) * 0.00005D;
 
-        this.smokeId = SMOKE_PROBE ? SMOKE_CREATED.incrementAndGet() : -1;
-        if (SMOKE_PROBE) {
+        this.smokeId = SMOKE_PROBE && !this.face ? SMOKE_CREATED.incrementAndGet() : -1;
+        this.faceSmokeId = SMOKE_PROBE && this.face ? SMOKE_FACE_CREATED.incrementAndGet() : -1;
+        if (SMOKE_PROBE && this.face) {
+            System.out.println("TC_SMOKE_SALIS_FACE_SPARKLE_CREATED=YES id=" + faceSmokeId
+                    + " frameStart=" + firstFrame + " lifetime=" + lifetime
+                    + " scaleStart=" + scaleStart);
+        } else if (SMOKE_PROBE) {
             System.out.println("TC_SMOKE_SALIS_SPARKLE_CREATED=YES id=" + smokeId
                     + " frameStart=" + firstFrame + " lifetime=" + lifetime
                     + " floaty=" + floaty);
@@ -105,11 +124,11 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
         return frames;
     }
 
-    private static float[] buildScaleFrames(int lifetime) {
-        // FXGeneric.setScale(0.5F, 1.0F), linearly interpolated over age.
+    private static float[] buildScaleFrames(int lifetime, float start, float end) {
+        // FXGeneric.setScale(start, end), linearly interpolated over age.
         float[] frames = new float[lifetime + 1];
         for (int age = 0; age <= lifetime; age++) {
-            frames[age] = 0.5F + 0.5F * age / lifetime;
+            frames[age] = start + (end - start) * age / lifetime;
         }
         return frames;
     }
@@ -154,7 +173,12 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
         this.zo = this.z;
 
         if (this.age++ >= this.lifetime) {
-            if (SMOKE_PROBE) {
+            if (SMOKE_PROBE && this.face) {
+                int expired = SMOKE_FACE_EXPIRED.incrementAndGet();
+                System.out.println("TC_SMOKE_SALIS_FACE_SPARKLE_EXPIRED=YES id=" + faceSmokeId
+                        + " age=" + (this.age - 1) + " lifetime=" + lifetime
+                        + " count=" + expired);
+            } else if (SMOKE_PROBE) {
                 int expired = SMOKE_EXPIRED.incrementAndGet();
                 System.out.println("TC_SMOKE_SALIS_SPARKLE_EXPIRED=YES id=" + smokeId
                         + " age=" + (this.age - 1) + " lifetime=" + lifetime
@@ -168,10 +192,16 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
         this.alpha = this.alphaFrames[frameAge];
         this.quadSize = 0.1F * this.scaleFrames[frameAge];
 
-        if (SMOKE_PROBE && smokeId == 1
+        if (SMOKE_PROBE && !this.face && smokeId == 1
                 && (this.age == 1 || this.age == 16 || this.age == 17
                     || this.age == 31 || this.age == 32)) {
             System.out.println("TC_SMOKE_SALIS_SPARKLE_FRAME=YES id=1 age=" + this.age
+                    + " frame=" + currentFrame());
+        }
+        if (SMOKE_PROBE && this.face && faceSmokeId == 1
+                && (this.age == 1 || this.age == 16 || this.age == 17
+                    || this.age == 31 || this.age == 32)) {
+            System.out.println("TC_SMOKE_SALIS_FACE_SPARKLE_FRAME=YES id=1 age=" + this.age
                     + " frame=" + currentFrame());
         }
 
@@ -182,9 +212,9 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
         this.xd *= this.slowDown;
         this.yd *= this.slowDown;
         this.zd *= this.slowDown;
-        this.xd += this.random.nextGaussian() * 5.0E-4D;
-        this.yd += this.random.nextGaussian() * 1.0E-3D;
-        this.zd += this.random.nextGaussian() * 5.0E-4D;
+        this.xd += this.level.random.nextGaussian() * 5.0E-4D;
+        this.yd += this.level.random.nextGaussian() * 1.0E-3D;
+        this.zd += this.level.random.nextGaussian() * 5.0E-4D;
         this.xd += this.windX;
         this.zd += this.windZ;
         if (this.onGround && this.slowDown != 1.0D) {
@@ -201,9 +231,15 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
     private void markRendered() {
         if (SMOKE_PROBE && !smokeRendered) {
             smokeRendered = true;
-            int rendered = SMOKE_RENDERED.incrementAndGet();
-            System.out.println("TC_SMOKE_SALIS_SPARKLE_RENDERED=YES id=" + smokeId
-                    + " frame=" + currentFrame() + " count=" + rendered);
+            if (this.face) {
+                int rendered = SMOKE_FACE_RENDERED.incrementAndGet();
+                System.out.println("TC_SMOKE_SALIS_FACE_SPARKLE_RENDERED=YES id=" + faceSmokeId
+                        + " frame=" + currentFrame() + " count=" + rendered);
+            } else {
+                int rendered = SMOKE_RENDERED.incrementAndGet();
+                System.out.println("TC_SMOKE_SALIS_SPARKLE_RENDERED=YES id=" + smokeId
+                        + " frame=" + currentFrame() + " count=" + rendered);
+            }
         }
     }
 

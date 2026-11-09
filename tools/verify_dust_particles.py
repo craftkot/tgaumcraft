@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-faithful BETA26 Salis FX atlas, hand trail and exposed-face fallback guards."""
+"""Source-faithful BETA26 Salis hand-trail and exposed-face FXGeneric sprite guards."""
 from pathlib import Path
 import hashlib
 import json
@@ -32,8 +32,9 @@ assert "SalisMundusSparkles.sendToActor(level, serverPlayer, pos, context.getHan
 assert "TRAIL_COUNT = 50" in fx
 assert "SalisSparkleParticleRegistration.TYPE" in fx
 assert "velocity.z + (floaty ? 1000.0D : 0.0D)" in fx
-assert "warmDust(level, false)" not in fx
-assert "warmDust(level, true)" in fx
+assert "FACE_PARTICLE_SENTINEL = 2000.0D" in fx
+assert "new Vec3(FACE_PARTICLE_SENTINEL, 0.0025D, 0.0D)" in fx
+assert "DustParticleOptions" not in fx
 assert "SalisSparkleHandOrigin.position(" in fx
 assert "player.getBoundingBox().minY" in fx
 assert "player.getBbHeight()" in fx
@@ -65,18 +66,26 @@ assert "GRID_SIZE = 64" in particle
 assert "FRAME_COUNT = 16" in particle
 assert "320 : 512" in particle
 assert "64 + level.random.nextInt(16)" in particle
-assert "floaty ? 0.2F : 0.5F" in particle
-assert "floaty ? 0.3D + level.random.nextFloat() * 0.5D : 0.85D" in particle
+assert "this.face = xSpeed >= FACE_SENTINEL * 0.5D" in particle
+assert "this.gravity = this.face ? 0.01F : (floaty ? 0.2F : 0.5F)" in particle
+assert "this.slowDown = this.face ? 1.0D" in particle
+assert "SalisSparkleScaleRules.blockFace(level.random.nextGaussian())" in particle
+assert "this.face ? scaleStart * 2.0F : 1.0F" in particle
+assert particle.count("this.level.random.nextGaussian()") == 3
+assert "this.random.nextGaussian()" not in particle
 assert "this.yd -= 0.04D * this.gravity" in particle
 assert "this.random.nextGaussian() * 5.0E-4D" in particle
 assert "this.random.nextGaussian() * 1.0E-3D" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_CREATED=YES" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_RENDERED=YES" in particle
 assert "TC_SMOKE_SALIS_SPARKLE_EXPIRED=YES" in particle
+assert "TC_SMOKE_SALIS_FACE_SPARKLE_CREATED=YES" in particle
+assert "TC_SMOKE_SALIS_FACE_SPARKLE_RENDERED=YES" in particle
+assert "TC_SMOKE_SALIS_FACE_SPARKLE_EXPIRED=YES" in particle
 assert "this.atlas = sprites.get(0, 1)" in particle
 assert "this.setSprite(this.atlas)" in particle
 assert "RegisterEvent event" in registration
 assert "Registries.PARTICLE_TYPE" in registration
 assert "helper.register(ID, TYPE)" in registration
 assert "registerSpriteSet(type, SalisSparkleParticle.Provider::new)" in client_events
-print("BETA26 Salis hand trail: original 320/512 sprite atlas, 16-frame UVs, 64-79 tick FXGeneric motion; face burst remains explicitly approximate: PASS")
+print("BETA26 Salis hand trail + exposed-face burst: original 320/512 FXGeneric sprites, 64-79 tick motion and source-specific face physics: PASS")
