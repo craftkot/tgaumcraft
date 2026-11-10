@@ -1570,3 +1570,8 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - The isolated Java harness now models the 1.21.1 Camera#setRotation convention (yaw zero rotates local -Z to world +Z) and records actual emitted vertices. It checks vertex count, first-vertex position, all four UVs, front-face normal and fullbright light. This corrects the earlier stub's inconsistent identity quaternion at yaw zero.
 - Source comparison: BETA26 FXBlockRunes.java at https://github.com/TheDarkTower314/Thaumcraft-6-Source-Code/blob/954022bb777b7546281fb36df8522f0ba6b43f81/src/main/java/thaumcraft/client/fx/particles/FXBlockRunes.java ; 1.21.1 SingleQuadParticle.java mirror at https://github.com/hackersense/OptiFine-Source/blob/b77c5c6995874f6cf2755bc5234428906b337b75/1.21.1/net/minecraft/client/particle/SingleQuadParticle.java .
 - No progress points are awarded yet. Acceptance still requires the exact-HEAD real client to show at least 40 changed target-face pixels on both viewpoints, positive quadFacingDot on both views, 45-tick expiry, and full NeoForge CI. If the new visual test fails, preserve the threshold and inspect the resulting screenshots.
+
+
+### 10.11.2026 — generated smoke subprocess import fix
+
+- The renderer commit's generated shell script contains a separate Python heredoc process. The parser import at the outer driver level is not inherited by that subprocess, and the repository root is its initial sys.path entry rather than tools/. Added an explicit tools/ path and parser import inside the heredoc itself, before the real-client script can reach log parsing. This is a code-review correction; no result from the in-flight run is claimed.

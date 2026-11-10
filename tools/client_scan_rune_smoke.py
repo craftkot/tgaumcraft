@@ -120,7 +120,10 @@ body = r'''
   # camera-facing block face from BOTH viewpoints; pixel diff remains separate.
   python3 - <<'PY' | tee -a client-smoke-status.txt
 import math
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path.cwd() / "tools"))
+from scan_rune_log_parser import parse_scan_rune_log
 
 log = Path("client-smoke/client.log").read_text(errors="replace")
 created, rendered, expired = parse_scan_rune_log(log)
