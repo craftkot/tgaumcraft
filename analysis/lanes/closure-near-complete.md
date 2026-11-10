@@ -2037,3 +2037,27 @@ At journal update time, the fixed-head push workflows were running:
 The earlier PR workflows launched against the first implementation commit `b63133fa` predate the regex correction and are not acceptance evidence for the final test script. No test is declared passed from those runs. The exact fixed script content was fetched and checked; GitHub Actions must still execute it.
 
 No progress point is awarded. The category remains 4/6 and the project remains 59/100. This iteration fixes one real visual-parity defect, but the actual Minecraft-client screenshot and full NeoForge result on the corrected HEAD are still pending. No merge was performed; PR #4 remains Draft/open.
+
+
+## 2026-11-10 — original BETA26 JAR confirms Salis additive blend; runtime gate added
+
+The original binary was checked directly from the user's Library, not inferred only from a decompiled mirror:
+
+- Artifact: `Thaumcraft-1.12.2-6.1.BETA26.jar`
+- SHA-256: `9425f8643581b27ff8845b087c8bc6fc10425a32942f1a3f0e265ce6b38f7b5f` (matches `analysis/jar_inventory.json`).
+- `FXDispatcher.drawSimpleSparkle` bytecode at offsets 185–191 invokes `FXGeneric.setLayer(0)`.
+- `ParticleEngine.onRenderWorldLast` switch case 0 at offsets 160–167 loads GL factors `770, 1` and invokes `GlStateManager.func_179112_b(II)V`: `SRC_ALPHA, ONE`, additive.
+- The actual JAR's `assets/thaumcraft/textures/misc/particles.png` is 408,277 bytes, 1024×1024, SHA-256 `3c31a3bed7a007ef4d671745bd627112c79d1ac70049e23194a1454929f17000`, Git blob SHA-1 `f958edbcbe774c924690562a1436d12fea5846b8`. The current ported particle PNG has the same Git blob SHA-1, so the sprite art itself is byte-identical.
+
+The earlier fix now has a runtime acceptance marker: when the actual custom particle render type begins in the smoke client, it prints exactly one `TC_SMOKE_SALIS_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1` after executing `RenderSystem.blendFunc(770, 1)`. `verify_salis_sparkle_particle_log.py` requires exactly one marker; the source regression also checks that the marker follows the blend-state call. This distinguishes merely compiling the custom render type from the real client actually invoking it.
+
+Additional commits:
+- [784e767c](https://github.com/craftkot/tgaumcraft/commit/784e767c2ccf96ca778d9c06d76e46a1933fa51a) — one-shot runtime blend marker and strict log parser gate.
+- [a960e917](https://github.com/craftkot/tgaumcraft/commit/a960e9177cb99ac1ae5dd015d9cb7748473d30c3) — simplified marker count to an exact literal count, avoiding unnecessary regex escaping.
+
+CI status at journal update:
+- Full NeoForge CI [#42847776535](https://github.com/craftkot/tgaumcraft/actions/runs/42847776535) on the earlier code HEAD `7ecf762d`: **SUCCESS** (Core parity, NeoForge build, dedicated server and JAR upload).
+- Real-client Salis run [#42847776653](https://github.com/craftkot/tgaumcraft/actions/runs/42847776653) on `7ecf762d`: still running; it predates the new runtime marker and cannot accept that marker.
+- Corrected-head push Full CI [#42848791103](https://github.com/craftkot/tgaumcraft/actions/runs/42848791103) and Salis real-client [#42848790841](https://github.com/craftkot/tgaumcraft/actions/runs/42848790841): queued. The corrected-head runs are the acceptance target.
+
+No score change: **59/100**, M16 **4/6**. The original BETA26 layer/asset mismatch is now corrected in code, but acceptance still requires the exact-head real-client marker, the existing 50 hand + face particle creation/render/expiry/frame checks, transient screenshot gate, and exact-head full CI. PR #4 remains Draft/open; no merge.
