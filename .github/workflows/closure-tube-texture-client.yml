@@ -1,0 +1,88 @@
+name: M16 real Minecraft tube particle texture smoke
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - '.github/workflows/closure-tube-texture-client.yml'
+      - 'tools/client_tube_texture_smoke.py'
+      - 'tools/test_tube_texture_smoke.py'
+      - 'tools/verify_tube_texture_client_log.py'
+      - 'tools/verify_tube_source_art.py'
+      - 'src/main/resources/assets/thaumcraft/textures/block/base_metal.png'
+      - 'src/main/resources/assets/thaumcraft/models/block/tube_core_valve.json'
+      - 'src/main/resources/assets/thaumcraft/models/block/tube_side_restrict.json'
+      - 'src/main/resources/assets/thaumcraft/blockstates/tube_valve.json'
+      - 'src/main/resources/assets/thaumcraft/blockstates/tube_restrict.json'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaTubeBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/EssentiaTubeBlockEntity.java'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/closure-tube-texture-client.yml'
+      - 'tools/client_tube_texture_smoke.py'
+      - 'tools/test_tube_texture_smoke.py'
+      - 'tools/verify_tube_texture_client_log.py'
+      - 'tools/verify_tube_source_art.py'
+      - 'src/main/resources/assets/thaumcraft/textures/block/base_metal.png'
+      - 'src/main/resources/assets/thaumcraft/models/block/tube_core_valve.json'
+      - 'src/main/resources/assets/thaumcraft/models/block/tube_side_restrict.json'
+      - 'src/main/resources/assets/thaumcraft/blockstates/tube_valve.json'
+      - 'src/main/resources/assets/thaumcraft/blockstates/tube_restrict.json'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaTubeBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/EssentiaTubeBlockEntity.java'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tube-texture-real-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install virtual graphics and input tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick
+      - name: Verify original BETA26 source art and smoke harness
+        run: |
+          python tools/verify_tube_source_art.py
+          python tools/test_tube_texture_smoke.py
+      - name: Generate and syntax-check isolated real-client script
+        run: |
+          python tools/client_tube_texture_smoke.py > client-tube-generated.sh
+          bash -n client-tube-generated.sh
+      - name: Launch real Minecraft client and render connected tube variants
+        run: bash client-tube-generated.sh
+      - name: Verify real blockstates, atlas load and transient particle frames
+        run: |
+          python tools/verify_tube_texture_client_log.py \
+            client-smoke/client.log \
+            client-smoke-status.txt \
+            client-smoke/screenshots
+      - name: Upload actual game screenshots and diagnostics
+        if: \${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-real-tube-base-metal-client-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/
