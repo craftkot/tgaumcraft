@@ -30,18 +30,18 @@ body = r'''
   pactl info > client-smoke/curio-pulse-info.txt
   pactl list short sinks > client-smoke/curio-sinks.txt
   grep -Fq 'tc_curio_sink' client-smoke/curio-sinks.txt
-  timeout --signal=TERM 2s parec --device=tc_curio_sink.monitor \\
-    --format=s16le --rate=48000 --channels=2 --raw \\
+  timeout --signal=TERM 2s parec --device=tc_curio_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/curio-baseline.pcm || test "$?" -eq 124
-  timeout --signal=TERM 5s parec --device=tc_curio_sink.monitor \\
-    --format=s16le --rate=48000 --channels=2 --raw \\
+  timeout --signal=TERM 5s parec --device=tc_curio_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/curio-event.pcm &
   curio_capture_pid=$!
   sleep 0.6
   xdotool click 3
   sleep 0.7
   pactl list short sink-inputs > client-smoke/curio-sink-inputs.txt
-  python3 tools/verify_curio_pulse_sink.py \\
+  python3 tools/verify_curio_pulse_sink.py \
     client-smoke/curio-sinks.txt client-smoke/curio-sink-inputs.txt
   if grep -Fq 'OpenAL initialized on device Null Output' client-smoke/client.log; then
     echo 'CURIO_LEARN_OPENAL_NULL_OUTPUT=YES' | tee -a client-smoke-status.txt
