@@ -8,7 +8,10 @@ rules = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFa
 fx = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java").read_text()
 queue = Path("src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
 smoke = Path("tools/client_dust_sound_smoke.py").read_text()
-assert "new AABB(pos).clip(eye, eye.add(forward.scale(6.0D)))" in fx
+assert "shape.clip(eye, eye.add(forward.scale(6.0D)), pos)" in fx
+assert "new AABB(pos).clip" not in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_SHAPE_CLIPPED")' in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_CENTER_FALLBACK")' in fx
 assert "SalisSparkleFaceDelayRules.delayTicks(" in fx
 assert "spawn.distanceTo(faceStart)" in fx
 assert "SalisSparkleTrailQueue.emitFaceOrQueue(" in fx

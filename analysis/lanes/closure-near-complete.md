@@ -1639,3 +1639,17 @@ Validation status at HEAD `369e7ba1edd3d4bcdbbe2a64108e92e4fecc866f`:
 - Therefore the new Java stub harness and the real NeoForge/client run remain unverified until Actions starts. Do not count this as accepted or award M16/overall points yet.
 
 Next action: inspect #42775639207 and #42775646148 first. If the harness fails, fix that before other work. Require full NeoForge build and the actual Salis client smoke to pass on the exact code HEAD. Native chunk-unload/reload with real chunk-ticket evidence remains a separate unclosed test gap; the existing JVM queue test is not native proof.
+
+
+## 2026-11-10 — reconcile Salis face-delay source guard with the accepted shape clip
+
+Fresh integration baseline and exact-head CI review:
+- `main` remains `a4280834adc5a20b6951098af937d30ca4aeca56`; PR #4 branch HEAD before this change was `8c68c489ac178bfcbe00d3ba1137937a9a0ed2d1`, 398 commits ahead / 0 behind. PR #4 is still open Draft; no merge.
+- Exact-head full NeoForge CI passed on push [#42775947533](https://github.com/craftkot/tgaumcraft/actions/runs/42775947533) and PR [#42775956022](https://github.com/craftkot/tgaumcraft/actions/runs/42775956022): Core parity, source/resource checks, NeoForge build, JAR and dedicated-server smoke.
+- Exact-head scan-rune real-client [#42775956019](https://github.com/craftkot/tgaumcraft/actions/runs/42775956019) and Salis queue JVM regression [#42775955948](https://github.com/craftkot/tgaumcraft/actions/runs/42775955948) passed.
+- Salis real-client workflow [#42775955950](https://github.com/craftkot/tgaumcraft/actions/runs/42775955950) failed **before launching Minecraft** at `tools/test_salis_face_delay.py:11`. Its preceding checks passed, including original asset/waveform controls, face geometry, the new `SalisMundusSparkles.java` partial-shape harness (`SALIS_SHAPE_AWARE_HITPOINT_FALLBACK=PASS upDelay=0 faceParticles=192`), hand anchor and trail-delay tests. The failing assertion still required the removed full-cube `new AABB(pos).clip(...)` path; production now correctly uses `VoxelShape.clip(..., pos)`. This is a stale test contract, not a game/client failure. No real-client evidence was produced by this failed run.
+- Fixed only `tools/test_salis_face_delay.py`: its source guard now requires the actual shape clip, rejects the old AABB clip and requires both explicit shape-hit and center-fallback diagnostics. The delay arithmetic and unload/cancellation checks remain unchanged.
+- Separate tube real-client run [#42775955717](https://github.com/craftkot/tgaumcraft/actions/runs/42775955717) reached the real world and passed render diffs (connected tube 765952, valve particles 6286, restrict particles 6153) with no missing model textures, but the final verifier failed because three server-side connected-blockstate markers were absent. It is not accepted and is not changed in this iteration.
+- PR #1 and #2 do not overlap this test/journal; PR #3's only PR #4 path overlap remains `SalisMundusItem.java`, untouched. No production Java, registries, Gradle, global workflow or foreign branch changed.
+
+Next: require the exact-new-HEAD Salis real-client workflow to pass the corrected source guards and proceed through the actual Minecraft dust/particle scenario; inspect its PCM and framebuffer artifacts. The tube server-marker failure remains a separate M16 issue. Native Salis chunk-unload/reload with actual server chunk-ticket evidence is still not proven by the JVM queue harness. Fixed audit remains **59/100**, M16 **4/6**; no points awarded.
