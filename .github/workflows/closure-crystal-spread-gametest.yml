@@ -35,8 +35,13 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      - name: Set up Gradle 9.2.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+
       - name: Run native NeoForge GameTests
-        run: ./gradlew --no-daemon runGameTestServer
+        run: gradle runGameTestServer --no-daemon
 
       - name: Upload GameTest evidence
         if: always()

@@ -2172,3 +2172,10 @@ This proves Core/source-contract, NeoForge compilation, dedicated-server startup
 - The new workflow must pass on the exact code HEAD and its log artifact must contain all three case markers plus `TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES`.
 - The GameTest is a deterministic direct invocation of the production random-tick method in a real NeoForge ServerLevel. It proves the production branch and aura transaction; it does not measure the natural random-tick scheduling frequency.
 - No M08 or total score increase is claimed until the exact-head GameTest passes and its artifact is inspected. Current fixed audit remains 59/100, M08 5/9. PR #4 remains Draft/open; no merge.
+
+
+### M33 workflow bootstrap correction — 2026-11-10
+
+- First dedicated workflow run [#42884378513](https://github.com/craftkot/tgaumcraft/actions/runs/42884378513) failed before Gradle started: the repository intentionally has no `gradlew` wrapper, so `./gradlew` exited 127. No GameTest method was loaded or executed; this is an infrastructure invocation failure, not a gameplay assertion.
+- The current main CI explicitly installs Gradle 9.2.1 via `gradle/actions/setup-gradle@v4` and invokes `gradle build`. The isolated GameTest workflow now uses the same Gradle setup and runs `gradle runGameTestServer --no-daemon`.
+- The failed run produced no GameTest logs/artifact. Exact-head GameTest and full NeoForge CI must be checked again after this workflow-only correction.
