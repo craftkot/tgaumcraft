@@ -51,8 +51,11 @@ isolated_options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory
 assert isolated_options in generated
 assert generated.index(isolated_options) < generated.index("gradle runClient")
 assert "CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS" in generated
-assert "soundCategory_neutral:0.0" not in generated
-assert "soundCategory_master:0.0" not in generated
+option_writes = [
+    line for line in generated.splitlines()
+    if line.startswith("printf 'guiScale:2\\n")
+]
+assert option_writes == [isolated_options]
 print("CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS")
 print("CURIO_LEARN_SOURCE_AND_TRIGGER_CONTRACT=PASS")
 print("CURIO_LEARN_REAL_PULSE_CAPTURE_GUARD=PASS")
