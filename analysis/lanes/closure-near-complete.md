@@ -2088,3 +2088,26 @@ Compared the pinned source JAR implementation of `thaumcraft.common.blocks.world
 Added `LegacyBlockCrystalGrowthRules.canSpreadInto(liquid, airOrReplaceable)`, wired it into `CrystalClusterBlock.randomTick` using non-empty `FluidState` as the conservative 1.21.1 liquid mapping, and added four deterministic assertions to `CrystalGrowthParityTest` (including the replaceable-liquid case). This deliberately does not change aura drain semantics: BETA26 growth reaches the drain call only after `available > auraBase + 10`, with generated base clamped nonnegative, so the existing all-or-nothing 10-unit check is not a reachable difference in this path.
 
 The Core parity runner already invokes `CrystalGrowthParityTest`; the exact-head GitHub Actions run must still confirm it. This is a Core rule regression plus NeoForge compilation, not a dedicated in-world crystal-spread GameTest. No category score is changed by this iteration. M16 remains 4/6; M08 remains at its previously audited 5/9 pending actual world-behavior acceptance. No merge was performed.
+
+
+## 2026-11-10 — M31: restore BETA26 aura biome sample height
+
+Pinned-source comparison: `thaumcraft.common.world.aura.AuraHandler#generateAura` at `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb777b7546281fb36df8522f0ba6b43f81`.
+
+**Defect:** the original samples the center biome and four cardinal-neighbor biomes at fixed block Y=50. `ThaumcraftAuraWorldEvents` instead sampled at `level.getSeaLevel()` (normally Y=63 in the default overworld). In 1.21.1, biome selection is vertically resolved, so this can choose a different biome modifier in cave/overhang columns and change generated base Vis.
+
+**Fix:** added `AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y = 50` and used it for the center position. The four cardinal samples derive from that same BlockPos and therefore inherit Y=50, matching BETA26's five sampling coordinates. The base arithmetic and Gaussian draw are unchanged.
+
+**Regression:** `CrystalGrowthParityTest` now asserts the pinned sample height is exactly 50. The existing Core parity workflow already executes this test. Exact-head GitHub Actions results are required before calling the regression PASS; full NeoForge/server success still does not prove biome selection in a real generated world.
+
+**Changed files:**
+- `src/main/java/dev/ehtid/thaumcraft/port/core/AuraGenerationLogic.java`
+- `src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java`
+- `src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java`
+- this lane journal.
+
+**Commit:** [40e21e7](https://github.com/craftkot/tgaumcraft/commit/40e21e731ed85e6ea9909cf487f5bb2a1274cfb2).
+
+**Acceptance limits:** this restores the exact source sampling height but does not make 1.21 biome layout, biome dictionary mapping, or chunk-generation timing identical to 1.12.2. No in-world aura-generation GameTest was added in this iteration. M08 remains 5/9; overall fixed audit remains 59/100. PR #4 remains Draft/open and is not merged.
+
+**Next:** inspect exact-head Core/NeoForge CI; then add a deterministic server-side test for the five biome sample positions and verify initialization in a generated 1.21.1 world without forcing neighbor chunks.
