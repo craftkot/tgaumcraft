@@ -3,7 +3,7 @@ set -euo pipefail
 
 timeout_seconds="${TC_GAMETEST_TIMEOUT_SECONDS:-300}"
 kill_after_seconds="${TC_GAMETEST_KILL_AFTER_SECONDS:-10}"
-log_file="${TC_GAMETEST_LOG_FILE:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/crystal-spread-gametest.log}"
+log_file="${TC_GAMETEST_LOG_FILE:-${RUNNER_TEMP:-${TMPDIR:-/tmp}}/aura-and-crystal-gametest.log}"
 
 for value in "$timeout_seconds" "$kill_after_seconds"; do
     if [[ ! "$value" =~ ^[1-9][0-9]*$ ]]; then
@@ -35,11 +35,22 @@ verify_gameplay_pass() {
     require_marker 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=water result=REJECTED vis=100.0' || return 1
     require_marker 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=lava result=REJECTED vis=100.0' || return 1
     require_marker 'TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES' || return 1
-    require_marker 'All 1 required tests passed' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAMPLE=center biome=minecraft:plains y=50' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAMPLE=north biome=minecraft:desert y=50' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAMPLE=south biome=minecraft:forest y=50' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAMPLE=west biome=minecraft:ocean y=50' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAMPLE=east biome=minecraft:swamp y=50' || return 1
+    require_marker 'TC_GAMETEST_AURA_SEALEVEL=center biome=minecraft:desert' || return 1
+    require_marker 'TC_GAMETEST_AURA_GENERATION base=181 vis=181.0 flux=0.0' || return 1
+    require_marker 'TC_GAMETEST_AURA_REENTRY_PRESERVED=YES' || return 1
+    require_marker 'TC_GAMETEST_AURA_SAVE_LOAD base=181 vis=73.0 flux=4.5' || return 1
+    require_marker 'TC_GAMETEST_AURA_NO_FORCE_LOAD=YES' || return 1
+    require_marker 'TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES' || return 1
+    require_marker 'All 2 required tests passed' || return 1
 }
 
 if ! verify_gameplay_pass; then
-    echo "Crystal spread GameTest did not complete successfully (Gradle exit: ${gradle_status})" >&2
+    echo "Aura/crystal GameTests did not complete successfully (Gradle exit: ${gradle_status})" >&2
     exit 1
 fi
 
