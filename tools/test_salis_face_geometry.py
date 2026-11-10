@@ -82,3 +82,6 @@ assert "this.random.nextGaussian()" not in particle
 assert "FACE_PARTICLE_SENTINEL = 2000.0D" in sparkles
 assert "new Vec3(FACE_PARTICLE_SENTINEL, 0.0025D, 0.0D)" in sparkles
 assert "DustParticleOptions" not in sparkles
+
+# Compile the actual NeoForge sparkle caller and verify exact partial-shape fallback.
+subprocess.run(["python3", "tools/test_salis_hitpoint_fallback.py"], check=True)
