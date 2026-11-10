@@ -113,58 +113,85 @@ body = r'''
   xdotool key --clearmodifiers F1
 
   # Real-client diagnostics are emitted from the actual ScanRuneParticle
-  # constructor, FacingCameraMode render callback, and tick expiration.
-  # Merely sending a mouse click or having a green process exit is insufficient.
+  # constructor, camera-relative render transform, FacingCameraMode callback,
+  # and tick expiration. The front-dot check proves the offset reaches the
+  # camera-facing block face from BOTH viewpoints; pixel diff remains separate.
   python3 - <<'PY' | tee -a client-smoke-status.txt
+import math
 import re
 from pathlib import Path
 
 log = Path("client-smoke/client.log").read_text(errors="replace")
 created = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_CREATED=YES face=(\d) lifetime=(\d+) "
-    r"x=(-?[\d.Ee]+) y=(-?[\d.Ee]+) z=(-?[\d.Ee]+)", log)
+    r"TC_SMOKE_SCAN_RUNE_CREATED=YES face=(\\d) lifetime=(\\d+) "
+    r"x=(-?[\\d.Ee+-]+) y=(-?[\\d.Ee+-]+) z=(-?[\\d.Ee+-]+) "
+    r"localX=(-?[\\d.Ee+-]+) localY=(-?[\\d.Ee+-]+) localZ=(-?[\\d.Ee+-]+)", log)
 rendered = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\d) alpha=([0-9.Ee+-]+) size=([0-9.Ee+-]+)", log)
+    r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\\d) alpha=([\\d.Ee+-]+) size=([\\d.Ee+-]+) "
+    r"cameraYaw=(-?[\\d.Ee+-]+) lookX=(-?[\\d.Ee+-]+) lookY=(-?[\\d.Ee+-]+) "
+    r"lookZ=(-?[\\d.Ee+-]+) worldX=(-?[\\d.Ee+-]+) worldY=(-?[\\d.Ee+-]+) "
+    r"worldZ=(-?[\\d.Ee+-]+) frontDot=(-?[\\d.Ee+-]+)", log)
 expired = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\d) age=(\d+) lifetime=(\d+) "
-    r"drift=([0-9.Ee+-]+)", log)
-if len(created) < 10:
+    r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\\d) age=(\\d+) lifetime=(\\d+) "
+    r"drift=([\\d.Ee+-]+)", log)
+if len(created) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
-visible_rendered = [(face, float(alpha), float(size))
-                    for face, alpha, size in rendered
-                    if float(alpha) >= 0.25 and float(size) >= 0.25]
-if not visible_rendered:
-    raise SystemExit("RUNE_ACTUAL_CLIENT_NONZERO_ALPHA_RENDER_MISSING")
-if len(expired) < 10:
+visible_rendered = []
+for row in rendered:
+    face, alpha, size, yaw, lx, ly, lz, wx, wy, wz, front = row
+    values = tuple(float(v) for v in (alpha,size,yaw,lx,ly,lz,wx,wy,wz,front))
+    if values[0] >= 0.25 and values[1] >= 0.25:
+        visible_rendered.append((int(face), *values))
+if len(visible_rendered) < 40:
+    raise SystemExit(f"RUNE_ACTUAL_CLIENT_NONZERO_ALPHA_RENDER_MISSING count={len(visible_rendered)}")
+if len(expired) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_EXPIRY_MISSING count={len(expired)}")
 faces = set()
-for face, life, x, y, z in created:
+for face, life, x, y, z, local_x, local_y, local_z in created:
     face, life = int(face), int(life)
-    x, y, z = float(x), float(y), float(z)
-    if life != 45 or not 151.74 <= y <= 151.96:
-        raise SystemExit(f"RUNE_BLOCK_DURATION_OR_HEIGHT_WRONG {face} {life} {y}")
-    if face == 0:
-        good = abs(z - 3.99) < 0.0001 and 0.19 <= x <= 0.81
-    elif face == 1:
-        good = abs(x + 0.01) < 0.0001 and 4.19 <= z <= 4.81
-    elif face == 2:
-        good = abs(z - 5.01) < 0.0001 and 0.19 <= x <= 0.81
-    elif face == 3:
-        good = abs(x - 1.01) < 0.0001 and 4.19 <= z <= 4.81
-    else:
-        good = False
-    if not good:
-        raise SystemExit(f"RUNE_FACE_PLACEMENT_WRONG face={face} xyz={x},{y},{z}")
+    x, y, z, local_x, local_y, local_z = map(
+        float, (x,y,z,local_x,local_y,local_z))
+    if life != 45 or abs(x-0.5)>0.0001 or abs(y-151.75)>0.0001 or abs(z-4.5)>0.0001:
+        raise SystemExit(f"RUNE_BLOCK_ANCHOR_OR_DURATION_WRONG {face} {life} {x},{y},{z}")
+    if not 0.0 <= local_x < 0.2 or not -0.3 <= local_y < 0.3 or abs(local_z+0.51)>0.0001:
+        raise SystemExit(f"RUNE_LOCAL_CAMERA_OFFSET_WRONG {face} {local_x},{local_y},{local_z}")
     faces.add(face)
-if len(faces) < 2:
-    raise SystemExit(f"RUNE_FACE_VARIETY_MISSING faces={faces}")
+if faces != {0,1,2,3}:
+    raise SystemExit(f"RUNE_FACE_VARIETY_MISSING faces={sorted(faces)}")
+
+def normalized_yaw(value):
+    return (value + 180.0) % 360.0 - 180.0
+
+first_view = [r for r in visible_rendered if abs(normalized_yaw(r[3])) < 5.0]
+opposite_view = [r for r in visible_rendered
+                 if abs(abs(normalized_yaw(r[3]))-180.0) < 5.0]
+if len(first_view) < 10 or len(opposite_view) < 10:
+    raise SystemExit(
+        f"RUNE_CAMERA_VIEWS_MISSING first={len(first_view)} opposite={len(opposite_view)}")
+front_first = [r for r in first_view if r[10] >= 0.49]
+front_opposite = [r for r in opposite_view if r[10] >= 0.49]
+if len(front_first) < 2 or len(front_opposite) < 2:
+    raise SystemExit(
+        f"RUNE_CAMERA_RELATIVE_FRONT_OFFSET_MISSING first={len(front_first)} "
+        f"opposite={len(front_opposite)}")
+for label, group in (("first",front_first),("opposite",front_opposite)):
+    for face,alpha,size,yaw,look_x,look_y,look_z,world_x,world_y,world_z,front_dot in group:
+        if not 151.70 <= world_y <= 151.98:
+            raise SystemExit(f"RUNE_RENDERED_WORLD_HEIGHT_WRONG {label} {world_y}")
+        if abs(look_x) > 0.02 or abs(look_y) > 0.02 or abs(abs(look_z)-1.0) > 0.02:
+            raise SystemExit(f"RUNE_SMOKE_CAMERA_NOT_HORIZONTAL {label} look={look_x},{look_y},{look_z}")
+        expected_front_z = 4.5 - look_z * 0.51
+        if abs(world_z-expected_front_z) > 0.02:
+            raise SystemExit(
+                f"RUNE_CAMERA_OFFSET_ON_WRONG_FACE {label} worldZ={world_z} expected={expected_front_z}")
 if any(int(age) != 45 or int(life) != 45 for _, age, life, _ in expired):
     raise SystemExit("RUNE_ACTUAL_CLIENT_EXPIRY_TICK_WRONG")
 if any(float(drift) > 0.0001 for _, _, _, drift in expired):
     raise SystemExit("RUNE_HORIZONTAL_DRIFT_FROM_VANILLA_CONSTRUCTOR")
 print(f"RUNE_ACTUAL_CLIENT_SPAWN=PASS count={len(created)} faces={sorted(faces)}")
 print(f"RUNE_ACTUAL_CLIENT_RENDER=PASS count={len(rendered)} "
-      f"visibleAlpha={max(alpha for _, alpha, _ in visible_rendered):.3f}")
+      f"visibleAlpha={max(r[1] for r in visible_rendered):.3f}")
+print(f"RUNE_CAMERA_RELATIVE_OFFSET=PASS views=2 frontFacing={len(front_first)}/{len(front_opposite)}")
 print(f"RUNE_ACTUAL_CLIENT_EXPIRY=PASS count={len(expired)}")
 PY
 
