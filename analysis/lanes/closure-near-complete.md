@@ -2193,3 +2193,10 @@ This proves Core/source-contract, NeoForge compilation, dedicated-server startup
 - Exact-head NeoForge compile [#42884693727](https://github.com/craftkot/tgaumcraft/actions/runs/42884693727) reached `:compileJava` and reported four errors, all caused by the initial import assumption: in NeoForge 1.21.1 `GameTestHolder` and `PrefixGameTestTemplate` are in `net.neoforged.neoforge.gametest`, not `net.minecraft.gametest.framework`.
 - Updated only those two imports in `CrystalSpreadGameTests.java`. The vanilla `GameTest` and `GameTestHelper` imports remain in `net.minecraft.gametest.framework`.
 - The GameTest body has not executed yet. The next exact-head build and GameTest server run are required before any gameplay result is claimed.
+
+
+### M33 structure-template compression correction — 2026-11-10
+
+- The GameTest server now starts and discovers the registered test, but [run #42885048053](https://github.com/craftkot/tgaumcraft/actions/runs/42885048053) failed while loading `thaumcraft:crystal_spread_empty`: `StructureTemplateManager` reported `ZipException: Not in GZIP format`, followed by `Missing test structure`.
+- The structure template NBT was encoded as raw NBT. Minecraft 1.21.1 expects structure `.nbt` resources to be gzip-compressed. Re-encoded the same DataVersion 3953 / 16×8×16 air-only structure with deterministic gzip (`mtime=0`); no Java or gameplay logic changed.
+- This was a fixture-format failure before the test method ran. The next exact-head GameTest run must confirm the structure loads and all three scenario markers appear.
