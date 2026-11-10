@@ -1794,3 +1794,31 @@ Next: inspect the two `dbedd0f` Curio runs first. Require the source/generator t
 - Exact-`dbedd0f` runs [push Curio #42806426473](https://github.com/craftkot/tgaumcraft/actions/runs/42806426473), [PR Curio #42806434955](https://github.com/craftkot/tgaumcraft/actions/runs/42806434955), [push full CI #42806426959](https://github.com/craftkot/tgaumcraft/actions/runs/42806426959) and [PR full CI #42806435456](https://github.com/craftkot/tgaumcraft/actions/runs/42806435456) were queued at the last status read. No result is inferred.
 - A local synthetic generator fixture using a minimal `client_smoke.sh` anchor returned exit 0 and confirmed the exact options command precedes `gradle runClient`; this is only a script-generation check, not a repository test or Minecraft run.
 - Next: inspect the exact-`dbedd0f` Curio source-unit, generated Bash, real client and PCM matcher results before changing anything else.
+
+
+## 2026-11-10 — Curio smoke generator syntax blocker removed; real client still running
+
+Fresh-state checks:
+- Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`; PR #4 branch is 410 commits ahead and 0 behind.
+- PR #4 remains open Draft. Changed-path comparison against PR #1 (`feature/infusion`), PR #2 (`chore/coordination`) and PR #3 (`feature/golems`) shows no overlap for the Curio generator, Curio unit test, Curio workflow or this lane journal. The known unrelated `SalisMundusItem.java` overlap between PR #3 and #4 is untouched.
+- Re-read main `AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md` and the fixed audit. The project remains on the existing M16 workstream; no M02/M03 or M07 implementation was duplicated.
+
+Exact failure diagnosis:
+- On `dbedd0f4586fd5116e715f91934f5b20b7862893`, PR Curio run [#42806434955](https://github.com/craftkot/tgaumcraft/actions/runs/42806434955) failed in step 7, `Source asset and pitched PCM unit regression`, before script generation or Minecraft startup.
+- The job log reports `IndentationError: unexpected indent` at line 89 of `tools/client_curio_learn_sound_smoke.py`. After `sys.stdout.write(head + body)`, 62 lines of a duplicated shell fragment had been accidentally left outside the Python raw string. This was a test-generator syntax defect; it was not an audio PCM mismatch and did not demonstrate a production Curio sound defect.
+
+Fix:
+- Removed the stray 62-line duplicate tail. The generator now terminates immediately after its single `sys.stdout.write(head + body)`.
+- Changed only `tools/client_curio_learn_sound_smoke.py` in this code commit; no production Java, resources, shared registries, Gradle or common smoke script changed.
+- Code commit: [6ff2411](https://github.com/craftkot/tgaumcraft/commit/6ff2411fa52dbe6c91b266ea482136a7711fc8c4).
+
+Exact-head verification on `6ff2411`:
+- Curio PR client [#42813815901](https://github.com/craftkot/tgaumcraft/actions/runs/42813815901): source asset/PCM unit regression **SUCCESS**; generated-script test and `bash -n` **SUCCESS**. At this journal update, the real Minecraft client step is still **IN_PROGRESS**; the PCM match step has not started. Do not claim Curio sound acceptance yet.
+- Full NeoForge PR CI [#42813815623](https://github.com/craftkot/tgaumcraft/actions/runs/42813815623): **SUCCESS** on exact code SHA. Logs show Core parity **10,046 assertions**, `BUILD SUCCESSFUL`, dedicated server `Done`, and JAR artifact upload [#13763417831](https://github.com/craftkot/tgaumcraft/actions/runs/42813815623/artifacts/13763417831).
+- Other exact-head M16 workflows already completed: readable GUI [#42813815628](https://github.com/craftkot/tgaumcraft/actions/runs/42813815628), Salis queue JVM [#42813815605](https://github.com/craftkot/tgaumcraft/actions/runs/42813815605), and original Thaumonomicon page resource check [#42813815620](https://github.com/craftkot/tgaumcraft/actions/runs/42813815620), all **SUCCESS**. Other real-client M16 workflows were still running; no outcomes are inferred.
+
+Assessment:
+- This iteration repairs the test harness only. No production gameplay behaviour changed and no score is awarded: fixed audit remains **59/100**, M16 remains **4/6**.
+- PR #4 remains Draft and unmerged. No foreign branch or PR was modified.
+
+Next: inspect the remainder of [Curio real-client #42813815901](https://github.com/craftkot/tgaumcraft/actions/runs/42813815901). Require actual Minecraft startup, the background-audio isolation marker, one server dispatch, original `learn.ogg` PCM correlation >= 0.20, and pitch parity. If the client step fails or times out, inspect its log/artifact before any production-code change.
