@@ -25,7 +25,6 @@ def main() -> int:
         "tube_send_chat '/setblock 11 149 12 thaumcraft:tube_restrict' 'Changed the block at 11, 149, 12'",
         "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
         "tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
-        "tube_send_chat_quick",
         "sleep 1",
         "--delay 24",
         "seq 1 80",
