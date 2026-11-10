@@ -136,6 +136,7 @@ def main() -> int:
         assert verify_tube_texture_client_log.verify(
             log.replace("TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES", ""),
             status,
+            screenshots,
         ), "breaking the wrong tube must fail the exact-block verifier"
 
         assert verify_tube_texture_client_log.verify(
