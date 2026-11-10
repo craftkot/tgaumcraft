@@ -44,14 +44,11 @@ public final class SalisMundusSparkles {
                 forward.x, forward.y, forward.z, hand == InteractionHand.OFF_HAND);
         Vec3 start = new Vec3(origin[0], origin[1], origin[2]);
         Vec3 travel = Vec3.atCenterOf(pos).subtract(start);
-        // BETA26 measures face-sparkle delay from the clicked hit point.
-        // The use-on-item call currently does not pass hit coordinates (PR #3
-        // also owns that item file). Reconstruct the ray/box intersection;
-        // the block center is a safe fallback, not exact hit-position parity.
-        // BETA26 ItemMagicDust receives the actual BlockHitResult coordinates.
-        // Re-raycast the authoritative server player against the same outline shape;
-        // only accept the result if it is still the clicked block. This avoids
-        // touching SalisMundusItem.onItemUseFirst, which is shared with PR #3.
+        // Read the clicked block's outline once. BETA26 passes the original hit
+        // coordinates into drawBlockSparkles; when the server-side player ray
+        // cannot reproduce that hit, clip against this exact VoxelShape rather
+        // than the full block AABB (which is wrong for slabs and multipart shapes).
+        var shape = level.getBlockState(pos).getShape(level, pos);
         var picked = player.pick(6.0D, 1.0F, false);
         Vec3 faceStart;
         if (picked instanceof BlockHitResult blockHit && blockHit.getBlockPos().equals(pos)) {
@@ -59,9 +56,14 @@ public final class SalisMundusSparkles {
             ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICKED");
         } else {
             Vec3 eye = player.getEyePosition();
-            faceStart = new AABB(pos).clip(eye, eye.add(forward.scale(6.0D)))
-                    .orElse(Vec3.atCenterOf(pos));
-            ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICK_FALLBACK");
+            var fallbackHit = shape.clip(eye, eye.add(forward.scale(6.0D)), pos);
+            if (fallbackHit == null) {
+                faceStart = Vec3.atCenterOf(pos);
+                ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_CENTER_FALLBACK");
+            } else {
+                faceStart = fallbackHit.getLocation();
+                ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_SHAPE_CLIPPED");
+            }
         }
 
         for (int i = 0; i < TRAIL_COUNT; i++) {
@@ -87,7 +89,6 @@ public final class SalisMundusSparkles {
         // emit sparkles. The previous 12 random interior positions were often
         // occluded by the solid bookshelf and did not match the source effect.
         // Original: 2 * floor(20 * mean edge length) per visible face.
-        var shape = level.getBlockState(pos).getShape(level, pos);
         // BETA26 FXDispatcher calls bs.grow(0.1, 0.1, 0.1) but discards
         // its return value. 1.12.2 AxisAlignedBB is immutable: the original
         // effect actually clamps to the UNEXPANDED shape (40/full-cube face).
