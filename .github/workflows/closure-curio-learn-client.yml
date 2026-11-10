@@ -13,6 +13,8 @@ on:
       - 'tools/test_curio_learn_sound.py'
       - 'tools/check_curio_pitch_parity.py'
       - 'tools/test_curio_pitch_parity.py'
+      - 'tools/verify_curio_pulse_sink.py'
+      - 'tools/test_curio_pulse_sink.py'
       - '.github/workflows/closure-curio-learn-client.yml'
   pull_request:
     branches: [main]
@@ -26,6 +28,8 @@ on:
       - 'tools/test_curio_learn_sound.py'
       - 'tools/check_curio_pitch_parity.py'
       - 'tools/test_curio_pitch_parity.py'
+      - 'tools/verify_curio_pulse_sink.py'
+      - 'tools/test_curio_pulse_sink.py'
       - '.github/workflows/closure-curio-learn-client.yml'
   workflow_dispatch:
 
@@ -60,6 +64,7 @@ jobs:
           python -m pip install numpy==2.2.6
           python tools/test_curio_learn_sound.py
           python tools/test_curio_pitch_parity.py
+          python tools/test_curio_pulse_sink.py
       - name: Generate real client script and validate Bash
         run: |
           python3 tools/client_curio_learn_sound_smoke.py > client-curio-generated.sh
@@ -70,6 +75,8 @@ jobs:
           mkdir -p "$XDG_RUNTIME_DIR"
           chmod 700 "$XDG_RUNTIME_DIR"
           pulseaudio --start --exit-idle-time=-1
+          export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"
+          pactl info
           pactl load-module module-null-sink sink_name=tc_curio_sink rate=48000 channels=2
           pactl set-default-sink tc_curio_sink
           bash client-curio-generated.sh
