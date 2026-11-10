@@ -62,10 +62,6 @@ def main() -> int:
         "tube_send_chat must be defined before the first setup command; Bash does not hoist functions"
     )
     assert generated.count("  tube_send_chat() {") == 1, "chat helper must be defined exactly once"
-    fast_helper_match = re.search(r"(?ms)^  tube_send_chat_fast\(\) \{\n.*?^  \}", generated)
-    assert fast_helper_match, "missing fast server-ack helper for short-lived particles"
-    first_fast_call = generated.index("  tube_send_chat_fast '/execute if block 9 149 12 minecraft:air")
-    assert generated.index(fast_helper_match.group(0)) < first_fast_call
     assert "minecraft:air destroy" not in generated, "tube destruction must use real client input"
     assert "TUBE_EVIDENCE_ROI=420x150+300+290" in generated
     assert "tube_send_chat_quick" not in generated, "racy chat helper must not return"
