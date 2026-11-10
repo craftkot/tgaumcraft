@@ -2232,3 +2232,20 @@ The wrapper's local shell harness was exercised in three cases: complete markers
 **Current acceptance:** the crystal spread gameplay subcase is supported by real NeoForge server logs, but the corrected bounded workflow must still complete successfully on the new exact HEAD. M08 remains **5/9** and the fixed overall audit remains **59/100**; no score is awarded for this isolated scenario. PR #4 remains Draft/open; no merge.
 
 **Next:** inspect the exact-head rerun for `TC_GAMETEST_CRYSTAL_SPREAD_RUNNER_EXIT=watchdog_after_all_tests_passed` (or `clean`) and uploaded log artifact. Then continue M08 with an in-world test of five Y=50 biome samples and aura initialization/save-reload; do not infer that from the current crystal test.
+
+
+### M33 bounded-runner exact-head acceptance — 2026-11-10
+
+For runner fix commit [4238d57](https://github.com/craftkot/tgaumcraft/commit/4238d578a3e304cc163f40b7c878854cb8059143):
+
+- Dedicated native NeoForge GameTest [#42892963072](https://github.com/craftkot/tgaumcraft/actions/runs/42892963072): **SUCCESS**.
+- Its decoded job log contains the exact positive seagrass case (child crystal, Vis 90), negative water case (unchanged, Vis 100), negative lava case (unchanged, Vis 100), `TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES`, and `All 1 required tests passed`.
+- The wrapper then emitted `TC_GAMETEST_CRYSTAL_SPREAD_RUNNER_EXIT=watchdog_after_all_tests_passed`. This is intentional: the GameTest assertions and Minecraft summary completed, but the ModDevGradle/Java process remained alive. The 300-second watchdog bounded that process only after the exact pass evidence was present. This is a **successful gameplay test with watchdog-managed shutdown**, not a natural Gradle exit.
+- Uploaded server-log artifact: [#13799078200](https://github.com/craftkot/tgaumcraft/actions/runs/42892963072/artifacts/13799078200).
+- Full exact-head [Thaumcraft Port CI #42892963588](https://github.com/craftkot/tgaumcraft/actions/runs/42892963588): **SUCCESS** — Core parity, NeoForge build, dedicated-server smoke and JAR packaging.
+
+The local wrapper harness also passed its positive/hung-process case and rejected both a missing gameplay marker and a nonzero Gradle exit after apparent markers. The real GameTest above is the authoritative server-world evidence.
+
+**Acceptance:** M33's crystal-spread liquid-material scenario is now accepted: a replaceable non-liquid fluid-bearing block spreads and debits exactly 10 Vis; water and lava are rejected without debit. This closes only that narrow M08 scenario. The fixed audit remains **59/100**, M08 remains **5/9**; no score is awarded for one isolated regression. M16 remains **4/6**. No production Java or `build.gradle` changed in the runner correction; PR #4 remains Draft/open and unmerged.
+
+**Next M08 action:** add a deterministic ServerLevel/GameTest for aura generation at the five BETA26 biome sample positions (center + four cardinal neighbors, all Y=50), then verify the generated chunk aura is persisted and not overwritten on reload. Keep the 1.21.1 vertical biome projection limitation explicit; this test can prove sampling coordinates and save behavior, not full 1.12.2 biome equivalence.
