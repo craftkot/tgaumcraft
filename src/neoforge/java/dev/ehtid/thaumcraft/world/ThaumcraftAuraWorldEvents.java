@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.function.DoubleSupplier;
+
 /**
  * Incremental, main-thread aura population for gameplay-loaded chunks.
  *
@@ -32,20 +34,42 @@ public final class ThaumcraftAuraWorldEvents {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     int x = cx + dx, z = cz + dz;
-                    BlockPos middle = new BlockPos(x * 16 + 8, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y, z * 16 + 8);
-                    if (aura.hasChunk(middle) || !fiveChunksLoaded(level, x, z)) continue;
-                    float center = modifier(level, middle);
-                    float north = modifier(level, middle.north(SAMPLE_SPACING));
-                    float south = modifier(level, middle.south(SAMPLE_SPACING));
-                    float west = modifier(level, middle.west(SAMPLE_SPACING));
-                    float east = modifier(level, middle.east(SAMPLE_SPACING));
-                    int base = AuraGenerationLogic.generatedBase(center, north, south,
-                            west, east, level.getRandom().nextGaussian());
-                    // Initial Vis equals base; no free Vis/Flux is created on re-entry.
-                    aura.putChunk(middle, (short) base, base, 0.0F);
+                    initializeChunkIfReady(level, aura, x, z, level.getRandom()::nextGaussian);
                 }
             }
         }
+    }
+
+    /**
+     * The production population path, also exercised by the native GameTest.
+     * The Gaussian supplier is evaluated only after the five chunks are
+     * already loaded and the aura entry is absent, so skipped work consumes
+     * no random value and never triggers a chunk load.
+     */
+    static boolean initializeChunkIfReady(
+            ServerLevel level,
+            ThaumcraftAuraSavedData aura,
+            int x,
+            int z,
+            DoubleSupplier gaussianSource
+    ) {
+        BlockPos middle = new BlockPos(
+                x * 16 + 8,
+                AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y,
+                z * 16 + 8
+        );
+        if (aura.hasChunk(middle) || !fiveChunksLoaded(level, x, z)) return false;
+
+        float center = modifier(level, middle);
+        float north = modifier(level, middle.north(SAMPLE_SPACING));
+        float south = modifier(level, middle.south(SAMPLE_SPACING));
+        float west = modifier(level, middle.west(SAMPLE_SPACING));
+        float east = modifier(level, middle.east(SAMPLE_SPACING));
+        int base = AuraGenerationLogic.generatedBase(center, north, south,
+                west, east, gaussianSource.getAsDouble());
+        // Initial Vis equals base; no free Vis/Flux is created on re-entry.
+        aura.putChunk(middle, (short) base, base, 0.0F);
+        return true;
     }
 
     private static boolean fiveChunksLoaded(ServerLevel level, int x, int z) {
