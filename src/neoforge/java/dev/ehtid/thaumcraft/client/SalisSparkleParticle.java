@@ -1,5 +1,8 @@
 package dev.ehtid.thaumcraft.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
 import dev.ehtid.thaumcraft.port.core.visual.SalisSparkleScaleRules;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -8,6 +11,7 @@ import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +27,23 @@ import java.util.concurrent.atomic.AtomicInteger;
  * accessors select the exact legacy cell without copying/repainting the art.
  */
 public final class SalisSparkleParticle extends TextureSheetParticle {
+    // BETA26 FXGeneric uses ParticleEngine layer 0, whose blend function is
+    // SRC_ALPHA, ONE (additive). Reuse the vanilla particle-sheet setup/atlas,
+    // then replace only its standard alpha blend state with the source blend.
+    private static final ParticleRenderType BETA26_ADDITIVE = new ParticleRenderType() {
+        @Override
+        public BufferBuilder begin(Tesselator tesselator, TextureManager textureManager) {
+            BufferBuilder builder = ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.begin(
+                    tesselator, textureManager);
+            RenderSystem.blendFunc(770, 1);
+            return builder;
+        }
+
+        @Override
+        public boolean isTranslucent() {
+            return true;
+        }
+    };
     private static final int GRID_SIZE = 64;
     private static final int FRAME_COUNT = 16;
     private static final double FLOATY_SENTINEL = 1000.0D;
@@ -225,7 +246,7 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        return BETA26_ADDITIVE;
     }
 
     private void markRendered() {
