@@ -44,7 +44,7 @@ assert "this.firstFrame = level.random.nextFloat() < 0.2F ? 320 : 512;" in sourc
 
 parser = Path("tools/verify_salis_sparkle_particle_log.py").read_text()
 assert 'TC_SMOKE_SALIS_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1' in parser
-assert 'blend_mode != [("770", "1")]' in parser
+assert 'blend_count != 1' in parser
 
 print("SALIS_BETA26_LAYER0_ADDITIVE_BLEND=PASS")
 print("SALIS_BETA26_320_512_FRAME_LOOP=PASS")
