@@ -3,6 +3,8 @@
 import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 import numpy as np
 from match_curio_audio_pcm import check_samples, stretched
 
@@ -36,6 +38,20 @@ assert "CURIO_LEARN_OPENAL_PULSE_ROUTE=PASS" not in smoke_generator
 assert "OpenAL initialized on device Null Output" not in smoke_generator
 assert 'export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"' in workflow
 assert "tools/test_curio_pulse_sink.py" in workflow
+
+# Exercise the generator itself: mute only background audio before runClient.
+# The Curio event must remain audible; its playback uses SoundSource.NEUTRAL.
+generated = subprocess.run(
+    [sys.executable, str(root / "tools/client_curio_learn_sound_smoke.py")],
+    cwd=root, check=True, capture_output=True, text=True,
+).stdout
+isolated_options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt"
+assert isolated_options in generated
+assert generated.index(isolated_options) < generated.index("gradle runClient")
+assert "CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS" in generated
+assert "soundCategory_neutral:0.0" not in generated
+assert "soundCategory_master:0.0" not in generated
+print("CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS")
 print("CURIO_LEARN_SOURCE_AND_TRIGGER_CONTRACT=PASS")
 print("CURIO_LEARN_REAL_PULSE_CAPTURE_GUARD=PASS")
 
