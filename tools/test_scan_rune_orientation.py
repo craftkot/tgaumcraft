@@ -295,14 +295,26 @@ public final class ScanRuneOrientationTest {
 }
 
 smoke_source = (ROOT / "tools/client_scan_rune_smoke.py").read_text(encoding="utf-8")
+particle_source = PARTICLE.read_text(encoding="utf-8")
+for marker in (
+    "camera.rotation().transform(offset)",
+    "float frontDot = -offset.dot(look)",
+    "this.x += dx",
+    "this.xo += dx",
+    "finally {",
+    "this.x -= dx",
+    "this.xo -= dx",
+):
+    if marker not in particle_source:
+        raise AssertionError(f"camera-relative particle transform contract missing: {marker}")
+
 for marker in (
     "crop_x=$((X + WIDTH * 424 / 1000))",
     "crop_y=$((Y + HEIGHT * 396 / 1000))",
     "crop_width=$((WIDTH * 152 / 1000))",
     "crop_height=$((HEIGHT * 203 / 1000))",
     "RUNE_VISUAL_CROP=block-face",
-    "float frontDot = -offset.dot(look)",
-    "camera.getLookVector()",
+    "frontDot",
     "RUNE_CAMERA_RELATIVE_OFFSET=PASS",
     "cameraYaw=",
 ):
