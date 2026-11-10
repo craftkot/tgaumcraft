@@ -1981,3 +1981,26 @@ Safety:
 - PR #1/#2/#3 changed-file sets do not overlap the three Tube files above. The existing unrelated PR #3 overlap on SalisMundusItem.java remains untouched.
 - No foreign branch, production Java, Gradle, registry, shared client harness, main branch, or other PR was modified.
 - Next action: inspect the exact-head 4009274 Tube artifact and full CI. Accept only if both direct-aim real clicks remove the intended blocks, preserve the middle tube, emit both exact-block markers, and produce valid cropped particle frames. If that passes, finish the remaining M16 acceptance review; otherwise correct the actual targeting path without lowering thresholds.
+
+
+## 2026-11-10 — exact-head Tube real-client acceptance
+
+The corrected Tube smoke passed on code commit [4009274c](https://github.com/craftkot/tgaumcraft/commit/4009274cfa8a7ba8fead8134aaaac56fb97a1c67):
+
+- Real Minecraft 1.21.1 client run [#42838177226](https://github.com/craftkot/tgaumcraft/actions/runs/42838177226): **SUCCESS**.
+- Evidence artifact [#13774843660](https://github.com/craftkot/tgaumcraft/actions/runs/42838177226/artifacts/13774843660) was downloaded and its actual screenshots and client log were inspected.
+- The real integrated world had commands enabled, Creative and Peaceful; the setup, three /setblock operations and three server blockstate checks were acknowledged by the server.
+- Three connection states passed: valve east=true, middle west=true/east=true, restrict west=true.
+- The valve was broken by a real client left-click from the directly aligned player position. The server confirmed the valve coordinate became air and confirmed the middle tube and restrict block remained. Cropped transient particle difference: 5599.
+- The restrict block was then broken by a separate real client left-click from its own centerline. The server confirmed restrict became air and confirmed the valve remained air and the middle tube remained. Cropped transient particle difference: 7169.
+- Connected block render difference: 10441. The fixed 420x150 ROI was used; the moving sky and chat/hotbar were not used as particle evidence.
+- Ten actual world screenshots (70–79) exist. Visual review shows three connected variants, then two remaining blocks after valve break, then only the middle tube after restrict break. No inventory/search screen was used.
+- TUBE_NO_MISSING_MODEL_TEXTURES=PASS and TUBE_REAL_CLIENT_EVIDENCE_OK are present. Original base_metal particle texture SHA/size verification passed.
+
+Full CI on the same code commit [#42838177204](https://github.com/craftkot/tgaumcraft/actions/runs/42838177204): **SUCCESS**. Core parity reported 10,046 assertions; NeoForge build succeeded; dedicated server reached Done (10.359s); JAR artifact [#13773684445](https://github.com/craftkot/tgaumcraft/actions/runs/42838177204/artifacts/13773684445) uploaded.
+
+The PR-triggered Tube rerun [#42838187114](https://github.com/craftkot/tgaumcraft/actions/runs/42838187114) was still in progress at journal time. The exact code HEAD has already passed the push real-client and full CI workflows; do not describe the PR check as complete until it finishes.
+
+This accepts the narrow Tube visual/particle sub-scenario. It does not award a point to the 6-point models/sounds/particles/localization category: the audit still explicitly lists missing source resources, special renderers and FX beyond the checked objects. The project score remains **59/100**, category remains **4/6**. No production Java was changed in this Tube iteration; it corrected and strengthened the real-client acceptance harness.
+
+Next M16 action: inspect the remaining particle/source-art gaps rather than repeating already accepted Curio, scan/page/crystal audio, rune, label, Salis unload, crystal-outline or Tube scenarios. In particular, compare the current Salis sparkle sprite/frame selection and any remaining special-renderer references against the pinned BETA26 source and original assets. Keep the PR #3 overlap on SalisMundusItem.java untouched; prefer the isolated particle renderer/resource paths only if the source diff proves no PR overlap.
