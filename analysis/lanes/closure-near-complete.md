@@ -1822,3 +1822,27 @@ Assessment:
 - PR #4 remains Draft and unmerged. No foreign branch or PR was modified.
 
 Next: inspect the remainder of [Curio real-client #42813815901](https://github.com/craftkot/tgaumcraft/actions/runs/42813815901). Require actual Minecraft startup, the background-audio isolation marker, one server dispatch, original `learn.ogg` PCM correlation >= 0.20, and pitch parity. If the client step fails or times out, inspect its log/artifact before any production-code change.
+
+
+## 2026-11-10 — restore BETA26 crystal support-material parity
+
+Source comparison:
+- Pinned BETA26 `BlockCrystal#drawAt` accepts a neighboring block only when `getMaterial() == Material.ROCK` and that exact face is `isSideSolid`.
+- The port previously used `BASE_STONE_OVERWORLD` plus only cobblestone/deepslate/stone bricks. This rejected other BETA26 rock supports such as sandstone and nether bricks, despite their 1.12 block classes using `Material.ROCK`.
+- Sources: [BETA26 BlockCrystal](https://github.com/TheDarkTower314/Thaumcraft-6-Source-Code/blob/954022bb/src/main/java/thaumcraft/common/blocks/world/ore/BlockCrystal.java), [1.12 BlockSandStone](https://github.com/Wharaden/MCP-1.12/blob/master/Desktop/MCP%201.12/src/minecraft/net/minecraft/block/BlockSandStone.java), [1.12 BlockNetherBrick](https://github.com/Wharaden/MCP-1.12/blob/master/Desktop/MCP%201.12/src/minecraft/net/minecraft/block/BlockNetherBrick.java).
+
+Change:
+- Replaced the narrow hard-coded predicate with the data-driven `thaumcraft:crystal_supports` block tag. The existing per-face `isFaceSturdy` gate remains, so a tagged stair/fence does not become a support on faces that are not actually sturdy.
+- Added the vanilla 1.12-era rock-block counterparts, retaining the modern base-stone set and allowing mod/datapack extensions without another Java registry.
+- Extended the real Minecraft crystal-outline smoke: north-face support now uses sandstone and south-face support uses nether bricks; all six face ray-picking cases still run. The script requires both material markers and the full client ray-pick acceptance marker.
+
+Changed files:
+- `src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java`
+- `src/main/resources/data/thaumcraft/tags/block/crystal_supports.json` (new)
+- `tools/client_crystal_outline_smoke.py`
+- `tools/test_crystal_outline_smoke.py`
+- this lane journal.
+
+Exact-head validation is pending. Required: crystal-outline source contract, generated Bash syntax, full NeoForge CI/data-pack load, and actual Minecraft client `CRYSTAL_OUTLINE_LEGACY_ROCK_SUPPORTS=PASS` plus `CRYSTAL_OUTLINE_REAL_CLIENT_RAY_PICK=PASS`. Do not infer success from the earlier stone-only smoke [#42797632305](https://github.com/craftkot/tgaumcraft/actions/runs/42797632305).
+
+The fixed project audit remains 59/100; M16 remains 4/6 and M08 remains 5/9 until the broader criteria are re-audited. No points awarded for this source change or a compile alone. PR #4 remains Draft/open; no merge.

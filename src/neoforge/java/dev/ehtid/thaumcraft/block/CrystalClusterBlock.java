@@ -6,7 +6,9 @@ import dev.ehtid.thaumcraft.port.core.LegacyCrystalOutlineBounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.tags.BlockTags;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.context.BlockPlaceContext;
@@ -16,7 +18,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.sounds.SoundEvent;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -28,7 +29,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 /**
  * Real seven-variant BETA26 BlockCrystal world behavior.
  * Uses the persisted (not imagined) per-chunk Vis/Flux in AuraSavedData.
- * Material.ROCK is mapped to modern stone-tag support. Advanced multi-face
+ * BETA26 Material.ROCK + side-solid support is represented by an explicit,
+ * data-driven vanilla compatibility tag that datapacks can extend. Advanced multi-face
  * mesh/outline and original crystal SoundType still require client parity.
  */
 public final class CrystalClusterBlock extends Block {
@@ -49,6 +51,9 @@ public final class CrystalClusterBlock extends Block {
 
     public static final IntegerProperty SIZE=IntegerProperty.create("size",0,3);
     public static final IntegerProperty GENERATION=IntegerProperty.create("gen",1,4);
+    private static final TagKey<Block> CRYSTAL_SUPPORTS = TagKey.create(
+            Registries.BLOCK, ResourceLocation.parse("thaumcraft:crystal_supports"));
+
     private final String aspectTag;
     public CrystalClusterBlock(BlockBehaviour.Properties props,String aspectTag) {
         // getShape depends on adjacent support blocks, not only BlockState properties.
@@ -87,9 +92,7 @@ public final class CrystalClusterBlock extends Block {
     public static boolean hasCrystalSupport(BlockGetter level, BlockPos pos, Direction d) {
         BlockPos side=pos.relative(d);
         BlockState support=level.getBlockState(side);
-        return (support.is(BlockTags.BASE_STONE_OVERWORLD)
-                ||support.is(Blocks.COBBLESTONE)||support.is(Blocks.DEEPSLATE)
-                ||support.is(Blocks.STONE_BRICKS))
+        return support.is(CRYSTAL_SUPPORTS)
                 && support.isFaceSturdy(level,side,d.getOpposite());
     }
 

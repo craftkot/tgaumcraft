@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Static, geometric and rotation-contract tests for crystal outline client smoke."""
+import json
 import math
 from pathlib import Path
 
 from client_crystal_outline_smoke import (
     FACE_CASES,
+    SUPPORT_BLOCK_FOR_FACE,
     MULTI_FACE_AIM,
     MULTI_FACE_PLAYER,
     PLAYER_EYE_HEIGHT,
@@ -20,6 +22,9 @@ from client_crystal_outline_smoke import (
 assert tuple(case[0] for case in FACE_CASES) == (
     "up", "down", "east", "west", "south", "north"
 )
+assert SUPPORT_BLOCK_FOR_FACE["north"] == "minecraft:sandstone"
+assert SUPPORT_BLOCK_FOR_FACE["south"] == "minecraft:nether_bricks"
+assert all(SUPPORT_BLOCK_FOR_FACE[f] == "minecraft:stone" for f in ("up", "down", "east", "west"))
 
 
 # Minecraft 1.21.1's Brigadier output is "Value of attribute ... for entity Dev is 5.0",
@@ -224,6 +229,22 @@ assert crystal_source.count("props.dynamicShape()") == 1
 assert "super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));" in crystal_source
 assert "thaumcraft.crystalOutlineDebug" not in crystal_source
 assert "CRYSTAL_OUTLINE_SHAPE_DEBUG" not in crystal_source
+assert "support.is(CRYSTAL_SUPPORTS)" in crystal_source
+assert "support.is(BlockTags.BASE_STONE_OVERWORLD)" not in crystal_source
+support_tag_path = (
+    Path(__file__).resolve().parents[1]
+    / "src/main/resources/data/thaumcraft/tags/block/crystal_supports.json"
+)
+support_tag = json.loads(support_tag_path.read_text(encoding="utf-8"))
+support_values = set(support_tag["values"])
+assert "#minecraft:base_stone_overworld" in support_values
+for required in (
+    "minecraft:sandstone", "minecraft:nether_bricks", "minecraft:obsidian",
+    "minecraft:end_stone", "minecraft:prismarine", "minecraft:quartz_block",
+    "minecraft:terracotta", "minecraft:white_terracotta",
+    "minecraft:white_glazed_terracotta", "minecraft:stone_bricks",
+):
+    assert required in support_values, required
 
 body = build_body()
 for face, *_ in FACE_CASES:
@@ -252,6 +273,10 @@ assert body.count("send_chat '/tp @p") == 1
 assert "miss_aim_x" not in body and "hit_aim_x" not in body
 assert "capture_outline" in body
 assert "setblock 249 153 249 minecraft:stone" in body
+assert 'north) support_block=minecraft:sandstone ;;' in body
+assert 'south) support_block=minecraft:nether_bricks ;;' in body
+assert "CRYSTAL_OUTLINE_SUPPORT_$face=$support_block" in body
+assert "CRYSTAL_OUTLINE_LEGACY_ROCK_SUPPORTS=PASS" in body
 assert 'if [ "$face" = "down" ]' in body
 assert "xdotool key --clearmodifiers space" not in body
 assert 'test "$(find client-smoke/screenshots' in body
