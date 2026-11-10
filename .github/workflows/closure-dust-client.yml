@@ -27,6 +27,9 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
@@ -77,6 +80,7 @@ jobs:
           python tools/test_salis_trail_delay.py
           python tools/test_salis_face_delay.py
           python tools/test_salis_queue_unload_jvm.py
+          python tools/test_salis_chunk_probe_cleanup.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py

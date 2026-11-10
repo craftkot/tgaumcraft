@@ -37,6 +37,7 @@ public final class SalisSparkleChunkUnloadProbe {
     private static int cancellationsBefore;
     private static int enqueuedBefore;
     private static boolean chunkUnloaded;
+    private static boolean fixtureTicketHeld;
     private static boolean finished;
 
     private SalisSparkleChunkUnloadProbe() {}
@@ -50,12 +51,14 @@ public final class SalisSparkleChunkUnloadProbe {
         phaseStarted = scheduledAt = reloadedAt = 0L;
         sendsBefore = cancellationsBefore = enqueuedBefore = 0;
         chunkUnloaded = false;
+        fixtureTicketHeld = false;
         finished = false;
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         if (active == event.getServer()) {
+            cleanupFixtureTicketOnStop();
             active = null;
             targetLevel = null;
         }
@@ -88,6 +91,7 @@ public final class SalisSparkleChunkUnloadProbe {
                 targetLevel = level;
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not acquire its one remote chunk ticket");
+                fixtureTicketHeld = true;
                 level.getChunk(CHUNK_X, CHUNK_Z);
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
                         "fixture chunk was not loaded before queue admission");
@@ -104,7 +108,7 @@ public final class SalisSparkleChunkUnloadProbe {
                         "expected exactly one pending Salis effect for this server");
 
                 scheduledAt = now;
-                require(level.setChunkForced(CHUNK_X, CHUNK_Z, false),
+                require(releaseFixtureTicket(),
                         "fixture could not release its only remote chunk ticket");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKETS_RELEASED");
                 phaseStarted = now;
@@ -139,6 +143,7 @@ public final class SalisSparkleChunkUnloadProbe {
                         "cancelled Salis effect remained queued");
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not reacquire remote chunk ticket");
+                fixtureTicketHeld = true;
                 level.getChunk(CHUNK_X, CHUNK_Z);
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
                         "remote chunk did not reload under fixture ticket");
@@ -156,6 +161,9 @@ public final class SalisSparkleChunkUnloadProbe {
                         "expected exactly one native unload cancellation");
                 require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
                         "Salis queue retained a stale effect after reload");
+                require(releaseFixtureTicket(),
+                        "fixture could not release its final remote chunk ticket after reload");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
                 finished = true;
@@ -163,10 +171,46 @@ public final class SalisSparkleChunkUnloadProbe {
                 active.halt(false);
             }
         } catch (RuntimeException | AssertionError ex) {
+            cleanupFixtureTicketAfterFailure();
             finished = true;
             ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_FAILED");
             LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_FAILED", ex);
             active.halt(false);
+        }
+    }
+
+    private static boolean releaseFixtureTicket() {
+        if (!fixtureTicketHeld) return true;
+        if (targetLevel == null || !targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)) return false;
+        fixtureTicketHeld = false;
+        return true;
+    }
+
+    private static void cleanupFixtureTicketAfterFailure() {
+        if (!fixtureTicketHeld) return;
+        try {
+            if (!releaseFixtureTicket()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            }
+        } catch (RuntimeException cleanupFailure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED", cleanupFailure);
+        }
+    }
+
+    private static void cleanupFixtureTicketOnStop() {
+        if (!fixtureTicketHeld) return;
+        try {
+            if (!releaseFixtureTicket()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED during server stop");
+            } else {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED_ON_STOP");
+            }
+        } catch (RuntimeException cleanupFailure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED during server stop", cleanupFailure);
         }
     }
 

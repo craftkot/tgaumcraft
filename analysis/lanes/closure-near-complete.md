@@ -1711,3 +1711,31 @@ Native chunk lifecycle acceptance:
 Other exact-HEAD client checks completed SUCCESS: readable GUI [#42791187910](https://github.com/craftkot/tgaumcraft/actions/runs/42791187910), Thaumonomicon page sound [#42791187880](https://github.com/craftkot/tgaumcraft/actions/runs/42791187880) and [#42791188137](https://github.com/craftkot/tgaumcraft/actions/runs/42791188137), Curio sound [#42791188060](https://github.com/craftkot/tgaumcraft/actions/runs/42791188060), scan-rune [#42791188172](https://github.com/craftkot/tgaumcraft/actions/runs/42791188172), tube texture [#42791187962](https://github.com/craftkot/tgaumcraft/actions/runs/42791187962), label art/tint [#42791188077](https://github.com/craftkot/tgaumcraft/actions/runs/42791188077), six crystal placement variants [#42791188195](https://github.com/craftkot/tgaumcraft/actions/runs/42791188195), and Thaumometer scan sound [#42791187937](https://github.com/craftkot/tgaumcraft/actions/runs/42791187937). Crystal placement sound [#42791188050](https://github.com/craftkot/tgaumcraft/actions/runs/42791188050), break sound [#42791187876](https://github.com/craftkot/tgaumcraft/actions/runs/42791187876), and outline/picking [#42791188180](https://github.com/craftkot/tgaumcraft/actions/runs/42791188180) were still in progress when this entry was prepared; no result is inferred for them.
 
 No new production code changed in this verification entry. Fixed audit remains **59/100**, M16 remains **4/6**; no score awarded for this narrow acceptance. Next: inspect the three remaining exact-head client runs, then select the next independent M16 defect after another PR path audit. PR #4 stays Draft; no merge.
+
+
+## 2026-11-10 — Salis native-probe fixture ticket is now released on every exit path
+
+Fresh exact-head review:
+- main remains a4280834adc5a20b6951098af937d30ca4aeca56.
+- feature/closure-near-complete and PR #4 were both at 07feb632b94eac5d4cebebb8357c9cf510574bc5, PR open Draft and unmerged.
+- PR path audit: PR #4 overlaps PR #3 only at src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java; this iteration changes the separate SalisSparkleChunkUnloadProbe.java and its test harness. PR #1 and #2 have no overlapping paths.
+- All 15 latest listed GitHub Actions runs on exact HEAD 07feb632 completed SUCCESS, including full NeoForge CI [#42793283950](https://github.com/craftkot/tgaumcraft/actions/runs/42793283950), Salis integrated-client [#42793283747](https://github.com/craftkot/tgaumcraft/actions/runs/42793283747), crystal outline [#42793284010](https://github.com/craftkot/tgaumcraft/actions/runs/42793284010), crystal placement sound [#42793283727](https://github.com/craftkot/tgaumcraft/actions/runs/42793283727), crystal break sound [#42793283781](https://github.com/craftkot/tgaumcraft/actions/runs/42793283781), tube texture [#42793283673](https://github.com/craftkot/tgaumcraft/actions/runs/42793283673), and Salis queue JVM [#42793284124](https://github.com/craftkot/tgaumcraft/actions/runs/42793284124).
+- Downloaded and inspected the crystal-outline artifact [#13751979777](https://github.com/craftkot/tgaumcraft/actions/runs/42793284010/artifacts/13751979777): the six face and multi-face scenarios are recorded. The only Thaumcraft missing-texture warning is caster_basic#inventory; its atlas/source guard is already owned by PR #1, so it is not duplicated here.
+- Downloaded and inspected the tube artifact [#13752623020](https://github.com/craftkot/tgaumcraft/actions/runs/42793283673/artifacts/13752623020): connected tube, valve and restrictor break screenshots are present; the same caster_basic atlas warning is the only mod-specific missing-texture warning found.
+
+Defect found in the test-only native unload probe:
+- Phase 2 reacquired its remote fixture chunk ticket to prove reload/no-replay, but phase 3 halted the test server without releasing that second ticket. This did not change the Salis production queue or demonstrate a production force-load; it leaked only the probe's own test fixture ticket into server shutdown.
+- Added explicit ticket ownership tracking and one release helper. The initial unload release, successful post-reload cleanup, failure path, and server-stop fallback now all release the ticket if held.
+- Successful acceptance now emits exactly one TC_SMOKE_SALIS_NATIVE_CHUNK_TICKET_CLEANED=YES after the final setChunkForced(..., false) succeeds. The client verifier requires exactly one such marker before reporting native unload acceptance.
+- Added tools/test_salis_chunk_probe_cleanup.py to assert acquisition/release ordering and cleanup on normal, failed, and server-stop paths. Added it to the Salis client workflow and fixed the PR path filter so changes to the queue/probe/smoke audit sources actually trigger the real-client workflow.
+
+Changed files:
+- src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java
+- tools/test_salis_chunk_probe_cleanup.py (new)
+- tools/client_dust_sound_smoke.py
+- .github/workflows/closure-dust-client.yml
+- this lane journal.
+
+Validation before this commit: previous exact-head full build and real-client tests all passed as listed above. The new static cleanup contract has not yet run on this new HEAD, and the native client has not yet emitted the new cleanup marker. Await exact-new-HEAD workflow results before accepting the cleanup. Fixed audit remains 59/100, M16 remains 4/6; no points awarded for test-fixture hygiene. PR #4 remains Draft; no merge.
+
+Next: inspect exact-new-HEAD test_salis_chunk_probe_cleanup.py, full NeoForge CI and the real Salis client run. Require the new ticket-cleaned marker and inspect the client log before moving to another M16 issue.

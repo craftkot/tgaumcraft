@@ -130,6 +130,8 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
   for marker in SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY; do
     grep -Fq "TC_SMOKE_${marker}=YES" client-smoke/client.log || exit 1
   done
+  test "$(grep -Fc 'TC_SMOKE_SALIS_NATIVE_CHUNK_TICKET_CLEANED=YES' client-smoke/client.log)" -eq 1
+  echo 'SALIS_NATIVE_CHUNK_TICKET_CLEANED=PASS' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS' | tee -a client-smoke-status.txt
   exit 0
 fi
