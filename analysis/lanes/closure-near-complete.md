@@ -2146,3 +2146,29 @@ For code commit [0bb18d7](https://github.com/craftkot/tgaumcraft/commit/0bb18d7a
 This proves Core/source-contract, NeoForge compilation, dedicated-server startup and JAR packaging. It does **not** prove that a real in-world crystal random tick accepts a waterlogged replaceable solid or rejects a liquid block. No M08 score change: **5/9**, overall **59/100**.
 
 **Next:** add a registered NeoForge GameTest (or an equivalent deterministic server-world harness) that forces the crystal spread branch for both target states and verifies the destination plus exact 10-Vis debit. First inspect whether the current ModDev run configuration exposes `runGameTestServer`; do not alter shared Gradle/CI until path ownership and need are confirmed.
+
+
+## 2026-11-10 — M33: native server GameTest for crystal spread liquid parity
+
+### Scope and source rule
+- Revisited the pinned BETA26 `BlockCrystal.spreadCrystal` predicate: reject only a block whose legacy material is liquid, then require air or replaceability. M32's `BlockState.liquid()` adapter is now exercised in an actual NeoForge server world rather than only by a Core source-contract assertion.
+- The positive fixture is vanilla seagrass: non-air, non-empty water FluidState, non-liquid block flag, and replaceable. It must be replaced by a child crystal because BETA26 tests the block material, not FluidState.
+- Negative fixtures are source water and lava blocks. Both must remain unchanged and must not spend Vis.
+
+### Implementation
+- Added `CrystalSpreadGameTests` under the production NeoForge source set with `@GameTestHolder("thaumcraft")`. It invokes the real `CrystalClusterBlock.randomTick` using a seed found by replaying the exact draw order (tick gate, x/y/z offsets, 1/16 spread chance).
+- Each case places the real registered Aer crystal, a real stone support from the mod's `crystal_supports` tag, and a real saved-data aura chunk at base 0 / Vis 100. Positive control requires a child crystal and exactly 90 Vis; water/lava require unchanged destination and exactly 100 Vis.
+- Added a dedicated `gameTestServer` ModDevGradle run configuration with the required namespace and `setForceExit false`, plus a path-isolated GitHub Actions workflow. No existing CI workflow, registry, or foreign feature branch was changed.
+- Coordination notices were posted to PR #1 and PR #3 after checking current PR changed-file lists; neither PR currently changes `build.gradle` or the new GameTest source path. PR #2 also has no relevant path overlap.
+
+### Files
+- `build.gradle`
+- `src/neoforge/java/dev/ehtid/thaumcraft/gametest/CrystalSpreadGameTests.java`
+- `src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt`
+- `.github/workflows/closure-crystal-spread-gametest.yml`
+- this lane journal
+
+### Verification boundary
+- The new workflow must pass on the exact code HEAD and its log artifact must contain all three case markers plus `TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES`.
+- The GameTest is a deterministic direct invocation of the production random-tick method in a real NeoForge ServerLevel. It proves the production branch and aura transaction; it does not measure the natural random-tick scheduling frequency.
+- No M08 or total score increase is claimed until the exact-head GameTest passes and its artifact is inspected. Current fixed audit remains 59/100, M08 5/9. PR #4 remains Draft/open; no merge.
