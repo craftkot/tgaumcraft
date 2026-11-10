@@ -1466,3 +1466,11 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - `textures/entity/armor/caster_basic.png` is present in the current branch tree; it was not duplicated or changed. Any warning associated with its use by `models/item/caster_basic.json` needs separate atlas/model diagnosis.
 - Fixed audit remains **59/100**, M16 **4/6**. This accepts only restoration of the original tube particle icon at source/asset-guard level; no category point is awarded and no claim is made about block-face rendering or all tube variants.
 - Next: inspect the exact-head real-client logs/artifacts for the model-bake/resource-reload warning after this asset addition. If a tube-specific visual assertion is still needed, add it as an isolated lane-owned client probe without changing shared CI, registries or alchemy code. PR #4 remains Draft/unmerged; `main` and all other feature branches remain unchanged.
+
+
+### Verification correction — exact-head NeoForge build and dedicated server
+
+- The earlier entry's statement that GitHub Actions `Thaumcraft Port CI` was only a Core/verify check was incorrect: the job has later steps beyond the first log excerpt. Exact code commit `452cde845b29cca751215755cc170752bdedd662`, run [#42742689288](https://github.com/craftkot/tgaumcraft/actions/runs/42742689288), completed **SUCCESS**. Its job steps include Core parity, `NeoForge build`, `Dedicated server smoke test` and `Upload built jars`.
+- Inspected the actual job log: Gradle reported `BUILD SUCCESSFUL in 1m`; the server log reached `Done (5.934s)! For help, type "help"`; the JAR upload step completed. Therefore NeoForge compilation/JAR packaging and dedicated-server startup **are verified on the exact asset+guard code commit**.
+- CircleCI `ci/circleci: verify-connection` also reports **SUCCESS** on both `452cde8` and documentation HEAD `43e625b`; that path executes the updated `tools/verify_tube_source_art.py`.
+- The separate real-client Salis dust run [#42742689308](https://github.com/craftkot/tgaumcraft/actions/runs/42742689308) was still in progress at inspection. It is not a tube-specific assertion; no graphical acceptance of the tube particle texture is claimed.
