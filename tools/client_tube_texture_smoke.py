@@ -21,17 +21,17 @@ def render() -> str:
   # Freeze the scene and suppress item drops so early-vs-late pixel differences
   # isolate the transient block-destruction particles rather than weather,
   # moving drops, chat fade, or the player's hand.
-  send_chat '/gamerule doDaylightCycle false'
-  send_chat '/gamerule doWeatherCycle false'
-  send_chat '/gamerule doTileDrops false'
-  send_chat '/time set noon'
+  tube_send_chat '/gamerule doDaylightCycle false' 'Gamerule doDaylightCycle is now set to: false'
+  tube_send_chat '/gamerule doWeatherCycle false' 'Gamerule doWeatherCycle is now set to: false'
+  tube_send_chat '/gamerule doTileDrops false' 'Gamerule doTileDrops is now set to: false'
+  tube_send_chat '/time set noon' 'Set the time to 6000'
   # Force-load the shared test chunk before building. The player must stand
   # on a real platform; a creative player still falls when not flying.
-  send_chat '/forceload add 0 0'
-  send_chat '/fill 8 148 8 12 148 14 minecraft:stone'
-  send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_TUBE_PLATFORM_READY=YES'
-  send_chat '/tp @p 10.5 149 8.5 0 18'
-  send_chat '/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_TUBE_PLAYER_ON_PLATFORM=YES'
+  tube_send_chat '/forceload add 0 0' 'Marked chunk [0, 0] in Overworld to be force loaded'
+  tube_send_chat '/fill 8 148 8 12 148 14 minecraft:stone' 'Successfully filled 35 block(s)'
+  tube_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_TUBE_PLATFORM_READY=YES' 'TC_SMOKE_TUBE_PLATFORM_READY=YES'
+  tube_send_chat '/tp @p 10.5 149 8.5 0 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'
+  tube_send_chat '/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_TUBE_PLAYER_ON_PLATFORM=YES' 'TC_SMOKE_TUBE_PLAYER_ON_PLATFORM=YES'
   xdotool key --clearmodifiers F3+d
   sleep 1
 
@@ -42,14 +42,27 @@ def render() -> str:
     echo "TUBE_REAL_CLIENT_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
-  tube_send_chat_quick() {
+  tube_send_chat() {
+    local command="$1" expected="$2"
+    # Match the stable chat-open/type timings used by client_smoke.sh, but
+    # return on the actual server acknowledgement so particle frames remain
+    # inside the transient effect window.
     xdotool key --clearmodifiers t
-    sleep 0.15
-    xdotool type --clearmodifiers --delay 2 "$1"
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$command"
     xdotool key --clearmodifiers Return
-    sleep 0.12
-    xdotool key --clearmodifiers F3+d
-    sleep 0.12
+    for _ in $(seq 1 80); do
+      if grep -Fq -- "$expected" client-smoke/client.log; then
+        echo "TUBE_SERVER_COMMAND_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+        xdotool key --clearmodifiers F3+d
+        sleep 0.1
+        return 0
+      fi
+      sleep 0.05
+    done
+    echo "TUBE_SERVER_COMMAND_NOT_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
   }
 
   tube_pixel_diff() {
@@ -81,16 +94,16 @@ def render() -> str:
   }
 
   tube_capture 70-tubes-before
-  tube_send_chat_quick '/setblock 9 149 12 thaumcraft:tube_valve'
-  tube_send_chat_quick '/setblock 10 149 12 thaumcraft:tube'
-  tube_send_chat_quick '/setblock 11 149 12 thaumcraft:tube_restrict'
+  tube_send_chat '/setblock 9 149 12 thaumcraft:tube_valve' 'Changed the block at 9, 149, 12'
+  tube_send_chat '/setblock 10 149 12 thaumcraft:tube' 'Changed the block at 10, 149, 12'
+  tube_send_chat '/setblock 11 149 12 thaumcraft:tube_restrict' 'Changed the block at 11, 149, 12'
 
   # These are authoritative server blockstate checks. They prove that the
   # real Tile entities connected and selected the valve/restrict multipart
   # branches, not merely that /setblock text was typed.
-  tube_send_chat_quick '/execute if block 9 149 12 thaumcraft:tube_valve[east=true] run say TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES'
-  tube_send_chat_quick '/execute if block 10 149 12 thaumcraft:tube[west=true,east=true] run say TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES'
-  tube_send_chat_quick '/execute if block 11 149 12 thaumcraft:tube_restrict[west=true] run say TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES'
+  tube_send_chat '/execute if block 9 149 12 thaumcraft:tube_valve[east=true] run say TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES' 'TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES'
+  tube_send_chat '/execute if block 10 149 12 thaumcraft:tube[west=true,east=true] run say TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES' 'TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES'
+  tube_send_chat '/execute if block 11 149 12 thaumcraft:tube_restrict[west=true] run say TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES' 'TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES'
   sleep 0.5
   xdotool key --clearmodifiers F3+d
   sleep 0.5
@@ -102,7 +115,8 @@ def render() -> str:
   # /setblock ... destroy invokes the real level block-destruction event.
   # Item drops are disabled above; the early-vs-late comparison therefore
   # measures the transient particle sprite after the block itself is gone.
-  tube_send_chat_quick '/setblock 9 149 12 minecraft:air destroy'
+  tube_send_chat '/setblock 9 149 12 minecraft:air destroy' 'Changed the block at 9, 149, 12'
+  tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'
   sleep 0.12
   tube_capture 72-valve-break-early-a
   sleep 0.16
@@ -117,7 +131,8 @@ def render() -> str:
     client-smoke/screenshots/73-valve-break-early-b.png \
     client-smoke/screenshots/74-valve-break-early-c.png
 
-  tube_send_chat_quick '/setblock 11 149 12 minecraft:air destroy'
+  tube_send_chat '/setblock 11 149 12 minecraft:air destroy' 'Changed the block at 11, 149, 12'
+  tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'
   sleep 0.12
   tube_capture 76-restrict-break-early-a
   sleep 0.16

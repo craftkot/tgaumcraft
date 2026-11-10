@@ -20,9 +20,15 @@ def main() -> int:
         "TC_SMOKE_TUBE_PLATFORM_READY=YES",
         "TC_SMOKE_TUBE_PLAYER_ON_PLATFORM=YES",
         "/tp @p 10.5 149 8.5 0 18",
-        "tube_send_chat_quick '/setblock 9 149 12 thaumcraft:tube_valve'",
-        "tube_send_chat_quick '/setblock 10 149 12 thaumcraft:tube'",
-        "tube_send_chat_quick '/setblock 11 149 12 thaumcraft:tube_restrict'",
+        "tube_send_chat '/setblock 9 149 12 thaumcraft:tube_valve' 'Changed the block at 9, 149, 12'",
+        "tube_send_chat '/setblock 10 149 12 thaumcraft:tube' 'Changed the block at 10, 149, 12'",
+        "tube_send_chat '/setblock 11 149 12 thaumcraft:tube_restrict' 'Changed the block at 11, 149, 12'",
+        "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
+        "tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
+        "tube_send_chat_quick",
+        "sleep 1",
+        "--delay 24",
+        "seq 1 80",
         "tube_core_valve",
         "tube_side_restrict",
         "TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES",
@@ -42,6 +48,36 @@ def main() -> int:
         check=False,
     )
     assert syntax.returncode == 0, syntax.stderr
+
+    helper_match = re.search(r"(?ms)^  tube_send_chat\(\) \{\n.*?^  \}", generated)
+    assert helper_match, "missing acknowledgement-gated server chat helper"
+    assert "tube_send_chat_quick" not in generated, "racy chat helper must not return"
+    with tempfile.TemporaryDirectory(prefix="tc-tube-command-ack-") as directory:
+        root = Path(directory)
+        fake_bin = root / "bin"
+        fake_bin.mkdir()
+        xdotool = fake_bin / "xdotool"
+        xdotool.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+        xdotool.chmod(0o755)
+        seq = fake_bin / "seq"
+        seq.write_text("#!/bin/sh\nprintf '1\\n'\n", encoding="utf-8")
+        seq.chmod(0o755)
+        (root / "client-smoke").mkdir()
+        client_log = root / "client-smoke" / "client.log"
+        helper_script = helper_match.group(0) + "\ntube_send_chat '/test' 'EXPECTED_MARKER=YES'\n"
+        env = os.environ.copy()
+        env["PATH"] = f"{fake_bin}:{env['PATH']}"
+        client_log.write_text("EXPECTED_MARKER=YES\n", encoding="utf-8")
+        passed = subprocess.run(
+            ["bash", "-c", helper_script], cwd=root, text=True, capture_output=True, env=env
+        )
+        assert passed.returncode == 0, passed.stderr
+        assert "TUBE_SERVER_COMMAND_CONFIRMED=EXPECTED_MARKER=YES" in passed.stdout
+        client_log.write_text("OTHER=NO\n", encoding="utf-8")
+        failed = subprocess.run(
+            ["bash", "-c", helper_script], cwd=root, text=True, capture_output=True, env=env
+        )
+        assert failed.returncode != 0, "missing server acknowledgement must fail"
 
     with tempfile.TemporaryDirectory(prefix="tc-tube-client-test-") as directory:
         root = Path(directory)
@@ -76,6 +112,18 @@ def main() -> int:
             status.replace("TUBE_VALVE_PARTICLE_DIFF=85", "TUBE_VALVE_PARTICLE_DIFF=0"),
             screenshots,
         ), "empty transient-particle delta must fail"
+        assert verify_tube_texture_client_log.verify(
+            log,
+            status.replace(
+                "TUBE_SERVER_COMMAND_CONFIRMED=Changed the block at 10, 149, 12\n", ""
+            ),
+            screenshots,
+        ), "missing real setblock acknowledgement must fail"
+        assert verify_tube_texture_client_log.verify(
+            log.replace("TC_SMOKE_TUBE_VALVE_DESTROYED=YES", ""),
+            status,
+            screenshots,
+        ), "missing actual valve destruction marker must fail"
 
     assert r"\${metric" not in generated, "shell metric expansion must not be escaped"
     assert generated.count("awk 'NR == 1 {print $1}'") == 2
