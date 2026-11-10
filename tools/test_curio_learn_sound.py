@@ -31,7 +31,9 @@ workflow = (root / ".github/workflows/closure-curio-learn-client.yml").read_text
 assert "export ALSOFT_DRIVERS=pulse" in smoke_generator
 assert "ALSOFT_LOGLEVEL=3" in smoke_generator
 assert "tools/verify_curio_pulse_sink.py" in smoke_generator
-assert "OpenAL initialized on device Null Output" in smoke_generator
+assert "tools/verify_curio_openal_backend.py" in smoke_generator
+assert "CURIO_LEARN_OPENAL_PULSE_ROUTE=PASS" not in smoke_generator
+assert "OpenAL initialized on device Null Output" not in smoke_generator
 assert 'export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"' in workflow
 assert "tools/test_curio_pulse_sink.py" in workflow
 print("CURIO_LEARN_SOURCE_AND_TRIGGER_CONTRACT=PASS")

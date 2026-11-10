@@ -43,11 +43,8 @@ body = r'''
   pactl list short sink-inputs > client-smoke/curio-sink-inputs.txt
   python3 tools/verify_curio_pulse_sink.py \
     client-smoke/curio-sinks.txt client-smoke/curio-sink-inputs.txt
-  if grep -Fq 'OpenAL initialized on device Null Output' client-smoke/client.log; then
-    echo 'CURIO_LEARN_OPENAL_NULL_OUTPUT=YES' | tee -a client-smoke-status.txt
-    exit 1
-  fi
-  echo 'CURIO_LEARN_OPENAL_PULSE_ROUTE=PASS' | tee -a client-smoke-status.txt
+  python3 tools/verify_curio_openal_backend.py client-smoke/client.log tc_curio_sink \
+    | tee -a client-smoke-status.txt
   sleep 3.7
   wait "$curio_capture_pid" || test "$?" -eq 124
   import -display :99 -window root -silent client-smoke/screenshots/96-curio-after.png
