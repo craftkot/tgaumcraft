@@ -1,4 +1,4 @@
-name: Closure crystal spread GameTest
+name: Closure aura and crystal GameTests
 
 on:
   push:
@@ -6,6 +6,8 @@ on:
     paths:
       - 'build.gradle'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java'
       - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
       - '.github/workflows/closure-crystal-spread-gametest.yml'
       - 'tools/run_crystal_spread_gametest.sh'
@@ -14,6 +16,8 @@ on:
     paths:
       - 'build.gradle'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java'
       - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
       - '.github/workflows/closure-crystal-spread-gametest.yml'
       - 'tools/run_crystal_spread_gametest.sh'
@@ -23,7 +27,7 @@ permissions:
   contents: read
 
 jobs:
-  crystal-spread-gametest:
+  aura-and-crystal-gametests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -45,14 +49,14 @@ jobs:
       - name: Validate GameTest runner
         run: bash -n tools/run_crystal_spread_gametest.sh
 
-      - name: Run native NeoForge GameTests with bounded shutdown
+      - name: Run native NeoForge aura and crystal GameTests with bounded shutdown
         run: bash tools/run_crystal_spread_gametest.sh
 
       - name: Upload GameTest evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: crystal-spread-gametest
+          name: aura-and-crystal-gametest
           path: |
             run/closure-gametest/logs/**
             run/closure-gametest/crash-reports/**
