@@ -8,7 +8,7 @@ source = Path(
 ).read_text()
 
 render_type = re.search(
-    r"private static final ParticleRenderType BETA26_ADDITIVE = new ParticleRenderType\\(\\) \\{(.*?)\\n    \\};",
+    r"private static final ParticleRenderType BETA26_ADDITIVE = new ParticleRenderType\(\) \{(.*?)\n    \};",
     source,
     re.S,
 )
@@ -18,12 +18,12 @@ assert "ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.begin(" in body
 assert "RenderSystem.blendFunc(770, 1);" in body, (
     "BETA26 layer 0 requires SRC_ALPHA, ONE additive blending"
 )
-assert re.search(r"public boolean isTranslucent\\(\\) \\{\\s*return true;", body), (
+assert re.search(r"public boolean isTranslucent\(\) \{\s*return true;", body), (
     "Additive sparkles must remain in the translucent particle ordering"
 )
 
 method = re.search(
-    r"public ParticleRenderType getRenderType\\(\\) \\{(.*?)\\n    \\}",
+    r"public ParticleRenderType getRenderType\(\) \{(.*?)\n    \}",
     source,
     re.S,
 )
