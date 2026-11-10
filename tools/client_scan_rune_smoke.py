@@ -6,6 +6,8 @@ Requires real Thaumometer use, actual particle construction, render callback,
 expiry, and framebuffer change. No shared client_smoke.sh modifications.
 """
 from pathlib import Path
+
+from scan_rune_log_parser import parse_scan_rune_log
 import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
@@ -118,22 +120,10 @@ body = r'''
   # camera-facing block face from BOTH viewpoints; pixel diff remains separate.
   python3 - <<'PY' | tee -a client-smoke-status.txt
 import math
-import re
 from pathlib import Path
 
 log = Path("client-smoke/client.log").read_text(errors="replace")
-created = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_CREATED=YES face=(\\d) lifetime=(\\d+) "
-    r"x=(-?[\\d.Ee+-]+) y=(-?[\\d.Ee+-]+) z=(-?[\\d.Ee+-]+) "
-    r"localX=(-?[\\d.Ee+-]+) localY=(-?[\\d.Ee+-]+) localZ=(-?[\\d.Ee+-]+)", log)
-rendered = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\\d) alpha=([\\d.Ee+-]+) size=([\\d.Ee+-]+) "
-    r"cameraYaw=(-?[\\d.Ee+-]+) lookX=(-?[\\d.Ee+-]+) lookY=(-?[\\d.Ee+-]+) "
-    r"lookZ=(-?[\\d.Ee+-]+) worldX=(-?[\\d.Ee+-]+) worldY=(-?[\\d.Ee+-]+) "
-    r"worldZ=(-?[\\d.Ee+-]+) frontDot=(-?[\\d.Ee+-]+)", log)
-expired = re.findall(
-    r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\\d) age=(\\d+) lifetime=(\\d+) "
-    r"drift=([\\d.Ee+-]+)", log)
+created, rendered, expired = parse_scan_rune_log(log)
 if len(created) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
 visible_rendered = []

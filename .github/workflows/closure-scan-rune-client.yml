@@ -42,6 +42,8 @@ jobs:
             libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
       - name: Verify camera-relative rune orientation and visual crop contract
         run: python3 tools/test_scan_rune_orientation.py
+      - name: Verify scan-rune client-log parser
+        run: python3 tools/test_scan_rune_log_parser.py
       - name: Generate isolated real-client script and validate Bash
         run: |
           python3 tools/client_scan_rune_smoke.py > client-rune-smoke-generated.sh
