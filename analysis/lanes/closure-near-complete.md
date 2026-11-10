@@ -1899,3 +1899,32 @@ Safety and assessment:
 - Fixed audit remains **59/100**, M16 remains **4/6**. No score is awarded for repairing a test harness.
 - Exact-head tube real-client and full CI runs must pass after this commit; require all three real server connection markers, destruction markers, ten actual screenshots, valid particle comparisons, and no missing tube/base_metal model texture warnings. PR #4 remains Draft/open and unmerged.
 
+
+
+## 2026-11-10 — revoke false-positive tube particle smoke; real player break + fixed ROI
+
+Artifact review of the previously green Tube client run exposed a false positive that the original verifier did not detect:
+- Run [#42829829609](https://github.com/craftkot/tgaumcraft/actions/runs/42829829609) reported TUBE_VALVE_PARTICLE_DIFF / TUBE_RESTRICT_PARTICLE_DIFF above threshold, but its script compared the entire 1280×800 root screenshot. Offline pixel analysis of the saved PNGs showed the valve early→late difference bbox was only (0,0)–(978,116); 4,876 of 4,881 changed pixels were in the moving cloud band, and the fixed tube ROI x=300..720, y=290..440 had **0** changed pixels. The restrict comparison likewise had 4,542 cloud-band changes and **0** pixels in the tube ROI. The earlier green particle markers are therefore invalid; the tube model/connection evidence remains separate and is not revoked.
+- Pinned original BETA26 source TheDarkTower314/Thaumcraft-6-Source-Code@954022bb777b7546281fb36df8522f0ba6b43f81, BlockTube.breakBlock (lines 212–225) emits the special lava/flux vent effect only when TileTube.getEssentiaAmount(UP)>0. The tested tubes are empty, so this smoke does **not** claim that conditional essentia vent effect. The valve/restrict models' particle texture is thaumcraft:block/base_metal; the narrow test is for the generic block-break sprite and its source texture.
+- /setblock ... minecraft:air destroy was not accepted as proof of a player break event. The smoke now aims at each variant and uses a real client left-click, then requires a server-side minecraft:air acknowledgement. Pixel metrics are cropped to 420x150+300+290, excluding the moving sky, chat and hotbar. The verifier now requires explicit ROI and real-click markers in addition to blockstate, screenshots and numeric thresholds.
+
+Changed files:
+- tools/client_tube_texture_smoke.py — real left-click break, fast post-break server acknowledgement, fixed tube ROI for render and particle diffs.
+- tools/test_tube_texture_smoke.py — checks click path, crop contract, function ordering, positive/negative thresholds and generated Bash.
+- tools/verify_tube_texture_client_log.py — requires ROI and left-click evidence markers.
+
+Commits:
+- [d20c5ac](https://github.com/craftkot/tgaumcraft/commit/d20c5ac03a5aa7c840362aaba1d8115ecff6ebc2) — initial real-click/ROI harness change.
+- [6592283](https://github.com/craftkot/tgaumcraft/commit/659228331bfb511ee6729f9a5e5b3fbf463041ed) — corrected double-escaped Python regex and shell fixture strings in the new regression test. The intermediate d20c5ac run failed at "missing fast server-ack helper"; this was a test-fixture defect, not a Minecraft failure.
+
+Exact-head checks on 6592283:
+- [Full NeoForge CI #42833913070](https://github.com/craftkot/tgaumcraft/actions/runs/42833913070) **SUCCESS**. Job log shows BUILD SUCCESSFUL, dedicated server reached Done (8.525s), and JAR artifact [#13772412501](https://github.com/craftkot/tgaumcraft/actions/runs/42833913070/artifacts/13772412501) uploaded. The startup log contains a missing server.properties parse error before defaults are loaded, but the server reached ready state; this is not a Java compile failure.
+- [Tube real-client #42833912726](https://github.com/craftkot/tgaumcraft/actions/runs/42833912726): source-art/harness regression and generated Bash syntax steps **PASS** on this exact HEAD; the actual Minecraft-client launch/render step was still **IN PROGRESS** at journal update. No particle acceptance yet.
+- GUI text regression [#42833912857](https://github.com/craftkot/tgaumcraft/actions/runs/42833912857), Salis queue unload JVM regression [#42833913024](https://github.com/craftkot/tgaumcraft/actions/runs/42833913024), and original page-sound source/PCM unit [#42833912897](https://github.com/craftkot/tgaumcraft/actions/runs/42833912897) **SUCCESS**. Other real-client M16 runs (Curio, scan rune/sound, label, crystal outline/placement/break/variants, Salis dust and page sound) were still running or queued; inspect their exact-head results before accepting any further M16 sub-item.
+- PR #1 owns src/main/resources/assets/minecraft/atlases/blocks.json; the unrelated caster_basic#inventory atlas warning is not changed here. PR #3's known SalisMundusItem.java overlap remains untouched. The three changed Tube test files have no path overlap with PR #1/#2/#3.
+
+Safety and score:
+- Fresh main HEAD: a4280834adc5a20b6951098af937d30ca4aeca56; PR #4 code/test HEAD: 659228331bfb511ee6729f9a5e5b3fbf463041ed.
+- No production Java, source assets, global registries, shared smoke harness, Gradle, CI workflow, main branch or foreign feature branch changed. PR #4 remains Draft/open; no merge.
+- Fixed audit remains **59/100**, M16 **4/6**. No point is awarded for a harness correction or for the invalid old particle delta.
+- Next action: inspect [#42833912726](https://github.com/craftkot/tgaumcraft/actions/runs/42833912726) artifact. Accept only if real left-clicks produce the server air markers and cropped ROI early/late diffs meet threshold; otherwise debug the actual click target or particle path without lowering thresholds.
