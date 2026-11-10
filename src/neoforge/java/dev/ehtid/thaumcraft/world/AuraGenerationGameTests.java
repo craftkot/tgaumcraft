@@ -49,11 +49,11 @@ public final class AuraGenerationGameTests {
         BlockPos east = center.east(16);
 
         var biomes = level.registryAccess().lookupOrThrow(Registries.BIOME);
-        Holder<Biome> plains = biomes.getHolderOrThrow(Biomes.PLAINS);
-        Holder<Biome> desert = biomes.getHolderOrThrow(Biomes.DESERT);
-        Holder<Biome> forest = biomes.getHolderOrThrow(Biomes.FOREST);
-        Holder<Biome> ocean = biomes.getHolderOrThrow(Biomes.OCEAN);
-        Holder<Biome> swamp = biomes.getHolderOrThrow(Biomes.SWAMP);
+        Holder<Biome> plains = biomes.getOrThrow(Biomes.PLAINS);
+        Holder<Biome> desert = biomes.getOrThrow(Biomes.DESERT);
+        Holder<Biome> forest = biomes.getOrThrow(Biomes.FOREST);
+        Holder<Biome> ocean = biomes.getOrThrow(Biomes.OCEAN);
+        Holder<Biome> swamp = biomes.getOrThrow(Biomes.SWAMP);
 
         // The fixture explicitly loads the five chunks required by the
         // production precondition. The production helper itself uses only
