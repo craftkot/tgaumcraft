@@ -60,7 +60,7 @@ def main() -> int:
         "tube_send_chat must be defined before the first setup command; Bash does not hoist functions"
     )
     assert generated.count("  tube_send_chat() {") == 1, "chat helper must be defined exactly once"
-    fast_helper_match = re.search(r"(?ms)^  tube_send_chat_fast\\(\\) \\{\\n.*?^  \\}", generated)
+    fast_helper_match = re.search(r"(?ms)^  tube_send_chat_fast\(\) \{\n.*?^  \}", generated)
     assert fast_helper_match, "missing fast server-ack helper for short-lived particles"
     first_fast_call = generated.index("  tube_send_chat_fast '/execute if block 9 149 12 minecraft:air")
     assert generated.index(fast_helper_match.group(0)) < first_fast_call
@@ -144,8 +144,8 @@ def main() -> int:
     assert generated.count("awk 'NR == 1 {print $1}'") == 1
 
     def run_shell_diff(name: str, args: str, metric: str) -> subprocess.CompletedProcess[str]:
-        helper = re.search(r"(?ms)^  tube_crop_metric\\(\\) \\{\\n.*?^  \\}", generated)
-        pattern = r"(?ms)^  " + re.escape(name) + r"\\(\\) \\{\\n.*?^  \\}"
+        helper = re.search(r"(?ms)^  tube_crop_metric\(\) \{\n.*?^  \}", generated)
+        pattern = r"(?ms)^  " + re.escape(name) + r"\(\) \{\n.*?^  \}"
         match = re.search(pattern, generated)
         assert helper, "missing shared cropped-image metric helper"
         assert match, f"missing shell function {name}"
@@ -154,13 +154,13 @@ def main() -> int:
             fake_bin.mkdir()
             compare = fake_bin / "compare"
             compare.write_text(
-                "#!/bin/sh\\nprintf '%s\\\\n' \\\"$FAKE_COMPARE_METRIC\\\" >&2\\nexit 1\\n",
+                '#!/bin/sh\nprintf "%s\\n" "$FAKE_COMPARE_METRIC" >&2\nexit 1\n',
                 encoding="utf-8",
             )
             compare.chmod(0o755)
             convert = fake_bin / "convert"
             convert.write_text(
-                "#!/bin/sh\\nfor last do :; done\\nprintf '%s\\\\n' \\\"$*\\\" >> \\\"$CONVERT_ARGS_FILE\\\"\\n: > \\\"$last\\\"\\n",
+                '#!/bin/sh\nfor last do :; done\nprintf "%s\\n" "$*" >> "$CONVERT_ARGS_FILE"\n: > "$last"\n',
                 encoding="utf-8",
             )
             convert.chmod(0o755)
@@ -169,7 +169,7 @@ def main() -> int:
             env["PATH"] = f"{fake_bin}:{env['PATH']}"
             env["FAKE_COMPARE_METRIC"] = metric
             env["CONVERT_ARGS_FILE"] = str(convert_args)
-            source = helper.group(0) + "\\n" + match.group(0) + "\\n" + name + " " + args
+            source = helper.group(0) + "\n" + match.group(0) + "\n" + name + " " + args
             result = subprocess.run(
                 ["bash", "-c", source],
                 text=True,
