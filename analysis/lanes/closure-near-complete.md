@@ -1846,3 +1846,8 @@ Changed files:
 Exact-head validation is pending. Required: crystal-outline source contract, generated Bash syntax, full NeoForge CI/data-pack load, and actual Minecraft client `CRYSTAL_OUTLINE_LEGACY_ROCK_SUPPORTS=PASS` plus `CRYSTAL_OUTLINE_REAL_CLIENT_RAY_PICK=PASS`. Do not infer success from the earlier stone-only smoke [#42797632305](https://github.com/craftkot/tgaumcraft/actions/runs/42797632305).
 
 The fixed project audit remains 59/100; M16 remains 4/6 and M08 remains 5/9 until the broader criteria are re-audited. No points awarded for this source change or a compile alone. PR #4 remains Draft/open; no merge.
+
+
+### 2026-11-10 follow-up — correct the crystal smoke generator before acceptance
+
+The first support-tag commit `927af74` exposed a generator-editing error: JavaScript replacement-string expansion interpreted the shell regex token `$'` and duplicated the tail of the embedded Bash template. The real-client workflow [#42823583393](https://github.com/craftkot/tgaumcraft/actions/runs/42823583393) failed before Minecraft launch; this was a test-generator failure, not a crystal runtime result. Rebuilt `client_crystal_outline_smoke.py` from its clean parent version using literal slice replacement, then reapplied the support-material cases and acceptance markers. The corrected file is checked to end at its single Python entry point; the rerun on the fix commit is authoritative.
