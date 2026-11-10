@@ -18,6 +18,30 @@ def render() -> str:
     body = r'''
   echo 'TUBE_TEXTURE_REAL_CLIENT_WORLD=YES' | tee -a client-smoke-status.txt
 
+  tube_send_chat() {
+    local command="$1" expected="$2"
+    # Match the stable chat-open/type timings used by client_smoke.sh, but
+    # return on the actual server acknowledgement so particle frames remain
+    # inside the transient effect window.
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$command"
+    xdotool key --clearmodifiers Return
+    for _ in $(seq 1 80); do
+      if grep -Fq -- "$expected" client-smoke/client.log; then
+        echo "TUBE_SERVER_COMMAND_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+        xdotool key --clearmodifiers F3+d
+        sleep 0.1
+        return 0
+      fi
+      sleep 0.05
+    done
+    echo "TUBE_SERVER_COMMAND_NOT_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  }
+
+
   # Freeze the scene and suppress item drops so early-vs-late pixel differences
   # isolate the transient block-destruction particles rather than weather,
   # moving drops, chat fade, or the player's hand.
@@ -42,28 +66,6 @@ def render() -> str:
     echo "TUBE_REAL_CLIENT_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
-  tube_send_chat() {
-    local command="$1" expected="$2"
-    # Match the stable chat-open/type timings used by client_smoke.sh, but
-    # return on the actual server acknowledgement so particle frames remain
-    # inside the transient effect window.
-    xdotool key --clearmodifiers t
-    sleep 1
-    xdotool type --clearmodifiers --delay 24 "$command"
-    xdotool key --clearmodifiers Return
-    for _ in $(seq 1 80); do
-      if grep -Fq -- "$expected" client-smoke/client.log; then
-        echo "TUBE_SERVER_COMMAND_CONFIRMED=$expected" | tee -a client-smoke-status.txt
-        xdotool key --clearmodifiers F3+d
-        sleep 0.1
-        return 0
-      fi
-      sleep 0.05
-    done
-    echo "TUBE_SERVER_COMMAND_NOT_CONFIRMED=$expected" | tee -a client-smoke-status.txt
-    tail -80 client-smoke/client.log >&2
-    exit 1
-  }
 
   tube_pixel_diff() {
     local label="$1" left="$2" right="$3" metric

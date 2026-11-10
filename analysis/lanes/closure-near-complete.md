@@ -1874,3 +1874,28 @@ Root cause: the tube harness used a custom tube_send_chat_quick with 150 ms to o
 This commit replaces the quick path with a deterministic chat helper using the proven 1 s/24 ms timings, but waits for the expected server-log acknowledgement (up to 4 s) rather than a fixed 4 s sleep so destruction-particle screenshots are captured while the effect is still alive. Every setup, placement, connection and destruction command must be acknowledged before the script continues. The verifier additionally requires three real block-placement acknowledgements and explicit valve/restrict air-state markers after destruction. Existing pixel/particle thresholds are unchanged. Acceptance for this corrected harness is pending the new workflow run; do not accept the tube category until the new artifact shows the actual tube world (not an inventory screen), all three blockstate markers, destruction markers, and valid particle frames.
 
 Accepted current-head evidence is limited to the runs listed above. Still running on the prior head when this entry was written: crystal outline/picking #42824117144, Thaumometer scan sound #42824117305, and crystal placement sound #42824117511. M16 remains 4/6 pending those results and the corrected tube smoke; next step is to inspect these workflows and the new tube run before choosing another M16 defect.
+
+
+## 2026-11-10 — fix tube real-client smoke function ordering
+
+Exact failure on the current PR head before this fix:
+- [Tube real-client PR run #42827631241](https://github.com/craftkot/tgaumcraft/actions/runs/42827631241) failed after the integrated Minecraft world had started. The job log reports `client-tube-generated.sh: line 285: tube_send_chat: command not found` and exits 127.
+- Inspection of `tools/client_tube_texture_smoke.py` showed that the generated script invoked `tube_send_chat` for the initial gamerule/time/chunk/platform setup before the shell function definition appeared later in the script. Bash executes top-to-bottom; function declarations are not hoisted. The previous acknowledgement-gated helper itself was valid, but its placement made early calls fail. This is a harness control-flow defect, not a production tube connection or particle defect.
+- The failing run did not reach authoritative server blockstate checks or valid tube world screenshots. Its artifact is not accepted as visual/particle evidence.
+
+Fix:
+- Move the single `tube_send_chat()` definition immediately after the integrated-world marker and before the first setup invocation. Keep the stable 1 s chat-open / 24 ms typing timings and acknowledgement polling.
+- Extend `tools/test_tube_texture_smoke.py` to assert that the function definition precedes the first call and occurs exactly once. Retain the existing positive/negative acknowledgement tests, Bash syntax check, server-marker verifier controls, and pixel/particle threshold controls.
+
+Changed files:
+- `tools/client_tube_texture_smoke.py`
+- `tools/test_tube_texture_smoke.py`
+- `analysis/lanes/closure-near-complete.md`
+
+Safety and assessment:
+- Fresh main HEAD: `a4280834adc5a20b6951098af937d30ca4aeca56`; PR #4 head before this fix: `c2fd06524bf9d29075865751d0a6de8eb850d975`.
+- PR #1/#2/#3 changed-file lists have no overlap with these tube-specific files. The known unrelated `SalisMundusItem.java` overlap between PR #3 and PR #4 remains untouched.
+- No production Java, resources, shared client harness, Gradle, registries, CI workflow, main branch, or foreign feature branch changed.
+- Fixed audit remains **59/100**, M16 remains **4/6**. No score is awarded for repairing a test harness.
+- Exact-head tube real-client and full CI runs must pass after this commit; require all three real server connection markers, destruction markers, ten actual screenshots, valid particle comparisons, and no missing tube/base_metal model texture warnings. PR #4 remains Draft/open and unmerged.
+

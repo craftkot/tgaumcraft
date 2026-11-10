@@ -50,6 +50,11 @@ def main() -> int:
 
     helper_match = re.search(r"(?ms)^  tube_send_chat\(\) \{\n.*?^  \}", generated)
     assert helper_match, "missing acknowledgement-gated server chat helper"
+    first_tube_call = generated.index("  tube_send_chat '/gamerule")
+    assert generated.index(helper_match.group(0)) < first_tube_call, (
+        "tube_send_chat must be defined before the first setup command; Bash does not hoist functions"
+    )
+    assert generated.count("  tube_send_chat() {") == 1, "chat helper must be defined exactly once"
     assert "tube_send_chat_quick" not in generated, "racy chat helper must not return"
     with tempfile.TemporaryDirectory(prefix="tc-tube-command-ack-") as directory:
         root = Path(directory)
