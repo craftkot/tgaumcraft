@@ -2186,3 +2186,10 @@ This proves Core/source-contract, NeoForge compilation, dedicated-server startup
 - Exact-head full CI [#42884378037](https://github.com/craftkot/tgaumcraft/actions/runs/42884378037) failed during Gradle configuration, before compilation: ModDevGradle 2.0.146 `RunModel` has no `setForceExit()` method. The NeoForge 1.21.1 docs' warning refers to NeoGradle/ForgeGradle run models and is not applicable to this ModDevGradle API.
 - Removed only that unsupported call. The dedicated `gameTestServer` run type, namespace filter and isolated working directory remain. This failure did not execute or fail any GameTest assertion.
 - Exact-head full build and GameTest server must be rerun after this correction; no parity or M08 score increase is claimed.
+
+
+### M33 annotation-package correction — 2026-11-10
+
+- Exact-head NeoForge compile [#42884693727](https://github.com/craftkot/tgaumcraft/actions/runs/42884693727) reached `:compileJava` and reported four errors, all caused by the initial import assumption: in NeoForge 1.21.1 `GameTestHolder` and `PrefixGameTestTemplate` are in `net.neoforged.neoforge.gametest`, not `net.minecraft.gametest.framework`.
+- Updated only those two imports in `CrystalSpreadGameTests.java`. The vanilla `GameTest` and `GameTestHelper` imports remain in `net.minecraft.gametest.framework`.
+- The GameTest body has not executed yet. The next exact-head build and GameTest server run are required before any gameplay result is claimed.
