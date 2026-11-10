@@ -44,7 +44,12 @@ assert "picked instanceof BlockHitResult blockHit" in fx
 assert "blockHit.getBlockPos().equals(pos)" in fx
 assert "faceStart = blockHit.getLocation()" in fx
 assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICKED")' in fx
-assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICK_FALLBACK")' in fx
+assert "shape.clip(eye, eye.add(forward.scale(6.0D)), pos)" in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_SHAPE_CLIPPED")' in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_CENTER_FALLBACK")' in fx
+assert 'ThaumcraftSmokeAudit.mark("SALIS_FACE_HITPOINT_PICK_FALLBACK")' not in fx
+assert fx.index("var shape = level.getBlockState(pos).getShape(level, pos);") < fx.index("var picked = player.pick(")
+assert fx.count("getBlockState(pos)") == 1
 assert "hand == InteractionHand.OFF_HAND" in fx
 assert "HumanoidArm" not in fx
 assert "Vec3 start = new Vec3(origin[0], origin[1], origin[2]);" in fx
