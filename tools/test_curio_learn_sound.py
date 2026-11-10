@@ -26,7 +26,16 @@ assert '0.4F / (LEARN_SOUND_RANDOM.nextFloat() * 0.4F + 0.8F)' in item
 assert item.index("level.playSound(null,") < item.index("if (index == 6 && actualWarp <= 20)")
 assert item.index("if (level.isClientSide)") < item.index("level.playSound(null,")
 assert 'CURIO_LEARN_SOUND_DISPATCHED' in item
+smoke_generator = (root / "tools/client_curio_learn_sound_smoke.py").read_text()
+workflow = (root / ".github/workflows/closure-curio-learn-client.yml").read_text()
+assert "export ALSOFT_DRIVERS=pulse" in smoke_generator
+assert "ALSOFT_LOGLEVEL=3" in smoke_generator
+assert "tools/verify_curio_pulse_sink.py" in smoke_generator
+assert "OpenAL initialized on device Null Output" in smoke_generator
+assert 'export PULSE_SERVER="unix:${XDG_RUNTIME_DIR}/pulse/native"' in workflow
+assert "tools/test_curio_pulse_sink.py" in workflow
 print("CURIO_LEARN_SOURCE_AND_TRIGGER_CONTRACT=PASS")
+print("CURIO_LEARN_REAL_PULSE_CAPTURE_GUARD=PASS")
 
 rng = np.random.default_rng(20261101)
 original = rng.normal(0, 0.15, 2800).astype(np.float64)
