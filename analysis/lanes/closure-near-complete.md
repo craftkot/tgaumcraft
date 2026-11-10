@@ -2111,3 +2111,24 @@ Pinned-source comparison: `thaumcraft.common.world.aura.AuraHandler#generateAura
 **Acceptance limits:** this restores the exact source sampling height but does not make 1.21 biome layout, biome dictionary mapping, or chunk-generation timing identical to 1.12.2. No in-world aura-generation GameTest was added in this iteration. M08 remains 5/9; overall fixed audit remains 59/100. PR #4 remains Draft/open and is not merged.
 
 **Next:** inspect exact-head Core/NeoForge CI; then add a deterministic server-side test for the five biome sample positions and verify initialization in a generated 1.21.1 world without forcing neighbor chunks.
+
+
+## 2026-11-10 — M32: use the legacy block-liquid flag for crystal spread
+
+Pinned BETA26 source: [BlockCrystal.java at 954022bb777b7546281fb36df8522f0ba6b43f81](https://github.com/TheDarkTower314/Thaumcraft-6-Source-Code/blob/954022bb777b7546281fb36df8522f0ba6b43f81/src/main/java/thaumcraft/common/blocks/world/ore/BlockCrystal.java), method `spreadCrystal`.
+
+**Correction to M30:** the original code obtains `Material bm = bs.getMaterial()` and tests `!bm.isLiquid()` before testing air/replaceability. The first NeoForge mapping used `!destination.getFluidState().isEmpty()`. That is too broad: a waterlogged solid can have a non-empty FluidState while its block material is not liquid, so the first mapping could reject a replaceable waterlogged block that BETA26 would permit. This was an adapter-parity defect, not a change to the original rule.
+
+**Fix:** `CrystalClusterBlock.randomTick` now passes `destination.liquid()` to `LegacyBlockCrystalGrowthRules.canSpreadInto`. In Minecraft 1.21.1 the retained `BlockStateBase.liquid()` compatibility flag is mapped as `isLiquid`; it models the block's legacy liquid property rather than the independent FluidState. The rule still rejects water/lava liquid blocks even if they are replaceable, while not classifying a waterlogged non-liquid block as liquid solely because its FluidState is non-empty. The helper parameter is now explicitly named `blockMaterialLiquid`.
+
+**Regression:** `CrystalGrowthParityTest` clarifies the non-liquid/replaceable case and now checks the NeoForge adapter source contract: it must use `destination.liquid()` and must not regress to `destination.getFluidState().isEmpty()`. This is a source-contract/Core regression plus compilation; it is not a live waterlogged-block GameTest.
+
+**Changed files:**
+- `src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java`
+- `src/main/java/dev/ehtid/thaumcraft/port/core/LegacyBlockCrystalGrowthRules.java`
+- `src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java`
+- this lane journal.
+
+**Acceptance limits:** the source adapter now matches the old liquid-material predicate more closely, but no in-world random-tick test has yet exercised a waterlogged replaceable block. Exact-head Core parity, NeoForge compilation, and a dedicated server run are required next; a GameTest/client smoke remains separate evidence. No M08 or overall score change: **M08 5/9, total 59/100**. PR #4 remains Draft/open and is not merged.
+
+**Next:** inspect exact-head CI for this correction. If compilation and Core parity pass, add a server-side GameTest that contrasts a replaceable waterlogged non-liquid block with a replaceable liquid block while forcing the crystal spread branch deterministically, and verify both destination state and aura debit.

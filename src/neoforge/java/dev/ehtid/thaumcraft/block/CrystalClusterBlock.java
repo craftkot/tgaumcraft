@@ -160,10 +160,11 @@ public final class CrystalClusterBlock extends Block {
         if(!LegacyBlockCrystalGrowthRules.spreadOffset(dx,dy,dz)) return;
         BlockPos other=pos.offset(dx,dy,dz);
         BlockState destination=level.getBlockState(other);
-        // BETA26 spreadCrystal rejects Material.isLiquid even when replaceable.
-        // A non-empty modern FluidState is the conservative 1.21.1 equivalent.
+        // BETA26 checks the block Material, not whether its FluidState is non-empty.
+        // BlockState.liquid() retains the legacy liquid-material flag in 1.21.1;
+        // waterlogged replaceable solids therefore remain eligible for spreading.
         if(!LegacyBlockCrystalGrowthRules.canSpreadInto(
-                !destination.getFluidState().isEmpty(),
+                destination.liquid(),
                 destination.isAir()||destination.canBeReplaced())) return;
         if(random.nextInt(16)!=0||!touchesStone(level,other)) return;
         if(!aura.trySpendCrystalAura(pos,flux,10)) return;

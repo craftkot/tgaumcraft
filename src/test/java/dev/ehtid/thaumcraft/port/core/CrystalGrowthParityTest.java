@@ -1,4 +1,7 @@
 package dev.ehtid.thaumcraft.port.core;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Objects;
 public final class CrystalGrowthParityTest {
   private static int total;
@@ -34,9 +37,9 @@ public final class CrystalGrowthParityTest {
        LegacyBlockCrystalGrowthRules.child(original,true));
     eq(new LegacyBlockCrystalGrowthRules.State(0,2),
        LegacyBlockCrystalGrowthRules.child(original,false));
-    // BETA26 spreadCrystal excludes liquid Material before checking replaceability.
-    yes(LegacyBlockCrystalGrowthRules.canSpreadInto(false,true));
-    no(LegacyBlockCrystalGrowthRules.canSpreadInto(true,true)); // water/lava are replaceable but liquid
+    // BETA26 checks the block Material: a replaceable waterlogged solid is not liquid.
+    yes(LegacyBlockCrystalGrowthRules.canSpreadInto(false,true)); // non-liquid block, fluid state may be non-empty
+    no(LegacyBlockCrystalGrowthRules.canSpreadInto(true,true)); // water/lava liquid block
     no(LegacyBlockCrystalGrowthRules.canSpreadInto(false,false));
     no(LegacyBlockCrystalGrowthRules.canSpreadInto(true,false));
     yes(LegacyBlockCrystalGrowthRules.spreadOffset(-1,1,1));
@@ -54,7 +57,18 @@ public final class CrystalGrowthParityTest {
         LegacyModernBiomeCompatibility.auraModifier("minecraft:ocean"));
     eq(150, AuraGenerationLogic.generatedBase(.3F,.3F,.3F,.3F,.3F,0.0D));
     eq(50, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y); // pinned BETA26 AuraHandler.generateAura
+    verifyNeoForgeSpreadLiquidAdapter();
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
+  }
+  private static void verifyNeoForgeSpreadLiquidAdapter() {
+    try {
+      String source = Files.readString(Path.of(
+          "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java"));
+      yes(source.contains("destination.liquid()"));
+      no(source.contains("destination.getFluidState().isEmpty()"));
+    } catch (IOException e) {
+      throw new AssertionError("Unable to inspect NeoForge crystal spread adapter", e);
+    }
   }
   private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
   private static void yes(boolean b){total++;if(!b)throw new AssertionError("expected true");}
