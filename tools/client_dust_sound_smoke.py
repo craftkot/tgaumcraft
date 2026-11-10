@@ -109,6 +109,28 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
     exit 1
   fi
   echo 'DUST_REAL_SALIS_BOOKSHELF_AND_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+  # Wait for the opt-in native chunk unload/reload probe after the real Salis use.
+  native_probe_ok=0
+  for _ in $(seq 1 180); do
+    if grep -Fq 'TC_SMOKE_SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=YES' client-smoke/client.log; then
+      native_probe_ok=1
+      break
+    fi
+    if grep -Fq 'TC_SMOKE_SALIS_NATIVE_CHUNK_UNLOAD_FAILED=YES' client-smoke/client.log; then
+      tail -120 client-smoke/client.log >&2
+      exit 1
+    fi
+    sleep 1
+  done
+  if [ "$native_probe_ok" -ne 1 ]; then
+    echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=NO' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  for marker in SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY; do
+    grep -Fq "TC_SMOKE_${marker}=YES" client-smoke/client.log || exit 1
+  done
+  echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS' | tee -a client-smoke-status.txt
   exit 0
 fi
 """

@@ -6,6 +6,9 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/dust.ogg'
@@ -16,6 +19,8 @@ on:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleDelayRules.java'
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceDelayRules.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java'
       - '.github/workflows/closure-dust-client.yml'
   pull_request:
     branches: [main]
@@ -71,6 +76,7 @@ jobs:
           python tools/test_salis_hand_origin.py
           python tools/test_salis_trail_delay.py
           python tools/test_salis_face_delay.py
+          python tools/test_salis_queue_unload_jvm.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py
@@ -84,6 +90,7 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=tc_dust_sink rate=48000 channels=2
           pactl set-default-sink tc_dust_sink
+          export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Dthaumcraft.salisChunkUnloadScenario=true"
           bash client-dust-generated.sh
       - name: Verify real-client visible Salis particles
         # Screenshot assertions require a completed client run; setup cancellation is not a particle failure.

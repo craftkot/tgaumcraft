@@ -1653,3 +1653,31 @@ Fresh integration baseline and exact-head CI review:
 - PR #1 and #2 do not overlap this test/journal; PR #3's only PR #4 path overlap remains `SalisMundusItem.java`, untouched. No production Java, registries, Gradle, global workflow or foreign branch changed.
 
 Next: require the exact-new-HEAD Salis real-client workflow to pass the corrected source guards and proceed through the actual Minecraft dust/particle scenario; inspect its PCM and framebuffer artifacts. The tube server-marker failure remains a separate M16 issue. Native Salis chunk-unload/reload with actual server chunk-ticket evidence is still not proven by the JVM queue harness. Fixed audit remains **59/100**, M16 **4/6**; no points awarded.
+
+
+## 2026-11-10 — native Salis chunk-unload/reload acceptance probe added (CI pending)
+
+Fresh exact-head review before this iteration:
+- `main` HEAD: `a4280834adc5a20b6951098af937d30ca4aeca56`; PR #4 base remains this main. Own branch HEAD: `59c3413da2d84571b36451763bfced2f321a87f6`, 399 commits ahead / 0 behind.
+- All 17 GitHub Actions runs on exact HEAD `59c3413` completed SUCCESS. Full NeoForge/Core/JAR/dedicated-server CI: [#42779998115](https://github.com/craftkot/tgaumcraft/actions/runs/42779998115). Real-client Salis dust/particle + original PCM: [#42779998668](https://github.com/craftkot/tgaumcraft/actions/runs/42779998668), artifact [#13745619434](https://github.com/craftkot/tgaumcraft/actions/runs/42779998668/artifacts/13745619434). Tube real-client now passes on the same HEAD: [#42779998187](https://github.com/craftkot/tgaumcraft/actions/runs/42779998187), artifact [#13746086340](https://github.com/craftkot/tgaumcraft/actions/runs/42779998187/artifacts/13746086340). Earlier failures remain historical, but are superseded on this exact HEAD.
+- PR ownership was recalculated from current changed-file lists: PR #4 has no path overlap with PR #1 or #2. Its only overlap with PR #3 remains `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java`, untouched here.
+
+Implementation added:
+1. `ThaumcraftSmokeAudit` counts opt-in markers in-process as well as printing them; ordinary player runs still do no counting or logging.
+2. `SalisSparkleTrailQueue` emits an enqueue marker and exposes a package-private, server-scoped pending-count observation. It does not load chunks, add tickets, or change particle timing/recipient behavior.
+3. New `SalisSparkleChunkUnloadProbe`, enabled only with `-Dthaumcraft.salisChunkUnloadScenario=true`: after real bookshelf Salis use and queue drain, it acquires one remote fixture chunk ticket, enqueues one long-delay face particle to the actual connected player, releases the fixture ticket, observes `ChunkEvent.Unload` and non-loading `getChunkNow/areEntitiesLoaded` state, requires exactly one queue cancellation, keeps the chunk absent beyond the due tick, reloads it, and requires no send-count increase or replay.
+4. The Salis real-client workflow now sets the opt-in JVM property, runs the expanded JVM queue regression, and waits for native unload/reload acceptance markers. This is an integrated real-client/server test, not a dedicated-server test.
+5. The native test uses a test-only 1200-tick face delay to leave enough time for unload; production BETA26 delay rules are unchanged.
+
+Files changed:
+- `src/neoforge/java/dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java`
+- `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java`
+- `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java` (new)
+- `tools/test_salis_queue_unload_jvm.py`
+- `tools/client_dust_sound_smoke.py`
+- `.github/workflows/closure-dust-client.yml`
+- this lane journal.
+
+At commit time, all checks for the new exact HEAD are pending. The last accepted baseline is `59c3413`: Core/NeoForge/JAR/dedicated-server PASS; real-client Salis PCM/particle PASS; tube/base-metal real-client PASS. No result for the new native chunk probe is inferred from older runs.
+
+Audit remains **59/100**, M16 **4/6**. This adds acceptance evidence for the remaining Salis unload/reload gap, not a score increase. Next: inspect exact-new-HEAD JVM queue test, full NeoForge build and native client probe; if the probe fails, diagnose the first missing native event/state marker before changing production behavior.

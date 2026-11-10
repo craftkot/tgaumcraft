@@ -14,7 +14,7 @@ STUBS = {
 "dev/ehtid/thaumcraft/ThaumcraftPort.java": "package dev.ehtid.thaumcraft; public class ThaumcraftPort { public static final String MOD_ID=\"thaumcraft\"; }",
 "dev/ehtid/thaumcraft/port/core/visual/SalisSparkleDelayRules.java": "package dev.ehtid.thaumcraft.port.core.visual; public class SalisSparkleDelayRules { public static long dueTick(long t,int d){return t+d;} }",
 "dev/ehtid/thaumcraft/port/core/visual/SalisSparkleFaceDelayRules.java": "package dev.ehtid.thaumcraft.port.core.visual; public class SalisSparkleFaceDelayRules { public static long dueTick(long t,int d){return t+d;} }",
-"dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java": "package dev.ehtid.thaumcraft.util; public class ThaumcraftSmokeAudit { public static int cancelled; public static void mark(String s){if(s.equals(\"SALIS_DELAY_UNLOADED_CANCELLED\"))cancelled++;} }",
+"dev/ehtid/thaumcraft/util/ThaumcraftSmokeAudit.java": "package dev.ehtid.thaumcraft.util; public class ThaumcraftSmokeAudit { private static final java.util.Map<String,Integer> COUNTS=new java.util.HashMap<>(); public static int cancelled; public static void mark(String s){COUNTS.merge(s,1,Integer::sum);if(s.equals(\"SALIS_DELAY_UNLOADED_CANCELLED\"))cancelled++;} public static int count(String s){return COUNTS.getOrDefault(s,0);} }",
 "net/minecraft/core/BlockPos.java": "package net.minecraft.core; import net.minecraft.world.phys.Vec3; public record BlockPos(int x,int y,int z) {public static BlockPos containing(Vec3 v){return new BlockPos((int)Math.floor(v.x),(int)Math.floor(v.y),(int)Math.floor(v.z));}}",
 "net/minecraft/core/particles/ParticleOptions.java": "package net.minecraft.core.particles; public interface ParticleOptions {}",
 "net/minecraft/core/particles/DustParticleOptions.java": "package net.minecraft.core.particles; public class DustParticleOptions implements ParticleOptions {}",
@@ -82,7 +82,11 @@ public class SalisQueueTest {
   var dust=new DustParticleOptions();var origin=new Vec3(17,64,17);var v=new Vec3(0,0,0);
   // Between-ticks unload/reload: only the event can see this transition.
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,5);
+  check(SalisSparkleTrailQueue.pendingCountForServer(s)==1,"pending count must include the actual server's queued effect");
+  check(ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED")>=1,"queue admission marker missing");
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(1,1))));
+  check(SalisSparkleTrailQueue.pendingCountForServer(s)==0,"native unload event must remove the server's pending effect");
+  check(ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED")>=1,"unload cancellation marker missing");
   a.time=5;tick(s);check(a.sends==0,"stale effect emitted after reload");
   check(ThaumcraftSmokeAudit.cancelled==1,"unload event did not cancel");
   // Different dimension and different chunk must not cancel this entry.
@@ -120,10 +124,14 @@ public class SalisQueueTest {
   var cPlayer=new ServerPlayer(c); cServer.players.put(cPlayer.id,cPlayer);
   c.time=30;
   SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,3);
+  check(SalisSparkleTrailQueue.pendingCountForServer(cServer)==1,"pending count must be isolated to server C");
   // Another server's tick must not discard this pending particle.
   a.time=31; tick(s);
   SalisSparkleTrailQueue.onChunkUnload(new ChunkEvent.Unload(a,new ChunkEvent.Chunk(new ChunkPos(1,1))));
   c.time=33; tick(cServer);
+  check(c.sends==1,"unload in another server cancelled same-dimension pending FX");
+  c.time=33; tick(cServer);
+  check(SalisSparkleTrailQueue.pendingCountForServer(cServer)==0,"server C queue did not drain on its own tick");
   check(c.sends==1,"unload in another server cancelled same-dimension pending FX");
   // Stopping server A must not erase server C's pending particle.
   c.time=33; SalisSparkleTrailQueue.emitOrQueue(c,cPlayer,dust,origin,v,2);

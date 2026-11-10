@@ -78,6 +78,7 @@ public final class SalisSparkleTrailQueue {
         // Otherwise an obsolete caller can enqueue effects that survive a brief reconnect.
         if (level.getServer().getPlayerList().getPlayer(player.getUUID()) != player) return;
         PENDING.add(new Pending(level.dimension(), level, player.getUUID(), player, color, origin, velocity, due, face));
+        ThaumcraftSmokeAudit.mark("SALIS_DELAY_ENQUEUED");
     }
 
     @SubscribeEvent
@@ -144,6 +145,15 @@ public final class SalisSparkleTrailQueue {
     public static void onServerStopped(ServerStoppedEvent event) {
         MinecraftServer stopped = event.getServer();
         PENDING.removeIf(pending -> pending.sourceLevel().getServer() == stopped);
+    }
+
+    /** Test-only observation of this server's queue; does not load or retain chunks. */
+    static int pendingCountForServer(MinecraftServer server) {
+        int count = 0;
+        for (Pending pending : PENDING) {
+            if (pending.sourceLevel().getServer() == server) count++;
+        }
+        return count;
     }
 
     private static void emit(ServerLevel level, ServerPlayer player, ParticleOptions color,
