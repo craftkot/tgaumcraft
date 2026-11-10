@@ -35,7 +35,7 @@ public class Quaternionf {
   public Quaternionf set(Quaternionf other) {
     yaw=other.yaw; tip=other.tip; cameraSeed=other.cameraSeed; setCalls++; return this;
   }
-  public Quaternionf rotationY(float value) { yaw += value; yawCalls++; return this; }
+  public Quaternionf rotateY(float value) { yaw += value; yawCalls++; return this; }
   public Quaternionf rotateZ(float value) { tip = value; tipCalls++; return this; }
 }
 """,
