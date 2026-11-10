@@ -2200,3 +2200,35 @@ This proves Core/source-contract, NeoForge compilation, dedicated-server startup
 - The GameTest server now starts and discovers the registered test, but [run #42885048053](https://github.com/craftkot/tgaumcraft/actions/runs/42885048053) failed while loading `thaumcraft:crystal_spread_empty`: `StructureTemplateManager` reported `ZipException: Not in GZIP format`, followed by `Missing test structure`.
 - The structure template NBT was encoded as raw NBT. Minecraft 1.21.1 expects structure `.nbt` resources to be gzip-compressed. Re-encoded the same DataVersion 3953 / 16×8×16 air-only structure with deterministic gzip (`mtime=0`); no Java or gameplay logic changed.
 - This was a fixture-format failure before the test method ran. The next exact-head GameTest run must confirm the structure loads and all three scenario markers appear.
+
+
+### M33 exact-head gameplay result and runner shutdown diagnosis — 2026-11-10
+
+The native NeoForge GameTest **did execute and all gameplay assertions passed** on exact code HEAD `5c463b6d1ff8effb4a0a2c88e22da0c00c93932a`, despite workflow [#42885439823](https://github.com/craftkot/tgaumcraft/actions/runs/42885439823) ending as `cancelled`.
+
+The decoded job log is decisive:
+- `TC_GAMETEST_CRYSTAL_SPREAD_CASE=seagrass result=SPREAD vis=90.0`
+- `TC_GAMETEST_CRYSTAL_SPREAD_CASE=water result=REJECTED vis=100.0`
+- `TC_GAMETEST_CRYSTAL_SPREAD_CASE=lava result=REJECTED vis=100.0`
+- `TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES`
+- `All 1 required tests passed :)`
+
+The GameTest server then logged `Stopping server`, `Saving players`, and `Saving worlds`. The Gradle/Java run process did not terminate; GitHub cancelled the job roughly 28 minutes later. Thus the **server-side assertions passed**, while the workflow/runner result was cancelled. This is a process-shutdown defect, not a failed crystal assertion. Do not report the workflow itself as SUCCESS.
+
+The separate exact-head [full CI #42885439667](https://github.com/craftkot/tgaumcraft/actions/runs/42885439667) is **SUCCESS**: Core parity, NeoForge build, dedicated-server smoke, and JAR packaging. Separate real-client workflows [tube texture #42885448430](https://github.com/craftkot/tgaumcraft/actions/runs/42885448430) and [Thaumonomicon page sound #42885448401](https://github.com/craftkot/tgaumcraft/actions/runs/42885448401) are also SUCCESS; these do not replace the crystal GameTest runner result.
+
+### M33 runner shutdown correction
+
+Added `tools/run_crystal_spread_gametest.sh` and changed only the lane-owned `.github/workflows/closure-crystal-spread-gametest.yml`:
+- run the GameTest through GNU `timeout` with a bounded 300-second runtime and 10-second TERM→KILL grace;
+- accept a watchdog termination **only if** the log contains all three exact case results, the acceptance marker, and Minecraft's `All 1 required tests passed` summary;
+- fail on any missing marker, failed GameTest, ordinary nonzero Gradle exit, or timeout before the summary;
+- retain the full server log as the uploaded artifact and reduce the job ceiling to 10 minutes.
+
+The wrapper's local shell harness was exercised in three cases: complete markers + hung process → accepted only after watchdog (**PASS**); missing case marker → rejected (**PASS**); complete markers but Gradle exit 7 → rejected (**PASS**). `bash -n` also passed. These are runner-logic tests, not another Minecraft run.
+
+**Path ownership check:** open PR #1 pages 1–2 do not change `build.gradle`, `CrystalSpreadGameTests.java`, the crystal structure, this dedicated workflow, or the new runner script; open PR #3 pages 1–2 likewise have no overlap. PR #2 is documentation/coordination only. No other branch was written. `build.gradle` and production Java are unchanged in this correction.
+
+**Current acceptance:** the crystal spread gameplay subcase is supported by real NeoForge server logs, but the corrected bounded workflow must still complete successfully on the new exact HEAD. M08 remains **5/9** and the fixed overall audit remains **59/100**; no score is awarded for this isolated scenario. PR #4 remains Draft/open; no merge.
+
+**Next:** inspect the exact-head rerun for `TC_GAMETEST_CRYSTAL_SPREAD_RUNNER_EXIT=watchdog_after_all_tests_passed` (or `clean`) and uploaded log artifact. Then continue M08 with an in-world test of five Y=50 biome samples and aura initialization/save-reload; do not infer that from the current crystal test.

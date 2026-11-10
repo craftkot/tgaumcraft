@@ -8,6 +8,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
       - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
       - '.github/workflows/closure-crystal-spread-gametest.yml'
+      - 'tools/run_crystal_spread_gametest.sh'
   pull_request:
     branches: [main]
     paths:
@@ -15,6 +16,7 @@ on:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
       - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
       - '.github/workflows/closure-crystal-spread-gametest.yml'
+      - 'tools/run_crystal_spread_gametest.sh'
   workflow_dispatch:
 
 permissions:
@@ -23,7 +25,7 @@ permissions:
 jobs:
   crystal-spread-gametest:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,8 +42,11 @@ jobs:
         with:
           gradle-version: '9.2.1'
 
-      - name: Run native NeoForge GameTests
-        run: gradle runGameTestServer --no-daemon
+      - name: Validate GameTest runner
+        run: bash -n tools/run_crystal_spread_gametest.sh
+
+      - name: Run native NeoForge GameTests with bounded shutdown
+        run: bash tools/run_crystal_spread_gametest.sh
 
       - name: Upload GameTest evidence
         if: always()
