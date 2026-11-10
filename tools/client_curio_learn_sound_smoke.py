@@ -9,8 +9,10 @@ if source.count(anchor) != 1:
     raise SystemExit("World boot hook changed; refusing unsafe smoke injection")
 if source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("OpenAL backend hook changed; refusing unsafe audio setup")
-head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null",
-                                           "export ALSOFT_DRIVERS=pulse")
+head = source.split(anchor, 1)[0].replace(
+    "export ALSOFT_DRIVERS=null",
+    "export ALSOFT_DRIVERS=pulse\\nexport ALSOFT_LOGLEVEL=3"
+)
 body = r'''
   echo 'CURIO_LEARN_REAL_WORLD=YES' | tee -a client-smoke-status.txt
   send_chat '/time set noon'
@@ -26,17 +28,27 @@ body = r'''
   sleep 3
   import -display :99 -window root -silent client-smoke/screenshots/95-curio-before.png
   pactl info > client-smoke/curio-pulse-info.txt
-  pactl list short sinks | grep -Fq 'tc_curio_sink'
-  timeout --signal=TERM 2s parec --device=tc_curio_sink.monitor \
-    --format=s16le --rate=48000 --channels=2 --raw \
+  pactl list short sinks > client-smoke/curio-sinks.txt
+  grep -Fq 'tc_curio_sink' client-smoke/curio-sinks.txt
+  timeout --signal=TERM 2s parec --device=tc_curio_sink.monitor \\
+    --format=s16le --rate=48000 --channels=2 --raw \\
     > client-smoke/curio-baseline.pcm || test "$?" -eq 124
-  timeout --signal=TERM 5s parec --device=tc_curio_sink.monitor \
-    --format=s16le --rate=48000 --channels=2 --raw \
+  timeout --signal=TERM 5s parec --device=tc_curio_sink.monitor \\
+    --format=s16le --rate=48000 --channels=2 --raw \\
     > client-smoke/curio-event.pcm &
   curio_capture_pid=$!
   sleep 0.6
   xdotool click 3
-  sleep 5
+  sleep 0.7
+  pactl list short sink-inputs > client-smoke/curio-sink-inputs.txt
+  python3 tools/verify_curio_pulse_sink.py \\
+    client-smoke/curio-sinks.txt client-smoke/curio-sink-inputs.txt
+  if grep -Fq 'OpenAL initialized on device Null Output' client-smoke/client.log; then
+    echo 'CURIO_LEARN_OPENAL_NULL_OUTPUT=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'CURIO_LEARN_OPENAL_PULSE_ROUTE=PASS' | tee -a client-smoke-status.txt
+  sleep 3.7
   wait "$curio_capture_pid" || test "$?" -eq 124
   import -display :99 -window root -silent client-smoke/screenshots/96-curio-after.png
   # Curio's BETA26 pitch is only 0.33-0.50; a fixed page-sound RMS
