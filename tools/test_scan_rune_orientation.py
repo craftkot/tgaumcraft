@@ -366,7 +366,7 @@ public final class ScanRuneOrientationTest {
       particle.getFacingCameraMode().setRotation(second,camera2,0.9F);
       check(second.cameraSeed && second.setCalls==1,
           "each render must seed from its active camera");
-      check(Math.abs((first.yaw-camera.yaw)-(second.yaw-camera2.yaw))<0.0001F
+      check(Math.abs((first.yaw-camera.rotation().yaw)-(second.yaw-camera2.rotation().yaw))<0.0001F
               && first.tip==second.tip,
           "camera yaw changes must preserve the same legacy local quarter-turn");
     }

@@ -1575,3 +1575,9 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 ### 10.11.2026 — generated smoke subprocess import fix
 
 - The renderer commit's generated shell script contains a separate Python heredoc process. The parser import at the outer driver level is not inherited by that subprocess, and the repository root is its initial sys.path entry rather than tools/. Added an explicit tools/ path and parser import inside the heredoc itself, before the real-client script can reach log parsing. This is a code-review correction; no result from the in-flight run is claimed.
+
+
+### 10.11.2026 — orientation harness convention follow-up
+
+- The first run of the new vertex-capture harness (#42762377670 and GUI regression #42762377668) stopped at its final camera-yaw comparison. The camera stub had been corrected to mirror 1.21.1 Camera#setRotation, but one final assertion still subtracted the raw entity yaw instead of the camera quaternion yaw. Updated that assertion; the vertex/UV acceptance code had not yet been reached in those runs.
+- The generated client smoke's inline Python process now imports the parser from tools/ explicitly. This fixes the separate-process import issue identified by code review. The queued run on the previous HEAD is not treated as a test of this correction.
