@@ -41,10 +41,12 @@ assert "tools/test_curio_pulse_sink.py" in workflow
 
 # Exercise the generator itself: mute only background audio before runClient.
 # The Curio event must remain audible; its playback uses SoundSource.NEUTRAL.
-generated = subprocess.run(
+generated_result = subprocess.run(
     [sys.executable, str(root / "tools/client_curio_learn_sound_smoke.py")],
-    cwd=root, check=True, capture_output=True, text=True,
-).stdout
+    cwd=root, capture_output=True, text=True,
+)
+assert generated_result.returncode == 0, generated_result.stderr
+generated = generated_result.stdout
 isolated_options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt"
 assert isolated_options in generated
 assert generated.index(isolated_options) < generated.index("gradle runClient")

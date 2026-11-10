@@ -24,8 +24,14 @@ body = r'''
     echo 'CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=FAIL' | tee -a client-smoke-status.txt
     exit 1
   fi
-  if grep -Eq '^soundCategory_(master|neutral):0(\.0+)?  send_chat '/time set noon'
-  send_chat '/weather clear'
+  if grep -Fq 'soundCategory_neutral:0.0' run/options.txt || grep -Fq 'soundCategory_master:0.0' run/options.txt; then
+    echo 'CURIO_LEARN_SOUND_OUTPUT_CATEGORY_MUTED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS' | tee -a client-smoke-status.txt
+  echo 'CURIO_LEARN_REAL_WORLD=YES' | tee -a client-smoke-status.txt
+  send_chat '/time set noon'
+
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:curio 1'
   send_chat '/execute if items entity @p hotbar.0 thaumcraft:curio run say CURIO_LEARN_ITEM_READY'
   if ! grep -Fq 'CURIO_LEARN_ITEM_READY' client-smoke/client.log; then
