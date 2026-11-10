@@ -11,7 +11,7 @@ if source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("OpenAL backend hook changed; refusing unsafe audio setup")
 head = source.split(anchor, 1)[0].replace(
     "export ALSOFT_DRIVERS=null",
-    "export ALSOFT_DRIVERS=pulse\\nexport ALSOFT_LOGLEVEL=3"
+    "export ALSOFT_DRIVERS=pulse\nexport ALSOFT_LOGLEVEL=3"
 )
 body = r'''
   echo 'CURIO_LEARN_REAL_WORLD=YES' | tee -a client-smoke-status.txt
