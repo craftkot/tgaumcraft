@@ -1681,3 +1681,9 @@ Files changed:
 At commit time, all checks for the new exact HEAD are pending. The last accepted baseline is `59c3413`: Core/NeoForge/JAR/dedicated-server PASS; real-client Salis PCM/particle PASS; tube/base-metal real-client PASS. No result for the new native chunk probe is inferred from older runs.
 
 Audit remains **59/100**, M16 **4/6**. This adds acceptance evidence for the remaining Salis unload/reload gap, not a score increase. Next: inspect exact-new-HEAD JVM queue test, full NeoForge build and native client probe; if the probe fails, diagnose the first missing native event/state marker before changing production behavior.
+
+## 2026-11-10 — JVM harness package-visibility correction
+
+- First exact-head JVM run [#42791001293](https://github.com/craftkot/tgaumcraft/actions/runs/42791001293) failed in the harness compile/run step. The production observation method `pendingCountForServer` is intentionally package-private, but the test driver declared `package test`; this was a test-fixture access error, not a NeoForge production compile or runtime failure.
+- Moved the generated Java harness source into the production queue package and updated its launch class name. The method remains package-private; no production API was widened.
+- The failed run is retained as FAIL. The corrected harness and full/client workflows on the new HEAD must pass before the native unload scenario is accepted. No score change: 59/100, M16 4/6.

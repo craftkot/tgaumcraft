@@ -63,7 +63,7 @@ public class ChunkEvent {
  public Level getLevel(){return level;} public Chunk getChunk(){return chunk;}
  }
 }""",
-"test/SalisQueueTest.java": """package test;
+"dev/ehtid/thaumcraft/item/SalisQueueTest.java": """package dev.ehtid.thaumcraft.item;
 import dev.ehtid.thaumcraft.item.SalisSparkleTrailQueue;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.server.*; import net.minecraft.server.level.*;
@@ -288,4 +288,4 @@ with tempfile.TemporaryDirectory(prefix="salis-queue-jvm-") as d:
     classes.mkdir()
     java_files = [str(p) for p in root.rglob("*.java")] + [str(QUEUE)]
     subprocess.run(["javac", "--release", "21", "-d", str(classes), *java_files], check=True)
-    subprocess.run(["java", "-cp", str(classes), "test.SalisQueueTest"], check=True)
+    subprocess.run(["java", "-cp", str(classes), "dev.ehtid.thaumcraft.item.SalisQueueTest"], check=True)
