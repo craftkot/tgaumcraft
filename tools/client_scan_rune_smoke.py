@@ -30,9 +30,16 @@ body = r'''
   target_ready=0
   for attempt in 1 2 3; do
     send_chat '/fill -4 149 -4 4 149 10 minecraft:stone'
+    # The previous smoke left generated trees/foliage above the platform. The
+    # first view then scanned a nearby obstruction at z=0 and the opposite
+    # view scanned z=7, so neither proved the intended gold target at z=4.
+    # Clear both sight lines while preserving the floor, then place the target.
+    send_chat '/fill -4 150 -4 4 155 10 minecraft:air'
     send_chat '/setblock 0 151 4 minecraft:gold_block'
     send_chat '/execute if block 0 151 4 minecraft:gold_block run say RUNE_TARGET_GOLD_OK'
-    if grep -Fq 'RUNE_TARGET_GOLD_OK' client-smoke/client.log; then
+    send_chat '/execute if block 0 151 0 minecraft:air run say RUNE_ORIGIN_VIEW_CLEAR'
+    send_chat '/execute if block 0 151 7 minecraft:air run say RUNE_OPPOSITE_VIEW_CLEAR'
+    if grep -Fq 'RUNE_TARGET_GOLD_OK' client-smoke/client.log && grep -Fq 'RUNE_ORIGIN_VIEW_CLEAR' client-smoke/client.log && grep -Fq 'RUNE_OPPOSITE_VIEW_CLEAR' client-smoke/client.log; then
       target_ready=1
       break
     fi
