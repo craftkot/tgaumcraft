@@ -1928,3 +1928,56 @@ Safety and score:
 - No production Java, source assets, global registries, shared smoke harness, Gradle, CI workflow, main branch or foreign feature branch changed. PR #4 remains Draft/open; no merge.
 - Fixed audit remains **59/100**, M16 **4/6**. No point is awarded for a harness correction or for the invalid old particle delta.
 - Next action: inspect [#42833912726](https://github.com/craftkot/tgaumcraft/actions/runs/42833912726) artifact. Accept only if real left-clicks produce the server air markers and cropped ROI early/late diffs meet threshold; otherwise debug the actual click target or particle path without lowering thresholds.
+
+
+## 2026-11-10 — tube break probe: exact target alignment and strict per-variant postconditions
+
+Fresh review of the exact 659228331bfb M16 run set found that the Tube push run [#42833896410](https://github.com/craftkot/tgaumcraft/actions/runs/42833896410) failed at the second real left-click: the server never confirmed TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES. Its saved screenshots show two tube blocks still present after that click, so this is not accepted as a successful restrict break. The matching PR run [#42833912726](https://github.com/craftkot/tgaumcraft/actions/runs/42833912726) did pass both breaks and the cropped ROI metrics (block render 10441; valve particles 4397; restrict particles 6154), but a single pass does not erase the push-run flake.
+
+The new probe removes two avoidable sources of nondeterminism:
+- The player is placed directly on the target block's X centerline: valve at (9.5,149,8.5), restrict at (11.5,149,8.5), yaw 0, pitch 16. The camera ray now aims through the center of each target rather than relying on opposite yaw offsets from one position.
+- The unproven 100 ms / 1 ms tube_send_chat_fast path is removed. Post-break state checks use the already-proven acknowledgement-gated tube_send_chat helper (1 s chat-open, 24 ms typing, server-log acknowledgement).
+
+The server now verifies not just that the intended coordinate became air, but that the other two block IDs remain in place:
+- TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES
+- TC_SMOKE_TUBE_RESTRICT_ONLY_DESTROYED=YES
+
+This rejects a click that breaks the adjacent tube or merely produces a particle-like screen delta. The verifier requires both new markers; the regression test has a negative control for a wrong-block break. The ROI and particle thresholds remain unchanged. No production block or renderer code was modified.
+
+Changed files in commit [7bb1858](https://github.com/craftkot/tgaumcraft/commit/7bb1858b908eaaf04dd35230ce8da799c458b8a7):
+- tools/client_tube_texture_smoke.py
+- tools/test_tube_texture_smoke.py
+- tools/verify_tube_texture_client_log.py
+
+The first exact-head run pair on 7bb failed before launching Minecraft because the regression test still asserted that the removed fast helper existed:
+- push [#42837286871](https://github.com/craftkot/tgaumcraft/actions/runs/42837286871)
+- PR [#42837304018](https://github.com/craftkot/tgaumcraft/actions/runs/42837304018)
+
+Commit [67a2f82](https://github.com/craftkot/tgaumcraft/commit/67a2f8217e06e614ca4874b7db3179b3c15c9022) removed that stale assertion. Its next test run exposed a second regression-test mistake: the new negative verifier call omitted the required screenshot directory (TypeError: verify() missing 1 required positional argument: screenshot_dir). Commit [4009274](https://github.com/craftkot/tgaumcraft/commit/4009274cfa8a7ba8fead8134aaaac56fb97a1c67) supplies the existing screenshot fixture. These are test-harness failures, not Minecraft or production-code failures.
+
+Exact-head checks for 4009274 at journal time:
+- Tube push [#42838177226](https://github.com/craftkot/tgaumcraft/actions/runs/42838177226): source-art/harness regression PASS; generated Bash syntax PASS; actual Minecraft client still IN PROGRESS.
+- Full CI push [#42838177204](https://github.com/craftkot/tgaumcraft/actions/runs/42838177204): Core parity, resource checks and NeoForge build PASS; dedicated-server completion still IN PROGRESS.
+- Tube PR [#42838187114](https://github.com/craftkot/tgaumcraft/actions/runs/42838187114) and full CI PR [#42838186980](https://github.com/craftkot/tgaumcraft/actions/runs/42838186980) were queued.
+
+### M16 real-client evidence snapshot on 6592283
+
+The previously running PR workflows completed successfully on 6592283:
+- Curio learn sound [#42833912847](https://github.com/craftkot/tgaumcraft/actions/runs/42833912847): real item/use, background isolation, exactly one server dispatch; original learn.ogg PCM correlation 0.9084 at audible pitch 0.5000, matching BETA26's pitch boundary.
+- Thaumometer scan sound [#42833913208](https://github.com/craftkot/tgaumcraft/actions/runs/42833913208): original scan.ogg correlation 0.9987; negative control and source hash pass.
+- Thaumometer rune [#42833912982](https://github.com/craftkot/tgaumcraft/actions/runs/42833912982): 80 real client particles, two camera orientations, expiry, framebuffer differences 2904 / 3820.
+- Crystal outline [#42833913033](https://github.com/craftkot/tgaumcraft/actions/runs/42833913033): six faces plus multi-face ray picking; legacy rock support check pass.
+- Thaumonomicon page sound/GUI [#42833913160](https://github.com/craftkot/tgaumcraft/actions/runs/42833913160): real GUI opened, exactly one page sound dispatch/resolution; original page1 correlation 0.9999 and page2 1.0000.
+- Crystal place/break [#42833912892](https://github.com/craftkot/tgaumcraft/actions/runs/42833912892) and [#42833913365](https://github.com/craftkot/tgaumcraft/actions/runs/42833913365): real block placement and break; original crystal.ogg correlations 0.7924 / 0.8356 at pitch 0.8000.
+- Six crystal variants [#42833913243](https://github.com/craftkot/tgaumcraft/actions/runs/42833913243): aer 0.8085, ignis 0.8040, terra 0.3691, ordo 0.6424, perditio 0.4540, vitium 0.4596; each real placement and original PCM match passed on the first attempt.
+- Salis dust [#42833913023](https://github.com/craftkot/tgaumcraft/actions/runs/42833913023): original dust PCM correlation 0.4376; native chunk unload, cancellation, reload-without-replay, ticket cleanup and 16-frame sprite animation passed. The screenshot marker explicitly does not claim exact BETA26 sprite parity.
+- Label art/tint [#42833913252](https://github.com/craftkot/tgaumcraft/actions/runs/42833913252): real jar-brace, blank, aer and ignis label screenshots; aspect/color parity passed.
+- Full NeoForge CI [#42833913070](https://github.com/craftkot/tgaumcraft/actions/runs/42833913070): 10,046 Core assertions, NeoForge build and dedicated server reached Done.
+
+The Tube PR run on that head passed its own click/particle scenario, but the separate push run did not; the corrected exact-head 4009274 client run is therefore still required before accepting the tube item. M16 remains 4/6; no score is awarded for harness repairs or for sub-items without their required evidence.
+
+Safety:
+- Main remains a4280834adc5a20b6951098af937d30ca4aeca56; PR #4 is Draft/open and unmerged.
+- PR #1/#2/#3 changed-file sets do not overlap the three Tube files above. The existing unrelated PR #3 overlap on SalisMundusItem.java remains untouched.
+- No foreign branch, production Java, Gradle, registry, shared client harness, main branch, or other PR was modified.
+- Next action: inspect the exact-head 4009274 Tube artifact and full CI. Accept only if both direct-aim real clicks remove the intended blocks, preserve the middle tube, emit both exact-block markers, and produce valid cropped particle frames. If that passes, finish the remaining M16 acceptance review; otherwise correct the actual targeting path without lowering thresholds.
