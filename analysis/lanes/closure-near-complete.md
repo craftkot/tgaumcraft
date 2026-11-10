@@ -2004,3 +2004,36 @@ The PR-triggered Tube rerun [#42838187114](https://github.com/craftkot/tgaumcraf
 This accepts the narrow Tube visual/particle sub-scenario. It does not award a point to the 6-point models/sounds/particles/localization category: the audit still explicitly lists missing source resources, special renderers and FX beyond the checked objects. The project score remains **59/100**, category remains **4/6**. No production Java was changed in this Tube iteration; it corrected and strengthened the real-client acceptance harness.
 
 Next M16 action: inspect the remaining particle/source-art gaps rather than repeating already accepted Curio, scan/page/crystal audio, rune, label, Salis unload, crystal-outline or Tube scenarios. In particular, compare the current Salis sparkle sprite/frame selection and any remaining special-renderer references against the pinned BETA26 source and original assets. Keep the PR #3 overlap on SalisMundusItem.java untouched; prefer the isolated particle renderer/resource paths only if the source diff proves no PR overlap.
+
+
+## 2026-11-10 — BETA26 Salis sparkle blend parity
+
+Pinned source comparison: `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb777b7546281fb36df8522f0ba6b43f81`.
+
+The previous sprite/frame audit found no mismatch in the Salis source art or frame selection:
+
+- The ported `particles.png` Git blob is byte-identical to the pinned source asset: `f958edbcbe774c924690562a1436d12fea5846b8`.
+- `FXGeneric` defaults to a 64-cell grid; `drawSimpleSparkle` selects the 16-frame sequences beginning at 320 (20%) or 512 (80%), loops one frame per age tick, and the current provider maps the same 320/512 + age mod 16 sequence.
+- The actual remaining visual mismatch was the blend mode, not the sprite coordinates.
+
+Source evidence: original `FXDispatcher.drawSimpleSparkle` calls `setLayer(0)`; original `ParticleEngine.renderWorldLast` renders layer 0 with `GlStateManager.blendFunc(770, 1)` (SRC_ALPHA, ONE, additive). The port had returned `ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT`, which uses standard source-alpha/one-minus-source-alpha blending. That made the otherwise correct Salis sprites materially darker and composited them differently from BETA26.
+
+Implementation:
+- `SalisSparkleParticle` now uses a dedicated `BETA26_ADDITIVE` render type.
+- It delegates particle-atlas/shader/buffer setup to the vanilla translucent sheet, then applies `RenderSystem.blendFunc(770, 1)`; `isTranslucent()` remains true so the particle is sorted in the translucent stage.
+- The 320/512 animation, lifetime, physics, atlas UVs and source PNG were not changed.
+- `tools/test_salis_particle_blend.py` guards the exact blend factors, render-type selection, translucent ordering and unchanged source frame loop.
+- `closure-dust-client.yml` now runs the regression and watches `SalisSparkleParticle.java` so renderer changes actually trigger the real-client workflow.
+
+Commits:
+- Renderer + workflow + first regression draft: [b63133fa](https://github.com/craftkot/tgaumcraft/commit/b63133fa1a678e36cb3285bacde32f63e7c599b2).
+- Corrected the regression's Python regex escaping before accepting its result: [7ecf762d](https://github.com/craftkot/tgaumcraft/commit/7ecf762d5501346fab3d2fed2186bad514726652).
+
+At journal update time, the fixed-head push workflows were running:
+- Full NeoForge CI [#42847776535](https://github.com/craftkot/tgaumcraft/actions/runs/42847776535).
+- Real Minecraft Salis dust client [#42847776653](https://github.com/craftkot/tgaumcraft/actions/runs/42847776653).
+- PR real-client rerun [#42847788633](https://github.com/craftkot/tgaumcraft/actions/runs/42847788633) was queued.
+
+The earlier PR workflows launched against the first implementation commit `b63133fa` predate the regex correction and are not acceptance evidence for the final test script. No test is declared passed from those runs. The exact fixed script content was fetched and checked; GitHub Actions must still execute it.
+
+No progress point is awarded. The category remains 4/6 and the project remains 59/100. This iteration fixes one real visual-parity defect, but the actual Minecraft-client screenshot and full NeoForge result on the corrected HEAD are still pending. No merge was performed; PR #4 remains Draft/open.
