@@ -1785,3 +1785,12 @@ Exact-head verification for `dbedd0f` is queued:
 - No exact-head Curio client or full NeoForge result is claimed yet. The new test has not passed until the `dbedd0f` runs finish and their job logs show the isolation marker plus real PCM attribution.
 
 Next: inspect the two `dbedd0f` Curio runs first. Require the source/generator test, Bash validation, real Minecraft client, `CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS`, PCM correlation >= 0.20 and BETA26 audible-pitch parity. If it still fails, inspect the new PCM artifact; do not lower thresholds or alter production Curio behavior without evidence.
+
+
+### Follow-up — CI status after the Curio isolation commits (2026-11-10)
+
+- [Thaumcraft Port CI #42806043000](https://github.com/craftkot/tgaumcraft/actions/runs/42806043000) completed **SUCCESS** on superseded code/test HEAD `b60952c`. Job logs show Core parity, source/resource guards, full NeoForge build, dedicated-server smoke and JAR upload all passed. The only subsequent code diff is the test assertion correction in `dbedd0f`; no production Java or resource file changed. This is useful compile/server evidence, but it is not exact-head Curio audio acceptance.
+- The Curio real-client push run [#42806042894](https://github.com/craftkot/tgaumcraft/actions/runs/42806042894) remained in progress on `b60952c`; it is superseded by the corrected test assertion and must not be used to accept the final test.
+- Exact-`dbedd0f` runs [push Curio #42806426473](https://github.com/craftkot/tgaumcraft/actions/runs/42806426473), [PR Curio #42806434955](https://github.com/craftkot/tgaumcraft/actions/runs/42806434955), [push full CI #42806426959](https://github.com/craftkot/tgaumcraft/actions/runs/42806426959) and [PR full CI #42806435456](https://github.com/craftkot/tgaumcraft/actions/runs/42806435456) were queued at the last status read. No result is inferred.
+- A local synthetic generator fixture using a minimal `client_smoke.sh` anchor returned exit 0 and confirmed the exact options command precedes `gradle runClient`; this is only a script-generation check, not a repository test or Minecraft run.
+- Next: inspect the exact-`dbedd0f` Curio source-unit, generated Bash, real client and PCM matcher results before changing anything else.
