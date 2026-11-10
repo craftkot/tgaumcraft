@@ -17,6 +17,7 @@ def render() -> str:
     head = source.split(anchor, 1)[0]
     body = r'''
   echo 'TUBE_TEXTURE_REAL_CLIENT_WORLD=YES' | tee -a client-smoke-status.txt
+  echo 'TUBE_EVIDENCE_ROI=420x150+300+290' | tee -a client-smoke-status.txt
 
   tube_send_chat() {
     local command="$1" expected="$2"
@@ -41,6 +42,26 @@ def render() -> str:
     exit 1
   }
 
+
+  tube_send_chat_fast() {
+    local command="$1" expected="$2"
+    xdotool key --clearmodifiers t
+    sleep 0.1
+    xdotool type --clearmodifiers --delay 1 "$command"
+    xdotool key --clearmodifiers Return
+    for _ in $(seq 1 80); do
+      if grep -Fq -- "$expected" client-smoke/client.log; then
+        echo "TUBE_SERVER_COMMAND_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+        xdotool key --clearmodifiers F3+d
+        sleep 0.05
+        return 0
+      fi
+      sleep 0.05
+    done
+    echo "TUBE_SERVER_COMMAND_NOT_CONFIRMED=$expected" | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  }
 
   # Freeze the scene and suppress item drops so early-vs-late pixel differences
   # isolate the transient block-destruction particles rather than weather,
@@ -67,10 +88,22 @@ def render() -> str:
   }
 
 
+  # Pixel comparisons are restricted to the fixed tube work area. The full
+  # framebuffer contains moving clouds even when weather/daylight gamerules
+  # are frozen, so full-screen deltas are not particle evidence.
+  tube_crop_metric() {
+    local left="$1" right="$2" temporary metric
+    temporary="$(mktemp -d)"
+    convert "$left" -crop 420x150+300+290 +repage "$temporary/left.png"
+    convert "$right" -crop 420x150+300+290 +repage "$temporary/right.png"
+    metric="$(compare -metric AE "$temporary/left.png" "$temporary/right.png" null: 2>&1 || true)"
+    rm -rf "$temporary"
+    printf '%s\n' "$metric" | awk 'NR == 1 {print $1}'
+  }
+
   tube_pixel_diff() {
     local label="$1" left="$2" right="$3" metric
-    metric="$(compare -metric AE "$left" "$right" null: 2>&1 || true)"
-    metric="$(printf '%s\n' "$metric" | awk 'NR == 1 {print $1}')"
+    metric="$(tube_crop_metric "$left" "$right")"
     if ! [[ "$metric" =~ ^[0-9]+$ ]] || [ "$metric" -lt 300 ]; then
       echo "TUBE_BLOCK_RENDER_DIFF_FAILED=$label metric=$metric" | tee -a client-smoke-status.txt
       exit 1
@@ -82,8 +115,7 @@ def render() -> str:
     local label="$1" late="$2" early_a="$3" early_b="$4" early_c="$5"
     local image metric best=0
     for image in "$early_a" "$early_b" "$early_c"; do
-      metric="$(compare -metric AE "$image" "$late" null: 2>&1 || true)"
-      metric="$(printf '%s\n' "$metric" | awk 'NR == 1 {print $1}')"
+      metric="$(tube_crop_metric "$image" "$late")"
       if [[ "$metric" =~ ^[0-9]+$ ]] && [ "$metric" -gt "$best" ]; then
         best="$metric"
       fi
@@ -114,17 +146,18 @@ def render() -> str:
     client-smoke/screenshots/70-tubes-before.png \
     client-smoke/screenshots/71-tubes-connected.png
 
-  # /setblock ... destroy invokes the real level block-destruction event.
-  # Item drops are disabled above; the early-vs-late comparison therefore
-  # measures the transient particle sprite after the block itself is gone.
-  tube_send_chat '/setblock 9 149 12 minecraft:air destroy' 'Changed the block at 9, 149, 12'
-  tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'
-  sleep 0.12
+  # Break each variant through the real client input path. /setblock destroy
+  # does not prove that the player's block-destroy event or client particles ran.
+  tube_send_chat '/tp @p 10.5 149 8.5 14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'
+  xdotool mousemove --sync 513 404 click 1
+  echo 'TUBE_VALVE_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
+  sleep 0.18
   tube_capture 72-valve-break-early-a
-  sleep 0.16
+  sleep 0.12
   tube_capture 73-valve-break-early-b
-  sleep 0.16
+  sleep 0.12
   tube_capture 74-valve-break-early-c
+  tube_send_chat_fast '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'
   sleep 2.2
   tube_capture 75-valve-break-late
   tube_particle_diff VALVE \
@@ -133,14 +166,16 @@ def render() -> str:
     client-smoke/screenshots/73-valve-break-early-b.png \
     client-smoke/screenshots/74-valve-break-early-c.png
 
-  tube_send_chat '/setblock 11 149 12 minecraft:air destroy' 'Changed the block at 11, 149, 12'
-  tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'
-  sleep 0.12
+  tube_send_chat '/tp @p 10.5 149 8.5 -14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'
+  xdotool mousemove --sync 513 404 click 1
+  echo 'TUBE_RESTRICT_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
+  sleep 0.18
   tube_capture 76-restrict-break-early-a
-  sleep 0.16
+  sleep 0.12
   tube_capture 77-restrict-break-early-b
-  sleep 0.16
+  sleep 0.12
   tube_capture 78-restrict-break-early-c
+  tube_send_chat_fast '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'
   sleep 2.2
   tube_capture 79-restrict-break-late
   tube_particle_diff RESTRICT \

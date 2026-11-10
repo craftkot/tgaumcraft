@@ -23,8 +23,14 @@ def main() -> int:
         "tube_send_chat '/setblock 9 149 12 thaumcraft:tube_valve' 'Changed the block at 9, 149, 12'",
         "tube_send_chat '/setblock 10 149 12 thaumcraft:tube' 'Changed the block at 10, 149, 12'",
         "tube_send_chat '/setblock 11 149 12 thaumcraft:tube_restrict' 'Changed the block at 11, 149, 12'",
-        "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
-        "tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
+        "tube_send_chat '/tp @p 10.5 149 8.5 14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'",
+        "tube_send_chat '/tp @p 10.5 149 8.5 -14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'",
+        "xdotool mousemove --sync 513 404 click 1",
+        "TUBE_VALVE_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK",
+        "TUBE_RESTRICT_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK",
+        "TUBE_EVIDENCE_ROI=420x150+300+290",
+        "tube_send_chat_fast '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
+        "tube_send_chat_fast '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
         "sleep 1",
         "--delay 24",
         "seq 1 80",
@@ -33,7 +39,6 @@ def main() -> int:
         "TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES",
         "TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES",
         "TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES",
-        "minecraft:air destroy",
         "TUBE_NO_MISSING_MODEL_TEXTURES=PASS",
     )
     for marker in required_shell:
@@ -55,6 +60,12 @@ def main() -> int:
         "tube_send_chat must be defined before the first setup command; Bash does not hoist functions"
     )
     assert generated.count("  tube_send_chat() {") == 1, "chat helper must be defined exactly once"
+    fast_helper_match = re.search(r"(?ms)^  tube_send_chat_fast\\(\\) \\{\\n.*?^  \\}", generated)
+    assert fast_helper_match, "missing fast server-ack helper for short-lived particles"
+    first_fast_call = generated.index("  tube_send_chat_fast '/execute if block 9 149 12 minecraft:air")
+    assert generated.index(fast_helper_match.group(0)) < first_fast_call
+    assert "minecraft:air destroy" not in generated, "tube destruction must use real client input"
+    assert "TUBE_EVIDENCE_ROI=420x150+300+290" in generated
     assert "tube_send_chat_quick" not in generated, "racy chat helper must not return"
     with tempfile.TemporaryDirectory(prefix="tc-tube-command-ack-") as directory:
         root = Path(directory)
@@ -130,31 +141,47 @@ def main() -> int:
         ), "missing actual valve destruction marker must fail"
 
     assert r"\${metric" not in generated, "shell metric expansion must not be escaped"
-    assert generated.count("awk 'NR == 1 {print $1}'") == 2
+    assert generated.count("awk 'NR == 1 {print $1}'") == 1
 
     def run_shell_diff(name: str, args: str, metric: str) -> subprocess.CompletedProcess[str]:
-        pattern = r"(?ms)^  " + re.escape(name) + r"\(\) \{\n.*?^  \}"
+        helper = re.search(r"(?ms)^  tube_crop_metric\\(\\) \\{\\n.*?^  \\}", generated)
+        pattern = r"(?ms)^  " + re.escape(name) + r"\\(\\) \\{\\n.*?^  \\}"
         match = re.search(pattern, generated)
+        assert helper, "missing shared cropped-image metric helper"
         assert match, f"missing shell function {name}"
         with tempfile.TemporaryDirectory(prefix="tc-tube-diff-test-") as directory:
             fake_bin = Path(directory) / "bin"
             fake_bin.mkdir()
             compare = fake_bin / "compare"
             compare.write_text(
-                "#!/bin/sh\nprintf '%s\\n' \"$FAKE_COMPARE_METRIC\" >&2\nexit 1\n",
+                "#!/bin/sh\\nprintf '%s\\\\n' \\\"$FAKE_COMPARE_METRIC\\\" >&2\\nexit 1\\n",
                 encoding="utf-8",
             )
             compare.chmod(0o755)
+            convert = fake_bin / "convert"
+            convert.write_text(
+                "#!/bin/sh\\nfor last do :; done\\nprintf '%s\\\\n' \\\"$*\\\" >> \\\"$CONVERT_ARGS_FILE\\\"\\n: > \\\"$last\\\"\\n",
+                encoding="utf-8",
+            )
+            convert.chmod(0o755)
+            convert_args = Path(directory) / "convert-args.txt"
             env = os.environ.copy()
             env["PATH"] = f"{fake_bin}:{env['PATH']}"
             env["FAKE_COMPARE_METRIC"] = metric
-            return subprocess.run(
-                ["bash", "-c", match.group(0) + "\n" + name + " " + args],
+            env["CONVERT_ARGS_FILE"] = str(convert_args)
+            source = helper.group(0) + "\\n" + match.group(0) + "\\n" + name + " " + args
+            result = subprocess.run(
+                ["bash", "-c", source],
                 text=True,
                 capture_output=True,
                 env=env,
                 check=False,
             )
+            assert convert_args.is_file(), "cropped images were not generated"
+            assert "-crop 420x150+300+290" in convert_args.read_text(encoding="utf-8"), (
+                "pixel metric must ignore the moving sky and compare only the tube ROI"
+            )
+            return result
 
     pixel_pass = run_shell_diff("tube_pixel_diff", "connected left right", "300 (0.1)")
     assert pixel_pass.returncode == 0, pixel_pass.stderr
