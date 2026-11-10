@@ -296,6 +296,7 @@ public final class ScanRuneOrientationTest {
 
 smoke_source = (ROOT / "tools/client_scan_rune_smoke.py").read_text(encoding="utf-8")
 particle_source = PARTICLE.read_text(encoding="utf-8")
+parser_source = (ROOT / "tools/scan_rune_log_parser.py").read_text(encoding="utf-8")
 for marker in (
     "camera.rotation().transform(offset)",
     "float frontDot = -offset.dot(look)",
@@ -314,12 +315,13 @@ for marker in (
     "crop_width=$((WIDTH * 152 / 1000))",
     "crop_height=$((HEIGHT * 203 / 1000))",
     "RUNE_VISUAL_CROP=block-face",
-    "frontDot",
     "RUNE_CAMERA_RELATIVE_OFFSET=PASS",
-    "cameraYaw=",
 ):
     if marker not in smoke_source:
         raise AssertionError(f"real-client visual crop contract missing: {marker}")
+for marker in ("frontDot=(", "cameraYaw=("):
+    if marker not in parser_source:
+        raise AssertionError(f"scan-rune log parser contract missing: {marker}")
 if "WIDTH / 2 - 150" in smoke_source or '300x300+$crop_x+$crop_y' in smoke_source:
     raise AssertionError("scan-rune framebuffer check must not include moving sky/clouds")
 

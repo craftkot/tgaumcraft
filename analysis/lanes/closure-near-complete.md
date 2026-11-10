@@ -1553,3 +1553,10 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - The artifact's two fixed target-face screenshot pairs were also inspected independently using the script's window geometry (ROOT=1,20; WINDOW=1024x768; crop 155x155 at 435,324). The before/during pixel difference is 0 on the first view and 0 on the opposite view. Thus the render callbacks and the old frontDot (which measures only the position offset) are not visual proof: the scan-rune quads are still not visibly rendered on the target face. The production camera-space change is not accepted.
 - Exact-HEAD full CI #42758541792 is SUCCESS: Core parity, source/resource guards, NeoForge build, JAR packaging and dedicated-server smoke. It does not replace the failed graphical client acceptance.
 - No production Java code changed in this parser correction. M16 remains 4/6, project index 59/100. Next action after this commit: rerun the real client so it reaches the unchanged framebuffer checks; then diagnose the actual quad orientation/texture mapping from the zero-diff screenshots without weakening thresholds.
+
+
+### 10.11.2026 — parser extraction source-guard follow-up
+
+- The first PR run after parser extraction exposed a stale source guard in the broad readable-GUI regression workflow [#42760938668](https://github.com/craftkot/tgaumcraft/actions/runs/42760938668): it still required the literal field labels frontDot and cameraYaw in client_scan_rune_smoke.py. Those fields now correctly live in scan_rune_log_parser.py. The Java particle compile and the rest of that workflow's earlier checks passed; the failure was the stale path assertion.
+- Updated the source guard to read the dedicated parser module for those field labels, while retaining the smoke-script checks for the two-view visual acceptance markers. Split parser assertions so the reported count is exact.
+- This does not alter the renderer or relax the real-client pixel thresholds. The zero-diff target-face evidence from artifact #13737096351 remains an unresolved production rendering defect. No category points are awarded.

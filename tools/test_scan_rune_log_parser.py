@@ -8,10 +8,14 @@ log = """[Render thread/INFO]: TC_SMOKE_SCAN_RUNE_CREATED=YES face=3 lifetime=45
 """
 
 created, rendered, expired = parse_scan_rune_log(log)
-assert len(created) == len(rendered) == len(expired) == 1
+assert len(created) == 1
+assert len(rendered) == 1
+assert len(expired) == 1
 assert created[0] == ("3", "45", "0.5", "151.75", "4.5", "0.12024379", "-0.012681067", "-0.51")
-assert rendered[0][0] == "2" and rendered[0][3] == "-180.0"
-assert rendered[0][4] == "-1.7484555E-7" and rendered[0][-1] == "0.51"
+assert rendered[0][0] == "2"
+assert rendered[0][3] == "-180.0"
+assert rendered[0][4] == "-1.7484555E-7"
+assert rendered[0][-1] == "0.51"
 assert expired[0] == ("2", "45", "45", "0.0")
 assert parse_scan_rune_log("TC_SMOKE_SCAN_RUNE_CREATED=YES face=x lifetime=45") == ([], [], [])
-print("SCAN_RUNE_LOG_PARSER=PASS assertions=7")
+print("SCAN_RUNE_LOG_PARSER=PASS assertions=10")
