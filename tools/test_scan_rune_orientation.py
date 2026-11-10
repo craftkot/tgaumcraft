@@ -17,15 +17,24 @@ STUBS = {
 package net.minecraft.client;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
+import net.minecraft.world.phys.Vec3;
 public class Camera {
   public final float yaw;
   private final Quaternionf rotation;
-  public Camera(float yaw) { this.yaw=yaw; this.rotation=Quaternionf.camera(yaw); }
+  public Camera(float yaw) { this.yaw=yaw; this.rotation=Quaternionf.camera((float)Math.PI-yaw); }
   public Quaternionf rotation() { return rotation; }
   public Vector3f getLookVector() {
-    return new Vector3f((float)Math.sin(yaw),0.0F,(float)Math.cos(yaw));
+    return new Vector3f(-(float)Math.sin(yaw),0.0F,(float)Math.cos(yaw));
   }
+  public Vec3 getPosition() { return new Vec3(0.0,0.0,0.0); }
   public float getYRot() { return (float)Math.toDegrees(yaw); }
+}
+""",
+    "net/minecraft/world/phys/Vec3.java": """
+package net.minecraft.world.phys;
+public class Vec3 {
+  public final double x,y,z;
+  public Vec3(double x,double y,double z) {this.x=x;this.y=y;this.z=z;}
 }
 """,
     "org/joml/Quaternionf.java": """
@@ -60,12 +69,22 @@ public class Vector3f {
     float c=(float)Math.cos(angle), s=(float)Math.sin(angle);
     float nx=c*x+s*z, nz=-s*x+c*z; x=nx; z=nz; return this;
   }
+  public Vector3f rotate(Quaternionf rotation) {
+    Vector3f value=rotation.transform(this);x=value.x;y=value.y;z=value.z;return this;
+  }
+  public Vector3f mul(float scale) {x*=scale;y*=scale;z*=scale;return this;}
+  public Vector3f add(float dx,float dy,float dz) {x+=dx;y+=dy;z+=dz;return this;}
   public float dot(Vector3f other) {return x*other.x+y*other.y+z*other.z;}
 }
 """,
     "com/mojang/blaze3d/vertex/VertexConsumer.java": """
 package com.mojang.blaze3d.vertex;
-public interface VertexConsumer {}
+public interface VertexConsumer {
+  VertexConsumer addVertex(float x,float y,float z);
+  VertexConsumer setUv(float u,float v);
+  VertexConsumer setColor(float r,float g,float b,float a);
+  VertexConsumer setLight(int light);
+}
 """,
     "net/minecraft/client/multiplayer/ClientLevel.java": """
 package net.minecraft.client.multiplayer;
@@ -82,7 +101,7 @@ public class Particle {
   public static Quaternionf lastRotation;
   public Random random = RANDOM;
   public double x, y, z, xo, yo, zo, xd, yd, zd;
-  public float gravity, alpha, roll, oRoll;
+  public float gravity, alpha, roll, oRoll, rCol, gCol, bCol;
   public int age, lifetime;
   public boolean hasPhysics;
   public boolean removed;
@@ -98,12 +117,12 @@ public class Particle {
   public double getXO(){return xo;}
   public double getYO(){return yo;}
   public double getZO(){return zo;}
-  public void setColor(float r,float g,float b) {}
+  public void setColor(float r,float g,float b) {rCol=r;gCol=g;bCol=b;}
   public void setPos(double x,double y,double z) {this.x=x;this.y=y;this.z=z;}
   public void move(double dx,double dy,double dz) {x+=dx;y+=dy;z+=dz;}
   public void remove() {removed=true;}
   public void tick() {}
-  public int getLightColor(float partialTick) {return 0;}
+  public int getLightColor(float partialTick) {return 0x00F000F0;}
   public ParticleRenderType getRenderType() {return null;}
 }
 """,
@@ -128,7 +147,11 @@ public class SingleQuadParticle extends Particle {
     Quaternionf rotation=new Quaternionf();
     getFacingCameraMode().setRotation(rotation,camera,partialTick);
     lastRotation=rotation;
+    renderRotatedQuad(buffer,camera,rotation,partialTick);
   }
+  protected void renderRotatedQuad(VertexConsumer buffer, Camera camera,
+                                   Quaternionf rotation, float partialTick) {}
+  public float getQuadSize(float partialTick) {return 0.0F;}
 }
 """,
     "net/minecraft/client/particle/TextureSheetParticle.java": """
@@ -141,6 +164,11 @@ public class TextureSheetParticle extends SingleQuadParticle {
     super(level,x,y,z);this.xd=dx;this.yd=dy;this.zd=dz;
   }
   public void pickSprite(SpriteSet sprites) {}
+  protected float getU0() {return 0.1F;}
+  protected float getU1() {return 0.2F;}
+  protected float getV0() {return 0.3F;}
+  protected float getV1() {return 0.4F;}
+  @Override public float getQuadSize(float partialTick) {return quadSize;}
 }
 """,
     "net/minecraft/client/particle/ParticleRenderType.java": """
@@ -178,8 +206,11 @@ public @interface Nullable {}
 """,
     "dev/ehtid/thaumcraft/client/ScanRuneOrientationTest.java": """
 package dev.ehtid.thaumcraft.client;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -189,6 +220,50 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 public final class ScanRuneOrientationTest {
   private static int assertions = 0;
+  private static final class Vertex {
+    float x,y,z,u,v,r,g,b,a;
+    int light;
+  }
+  private static final class RecordingVertexConsumer implements VertexConsumer {
+    final List<Vertex> vertices = new ArrayList<>();
+    private Vertex current;
+    public VertexConsumer addVertex(float x,float y,float z) {
+      current=new Vertex();current.x=x;current.y=y;current.z=z;vertices.add(current);return this;
+    }
+    public VertexConsumer setUv(float u,float v) {current.u=u;current.v=v;return this;}
+    public VertexConsumer setColor(float r,float g,float b,float a) {
+      current.r=r;current.g=g;current.b=b;current.a=a;return this;
+    }
+    public VertexConsumer setLight(int light) {current.light=light;return this;}
+  }
+  private static void checkLegacyQuad(RecordingVertexConsumer buffer, Quaternionf rotation,
+                                      Camera camera, float centerX, float centerY, float centerZ,
+                                      float halfSize, float expectedFrontDot) {
+    check(buffer.vertices.size()==4, "BETA26 rune must emit exactly four vertices");
+    Vertex v0=buffer.vertices.get(0), v1=buffer.vertices.get(1);
+    Vertex v2=buffer.vertices.get(2), v3=buffer.vertices.get(3);
+    Vector3f expectedTopLeft = new Vector3f(-1.0F,1.0F,0.0F)
+        .rotate(rotation).mul(halfSize).add(centerX,centerY,centerZ);
+    check(Math.abs(v0.x-expectedTopLeft.x)<0.0001F
+            && Math.abs(v0.y-expectedTopLeft.y)<0.0001F
+            && Math.abs(v0.z-expectedTopLeft.z)<0.0001F,
+        "first emitted vertex must be BETA26 left-top");
+    check(v0.u==0.2F && v0.v==0.4F, "BETA26 left-top UV must be u1,v1");
+    check(v1.u==0.2F && v1.v==0.3F, "BETA26 right-top UV must be u1,v0");
+    check(v2.u==0.1F && v2.v==0.3F, "BETA26 right-bottom UV must be u0,v0");
+    check(v3.u==0.1F && v3.v==0.4F, "BETA26 left-bottom UV must be u0,v1");
+    float ax=v1.x-v0.x, ay=v1.y-v0.y, az=v1.z-v0.z;
+    float bx=v2.x-v1.x, by=v2.y-v1.y, bz=v2.z-v1.z;
+    float nx=ay*bz-az*by, ny=az*bx-ax*bz, nz=ax*by-ay*bx;
+    float length=(float)Math.sqrt(nx*nx+ny*ny+nz*nz);
+    Vector3f look=camera.getLookVector();
+    float facing=-(nx*look.x+ny*look.y+nz*look.z)/length;
+    if (expectedFrontDot>=0.49F) {
+      check(facing>=0.49F, "front-side BETA26 quad normal must face the active camera");
+    }
+    check(v0.light==0x00F000F0, "BETA26 rune quad must remain fullbright");
+  }
+
   private static void check(boolean value, String message) {
     assertions++;
     if (!value) throw new AssertionError(message);
@@ -208,12 +283,12 @@ public final class ScanRuneOrientationTest {
       Camera camera = new Camera(0.25F);
       Quaternionf first = new Quaternionf();
       particle.getFacingCameraMode().setRotation(first,camera,0.0F);
-      int quarter = Math.round((first.yaw - camera.yaw) / Mth.HALF_PI);
+      int quarter = Math.round((first.yaw - camera.rotation().yaw) / Mth.HALF_PI);
       yawSteps.add(quarter);
       check(quarter>=0 && quarter<4, "camera-relative yaw must be a quarter turn");
       check(first.cameraSeed && first.setCalls==1,
           "rotation must start from the active camera quaternion");
-      check(Math.abs((first.yaw-camera.yaw)-quarter*Mth.HALF_PI)<0.0001F,
+      check(Math.abs((first.yaw-camera.rotation().yaw)-quarter*Mth.HALF_PI)<0.0001F,
           "camera-relative yaw must be exact quarter turn");
       check(first.yawCalls==1 && first.tipCalls==1,
           "rotation must use camera, Y then Z once");
@@ -237,7 +312,8 @@ public final class ScanRuneOrientationTest {
       // The world offset must therefore be camera.rotation * Ry * Rz * local,
       // recomputed on every render instead of being frozen in world axes.
       Vector3f expectedFirst = expectedOffset(particle,camera);
-      particle.render(null,camera,0.0F);
+      RecordingVertexConsumer firstBuffer = new RecordingVertexConsumer();
+      particle.render(firstBuffer,camera,0.0F);
       check(Math.abs(Particle.lastRenderX-expectedFirst.x)<0.0001,
           "rendered X uses the current camera-space offset");
       check(Math.abs(Particle.lastRenderY-(64.0+expectedFirst.y))<0.0001,
@@ -253,10 +329,14 @@ public final class ScanRuneOrientationTest {
       check(particle.getX()==0.0 && particle.getY()==64.0 && particle.getZ()==0.0
               && particle.getXO()==0.0 && particle.getYO()==64.0 && particle.getZO()==0.0,
           "temporary camera offset is restored after render");
+      checkLegacyQuad(firstBuffer, Particle.lastRotation, camera,
+          (float)Particle.lastRenderX,(float)Particle.lastRenderY,(float)Particle.lastRenderZ,
+          particle.getQuadSize(0.0F)*0.5F,-expectedFirst.dot(camera.getLookVector()));
 
       Camera camera2 = new Camera(camera.yaw + (float)Math.PI);
       Vector3f expectedSecond = expectedOffset(particle,camera2);
-      particle.render(null,camera2,0.9F);
+      RecordingVertexConsumer secondBuffer = new RecordingVertexConsumer();
+      particle.render(secondBuffer,camera2,0.9F);
       check(Math.abs(Particle.lastRenderX-expectedSecond.x)<0.0001,
           "opposite camera yaw recomputes rendered X");
       check(Math.abs(Particle.lastRenderY-(64.0+expectedSecond.y))<0.0001,
@@ -275,6 +355,9 @@ public final class ScanRuneOrientationTest {
           "opposite views must differ by the two-sided 0.51-block camera offset");
       check(particle.getX()==0.0 && particle.getY()==64.0 && particle.getZ()==0.0,
           "second render also restores the world anchor");
+      checkLegacyQuad(secondBuffer, Particle.lastRotation, camera2,
+          (float)Particle.lastRenderX,(float)Particle.lastRenderY,(float)Particle.lastRenderZ,
+          particle.getQuadSize(0.9F)*0.5F,-expectedSecond.dot(camera2.getLookVector()));
 
       particle.tick();
       check(particle.getX()==0.0 && particle.getZ()==0.0,
@@ -300,6 +383,9 @@ parser_source = (ROOT / "tools/scan_rune_log_parser.py").read_text(encoding="utf
 for marker in (
     "camera.rotation().transform(offset)",
     "float frontDot = -offset.dot(look)",
+    "protected void renderRotatedQuad(VertexConsumer buffer, Camera camera,",
+    "float halfSize = this.quadSize * 0.5F",
+    "emitVertex(buffer, rotation, centerX, centerY, centerZ, -1.0F, 1.0F, halfSize, u1, v1, light)",
     "this.x += dx",
     "this.xo += dx",
     "finally {",
@@ -319,7 +405,7 @@ for marker in (
 ):
     if marker not in smoke_source:
         raise AssertionError(f"real-client visual crop contract missing: {marker}")
-for marker in ("frontDot=(", "cameraYaw=("):
+for marker in ("frontDot=(", "cameraYaw=(", "quadFacingDot=("):
     if marker not in parser_source:
         raise AssertionError(f"scan-rune log parser contract missing: {marker}")
 if "WIDTH / 2 - 150" in smoke_source or '300x300+$crop_x+$crop_y' in smoke_source:

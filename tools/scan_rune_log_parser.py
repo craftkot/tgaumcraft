@@ -14,7 +14,8 @@ _RENDERED = re.compile(
     r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\d+) alpha=(" + _NUMBER + r") size=(" + _NUMBER + r") "
     r"cameraYaw=(" + _NUMBER + r") lookX=(" + _NUMBER + r") lookY=(" + _NUMBER + r") "
     r"lookZ=(" + _NUMBER + r") worldX=(" + _NUMBER + r") worldY=(" + _NUMBER + r") "
-    r"worldZ=(" + _NUMBER + r") frontDot=(" + _NUMBER + r")"
+    r"worldZ=(" + _NUMBER + r") frontDot=(" + _NUMBER + r") "
+    r"quadFacingDot=(" + _NUMBER + r")"
 )
 _EXPIRED = re.compile(
     r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\d+) age=(\d+) lifetime=(\d+) "

@@ -128,8 +128,8 @@ if len(created) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
 visible_rendered = []
 for row in rendered:
-    face, alpha, size, yaw, lx, ly, lz, wx, wy, wz, front = row
-    values = tuple(float(v) for v in (alpha,size,yaw,lx,ly,lz,wx,wy,wz,front))
+    face, alpha, size, yaw, lx, ly, lz, wx, wy, wz, front, quad = row
+    values = tuple(float(v) for v in (alpha,size,yaw,lx,ly,lz,wx,wy,wz,front,quad))
     if values[0] >= 0.25 and values[1] >= 0.25:
         visible_rendered.append((int(face), *values))
 if len(visible_rendered) < 40:
@@ -158,14 +158,14 @@ opposite_view = [r for r in visible_rendered
 if len(first_view) < 10 or len(opposite_view) < 10:
     raise SystemExit(
         f"RUNE_CAMERA_VIEWS_MISSING first={len(first_view)} opposite={len(opposite_view)}")
-front_first = [r for r in first_view if r[10] >= 0.49]
-front_opposite = [r for r in opposite_view if r[10] >= 0.49]
+front_first = [r for r in first_view if r[10] >= 0.49 and r[11] >= 0.49]
+front_opposite = [r for r in opposite_view if r[10] >= 0.49 and r[11] >= 0.49]
 if len(front_first) < 2 or len(front_opposite) < 2:
     raise SystemExit(
         f"RUNE_CAMERA_RELATIVE_FRONT_OFFSET_MISSING first={len(front_first)} "
         f"opposite={len(front_opposite)}")
 for label, group in (("first",front_first),("opposite",front_opposite)):
-    for face,alpha,size,yaw,look_x,look_y,look_z,world_x,world_y,world_z,front_dot in group:
+    for face,alpha,size,yaw,look_x,look_y,look_z,world_x,world_y,world_z,front_dot,quad_facing_dot in group:
         if not 151.70 <= world_y <= 151.98:
             raise SystemExit(f"RUNE_RENDERED_WORLD_HEIGHT_WRONG {label} {world_y}")
         if abs(look_x) > 0.02 or abs(look_y) > 0.02 or abs(abs(look_z)-1.0) > 0.02:
@@ -174,6 +174,8 @@ for label, group in (("first",front_first),("opposite",front_opposite)):
         if abs(world_z-expected_front_z) > 0.02:
             raise SystemExit(
                 f"RUNE_CAMERA_OFFSET_ON_WRONG_FACE {label} worldZ={world_z} expected={expected_front_z}")
+        if quad_facing_dot < 0.49:
+            raise SystemExit(f"RUNE_CAMERA_RELATIVE_QUAD_NOT_FACING_CAMERA {label} dot={quad_facing_dot}")
 if any(int(age) != 45 or int(life) != 45 for _, age, life, _ in expired):
     raise SystemExit("RUNE_ACTUAL_CLIENT_EXPIRY_TICK_WRONG")
 if any(float(drift) > 0.0001 for _, _, _, drift in expired):
@@ -181,7 +183,7 @@ if any(float(drift) > 0.0001 for _, _, _, drift in expired):
 print(f"RUNE_ACTUAL_CLIENT_SPAWN=PASS count={len(created)} faces={sorted(faces)}")
 print(f"RUNE_ACTUAL_CLIENT_RENDER=PASS count={len(rendered)} "
       f"visibleAlpha={max(r[1] for r in visible_rendered):.3f}")
-print(f"RUNE_CAMERA_RELATIVE_OFFSET=PASS views=2 frontFacing={len(front_first)}/{len(front_opposite)}")
+print(f"RUNE_CAMERA_RELATIVE_OFFSET=PASS views=2 frontFacing={len(front_first)}/{len(front_opposite)} quadFacing=PASS")
 print(f"RUNE_ACTUAL_CLIENT_EXPIRY=PASS count={len(expired)}")
 PY
 

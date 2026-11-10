@@ -12,7 +12,9 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 /**
@@ -102,17 +104,6 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.yo += dy;
         this.zo += dz;
         try {
-            if (SMOKE_PROBE && !smokeRendered && this.alpha >= 0.25F) {
-                smokeRendered = true;
-                Vector3f look = camera.getLookVector();
-                float frontDot = -offset.dot(look);
-                System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace
-                        + " alpha=" + this.alpha + " size=" + this.quadSize
-                        + " cameraYaw=" + camera.getYRot()
-                        + " lookX=" + look.x + " lookY=" + look.y + " lookZ=" + look.z
-                        + " worldX=" + this.x + " worldY=" + this.y + " worldZ=" + this.z
-                        + " frontDot=" + frontDot);
-            }
             super.render(buffer, camera, partialTick);
         } finally {
             this.x -= dx;
@@ -122,6 +113,66 @@ public final class ScanRuneParticle extends TextureSheetParticle {
             this.yo -= dy;
             this.zo -= dz;
         }
+    }
+
+
+    @Override
+    protected void renderRotatedQuad(VertexConsumer buffer, Camera camera,
+                                     Quaternionf rotation, float partialTick) {
+        Vec3 cameraPosition = camera.getPosition();
+        float centerX = (float) (this.xo + (this.x - this.xo) * partialTick - cameraPosition.x);
+        float centerY = (float) (this.yo + (this.y - this.yo) * partialTick - cameraPosition.y);
+        float centerZ = (float) (this.zo + (this.z - this.zo) * partialTick - cameraPosition.z);
+
+        // BETA26 var20 is the FULL quad width (0.3 * particleScale).
+        // SingleQuadParticle's default vertices use +/- quadSize, so use
+        // +/- 0.5 here to retain the original full width.
+        float halfSize = this.quadSize * 0.5F;
+        float u0 = this.getU0();
+        float u1 = this.getU1();
+        float v0 = this.getV0();
+        float v1 = this.getV1();
+        int light = this.getLightColor(partialTick);
+
+        // Exact FXBlockRunes order and UV rotation from BETA26:
+        // left-top, right-top, right-bottom, left-bottom. The vanilla
+        // SingleQuadParticle order has the opposite winding.
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, -1.0F, 1.0F, halfSize, u1, v1, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, 1.0F, 1.0F, halfSize, u1, v0, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, 1.0F, -1.0F, halfSize, u0, v0, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, -1.0F, -1.0F, halfSize, u0, v1, light);
+
+        if (SMOKE_PROBE && !smokeRendered && this.alpha >= 0.25F) {
+            Vector3f offset = new Vector3f(localOffsetX, localOffsetY, LOCAL_OFFSET_Z)
+                    .rotateZ(Mth.HALF_PI)
+                    .rotateY(legacyCameraYaw);
+            camera.rotation().transform(offset);
+            Vector3f look = camera.getLookVector();
+            Vector3f normal = new Vector3f(0.0F, 0.0F, -1.0F).rotate(rotation);
+            float frontDot = -offset.dot(look);
+            float quadFacingDot = -normal.dot(look);
+            System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace
+                    + " alpha=" + this.alpha + " size=" + this.quadSize
+                    + " cameraYaw=" + camera.getYRot()
+                    + " lookX=" + look.x + " lookY=" + look.y + " lookZ=" + look.z
+                    + " worldX=" + this.x + " worldY=" + this.y + " worldZ=" + this.z
+                    + " frontDot=" + frontDot + " quadFacingDot=" + quadFacingDot);
+            smokeRendered = true;
+        }
+    }
+
+    private void emitVertex(VertexConsumer buffer, Quaternionf rotation,
+                            float centerX, float centerY, float centerZ,
+                            float localX, float localY, float halfSize,
+                            float u, float v, int light) {
+        Vector3f vertex = new Vector3f(localX, localY, 0.0F)
+                .rotate(rotation)
+                .mul(halfSize)
+                .add(centerX, centerY, centerZ);
+        buffer.addVertex(vertex.x, vertex.y, vertex.z)
+                .setUv(u, v)
+                .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light);
     }
 
     @Override
