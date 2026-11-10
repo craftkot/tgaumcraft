@@ -2132,3 +2132,17 @@ Pinned BETA26 source: [BlockCrystal.java at 954022bb777b7546281fb36df8522f0ba6b4
 **Acceptance limits:** the source adapter now matches the old liquid-material predicate more closely, but no in-world random-tick test has yet exercised a waterlogged replaceable block. Exact-head Core parity, NeoForge compilation, and a dedicated server run are required next; a GameTest/client smoke remains separate evidence. No M08 or overall score change: **M08 5/9, total 59/100**. PR #4 remains Draft/open and is not merged.
 
 **Next:** inspect exact-head CI for this correction. If compilation and Core parity pass, add a server-side GameTest that contrasts a replaceable waterlogged non-liquid block with a replaceable liquid block while forcing the crystal spread branch deterministically, and verify both destination state and aura debit.
+
+
+### M32 exact-head CI outcome — 2026-11-10
+
+For code commit [0bb18d7](https://github.com/craftkot/tgaumcraft/commit/0bb18d7ad95e9212a300f1bde371b92786d1b26d):
+
+- GitHub Actions [Thaumcraft Port CI #42873283828](https://github.com/craftkot/tgaumcraft/actions/runs/42873283828): **SUCCESS** on the exact HEAD. The Core parity step, NeoForge build, dedicated-server smoke and JAR upload all completed successfully.
+- Uploaded JAR artifact: [thaumcraft-port-jars #13790547964](https://github.com/craftkot/tgaumcraft/actions/runs/42873283828/artifacts/13790547964) (1,980,299 bytes).
+- CircleCI `verify-connection`: **SUCCESS**; the configured job includes `bash tools/run_core_parity.sh`.
+- The Core test's adapter source-contract assertions passed because the exact-head Core parity step completed successfully.
+
+This proves Core/source-contract, NeoForge compilation, dedicated-server startup and JAR packaging. It does **not** prove that a real in-world crystal random tick accepts a waterlogged replaceable solid or rejects a liquid block. No M08 score change: **5/9**, overall **59/100**.
+
+**Next:** add a registered NeoForge GameTest (or an equivalent deterministic server-world harness) that forces the crystal spread branch for both target states and verifies the destination plus exact 10-Vis debit. First inspect whether the current ModDev run configuration exposes `runGameTestServer`; do not alter shared Gradle/CI until path ownership and need are confirmed.
