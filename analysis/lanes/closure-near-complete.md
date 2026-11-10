@@ -2179,3 +2179,10 @@ This proves Core/source-contract, NeoForge compilation, dedicated-server startup
 - First dedicated workflow run [#42884378513](https://github.com/craftkot/tgaumcraft/actions/runs/42884378513) failed before Gradle started: the repository intentionally has no `gradlew` wrapper, so `./gradlew` exited 127. No GameTest method was loaded or executed; this is an infrastructure invocation failure, not a gameplay assertion.
 - The current main CI explicitly installs Gradle 9.2.1 via `gradle/actions/setup-gradle@v4` and invokes `gradle build`. The isolated GameTest workflow now uses the same Gradle setup and runs `gradle runGameTestServer --no-daemon`.
 - The failed run produced no GameTest logs/artifact. Exact-head GameTest and full NeoForge CI must be checked again after this workflow-only correction.
+
+
+### M33 Gradle run-model correction — 2026-11-10
+
+- Exact-head full CI [#42884378037](https://github.com/craftkot/tgaumcraft/actions/runs/42884378037) failed during Gradle configuration, before compilation: ModDevGradle 2.0.146 `RunModel` has no `setForceExit()` method. The NeoForge 1.21.1 docs' warning refers to NeoGradle/ForgeGradle run models and is not applicable to this ModDevGradle API.
+- Removed only that unsupported call. The dedicated `gameTestServer` run type, namespace filter and isolated working directory remain. This failure did not execute or fail any GameTest assertion.
+- Exact-head full build and GameTest server must be rerun after this correction; no parity or M08 score increase is claimed.
