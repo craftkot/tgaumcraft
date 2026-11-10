@@ -23,14 +23,14 @@ def main() -> int:
         "tube_send_chat '/setblock 9 149 12 thaumcraft:tube_valve' 'Changed the block at 9, 149, 12'",
         "tube_send_chat '/setblock 10 149 12 thaumcraft:tube' 'Changed the block at 10, 149, 12'",
         "tube_send_chat '/setblock 11 149 12 thaumcraft:tube_restrict' 'Changed the block at 11, 149, 12'",
-        "tube_send_chat '/tp @p 10.5 149 8.5 14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'",
-        "tube_send_chat '/tp @p 10.5 149 8.5 -14 18' 'Teleported Dev to 10.500000, 149.000000, 8.500000'",
+        "tube_send_chat '/tp @p 9.5 149 8.5 0 16' 'Teleported Dev to 9.500000, 149.000000, 8.500000'",
+        "tube_send_chat '/tp @p 11.5 149 8.5 0 16' 'Teleported Dev to 11.500000, 149.000000, 8.500000'",
         "xdotool mousemove --sync 513 404 click 1",
         "TUBE_VALVE_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "TUBE_RESTRICT_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "TUBE_EVIDENCE_ROI=420x150+300+290",
-        "tube_send_chat_fast '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
-        "tube_send_chat_fast '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
+        "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
+        "tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
         "sleep 1",
         "--delay 24",
         "seq 1 80",
@@ -39,6 +39,8 @@ def main() -> int:
         "TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES",
         "TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES",
         "TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES",
+        "TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES",
+        "TC_SMOKE_TUBE_RESTRICT_ONLY_DESTROYED=YES",
         "TUBE_NO_MISSING_MODEL_TEXTURES=PASS",
     )
     for marker in required_shell:
@@ -67,6 +69,7 @@ def main() -> int:
     assert "minecraft:air destroy" not in generated, "tube destruction must use real client input"
     assert "TUBE_EVIDENCE_ROI=420x150+300+290" in generated
     assert "tube_send_chat_quick" not in generated, "racy chat helper must not return"
+    assert "tube_send_chat_fast" not in generated, "fast chat helper must not return"
     with tempfile.TemporaryDirectory(prefix="tc-tube-command-ack-") as directory:
         root = Path(directory)
         fake_bin = root / "bin"
@@ -134,6 +137,11 @@ def main() -> int:
             ),
             screenshots,
         ), "missing real setblock acknowledgement must fail"
+        assert verify_tube_texture_client_log.verify(
+            log.replace("TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES", ""),
+            status,
+        ), "breaking the wrong tube must fail the exact-block verifier"
+
         assert verify_tube_texture_client_log.verify(
             log.replace("TC_SMOKE_TUBE_VALVE_DESTROYED=YES", ""),
             status,
