@@ -2061,3 +2061,30 @@ CI status at journal update:
 - Corrected-head push Full CI [#42848791103](https://github.com/craftkot/tgaumcraft/actions/runs/42848791103) and Salis real-client [#42848790841](https://github.com/craftkot/tgaumcraft/actions/runs/42848790841): queued. The corrected-head runs are the acceptance target.
 
 No score change: **59/100**, M16 **4/6**. The original BETA26 layer/asset mismatch is now corrected in code, but acceptance still requires the exact-head real-client marker, the existing 50 hand + face particle creation/render/expiry/frame checks, transient screenshot gate, and exact-head full CI. PR #4 remains Draft/open; no merge.
+
+
+## 2026-11-10 — M29 Salis client acceptance; M08 crystal spread liquid guard
+
+### Exact-head M16 evidence
+
+The corrected Salis additive renderer was accepted on code HEAD `a960e9177cb99ac1ae5dd015d9cb7748473d30c3`:
+
+- Push real-client smoke [#42848790841](https://github.com/craftkot/tgaumcraft/actions/runs/42848790841): **SUCCESS**.
+- PR real-client smoke [#42848808152](https://github.com/craftkot/tgaumcraft/actions/runs/42848808152): **SUCCESS**.
+- Full NeoForge push CI [#42848791103](https://github.com/craftkot/tgaumcraft/actions/runs/42848791103): **SUCCESS**.
+- Full NeoForge PR CI [#42848808140](https://github.com/craftkot/tgaumcraft/actions/runs/42848808140): **SUCCESS**.
+- Thaumometer rune PR client [#42848808088](https://github.com/craftkot/tgaumcraft/actions/runs/42848808088): **SUCCESS**; screenshot artifact [#13780217015](https://github.com/craftkot/tgaumcraft/actions/runs/42848808088/artifacts/13780217015) inspected.
+- Crystal placement and break PR clients [#42848807882](https://github.com/craftkot/tgaumcraft/actions/runs/42848807882) and [#42848808178](https://github.com/craftkot/tgaumcraft/actions/runs/42848808178): **SUCCESS**.
+- Crystal outline client [#42848807951](https://github.com/craftkot/tgaumcraft/actions/runs/42848807951) was still in progress at this check; it is not counted as accepted here.
+
+Downloaded Salis artifact [#13780316754](https://github.com/craftkot/tgaumcraft/actions/runs/42848790841/artifacts/13780316754) and inspected the actual early, peak and late screenshots. The real client log contains exactly one `TC_SMOKE_SALIS_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1`. It also records 50 hand particles created/expired (44 rendered) and 240 face particles created/expired (216 rendered). The transient pixel gate passed: 14,093 peak warm pixels, then 0 late warm pixels; late scene-change fraction 0.0085. Original `dust.ogg` PCM matched at correlation 0.2414, baseline 0.0000, pitch 0.9490. The audio score is above the configured 0.20 threshold but has limited margin; no threshold was lowered.
+
+The same artifact's `latest.log` still reports `caster_basic#inventory` missing from the block atlas. This is not changed here: PR #1's `feature/infusion` branch already adds `minecraft:single` for `thaumcraft:entity/armor/caster_basic` in `assets/minecraft/atlases/blocks.json`. That shared atlas path is owned by the open PR and remains unmerged. Other unimplemented FX such as research-page turns and alchemy/crucible effects belong to their respective feature lanes. M16 is **not closed**; no points are awarded. Current audited score remains **59/100**, M16 **4/6**.
+
+### Independent M08 defect found against pinned BETA26
+
+Compared the pinned source JAR implementation of `thaumcraft.common.blocks.world.ore.BlockCrystal#spreadCrystal` at source commit `954022bb777b7546281fb36df8522f0ba6b43f81`. It checks `!bm.isLiquid()` before the air/replaceable predicate. The NeoForge port previously checked only `isAir() || canBeReplaced()`; that predicate alone does not preserve BETA26's liquid exclusion, so a water/lava block that is replaceable could be selected as a crystal-spread destination.
+
+Added `LegacyBlockCrystalGrowthRules.canSpreadInto(liquid, airOrReplaceable)`, wired it into `CrystalClusterBlock.randomTick` using non-empty `FluidState` as the conservative 1.21.1 liquid mapping, and added four deterministic assertions to `CrystalGrowthParityTest` (including the replaceable-liquid case). This deliberately does not change aura drain semantics: BETA26 growth reaches the drain call only after `available > auraBase + 10`, with generated base clamped nonnegative, so the existing all-or-nothing 10-unit check is not a reachable difference in this path.
+
+The Core parity runner already invokes `CrystalGrowthParityTest`; the exact-head GitHub Actions run must still confirm it. This is a Core rule regression plus NeoForge compilation, not a dedicated in-world crystal-spread GameTest. No category score is changed by this iteration. M16 remains 4/6; M08 remains at its previously audited 5/9 pending actual world-behavior acceptance. No merge was performed.

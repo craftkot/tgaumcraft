@@ -34,6 +34,11 @@ public final class CrystalGrowthParityTest {
        LegacyBlockCrystalGrowthRules.child(original,true));
     eq(new LegacyBlockCrystalGrowthRules.State(0,2),
        LegacyBlockCrystalGrowthRules.child(original,false));
+    // BETA26 spreadCrystal excludes liquid Material before checking replaceability.
+    yes(LegacyBlockCrystalGrowthRules.canSpreadInto(false,true));
+    no(LegacyBlockCrystalGrowthRules.canSpreadInto(true,true)); // water/lava are replaceable but liquid
+    no(LegacyBlockCrystalGrowthRules.canSpreadInto(false,false));
+    no(LegacyBlockCrystalGrowthRules.canSpreadInto(true,false));
     yes(LegacyBlockCrystalGrowthRules.spreadOffset(-1,1,1));
     no(LegacyBlockCrystalGrowthRules.spreadOffset(0,0,0));
     no(LegacyBlockCrystalGrowthRules.spreadOffset(0,2,0));
