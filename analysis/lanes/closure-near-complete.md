@@ -1608,3 +1608,34 @@ Fresh main HEAD `a4280834`, own starting HEAD `ea879b5`. Read main ROADMAP/AGENT
 - The crystal-outline client log still reports only the known `caster_basic#inventory` missing-atlas warning. The PNG exists and PR #1 already supplies the intended block-atlas source plus `tools/verify_source_caster.py`; do not duplicate or edit those paths. No additional missing model/texture warning was found in this artifact.
 - No production code changed in this verification iteration; this entry records a completed real-client acceptance and exact-HEAD full CI. Fixed audit remains **59/100**, M16 remains **4/6**. No score is awarded for a narrow picking case.
 - Next: inspect the two still-running exact-PR client jobs; if they remain stuck/fail, diagnose the runner package-install step before creating more redundant client runs. Then choose the next M16 item that does not overlap PR #1–#3. The native Salis unload/reload packet/chunk-ticket proof is still absent; the existing JVM harness is explicitly not a native GameTest or proof of no chunk tickets.
+
+
+## 2026-11-10 — M16 Salis face-hit fallback now clips the real block outline (CI pending)
+
+Fresh baseline before this iteration:
+- `main`: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- Previous lane HEAD: `64594d21d77ac9d9e291b0932f5f0e2f156257b1`.
+- All 16 GitHub Actions runs attached to that exact HEAD completed SUCCESS (including full NeoForge CI, dedicated-server startup, Salis real-client dust/particle smoke, crystal outline client smoke, crystal sounds, tube textures, labels/tint, rune particles and GUI/audio checks).
+- PR #4 remains Draft/open. PR #1–#3 path checks show no ownership overlap for `SalisMundusSparkles.java`, `tools/test_salis_face_geometry.py`, or the new fallback harness.
+
+Source comparison:
+- Pinned BETA26 source: `TheDarkTower314/Thaumcraft-6-Source-Code@954022bb777b7546281fb36df8522f0ba6b43f81`.
+- `ItemMagicDust.onItemUseFirst` passes the actual hitX/hitY/hitZ to `doSparkles`; `FXDispatcher.drawBlockSparkles` uses that point to compute distance-based delays.
+- The modern caller cannot read those coordinates because its call site `SalisMundusItem.java` is shared with PR #3. Its fallback previously clipped against `new AABB(pos)`, i.e. a full cube. On a slab or multipart block this can produce a hit point outside the actual outline and incorrect face-particle delays.
+
+Implemented:
+1. `SalisMundusSparkles.java` now reads the clicked block's `VoxelShape` once. If the authoritative player ray hits the clicked block, it still uses that exact `BlockHitResult`. If not, it uses `shape.clip(eye, eye + look*6, pos)`; only an empty/missed shape falls back to the block center. The later face geometry reuses the same shape. This avoids changing the PR #3-owned item call site.
+2. Added `tools/test_salis_hitpoint_fallback.py`. It compiles the actual NeoForge `SalisMundusSparkles.java` against minimal API doubles, forces the player ray to miss the clicked block, supplies a half-height slab outline, and verifies the first UP-face particle has delay 0 at the exact slab top. The old full-cube AABB fallback would yield delay 8, so the fixture distinguishes the regression.
+3. Wired this harness into the existing `tools/test_salis_face_geometry.py`, which is already run by `.github/workflows/closure-dust-client.yml`.
+
+Commits:
+- `30133681e429ccf9d6ddc7c56211b36f1eca98df` — production shape-aware fallback.
+- `2c7cc2c70a713708ee907fb3f51ce4660838232a` — actual-class partial-shape fallback harness.
+- `369e7ba1edd3d4bcdbbe2a64108e92e4fecc866f` — hook harness into the existing face-geometry test.
+
+Validation status at HEAD `369e7ba1edd3d4bcdbbe2a64108e92e4fecc866f`:
+- GitHub Actions: 17 runs were created for this exact HEAD; all 17 were still QUEUED at 2026-11-10 08:17 CET (no PASS/FAIL yet). Important runs: push full CI #42775639078; push Salis real-client #42775639207; PR Salis real-client #42775646148; PR full CI #42775646120.
+- Local execution was attempted via a shallow clone, but the runner cannot resolve github.com (DNS/network unavailable). No local test result is claimed.
+- Therefore the new Java stub harness and the real NeoForge/client run remain unverified until Actions starts. Do not count this as accepted or award M16/overall points yet.
+
+Next action: inspect #42775639207 and #42775646148 first. If the harness fails, fix that before other work. Require full NeoForge build and the actual Salis client smoke to pass on the exact code HEAD. Native chunk-unload/reload with real chunk-ticket evidence remains a separate unclosed test gap; the existing JVM queue test is not native proof.
