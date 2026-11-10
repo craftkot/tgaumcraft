@@ -2249,3 +2249,28 @@ The local wrapper harness also passed its positive/hung-process case and rejecte
 **Acceptance:** M33's crystal-spread liquid-material scenario is now accepted: a replaceable non-liquid fluid-bearing block spreads and debits exactly 10 Vis; water and lava are rejected without debit. This closes only that narrow M08 scenario. The fixed audit remains **59/100**, M08 remains **5/9**; no score is awarded for one isolated regression. M16 remains **4/6**. No production Java or `build.gradle` changed in the runner correction; PR #4 remains Draft/open and unmerged.
 
 **Next M08 action:** add a deterministic ServerLevel/GameTest for aura generation at the five BETA26 biome sample positions (center + four cardinal neighbors, all Y=50), then verify the generated chunk aura is persisted and not overwritten on reload. Keep the 1.21.1 vertical biome projection limitation explicit; this test can prove sampling coordinates and save behavior, not full 1.12.2 biome equivalence.
+
+## 2026-11-10 — M34: native five-biome aura generation and SavedData round-trip
+
+### BETA26 source check
+- Read the pinned original `AuraHandler.generateAura(Chunk, Random)` at source commit `954022bb777b7546281fb36df8522f0ba6b43f81`.
+- The source samples the target chunk center and four horizontal neighbors at block Y=50, averages those five `BiomeHandler.getBiomeAuraModifier` values, multiplies by the original Gaussian factor, narrows to `short`, clamps to 0..500, then stores `base=vis` and `flux=0`.
+- The 1.21.1 biome projection remains intentionally approximate; this test proves the port samples the five modern biome holders at the BETA26 coordinates, not source-era 1.12 biome identity or worldgen RNG.
+
+### Implementation
+- Extracted the existing production population branch into package-private `ThaumcraftAuraWorldEvents.initializeChunkIfReady`; the server tick event calls this exact helper. Its Gaussian supplier is evaluated only after the five chunks are already loaded and the aura entry is absent, so skipped/re-entry work does not consume RNG.
+- Added a native NeoForge GameTest using the existing air-only crystal fixture. The test fixture explicitly preloads the center chunk and four cardinal neighbors, then writes distinct modern biome holders into the quart biome containers at Y=50 and a separate desert layer at Overworld sea level.
+- The expected deterministic base is 181 for plains/desert/forest/ocean/swamp with Gaussian 0.0. The test checks each real `ServerLevel.getBiome` sample, the production initialization helper, initial Vis/Flux, idempotent re-entry without a Gaussian draw, SavedData NBT save/load round-trip, and rejection of an unloaded far-away target without loading it.
+- The serializer round-trip uses the production `ThaumcraftAuraSavedData.save/load` methods; it is **not** a full disk-restart test.
+
+### Files
+- `src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java`
+- `src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java`
+- `.github/workflows/closure-crystal-spread-gametest.yml`
+- `tools/run_crystal_spread_gametest.sh`
+- this lane journal
+
+### Verification boundary
+- The combined dedicated workflow now requires both existing crystal-spread cases and the new aura-generation markers, plus `All 2 required tests passed`. The workflow result must be inspected on the exact code HEAD; until then M34 is pending.
+- The test does not prove a physical disk flush followed by a separate Minecraft process restart. It does prove the exact SavedData NBT serializer/loader round-trip and that an existing aura entry is not re-seeded by the production initialization helper.
+- Fixed audit remains **59/100**, M08 remains **5/9**. No score is awarded for this isolated world-generation scenario. PR #4 remains Draft/open and unmerged.
