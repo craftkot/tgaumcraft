@@ -25,11 +25,13 @@ def render() -> str:
   send_chat '/gamerule doWeatherCycle false'
   send_chat '/gamerule doTileDrops false'
   send_chat '/time set noon'
-  send_chat '/fill 3 149 7 7 149 13 minecraft:stone'
-  send_chat '/setblock 4 150 12 minecraft:air'
-  send_chat '/setblock 5 150 12 minecraft:air'
-  send_chat '/setblock 6 150 12 minecraft:air'
-  send_chat '/tp @p 5.5 150 8.5 0 16'
+  # Force-load the shared test chunk before building. The player must stand
+  # on a real platform; a creative player still falls when not flying.
+  send_chat '/forceload add 0 0'
+  send_chat '/fill 8 148 8 12 148 14 minecraft:stone'
+  send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_TUBE_PLATFORM_READY=YES'
+  send_chat '/tp @p 10.5 149 8.5 0 18'
+  send_chat '/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_TUBE_PLAYER_ON_PLATFORM=YES'
   xdotool key --clearmodifiers F3+d
   sleep 1
 
@@ -53,7 +55,7 @@ def render() -> str:
   tube_pixel_diff() {
     local label="$1" left="$2" right="$3" metric
     metric="$(compare -metric AE "$left" "$right" null: 2>&1 || true)"
-    metric="\${metric%% *}"
+    metric="$(printf '%s\n' "$metric" | awk 'NR == 1 {print $1}')"
     if ! [[ "$metric" =~ ^[0-9]+$ ]] || [ "$metric" -lt 300 ]; then
       echo "TUBE_BLOCK_RENDER_DIFF_FAILED=$label metric=$metric" | tee -a client-smoke-status.txt
       exit 1
@@ -66,7 +68,7 @@ def render() -> str:
     local image metric best=0
     for image in "$early_a" "$early_b" "$early_c"; do
       metric="$(compare -metric AE "$image" "$late" null: 2>&1 || true)"
-      metric="\${metric%% *}"
+      metric="$(printf '%s\n' "$metric" | awk 'NR == 1 {print $1}')"
       if [[ "$metric" =~ ^[0-9]+$ ]] && [ "$metric" -gt "$best" ]; then
         best="$metric"
       fi
@@ -79,16 +81,16 @@ def render() -> str:
   }
 
   tube_capture 70-tubes-before
-  send_chat '/setblock 4 150 12 thaumcraft:tube_valve'
-  send_chat '/setblock 5 150 12 thaumcraft:tube'
-  send_chat '/setblock 6 150 12 thaumcraft:tube_restrict'
+  tube_send_chat_quick '/setblock 9 149 12 thaumcraft:tube_valve'
+  tube_send_chat_quick '/setblock 10 149 12 thaumcraft:tube'
+  tube_send_chat_quick '/setblock 11 149 12 thaumcraft:tube_restrict'
 
   # These are authoritative server blockstate checks. They prove that the
   # real Tile entities connected and selected the valve/restrict multipart
   # branches, not merely that /setblock text was typed.
-  tube_send_chat_quick '/execute if block 4 150 12 thaumcraft:tube_valve[east=true] run say TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES'
-  tube_send_chat_quick '/execute if block 5 150 12 thaumcraft:tube[west=true,east=true] run say TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES'
-  tube_send_chat_quick '/execute if block 6 150 12 thaumcraft:tube_restrict[west=true] run say TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES'
+  tube_send_chat_quick '/execute if block 9 149 12 thaumcraft:tube_valve[east=true] run say TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES'
+  tube_send_chat_quick '/execute if block 10 149 12 thaumcraft:tube[west=true,east=true] run say TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES'
+  tube_send_chat_quick '/execute if block 11 149 12 thaumcraft:tube_restrict[west=true] run say TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES'
   sleep 0.5
   xdotool key --clearmodifiers F3+d
   sleep 0.5
@@ -100,7 +102,7 @@ def render() -> str:
   # /setblock ... destroy invokes the real level block-destruction event.
   # Item drops are disabled above; the early-vs-late comparison therefore
   # measures the transient particle sprite after the block itself is gone.
-  tube_send_chat_quick '/setblock 4 150 12 minecraft:air destroy'
+  tube_send_chat_quick '/setblock 9 149 12 minecraft:air destroy'
   sleep 0.12
   tube_capture 72-valve-break-early-a
   sleep 0.16
@@ -115,7 +117,7 @@ def render() -> str:
     client-smoke/screenshots/73-valve-break-early-b.png \
     client-smoke/screenshots/74-valve-break-early-c.png
 
-  tube_send_chat_quick '/setblock 6 150 12 minecraft:air destroy'
+  tube_send_chat_quick '/setblock 11 149 12 minecraft:air destroy'
   sleep 0.12
   tube_capture 76-restrict-break-early-a
   sleep 0.16
