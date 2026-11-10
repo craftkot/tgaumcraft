@@ -19,10 +19,9 @@ import org.jetbrains.annotations.Nullable;
  * quarter-turn rotation, 0.3 scale with gaussian variation and the exact fade curve.
  */
 public final class ScanRuneParticle extends TextureSheetParticle {
-    // BETA26 rotates the rune's XY quad around WORLD Y, then tips it 90°
-    // around local Z. A vanilla billboard's roll rotates around the camera
-    // instead, changing the rune's appearance as the player looks around.
-    private final float legacyWorldYaw;
+    // FXBlockRunes.renderParticle runs after the active camera view matrix.
+    // Its Y and Z GL rotations are therefore camera-relative, not world-Y.
+    private final float legacyCameraYaw;
     // Opt-in CI evidence from the ACTUAL client particle, never a mock render.
     // This is silent in normal gameplay and does not change particle behavior.
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
@@ -46,15 +45,15 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
         int yawQuarter = this.random.nextInt(4);
         this.smokeFace = yawQuarter;
-        this.legacyWorldYaw = yawQuarter * Mth.HALF_PI;
+        this.legacyCameraYaw = yawQuarter * Mth.HALF_PI;
         this.roll = this.oRoll = 0.0F;
         this.alpha = 0.0F;
         this.pickSprite(sprites);
 
         // BETA26 FXBlockRunes.renderParticle translates (ofx, ofy, -0.51)
-        // AFTER rotating the quad by world-Y (0/90/180/270) and local-Z 90.
-        // Moving the offsets directly in world X/Y loses the -0.51 face
-        // displacement and makes runes appear inside the scanned block.
+        // after its camera-relative Y quarter-turn and local-Z 90° rotation.
+        // The corresponding position offset is rotated into one of four
+        // block faces so the rune sits 0.51 blocks outside the hit block.
         double ofx = this.random.nextFloat() * 0.2F;
         double ofy = -0.3F + this.random.nextFloat() * 0.6F;
         double dx, dz;
@@ -84,13 +83,17 @@ public final class ScanRuneParticle extends TextureSheetParticle {
 
     @Override
     public SingleQuadParticle.FacingCameraMode getFacingCameraMode() {
-        // FXBlockRunes.renderParticle: glRotatef(rotation, 0,1,0),
-        // then glRotatef(90, 0,0,1). No camera-facing billboard.
+        // FXBlockRunes GL rotations execute after the camera view transform.
+        // Seed the quad with the active camera orientation, then apply the
+        // same local Y quarter-turn and Z tip in that camera-relative space.
         return (rotation, camera, partialTick) -> {
-            rotation.rotationY(this.legacyWorldYaw).rotateZ(Mth.HALF_PI);
-            if (SMOKE_PROBE && !smokeRendered) {
+            rotation.set(camera.rotation())
+                    .rotateY(this.legacyCameraYaw)
+                    .rotateZ(Mth.HALF_PI);
+            if (SMOKE_PROBE && !smokeRendered && this.alpha >= 0.25F) {
                 smokeRendered = true;
-                System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace);
+                System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace
+                        + " alpha=" + this.alpha + " size=" + this.quadSize);
             }
         };
     }

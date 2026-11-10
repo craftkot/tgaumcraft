@@ -123,14 +123,18 @@ log = Path("client-smoke/client.log").read_text(errors="replace")
 created = re.findall(
     r"TC_SMOKE_SCAN_RUNE_CREATED=YES face=(\d) lifetime=(\d+) "
     r"x=(-?[\d.Ee]+) y=(-?[\d.Ee]+) z=(-?[\d.Ee]+)", log)
-rendered = re.findall(r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\d)", log)
+rendered = re.findall(
+    r"TC_SMOKE_SCAN_RUNE_RENDERED=YES face=(\d) alpha=([0-9.Ee+-]+) size=([0-9.Ee+-]+)", log)
 expired = re.findall(
     r"TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=(\d) age=(\d+) lifetime=(\d+) "
     r"drift=([0-9.Ee+-]+)", log)
 if len(created) < 10:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
-if not rendered:
-    raise SystemExit("RUNE_ACTUAL_CLIENT_RENDER_CALLBACK_MISSING")
+visible_rendered = [(face, float(alpha), float(size))
+                    for face, alpha, size in rendered
+                    if float(alpha) >= 0.25 and float(size) >= 0.25]
+if not visible_rendered:
+    raise SystemExit("RUNE_ACTUAL_CLIENT_NONZERO_ALPHA_RENDER_MISSING")
 if len(expired) < 10:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_EXPIRY_MISSING count={len(expired)}")
 faces = set()
@@ -159,7 +163,8 @@ if any(int(age) != 45 or int(life) != 45 for _, age, life, _ in expired):
 if any(float(drift) > 0.0001 for _, _, _, drift in expired):
     raise SystemExit("RUNE_HORIZONTAL_DRIFT_FROM_VANILLA_CONSTRUCTOR")
 print(f"RUNE_ACTUAL_CLIENT_SPAWN=PASS count={len(created)} faces={sorted(faces)}")
-print(f"RUNE_ACTUAL_CLIENT_RENDER=PASS count={len(rendered)}")
+print(f"RUNE_ACTUAL_CLIENT_RENDER=PASS count={len(rendered)} "
+      f"visibleAlpha={max(alpha for _, alpha, _ in visible_rendered):.3f}")
 print(f"RUNE_ACTUAL_CLIENT_EXPIRY=PASS count={len(expired)}")
 PY
 
@@ -167,12 +172,18 @@ PY
   # supplementary visual check; the render-callback proof above is separate.
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
-  crop_x=$((X + WIDTH / 2 - 150))
-  crop_y=$((Y + HEIGHT / 2 - 150))
+  # The camera is fixed on the gold target block. Crop only its front face;
+  # moving clouds above it must never count as rune-particle pixels.
+  crop_x=$((X + WIDTH * 424 / 1000))
+  crop_y=$((Y + HEIGHT * 396 / 1000))
+  crop_width=$((WIDTH * 152 / 1000))
+  crop_height=$((HEIGHT * 203 / 1000))
+  echo "RUNE_VISUAL_CROP=block-face ${crop_width}x${crop_height}+${crop_x}+${crop_y}" \
+    | tee -a client-smoke-status.txt
   for name in 70-rune-before-use 71-rune-during-use \
               74-rune-opposite-before-use 75-rune-opposite-during-use; do
     convert "client-smoke/screenshots/$name.png" \
-      -crop "300x300+$crop_x+$crop_y" +repage \
+      -crop "${crop_width}x${crop_height}+${crop_x}+${crop_y}" +repage \
       "client-smoke/screenshots/$name-target.png"
   done
   pixel_diff="$(compare -metric AE \

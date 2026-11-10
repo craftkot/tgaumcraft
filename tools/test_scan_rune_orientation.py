@@ -15,14 +15,27 @@ DURATION = ROOT / "src/main/java/dev/ehtid/thaumcraft/port/core/LegacyScanRuneDu
 STUBS = {
     "net/minecraft/client/Camera.java": """
 package net.minecraft.client;
-public class Camera {}
+import org.joml.Quaternionf;
+public class Camera {
+  public final float yaw;
+  private final Quaternionf rotation;
+  public Camera(float yaw) { this.yaw=yaw; this.rotation=Quaternionf.camera(yaw); }
+  public Quaternionf rotation() { return rotation; }
+}
 """,
     "org/joml/Quaternionf.java": """
 package org.joml;
 public class Quaternionf {
   public float yaw, tip;
-  public int yawCalls, tipCalls;
-  public Quaternionf rotationY(float value) { yaw = value; yawCalls++; return this; }
+  public int setCalls, yawCalls, tipCalls;
+  public boolean cameraSeed;
+  public static Quaternionf camera(float yaw) {
+    Quaternionf q = new Quaternionf(); q.yaw=yaw; q.cameraSeed=true; return q;
+  }
+  public Quaternionf set(Quaternionf other) {
+    yaw=other.yaw; tip=other.tip; cameraSeed=other.cameraSeed; setCalls++; return this;
+  }
+  public Quaternionf rotationY(float value) { yaw += value; yawCalls++; return this; }
   public Quaternionf rotateZ(float value) { tip = value; tipCalls++; return this; }
 }
 """,
@@ -139,19 +152,22 @@ public final class ScanRuneOrientationTest {
     for (int i=0; i<128; i++) {
       ScanRuneParticle particle = (ScanRuneParticle) provider.createParticle(
           null,new ClientLevel(),0,64,0,0.8,15,0.9);
+      Camera camera = new Camera(0.25F);
       Quaternionf first = new Quaternionf();
-      particle.getFacingCameraMode().setRotation(first,new Camera(),0.0F);
-      int quarter = Math.round(first.yaw / Mth.HALF_PI);
+      particle.getFacingCameraMode().setRotation(first,camera,0.0F);
+      int quarter = Math.round((first.yaw - camera.yaw) / Mth.HALF_PI);
       yawSteps.add(quarter);
-      check(quarter>=0 && quarter<4, "yaw must be a world-Y quarter turn");
-      check(Math.abs(first.yaw-quarter*Mth.HALF_PI)<0.0001F,
-          "yaw must be exact quarter turn");
+      check(quarter>=0 && quarter<4, "camera-relative yaw must be a quarter turn");
+      check(first.cameraSeed && first.setCalls==1,
+          "rotation must start from the active camera quaternion");
+      check(Math.abs((first.yaw-camera.yaw)-quarter*Mth.HALF_PI)<0.0001F,
+          "camera-relative yaw must be exact quarter turn");
       check(first.yawCalls==1 && first.tipCalls==1,
-          "rotation must use Y then Z once");
+          "rotation must use camera, Y then Z once");
       check(Math.abs(first.tip-Mth.HALF_PI)<0.0001F,
           "original rune plane must tip 90 degrees around Z");
       check(particle.roll==0.0F && particle.oRoll==0.0F,
-          "billboard roll must not rotate world-space runes");
+          "legacy rotation is supplied by the camera-relative quaternion");
       check(particle.lifetime==45, "block scan lifetime must stay 45 ticks");
       check(particle.xd==0.0 && particle.yd==0.0 && particle.zd==0.0,
           "BETA26 rune starts stationary despite vanilla random velocity");
@@ -187,10 +203,14 @@ public final class ScanRuneOrientationTest {
       particle.tick();
       check(particle.x==px && particle.z==pz,
           "rune must not drift horizontally after a real tick");
+      Camera camera2 = new Camera(-0.375F);
       Quaternionf second = new Quaternionf();
-      particle.getFacingCameraMode().setRotation(second,new Camera(),0.9F);
-      check(first.yaw==second.yaw && first.tip==second.tip,
-          "camera or partial ticks must not change world orientation");
+      particle.getFacingCameraMode().setRotation(second,camera2,0.9F);
+      check(second.cameraSeed && second.setCalls==1,
+          "each render must seed from its active camera");
+      check(Math.abs((first.yaw-camera.yaw)-(second.yaw-camera2.yaw))<0.0001F
+              && first.tip==second.tip,
+          "camera yaw changes must preserve the same legacy local quarter-turn");
     }
     check(yawSteps.size()==4, "all four original quarter-turns must occur");
     System.out.println("ScanRuneOrientationTest PASS: "+assertions+" assertions");
@@ -198,6 +218,19 @@ public final class ScanRuneOrientationTest {
 }
 """,
 }
+
+smoke_source = (ROOT / "tools/client_scan_rune_smoke.py").read_text(encoding="utf-8")
+for marker in (
+    "crop_x=$((X + WIDTH * 424 / 1000))",
+    "crop_y=$((Y + HEIGHT * 396 / 1000))",
+    "crop_width=$((WIDTH * 152 / 1000))",
+    "crop_height=$((HEIGHT * 203 / 1000))",
+    "RUNE_VISUAL_CROP=block-face",
+):
+    if marker not in smoke_source:
+        raise AssertionError(f"real-client visual crop contract missing: {marker}")
+if "WIDTH / 2 - 150" in smoke_source or '300x300+$crop_x+$crop_y' in smoke_source:
+    raise AssertionError("scan-rune framebuffer check must not include moving sky/clouds")
 
 with tempfile.TemporaryDirectory(prefix="scan-rune-orientation-") as tmp:
     work = Path(tmp)
