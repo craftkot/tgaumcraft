@@ -32,7 +32,7 @@ public final class ThaumcraftAuraWorldEvents {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dz = -1; dz <= 1; dz++) {
                     int x = cx + dx, z = cz + dz;
-                    BlockPos middle = new BlockPos(x * 16 + 8, level.getSeaLevel(), z * 16 + 8);
+                    BlockPos middle = new BlockPos(x * 16 + 8, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y, z * 16 + 8);
                     if (aura.hasChunk(middle) || !fiveChunksLoaded(level, x, z)) continue;
                     float center = modifier(level, middle);
                     float north = modifier(level, middle.north(SAMPLE_SPACING));

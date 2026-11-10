@@ -53,6 +53,7 @@ public final class CrystalGrowthParityTest {
     eq(LegacyVanillaBiomeTypes.auraModifier("OCEAN"),
         LegacyModernBiomeCompatibility.auraModifier("minecraft:ocean"));
     eq(150, AuraGenerationLogic.generatedBase(.3F,.3F,.3F,.3F,.3F,0.0D));
+    eq(50, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y); // pinned BETA26 AuraHandler.generateAura
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
   }
   private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}

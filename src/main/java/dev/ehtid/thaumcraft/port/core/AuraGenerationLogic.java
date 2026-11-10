@@ -2,6 +2,9 @@ package dev.ehtid.thaumcraft.port.core;
 
 /** Exact BETA26 AuraHandler.generateAura base-vis arithmetic. */
 public final class AuraGenerationLogic {
+    /** BETA26 AuraHandler.generateAura samples all five biome positions at fixed Y=50. */
+    public static final int SOURCE_BIOME_SAMPLE_Y = 50;
+
     private AuraGenerationLogic() {}
 
     /**
