@@ -9,6 +9,12 @@ if len(sys.argv) != 2:
     raise SystemExit("usage: verify_salis_sparkle_particle_log.py client.log")
 log = Path(sys.argv[1]).read_text(errors="replace")
 
+blend_mode = re.findall(
+    r"TC_SMOKE_SALIS_ADDITIVE_BLEND_BEGIN=YES src=(\\d+) dst=(\\d+)", log
+)
+if blend_mode != [("770", "1")]:
+    raise SystemExit(f"SALIS_BETA26_ADDITIVE_BLEND=FAIL actual={blend_mode}")
+
 picked_hitpoints = log.count("TC_SMOKE_SALIS_FACE_HITPOINT_PICKED=YES")
 fallback_hitpoints = log.count("TC_SMOKE_SALIS_FACE_HITPOINT_PICK_FALLBACK=YES")
 if picked_hitpoints != 1 or fallback_hitpoints:
@@ -114,6 +120,7 @@ expected_face_frames = {
 if face_frames != expected_face_frames:
     raise SystemExit(f"SALIS_REAL_FACE_SPRITE_ANIMATION=FAIL actual={face_frames} expected={expected_face_frames}")
 
+print("SALIS_BETA26_ADDITIVE_BLEND=PASS src=770 dst=1")
 print("SALIS_FACE_HITPOINT_PICK=PASS source=server BlockHitResult")
 print("SALIS_REAL_SPRITE_CREATED=PASS count=50")
 print(f"SALIS_REAL_SPRITE_RENDER=PASS count={len(rendered)}")

@@ -16,6 +16,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.RandomSource;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -36,6 +37,9 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
             BufferBuilder builder = ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.begin(
                     tesselator, textureManager);
             RenderSystem.blendFunc(770, 1);
+            if (SMOKE_PROBE && SMOKE_BLEND_BEGIN.compareAndSet(false, true)) {
+                System.out.println("TC_SMOKE_SALIS_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1");
+            }
             return builder;
         }
 
@@ -50,6 +54,7 @@ public final class SalisSparkleParticle extends TextureSheetParticle {
     private static final double FACE_SENTINEL = 2000.0D;
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final AtomicInteger SMOKE_CREATED = new AtomicInteger();
+    private static final AtomicBoolean SMOKE_BLEND_BEGIN = new AtomicBoolean();
     private static final AtomicInteger SMOKE_RENDERED = new AtomicInteger();
     private static final AtomicInteger SMOKE_EXPIRED = new AtomicInteger();
     private static final AtomicInteger SMOKE_FACE_CREATED = new AtomicInteger();
