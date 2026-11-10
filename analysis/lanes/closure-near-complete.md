@@ -1755,3 +1755,33 @@ Exact-head results for 3036a3b36101aebc1316d6ce374999a054686581:
 The test-fixture cleanup is accepted for this exact HEAD: the normal path releases the second forced ticket before server halt; the failure and server-stop fallback paths also attempt release. This does not alter production Salis timing, particle behavior, or chunk loading. M16 remains 4/6 and the fixed project audit remains 59/100; no score is awarded for fixture cleanup or individual smoke tests. PR #4 remains open Draft and unmerged.
 
 Next concrete action: resolve the Curio PCM attribution failure as a test-isolation/alignment issue first (music/ambient mute, shorter capture window, then compare the same original learn.ogg at the clamped 0.5 pitch). Preserve the 0.20 correlation gate. Separately collect the still-running crystal-outline, crystal-placement and scan-sound results before declaring M16 complete.
+
+
+## 2026-11-10 — Curio learn PCM capture isolation (exact-head verification pending)
+
+Fresh coordination check before this change:
+- `main` remains `a4280834adc5a20b6951098af937d30ca4aeca56`; `ROADMAP_RU.md`, `AGENTS.md`, `analysis/PARALLEL_WORKFLOW_RU.md` and the fixed audit were re-read from main.
+- PR #4 is still Draft/open, based on main, and its branch is 404 commits ahead / 0 behind. PR #1, #2 and #3 have no changed-path overlap with the two Curio test files changed here. PR #3's existing `SalisMundusItem.java` overlap with PR #4 remains untouched.
+- The fixed rubric is unchanged: M16 4/6; project 59/100. No score awarded for a test-harness correction.
+
+Evidence motivating the change:
+- Earlier real-client Curio run [#42797632660](https://github.com/craftkot/tgaumcraft/actions/runs/42797632660) failed PCM attribution: correlation 0.1004 at the 0.5000 pitch boundary, event RMS 0.049806, baseline RMS 0.008472. Server dispatch, item use and PulseAudio route had succeeded; the sound waveform was not attributable.
+- A later exact-HEAD real-client run [#42799183440](https://github.com/craftkot/tgaumcraft/actions/runs/42799183440) succeeded without a production-code change: correlation 0.8584 at pitch 0.5000, event RMS 0.005907, baseline RMS 0.002922. This confirms the Curio sound can be captured, while the large event-RMS variation indicates intermittent background contamination rather than a proven CurioItem defect.
+
+Change:
+- `tools/client_curio_learn_sound_smoke.py` now writes `soundCategory_music:0.0` and `soundCategory_ambient:0.0` into `run/options.txt` before `gradle runClient`, matching the existing dust-smoke isolation pattern.
+- It leaves master and neutral output unmuted and checks the loaded options file before the event. The 5-second PCM window and the 0.20 correlation / 0.08 margin gates are unchanged.
+- `tools/test_curio_learn_sound.py` runs the generator itself and checks that the exact isolated options command is emitted before client launch, without accidentally muting the Curio output category.
+
+Commits:
+- [ef8d808](https://github.com/craftkot/tgaumcraft/commit/ef8d80816016e15c1612f59e00ba6de77896444c) — first generator/test attempt; its source-unit run [#42805676576](https://github.com/craftkot/tgaumcraft/actions/runs/42805676576) failed because the generated guard was malformed.
+- [b60952c](https://github.com/craftkot/tgaumcraft/commit/b60952c8383424603b4531345a17f2fd81ccf2c2) — corrected the generated shell guard. Review of the test then found a false-negative assertion (it searched the entire script for strings that intentionally occur in the guard).
+- [dbedd0f](https://github.com/craftkot/tgaumcraft/commit/dbedd0f4586fd5116e715f91934f5b20b7862893) — corrected that assertion to inspect the actual `printf` options command.
+
+Exact-head verification for `dbedd0f` is queued:
+- Push Curio client [#42806426473](https://github.com/craftkot/tgaumcraft/actions/runs/42806426473).
+- PR Curio client [#42806434955](https://github.com/craftkot/tgaumcraft/actions/runs/42806434955).
+- Older run [#42806042894](https://github.com/craftkot/tgaumcraft/actions/runs/42806042894) and its full CI [#42806043000](https://github.com/craftkot/tgaumcraft/actions/runs/42806043000) are still running on the superseded `b60952c`; do not use them to accept the final test assertion.
+- No exact-head Curio client or full NeoForge result is claimed yet. The new test has not passed until the `dbedd0f` runs finish and their job logs show the isolation marker plus real PCM attribution.
+
+Next: inspect the two `dbedd0f` Curio runs first. Require the source/generator test, Bash validation, real Minecraft client, `CURIO_LEARN_BACKGROUND_AUDIO_ISOLATION=PASS`, PCM correlation >= 0.20 and BETA26 audible-pitch parity. If it still fails, inspect the new PCM artifact; do not lower thresholds or alter production Curio behavior without evidence.
