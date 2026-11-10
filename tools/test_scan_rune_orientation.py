@@ -301,7 +301,8 @@ for marker in (
     "crop_width=$((WIDTH * 152 / 1000))",
     "crop_height=$((HEIGHT * 203 / 1000))",
     "RUNE_VISUAL_CROP=block-face",
-    "frontDot = -offset.dot(camera.getLookVector())",
+    "float frontDot = -offset.dot(look)",
+    "camera.getLookVector()",
     "RUNE_CAMERA_RELATIVE_OFFSET=PASS",
     "cameraYaw=",
 ):
