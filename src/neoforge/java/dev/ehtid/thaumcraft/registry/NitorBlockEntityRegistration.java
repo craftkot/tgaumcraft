@@ -8,7 +8,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 /**
  * Isolated registration for the original TileNitor client ticker.

@@ -15,6 +15,8 @@ assert "animateTick(" not in BLOCK, "Nitor must not depend on random display tic
 assert "new NitorBlockEntity(pos, state)" in BLOCK
 assert "level.isClientSide" in BLOCK
 assert "createTickerHelper(type, NitorBlockEntityRegistration.TYPE, NitorBlockEntity::clientTick)" in BLOCK
+assert "import net.neoforged.neoforge.registries.RegisterEvent;" in REGISTRATION
+assert "net.neoforged.neoforge.event.RegisterEvent" not in REGISTRATION
 assert "ThaumcraftBlocks.NITOR.values()" in REGISTRATION
 assert "validBlocks.length != 16" in REGISTRATION
 assert "BlockEntityType.Builder.of(NitorBlockEntity::new, validBlocks).build(null)" in REGISTRATION
