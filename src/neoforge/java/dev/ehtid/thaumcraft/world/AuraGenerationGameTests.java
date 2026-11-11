@@ -416,9 +416,10 @@ public final class AuraGenerationGameTests {
         float negativeCapSimVis = aura.drainVis(pos, -40_000.0F, true);
         float negativeCapSimFlux = aura.drainFlux(pos, -40_000.0F, true);
         if (negativeCapSimVis != -40_000.0F || negativeCapSimFlux != -40_000.0F
-                || aura.getVis(pos) != 32_766.0F || aura.getFlux(pos) != 32_766.0F) {
-            throw new AssertionError("Simulated negative over-cap request mutated aura or changed its return");
+                || aura.getVis(pos) != 2.0F || aura.getFlux(pos) != 2.0F) {
+            throw new AssertionError("Simulated negative over-cap drain must preserve the pre-write aura value");
         }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_NEGATIVE_CAP_SIMULATE=PASS vis=2.0 flux=2.0");
         float negativeCapVis = aura.drainVis(pos, -40_000.0F, false);
         float negativeCapFlux = aura.drainFlux(pos, -40_000.0F, false);
         if (negativeCapVis != -40_000.0F || negativeCapFlux != -40_000.0F
@@ -437,7 +438,7 @@ public final class AuraGenerationGameTests {
         if (nanVis != 0.0F || nanFlux != 0.0F
                 || positiveInfinityVis != 0.0F || positiveInfinityFlux != 0.0F
                 || negativeInfinityVis != 0.0F || negativeInfinityFlux != 0.0F
-                || aura.getVis(pos) != 2.0F || aura.getFlux(pos) != 2.0F) {
+                || aura.getVis(pos) != 32_766.0F || aura.getFlux(pos) != 32_766.0F) {
             throw new AssertionError("Non-finite aura drain input must be rejected without mutation");
         }
         System.out.println("TC_GAMETEST_AURA_DRAIN_NONFINITE_GUARD=PASS");
