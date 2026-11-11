@@ -145,6 +145,7 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_REENTRY_PRESERVED=YES");
         assertDrainVisAndFluxSemantics(aura, center.offset(32, 0, 0));
+        assertFluxPollutionBounds(aura, center.offset(48, 0, 0));
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -352,6 +353,45 @@ public final class AuraGenerationGameTests {
         }
 
         helper.succeed();
+    }
+
+    private static void assertFluxPollutionBounds(ThaumcraftAuraSavedData aura, BlockPos pos) {
+        if (aura.hasChunk(pos)) {
+            throw new AssertionError("Flux pollution fixture chunk must start uninitialized");
+        }
+        aura.putChunk(pos, (short) 120, 17.0F, 32760.0F);
+        aura.polluteFlux(pos, 10.0F);
+        if (aura.getFlux(pos) != 32766.0F
+                || aura.getBase(pos) != 120
+                || aura.getVis(pos) != 17.0F) {
+            throw new AssertionError("Flux pollution exceeded the BETA26 AuraChunk ceiling or changed other channels: "
+                    + "base=" + aura.getBase(pos) + " vis=" + aura.getVis(pos)
+                    + " flux=" + aura.getFlux(pos));
+        }
+        System.out.println("TC_GAMETEST_AURA_POLLUTE_FLUX_CAPPED=PASS flux=32766.0");
+
+        aura.polluteFlux(pos, -5.0F);
+        aura.polluteFlux(pos, 0.0F);
+        aura.polluteFlux(pos, Float.NaN);
+        aura.polluteFlux(pos, Float.POSITIVE_INFINITY);
+        aura.polluteFlux(pos, Float.NEGATIVE_INFINITY);
+        if (aura.getFlux(pos) != 32766.0F
+                || aura.getBase(pos) != 120
+                || aura.getVis(pos) != 17.0F) {
+            throw new AssertionError("Rejected Flux pollution input changed the aura state");
+        }
+        System.out.println("TC_GAMETEST_AURA_POLLUTE_FLUX_GUARDS=PASS");
+
+        BlockPos missing = pos.offset(32, 0, 0);
+        if (aura.hasChunk(missing)) {
+            throw new AssertionError("Missing Flux pollution fixture must start absent");
+        }
+        aura.polluteFlux(missing, 10.0F);
+        if (aura.hasChunk(missing)) {
+            throw new AssertionError("Flux pollution manufactured an uninitialized aura chunk");
+        }
+        System.out.println("TC_GAMETEST_AURA_POLLUTE_FLUX_MISSING=PASS");
+        System.out.println("TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES");
     }
 
     private static void assertDrainVisAndFluxSemantics(ThaumcraftAuraSavedData aura, BlockPos pos) {

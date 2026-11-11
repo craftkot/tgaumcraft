@@ -121,7 +121,8 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         long key=key(pos);
         AuraChunk c=chunks.get(key);
         if (c==null) return; // avoid manufactured aura on uninitialized chunks
-        chunks.put(key,new AuraChunk(c.base(),c.vis(),c.flux()+amount));
+        chunks.put(key, new AuraChunk(c.base(), c.vis(),
+                Math.min(AURA_CHUNK_VALUE_MAX, c.flux() + amount)));
         setDirty();
     }
 
