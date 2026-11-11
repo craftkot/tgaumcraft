@@ -53,8 +53,17 @@ assert "JAR_FALL_LANDED_ON_JAR" in SMOKE
 assert "JAR_SOUNDTYPE_PLACE_STEP_HIT_FALL=PASS" in SMOKE
 assert WORKFLOW.count("tools/verify_jar_soundtype_smoke.py") >= 2, "PR path filter and job must run this guard"
 assert "pull_request:" in WORKFLOW and "  push:" not in WORKFLOW, "expensive real-client smoke must run once per PR update, not again on the same branch push"
-assert "apt-mirrors.txt" in WORKFLOW and "archive.ubuntu.com" in WORKFLOW, "runner must bypass the failing regional Azure apt mirror"
-assert "Acquire::Retries=1" in WORKFLOW and "timeout-minutes: 45" in WORKFLOW, "dependency installation and client runtime need bounded, sufficient time"
+assert all(mirror in WORKFLOW for mirror in (
+    "mirrors.edge.kernel.org/ubuntu/",
+    "mirror.math.princeton.edu/pub/ubuntu/",
+    "ubuntu.osuosl.org/ubuntu/",
+    "archive.ubuntu.com/ubuntu/",
+)), "runner must have independent Ubuntu mirror fallbacks"
+assert "getent ahostsv4" in WORKFLOW and "curl --fail" in WORKFLOW, "mirror candidates must pass DNS and HTTPS preflight"
+assert "APT::Update::Error-Mode=any" in WORKFLOW and "Acquire::Retries=0" in WORKFLOW, "failed apt indexes must not silently fall back to stale package lists"
+assert "APT_MIRROR_SELECTION_FAILED=YES" in WORKFLOW, "mirror outage must fail fast with an explicit diagnostic"
+assert WORKFLOW.index('if [ -z "$selected" ]') < WORKFLOW.index('apt-get "${apt_options[@]}" install'), "packages must not install before a mirror has updated successfully"
+assert "timeout-minutes: 45" in WORKFLOW and "timeout 360s" in WORKFLOW, "dependency installation and client runtime need bounded, sufficient time"
 assert "python tools/verify_jar_soundtype_smoke.py" in WORKFLOW
 
 print("BETA26 jar SoundType client contract: place, hit, step and fall each have real interaction, server-state guard and original-PCM matcher: PASS")
