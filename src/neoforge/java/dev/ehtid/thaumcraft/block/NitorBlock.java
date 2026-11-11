@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.block;
 
+import com.mojang.serialization.MapCodec;
 import dev.ehtid.thaumcraft.blockentity.NitorBlockEntity;
 import dev.ehtid.thaumcraft.registry.NitorBlockEntityRegistration;
 import net.minecraft.core.BlockPos;
@@ -28,11 +29,16 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * still a separate M16 task.
  */
 public final class NitorBlock extends BaseEntityBlock {
+    public static final MapCodec<NitorBlock> CODEC = simpleCodec(NitorBlock::new);
     private static final VoxelShape OUTLINE =
             box(5.28, 5.28, 5.28, 10.56, 10.56, 10.56);
 
     private final int flameRgb;
     private final DustParticleOptions coloredGlow;
+
+    public NitorBlock(BlockBehaviour.Properties props) {
+        this(props, 0xFFFFFF);
+    }
 
     public NitorBlock(BlockBehaviour.Properties props, int flameRgb) {
         super(props);
@@ -46,6 +52,11 @@ public final class NitorBlock extends BaseEntityBlock {
     public int flameRgb() { return flameRgb; }
 
     public DustParticleOptions coloredGlow() { return coloredGlow; }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
 
     @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {

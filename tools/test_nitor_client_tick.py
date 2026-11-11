@@ -11,6 +11,8 @@ REGISTRATION = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorBlo
 WORKFLOW = (ROOT / ".github/workflows/closure-dust-client.yml").read_text()
 
 assert "extends BaseEntityBlock" in BLOCK
+assert "public static final MapCodec<NitorBlock> CODEC = simpleCodec(NitorBlock::new);" in BLOCK
+assert "protected MapCodec<? extends BaseEntityBlock> codec()" in BLOCK
 assert "animateTick(" not in BLOCK, "Nitor must not depend on random display ticks"
 assert "new NitorBlockEntity(pos, state)" in BLOCK
 assert "level.isClientSide" in BLOCK
