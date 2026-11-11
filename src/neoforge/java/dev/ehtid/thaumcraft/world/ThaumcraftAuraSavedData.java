@@ -168,7 +168,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
     /**
      * Exact AuraHandler.modifyVisInChunk semantics: a missing chunk returns false;
-     * simulation succeeds without mutation; real writes clamp only the lower bound.
+     * simulation succeeds without mutation; real writes use BETA26 AuraChunk bounds [0, 32766].
      */
     public boolean modifyVis(BlockPos pos, float amount, boolean simulate) {
         if (!Float.isFinite(amount)) return false;
