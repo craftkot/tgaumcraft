@@ -24,7 +24,7 @@ ORIGINAL_PAGE_BLOBS = {
 
 
 def git_blob_sha1(data: bytes) -> str:
-    header = f"blob {len(data)}\\0".encode("ascii")
+    header = f"blob {len(data)}\0".encode("ascii")
     return hashlib.sha1(header + data).hexdigest()
 
 
@@ -67,7 +67,7 @@ if not isinstance(page, dict) or page.get("category") != "master" or page.get("s
     "thaumcraft:page1", "thaumcraft:page2"
 ]:
     raise SystemExit("PAGE event manifest differs from the original two-clip event")
-if not re.search(r'PAGE\\s*=\\s*SOUND_EVENTS\\.register\\("page"', sounds):
+if not re.search(r'PAGE\s*=\s*SOUND_EVENTS\.register\("page"', sounds):
     raise SystemExit("ThaumcraftSounds.PAGE is not registered")
 
 for filename, expected in ORIGINAL_PAGE_BLOBS.items():
