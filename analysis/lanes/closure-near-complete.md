@@ -2420,3 +2420,9 @@ PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTes
 - Changed files: `ThaumcraftAuraSavedData.java`, `AuraGenerationGameTests.java`, `tools/run_crystal_spread_gametest.sh`, this lane journal. No shared registry, Gradle, workflow YAML, main, or foreign feature branch changed. PR #1/#2/#3 changed-path lists were checked; none overlaps these M37 paths. The known PR #4/#3 `SalisMundusItem.java` overlap remains untouched.
 - Code/test/runner commits: pending exact SHA capture below. Native GameTest and full NeoForge CI must run on the final code/test HEAD before accepting M37. No score awarded; M08 remains 5/9 and fixed audit remains 59/100 until broader category criteria are met.
 - Next: inspect exact-head GameTest write/read logs and full CI; fix any real failure rather than weakening the marker contract.
+
+
+### M37 source-setter ceiling follow-up
+
+- The pinned BETA26 `AuraChunk.setVis/setFlux` also clamps finite values to [0, 32766]. The port's immutable record updates previously reproduced the lower bound but missed this upper bound on a finite negative drain (which is intentionally preserved from BETA26). Added the same ceiling to production Vis/Flux drain mutations and extended the GameTest with simulated and real -40000 requests: simulation returns -40000 without mutation; real mutation returns -40000 but stores exactly 32766 in both channels; Base remains 100. Non-finite guard assertions now verify no mutation at the saturated value.
+- Follow-up production/test/runner commits are being recorded by GitHub; exact-head native GameTest and full NeoForge CI remain pending. This closes the setter-boundary part of M37 but is not an M08 score change.
