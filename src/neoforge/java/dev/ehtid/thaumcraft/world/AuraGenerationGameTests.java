@@ -20,6 +20,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.common.IOUtilities;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.io.IOException;
@@ -167,6 +168,10 @@ public final class AuraGenerationGameTests {
                 + " data=" + dataDirectory + " isServerOverworld=" + (level == server.overworld())
                 + " dirtyBeforeSave=" + dirtyBeforeSave);
         level.getDataStorage().save();
+        // NeoForge 21.1.1 queues SavedData writes on IOUtilities' worker and clears dirty immediately.
+        // Join that queue before asserting that the atomic temp-file rename reached disk.
+        IOUtilities.waitUntilIOWorkerComplete();
+        System.out.println("TC_GAMETEST_AURA_DISK_IO_FLUSH=COMPLETE");
         System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC dirtyAfterSave=" + aura.isDirty());
         System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC rootExists="
                 + Files.isDirectory(server.getWorldPath(LevelResource.ROOT))
