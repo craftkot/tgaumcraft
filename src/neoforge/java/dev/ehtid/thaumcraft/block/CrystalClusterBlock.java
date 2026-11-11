@@ -125,9 +125,10 @@ public final class CrystalClusterBlock extends Block {
         if(!LegacyBlockCrystalGrowthRules.attemptTick(s,
                 random.nextInt(LegacyBlockCrystalGrowthRules.tickDenominator(s)))) return;
         ThaumcraftAuraSavedData aura=ThaumcraftAuraSavedData.get(level);
-        // Missing chunk != zero aura. The original expects AuraHandler to
-        // generate a chunk first; do not destroy crystals on unloaded data.
-        if(!aura.hasChunk(pos)) return;
+        // BETA26 AuraHandler.getVis/getFlux return zero when the aura-world
+        // cache has no entry for this chunk. That is starvation, not a reason
+        // to skip the tick: size reduction still occurs, while addVis/polluteFlux
+        // remain no-ops for the absent record exactly as in the legacy helper path.
         boolean flux="vitium".equals(aspectTag);
         float available=flux?aura.getFlux(pos):aura.getVis(pos);
         if(LegacyBlockCrystalGrowthRules.starved(available)) {

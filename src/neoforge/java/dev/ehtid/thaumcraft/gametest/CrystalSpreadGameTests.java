@@ -14,6 +14,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.phys.AABB;
 
 /**
  * Executes the production CrystalClusterBlock.randomTick method in a real
@@ -62,6 +64,142 @@ public final class CrystalSpreadGameTests {
 
         System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES");
         helper.succeed();
+    }
+
+    @SuppressWarnings("deprecation")
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 100
+    )
+    public static void missingAuraChunkUsesBETA26ZeroAuraStarvation(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos anchor = helper.absolutePos(new BlockPos(8, TEST_Y, 8));
+        // Load a separate, otherwise untouched chunk as part of the fixture.
+        // The behavior under test is a LOADED chunk with no AuraSavedData entry.
+        int chunkX = (anchor.getX() >> 4) + 32;
+        int chunkZ = (anchor.getZ() >> 4) + 32;
+        level.getChunk(chunkX, chunkZ);
+        int baseX = chunkX * 16;
+        int baseZ = chunkZ * 16;
+        int y = anchor.getY();
+
+        BlockPos aerPos = new BlockPos(baseX + 2, y, baseZ + 2);
+        BlockPos vitiumPos = new BlockPos(baseX + 6, y, baseZ + 2);
+        BlockPos isolatedPos = new BlockPos(baseX + 10, y, baseZ + 2);
+        BlockPos sameVariantPos = new BlockPos(baseX + 2, y, baseZ + 8);
+        BlockPos sameVariantNeighbor = sameVariantPos.east();
+        BlockPos otherVariantPos = new BlockPos(baseX + 10, y, baseZ + 8);
+        BlockPos otherVariantNeighbor = otherVariantPos.east();
+
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+        requireMissingAura(aura, aerPos, vitiumPos, isolatedPos,
+                sameVariantPos, sameVariantNeighbor, otherVariantPos, otherVariantNeighbor);
+
+        CrystalClusterBlock aer = ThaumcraftBlocks.CRYSTAL_AER.get();
+        CrystalClusterBlock vitium = ThaumcraftBlocks.CRYSTAL_VITIUM.get();
+        CrystalClusterBlock ignis = ThaumcraftBlocks.CRYSTAL_IGNIS.get();
+        long starvationSeed = findStarvationSeed();
+
+        BlockState aerState = placeCrystal(level, aer, aerPos, 3, 3);
+        aer.randomTick(aerState, level, aerPos, RandomSource.create(starvationSeed));
+        BlockState aerAfter = level.getBlockState(aerPos);
+        if (!aerAfter.is(aer) || aerAfter.getValue(CrystalClusterBlock.SIZE) != 2
+                || aura.hasChunk(aerPos) || aura.getVis(aerPos) != 0.0F) {
+            throw new AssertionError("BETA26 missing-aura Aer crystal did not starve from zero Vis: " + aerAfter);
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_AER_MISSING_AURA=PASS size=2");
+
+        BlockState vitiumState = placeCrystal(level, vitium, vitiumPos, 3, 3);
+        vitium.randomTick(vitiumState, level, vitiumPos, RandomSource.create(starvationSeed));
+        BlockState vitiumAfter = level.getBlockState(vitiumPos);
+        if (!vitiumAfter.is(vitium) || vitiumAfter.getValue(CrystalClusterBlock.SIZE) != 2
+                || aura.hasChunk(vitiumPos) || aura.getFlux(vitiumPos) != 0.0F) {
+            throw new AssertionError("BETA26 missing-aura Vitium crystal did not starve from zero Flux: " + vitiumAfter);
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_VITIUM_MISSING_AURA=PASS size=2");
+
+        BlockState isolatedState = placeCrystal(level, aer, isolatedPos, 0, 3);
+        aer.randomTick(isolatedState, level, isolatedPos, RandomSource.create(starvationSeed));
+        if (!level.getBlockState(isolatedPos).equals(isolatedState)) {
+            throw new AssertionError("An isolated size-zero crystal must remain when no same block touches it");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_ZERO_ISOLATED=PASS");
+
+        BlockState sameVariantState = placeCrystal(level, vitium, sameVariantPos, 0, 3);
+        BlockState sameVariantNeighborState = placeCrystal(level, vitium, sameVariantNeighbor, 1, 3);
+        vitium.randomTick(sameVariantState, level, sameVariantPos, RandomSource.create(starvationSeed));
+        if (!level.getBlockState(sameVariantPos).isAir()
+                || !level.getBlockState(sameVariantNeighbor).equals(sameVariantNeighborState)) {
+            throw new AssertionError("A size-zero crystal touching the same BETA26 block variant must be removed alone");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_SAME=PASS");
+
+        BlockState otherVariantState = placeCrystal(level, aer, otherVariantPos, 0, 3);
+        BlockState otherVariantNeighborState = placeCrystal(level, ignis, otherVariantNeighbor, 1, 3);
+        aer.randomTick(otherVariantState, level, otherVariantPos, RandomSource.create(starvationSeed));
+        if (!level.getBlockState(otherVariantPos).equals(otherVariantState)
+                || !level.getBlockState(otherVariantNeighbor).equals(otherVariantNeighborState)) {
+            throw new AssertionError("A different crystal variant must not satisfy BlockUtils.isBlockTouching(this)");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_OTHER_VARIANT=PASS");
+
+        for (BlockPos pos : new BlockPos[]{aerPos, vitiumPos, isolatedPos,
+                sameVariantPos, sameVariantNeighbor, otherVariantPos, otherVariantNeighbor}) {
+            requireNoItemDrops(level, pos);
+        }
+        requireMissingAura(aura, aerPos, vitiumPos, isolatedPos,
+                sameVariantPos, sameVariantNeighbor, otherVariantPos, otherVariantNeighbor);
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_NO_DROPS=PASS");
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_NO_AURA_CREATED=PASS");
+        System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_ACCEPTED=YES");
+        helper.succeed();
+    }
+
+    private static BlockState placeCrystal(
+            ServerLevel level, CrystalClusterBlock crystal, BlockPos pos, int size, int generation) {
+        level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
+        BlockState state = crystal.defaultBlockState()
+                .setValue(CrystalClusterBlock.SIZE, size)
+                .setValue(CrystalClusterBlock.GENERATION, generation);
+        level.setBlock(pos, state, 3);
+        if (!level.getBlockState(pos).equals(state) || !state.canSurvive(level, pos)) {
+            throw new AssertionError("Failed to place supported crystal fixture at " + pos + ": " + state);
+        }
+        return state;
+    }
+
+    private static void requireMissingAura(ThaumcraftAuraSavedData aura, BlockPos... positions) {
+        for (BlockPos pos : positions) {
+            if (aura.hasChunk(pos)) {
+                throw new AssertionError("Crystal starvation fixture unexpectedly has an aura entry at " + pos);
+            }
+        }
+    }
+
+    private static void requireNoItemDrops(ServerLevel level, BlockPos pos) {
+        AABB bounds = new AABB(
+                pos.getX() - 1.0D, pos.getY() - 1.0D, pos.getZ() - 1.0D,
+                pos.getX() + 2.0D, pos.getY() + 2.0D, pos.getZ() + 2.0D);
+        if (!level.getEntitiesOfClass(ItemEntity.class, bounds).isEmpty()) {
+            throw new AssertionError("Starvation must not produce manual crystal item drops at " + pos);
+        }
+    }
+
+    private static long findStarvationSeed() {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            if (RandomSource.create(seed).nextInt(6) == 0) {
+                return seed;
+            }
+        }
+        throw new AssertionError("Could not find deterministic size-zero/three starvation tick seed");
     }
 
     private static void requireFluidFixture(String name, BlockState state, boolean liquid) {

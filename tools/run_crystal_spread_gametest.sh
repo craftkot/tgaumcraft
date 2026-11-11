@@ -47,6 +47,14 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=water result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=lava result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_AER_MISSING_AURA=PASS size=2' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_VITIUM_MISSING_AURA=PASS size=2' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_ISOLATED=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_SAME=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_OTHER_VARIANT=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_NO_DROPS=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_NO_AURA_CREATED=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SAMPLE=center biome=minecraft:plains y=50' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SAMPLE=north biome=minecraft:desert y=50' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SAMPLE=south biome=minecraft:forest y=50' || return 1
@@ -75,7 +83,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
-    require_marker "$file" 'All 3 required tests passed' || return 1
+    require_marker "$file" 'All 4 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=write' || return 1
@@ -84,9 +92,10 @@ verify_write_phase() {
 verify_read_phase() {
     local file="$1"
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_SKIPPED_PHASE=read' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
-    require_marker "$file" 'All 3 required tests passed' || return 1
+    require_marker "$file" 'All 4 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=read' || return 1
@@ -107,7 +116,7 @@ run_phase() {
 
     local shutdown_seen=0
     while kill -0 "$timeout_pid" 2>/dev/null; do
-        if grep -Fq 'All 3 required tests passed' "$phase_log" \
+        if grep -Fq 'All 4 required tests passed' "$phase_log" \
                 && grep -Fq 'Saving worlds' "$phase_log"; then
             shutdown_seen=1
             # The aura file was explicitly flushed by the GameTest before it
@@ -125,7 +134,7 @@ run_phase() {
     local gradle_status=$?
     set -e
 
-    if grep -Fq 'All 3 required tests passed' "$phase_log" \
+    if grep -Fq 'All 4 required tests passed' "$phase_log" \
             && grep -Fq 'Saving worlds' "$phase_log"; then
         shutdown_seen=1
     fi
