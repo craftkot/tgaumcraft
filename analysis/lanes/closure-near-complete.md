@@ -2641,3 +2641,38 @@ PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTes
 - Current branch head after this correction: `216dc910876931758dd17552b75ddf7a0047b81c`; compare against main `a4280834adc5a20b6951098af937d30ca4aeca56`: ahead 519, behind 0. The verifier and lane journal are the only files changed in this narrow recovery; no production Java or foreign PR path overlap.
 - New PR checks observed for this head include full NeoForge/Core CI [#43075629279](https://github.com/craftkot/tgaumcraft/actions/runs/43075629279) queued and aura/crystal GameTests [#43075628770](https://github.com/craftkot/tgaumcraft/actions/runs/43075628770) in progress, plus other M16 regressions. The GitHub connector returned only the first page of workflow runs; the M43 jar-client run is not yet individually identified in that page. Do not claim it ran or passed until its run/job log is located.
 - The previous exact-head run on PR head `3cc07e2` established that APT mirror selection/install now succeeds, the M43 static guard passes, and synthetic jar PCM controls pass; it failed only at the stale label-smoke click count before Minecraft launch. The corrected verifier has not yet been executed by CI. M43 remains unaccepted; require the actual four event PCM captures and server markers. Fixed audit remains 59/100, M16 4/6, M08 5/9; no points awarded. PR #4 remains Draft/Open/Unmerged; no merge.
+
+## 2026-11-11 — M42 PCM attribution false-positive isolated; action-window capture hardened
+
+Fresh-state check before this change:
+- main HEAD: a4280834adc5a20b6951098af937d30ca4aeca56.
+- Own branch HEAD: b0e5954fe4260e787e90d741b4862b272cfd0fae; PR #4 remains Draft/Open/Unmerged.
+- PR #1 (feature/infusion), #2 (chore/coordination) and #3 (feature/golems) are open; changed-file comparison showed no overlap for the four files changed in this iteration.
+- Main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and the fixed audit were reread. Main still declares M04 as the only active shared lane; this work remains isolated to this lane's client-smoke helpers and journal.
+
+Evidence from exact branch run #43075933308 (https://github.com/craftkot/tgaumcraft/actions/runs/43075933308):
+- M40 real break: JAR_SOURCE_MATCH=PASS, jar2.ogg, correlation 0.9962, pitch 0.8000.
+- M41 wrong-face negative check passed; configured-face removal passed server filter removal and blank-label drop. Actual page audio passed: page1, correlation 0.3036, baseline 0.0664; JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS.
+- M42 server-side reset/filter-retention marker passed, but its jar PCM matcher failed: best jar2.ogg correlation 0.2759, baseline correlation 0.2357, offset 0.111s. The action click occurs about 0.75s into the capture, so the best match was before the action; the recording did not prove the expected post-click jar sound. The client job stopped here; M43 place/hit/step/fall were not reached.
+- Full NeoForge CI on the same old branch HEAD succeeded: #43075933343 (https://github.com/craftkot/tgaumcraft/actions/runs/43075933343). This is compile/server evidence only, not M42/M43 gameplay acceptance.
+
+Change made:
+- Added a checked raw-PCM frame crop helper (s16le, stereo, 48 kHz; four bytes per frame) to tools/client_jar_sound_smoke.py.
+- Before M42 and each M43 baseline, the client now runs /stopsound @p to clear already-playing game audio.
+- Jar/bottle matchers now receive a bounded post-action window, not the full capture with pre-click/background samples. The M42 window is frames 31200..117600 (0.65–2.45 s); M43 place/hit use 26400..120000 (0.55–2.50 s), step uses 16800..120000 (0.35–2.50 s), and fall uses 16800..144000 (0.35–3.00 s).
+- Existing correlation and baseline-margin thresholds were not lowered. The PAGE negative check still examines the full M42 capture.
+- Updated tools/verify_jar_soundtype_smoke.py and tools/verify_jar_label_sound.py to require the stopsound, exact crop windows, full-frame byte validation, and cropped matcher inputs.
+- No production Java, registries, global resources, Gradle, or shared CI workflow files changed.
+
+Commits:
+- efda65ede2cbf40d2091d91808762293f8e59d5e — isolate jar PCM to post-action windows.
+- 48b2cc13578bde836efbf6dbea517d0c0e806478 — guard all four M43 action windows.
+- 8cc5786faf981b41c4bf339ed0a7a2aa3419684f — guard M42 empty-jar window and baseline silence.
+- Journal update follows in this commit.
+
+Validation status:
+- The prior client run proves M40 and M41 only; M42 PCM attribution failed and M43 remains untested.
+- The new crop helper and verifier changes have not yet run in GitHub Actions. This environment has no repository checkout and outbound DNS is unavailable, so no local Gradle or local client run is claimed.
+- No progress point is awarded. Fixed audit remains 59/100; M16 remains 4/6.
+
+Next action: inspect the first new PR workflow run on the updated HEAD. Require M42's jar and vanilla bottle-fill PCM matches plus the no-PAGE negative assertion. Only if M42 passes, continue to the four M43 real-client interactions and their server-state/PCM evidence. If the cropped M42 matcher still fails, inspect the post-click PCM and client sound branch; do not relax matcher thresholds.
