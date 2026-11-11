@@ -122,6 +122,23 @@ if "JAR_LABEL_WRONG_FACE_EXPECTED=NORTH" not in smoke:
     raise SystemExit("Wrong-face geometry marker is missing")
 if "JAR_LABEL_CONFIGURED_FACE=SOUTH" not in smoke:
     raise SystemExit("Configured-face geometry marker is missing")
+# The same original PAGE event is first exercised as a diagnostic output-path
+# control. This must remain separate from the real label-removal acceptance.
+page_control = "send_chat '/playsound thaumcraft:page block @p 250.5 151.5 251.5 1 1 0'"
+if page_control not in smoke or "JAR_PAGE_AUDIO_COMMAND_CONTROL_ONLY=PASS" not in smoke:
+    raise SystemExit("PAGE output-path positive control is missing")
+if not all(token in smoke for token in (
+    "pactl info > client-smoke/pulse-info.txt",
+    "pactl list short sinks > client-smoke/pulse-sinks.txt",
+    "pactl list short sink-inputs > client-smoke/pulse-sink-inputs.txt",
+    "pactl list sink-inputs > client-smoke/pulse-sink-input-details.txt",
+)):
+    raise SystemExit("PulseAudio sink and Minecraft stream diagnostics are incomplete")
+for capture in ("label-wrong-baseline.pcm", "label-baseline.pcm"):
+    capture_pos = smoke.index(">" + " client-smoke/" + capture)
+    stop_pos = smoke.rfind("send_chat '/stopsound @p'", 0, capture_pos)
+    if stop_pos < 0:
+        raise SystemExit(f"{capture}: baseline must follow /stopsound @p")
 if "JAR_EMPTY_WRONG_FACE_EXPECTED=NORTH" not in smoke:
     raise SystemExit("Jar-empty fallback geometry marker is missing")
 for marker in (

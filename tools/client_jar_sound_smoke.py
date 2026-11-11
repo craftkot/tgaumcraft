@@ -68,6 +68,26 @@ body = r'''
   fi
   echo 'JAR_REAL_BREAK_AND_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
 
+  # Positive control only: prove the same PAGE event, BLOCKS category and
+  # PulseAudio monitor are audible before attributing the real interaction.
+  # This /playsound control is diagnostic and is never counted as gameplay.
+  send_chat '/stopsound @p'
+  sleep 0.25
+  pactl info > client-smoke/pulse-info.txt
+  pactl list short sinks > client-smoke/pulse-sinks.txt
+  pactl list short sink-inputs > client-smoke/pulse-sink-inputs.txt
+  pactl list sink-inputs > client-smoke/pulse-sink-input-details.txt
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/page-control-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/page-control-event.pcm &
+  capture_pid=$!
+  sleep 0.6
+  send_chat '/playsound thaumcraft:page block @p 250.5 151.5 251.5 1 1 0'
+  wait "$capture_pid" || test "$?" -eq 124
+  python3 tools/match_page_audio_pcm.py client-smoke/page-control-baseline.pcm client-smoke/page-control-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/page-control-source-match.txt
+  echo 'JAR_PAGE_AUDIO_COMMAND_CONTROL_ONLY=PASS' | tee -a client-smoke-status.txt
+  send_chat '/stopsound @p'
+  sleep 0.25
+
   # BETA26 BlockJar: shift-right-click on the labelled face plays SoundsTC.page
   # locally; the server removes the filter and drops one blank label.
   send_chat '/setblock 250 151 251 thaumcraft:jar_normal{AspectFilter:"aer",Amount:0s,facing:3b}'
@@ -87,6 +107,8 @@ body = r'''
   send_chat '/tp @p 250.5 150 249.5 0 0'
   echo 'JAR_LABEL_WRONG_FACE_EXPECTED=NORTH' | tee -a client-smoke-status.txt
   sleep 2
+  send_chat '/stopsound @p'
+  sleep 0.25
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-wrong-baseline.pcm || test "$?" -eq 124
   timeout --signal=TERM 4s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-wrong-event.pcm &
   capture_pid=$!
@@ -130,6 +152,8 @@ PY
   send_chat '/tp @p 250.5 150 253.5 180 0'
   echo 'JAR_LABEL_CONFIGURED_FACE=SOUTH' | tee -a client-smoke-status.txt
   sleep 2
+  send_chat '/stopsound @p'
+  sleep 0.25
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-baseline.pcm || test "$?" -eq 124
   timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-event.pcm &
   capture_pid=$!
