@@ -51,8 +51,23 @@ if required_call not in client_branch:
     raise SystemExit("Client label-removal branch does not play the original PAGE event")
 if "1.0F, 1.0F, false);" not in client_branch:
     raise SystemExit("BETA26 label-removal sound volume/pitch/local flag changed")
-if block.count("playLocalSound(") != 1:
-    raise SystemExit("Unexpected extra local sound call in EssentiaJarBlock")
+if block.count("playLocalSound(") != 3:
+    raise SystemExit("EssentiaJarBlock must contain only PAGE, jar-empty and bottle-fill local sound calls")
+if "import net.minecraft.sounds.SoundEvents;" not in block:
+    raise SystemExit("Vanilla bottle-fill SoundEvents import is missing")
+fallback = client_branch.split("} else {", 1)
+if len(fallback) != 2:
+    raise SystemExit("Jar-empty fallback must be mutually exclusive with the labelled-face PAGE branch")
+fallback = fallback[1]
+for call in (
+    "ThaumcraftSounds.JAR.get()",
+    "SoundEvents.BOTTLE_FILL",
+    "0.4F, 1.0F, false);",
+    "0.5F, pitch, false);",
+    "1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.3F",
+):
+    if call not in fallback:
+        raise SystemExit(f"BETA26 jar-empty fallback sound contract is missing: {call}")
 if "import net.minecraft.sounds.SoundSource;" not in block:
     raise SystemExit("SoundSource import missing")
 
@@ -80,8 +95,8 @@ for filename, expected in ORIGINAL_PAGE_BLOBS.items():
 
 if not MATCHER_TEST.is_file():
     raise SystemExit("Synthetic page PCM matcher regression test is missing")
-if smoke.count("xdotool keydown Shift_L") != 2 or smoke.count("xdotool click 3") != 2:
-    raise SystemExit("Real-client smoke must exercise wrong-side and labelled-side shift-right-click")
+if smoke.count("xdotool keydown Shift_L") != 3 or smoke.count("xdotool click 3") != 3:
+    raise SystemExit("Real-client smoke must exercise wrong-side, labelled-side and jar-empty shift-right-click")
 # The jar fixture uses facing=3 (SOUTH). Minecraft yaw 0 looks south and
 # yaw 180 looks north, so the north-side attempt must be the negative case.
 wrong_face = "send_chat '/tp @p 250.5 150 249.5 0 0'"
@@ -92,6 +107,16 @@ if "JAR_LABEL_WRONG_FACE_EXPECTED=NORTH" not in smoke:
     raise SystemExit("Wrong-face geometry marker is missing")
 if "JAR_LABEL_CONFIGURED_FACE=SOUTH" not in smoke:
     raise SystemExit("Configured-face geometry marker is missing")
+if "JAR_EMPTY_WRONG_FACE_EXPECTED=NORTH" not in smoke:
+    raise SystemExit("Jar-empty fallback geometry marker is missing")
+for marker in (
+    "JAR_EMPTY_SERVER_RESET_FILTER_RETAINED",
+    "match_jar_audio_pcm.py",
+    "match_bottle_fill_audio_pcm.py",
+    "JAR_EMPTY_BETA26_SOUND_PAIR_AND_SERVER_RESET=PASS",
+):
+    if marker not in smoke:
+        raise SystemExit(f"Jar-empty real-client assertion is missing: {marker}")
 for marker in (
     "JAR_LABEL_WRONG_SIDE_PRESERVED",
     "JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS",

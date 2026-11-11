@@ -15,8 +15,10 @@ def wave(seed: int) -> np.ndarray:
     rng = np.random.default_rng(seed)
     t = np.arange(8000, dtype=np.float64) / 8000.0
     envelope = np.sin(np.linspace(0.0, np.pi, len(t))) ** 2
-    chirp = np.sin(2.0 * np.pi * (280.0 * t + 470.0 * t * t))
-    overtone = 0.31 * np.sin(2.0 * np.pi * 1170.0 * t + 0.2)
+    base = 220.0 + seed * 37.0
+    sweep = 300.0 + seed * 41.0
+    chirp = np.sin(2.0 * np.pi * (base * t + sweep * t * t))
+    overtone = 0.31 * np.sin(2.0 * np.pi * (950.0 + seed * 67.0) * t + 0.2)
     return envelope * (chirp + overtone) + rng.normal(0.0, 0.0002, len(t))
 
 
