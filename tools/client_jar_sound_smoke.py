@@ -64,7 +64,9 @@ body = r'''
   # First click the wrong face. It must retain the filter and must not play
   # either original page clip. Amount=0 keeps the unrelated empty-jar spill
   # path from mutating this label-only fixture.
-  send_chat '/tp @p 250.5 150 252.5 180 0'
+  # Stand north of the jar and look south: the ray hits NORTH, not configured SOUTH (facing=3).
+  send_chat '/tp @p 250.5 150 249.5 0 0'
+  echo 'JAR_LABEL_WRONG_FACE_EXPECTED=NORTH' | tee -a client-smoke-status.txt
   sleep 2
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-wrong-baseline.pcm || test "$?" -eq 124
   timeout --signal=TERM 4s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-wrong-event.pcm &
@@ -101,7 +103,9 @@ PY
 
   # Then approach the configured SOUTH face (facing=3) and remove the label.
   # Stay outside the one-block item pickup radius while remaining within interaction reach.
-  send_chat '/tp @p 250.5 150 249.0 0 0'
+  # Stand south of the jar and look north: the ray hits configured SOUTH (facing=3).
+  send_chat '/tp @p 250.5 150 253.5 180 0'
+  echo 'JAR_LABEL_CONFIGURED_FACE=SOUTH' | tee -a client-smoke-status.txt
   sleep 2
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-baseline.pcm || test "$?" -eq 124
   timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-event.pcm &
