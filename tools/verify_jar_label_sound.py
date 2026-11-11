@@ -134,6 +134,19 @@ if "JAR_LABEL_SERVER_BLANK_DROP_ENTITY_PRESENT" not in smoke or "JAR_LABEL_SERVE
     raise SystemExit("Real-client smoke must accept either the dropped label entity or its inventory pickup")
 if "send_chat '/clear @p thaumcraft:label'" not in smoke:
     raise SystemExit("M42 must start with an actually empty hand after the label drop")
+empty_baseline_pos = smoke.index("> client-smoke/empty-baseline.pcm")
+empty_stop_pos = smoke.rfind("send_chat '/stopsound @p'", 0, empty_baseline_pos)
+empty_previous_capture_end = smoke.rfind('wait "$capture_pid"', 0, empty_baseline_pos)
+if empty_stop_pos <= empty_previous_capture_end:
+    raise SystemExit("M42 baseline must start after stopping unrelated game audio")
+if "crop_pcm_frames client-smoke/empty-event.pcm client-smoke/empty-event-window.pcm 31200 117600" not in smoke:
+    raise SystemExit("M42 must isolate the 0.65–2.45s post-click PCM window")
+if "JAR_EMPTY_POST_CLICK_WINDOW=PASS" not in smoke:
+    raise SystemExit("M42 post-click PCM window marker is missing")
+if "match_jar_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event-window.pcm" not in smoke:
+    raise SystemExit("M42 jar matcher must inspect only the post-click PCM window")
+if "match_bottle_fill_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event-window.pcm" not in smoke:
+    raise SystemExit("M42 bottle matcher must inspect only the post-click PCM window")
 for marker in (
     "JAR_LABEL_WRONG_SIDE_PRESERVED",
     "JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS",
@@ -150,3 +163,4 @@ print("BETA26_PAGE_AUDIO_BLOBS=PASS")
 print("JAR_LABEL_CLIENT_SIDE_PREDICATE_AND_SOUND=PASS")
 print("JAR_LABEL_SERVER_REMOVAL_AND_BLANK_DROP=PASS")
 print("JAR_LABEL_REAL_CLIENT_WRONG_AND_CORRECT_SIDE_ASSERTIONS=PASS")
+print("JAR_EMPTY_PCM_WINDOW_ISOLATION=PASS")
