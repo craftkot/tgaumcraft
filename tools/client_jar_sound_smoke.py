@@ -141,6 +141,14 @@ PY
 
   # M42: BETA26 fallback branch when a labelled jar is clicked from the wrong face.
   # The original empties its contents, retains the label, and plays jar + bottle-fill.
+  # Remove the previous M41 jar first: /setblock cannot replace a block with itself,
+  # so repeating the same block ID would leave the old zero-amount block entity intact.
+  send_chat '/setblock 250 151 251 minecraft:air'
+  send_chat '/execute unless block 250 151 251 thaumcraft:jar_normal run say JAR_EMPTY_FIXTURE_CLEARED'
+  if ! grep -Fq 'JAR_EMPTY_FIXTURE_CLEARED' client-smoke/client.log; then
+    echo 'JAR_EMPTY_FIXTURE_CLEAR_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
   send_chat '/setblock 250 151 251 thaumcraft:jar_normal{Aspect:"aer",AspectFilter:"aer",Amount:12s,facing:3b}'
   send_chat '/execute if data block 250 151 251 {Aspect:"aer",AspectFilter:"aer",Amount:12s,facing:3b} run say JAR_EMPTY_FIXTURE_READY'
   if ! grep -Fq 'JAR_EMPTY_FIXTURE_READY' client-smoke/client.log; then
