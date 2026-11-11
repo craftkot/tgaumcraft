@@ -61,6 +61,13 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_DISK_REENTRY_PRESERVED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_NO_FORCE_LOAD=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_SIMULATE=PASS vis=4.0 flux=2.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_PARTIAL=PASS vis=6.0 flux=1.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_CAPPED=PASS vis=0.0 flux=0.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_NEGATIVE_BETA26=PASS vis=2.0 flux=2.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_NONFINITE_GUARD=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_MISSING=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
     require_marker "$file" 'All 3 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
