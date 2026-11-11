@@ -27,6 +27,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     private static final String TAG_BASE = "base";
     private static final String TAG_VIS = "vis";
     private static final String TAG_FLUX = "flux";
+    private static final float AURA_CHUNK_VALUE_MAX = 32766.0F;
 
     private static final Factory<ThaumcraftAuraSavedData> FACTORY =
             new Factory<>(ThaumcraftAuraSavedData::new, ThaumcraftAuraSavedData::load);
@@ -103,7 +104,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         float removed = Math.min(amount, c.flux());
         if (!simulate) {
             chunks.put(key, new AuraChunk(c.base(), c.vis(),
-                    Math.max(0.0F, c.flux()-removed)));
+                    Math.min(AURA_CHUNK_VALUE_MAX, Math.max(0.0F, c.flux()-removed))));
             setDirty();
         }
         return removed;
@@ -175,7 +176,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         AuraChunk old = chunks.get(key);
         if (old == null) return false;
         if (!simulate) {
-            chunks.put(key, new AuraChunk(old.base(), Math.max(0.0F, old.vis() + amount), old.flux()));
+            chunks.put(key, new AuraChunk(old.base(), Math.min(AURA_CHUNK_VALUE_MAX, Math.max(0.0F, old.vis() + amount)), old.flux()));
             setDirty();
         }
         return true;
