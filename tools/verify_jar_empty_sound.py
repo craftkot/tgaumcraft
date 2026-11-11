@@ -45,5 +45,9 @@ helper = CORE[helper_start:helper_start + 260]
 assert "jar.filter() == null ? null : jar.aspect()" in helper
 assert "if (amount == 0) aspect = null;" not in CORE
 assert '{Aspect:"aer",AspectFilter:"aer",Amount:0s}' in SMOKE
+assert "send_chat '/setblock 250 151 251 minecraft:air'" in SMOKE
+assert "JAR_EMPTY_FIXTURE_CLEARED" in SMOKE
+assert SMOKE.index("JAR_EMPTY_FIXTURE_CLEARED") < SMOKE.index("JAR_EMPTY_FIXTURE_READY")
+
 
 print("BETA26 jar-empty fallback: PAGE-face precedence, jar 0.4, bottle-fill 0.5, triangular pitch and server Flux/reset contract: PASS")
