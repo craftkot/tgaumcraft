@@ -83,12 +83,15 @@ body = r'''
     exit 1
   fi
   python3 - <<'PY'
+from pathlib import Path
+import sys
+sys.path.insert(0, "tools")
 from match_page_audio_pcm import check
 try:
     check(
-        __import__("pathlib").Path("client-smoke/label-wrong-baseline.pcm"),
-        __import__("pathlib").Path("client-smoke/label-wrong-event.pcm"),
-        __import__("pathlib").Path("src/main/resources/assets/thaumcraft/sounds"),
+        Path("client-smoke/label-wrong-baseline.pcm"),
+        Path("client-smoke/label-wrong-event.pcm"),
+        Path("src/main/resources/assets/thaumcraft/sounds"),
     )
 except AssertionError:
     print("JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS")
