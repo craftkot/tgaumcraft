@@ -98,7 +98,7 @@ if not MATCHER_TEST.is_file():
 # M41/M42 retain three shift-right-clicks; M43 adds one unshifted BlockItem placement.
 legacy_smoke, m43_marker, m43_smoke = smoke.partition("  # M43:")
 shift_right_clicks = re.findall(
-    r"xdotool keydown Shift_L\\s+sleep [^\\n]+\\s+xdotool click 3\\s+sleep [^\\n]+\\s+xdotool keyup Shift_L",
+    r"xdotool keydown Shift_L\s+sleep [^\n]+\s+xdotool click 3\s+sleep [^\n]+\s+xdotool keyup Shift_L",
     legacy_smoke,
 )
 if (
