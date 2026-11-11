@@ -100,7 +100,8 @@ else:
 PY
 
   # Then approach the configured SOUTH face (facing=3) and remove the label.
-  send_chat '/tp @p 250.5 150 250.5 0 0'
+  # Stay outside the one-block item pickup radius while remaining within interaction reach.
+  send_chat '/tp @p 250.5 150 249.0 0 0'
   sleep 2
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-baseline.pcm || test "$?" -eq 124
   timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/label-event.pcm &

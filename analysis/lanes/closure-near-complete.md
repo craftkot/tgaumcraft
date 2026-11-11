@@ -2540,3 +2540,9 @@ PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTes
 - GitHub Actions exact-head workflow has not yet been accepted. Local repository checkout was unavailable because the execution environment could not resolve github.com; no local compile or smoke result is claimed. The dedicated workflow runs the source/asset guard, synthetic positive/negative PAGE PCM matcher, then the actual Minecraft client capture. Full NeoForge CI must also pass on the final code HEAD.
 - Acceptance gate: wrong-side marker + no-PAGE negative matcher; correct-side server filter removal + blank label drop; correct-side PCM match to original page1/page2; source/asset guard; exact-head NeoForge build, dedicated server and JAR. If any fails, inspect the artifact/log and fix the fixture or implementation without weakening the assertions.
 - Fixed audit remains **59/100**; M16 remains **4/6**. PR #4 remains Draft/Open/Unmerged; no merge.
+
+
+### M41 real-client fixture correction (2026-11-11)
+
+- The inherited send_chat helper waits four seconds after every command. A player standing adjacent to the jar could auto-pick the blank label before the later entity assertion. The correct-side player position is now 2.5 blocks from the jar drop (z=249.0), still within the real client's 5-block creative interaction reach and within the smoke's 3-block entity-query radius. This prevents pickup during PCM capture without changing production behavior.
+- This is a test-fixture correction only; rerun the exact-head wrong-side/no-sound and correct-side/drop/PCM checks before M41 acceptance.
