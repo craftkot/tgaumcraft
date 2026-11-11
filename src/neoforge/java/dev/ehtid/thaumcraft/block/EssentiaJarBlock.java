@@ -18,6 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -62,7 +63,17 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
  @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                        Player player, BlockHitResult hit) {
   if (!player.isShiftKeyDown()) return InteractionResult.PASS;
-  if (level.isClientSide) return InteractionResult.SUCCESS;
+  if (level.isClientSide) {
+   // BETA26 BlockJar plays SoundsTC.page locally only when removing the label
+   // from its labelled face; the server remains responsible for the blank drop.
+   if (level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar
+           && jar.snapshot().filter() != null
+           && jar.facing() == hit.getDirection().get3DDataValue()) {
+    level.playLocalSound(pos, ThaumcraftSounds.PAGE.get(), SoundSource.BLOCKS,
+            1.0F, 1.0F, false);
+   }
+   return InteractionResult.SUCCESS;
+  }
   if (!player.mayInteract(level, pos)) return InteractionResult.FAIL;
   if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar))
    return InteractionResult.PASS;
