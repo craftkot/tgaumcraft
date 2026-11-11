@@ -168,13 +168,16 @@ public final class AuraGenerationGameTests {
                 + " dirtyBeforeSave=" + dirtyBeforeSave);
         level.getDataStorage().save();
         System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC dirtyAfterSave=" + aura.isDirty());
-        try (var paths = Files.walk(server.getWorldPath(LevelResource.ROOT), 5)) {
-            paths.filter(path -> path.getFileName() != null
-                            && (path.getFileName().toString().equals("thaumcraft_aura.dat")
-                            || path.getFileName().toString().equals("data")))
-                    .forEach(path -> System.out.println("TC_GAMETEST_AURA_DISK_PATH=" + path));
-        } catch (IOException exception) {
-            throw new AssertionError("Unable to inspect GameTest world storage tree", exception);
+        System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC rootExists="
+                + Files.isDirectory(server.getWorldPath(LevelResource.ROOT))
+                + " dataDirectoryExists=" + Files.isDirectory(dataDirectory)
+                + " auraFileExists=" + Files.isRegularFile(auraFile));
+        if (Files.isDirectory(dataDirectory)) {
+            try (var paths = Files.list(dataDirectory)) {
+                paths.limit(50).forEach(path -> System.out.println("TC_GAMETEST_AURA_DISK_PATH=" + path));
+            } catch (IOException exception) {
+                throw new AssertionError("Unable to inspect the bounded aura data directory", exception);
+            }
         }
         try {
             if (!Files.isRegularFile(auraFile) || Files.size(auraFile) <= 0L) {
