@@ -10,6 +10,10 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.DimensionDataStorage;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -18,6 +22,9 @@ import net.minecraft.world.level.chunk.PalettedContainer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -35,7 +42,7 @@ public final class AuraGenerationGameTests {
     @GameTest(
             template = "crystal_spread_empty",
             templateNamespace = ThaumcraftPort.MOD_ID,
-            timeoutTicks = 40
+            timeoutTicks = 100
     )
     public static void samplesFiveBETA26BiomesAtY50AndPersistsAura(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -142,6 +149,60 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_SAVE_LOAD base=181 vis=73.0 flux=4.5");
 
+        // Flush the real GameTest world's DimensionDataStorage, then discard
+        // the in-memory object boundary by opening a second storage instance
+        // against the same on-disk data directory.
+        if (!level.dimension().equals(Level.OVERWORLD)) {
+            throw new AssertionError("Disk persistence fixture requires the Overworld data directory");
+        }
+        var server = level.getServer();
+        Path dataDirectory = server.getWorldPath(LevelResource.ROOT).resolve("data");
+        Path auraFile = dataDirectory.resolve("thaumcraft_aura.dat");
+        level.getDataStorage().save();
+        try {
+            if (!Files.isRegularFile(auraFile) || Files.size(auraFile) <= 0L) {
+                throw new AssertionError("DimensionDataStorage.save() did not create a non-empty thaumcraft_aura.dat");
+            }
+            try (var input = Files.newInputStream(auraFile)) {
+                if (input.read() != 0x1f || input.read() != 0x8b) {
+                    throw new AssertionError("thaumcraft_aura.dat is not a gzip-compressed NBT file");
+                }
+            }
+        } catch (IOException exception) {
+            throw new AssertionError("Unable to inspect the physical aura SavedData file", exception);
+        }
+        System.out.println("TC_GAMETEST_AURA_DISK_SAVE file=thaumcraft_aura.dat bytes=" + safeFileSize(auraFile));
+
+        DimensionDataStorage reopenedStorage = new DimensionDataStorage(
+                dataDirectory.toFile(), server.getFixerUpper(), level.registryAccess());
+        SavedData.Factory<ThaumcraftAuraSavedData> factory =
+                new SavedData.Factory<>(ThaumcraftAuraSavedData::new, ThaumcraftAuraSavedData::load);
+        ThaumcraftAuraSavedData diskRestored = reopenedStorage.computeIfAbsent(factory, "thaumcraft_aura");
+        if (diskRestored == aura
+                || !diskRestored.hasChunk(center)
+                || diskRestored.getBase(center) != 181
+                || diskRestored.getVis(center) != 73.0F
+                || diskRestored.getFlux(center) != 4.5F) {
+            throw new AssertionError("Fresh DimensionDataStorage did not reload physical aura state: base="
+                    + diskRestored.getBase(center) + " vis=" + diskRestored.getVis(center)
+                    + " flux=" + diskRestored.getFlux(center));
+        }
+        System.out.println("TC_GAMETEST_AURA_DISK_RELOAD base=181 vis=73.0 flux=4.5");
+
+        AtomicInteger diskReentryRandomCalls = new AtomicInteger();
+        boolean diskReinitialized = ThaumcraftAuraWorldEvents.initializeChunkIfReady(
+                level, diskRestored, chunkX, chunkZ, () -> {
+                    diskReentryRandomCalls.incrementAndGet();
+                    return 0.75D;
+                });
+        if (diskReinitialized || diskReentryRandomCalls.get() != 0
+                || diskRestored.getBase(center) != 181
+                || diskRestored.getVis(center) != 73.0F
+                || diskRestored.getFlux(center) != 4.5F) {
+            throw new AssertionError("Disk-restored aura was re-seeded on production re-entry");
+        }
+        System.out.println("TC_GAMETEST_AURA_DISK_REENTRY_PRESERVED=YES");
+
         int unloadedX = chunkX + 64;
         int unloadedZ = chunkZ + 64;
         if (level.hasChunk(unloadedX, unloadedZ)) {
@@ -160,6 +221,14 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_NO_FORCE_LOAD=YES");
         System.out.println("TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES");
         helper.succeed();
+    }
+
+    private static long safeFileSize(Path path) {
+        try {
+            return Files.size(path);
+        } catch (IOException exception) {
+            throw new AssertionError("Unable to read saved aura file size", exception);
+        }
     }
 
     private static BlockPos sampleCenter(int chunkX, int chunkZ) {
