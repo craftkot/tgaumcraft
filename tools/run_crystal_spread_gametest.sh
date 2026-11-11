@@ -44,6 +44,9 @@ verify_gameplay_pass() {
     require_marker 'TC_GAMETEST_AURA_GENERATION base=181 vis=181.0 flux=0.0' || return 1
     require_marker 'TC_GAMETEST_AURA_REENTRY_PRESERVED=YES' || return 1
     require_marker 'TC_GAMETEST_AURA_SAVE_LOAD base=181 vis=73.0 flux=4.5' || return 1
+    require_marker 'TC_GAMETEST_AURA_DISK_SAVE file=thaumcraft_aura.dat' || return 1
+    require_marker 'TC_GAMETEST_AURA_DISK_RELOAD base=181 vis=73.0 flux=4.5' || return 1
+    require_marker 'TC_GAMETEST_AURA_DISK_REENTRY_PRESERVED=YES' || return 1
     require_marker 'TC_GAMETEST_AURA_NO_FORCE_LOAD=YES' || return 1
     require_marker 'TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES' || return 1
     require_marker 'All 2 required tests passed' || return 1
