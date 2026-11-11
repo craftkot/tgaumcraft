@@ -49,6 +49,10 @@ if not all(condition in client_branch for condition in required_conditions):
     raise SystemExit("Client page sound is not guarded by the original label-face predicate")
 if required_call not in client_branch:
     raise SystemExit("Client label-removal branch does not play the original PAGE event")
+if 'ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED")' not in client_branch:
+    raise SystemExit("Client PAGE branch lacks its opt-in runtime branch marker")
+if 'ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED")' not in client_branch:
+    raise SystemExit("Client jar/bottle fallback lacks its opt-in runtime branch marker")
 if "1.0F, 1.0F, false);" not in client_branch:
     raise SystemExit("BETA26 label-removal sound volume/pitch/local flag changed")
 if block.count("playLocalSound(") != 3:
@@ -154,6 +158,8 @@ for marker in (
     "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
     "match_page_audio_pcm.py",
     "JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS",
+    "TC_SMOKE_JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED=YES",
+    "TC_SMOKE_JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED=YES",
 ):
     if marker not in smoke:
         raise SystemExit(f"Real-client smoke is missing required assertion: {marker}")

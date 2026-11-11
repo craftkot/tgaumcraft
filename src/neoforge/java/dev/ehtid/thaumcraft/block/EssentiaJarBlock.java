@@ -11,6 +11,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
@@ -72,12 +73,14 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
            && jar.facing() == hit.getDirection().get3DDataValue()) {
     level.playLocalSound(pos, ThaumcraftSounds.PAGE.get(), SoundSource.BLOCKS,
             1.0F, 1.0F, false);
+    ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED");
    } else {
     level.playLocalSound(pos, ThaumcraftSounds.JAR.get(), SoundSource.BLOCKS,
             0.4F, 1.0F, false);
     float pitch = 1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.3F;
     level.playLocalSound(pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS,
             0.5F, pitch, false);
+    ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED");
    }
    return InteractionResult.SUCCESS;
   }

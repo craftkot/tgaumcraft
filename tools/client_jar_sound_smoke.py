@@ -103,6 +103,10 @@ body = r'''
     echo 'JAR_LABEL_WRONG_SIDE_MUTATED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
+  if ! grep -Fq 'TC_SMOKE_JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED=YES' client-smoke/client.log; then
+    echo 'JAR_LABEL_WRONG_SIDE_CLIENT_FALLBACK_NOT_OBSERVED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
   python3 - <<'PY'
 from pathlib import Path
 import sys
@@ -143,6 +147,10 @@ PY
   send_chat '/execute if items entity @p hotbar.* thaumcraft:label run say JAR_LABEL_SERVER_BLANK_DROP_INVENTORY_PRESENT'
   if ! grep -Fq 'JAR_LABEL_SERVER_FILTER_REMOVED' client-smoke/client.log; then
     echo 'JAR_LABEL_SERVER_FILTER_NOT_REMOVED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  if ! grep -Fq 'TC_SMOKE_JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED=YES' client-smoke/client.log; then
+    echo 'JAR_LABEL_CONFIGURED_FACE_CLIENT_PAGE_BRANCH_NOT_OBSERVED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
   if grep -Eq 'JAR_LABEL_SERVER_BLANK_DROP_(ENTITY|INVENTORY)_PRESENT' client-smoke/client.log; then
