@@ -38,6 +38,11 @@ public final class CrystalSpreadGameTests {
             timeoutTicks = 40
     )
     public static void spreadUsesLegacyBlockMaterial(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
         ServerLevel level = helper.getLevel();
         SpreadPlan plan = findSpreadPlan();
 

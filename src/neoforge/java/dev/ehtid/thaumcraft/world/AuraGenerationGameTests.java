@@ -46,6 +46,11 @@ public final class AuraGenerationGameTests {
             timeoutTicks = 100
     )
     public static void samplesFiveBETA26BiomesAtY50AndPersistsAura(GameTestHelper helper) {
+        if (isColdRestartReadPhase()) {
+            System.out.println("TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(8, 2, 8));
         int chunkX = anchor.getX() >> 4;
@@ -247,6 +252,109 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_NO_FORCE_LOAD=YES");
         System.out.println("TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES");
         helper.succeed();
+    }
+
+    @SuppressWarnings("deprecation")
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 80
+    )
+    public static void auraSurvivesColdServerRestart(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        if (!level.dimension().equals(Level.OVERWORLD)) {
+            throw new AssertionError("Cold-restart fixture requires the Overworld");
+        }
+
+        String phase = System.getenv("TC_AURA_COLD_RESTART_PHASE");
+        String markerValue = System.getenv("TC_AURA_COLD_RESTART_MARKER");
+        if (phase == null || markerValue == null || markerValue.isBlank()) {
+            throw new AssertionError("Cold-restart phase and marker environment are required");
+        }
+        Path marker = Path.of(markerValue);
+        long currentPid = ProcessHandle.current().pid();
+
+        if ("write".equals(phase)) {
+            if (Files.exists(marker)) {
+                throw new AssertionError("Cold-restart marker must be absent before the write process");
+            }
+            BlockPos persistentChunk = new BlockPos(64_008, 50, 64_008);
+            ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+            if (aura.hasChunk(persistentChunk)) {
+                throw new AssertionError("Cold-restart fixture chunk already contains aura data");
+            }
+            aura.putChunk(persistentChunk, (short) 137, 91.25F, 12.5F);
+            level.getDataStorage().save();
+            IOUtilities.waitUntilIOWorkerComplete();
+
+            Path auraFile = level.getServer().getWorldPath(LevelResource.ROOT)
+                    .resolve("data").resolve("thaumcraft_aura.dat");
+            try {
+                if (!Files.isRegularFile(auraFile) || Files.size(auraFile) <= 0L) {
+                    throw new AssertionError("Cold-restart write did not flush thaumcraft_aura.dat");
+                }
+                if (marker.getParent() != null) {
+                    Files.createDirectories(marker.getParent());
+                }
+                Files.writeString(marker, currentPid + "\n" + level.getSeed() + "\n"
+                        + persistentChunk.getX() + "\n" + persistentChunk.getZ() + "\n");
+            } catch (IOException exception) {
+                throw new AssertionError("Unable to persist cold-restart marker", exception);
+            }
+            System.out.println("TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=" + currentPid
+                    + " seed=" + level.getSeed()
+                    + " x=" + persistentChunk.getX() + " z=" + persistentChunk.getZ()
+                    + " base=137 vis=91.25 flux=12.5");
+        } else if ("read".equals(phase)) {
+            if (!Files.isRegularFile(marker)) {
+                throw new AssertionError("Cold-restart marker from the first process is missing");
+            }
+            try {
+                var lines = Files.readAllLines(marker);
+                if (lines.size() != 4) {
+                    throw new AssertionError("Cold-restart marker must contain PID, seed, X and Z");
+                }
+                long previousPid = Long.parseLong(lines.get(0));
+                long previousSeed = Long.parseLong(lines.get(1));
+                int x = Integer.parseInt(lines.get(2));
+                int z = Integer.parseInt(lines.get(3));
+                if (previousPid <= 0L || previousPid == currentPid) {
+                    throw new AssertionError("Cold-restart phase did not use a distinct JVM process");
+                }
+                if (ProcessHandle.of(previousPid).map(ProcessHandle::isAlive).orElse(false)) {
+                    throw new AssertionError("First GameTest JVM is still alive during the reload phase");
+                }
+                if (level.getSeed() != previousSeed) {
+                    throw new AssertionError("Second process opened a different world seed: expected "
+                            + previousSeed + " but got " + level.getSeed());
+                }
+
+                BlockPos persistentChunk = new BlockPos(x, 50, z);
+                ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+                if (!aura.hasChunk(persistentChunk)
+                        || aura.getBase(persistentChunk) != 137
+                        || aura.getVis(persistentChunk) != 91.25F
+                        || aura.getFlux(persistentChunk) != 12.5F) {
+                    throw new AssertionError("New server process did not restore aura SavedData: base="
+                            + aura.getBase(persistentChunk) + " vis=" + aura.getVis(persistentChunk)
+                            + " flux=" + aura.getFlux(persistentChunk));
+                }
+                System.out.println("TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=" + currentPid
+                        + " previousPid=" + previousPid + " seed=" + previousSeed
+                        + " base=137 vis=91.25 flux=12.5");
+            } catch (IOException exception) {
+                throw new AssertionError("Unable to read cold-restart marker", exception);
+            }
+        } else {
+            throw new AssertionError("Unknown cold-restart phase: " + phase);
+        }
+
+        helper.succeed();
+    }
+
+    private static boolean isColdRestartReadPhase() {
+        return "read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"));
     }
 
     private static long safeFileSize(Path path) {
