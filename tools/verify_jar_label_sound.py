@@ -82,6 +82,16 @@ if not MATCHER_TEST.is_file():
     raise SystemExit("Synthetic page PCM matcher regression test is missing")
 if smoke.count("xdotool keydown Shift_L") != 2 or smoke.count("xdotool click 3") != 2:
     raise SystemExit("Real-client smoke must exercise wrong-side and labelled-side shift-right-click")
+# The jar fixture uses facing=3 (SOUTH). Minecraft yaw 0 looks south and
+# yaw 180 looks north, so the north-side attempt must be the negative case.
+wrong_face = "send_chat '/tp @p 250.5 150 249.5 0 0'"
+configured_face = "send_chat '/tp @p 250.5 150 253.5 180 0'"
+if wrong_face not in smoke or configured_face not in smoke:
+    raise SystemExit("Label smoke must hit NORTH as wrong face and SOUTH as configured face")
+if "JAR_LABEL_WRONG_FACE_EXPECTED=NORTH" not in smoke:
+    raise SystemExit("Wrong-face geometry marker is missing")
+if "JAR_LABEL_CONFIGURED_FACE=SOUTH" not in smoke:
+    raise SystemExit("Configured-face geometry marker is missing")
 for marker in (
     "JAR_LABEL_WRONG_SIDE_PRESERVED",
     "JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS",
