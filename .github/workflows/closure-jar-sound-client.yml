@@ -1,26 +1,6 @@
 name: M16 real Minecraft jar SoundType and interaction audio smoke
 
 on:
-  push:
-    branches: [feature/closure-near-complete]
-    paths:
-      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java'
-      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
-      - 'src/main/resources/assets/thaumcraft/sounds.json'
-      - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
-      - 'tools/verify_jar_sound.py'
-      - 'tools/verify_jar_soundtype_smoke.py'
-      - 'tools/match_jar_audio_pcm.py'
-      - 'tools/test_jar_audio_match.py'
-      - 'tools/client_jar_sound_smoke.py'
-      - 'tools/verify_jar_label_sound.py'
-      - 'tools/match_page_audio_pcm.py'
-      - 'tools/test_page_audio_match.py'
-      - 'tools/verify_jar_empty_sound.py'
-      - 'tools/match_bottle_fill_audio_pcm.py'
-      - 'tools/test_bottle_fill_audio.py'
-      - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
-      - '.github/workflows/closure-jar-sound-client.yml'
   pull_request:
     branches: [main]
     paths:
@@ -49,7 +29,7 @@ permissions:
 jobs:
   jar-real-client:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -63,9 +43,32 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install real client and audio tools
+        timeout-minutes: 12
         run: |
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg pulseaudio pulseaudio-utils
+          set -euo pipefail
+          # Ubuntu 24.04 hosted images may point apt's mirror list at the
+          # regional Azure hostname. If its DNS fails, apt retries each
+          # package for minutes and the client job never reaches the smoke.
+          for source in /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources; do
+            if [ -f "$source" ]; then
+              sudo sed -i 's|azure.archive.ubuntu.com|archive.ubuntu.com|g' "$source"
+            fi
+          done
+          if grep -R -q 'azure.archive.ubuntu.com' /etc/apt/apt-mirrors.txt /etc/apt/sources.list.d/ubuntu.sources 2>/dev/null; then
+            echo 'APT_AZURE_MIRROR_REWRITE_FAILED=YES'
+            exit 1
+          fi
+          apt_options=(
+            -o Acquire::ForceIPv4=true
+            -o Acquire::Retries=1
+            -o Acquire::http::Timeout=20
+            -o Acquire::https::Timeout=20
+          )
+          sudo timeout 360s apt-get "${apt_options[@]}" update -qq
+          sudo timeout 360s env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --no-install-recommends -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg pulseaudio pulseaudio-utils
+          for command in Xvfb xdpyinfo xdotool openbox glxinfo import ffmpeg pulseaudio pactl parec; do
+            command -v "$command" >/dev/null || { echo "CLIENT_TOOL_MISSING=$command"; exit 1; }
+          done
       - name: Verify original BETA26 jar SoundType, label and emptying sound contracts
         run: |
           python -m pip install numpy==2.2.6
