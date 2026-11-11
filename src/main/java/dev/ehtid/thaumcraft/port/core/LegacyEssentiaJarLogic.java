@@ -11,7 +11,8 @@ import java.util.Objects;
  * returned State only after the external source/sink transfer is verified.
  *
  * Original quirks kept:
- * - capacity exactly 250; single stored aspect, clear aspect when drained;
+ * - capacity exactly 250; ordinary container drains clear the aspect, while
+ *   manual emptying preserves it on a labelled jar;
  * - suction 64 when filtered, otherwise 32, and zero when full;
  * - the filter governs doesContainerAccept, not addToContainer directly.
  *
@@ -31,7 +32,6 @@ public final class LegacyEssentiaJarLogic {
                 throw new IllegalArgumentException("Jar amount outside 0..250");
             if (amount > 0 && (aspect == null || aspect.isBlank()))
                 throw new IllegalArgumentException("Nonempty jar requires an aspect");
-            if (amount == 0) aspect = null;
             if (filter != null && filter.isBlank()) filter = null;
         }
         public static State empty() { return new State(null, null, 0); }
@@ -90,6 +90,15 @@ public final class LegacyEssentiaJarLogic {
         int left = jar.amount() - requested;
         return new Transfer(new State(left == 0 ? null : jar.aspect(),
                 jar.filter(), left), requested);
+    }
+
+    /**
+     * Original BlockJar manual emptying differs from takeFromContainer:
+     * the aspect is cleared only when no label/filter is attached.
+     */
+    public static State emptyByHand(State jar) {
+        Objects.requireNonNull(jar);
+        return new State(jar.filter() == null ? null : jar.aspect(), jar.filter(), 0);
     }
 
     /**
