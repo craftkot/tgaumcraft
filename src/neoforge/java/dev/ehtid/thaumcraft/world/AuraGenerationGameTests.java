@@ -158,10 +158,28 @@ public final class AuraGenerationGameTests {
         var server = level.getServer();
         Path dataDirectory = server.getWorldPath(LevelResource.ROOT).resolve("data");
         Path auraFile = dataDirectory.resolve("thaumcraft_aura.dat");
+        boolean dirtyBeforeSave = aura.isDirty();
+        if (!dirtyBeforeSave || ThaumcraftAuraSavedData.get(level) != aura) {
+            throw new AssertionError("Aura SavedData is not dirty or is not attached to this level's DimensionDataStorage"
+                    + " dirty=" + dirtyBeforeSave);
+        }
+        System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC root=" + server.getWorldPath(LevelResource.ROOT)
+                + " data=" + dataDirectory + " isServerOverworld=" + (level == server.overworld())
+                + " dirtyBeforeSave=" + dirtyBeforeSave);
         level.getDataStorage().save();
+        System.out.println("TC_GAMETEST_AURA_DISK_DIAGNOSTIC dirtyAfterSave=" + aura.isDirty());
+        try (var paths = Files.walk(server.getWorldPath(LevelResource.ROOT), 5)) {
+            paths.filter(path -> path.getFileName() != null
+                            && (path.getFileName().toString().equals("thaumcraft_aura.dat")
+                            || path.getFileName().toString().equals("data")))
+                    .forEach(path -> System.out.println("TC_GAMETEST_AURA_DISK_PATH=" + path));
+        } catch (IOException exception) {
+            throw new AssertionError("Unable to inspect GameTest world storage tree", exception);
+        }
         try {
             if (!Files.isRegularFile(auraFile) || Files.size(auraFile) <= 0L) {
-                throw new AssertionError("DimensionDataStorage.save() did not create a non-empty thaumcraft_aura.dat");
+                throw new AssertionError("DimensionDataStorage.save() did not create a non-empty thaumcraft_aura.dat"
+                        + " at " + auraFile);
             }
             try (var input = Files.newInputStream(auraFile)) {
                 if (input.read() != 0x1f || input.read() != 0x8b) {
