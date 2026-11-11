@@ -144,6 +144,7 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("Existing aura was re-seeded or consumed RNG on re-entry");
         }
         System.out.println("TC_GAMETEST_AURA_REENTRY_PRESERVED=YES");
+        assertDrainVisAndFluxSemantics(aura, center.offset(32, 0, 0));
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -351,6 +352,90 @@ public final class AuraGenerationGameTests {
         }
 
         helper.succeed();
+    }
+
+    private static void assertDrainVisAndFluxSemantics(ThaumcraftAuraSavedData aura, BlockPos pos) {
+        if (aura.hasChunk(pos)) {
+            throw new AssertionError("Aura drain fixture chunk must start uninitialized");
+        }
+        aura.putChunk(pos, (short) 100, 10.0F, 3.0F);
+
+        float simulatedVis = aura.drainVis(pos, 4.0F, true);
+        float simulatedFlux = aura.drainFlux(pos, 2.0F, true);
+        if (simulatedVis != 4.0F || simulatedFlux != 2.0F
+                || aura.getVis(pos) != 10.0F || aura.getFlux(pos) != 3.0F
+                || aura.getBase(pos) != 100) {
+            throw new AssertionError("Simulated aura drain changed state or returned the wrong amount");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_SIMULATE=PASS vis=4.0 flux=2.0");
+
+        float partialVis = aura.drainVis(pos, 4.0F, false);
+        float partialFlux = aura.drainFlux(pos, 2.0F, false);
+        if (partialVis != 4.0F || partialFlux != 2.0F
+                || aura.getVis(pos) != 6.0F || aura.getFlux(pos) != 1.0F
+                || aura.getBase(pos) != 100) {
+            throw new AssertionError("Partial aura drain did not debit the exact requested amounts");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_PARTIAL=PASS vis=6.0 flux=1.0");
+
+        float cappedSimVis = aura.drainVis(pos, 20.0F, true);
+        float cappedSimFlux = aura.drainFlux(pos, 20.0F, true);
+        if (cappedSimVis != 6.0F || cappedSimFlux != 1.0F
+                || aura.getVis(pos) != 6.0F || aura.getFlux(pos) != 1.0F) {
+            throw new AssertionError("Simulated over-drain did not cap to available aura without mutation");
+        }
+        float cappedVis = aura.drainVis(pos, 20.0F, false);
+        float cappedFlux = aura.drainFlux(pos, 20.0F, false);
+        if (cappedVis != 6.0F || cappedFlux != 1.0F
+                || aura.getVis(pos) != 0.0F || aura.getFlux(pos) != 0.0F
+                || aura.getBase(pos) != 100) {
+            throw new AssertionError("Real over-drain did not cap at zero while preserving base");
+        }
+        if (aura.drainVis(pos, 1.0F, false) != 0.0F
+                || aura.drainFlux(pos, 1.0F, false) != 0.0F
+                || aura.getVis(pos) != 0.0F || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("Exhausted aura returned or removed more than was available");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_CAPPED=PASS vis=0.0 flux=0.0");
+
+        float negativeSimVis = aura.drainVis(pos, -2.0F, true);
+        float negativeSimFlux = aura.drainFlux(pos, -2.0F, true);
+        if (negativeSimVis != -2.0F || negativeSimFlux != -2.0F
+                || aura.getVis(pos) != 0.0F || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("BETA26 negative simulated drain behavior changed");
+        }
+        float negativeVis = aura.drainVis(pos, -2.0F, false);
+        float negativeFlux = aura.drainFlux(pos, -2.0F, false);
+        if (negativeVis != -2.0F || negativeFlux != -2.0F
+                || aura.getVis(pos) != 2.0F || aura.getFlux(pos) != 2.0F
+                || aura.getBase(pos) != 100) {
+            throw new AssertionError("Finite negative drain must preserve BETA26's negative return / aura increase");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_NEGATIVE_BETA26=PASS vis=2.0 flux=2.0");
+
+        float nanVis = aura.drainVis(pos, Float.NaN, false);
+        float nanFlux = aura.drainFlux(pos, Float.NaN, false);
+        float positiveInfinityVis = aura.drainVis(pos, Float.POSITIVE_INFINITY, false);
+        float positiveInfinityFlux = aura.drainFlux(pos, Float.POSITIVE_INFINITY, false);
+        float negativeInfinityVis = aura.drainVis(pos, Float.NEGATIVE_INFINITY, false);
+        float negativeInfinityFlux = aura.drainFlux(pos, Float.NEGATIVE_INFINITY, false);
+        if (nanVis != 0.0F || nanFlux != 0.0F
+                || positiveInfinityVis != 0.0F || positiveInfinityFlux != 0.0F
+                || negativeInfinityVis != 0.0F || negativeInfinityFlux != 0.0F
+                || aura.getVis(pos) != 2.0F || aura.getFlux(pos) != 2.0F) {
+            throw new AssertionError("Non-finite aura drain input must be rejected without mutation");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_NONFINITE_GUARD=PASS");
+
+        BlockPos missing = pos.offset(32, 0, 0);
+        if (aura.hasChunk(missing)
+                || aura.drainVis(missing, 1.0F, false) != 0.0F
+                || aura.drainFlux(missing, 1.0F, false) != 0.0F
+                || aura.hasChunk(missing)) {
+            throw new AssertionError("Draining an uninitialized aura chunk must return zero without creating it");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_MISSING=PASS");
+        System.out.println("TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES");
     }
 
     private static boolean isColdRestartReadPhase() {
