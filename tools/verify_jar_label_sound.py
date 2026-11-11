@@ -95,8 +95,19 @@ for filename, expected in ORIGINAL_PAGE_BLOBS.items():
 
 if not MATCHER_TEST.is_file():
     raise SystemExit("Synthetic page PCM matcher regression test is missing")
-if smoke.count("xdotool keydown Shift_L") != 3 or smoke.count("xdotool click 3") != 3:
-    raise SystemExit("Real-client smoke must exercise wrong-side, labelled-side and jar-empty shift-right-click")
+# M41/M42 retain three shift-right-clicks; M43 adds one unshifted BlockItem placement.
+legacy_smoke, m43_marker, m43_smoke = smoke.partition("  # M43:")
+shift_right_clicks = re.findall(
+    r"xdotool keydown Shift_L\\s+sleep [^\\n]+\\s+xdotool click 3\\s+sleep [^\\n]+\\s+xdotool keyup Shift_L",
+    legacy_smoke,
+)
+if (
+    len(shift_right_clicks) != 3
+    or legacy_smoke.count("xdotool click 3") != 3
+    or not m43_marker
+    or m43_smoke.count("xdotool click 3") != 1
+):
+    raise SystemExit("Real-client smoke must retain three label/empty shift-right-clicks and one unshifted M43 jar placement")
 # The jar fixture uses facing=3 (SOUTH). Minecraft yaw 0 looks south and
 # yaw 180 looks north, so the north-side attempt must be the negative case.
 wrong_face = "send_chat '/tp @p 250.5 150 249.5 0 0'"
