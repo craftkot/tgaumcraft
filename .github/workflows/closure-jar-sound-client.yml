@@ -1,4 +1,4 @@
-name: M16 real Minecraft original jar break sound
+name: M16 real Minecraft jar break and label removal sounds
 
 on:
   push:
@@ -12,6 +12,10 @@ on:
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
       - 'tools/client_jar_sound_smoke.py'
+      - 'tools/verify_jar_label_sound.py'
+      - 'tools/match_page_audio_pcm.py'
+      - 'tools/test_page_audio_match.py'
+      - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
       - '.github/workflows/closure-jar-sound-client.yml'
   pull_request:
     branches: [main]
@@ -24,6 +28,10 @@ on:
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
       - 'tools/client_jar_sound_smoke.py'
+      - 'tools/verify_jar_label_sound.py'
+      - 'tools/match_page_audio_pcm.py'
+      - 'tools/test_page_audio_match.py'
+      - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
       - '.github/workflows/closure-jar-sound-client.yml'
   workflow_dispatch:
 
@@ -55,11 +63,13 @@ jobs:
           python -m pip install numpy==2.2.6
           python tools/verify_jar_sound.py
           python tools/test_jar_audio_match.py
+          python tools/verify_jar_label_sound.py
+          python tools/test_page_audio_match.py
       - name: Generate and syntax-check actual Minecraft smoke
         run: |
           python3 tools/client_jar_sound_smoke.py > client-jar-generated.sh
           bash -n client-jar-generated.sh
-      - name: Launch Minecraft and capture original jar audio
+      - name: Launch Minecraft and capture original jar and label audio
         run: |
           export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
@@ -72,7 +82,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m16-jar-original-sound-client-evidence
+          name: m16-jar-and-label-original-sound-client-evidence
           retention-days: 14
           if-no-files-found: warn
           path: |
