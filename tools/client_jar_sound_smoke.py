@@ -120,15 +120,22 @@ PY
   wait "$capture_pid" || test "$?" -eq 124
   import -display :99 -window root -silent client-smoke/screenshots/99-jar-label-removed.png
   send_chat '/execute unless data block 250 151 251 {AspectFilter:"aer"} run say JAR_LABEL_SERVER_FILTER_REMOVED'
-  send_chat '/execute if entity @e[type=minecraft:item,distance=..3,nbt={Item:{id:"thaumcraft:label"}}] run say JAR_LABEL_SERVER_BLANK_DROP_PRESENT'
+  send_chat '/execute if entity @e[type=minecraft:item,distance=..3,nbt={Item:{id:"thaumcraft:label"}}] run say JAR_LABEL_SERVER_BLANK_DROP_ENTITY_PRESENT'
+  send_chat '/execute if items entity @p hotbar.* thaumcraft:label run say JAR_LABEL_SERVER_BLANK_DROP_INVENTORY_PRESENT'
   if ! grep -Fq 'JAR_LABEL_SERVER_FILTER_REMOVED' client-smoke/client.log; then
     echo 'JAR_LABEL_SERVER_FILTER_NOT_REMOVED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
-  if ! grep -Fq 'JAR_LABEL_SERVER_BLANK_DROP_PRESENT' client-smoke/client.log; then
+  if grep -Eq 'JAR_LABEL_SERVER_BLANK_DROP_(ENTITY|INVENTORY)_PRESENT' client-smoke/client.log; then
+    echo 'JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS' | tee -a client-smoke-status.txt
+  else
     echo 'JAR_LABEL_SERVER_BLANK_DROP_MISSING=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
+  # The real drop may already be picked up; clear both representations before
+  # the next shift-empty-hand scenario so the player definitely holds nothing.
+  send_chat '/kill @e[type=minecraft:item,nbt={Item:{id:"thaumcraft:label"}}]'
+  send_chat '/clear @p thaumcraft:label'
   python3 tools/match_page_audio_pcm.py client-smoke/label-baseline.pcm client-smoke/label-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/label-source-match.txt
   echo 'JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS' | tee -a client-smoke-status.txt
 
@@ -140,7 +147,6 @@ PY
     echo 'JAR_EMPTY_FIXTURE_SETUP_FAILED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
-  send_chat '/item replace entity @p hotbar.0 with minecraft:air'
   send_chat '/tp @p 250.5 150 249.5 0 0'
   echo 'JAR_EMPTY_WRONG_FACE_EXPECTED=NORTH' | tee -a client-smoke-status.txt
   sleep 2
@@ -155,7 +161,7 @@ PY
   xdotool keyup Shift_L
   sleep 3
   wait "$capture_pid" || test "$?" -eq 124
-  send_chat '/execute if data block 250 151 251 {AspectFilter:"aer",Amount:0s} run say JAR_EMPTY_SERVER_RESET_FILTER_RETAINED'
+  send_chat '/execute if data block 250 151 251 {Aspect:"aer",AspectFilter:"aer",Amount:0s} run say JAR_EMPTY_SERVER_RESET_FILTER_RETAINED'
   if ! grep -Fq 'JAR_EMPTY_SERVER_RESET_FILTER_RETAINED' client-smoke/client.log; then
     echo 'JAR_EMPTY_SERVER_RESET_OR_FILTER_FAILED=YES' | tee -a client-smoke-status.txt
     exit 1
