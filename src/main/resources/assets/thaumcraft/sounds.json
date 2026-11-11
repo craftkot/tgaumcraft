@@ -32,6 +32,15 @@
       }
     ]
   },
+  "jar": {
+    "category": "block",
+    "sounds": [
+      "thaumcraft:jar1",
+      "thaumcraft:jar2",
+      "thaumcraft:jar3",
+      "thaumcraft:jar4"
+    ]
+  },
   "dust": {
     "category": "block",
     "sounds": [

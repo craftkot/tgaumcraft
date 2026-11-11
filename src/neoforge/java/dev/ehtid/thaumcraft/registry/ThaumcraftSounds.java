@@ -35,6 +35,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crystal")));
 
+    // BETA26 SoundsTC.JAR: four original random clips shared by all five BlockJar sounds.
+    public static final Supplier<SoundEvent> JAR = SOUND_EVENTS.register("jar",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "jar")));
+
     // BETA26 ItemMagicDust#doSparkles, valid Salis Mundus use only.
     public static final Supplier<SoundEvent> DUST = SOUND_EVENTS.register("dust",
             () -> SoundEvent.createVariableRangeEvent(

@@ -16,6 +16,9 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.sounds.SoundEvent;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -29,7 +32,19 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public final class EssentiaJarBlock extends BaseEntityBlock {
  public static final MapCodec<EssentiaJarBlock> CODEC = simpleCodec(EssentiaJarBlock::new);
  private static final VoxelShape SHAPE = box(3,0,3,13,12,13);
- public EssentiaJarBlock(BlockBehaviour.Properties props) { super(props); }
+ // BETA26 BlockJar uses SoundsTC.JAR for break, step, place, hit and fall.
+ private static final SoundType ORIGINAL_JAR_SOUND = new SoundType(
+         0.5F, 1.0F,
+         SoundType.GLASS.getBreakSound(), SoundType.GLASS.getStepSound(),
+         SoundType.GLASS.getPlaceSound(), SoundType.GLASS.getHitSound(),
+         SoundType.GLASS.getFallSound()) {
+  @Override public SoundEvent getBreakSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getStepSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getPlaceSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getHitSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getFallSound() { return ThaumcraftSounds.JAR.get(); }
+ };
+ public EssentiaJarBlock(BlockBehaviour.Properties props) { super(props.sound(ORIGINAL_JAR_SOUND)); }
  @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
  @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
  @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
