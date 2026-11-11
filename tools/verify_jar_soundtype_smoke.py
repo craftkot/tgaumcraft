@@ -14,32 +14,40 @@ for hook in ("Break", "Step", "Place", "Hit", "Fall"):
 
 scenarios = {
     "place": (
-        "place-baseline.pcm", "place-event.pcm",
-        "JAR_PLACE_BLOCK_PRESENT", "JAR_PLACE_ORIGINAL_PCM=PASS",
-        "xdotool click 3",
+        "place-baseline.pcm", "place-event.pcm", "place-event-window.pcm", 26400, 120000,
+        "JAR_PLACE_BLOCK_PRESENT", "JAR_PLACE_ORIGINAL_PCM=PASS", "xdotool click 3",
     ),
     "hit": (
-        "hit-baseline.pcm", "hit-event.pcm",
-        "JAR_HIT_BLOCK_RETAINED", "JAR_HIT_ORIGINAL_PCM=PASS",
-        "xdotool mousedown 1",
+        "hit-baseline.pcm", "hit-event.pcm", "hit-event-window.pcm", 26400, 120000,
+        "JAR_HIT_BLOCK_RETAINED", "JAR_HIT_ORIGINAL_PCM=PASS", "xdotool mousedown 1",
     ),
     "step": (
-        "step-baseline.pcm", "step-event.pcm",
-        "JAR_STEP_MOVED_ON_ROW", "JAR_STEP_ORIGINAL_PCM=PASS",
-        "xdotool keydown w",
+        "step-baseline.pcm", "step-event.pcm", "step-event-window.pcm", 16800, 120000,
+        "JAR_STEP_MOVED_ON_ROW", "JAR_STEP_ORIGINAL_PCM=PASS", "xdotool keydown w",
     ),
     "fall": (
-        "fall-baseline.pcm", "fall-event.pcm",
+        "fall-baseline.pcm", "fall-event.pcm", "fall-event-window.pcm", 16800, 144000,
         "JAR_FALL_LANDED_ON_JAR", "JAR_FALL_ORIGINAL_PCM=PASS",
         "send_chat '/tp @p 250.5 155 253.5 0 90'",
     ),
 }
 
+if not all(token in SMOKE for token in (
+    "crop_pcm_frames()",
+    "bs=4 skip=",
+    "actual_bytes != expected_bytes",
+)):
+    raise SystemExit("PCM action-window crop must validate complete stereo frames")
 positions = []
-for name, (baseline, event, state_marker, pass_marker, action) in scenarios.items():
+for name, (baseline, event, window, first, last, state_marker, pass_marker, action) in scenarios.items():
     assert f"client-smoke/{baseline}" in SMOKE, name
     assert f"client-smoke/{event}" in SMOKE, name
-    assert f"client-smoke/{baseline} client-smoke/{event} src/main/resources/assets/thaumcraft/sounds" in SMOKE, name
+    assert f"crop_pcm_frames client-smoke/{event} client-smoke/{window} {first} {last}" in SMOKE, name
+    assert f"client-smoke/{baseline} client-smoke/{window} src/main/resources/assets/thaumcraft/sounds" in SMOKE, name
+    baseline_pos = SMOKE.index(f"> client-smoke/{baseline}")
+    stop_pos = SMOKE.rfind("send_chat '/stopsound @p'", 0, baseline_pos)
+    previous_capture_end = SMOKE.rfind('wait "$capture_pid"', 0, baseline_pos)
+    assert stop_pos > previous_capture_end, f"{name}: baseline must start after stopsound"
     assert state_marker in SMOKE, name
     assert pass_marker in SMOKE, name
     assert action in SMOKE, name
