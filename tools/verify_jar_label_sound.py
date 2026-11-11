@@ -117,11 +117,17 @@ for marker in (
 ):
     if marker not in smoke:
         raise SystemExit(f"Jar-empty real-client assertion is missing: {marker}")
+if "execute if items entity @p hotbar.* thaumcraft:label" not in smoke:
+    raise SystemExit("Real-client smoke must detect a blank label already picked up by the player")
+if "JAR_LABEL_SERVER_BLANK_DROP_ENTITY_PRESENT" not in smoke or "JAR_LABEL_SERVER_BLANK_DROP_INVENTORY_PRESENT" not in smoke:
+    raise SystemExit("Real-client smoke must accept either the dropped label entity or its inventory pickup")
+if "send_chat '/clear @p thaumcraft:label'" not in smoke:
+    raise SystemExit("M42 must start with an actually empty hand after the label drop")
 for marker in (
     "JAR_LABEL_WRONG_SIDE_PRESERVED",
     "JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS",
     "JAR_LABEL_SERVER_FILTER_REMOVED",
-    "JAR_LABEL_SERVER_BLANK_DROP_PRESENT",
+    "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
     "match_page_audio_pcm.py",
     "JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS",
 ):
