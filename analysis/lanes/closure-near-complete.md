@@ -2676,3 +2676,29 @@ Validation status:
 - No progress point is awarded. Fixed audit remains 59/100; M16 remains 4/6.
 
 Next action: inspect the first new PR workflow run on the updated HEAD. Require M42's jar and vanilla bottle-fill PCM matches plus the no-PAGE negative assertion. Only if M42 passes, continue to the four M43 real-client interactions and their server-state/PCM evidence. If the cropped M42 matcher still fails, inspect the post-click PCM and client sound branch; do not relax matcher thresholds.
+
+## 2026-11-11 — M43 hit probe: extend the real mining input
+
+Fresh-state evidence on branch HEAD `8d0c81d`:
+- Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`; own branch was exactly `8d0c81dc625a3ce18f91de1c7bb2ef36052090fb`.
+- PR #4 is still Open/Draft/Unmerged. The known PR #3 overlap on `SalisMundusItem.java` remains; this iteration touches only the two M43 tool scripts and this lane journal.
+- Changed-file lists for open PR #1, #2 and #3 contain none of those three paths.
+
+Real client run [#43086768280](https://github.com/craftkot/tgaumcraft/actions/runs/43086768280), artifact [#13888595795](https://github.com/craftkot/tgaumcraft/actions/runs/43086768280/artifacts/13888595795):
+- M42 empty-jar path passed: original jar clip `jar3.ogg` correlation 0.8033 / baseline 0.0000; vanilla bottle-fill `fill3.ogg` correlation 0.5095 / baseline 0.0000; the negative PAGE assertion and server reset/filter-retention marker passed.
+- M43 Place passed: real BlockItem placement, server block-present marker, original `jar4.ogg` correlation 0.9979 / baseline 0.0000.
+- M43 Hit reached the server guard `JAR_HIT_BLOCK_RETAINED`, so the jar was not broken. But both hit baseline and event PCM were exactly silent (0 nonzero samples; RMS 0); the matcher correctly failed. Step/Fall were not reached.
+- Full NeoForge build/JAR/dedicated-server CI [#43086768686](https://github.com/craftkot/tgaumcraft/actions/runs/43086768686) passed on the same HEAD; Aura/Crystal GameTests [#43086768519](https://github.com/craftkot/tgaumcraft/actions/runs/43086768519) passed. These do not turn the failed client Hit check into a pass.
+
+Diagnosis and change:
+- The old probe held left mouse for only 0.12s. That is too short to reliably reach the tick-driven continuing block-break sound loop; a silent PCM capture is consistent with the input ending before the hit event, not evidence that the registered sound hook is wrong.
+- The probe now holds for 0.30s (about six 20-TPS client ticks), still guarded by the authoritative server assertion that the 0.3-hardness jar remains present. A pre-input screenshot `100a-jar-hit-aim.png` is retained to inspect the crosshair/target if the next run still fails.
+- `tools/verify_jar_soundtype_smoke.py` now rejects regression to the 0.12s tap and requires the aim screenshot.
+- No production Java, registry, sound asset, Gradle, or shared workflow file changed.
+
+Validation:
+- Pre-commit source checks for the new hold, aim screenshot and verifier guard: PASS in the editing step.
+- The previous exact-head full NeoForge/server CI remains PASS; it does not validate this new smoke edit.
+- The new GitHub client and full CI checks must be inspected on the new commit before claiming validation. No progress point is awarded; fixed audit remains **59/100**, M16 **4/6**.
+
+Next: inspect the new real-client run. If Hit passes, continue to Step and Fall. If it still fails, inspect `100a-jar-hit-aim.png` and run a same-position vanilla-stone hit control before changing production Java.

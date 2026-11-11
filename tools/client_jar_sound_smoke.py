@@ -254,11 +254,13 @@ PY
   python3 tools/match_jar_audio_pcm.py client-smoke/place-baseline.pcm client-smoke/place-event-window.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/place-source-match.txt
   echo 'JAR_PLACE_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
 
-  # Hit is a short survival mining press: enough to invoke getHitSound, not
-  # enough to break the 0.3-hardness jar. The authoritative block check guards
-  # against accidentally accepting the break clip as the hit clip.
+  # M43 HIT: SoundType hit audio belongs to the continuing block-break loop;
+  # a 0.12s tap can end before that tick-driven loop emits anything. Hold for
+  # about six client ticks (0.30s), still below the 0.3-hardness jar's bare-hand
+  # break time. The authoritative server block check below rejects any break.
   send_chat '/item replace entity @p hotbar.0 with minecraft:air'
   send_chat '/tp @p 250.5 150 250.5 0 35'
+  import -display :99 -window root -silent client-smoke/screenshots/100a-jar-hit-aim.png
   send_chat '/stopsound @p'
   sleep 0.25
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/hit-baseline.pcm || test "$?" -eq 124
@@ -266,7 +268,7 @@ PY
   capture_pid=$!
   sleep 0.6
   xdotool mousedown 1
-  sleep 0.12
+  sleep 0.30
   xdotool mouseup 1
   sleep 0.4
   wait "$capture_pid" || test "$?" -eq 124

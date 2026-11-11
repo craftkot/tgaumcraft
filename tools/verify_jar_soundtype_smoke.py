@@ -54,6 +54,11 @@ for name, (baseline, event, window, first, last, state_marker, pass_marker, acti
     positions.append(SMOKE.index(pass_marker))
 
 assert positions == sorted(positions), "SoundType scenarios must run place -> hit -> step -> fall"
+hit_section = SMOKE.split("# M43 HIT:", 1)[1].split("# Rebuild a five-block row", 1)[0]
+assert re.search(r"xdotool mousedown 1\\s+sleep 0\\.30\\s+xdotool mouseup 1", hit_section), (
+    "Hit probe must hold long enough for the tick-driven block-breaking sound loop"
+)
+assert "100a-jar-hit-aim.png" in hit_section, "Hit probe must preserve a pre-input aim screenshot"
 assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE
 assert "JAR_STEP_STANDING_READY" in SMOKE and "JAR_STEP_MOVED_ON_ROW" in SMOKE
