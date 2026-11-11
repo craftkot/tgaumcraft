@@ -2361,3 +2361,17 @@ PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTes
 - Path-safety check: the current M35 code/test/runner paths do not overlap PR #1 (`feature/infusion`), PR #3 (`feature/golems`) or `chore/coordination`. Existing PR #4/#3 overlap in `SalisMundusItem.java` remains an integration hazard and is untouched. PR #4 remains open/Draft; no merge.
 - Fixed audit remains **59/100**, M08 **5/9**, M16 **4/6**. No score is awarded for a failed disk persistence test.
 - Next: inspect exact GameTest #42936794525 diagnostics. Fix the actual storage-path/dirty-state mismatch rather than weakening the assertion or writing the file manually; rerun native GameTest and full NeoForge CI on the corrected exact HEAD.
+
+
+## 2026-11-11 — M35 diagnostic result: dirty state clears, expected file still absent
+
+- The first diagnostic GameTest [#42936794525](https://github.com/craftkot/tgaumcraft/actions/runs/42936794525) completed **FAILURE**. Its decoded log now establishes:
+  - GameTest level is exactly `server.overworld()`;
+  - `aura.isDirty()` was `true` before `level.getDataStorage().save()` and `false` immediately after;
+  - reported world root is `./world/.`, expected data folder `./world/./data`;
+  - the expected file was still absent immediately after save; the assertion failed before disk reload.
+- The previous recursive diagnostic walk listed the root data directory and the two dimension data directories, but no `thaumcraft_aura.dat`. It did not print all entries of the data directory, so it did not yet rule out an alternate filename or delayed file visibility. No underlying IO exception appeared in the filtered test log. Do not infer the exact cause yet.
+- To keep diagnostics bounded, [`ee2642a`](https://github.com/craftkot/tgaumcraft/commit/ee2642a6e6e8df067d0856747759c8a34aa2b9a8) replaces the recursive world-root walk with a listing of at most 50 immediate entries in the expected data directory and explicit existence checks. Exact-head GameTest [#42937441241](https://github.com/craftkot/tgaumcraft/actions/runs/42937441241) and full CI [#42937441257](https://github.com/craftkot/tgaumcraft/actions/runs/42937441257) were queued after that change.
+- Exact predecessor full CI [#42936794688](https://github.com/craftkot/tgaumcraft/actions/runs/42936794688) is **SUCCESS**; this proves compilation, dedicated-server smoke and packaging for `1915e7b`, not M35 disk persistence.
+- M35 remains unaccepted. The next action is to inspect the bounded directory listing on #42937441241. If `thaumcraft_aura.dat` appears after a tick or under a different name/path, adjust the test to the actual storage contract; if no file is written despite dirty clearing, inspect the saved-data write path and its logged IO result. Do not call the serializer directly or manually create the file as a substitute for `DimensionDataStorage.save()`.
+- Fixed audit remains **59/100**; M08 **5/9**, M16 **4/6**. No points awarded.
