@@ -2702,3 +2702,11 @@ Validation:
 - The new GitHub client and full CI checks must be inspected on the new commit before claiming validation. No progress point is awarded; fixed audit remains **59/100**, M16 **4/6**.
 
 Next: inspect the new real-client run. If Hit passes, continue to Step and Fall. If it still fails, inspect `100a-jar-hit-aim.png` and run a same-position vanilla-stone hit control before changing production Java.
+
+### 2026-11-11 — correction: M43 hold-time guard regex
+
+- The first CI attempt on `7d05cc5`, [client run #43093845024](https://github.com/craftkot/tgaumcraft/actions/runs/43093845024), failed **before APT or Minecraft** in `verify_jar_soundtype_smoke.py`: the new raw-string regex contained doubled backslashes (`\\s`, `\\.`) and therefore matched literal backslashes rather than whitespace / a decimal point.
+- This was a verifier defect, not a game or build failure. Corrected the pattern to single raw-regex escapes; a local regex check against the expected shell sequence passes.
+- The 0.30s client input change remains untested in Minecraft; no hit-sound success is inferred. The next run must pass the verifier before installing dependencies and launching the client.
+- Full NeoForge CI on `7d05cc5` was still running at this observation; inspect its exact result separately.
+- Fixed rubric remains **59/100**, M16 **4/6**; no points awarded.
