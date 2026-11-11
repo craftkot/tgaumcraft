@@ -1,9 +1,14 @@
-name: M16 real Minecraft original Salis Mundus dust audio
+name: M16 real Minecraft Salis dust and Nitor client tick smoke
 
 on:
   push:
     branches: [feature/closure-near-complete]
     paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/NitorBlockEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorBlockEntityRegistration.java'
+      - 'tools/test_nitor_client_tick.py'
+      - 'tools/verify_nitor_client_tick.py'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
@@ -26,6 +31,11 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/NitorBlockEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorBlockEntityRegistration.java'
+      - 'tools/test_nitor_client_tick.py'
+      - 'tools/verify_nitor_client_tick.py'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java'
@@ -83,6 +93,7 @@ jobs:
           python tools/test_salis_face_delay.py
           python tools/test_salis_queue_unload_jvm.py
           python tools/test_salis_chunk_probe_cleanup.py
+          python tools/test_nitor_client_tick.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py
@@ -96,12 +107,13 @@ jobs:
           pulseaudio --start --exit-idle-time=-1
           pactl load-module module-null-sink sink_name=tc_dust_sink rate=48000 channels=2
           pactl set-default-sink tc_dust_sink
-          export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Dthaumcraft.salisChunkUnloadScenario=true"
+          export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Dthaumcraft.salisChunkUnloadScenario=true -Dthaumcraft.nitorSmoke=true"
           bash client-dust-generated.sh
       - name: Verify real-client visible Salis particles
         # Screenshot assertions require a completed client run; setup cancellation is not a particle failure.
         if: ${{ success() }}
         run: |
+          python tools/verify_nitor_client_tick.py client-smoke/client.log
           set -o pipefail
           python tools/verify_salis_sparkles_screenshot.py \
             client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \

@@ -7,7 +7,20 @@ anchor = "  capture 08k-firststeps-real-bookshelf-before-salis\n  xdotool click 
 end = "  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post"
 if source.count(anchor) != 1 or source.count(end) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Real-client fixture changed; refuse unsafe injection")
-replacement = """  # Hide HUD/chat and hand swing so the transient-particle ROI measures world FX.
+replacement = """  # BETA26 TileNitor.update is a real client ticker, not a random display tick.
+  send_chat '/setblock 4 151 12 thaumcraft:nitor_yellow'
+  send_chat '/execute if block 4 151 12 thaumcraft:nitor_yellow run say NITOR_CLIENT_BLOCK_READY'
+  grep -Fq 'NITOR_CLIENT_BLOCK_READY' client-smoke/client.log
+  for _ in $(seq 1 50); do
+    if grep -Fq 'TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=20 flames=20 cores=2' client-smoke/client.log; then
+      break
+    fi
+    sleep 0.1
+  done
+  python3 tools/verify_nitor_client_tick.py client-smoke/client.log
+  echo 'NITOR_CLIENT_TICK=PASS' | tee -a client-smoke-status.txt
+  send_chat '/setblock 4 151 12 minecraft:air'
+  # Hide HUD/chat and hand swing so the transient-particle ROI measures world FX.
   xdotool key --clearmodifiers F1
   sleep 0.5
   capture 08k-firststeps-real-bookshelf-before-salis
