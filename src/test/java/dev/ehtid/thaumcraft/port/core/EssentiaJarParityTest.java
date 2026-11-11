@@ -42,6 +42,26 @@ public final class EssentiaJarParityTest {
         eq(0, last.state().amount());
         eq(nullText(), last.state().aspect());
 
+        // BETA26 BlockJar hand-empty is not the same operation as
+        // takeFromContainer: a labelled jar retains its aspect field.
+        var labelledFull = new LegacyEssentiaJarLogic.State("aer", "aer", 12);
+        var handEmptiedLabelled = LegacyEssentiaJarLogic.emptyByHand(labelledFull);
+        eq(0, handEmptiedLabelled.amount());
+        eq("aer", handEmptiedLabelled.aspect());
+        eq("aer", handEmptiedLabelled.filter());
+        var emptyLabelled = new LegacyEssentiaJarLogic.State("aer", "aer", 0);
+        eq("aer", emptyLabelled.aspect());
+        var labelledTake = LegacyEssentiaJarLogic.take(labelledFull, "aer", 12);
+        eq(12, labelledTake.transferred());
+        eq(0, labelledTake.state().amount());
+        eq(nullText(), labelledTake.state().aspect());
+        eq("aer", labelledTake.state().filter());
+        var handEmptiedUnlabelled = LegacyEssentiaJarLogic.emptyByHand(
+                new LegacyEssentiaJarLogic.State("aer", null, 12));
+        eq(0, handEmptiedUnlabelled.amount());
+        eq(nullText(), handEmptiedUnlabelled.aspect());
+        eq(nullText(), handEmptiedUnlabelled.filter());
+
         var filtered = new LegacyEssentiaJarLogic.State(null,"ignis",0);
         eq(64, LegacyEssentiaJarLogic.suction(filtered));
         eq("ignis", LegacyEssentiaJarLogic.suctionAspect(filtered));
