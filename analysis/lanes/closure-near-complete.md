@@ -2306,3 +2306,45 @@ The local wrapper harness also passed its positive/hung-process case and rejecte
 - Changed files in this iteration: `tools/client_scan_rune_smoke.py`, `tools/test_scan_rune_log_parser.py`, and this lane journal. No production particle code, Gradle, global CI, main, or other feature branch was changed. PR #1/#2/#3 changed-file lists were checked; none touches these paths.
 - On the exact pre-fix HEAD `94361070`, 15 of 16 PR-triggered workflows were SUCCESS, including native aura/crystal GameTests [#42913088116](https://github.com/craftkot/tgaumcraft/actions/runs/42913088116) and full NeoForge CI [#42913088263](https://github.com/craftkot/tgaumcraft/actions/runs/42913088263); the one failure was this scan-rune real-client fixture.
 - M16 remains 4/6, M08 remains 5/9, and the fixed audit remains 59/100. No score is awarded. Next: inspect the exact new real-client run and confirm both views emit the gold target anchor z=4.5 and the framebuffer shows the target face. After that, resume M35: physical `DataStorage.save()` plus independent `DimensionDataStorage` reload from `thaumcraft_aura.dat`.
+
+
+## 2026-11-11 — M16 scan-rune client scenario accepted; M35 disk persistence test added
+
+### M16 scan-rune smoke result on the pre-M35 HEAD
+
+- The corrected real Minecraft client workflow [#42921728676](https://github.com/craftkot/tgaumcraft/actions/runs/42921728676) completed **SUCCESS**. Its decoded job log contains:
+  - RUNE_REAL_WORLD_TARGET=PASS and RUNE_REAL_ITEM=PASS;
+  - both front and opposite-view integrated-world passes;
+  - all 80 particles created at the intended gold-block anchor x=0.5 y=151.75 z=4.5, lifetime 45;
+  - 80 actual client renders, visible alpha 0.278, four faces, camera-relative quad-facing checks;
+  - all 80 particles expired at age 45;
+  - framebuffer differences of 1526 pixels (front) and 2751 pixels (opposite view);
+  - RUNE_REAL_CLIENT_SMOKE=PASS.
+- Downloaded artifact [#13813265045](https://github.com/craftkot/tgaumcraft/actions/runs/42921728676/artifacts/13813265045), inspected 71-rune-during-use.png and 75-rune-opposite-during-use.png; both show the rune overlay on the intended gold block, without the previous foliage obstruction. This accepts the **narrow scan-rune rendering/lifetime/two-view scenario**, not all M16 assets.
+- Exact PR-triggered workflow set associated with commit 6f86677 completed successfully: full Thaumcraft Port CI [#42921728787](https://github.com/craftkot/tgaumcraft/actions/runs/42921728787), aura/crystal GameTests [#42921728905](https://github.com/craftkot/tgaumcraft/actions/runs/42921728905), and the 14 other M16 focused workflows listed by the commit run query. The client artifact above is the graphical evidence; full CI is separate server/build evidence.
+- M16 remains **4/6** and the fixed audit remains **59/100**. One scan-rune scenario does not complete visual/audio/localization parity.
+
+### M35 implementation: physical SavedData write and independent storage reload
+
+- Extended AuraGenerationGameTests.samplesFiveBETA26BiomesAtY50AndPersistsAura after the existing serializer-only round-trip:
+  1. Require the GameTest level to be the Overworld, then resolve the actual world root with MinecraftServer.getWorldPath(LevelResource.ROOT).
+  2. Call the real level.getDataStorage().save().
+  3. Require a non-empty data/thaumcraft_aura.dat and verify the gzip NBT signature.
+  4. Construct a **new** DimensionDataStorage for that same data directory using the running server's real DataFixer and registry provider.
+  5. Load thaumcraft_aura through a new SavedData.Factory; require a distinct object and exact persisted base=181, vis=73.0, flux=4.5.
+  6. Pass the disk-restored object through the production aura initializer again; require no re-seed, no Gaussian call, and unchanged values.
+- Raised only this GameTest timeout from 40 to 100 ticks to accommodate real file I/O.
+- The isolated GameTest runner now requires the physical-save, disk-reload, and disk-reentry markers in addition to the existing crystal/aura markers. Missing any one fails the workflow.
+- API checked against the NeoForge 1.21.1 Javadocs: DimensionDataStorage(File, DataFixer, HolderLookup.Provider), computeIfAbsent(Factory, String), save(), MinecraftServer.getFixerUpper(), and getWorldPath(LevelResource). This is a real disk flush and independent storage-instance read, but **not** a separate Minecraft process cold restart or a forced chunk unload/reload.
+
+### Changed files and commits
+
+- src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java — [aaa3549](https://github.com/craftkot/tgaumcraft/commit/aaa3549ef1446aa3324bce32337b600709ed6b7a).
+- tools/run_crystal_spread_gametest.sh — [2523e2b](https://github.com/craftkot/tgaumcraft/commit/2523e2b89c405bbb2a70b42245995105a8e0f254).
+- This lane journal — pending commit below.
+
+PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTest or its runner. PR #2 remains documentation/coordination only. The modified test and runner are owned by this lane's existing PR #4. No main, other feature branch, Gradle file, global registry, or shared workflow was changed.
+
+**Current acceptance:** M16's narrow scan-rune client scenario is accepted. M35 code is written but remains **pending exact-HEAD NeoForge compile and native GameTest**; do not claim disk persistence passed until the log contains all three new M35 markers and Minecraft's All 2 required tests passed. M08 remains **5/9**, M16 **4/6**, fixed audit **59/100**. PR #4 remains Draft/open; no merge.
+
+**Next:** inspect the exact new GameTest and full NeoForge CI. If the new disk reload passes, separately decide whether to add a two-process cold-restart harness; do not conflate that stronger test with the current independent-storage-instance proof.
