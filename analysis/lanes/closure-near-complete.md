@@ -2479,3 +2479,22 @@ PR #1 and #3 changed-file lists were rechecked; neither touches the aura GameTes
 - Code/test/runner commit: [5b3328e](https://github.com/craftkot/tgaumcraft/commit/5b3328eb0a43f05f9192a9e52820480ddaac706c). Changed paths: src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java, src/neoforge/java/dev/ehtid/thaumcraft/gametest/CrystalSpreadGameTests.java, tools/run_crystal_spread_gametest.sh. Journal update is committed separately below.
 - Exact-head native GameTest and full NeoForge CI are **pending**. Do not accept M39 until the write/read phases both report four required tests passed, every M39 marker is present, and the exact-head NeoForge build/dedicated-server/JAR workflow succeeds. If the GameTest fails, inspect its server log and correct the fixture or production behavior; do not weaken the assertions.
 - Fixed audit remains **59/100**, M08 **5/9**. PR #4 remains Draft/Open; no merge.
+
+
+### M39 acceptance — exact-head native GameTest and full NeoForge CI (2026-11-11)
+
+- Exact code/test/runner commit: [5b3328eb0a43f05f9192a9e52820480ddaac706c](https://github.com/craftkot/tgaumcraft/commit/5b3328eb0a43f05f9192a9e52820480ddaac706c). Exact PR head before this documentation-only update: [51577dff6ff49975992a81e3bef147d0d4be7aad](https://github.com/craftkot/tgaumcraft/commit/51577dff6ff49975992a81e3bef147d0d4be7aad).
+- Native NeoForge aura/crystal GameTest [#42979094018](https://github.com/craftkot/tgaumcraft/actions/runs/42979094018) **SUCCESS**. The actual server log contains all M39 markers:
+  - Aer missing aura: PASS, size 3→2 at Vis=0.
+  - Vitium missing aura: PASS, size 3→2 at Flux=0.
+  - Isolated size-zero crystal retained.
+  - Size-zero crystal touching the same block variant removed; adjacent crystal retained.
+  - A different crystal variant does not satisfy the original BlockUtils.isBlockTouching(world,pos,this) check.
+  - No ItemEntity drops and no AuraChunk entry created by the starvation path.
+  - The write and cold-read processes each report **All 4 required tests passed**. The write/read Minecraft JVM PIDs are 2828 and 3219; both runner phases exited cleanly. The cold-read phase restored Base=137, Vis=91.25, Flux=12.5.
+  - GameTest artifact [#13837020765](https://github.com/craftkot/tgaumcraft/actions/runs/42979094018/artifacts/13837020765), 149,033 bytes.
+- Exact-head full NeoForge CI [#42979093927](https://github.com/craftkot/tgaumcraft/actions/runs/42979093927) **SUCCESS**. Job steps confirm Core parity (**10,046 assertions**), source/resource guards, NeoForge build (**BUILD SUCCESSFUL**), dedicated-server startup (server reached Done in 5.567s), and JAR upload. JAR artifact [#13837385224](https://github.com/craftkot/tgaumcraft/actions/runs/42979093927/artifacts/13837385224), 2,000,551 bytes. The generic dedicated-server smoke is build/runtime evidence; the M39 mechanic itself is proven by the native GameTest above.
+- CircleCI verify-connection on the exact pre-documentation HEAD is SUCCESS; it is a Core connection check, not a game test.
+- M39 is accepted as a **narrow M08 subcase**. It does not close M08: aura event/consumption coverage, source-era biome/world parity, remaining natural crystal growth and other world interactions remain. Fixed audit stays **59/100**, M08 stays **5/9**; no score awarded for one edge-case correction.
+- No M39 path overlaps the current changed-file lists of PR #1/#2/#3. The existing PR #4/#3 SalisMundusItem.java overlap is still unresolved and untouched. PR #4 remains Open/Draft/Unmerged; no merge.
+- Next run: re-evaluate the closest still-open rubric category from the fresh main audit and current lane evidence before choosing another isolated behavior. M08 must not be marked complete from M39 alone; FIRSTSTEPS residuals must be checked against M07 ownership before any work there.
