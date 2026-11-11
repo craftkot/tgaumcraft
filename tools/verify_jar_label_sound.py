@@ -38,14 +38,14 @@ client_start = block.index("if (level.isClientSide) {", method_start)
 client_end = block.index("return InteractionResult.SUCCESS;", client_start)
 client_branch = block[client_start:client_end]
 
-required_condition = (
-    "jar.snapshot().filter() != null"
-    " && jar.facing() == hit.getDirection().get3DDataValue()"
+required_conditions = (
+    "jar.snapshot().filter() != null",
+    "jar.facing() == hit.getDirection().get3DDataValue()",
 )
 required_call = (
     "level.playLocalSound(pos, ThaumcraftSounds.PAGE.get(), SoundSource.BLOCKS,"
 )
-if required_condition not in client_branch:
+if not all(condition in client_branch for condition in required_conditions):
     raise SystemExit("Client page sound is not guarded by the original label-face predicate")
 if required_call not in client_branch:
     raise SystemExit("Client label-removal branch does not play the original PAGE event")
