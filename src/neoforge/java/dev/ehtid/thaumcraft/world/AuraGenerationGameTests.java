@@ -413,6 +413,21 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_DRAIN_NEGATIVE_BETA26=PASS vis=2.0 flux=2.0");
 
+        float negativeCapSimVis = aura.drainVis(pos, -40_000.0F, true);
+        float negativeCapSimFlux = aura.drainFlux(pos, -40_000.0F, true);
+        if (negativeCapSimVis != -40_000.0F || negativeCapSimFlux != -40_000.0F
+                || aura.getVis(pos) != 32_766.0F || aura.getFlux(pos) != 32_766.0F) {
+            throw new AssertionError("Simulated negative over-cap request mutated aura or changed its return");
+        }
+        float negativeCapVis = aura.drainVis(pos, -40_000.0F, false);
+        float negativeCapFlux = aura.drainFlux(pos, -40_000.0F, false);
+        if (negativeCapVis != -40_000.0F || negativeCapFlux != -40_000.0F
+                || aura.getVis(pos) != 32_766.0F || aura.getFlux(pos) != 32_766.0F
+                || aura.getBase(pos) != 100) {
+            throw new AssertionError("BETA26 AuraChunk setters must clamp negative-drain growth to 32766");
+        }
+        System.out.println("TC_GAMETEST_AURA_DRAIN_NEGATIVE_CAP=PASS vis=32766.0 flux=32766.0");
+
         float nanVis = aura.drainVis(pos, Float.NaN, false);
         float nanFlux = aura.drainFlux(pos, Float.NaN, false);
         float positiveInfinityVis = aura.drainVis(pos, Float.POSITIVE_INFINITY, false);
