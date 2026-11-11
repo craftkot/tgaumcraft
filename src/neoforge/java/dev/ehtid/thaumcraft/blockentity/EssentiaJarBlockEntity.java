@@ -97,7 +97,7 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
         int spilled = stored.amount();
         dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData.get(server)
                 .polluteFlux(worldPosition, spilled);
-        updateStored(new LegacyEssentiaJarLogic.State(null, stored.filter(), 0));
+        updateStored(LegacyEssentiaJarLogic.emptyByHand(stored));
         return true;
     }
     /** True if the jar item must retain non-default BlockEntity state. */
