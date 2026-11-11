@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate isolated real Minecraft jar-break PCM smoke from the verified client boot."""
+"""Generate isolated real Minecraft jar SoundType and interaction PCM smoke from the verified client boot."""
 from pathlib import Path
 import sys
 
@@ -193,6 +193,114 @@ else:
     raise SystemExit("Wrong-face emptying unexpectedly played the label PAGE event")
 PY
   echo 'JAR_EMPTY_BETA26_SOUND_PAIR_AND_SERVER_RESET=PASS' | tee -a client-smoke-status.txt
+
+
+  # M43: exercise the four SoundType hooks not covered by the earlier break test.
+  # Use a real BlockItem placement, survival mining tap, grounded movement across
+  # a narrow but continuous jar row, and a real fall onto the jar collision top.
+  # The block shape is the original 10x10x12 px (0.625x0.75x0.625); the row gap
+  # (0.375) is smaller than the player's 0.6-block width, so the player remains
+  # supported while the block under the feet changes between adjacent jars.
+  send_chat '/gamemode survival @p'
+  send_chat '/fill 249 149 249 251 149 255 minecraft:stone'
+  send_chat '/fill 249 150 249 251 155 255 minecraft:air'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_normal'
+  send_chat '/execute if items entity @p hotbar.0 thaumcraft:jar_normal run say JAR_PLACE_ITEM_READY'
+  if ! grep -Fq 'JAR_PLACE_ITEM_READY' client-smoke/client.log; then
+    echo 'JAR_PLACE_ITEM_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/tp @p 250.5 150 250.5 0 47'
+  sleep 1
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/place-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/place-event.pcm &
+  capture_pid=$!
+  sleep 0.6
+  xdotool click 3
+  sleep 0.4
+  wait "$capture_pid" || test "$?" -eq 124
+  import -display :99 -window root -silent client-smoke/screenshots/100-jar-placed.png
+  send_chat '/execute if block 250 150 252 thaumcraft:jar_normal run say JAR_PLACE_BLOCK_PRESENT'
+  if ! grep -Fq 'JAR_PLACE_BLOCK_PRESENT' client-smoke/client.log; then
+    echo 'JAR_PLACE_BLOCK_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_jar_audio_pcm.py client-smoke/place-baseline.pcm client-smoke/place-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/place-source-match.txt
+  echo 'JAR_PLACE_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+
+  # Hit is a short survival mining press: enough to invoke getHitSound, not
+  # enough to break the 0.3-hardness jar. The authoritative block check guards
+  # against accidentally accepting the break clip as the hit clip.
+  send_chat '/item replace entity @p hotbar.0 with minecraft:air'
+  send_chat '/tp @p 250.5 150 250.5 0 35'
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/hit-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/hit-event.pcm &
+  capture_pid=$!
+  sleep 0.6
+  xdotool mousedown 1
+  sleep 0.12
+  xdotool mouseup 1
+  sleep 0.4
+  wait "$capture_pid" || test "$?" -eq 124
+  send_chat '/execute if block 250 150 252 thaumcraft:jar_normal run say JAR_HIT_BLOCK_RETAINED'
+  if ! grep -Fq 'JAR_HIT_BLOCK_RETAINED' client-smoke/client.log; then
+    echo 'JAR_HIT_BROKE_OR_MISSED_BLOCK=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_jar_audio_pcm.py client-smoke/hit-baseline.pcm client-smoke/hit-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/hit-source-match.txt
+  echo 'JAR_HIT_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+
+  # Rebuild a five-block row. Its collision tops overlap the player's bounding
+  # box across the 0.375 gaps; movement must traverse several jar block positions
+  # while the server confirms the player's feet stay at the 0.75-block jar top.
+  send_chat '/fill 250 150 251 250 150 255 minecraft:air'
+  send_chat '/fill 250 150 251 250 150 255 thaumcraft:jar_normal'
+  send_chat '/execute if block 250 150 251 thaumcraft:jar_normal if block 250 150 255 thaumcraft:jar_normal run say JAR_SOUND_ROW_READY'
+  if ! grep -Fq 'JAR_SOUND_ROW_READY' client-smoke/client.log; then
+    echo 'JAR_SOUND_ROW_SETUP_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/tp @p 250.5 154 251.5 0 0'
+  send_chat '/execute if entity @p[x=250.4,y=150.7,z=251,dx=0.2,dy=0.2,dz=1] run say JAR_STEP_STANDING_READY'
+  if ! grep -Fq 'JAR_STEP_STANDING_READY' client-smoke/client.log; then
+    echo 'JAR_STEP_NOT_STANDING_ON_JAR=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/step-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/step-event.pcm &
+  capture_pid=$!
+  sleep 0.4
+  xdotool keydown w
+  sleep 0.7
+  xdotool keyup w
+  wait "$capture_pid" || test "$?" -eq 124
+  import -display :99 -window root -silent client-smoke/screenshots/101-jar-step.png
+  send_chat '/execute if entity @p[x=250.4,y=150.7,z=253,dx=0.2,dy=0.2,dz=2] run say JAR_STEP_MOVED_ON_ROW'
+  if ! grep -Fq 'JAR_STEP_MOVED_ON_ROW' client-smoke/client.log; then
+    echo 'JAR_STEP_MOVEMENT_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_jar_audio_pcm.py client-smoke/step-baseline.pcm client-smoke/step-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/step-source-match.txt
+  echo 'JAR_STEP_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+
+  # A real survival fall from y=155 lands 4.25 blocks above the jar's 0.75 top.
+  # The server position check proves the entity actually landed on a jar.
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/fall-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 6s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/fall-event.pcm &
+  capture_pid=$!
+  sleep 0.4
+  send_chat '/tp @p 250.5 155 253.5 0 90'
+  wait "$capture_pid" || test "$?" -eq 124
+  import -display :99 -window root -silent client-smoke/screenshots/102-jar-fall.png
+  send_chat '/execute if entity @p[x=250.4,y=150.7,z=253,dx=0.2,dy=0.2,dz=1] run say JAR_FALL_LANDED_ON_JAR'
+  if ! grep -Fq 'JAR_FALL_LANDED_ON_JAR' client-smoke/client.log; then
+    echo 'JAR_FALL_DID_NOT_LAND_ON_JAR=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_jar_audio_pcm.py client-smoke/fall-baseline.pcm client-smoke/fall-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/fall-source-match.txt
+  echo 'JAR_FALL_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+
+  echo 'JAR_SOUNDTYPE_PLACE_STEP_HIT_FALL=PASS' | tee -a client-smoke-status.txt
 
 fi
 '''

@@ -1,4 +1,4 @@
-name: M16 real Minecraft jar break, label removal and emptying sounds
+name: M16 real Minecraft jar SoundType and interaction audio smoke
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
       - 'tools/verify_jar_sound.py'
+      - 'tools/verify_jar_soundtype_smoke.py'
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
       - 'tools/client_jar_sound_smoke.py'
@@ -28,6 +29,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
       - 'tools/verify_jar_sound.py'
+      - 'tools/verify_jar_soundtype_smoke.py'
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
       - 'tools/client_jar_sound_smoke.py'
@@ -64,10 +66,11 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg pulseaudio pulseaudio-utils
-      - name: Verify original BETA26 jar, label and emptying sound contracts
+      - name: Verify original BETA26 jar SoundType, label and emptying sound contracts
         run: |
           python -m pip install numpy==2.2.6
           python tools/verify_jar_sound.py
+          python tools/verify_jar_soundtype_smoke.py
           python tools/test_jar_audio_match.py
           python tools/verify_jar_label_sound.py
           python tools/test_page_audio_match.py
@@ -77,7 +80,7 @@ jobs:
         run: |
           python3 tools/client_jar_sound_smoke.py > client-jar-generated.sh
           bash -n client-jar-generated.sh
-      - name: Launch Minecraft and capture original jar, label and emptying audio
+      - name: Launch Minecraft and capture original jar SoundType and interaction audio
         run: |
           export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
