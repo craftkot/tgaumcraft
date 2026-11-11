@@ -1,4 +1,4 @@
-name: M16 real Minecraft jar break and label removal sounds
+name: M16 real Minecraft jar break, label removal and emptying sounds
 
 on:
   push:
@@ -15,6 +15,9 @@ on:
       - 'tools/verify_jar_label_sound.py'
       - 'tools/match_page_audio_pcm.py'
       - 'tools/test_page_audio_match.py'
+      - 'tools/verify_jar_empty_sound.py'
+      - 'tools/match_bottle_fill_audio_pcm.py'
+      - 'tools/test_bottle_fill_audio.py'
       - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
       - '.github/workflows/closure-jar-sound-client.yml'
   pull_request:
@@ -31,6 +34,9 @@ on:
       - 'tools/verify_jar_label_sound.py'
       - 'tools/match_page_audio_pcm.py'
       - 'tools/test_page_audio_match.py'
+      - 'tools/verify_jar_empty_sound.py'
+      - 'tools/match_bottle_fill_audio_pcm.py'
+      - 'tools/test_bottle_fill_audio.py'
       - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
       - '.github/workflows/closure-jar-sound-client.yml'
   workflow_dispatch:
@@ -58,18 +64,20 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg pulseaudio pulseaudio-utils
-      - name: Verify original BETA26 jar clips and matcher
+      - name: Verify original BETA26 jar, label and emptying sound contracts
         run: |
           python -m pip install numpy==2.2.6
           python tools/verify_jar_sound.py
           python tools/test_jar_audio_match.py
           python tools/verify_jar_label_sound.py
           python tools/test_page_audio_match.py
+          python tools/verify_jar_empty_sound.py
+          python tools/test_bottle_fill_audio.py
       - name: Generate and syntax-check actual Minecraft smoke
         run: |
           python3 tools/client_jar_sound_smoke.py > client-jar-generated.sh
           bash -n client-jar-generated.sh
-      - name: Launch Minecraft and capture original jar and label audio
+      - name: Launch Minecraft and capture original jar, label and emptying audio
         run: |
           export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
@@ -82,7 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m16-jar-and-label-original-sound-client-evidence
+          name: m16-jar-interaction-original-sound-client-evidence
           retention-days: 14
           if-no-files-found: warn
           path: |

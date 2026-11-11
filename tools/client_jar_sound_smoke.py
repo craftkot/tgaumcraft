@@ -131,6 +131,55 @@ PY
   fi
   python3 tools/match_page_audio_pcm.py client-smoke/label-baseline.pcm client-smoke/label-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/label-source-match.txt
   echo 'JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS' | tee -a client-smoke-status.txt
+
+  # M42: BETA26 fallback branch when a labelled jar is clicked from the wrong face.
+  # The original empties its contents, retains the label, and plays jar + bottle-fill.
+  send_chat '/setblock 250 151 251 thaumcraft:jar_normal{Aspect:"aer",AspectFilter:"aer",Amount:12s,facing:3b}'
+  send_chat '/execute if data block 250 151 251 {Aspect:"aer",AspectFilter:"aer",Amount:12s,facing:3b} run say JAR_EMPTY_FIXTURE_READY'
+  if ! grep -Fq 'JAR_EMPTY_FIXTURE_READY' client-smoke/client.log; then
+    echo 'JAR_EMPTY_FIXTURE_SETUP_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/item replace entity @p hotbar.0 with minecraft:air'
+  send_chat '/tp @p 250.5 150 249.5 0 0'
+  echo 'JAR_EMPTY_WRONG_FACE_EXPECTED=NORTH' | tee -a client-smoke-status.txt
+  sleep 2
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/empty-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/empty-event.pcm &
+  capture_pid=$!
+  sleep 0.6
+  xdotool keydown Shift_L
+  sleep 0.15
+  xdotool click 3
+  sleep 0.15
+  xdotool keyup Shift_L
+  sleep 3
+  wait "$capture_pid" || test "$?" -eq 124
+  send_chat '/execute if data block 250 151 251 {AspectFilter:"aer",Amount:0s} run say JAR_EMPTY_SERVER_RESET_FILTER_RETAINED'
+  if ! grep -Fq 'JAR_EMPTY_SERVER_RESET_FILTER_RETAINED' client-smoke/client.log; then
+    echo 'JAR_EMPTY_SERVER_RESET_OR_FILTER_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_jar_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/empty-jar-source-match.txt
+  python3 tools/match_bottle_fill_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event.pcm | tee client-smoke/empty-bottle-source-match.txt
+  python3 - <<'PY'
+from pathlib import Path
+import sys
+sys.path.insert(0, "tools")
+from match_page_audio_pcm import check
+try:
+    check(
+        Path("client-smoke/empty-baseline.pcm"),
+        Path("client-smoke/empty-event.pcm"),
+        Path("src/main/resources/assets/thaumcraft/sounds"),
+    )
+except AssertionError:
+    print("JAR_EMPTY_NO_PAGE_SOUND=PASS")
+else:
+    raise SystemExit("Wrong-face emptying unexpectedly played the label PAGE event")
+PY
+  echo 'JAR_EMPTY_BETA26_SOUND_PAIR_AND_SERVER_RESET=PASS' | tee -a client-smoke-status.txt
+
 fi
 '''
 sys.stdout.write(head + body)
