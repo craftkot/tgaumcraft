@@ -93,7 +93,10 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
     /** AuraHelper.drainFlux: same per-chunk capping as Vis. */
     public float drainFlux(BlockPos pos, float amount, boolean simulate) {
-        if (!Float.isFinite(amount) || amount <= 0.0F) return 0.0F;
+        // BETA26 permits finite negative requests: they return a negative amount and
+        // increase stored Flux. Preserve that odd API behavior; reject NaN/Infinity
+        // so invalid floats cannot poison persistent aura data.
+        if (!Float.isFinite(amount)) return 0.0F;
         long key = key(pos);
         AuraChunk c = chunks.get(key);
         if (c == null) return 0.0F;
