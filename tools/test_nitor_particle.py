@@ -94,8 +94,8 @@ for particle_name in ("nitor_flame", "nitor_core"):
 def verifier_result(name: str, omit: str | None = None, wrong: str | None = None) -> subprocess.CompletedProcess[str]:
     lines = [
         "TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=20 flames=20 cores=2",
-        "TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb=16767037 mapColor=15000000 particleColor=15000000",
-        "TC_SMOKE_NITOR_FLAME_CREATED=YES id=1 frameStart=264 frameCount=8 lifetime=10 startScale=3.5 rgb=15000000",
+        "TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb=16701501 mapColor=15066419 particleColor=15066419",
+        "TC_SMOKE_NITOR_FLAME_CREATED=YES id=1 frameStart=264 frameCount=8 lifetime=10 startScale=3.5 rgb=15066419",
         "TC_SMOKE_NITOR_CORE_CREATED=YES id=1 frame=457 lifetime=10 middleScale=1.1",
         "TC_SMOKE_NITOR_FLAME_RENDERED=YES id=1 frame=265 age=1",
         "TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=1",
@@ -116,10 +116,10 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
     if omit == "blend":
         lines = [line for line in lines if "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN" not in line]
     if wrong == "dye":
-        lines = [line.replace("mapColor=15000000 particleColor=15000000",
-                              "mapColor=16767037 particleColor=16767037") for line in lines]
+        lines = [line.replace("mapColor=15066419 particleColor=15066419",
+                              "mapColor=16701501 particleColor=16701501") for line in lines]
     if wrong == "particle":
-        lines = [line.replace("particleColor=15000000", "particleColor=16767037") for line in lines]
+        lines = [line.replace("particleColor=15066419", "particleColor=16701501") for line in lines]
     with tempfile.TemporaryDirectory() as directory:
         log = Path(directory) / f"{name}.log"
         log.write_text("\n".join(lines) + "\n", encoding="utf-8")
