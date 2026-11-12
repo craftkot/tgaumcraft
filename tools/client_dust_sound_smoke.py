@@ -75,7 +75,6 @@ anchor = "  # BETA26 Nitor emits a flame particle every client tick and a core e
   send_chat '/setblock 2 151 12 minecraft:bookshelf'
   send_chat '/execute if block 2 151 12 minecraft:bookshelf run say SALIS_TEMPORAL_CONTROL_RESTORED'
   grep -Fq 'SALIS_TEMPORAL_CONTROL_RESTORED' client-smoke/client.log
-  xdotool key --clearmodifiers F1
   sleep 1
   # At >4s after use, with the same shelf restored, FX must have expired.
   import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-late.png
