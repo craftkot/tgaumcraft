@@ -102,11 +102,11 @@ final class NitorParticle extends TextureSheetParticle {
         // BETA26 drawNitorFlames: age 10..14, alpha .66, scale 3..4 -> .05.
         // BETA26 drawNitorCore: age 10, white, scale 1 -> randomized middle -> 1.
         this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;
-        // Minecraft 1.21 renders a queued particle before its first client tick.
-        // BETA26 FXGeneric increments particleAge in onUpdate before first render,
-        // so initialize at age 1 to preserve the original first visible frame.
-        // The real-client probe observed age 0 when initialized at 0.
-        this.age = 1;
+        // In the actual 1.21.1 block-entity emission path, ParticleEngine advances
+        // this queued particle twice before its first visible quad (age 3 when seeded
+        // at 1). BETA26 FXGeneric renders after one onUpdate, so seed at -1 to make
+        // the first modern visible quad correspond to legacy particleAge 1.
+        this.age = -1;
         this.startScale = flame ? 3.0F + level.random.nextFloat() : 1.0F;
         this.middleScale = flame ? 1.0F
                 : 1.0F + (float) level.random.nextGaussian() * 0.1F;

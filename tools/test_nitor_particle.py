@@ -36,15 +36,30 @@ def core_scale(middle: float, age: int, lifetime: int) -> float:
         return 1.0 + (middle - 1.0) * (progress * 2.0)
     return middle + (1.0 - middle) * ((progress - 0.5) * 2.0)
 
-# Minecraft 1.21 renders a queued particle before its first client tick.
-# BETA26 FXGeneric increments particleAge in onUpdate before its first render,
-# so the modern provider must start at age 1 to preserve the first visible frame.
-def first_render_age(initial_age: int) -> int:
-    return initial_age
+# The exact 1.21.1 client run showed age=3 on the first visible quad when
+# the provider was seeded at age=1: this block-entity emission path advances
+# the queued particle twice before first render. BETA26 FXGeneric's first
+# visible age is 1, so compensate for both modern pre-render updates.
+PRE_RENDER_TICKS = 2
 
-assert first_render_age(1) == 1
-assert first_render_age(0) == 0
-assert 264 + first_render_age(1) % 8 == 265
+def first_render_age(initial_age: int) -> int:
+    return initial_age + PRE_RENDER_TICKS
+
+assert first_render_age(-1) == 1
+assert first_render_age(0) == 2
+assert first_render_age(1) == 3
+assert 264 + first_render_age(-1) % 8 == 265
+
+# The age=-1 seed still exposes exactly the legacy visible ages 1..lifetime.
+for lifetime in (10, 14):
+    age = -1
+    for _ in range(PRE_RENDER_TICKS):
+        age += 1
+    visible_ages = [age]
+    while age < lifetime:
+        age += 1
+        visible_ages.append(age)
+    assert visible_ages == list(range(1, lifetime + 1))
 
 # Compare the modern formulas against the exact source keyframe interpolator.
 for lifetime in range(10, 15):
@@ -67,7 +82,7 @@ assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
 assert "CORE_FRAME = 457" in PARTICLE
 assert "this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;" in PARTICLE
-assert "this.age = 1;" in PARTICLE
+assert "this.age = -1;" in PARTICLE
 assert "this.quadSize = 0.1F * scaleAt(this.age);" in PARTICLE
 assert "private static final AtomicInteger FLAME_FRAME_MASK" in PARTICLE
 assert "FLAME_FRAME_MASK.getAndUpdate(mask -> mask | bit)" in PARTICLE
