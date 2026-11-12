@@ -168,12 +168,24 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
         "TC_SMOKE_NITOR_FLAME_EXPIRED=YES id=1 age=10 lifetime=10",
         "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1",
     ]
+    # A software-rendered client may sample only a subset of GPU frames.
+    # The real particle's post-render tick markers must still cover the full
+    # BETA26 eight-frame atlas cycle; this fixture models that distinction.
     lines.extend(
         f"TC_SMOKE_NITOR_FLAME_FRAME=YES frame={frame}"
-        for frame in range(264, 272)
+        for frame in (265, 269)
+    )
+    lines.extend(
+        f"TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age={age} frame={264 + age % 8}"
+        for age in range(2, 10)
     )
     if omit == "last-frame":
         lines = [line for line in lines if "frame=271" not in line]
+    if omit == "last-tick-frame":
+        lines = [
+            line for line in lines
+            if "TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age=7 frame=271" not in line
+        ]
     if omit == "core-render":
         lines = [line for line in lines if "TC_SMOKE_NITOR_CORE_RENDERED" not in line]
     if omit == "core-first-scale":
@@ -196,6 +208,12 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
                          "TC_SMOKE_NITOR_FLAME_RENDERED=YES id=1 frame=265 age=0")
             for line in lines
         ]
+    if wrong == "tick-frame":
+        lines = [
+            line.replace("TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age=7 frame=271",
+                         "TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age=7 frame=270")
+            for line in lines
+        ]
     with tempfile.TemporaryDirectory() as directory:
         log = Path(directory) / f"{name}.log"
         log.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -207,6 +225,8 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
 good = verifier_result("good")
 assert good.returncode == 0, good.stdout + good.stderr
 assert verifier_result("missing-last-frame", omit="last-frame").returncode != 0
+assert verifier_result("missing-last-tick-frame", omit="last-tick-frame").returncode != 0
+assert verifier_result("wrong-tick-frame", wrong="tick-frame").returncode != 0
 assert verifier_result("missing-core-render", omit="core-render").returncode != 0
 assert verifier_result("missing-core-first-scale", omit="core-first-scale").returncode != 0
 assert verifier_result("wrong-core-phase", wrong="core-phase").returncode != 0
