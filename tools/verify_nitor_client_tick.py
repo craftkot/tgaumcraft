@@ -5,6 +5,8 @@ import math
 import re
 import sys
 
+from nitor_frame_coverage import assert_nitor_frame_coverage
+
 if len(sys.argv) != 2:
     raise SystemExit("usage: verify_nitor_client_tick.py <client.log>")
 log = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
@@ -80,15 +82,10 @@ if (int(flame_render[0]), int(flame_render[1])) != (265, 1):
         f"Nitor first visible flame frame does not match FXGeneric age-one phase: {flame_render}"
     )
 
-frame_matches = re.findall(
-    r"TC_SMOKE_NITOR_FLAME_FRAME=YES frame=(\d+)", log
-)
-frames = {int(frame) for frame in frame_matches}
-if len(frame_matches) != 8 or frames != set(range(264, 272)):
-    raise SystemExit(
-        f"Nitor flame did not render all eight looping atlas frames across visible instances: "
-        f"{sorted(frames)} (markers={len(frame_matches)})"
-    )
+try:
+    rendered_frames, tick_frames = assert_nitor_frame_coverage(log)
+except AssertionError as exc:
+    raise SystemExit(str(exc)) from exc
 
 flame_expired = one(
     r"TC_SMOKE_NITOR_FLAME_EXPIRED=YES id=1 age=(\d+) lifetime=(\d+)",
@@ -141,6 +138,7 @@ if "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES" not in log:
 
 print(
     "NITOR_REAL_CLIENT_PARTICLES=PASS "
-    f"flameFrames=264..271 coreFrame=457 "
+    f"flameTickFrames={tick_frames[0]}..{tick_frames[-1]} "
+    f"renderedFrames={','.join(map(str, rendered_frames))} coreFrame=457 "
     f"mapColor={map_rgb:#08x} additive=770/1"
 )
