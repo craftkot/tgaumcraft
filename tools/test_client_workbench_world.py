@@ -151,7 +151,8 @@ expect_difficulty(
 )
 
 generator = Path(__file__).with_name("client_workbench_gui_smoke.py").read_text(encoding="utf-8")
-expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)' in generator,\n       "OCR self-test must write diagnostics to stderr, not corrupt generated shell stdout")\nexpect("send_chat '/save-all flush'" not in generator,
+expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)' in generator,
+       "OCR self-test must write diagnostics to stderr, not corrupt generated shell stdout")\nexpect("send_chat '/save-all flush'" not in generator,
        "GUI generator still sends the unavailable singleplayer save-all command")
 expect("assert_client_workbench_difficulty.py client-smoke/client.log" in generator,
        "GUI generator does not verify live integrated-server difficulty feedback")
