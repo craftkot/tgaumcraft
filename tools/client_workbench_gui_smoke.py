@@ -115,13 +115,13 @@ body = r'''
   panel_y=$((42 * scale))
   panel_width=$((46 * scale))
   panel_height=$((54 * scale))
-  convert client-smoke/screenshots/workbench-gui-crop.png \\
-    -crop "$title_width"x"$title_height"+"$title_x"+0 +repage \\
-    -resize 300% -colorspace Gray -contrast-stretch 0x12% \\
+  convert client-smoke/screenshots/workbench-gui-crop.png \
+    -crop "$title_width"x"$title_height"+"$title_x"+0 +repage \
+    -resize 300% -colorspace Gray -contrast-stretch 0x12% \
     client-smoke/screenshots/workbench-title-ocr.png
-  convert client-smoke/screenshots/workbench-gui-crop.png \\
-    -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \\
-    -resize 400% -colorspace Gray -contrast-stretch 0x12% \\
+  convert client-smoke/screenshots/workbench-gui-crop.png \
+    -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \
+    -resize 400% -colorspace Gray -contrast-stretch 0x12% \
     client-smoke/screenshots/workbench-vis-ocr.png
   test -s client-smoke/screenshots/workbench-title-ocr.png
   test -s client-smoke/screenshots/workbench-vis-ocr.png
