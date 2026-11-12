@@ -150,7 +150,7 @@ expect_difficulty(
     "Hard difficulty was accepted as Peaceful",
 )
 
-expect("\\nexpect(" not in Path(__file__).read_text(encoding="utf-8"),
+expect((chr(92) + "nexpect(") not in Path(__file__).read_text(encoding="utf-8"),
        "test source contains a literal escaped newline between Python statements")
 generator = Path(__file__).with_name("client_workbench_gui_smoke.py").read_text(encoding="utf-8")
 expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)' in generator,
