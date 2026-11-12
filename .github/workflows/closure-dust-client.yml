@@ -1,4 +1,4 @@
-name: M16 real Minecraft Salis dust and Nitor client tick smoke
+name: M16 real Minecraft Salis dust and BETA26 Nitor particle smoke
 
 on:
   push:
@@ -6,6 +6,10 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/NitorBlockEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorParticleRegistration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/NitorParticleClientEvents.java'
+      - 'src/main/resources/assets/thaumcraft/particles/nitor_*.json'
+      - 'tools/test_nitor_particle.py'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorBlockEntityRegistration.java'
       - 'tools/test_nitor_client_tick.py'
       - 'tools/verify_nitor_client_tick.py'
@@ -33,6 +37,10 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/blockentity/NitorBlockEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorParticleRegistration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/NitorParticleClientEvents.java'
+      - 'src/main/resources/assets/thaumcraft/particles/nitor_*.json'
+      - 'tools/test_nitor_particle.py'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorBlockEntityRegistration.java'
       - 'tools/test_nitor_client_tick.py'
       - 'tools/verify_nitor_client_tick.py'
@@ -93,13 +101,14 @@ jobs:
           python tools/test_salis_face_delay.py
           python tools/test_salis_queue_unload_jvm.py
           python tools/test_salis_chunk_probe_cleanup.py
+          python tools/test_nitor_particle.py
           python tools/test_nitor_client_tick.py
       - name: Generate and syntax-check client Salis smoke
         run: |
           python tools/test_dust_capture_fixture.py
           python tools/client_dust_sound_smoke.py > client-dust-generated.sh
           bash -n client-dust-generated.sh
-      - name: Launch real Minecraft and record Salis bookshelf sound
+      - name: Launch real Minecraft and record Nitor and Salis evidence
         run: |
           export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
           mkdir -p "$XDG_RUNTIME_DIR"
@@ -109,11 +118,13 @@ jobs:
           pactl set-default-sink tc_dust_sink
           export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Dthaumcraft.salisChunkUnloadScenario=true -Dthaumcraft.nitorSmoke=true"
           bash client-dust-generated.sh
-      - name: Verify real-client visible Salis particles
+      - name: Verify real-client Nitor and Salis particles
         # Screenshot assertions require a completed client run; setup cancellation is not a particle failure.
         if: ${{ success() }}
         run: |
           python tools/verify_nitor_client_tick.py client-smoke/client.log
+          identify client-smoke/screenshots/08m-nitor-particles-before.png \
+            client-smoke/screenshots/08n-nitor-flame-core-active.png
           set -o pipefail
           python tools/verify_salis_sparkles_screenshot.py \
             client-smoke/screenshots/08k-firststeps-real-bookshelf-before-salis.png \
@@ -128,7 +139,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m16-salis-dust-original-audio-evidence
+          name: m16-nitor-salis-real-client-evidence
           retention-days: 14
           if-no-files-found: warn
           path: |
