@@ -4,12 +4,15 @@ from pathlib import Path
 import subprocess
 import sys
 
+from nitor_frame_coverage import assert_nitor_frame_coverage
+
 ROOT = Path(__file__).resolve().parents[1]
 BLOCK = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java").read_text()
 ENTITY = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/blockentity/NitorBlockEntity.java").read_text()
 REGISTRATION = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorParticleRegistration.java").read_text()
 PARTICLE = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/client/NitorParticleClientEvents.java").read_text()
 WORKFLOW = (ROOT / ".github/workflows/closure-dust-client.yml").read_text()
+VERIFY = (ROOT / "tools/verify_nitor_client_tick.py").read_text()
 
 assert "extends BaseEntityBlock" in BLOCK
 assert "simpleCodec(NitorBlock::new)" in BLOCK
@@ -38,6 +41,42 @@ assert "event.registerSpriteSet(NitorParticleRegistration.FLAME_TYPE" in PARTICL
 assert "event.registerSpriteSet(NitorParticleRegistration.CORE_TYPE" in PARTICLE
 assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
+assert "private int smokeTickFrameMask;" in PARTICLE
+assert "TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age=" in PARTICLE
+assert "if (SMOKE_PROBE && flame && smokeId == 1 && firstVisibleRenderDone)" in PARTICLE
+assert "assert_nitor_frame_coverage(log)" in VERIFY
+
+def frame_log(rendered_frames, ages, wrong_age=None):
+    lines = [f"TC_SMOKE_NITOR_FLAME_FRAME=YES frame={frame}" for frame in rendered_frames]
+    for age in ages:
+        frame = 264 + age % 8
+        if age == wrong_age:
+            frame = 270
+        lines.append(
+            f"TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age={age} frame={frame}"
+        )
+    return "\n".join(lines)
+
+
+rendered, tick_frames = assert_nitor_frame_coverage(
+    frame_log(range(264, 271), range(2, 10))
+)
+assert rendered == tuple(range(264, 271))
+assert tick_frames == tuple(range(264, 272))
+
+for invalid in (
+    frame_log(range(264, 271), (2, 3, 4, 5, 6, 8, 9)),
+    frame_log(range(264, 271), range(2, 10), wrong_age=7),
+    frame_log((265,), range(2, 10)),
+    frame_log((265, 265), range(2, 10)),
+):
+    try:
+        assert_nitor_frame_coverage(invalid)
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError("invalid Nitor frame coverage was accepted")
+
 assert "CORE_FRAME = 457" in PARTICLE
 assert "RenderSystem.blendFunc(770, 1);" in PARTICLE
 assert "ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT.begin" in PARTICLE
