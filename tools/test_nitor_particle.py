@@ -36,16 +36,15 @@ def core_scale(middle: float, age: int, lifetime: int) -> float:
         return 1.0 + (middle - 1.0) * (progress * 2.0)
     return middle + (1.0 - middle) * ((progress - 0.5) * 2.0)
 
-# NitorBlockEntity emits during the client level tick; the particle engine
-# advances pending particles before their first rendered frame. Starting at
-# zero therefore produces the BETA26 FXGeneric age-one sample on screen.
-def first_visible_age_after_client_tick(initial_age: int) -> int:
-    return initial_age + 1
+# Minecraft 1.21 renders a queued particle before its first client tick.
+# BETA26 FXGeneric increments particleAge in onUpdate before its first render,
+# so the modern provider must start at age 1 to preserve the first visible frame.
+def first_render_age(initial_age: int) -> int:
+    return initial_age
 
-first_visible_age = first_visible_age_after_client_tick(0)
-assert first_visible_age == 1
-assert 264 + first_visible_age % 8 == 265
-assert first_visible_age_after_client_tick(1) == 2
+assert first_render_age(1) == 1
+assert first_render_age(0) == 0
+assert 264 + first_render_age(1) % 8 == 265
 
 # Compare the modern formulas against the exact source keyframe interpolator.
 for lifetime in range(10, 15):
@@ -68,7 +67,7 @@ assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
 assert "CORE_FRAME = 457" in PARTICLE
 assert "this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;" in PARTICLE
-assert "this.age = 0;" in PARTICLE
+assert "this.age = 1;" in PARTICLE
 assert "this.quadSize = 0.1F * scaleAt(this.age);" in PARTICLE
 assert "private static final AtomicInteger FLAME_FRAME_MASK" in PARTICLE
 assert "FLAME_FRAME_MASK.getAndUpdate(mask -> mask | bit)" in PARTICLE
@@ -142,6 +141,14 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
     if wrong == "core-phase":
         lines = [line.replace("TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=1",
                               "TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=2") for line in lines]
+    if wrong == "first-render-zero":
+        lines = [
+            line.replace("TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=1",
+                         "TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=0")
+                .replace("TC_SMOKE_NITOR_FLAME_RENDERED=YES id=1 frame=265 age=1",
+                         "TC_SMOKE_NITOR_FLAME_RENDERED=YES id=1 frame=265 age=0")
+            for line in lines
+        ]
     with tempfile.TemporaryDirectory() as directory:
         log = Path(directory) / f"{name}.log"
         log.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -156,6 +163,7 @@ assert verifier_result("missing-last-frame", omit="last-frame").returncode != 0
 assert verifier_result("missing-core-render", omit="core-render").returncode != 0
 assert verifier_result("missing-core-first-scale", omit="core-first-scale").returncode != 0
 assert verifier_result("wrong-core-phase", wrong="core-phase").returncode != 0
+assert verifier_result("first-render-zero", wrong="first-render-zero").returncode != 0
 assert verifier_result("missing-additive", omit="blend").returncode != 0
 assert verifier_result("old-dye-rgb", wrong="dye").returncode != 0
 assert verifier_result("wrong-particle-rgb", wrong="particle").returncode != 0
