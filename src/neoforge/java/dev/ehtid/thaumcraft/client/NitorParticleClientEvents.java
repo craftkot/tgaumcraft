@@ -3,9 +3,11 @@ package dev.ehtid.thaumcraft.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.registry.NitorParticleRegistration;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
@@ -164,6 +166,16 @@ final class NitorParticle extends TextureSheetParticle {
 
     private float v(int cell) {
         return atlas.getV0() + (atlas.getV1() - atlas.getV0()) * cell / GRID_SIZE;
+    }
+
+    @Override
+    public void render(VertexConsumer buffer, Camera camera, float partialTick) {
+        // BETA26 FXGeneric advances age before its first visible quad. The
+        // modern block-entity queue can ask the particle to render at age -1
+        // and 0 before it reaches that first legacy-visible state. Do not draw
+        // those pre-roll states (age -1 would even select atlas cell 263).
+        if (this.age < 1) return;
+        super.render(buffer, camera, partialTick);
     }
 
     @Override
