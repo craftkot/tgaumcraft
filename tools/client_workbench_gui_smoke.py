@@ -118,8 +118,8 @@ body = r'''
   printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM6_END\\n' "$panel_text_6" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM11_END\\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
-  python3 tools/assert_client_workbench_gui_ocr.py \\
-    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_11" "$panel_text_6" "$panel_text_11" \\
+  python3 tools/assert_client_workbench_gui_ocr.py \
+    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_11" "$panel_text_6" "$panel_text_11" \
     | tee -a client-smoke-status.txt
 
   if grep -Eiq 'Unable to load model.*thaumcraft:arcane_workbench|Unable to load texture.*arcaneworkbench|Exception in thread "Render thread"|Minecraft has crashed' client-smoke/client.log; then
