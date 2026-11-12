@@ -183,7 +183,7 @@ PY
     echo 'JAR_LABEL_CONFIGURED_FACE_CLIENT_PAGE_BRANCH_NOT_OBSERVED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
-  if grep -Fq 'id:"thaumcraft:label"' client-smoke/client.log; then
+  if grep -Eq '(^|[^[:alnum:]_])id:[[:space:]]*"thaumcraft:label"' client-smoke/client.log; then
     echo 'JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS source=entity-or-inventory-nbt' | tee -a client-smoke-status.txt
   else
     echo 'JAR_LABEL_SERVER_BLANK_DROP_MISSING=YES' | tee -a client-smoke-status.txt

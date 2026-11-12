@@ -2886,3 +2886,13 @@ Fresh-state review:
 - Updated the source/asset verifier to require the replacement live-data path: query the nearest item entity's Item compound, query the player's complete Inventory compound, and require the serialized id thaumcraft:label plus the single combined PASS marker. No gameplay or resource contract was weakened; the old query was the stale assertion.
 - Only tools/verify_jar_label_sound.py and this lane journal changed in this commit. M41/M43 real-client acceptance remains pending; do not infer a pass from static checks.
 - Fixed-scale readiness remains 59/100; M16 4/6. Next: rerun the exact-head jar workflow; if M41 data observation succeeds, continue through the held-hit overlay and original jar1.ogg matcher before returning to Arcane Workbench GUI work.
+
+
+## 2026-11-12 — M41: accept Minecraft's pretty-printed SNBT whitespace
+
+- Exact real-client run #43162725406 reached the correct-face label-removal interaction. The client emitted TC_SMOKE_JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED=YES; the server emitted JAR_LABEL_SERVER_FILTER_REMOVED. The subsequent /data get entity Item output was: Jar Label has the following entity data: {count: 1, id: "thaumcraft:label"}. The player's Inventory output was []. This run proves the blank label was dropped as an item entity, not that it was picked up.
+- The smoke then failed at the observation gate because fixed-string grep expected id:"thaumcraft:label" with no space. Minecraft 1.21.1's actual SNBT pretty-printer emitted id: "thaumcraft:label". This is a test-parser defect; it is not evidence of a production drop/sound failure. The PAGE PCM matcher was not reached, and M42/M43 did not run.
+- Updated the real-client smoke to match the exact id key with optional SNBT whitespace and the exact thaumcraft:label value. The existing source/asset verifier now exercises that same POSIX ERE against six fixtures: actual entity output, inventory output, compact SNBT, and three negative lookalikes.
+- Changed files: tools/client_jar_sound_smoke.py, tools/verify_jar_label_sound.py, and this lane journal. No production Java, registries, Gradle, workflow definitions, global localization, main, or parallel feature branch changed.
+- Local matcher regression: 6/6 fixtures PASS. Exact-head real-client rerun is pending; M41 is not yet accepted because its original PAGE PCM matcher has not completed. M42/M43 remain untested.
+- Fixed-scale readiness remains 59/100, M16 4/6. No points awarded.

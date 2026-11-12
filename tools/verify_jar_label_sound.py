@@ -6,6 +6,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 BLOCK = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java"
@@ -32,6 +33,30 @@ block = BLOCK.read_text(encoding="utf-8")
 sounds = SOUNDS.read_text(encoding="utf-8")
 manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
 smoke = SMOKE.read_text(encoding="utf-8")
+
+LABEL_NBT_GREP = r'(^|[^[:alnum:]_])id:[[:space:]]*"thaumcraft:label"'
+if f"grep -Eq '{LABEL_NBT_GREP}' client-smoke/client.log" not in smoke:
+    raise SystemExit("M41 must parse the exact label item id with Minecraft SNBT whitespace")
+label_nbt_samples = (
+    ('Jar Label has the following entity data: {count: 1, id: "thaumcraft:label"}', True),
+    ('Dev has the following entity data: [{Slot: 0b, id: "thaumcraft:label", count: 1}]', True),
+    ('Item: {id:"thaumcraft:label",count:1}', True),
+    ('Item: {id: "thaumcraft:label_overlay",count:1}', False),
+    ('Item: {id: "minecraft:paper",count:1}', False),
+    ('Item: {custom_id: "thaumcraft:label",count:1}', False),
+)
+for sample, expected in label_nbt_samples:
+    result = subprocess.run(
+        ["grep", "-Eq", LABEL_NBT_GREP],
+        input=sample,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if (result.returncode == 0) != expected:
+        raise SystemExit(f"Minecraft SNBT label matcher regression: {sample!r}")
+print("MINECRAFT_SNBT_LABEL_WHITESPACE_MATCHER=PASS (6 fixtures)")
+
 
 method_start = block.index("protected InteractionResult useWithoutItem")
 client_start = block.index("if (level.isClientSide) {", method_start)
@@ -152,7 +177,7 @@ for marker in (
 for token in (
     "send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'",
     "send_chat '/data get entity @p Inventory'",
-    "grep -Fq 'id:\"thaumcraft:label\"' client-smoke/client.log",
+    "grep -Eq '(^|[^[:alnum:]_])id:[[:space:]]*\"thaumcraft:label\"' client-smoke/client.log",
     "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
 ):
     if token not in smoke:
