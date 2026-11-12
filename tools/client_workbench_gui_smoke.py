@@ -7,6 +7,7 @@ after opening the actual block menu and capturing the localized screen.
 from pathlib import Path
 import os
 import sys
+import subprocess
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 options_line = "printf 'guiScale:2\\n' > run/options.txt"
@@ -21,6 +22,7 @@ if scale not in {"2", "3"}:
     raise SystemExit("TC_WORKBENCH_GUI_SCALE must be 2 or 3")
 if tess_language != ("eng" if language == "en_us" else "rus"):
     raise SystemExit("Tesseract language does not match Minecraft language")
+subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True)
 if source.count(options_line) != 1:
     raise SystemExit("Minecraft options line changed; refusing unsafe injection")
 if source.count(anchor) != 1:
@@ -35,7 +37,7 @@ if source.count(login_gate) != 1:
     raise SystemExit("Shared integrated-player login gate changed; refusing unsafe injection")
 
 replacement = (
-    "printf 'guiScale:%s\\nlang:%s\\n' "
+    "printf 'guiScale:%s\\nlang:%s\\ntutorialStep:none\\n' "
     "\"$TC_WORKBENCH_GUI_SCALE\" \"$TC_WORKBENCH_LANG\" > run/options.txt"
 )
 source = source.replace(options_line, replacement, 1)
@@ -103,88 +105,22 @@ body = r'''
     -crop "$gui_width"x"$gui_height"+"$gui_left"+"$gui_top" +repage \
     client-smoke/screenshots/workbench-gui-crop.png
 
-  # OCR the actual title and the two-line Vis/cost readout at physical pixels.
-  title_x=$((12 * scale))
-  title_width=$((120 * scale))
-  title_height=$((24 * scale))
-  panel_x=$((144 * scale))
-  panel_y=$((42 * scale))
-  panel_width=$((46 * scale))
-  panel_height=$((54 * scale))
-  convert client-smoke/screenshots/workbench-gui-crop.png \
-    -crop "$title_width"x"$title_height"+"$title_x"+0 +repage \
-    -colorspace Gray -threshold 65% -resize 600% \
-    client-smoke/screenshots/workbench-title-ocr.png
-  convert client-smoke/screenshots/workbench-gui-crop.png \
-    -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \
-    -colorspace Gray -threshold 35% -resize 400% \
-    client-smoke/screenshots/workbench-vis-ocr.png
+  # The tutorial toast can cover the title at GUI scale 3. Disable it in the
+  # isolated options file above; do not dismiss it by moving the player.
+  # Run two Tesseract page-segmentation modes because Minecraft's bitmap glyphs
+  # are inconsistently split/merged by a single OCR mode.
+  title_text_6="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
+  title_text_11="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
+  panel_text_6="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
+  panel_text_11="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
+  printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\\n%s\\nWORKBENCH_TITLE_OCR_PSM6_END\\n' "$title_text_6" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_TITLE_OCR_PSM11_BEGIN\\n%s\\nWORKBENCH_TITLE_OCR_PSM11_END\\n' "$title_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM6_END\\n' "$panel_text_6" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM11_END\\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
-  # Minecraft's pixel font is not reliably recognized by Tesseract as a
-  # complete word. Use a single-line title pass and bounded edit distance for
-  # clipped panel labels ("available" is intentionally ellipsized to fit the
-  # original 46px side strip).
-  title_text="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 7 2>/dev/null || true)"
-  panel_text="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
-  printf 'WORKBENCH_TITLE_OCR_BEGIN\n%s\nWORKBENCH_TITLE_OCR_END\n' "$title_text" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_VIS_OCR_BEGIN\n%s\nWORKBENCH_VIS_OCR_END\n' "$panel_text" | tee -a client-smoke-status.txt
-
-  python3 - "$TC_WORKBENCH_LANG" "$title_text" "$panel_text" <<'PY'
-import re
-import sys
-import unicodedata
-
-language, title, panel = sys.argv[1], sys.argv[2], sys.argv[3]
-
-def tokens(value):
-    normalized = unicodedata.normalize("NFKC", value).casefold()
-    return re.findall(r"[0-9a-zа-яё]+", normalized)
-
-def edit_distance(left, right):
-    previous = list(range(len(right) + 1))
-    for index, char in enumerate(left, 1):
-        current = [index]
-        for other_index, other in enumerate(right, 1):
-            current.append(min(
-                current[-1] + 1,
-                previous[other_index] + 1,
-                previous[other_index - 1] + (char != other),
-            ))
-        previous = current
-    return previous[-1]
-
-def contains_near(words, expected, maximum_distance):
-    return any(edit_distance(word, expected) <= maximum_distance for word in words)
-
-title_words = tokens(title)
-panel_words = tokens(panel)
-if language == "en_us":
-    expected_title = ("arcane", "workbench")
-    expected_available = "available"
-    expected_cost = "vis"
-else:
-    expected_title = ("магический", "верстак")
-    expected_available = "доступно"
-    expected_cost = "вис"
-
-checks = {
-    "localized title": (
-        contains_near(title_words, expected_title[0], 1)
-        and contains_near(title_words, expected_title[1], 2)
-    ),
-    "localized available label": contains_near(panel_words, expected_available, 2),
-    "localized vis label": contains_near(panel_words, expected_cost, 1),
-    # The pixel font sometimes turns the zero into O/H; the actual recipe
-    # pattern is separately fixed to ThaumometerRecipeLogic.BASE_VIS=20.
-    "20-vis recipe preview": contains_near(panel_words, "20", 1),
-}
-print(f"WORKBENCH_TITLE_OCR_TOKENS={title_words}")
-print(f"WORKBENCH_VIS_OCR_TOKENS={panel_words}")
-for name, passed in checks.items():
-    print(f"WORKBENCH_OCR_{name.upper().replace(' ', '_')}={'PASS' if passed else 'FAIL'}")
-if not all(checks.values()):
-    raise SystemExit("Real workbench screenshot did not contain every localized label")
-PY
+  python3 tools/assert_client_workbench_gui_ocr.py \\
+    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_11" "$panel_text_6" "$panel_text_11" \\
+    | tee -a client-smoke-status.txt
 
   if grep -Eiq 'Unable to load model.*thaumcraft:arcane_workbench|Unable to load texture.*arcaneworkbench|Exception in thread "Render thread"|Minecraft has crashed' client-smoke/client.log; then
     echo 'WORKBENCH_GUI_RENDER_OR_CLIENT_ERROR=YES' | tee -a client-smoke-status.txt
