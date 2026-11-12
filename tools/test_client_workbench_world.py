@@ -152,4 +152,31 @@ expect('--from-offset "$difficulty_log_offset" --wait-seconds 12' in generator,
 expect("assert_client_workbench_world.py run/saves --require-peaceful" not in generator,
        "GUI generator still reads the stale pre-shutdown difficulty byte")
 
+
+# The shared smoke's English chat sentence is localized in ru_ru. The isolated
+# workbench runner must replace it with the invariant PlayerList server log.
+shared_smoke = Path(__file__).with_name("client_smoke.sh").read_text(encoding="utf-8")
+english_login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
+expect(english_login_gate in shared_smoke,
+       "shared smoke login anchor changed; generator replacement must be reviewed")
+expect("login_gate = \"if grep -Fq 'Dev joined the game' client-smoke/client.log; then\"" in generator,
+       "workbench generator does not identify the localized shared login gate")
+expect("login_replacement = \"if grep -Fq 'logged in with entity id' client-smoke/client.log; then\"" in generator,
+       "workbench generator does not use invariant integrated-server login evidence")
+expect("source = source.replace(login_gate, login_replacement, 1)" in generator,
+       "workbench generator does not replace the English-only login gate")
+expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
+       "workbench crop still adds Openbox's horizontal client-frame offset")
+expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
+       "workbench crop still adds Openbox's vertical client-frame offset")
+expect("gui_top=$((Y + (HEIGHT - 234 * scale) / 2))" not in generator,
+       "workbench crop still uses the decorated window Y coordinate")
+expect("-threshold 65% -resize 600%" in generator and "--psm 7" in generator,
+       "title OCR is not using the tested single-line pixel-font preprocessing")
+expect("-threshold 35% -resize 400%" in generator and "--psm 6" in generator,
+       "panel OCR is not using the tested pixel-font preprocessing")
+expect("def edit_distance(" in generator and "contains_near(" in generator,
+       "workbench OCR still requires brittle exact Tesseract strings")
+
 print(f"Workbench world gate: OK ({checks} assertions)")
+
