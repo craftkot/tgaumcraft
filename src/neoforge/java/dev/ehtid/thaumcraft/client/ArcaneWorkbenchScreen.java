@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu;
+import dev.ehtid.thaumcraft.port.core.visual.WorkbenchVisPanelLayout;
 import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -10,9 +11,6 @@ import net.minecraft.world.entity.player.Inventory;
 
 /** FIRSTSTEPS arcane workbench screen; legacy slot geometry is owned by the menu. */
 public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneWorkbenchMenu> {
-    private static final int[][] ASPECT_LOCS = {
-            {72, 21}, {24, 43}, {24, 102}, {72, 124}, {120, 102}, {120, 43}
-    };
     // ShardType metadata order in BETA26: AIR, FIRE, WATER, EARTH, ORDER, ENTROPY.
     private static final int[] ASPECT_COLORS = {
             16777086, 16734721, 3986684, 5685248, 14013676, 4210752
@@ -43,18 +41,27 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
         int available = menu.availableVis();
         int cost = menu.displayedVisCost();
-        ThaumcraftReadableText.panel(graphics, 9, 112, 173, 24);
+        // The old full-width panel at y=112 covered the three lower BETA26
+        // crystal sockets. Move the readout into the unused wooden strip at
+        // the right edge; the six animated requirement icons remain visible.
+        ThaumcraftReadableText.panel(graphics,
+                WorkbenchVisPanelLayout.PANEL_X, WorkbenchVisPanelLayout.PANEL_Y,
+                WorkbenchVisPanelLayout.PANEL_WIDTH, WorkbenchVisPanelLayout.PANEL_HEIGHT);
         Component availableText = Component.literal(available + " ")
                 .append(Component.translatable("workbench.available"));
         int availableColor = available < cost
                 ? ThaumcraftReadableText.BAD_TEXT : ThaumcraftReadableText.GREEN_TEXT;
-        ThaumcraftReadableText.centeredLabel(graphics, font, availableText,
-                15, 115, 161, availableColor);
+        ThaumcraftReadableText.wrapped(graphics, font, availableText,
+                WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.AVAILABLE_Y,
+                WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
+                availableColor);
         if (cost > 0) {
             Component costText = Component.literal(cost + " ")
                     .append(Component.translatable("workbench.cost"));
-            ThaumcraftReadableText.centeredLabel(graphics, font, costText,
-                    15, 125, 161, ThaumcraftReadableText.MUTED_TEXT);
+            ThaumcraftReadableText.wrapped(graphics, font, costText,
+                    WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.COST_Y,
+                    WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
+                    ThaumcraftReadableText.MUTED_TEXT);
         }
     }
 
@@ -71,7 +78,7 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
         if (crystalMask == 0) return;
 
         int ticks = minecraft != null && minecraft.player != null ? minecraft.player.tickCount : 0;
-        for (int i = 0; i < ASPECT_LOCS.length; i++) {
+        for (int i = 0; i < 6; i++) {
             // BETA26 only highlights aspects actually required by the
             // currently matched recipe, not all six primal crystals.
             if ((crystalMask & (1 << i)) == 0) continue;
@@ -81,8 +88,8 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
             float blue = (color & 0xFF) / 255.0F;
 
             graphics.pose().pushPose();
-            graphics.pose().translate(leftPos + ASPECT_LOCS[i][0] + 7.5F,
-                    topPos + ASPECT_LOCS[i][1] + 8.0F, 0.0F);
+            graphics.pose().translate(leftPos + WorkbenchVisPanelLayout.aspectX(i) + 7.5F,
+                    topPos + WorkbenchVisPanelLayout.aspectY(i) + 8.0F, 0.0F);
             graphics.pose().mulPose(Axis.ZP.rotationDegrees(i * 60.0F + (ticks % 360) + partialTick));
             graphics.pose().scale(0.5F, 0.5F, 1.0F);
             graphics.setColor(red, green, blue, 0.33F);

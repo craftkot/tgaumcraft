@@ -1,0 +1,76 @@
+name: M16 real Arcane Workbench GUI RU/EN client
+
+on:
+  push:
+    branches:
+      - feature/closure-near-complete
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayout.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/client_workbench_gui_smoke.py'
+      - '.github/workflows/closure-workbench-gui-client.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  workbench-gui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: en_us
+            tesseract: eng
+            scale: '2'
+          - language: ru_ru
+            tesseract: rus
+            scale: '2'
+          - language: en_us
+            tesseract: eng
+            scale: '3'
+          - language: ru_ru
+            tesseract: rus
+            scale: '3'
+    env:
+      TC_WORKBENCH_LANG: ${{ matrix.language }}
+      TC_WORKBENCH_TESS_LANG: ${{ matrix.tesseract }}
+      TC_WORKBENCH_GUI_SCALE: ${{ matrix.scale }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install real-client graphics, input and OCR tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            tesseract-ocr tesseract-ocr-rus
+          tesseract --list-langs
+      - name: Generate isolated smoke from the proven real-world boot
+        run: |
+          python3 tools/client_workbench_gui_smoke.py > client-workbench-gui-generated.sh
+          bash -n client-workbench-gui-generated.sh
+      - name: Open the actual Arcane Workbench and inspect localized GUI pixels
+        run: bash client-workbench-gui-generated.sh
+      - name: Upload actual Minecraft screenshots and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-workbench-gui-${{ matrix.language }}-scale-${{ matrix.scale }}
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/
