@@ -95,6 +95,7 @@ final class NitorParticle extends TextureSheetParticle {
     private double firstVisibleZo;
     private boolean smokeRendered;
     private boolean smokeExpired;
+    private int smokeTickFrameMask;
 
     private NitorParticle(ClientLevel level, double x, double y, double z,
                           double xSpeed, double ySpeed, double zSpeed,
@@ -241,6 +242,20 @@ final class NitorParticle extends TextureSheetParticle {
             this.yo = this.firstVisibleYo;
             this.zo = this.firstVisibleZo;
             return;
+        }
+
+        // A software-rendered client may advance several particle ticks between
+        // frames. Record the first flame's post-render tick sequence separately
+        // from GPU-sampled frames so the smoke can prove the full atlas loop
+        // without requiring the renderer to sample every intermediate frame.
+        if (SMOKE_PROBE && flame && smokeId == 1 && firstVisibleRenderDone) {
+            int frame = currentFrame();
+            int bit = 1 << (frame - FLAME_FIRST_FRAME);
+            if ((smokeTickFrameMask & bit) == 0) {
+                smokeTickFrameMask |= bit;
+                System.out.println("TC_SMOKE_NITOR_FLAME_TICK_FRAME=YES id=1 age="
+                        + age + " frame=" + frame);
+            }
         }
 
         int frameAge = Math.min(this.age, this.lifetime);
