@@ -12,6 +12,7 @@ on:
       - 'tools/test_readable_text_layout.sh'
       - 'tools/client_workbench_gui_smoke.py'
       - 'tools/assert_client_workbench_world.py'
+      - 'tools/assert_client_workbench_difficulty.py'
       - 'tools/test_client_workbench_world.py'
       - '.github/workflows/closure-workbench-gui-client.yml'
 

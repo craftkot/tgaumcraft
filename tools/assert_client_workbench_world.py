@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Verify the real Minecraft world used by the isolated Arcane Workbench smoke.
 
-The shared bootstrap's global world gate also requires Peaceful at first login.
-This lane does not change that shared contract: its generated copy replaces the
-gate with this narrower check, then explicitly sets Peaceful and flushes the
-world before gameplay. The final check can require the persisted Peaceful byte.
+The generated copy replaces only the shared initial world gate with this
+narrower check: real allowCommands=1 and Creative must be present before any
+scripted interaction. Difficulty is changed in the live integrated server and
+verified from its command feedback; /save-all is unavailable in singleplayer.
+The --require-peaceful mode remains available for a post-shutdown NBT check.
 """
 from pathlib import Path
 import gzip

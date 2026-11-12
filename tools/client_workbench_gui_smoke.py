@@ -43,9 +43,12 @@ body = r'''
   # The shared bootstrap's initial NBT gate is narrowed only in this generated
   # copy: require real cheats + Creative, then set Peaceful and persist it before
   # any scripted block/item interaction. The shared client_smoke.sh is untouched.
+  # Integrated singleplayer does not register /save-all (dedicated-server-only).
+  # The initial NBT gate already proved cheats + Creative; now require the
+  # integrated server's actual command feedback instead of reading stale
+  # pre-save level.dat metadata.
   send_chat '/difficulty peaceful'
-  send_chat '/save-all flush'
-  python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt
+  python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log | tee -a client-smoke-status.txt
 
   # The existing real workbench at 12,149,7 is opened by an actual right click.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
