@@ -113,10 +113,10 @@ body = r'''
   title_text_11="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
   panel_text_6="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
   panel_text_11="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
-  printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\\n%s\\nWORKBENCH_TITLE_OCR_PSM6_END\\n' "$title_text_6" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_TITLE_OCR_PSM11_BEGIN\\n%s\\nWORKBENCH_TITLE_OCR_PSM11_END\\n' "$title_text_11" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM6_END\\n' "$panel_text_6" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\\n%s\\nWORKBENCH_VIS_OCR_PSM11_END\\n' "$panel_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM6_END\n' "$title_text_6" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_TITLE_OCR_PSM11_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM11_END\n' "$title_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM6_END\n' "$panel_text_6" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
   python3 tools/assert_client_workbench_gui_ocr.py \
     "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_11" "$panel_text_6" "$panel_text_11" \
