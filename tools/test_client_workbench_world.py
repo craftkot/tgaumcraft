@@ -94,12 +94,29 @@ already_peaceful_log = (
     "[09:13:35] [Render thread/INFO] [minecraft/ChatComponent]: "
     "[System] [CHAT] The difficulty did not change; it is already set to peaceful\n"
 )
+already_peaceful_log_ru = (
+    "[16:33:49] [Render thread/INFO] [minecraft/ChatComponent]: "
+    "[System] [CHAT] Сложность не изменилась; уже выставлено значение «peaceful»\n"
+)
 client_only_log = (
     "[09:13:35] [Render thread/INFO] [minecraft/ChatComponent]: "
     "[System] [CHAT] The difficulty has been set to Peaceful\n"
 )
 expect_difficulty(server_set_log, True, "server-confirmed Peaceful command was rejected")
-expect_difficulty(already_peaceful_log, True, "already-Peaceful server response was rejected")
+expect_difficulty(already_peaceful_log, True, "already-Peaceful English response was rejected")
+expect_difficulty(already_peaceful_log_ru, True, "already-Peaceful Russian response was rejected")
+expect_difficulty(
+    "prefix\n" + already_peaceful_log_ru,
+    True,
+    "current-command Russian response after the captured byte offset was rejected",
+    start_offset=len("prefix\n".encode("utf-8")),
+)
+expect_difficulty(
+    already_peaceful_log_ru + "prefix\n",
+    False,
+    "a stale Russian response written before the command offset was trusted",
+    start_offset=len((already_peaceful_log_ru + "prefix\n").encode("utf-8")),
+)
 expect_difficulty(client_only_log, False, "client-only echo was trusted without server confirmation")
 expect_difficulty("CLIENT_SENT_DIFFICULTY=YES\n", False, "typed-command marker was trusted")
 expect_difficulty(

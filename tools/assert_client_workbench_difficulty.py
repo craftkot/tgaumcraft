@@ -26,7 +26,14 @@ def assert_peaceful_response(log: str | bytes, start_offset: int = 0) -> str:
     chat_already = any(
         "[Render thread/INFO]" in line
         and "[CHAT]" in line
-        and "The difficulty did not change; it is already set to peaceful" in line
+        and (
+            "The difficulty did not change; it is already set to peaceful" in line
+            or (
+                "Сложность не изменилась" in line
+                and "уже выставлено значение" in line
+                and "peaceful" in line
+            )
+        )
         for line in lines
     )
     if server_set:
