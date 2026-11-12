@@ -87,7 +87,7 @@ assert "python tools/verify_jar_soundtype_smoke.py" in WORKFLOW
 assert "send_chat '/kill @e[type=minecraft:item]'" in SMOKE
 assert "send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'" in SMOKE
 assert "send_chat '/data get entity @p Inventory'" in SMOKE
-assert 'id:"thaumcraft:label"' in SMOKE
+assert """grep -Eq '(^|[^[:alnum:]_])id:[[:space:]]*"thaumcraft:label"'""" in SMOKE
 assert "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS" in SMOKE
 assert 'nbt={Item:{id:"thaumcraft:label"}}' not in SMOKE
 assert "hotbar.* thaumcraft:label" not in SMOKE

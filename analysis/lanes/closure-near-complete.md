@@ -2896,3 +2896,12 @@ Fresh-state review:
 - Changed files: tools/client_jar_sound_smoke.py, tools/verify_jar_label_sound.py, and this lane journal. No production Java, registries, Gradle, workflow definitions, global localization, main, or parallel feature branch changed.
 - Local matcher regression: 6/6 fixtures PASS. Exact-head real-client rerun is pending; M41 is not yet accepted because its original PAGE PCM matcher has not completed. M42/M43 remain untested.
 - Fixed-scale readiness remains 59/100, M16 4/6. No points awarded.
+
+
+## 2026-11-12 — M41 follow-up: remove the second stale fixed-string assertion
+
+- The first rerun after commit c818f8d3, [Actions #43166350030](https://github.com/craftkot/tgaumcraft/actions/runs/43166350030), stopped in the early M43 smoke-contract verifier before package installation or Minecraft launch. The remaining assertion was in tools/verify_jar_soundtype_smoke.py:90 and still demanded the old no-whitespace substring id:"thaumcraft:label".
+- Updated that verifier to require the same exact-key, whitespace-tolerant POSIX ERE now used by the client smoke. The six positive/negative matcher fixtures remain in tools/verify_jar_label_sound.py and execute later in the same workflow.
+- No production Java or runtime assets changed. Only tools/verify_jar_soundtype_smoke.py and this lane journal changed; fresh comparisons show no path overlap with feature/alchemy, feature/research, feature/infusion, feature/golems, or chore/coordination.
+- The c818f8d3 real-client attempt did not reach Minecraft; it is a static preflight failure, not a game failure. Re-run the jar workflow on the corrected head. M41 PAGE PCM and M42/M43 remain unaccepted.
+- Fixed-scale readiness remains 59/100; M16 4/6.
