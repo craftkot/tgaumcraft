@@ -188,12 +188,35 @@ expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's vertical client-frame offset")
 expect("gui_top=$((Y + (HEIGHT - 234 * scale) / 2))" not in generator,
        "workbench crop still uses the decorated window Y coordinate")
-expect("-threshold 65% -resize 600%" in generator and "--psm 7" in generator,
-       "title OCR is not using the tested single-line pixel-font preprocessing")
-expect("-threshold 35% -resize 400%" in generator and "--psm 6" in generator,
-       "panel OCR is not using the tested pixel-font preprocessing")
-expect("def edit_distance(" in generator and "contains_near(" in generator,
-       "workbench OCR still requires brittle exact Tesseract strings")
+expect("title_x=$((12 * scale))" in generator
+       and "title_width=$((120 * scale))" in generator
+       and "title_height=$((24 * scale))" in generator,
+       "workbench title OCR crop geometry changed without a fixture update")
+expect("panel_x=$((144 * scale))" in generator
+       and "panel_y=$((42 * scale))" in generator
+       and "panel_width=$((46 * scale))" in generator
+       and "panel_height=$((54 * scale))" in generator,
+       "workbench Vis panel OCR crop no longer matches the rendered panel")
+expect("client-smoke/screenshots/workbench-title-ocr.png" in generator
+       and "client-smoke/screenshots/workbench-vis-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-title-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-vis-ocr.png" in generator,
+       "workbench OCR inputs are not generated and checked before Tesseract")
+expect("-resize 300% -colorspace Gray -contrast-stretch 0x12%" in generator,
+       "title OCR no longer uses the tested bitmap-font preprocessing")
+expect("-resize 400% -colorspace Gray -contrast-stretch 0x12%" in generator,
+       "panel OCR no longer uses the tested bitmap-font preprocessing")
+expect("--psm 6" in generator and "--psm 11" in generator
+       and "title_text_6" in generator and "title_text_11" in generator
+       and "panel_text_6" in generator and "panel_text_11" in generator,
+       "workbench OCR must evaluate both tested segmentation modes for both regions")
+expect("assert_client_workbench_gui_ocr.py" in generator,
+       "workbench OCR generator does not call the bounded localized OCR oracle")
+ocr_helper = Path(__file__).with_name("assert_client_workbench_gui_ocr.py").read_text(encoding="utf-8")
+expect("contains_prefix_near(" in ocr_helper
+       and "contains_label_prefix(" in ocr_helper
+       and "has_cost_pair(" in ocr_helper,
+       "workbench OCR oracle no longer checks bounded localized title/label and paired cost evidence")
 
 print(f"Workbench world gate: OK ({checks} assertions)")
 
