@@ -229,8 +229,9 @@ screen_source = screen.read_text(encoding="utf-8")
 expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
        and "smokeBase64(title.getString())" in screen_source
        and "smokeBase64(availableText.getString())" in screen_source
-       and "smokeBase64(costText.getString())" in screen_source,
-       "actual ArcaneWorkbenchScreen render path does not emit localized semantic evidence")
+       and "smokeBase64(costText.getString())" in screen_source
+       and "cost != 20 || available < cost || crystalMask != 0b111111" in screen_source,
+       "actual ArcaneWorkbenchScreen render path does not wait for the synced Thaumometer preview before emitting evidence")
 expect(screen_source.index("ThaumcraftReadableText.wrapped")
        < screen_source.index("emitSmokeAudit(availableText, costText, available, cost);"),
        "Workbench semantic marker is emitted before the text draw calls")

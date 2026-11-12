@@ -74,6 +74,9 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     private void emitSmokeAudit(Component availableText, Component costText, int available, int cost) {
         if (smokeAuditEmitted || !"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) return;
+        int crystalMask = menu.requiredCrystalMask();
+        // Wait for the server-synced Thaumometer preview; the first client frame may still carry zeroed DataSlots.
+        if (cost != 20 || available < cost || crystalMask != 0b111111) return;
         smokeAuditEmitted = true;
         System.out.println("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES"
                 + " title_b64=" + smokeBase64(title.getString())
@@ -81,7 +84,7 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
                 + " cost_text_b64=" + smokeBase64(costText.getString())
                 + " available_vis=" + available
                 + " cost_vis=" + cost
-                + " crystal_mask=" + menu.requiredCrystalMask()
+                + " crystal_mask=" + crystalMask
                 + " title_width=" + font.width(title)
                 + " title_x=" + titleLabelX
                 + " title_y=" + titleLabelY
