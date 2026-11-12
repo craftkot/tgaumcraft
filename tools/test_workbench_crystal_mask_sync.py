@@ -80,7 +80,7 @@ mask_signature, mask_body = method_body(
     "private static DataSlot crystalMaskSlot(Container bench)"
 )
 require(
-    re.search(r"matchesThaumometerPattern\(\)\s*return 0b111111;", mask_body)
+    re.search(r"matchesThaumometerPattern\(\)\)\s*return 0b111111;", mask_body)
     is not None,
     "BETA26 Thaumometer preview must require all six primal crystals",
 )
