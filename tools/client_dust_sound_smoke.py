@@ -105,7 +105,9 @@ replacement = """  # Keep one fixed view that includes the adjacent Nitor and Sa
 options = "printf 'guiScale:2\\n' > run/options.txt"
 if source.count(options) != 1:
     raise SystemExit("Minecraft options fixture changed; refuse unsafe audio injection")
-head = source.split(end, 1)[0].replace(anchor, replacement)
+if source.index(anchor) >= source.index(end):
+    raise SystemExit("Real-client fixture end marker precedes the injection anchor")
+head = source.split(anchor, 1)[0] + replacement
 head = head.replace(options,
     "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt")
 # The bookshelf is at (2,151,12); the shared fixture originally records
