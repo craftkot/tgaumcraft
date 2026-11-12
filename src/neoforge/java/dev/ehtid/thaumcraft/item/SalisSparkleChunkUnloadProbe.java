@@ -229,8 +229,7 @@ public final class SalisSparkleChunkUnloadProbe {
                                 + " y=" + packet.getY()
                                 + " z=" + packet.getZ()
                                 + " particle=thaumcraft:salis_sparkle"
-                                + " particle_count=" + packet.getCount()
-                                + " long_distance=" + packet.isLongDistance());
+                                + " particle_count=" + packet.getCount());
                     }
                     context.write(message, promise);
                 }
