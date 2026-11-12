@@ -61,11 +61,10 @@ assert "TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=20 flames=20 cores=2" in generated
 for path in (
     "src/neoforge/java/dev/ehtid/thaumcraft/client/NitorParticleClientEvents.java",
     "src/neoforge/java/dev/ehtid/thaumcraft/registry/NitorParticleRegistration.java",
-    "src/main/resources/assets/thaumcraft/particles/nitor_flame.json",
-    "src/main/resources/assets/thaumcraft/particles/nitor_core.json",
     "tools/test_nitor_particle.py",
 ):
     assert path in WORKFLOW, f"real-client workflow does not trigger for {path}"
+assert "src/main/resources/assets/thaumcraft/particles/nitor_*.json" in WORKFLOW
 assert "python tools/test_nitor_particle.py" in WORKFLOW
 
 print("BETA26 Nitor block tick, particle registry, generated real-client smoke: PASS")
