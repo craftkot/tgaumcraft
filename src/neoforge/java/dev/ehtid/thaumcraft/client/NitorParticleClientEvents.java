@@ -102,11 +102,11 @@ final class NitorParticle extends TextureSheetParticle {
         // BETA26 drawNitorFlames: age 10..14, alpha .66, scale 3..4 -> .05.
         // BETA26 drawNitorCore: age 10, white, scale 1 -> randomized middle -> 1.
         this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;
-        // NitorBlockEntity emits from the client level tick. ParticleEngine ticks
-        // pending particles before the next render, so start at age 0: the first
-        // visible sample is age 1, matching FXGeneric.onUpdate. The real-client
-        // probe observed age=2 when initialized at 1, skipping the source phase.
-        this.age = 0;
+        // Minecraft 1.21 renders a queued particle before its first client tick.
+        // BETA26 FXGeneric increments particleAge in onUpdate before first render,
+        // so initialize at age 1 to preserve the original first visible frame.
+        // The real-client probe observed age 0 when initialized at 0.
+        this.age = 1;
         this.startScale = flame ? 3.0F + level.random.nextFloat() : 1.0F;
         this.middleScale = flame ? 1.0F
                 : 1.0F + (float) level.random.nextGaussian() * 0.1F;
@@ -220,12 +220,6 @@ final class NitorParticle extends TextureSheetParticle {
         float scale = scaleAt(frameAge);
         this.quadSize = 0.1F * scale;
 
-        // Record the first post-update sample, not the constructor's pre-tick state.
-        if (SMOKE_PROBE && smokeId == 1 && frameAge == 1) {
-            String kind = flame ? "FLAME" : "CORE";
-            System.out.println("TC_SMOKE_NITOR_" + kind + "_SCALE=YES id=1 age=1 scale=" + scale);
-        }
-
         if (SMOKE_PROBE && smokeId == 1 && frameAge == lifetime) {
             String kind = flame ? "FLAME" : "CORE";
             System.out.println("TC_SMOKE_NITOR_" + kind + "_SCALE=YES id=1 age="
@@ -262,6 +256,9 @@ final class NitorParticle extends TextureSheetParticle {
             System.out.println("TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame="
                     + currentFrame() + " age=" + age);
         }
+        String kind = flame ? "FLAME" : "CORE";
+        System.out.println("TC_SMOKE_NITOR_" + kind + "_SCALE=YES id=1 age="
+                + age + " scale=" + scaleAt(age));
     }
 
     static final class Provider implements ParticleProvider<SimpleParticleType> {
