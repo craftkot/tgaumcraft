@@ -192,7 +192,7 @@ PY
   fi
   # The real drop may already be picked up; clear both representations before
   # the next shift-empty-hand scenario so the player definitely holds nothing.
-  send_chat '/kill @e[type=minecraft:item,nbt={Item:{id:"thaumcraft:label"}}]'
+  send_chat '/kill @e[type=minecraft:item]'
   send_chat '/clear @p thaumcraft:label'
   python3 tools/match_page_audio_pcm.py client-smoke/label-baseline.pcm client-smoke/label-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/label-source-match.txt
   echo 'JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS' | tee -a client-smoke-status.txt

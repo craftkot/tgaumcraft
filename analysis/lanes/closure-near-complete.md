@@ -2868,3 +2868,12 @@ Fresh-state review:
 - Changed files: tools/client_jar_sound_smoke.py, tools/verify_jar_soundtype_smoke.py, and this lane journal. No production Java, registry, Gradle, global localization, main, or foreign feature branch was changed.
 - Exact-head static smoke verifier, original resource/audio contract checks, and generated Bash syntax passed on c3169ba2b5f9f0bf8e4cae84bbd8c09778424e5f. Full NeoForge CI [#43160527747](https://github.com/craftkot/tgaumcraft/actions/runs/43160527747), Aura/Crystal GameTests [#43160527717](https://github.com/craftkot/tgaumcraft/actions/runs/43160527717), and readable-text regression [#43160527952](https://github.com/craftkot/tgaumcraft/actions/runs/43160527952) passed. The real jar client [#43160527973](https://github.com/craftkot/tgaumcraft/actions/runs/43160527973) failed only at M41's item-observation gate; M43 was not run.
 - Fixed-scale readiness remains 59/100; M16 4/6. Next action: rerun the jar client on the new head; first verify that direct Item/Inventory NBT identifies the blank label, then observe the M43 damage-overlay gate and original jar1.ogg PCM. Only after this workflow is stable return to the planned Arcane Workbench RU/EN screenshots.
+
+
+
+## 2026-11-12 — M41 verifier correction: remove the obsolete cleanup selector
+
+- The new-head jar workflow [#43162228247](https://github.com/craftkot/tgaumcraft/actions/runs/43162228247) stopped before package installation/client launch because the static verifier rejected the old label-only NBT cleanup command that remained after the M41 observation logic had been replaced. This was an over-broad verifier assertion, not a gameplay or build failure; no Minecraft client ran on this head.
+- Replaced that post-M41 cleanup command with a general nearby-test-world item-entity cleanup. All stale item entities were already cleared before M41, and no later scenario needs item drops from this stage. This removes the obsolete selector consistently with the new direct Item/Inventory NBT observation.
+- No production Java changed. The next exact-head run must first pass the static verifier, then exercise M41 and the M43 pointer/damage-overlay/PCM sequence. The real-client test remains unaccepted.
+- Fixed-scale readiness remains 59/100; M16 4/6. The planned Arcane Workbench RU/EN GUI screenshot remains deferred until the jar smoke blockers are cleared.
