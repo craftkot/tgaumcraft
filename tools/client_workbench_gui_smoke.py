@@ -125,3 +125,5 @@ PY
   printf 'WORKBENCH_GUI_REAL_CLIENT_%s_%s=PASS\n' "$TC_WORKBENCH_LANG" "$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
   exit 0
 fi
+'''
+sys.stdout.write(source.split(anchor, 1)[0] + body)

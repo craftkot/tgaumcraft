@@ -2917,3 +2917,10 @@ Fresh-state review:
 - New GUI audit found a concrete rendering defect in ArcaneWorkbenchScreen: the Vis panel at (9,112,173,24) was drawn after the six requirement icons and geometrically covered the bottom-center crystal plus parts of both lower-side crystals. The original 190x234 background has an unused wooden strip at the right edge. The readout is moved into that strip; a pure-Java geometry regression proves it does not intersect any of the six 32x32 icon bounds.
 - Added an isolated real-client matrix for EN/RU at GUI scales 2 and 3. It opens the actual placed workbench by right-click, loads the BETA26 Thaumometer preview pattern (four gold ingots + center glass pane), and OCR-checks the localized title, available label, Vis label and 20-Vis preview from actual screenshots. This test is **pending** until its new workflow completes; no GUI acceptance is claimed in this entry.
 - Changed production screen, pure-Java layout helper/test, existing layout test runner, a read-only smoke generator, a lane-local workflow, and this journal. No shared client_smoke.sh, global registry, Gradle, language file, main, or parallel feature branch was modified. M16 remains **4/6**, fixed audit **59/100**; no score added.
+
+
+### GUI client runner preflight correction — 2026-11-12
+
+- First matrix run [#43177618952](https://github.com/craftkot/tgaumcraft/actions/runs/43177618952) failed before Minecraft launch in three completed jobs; the fourth was still running. All observed failures had the same Python SyntaxError: the generated-body triple-quoted string was missing its closing delimiter and the final stdout write. No GUI/gameplay result was produced.
+- The exact-head pure-Java regression [#43177626547](https://github.com/craftkot/tgaumcraft/actions/runs/43177626547) **SUCCESS**: 2003 text-layout assertions, 21 Workbench panel geometry assertions, 54 client-helper stub assertions, 118 label tint assertions and 5321 scan-rune orientation assertions.
+- Added the missing closing delimiter and generator output call. The real RU/EN client matrix must be rerun on the corrected commit; no screenshot acceptance is claimed from the failed preflight.
