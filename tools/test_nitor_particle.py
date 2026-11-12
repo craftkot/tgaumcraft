@@ -36,35 +36,46 @@ def core_scale(middle: float, age: int, lifetime: int) -> float:
         return 1.0 + (middle - 1.0) * (progress * 2.0)
     return middle + (1.0 - middle) * ((progress - 0.5) * 2.0)
 
-# The real 1.21.1 client log shows a queued particle can be offered to render
-# before its two pre-render updates. Those age -1/0 quads are not part of the
-# BETA26 FXGeneric visible lifetime; the first visible state must be age 1.
-PRE_RENDER_TICKS = 2
-
-def first_render_age(initial_age: int) -> int:
-    return initial_age + PRE_RENDER_TICKS
+# BETA26 FXGeneric starts at age 0; its first onUpdate increments to age 1,
+# moves once, and then renders. The modern queue may tick the queued particle
+# again before its first render, so keep that exact age-one state frozen.
+def first_visible_state(pre_render_ticks: int) -> tuple[int, int, float, float]:
+    age = 0
+    position = 0.0
+    previous = 0.0
+    age_one_previous = None
+    movement_updates = 0
+    for _ in range(pre_render_ticks):
+        previous = position
+        age += 1
+        if age > 1:
+            age = 1
+            assert age_one_previous is not None
+            previous = age_one_previous
+            continue
+        movement_updates += 1
+        position += 1.0
+        if age == 1:
+            age_one_previous = previous
+    return age, movement_updates, previous, position
 
 def render_allowed(age: int) -> bool:
     return age >= 1
 
-assert first_render_age(-1) == 1
-assert first_render_age(0) == 2
-assert first_render_age(1) == 3
-assert not render_allowed(-1)
 assert not render_allowed(0)
-assert render_allowed(1)
-assert 264 + first_render_age(-1) % 8 == 265
+for queued_ticks in range(1, 9):
+    first_age, movement_updates, previous, position = first_visible_state(queued_ticks)
+    assert first_age == 1
+    assert movement_updates == 1
+    assert previous == 0.0 and position == 1.0
+    assert render_allowed(first_age)
+assert first_visible_state(3) == (1, 1, 0.0, 1.0)
+assert 264 + 1 % 8 == 265
 
-# Once the age-1 guard opens, the visible lifetime remains 1..lifetime.
+# Once the first age-one state is rendered, the original visible lifetime is 1..maxAge.
 for lifetime in (10, 14):
-    age = -1
-    for _ in range(PRE_RENDER_TICKS):
-        age += 1
-    visible_ages = [age]
-    while age < lifetime:
-        age += 1
-        visible_ages.append(age)
-    assert visible_ages == list(range(1, lifetime + 1))
+    visible_ages = list(range(1, lifetime + 1))
+    assert visible_ages[0] == 1 and visible_ages[-1] == lifetime
 
 # Compare the modern formulas against the exact source keyframe interpolator.
 for lifetime in range(10, 15):
@@ -88,7 +99,19 @@ assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
 assert "CORE_FRAME = 457" in PARTICLE
 assert "this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;" in PARTICLE
-assert "this.age = -1;" in PARTICLE
+assert "this.age = 0;" in PARTICLE
+assert "private boolean firstVisibleRenderDone;" in PARTICLE
+assert "private double firstVisibleXo;" in PARTICLE
+assert "private double firstVisibleYo;" in PARTICLE
+assert "private double firstVisibleZo;" in PARTICLE
+assert "if (!this.firstVisibleRenderDone && this.age > 1)" in PARTICLE
+assert "this.age = 1;" in PARTICLE
+assert "this.xo = this.firstVisibleXo;" in PARTICLE
+assert "this.yo = this.firstVisibleYo;" in PARTICLE
+assert "this.zo = this.firstVisibleZo;" in PARTICLE
+assert "if (!this.firstVisibleRenderDone && this.age == 1)" in PARTICLE
+assert "this.firstVisibleXo = this.xo;" in PARTICLE
+assert "this.firstVisibleRenderDone = true;" in PARTICLE
 assert "public void render(VertexConsumer buffer, Camera camera, float partialTick)" in PARTICLE
 assert "if (this.age < 1) return;" in PARTICLE
 assert "super.render(buffer, camera, partialTick);" in PARTICLE

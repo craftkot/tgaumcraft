@@ -89,6 +89,10 @@ final class NitorParticle extends TextureSheetParticle {
     private final double randomX;
     private final double randomY;
     private final double randomZ;
+    private boolean firstVisibleRenderDone;
+    private double firstVisibleXo;
+    private double firstVisibleYo;
+    private double firstVisibleZo;
     private boolean smokeRendered;
     private boolean smokeExpired;
 
@@ -104,11 +108,11 @@ final class NitorParticle extends TextureSheetParticle {
         // BETA26 drawNitorFlames: age 10..14, alpha .66, scale 3..4 -> .05.
         // BETA26 drawNitorCore: age 10, white, scale 1 -> randomized middle -> 1.
         this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;
-        // In the actual 1.21.1 block-entity emission path, ParticleEngine advances
-        // this queued particle twice before its first visible quad (age 3 when seeded
-        // at 1). BETA26 FXGeneric renders after one onUpdate, so seed at -1 to make
-        // the first modern visible quad correspond to legacy particleAge 1.
-        this.age = -1;
+        // BETA26 FXGeneric starts at particleAge=0 and increments before its first
+        // update/render. Start at 0 so the first modern tick is legacy age 1.
+        // ParticleEngine may tick a queued particle again before its first render;
+        // tick() holds the age-one state and its interpolation origin until rendered.
+        this.age = 0;
         this.startScale = flame ? 3.0F + level.random.nextFloat() : 1.0F;
         this.middleScale = flame ? 1.0F
                 : 1.0F + (float) level.random.nextGaussian() * 0.1F;
@@ -170,11 +174,11 @@ final class NitorParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer buffer, Camera camera, float partialTick) {
-        // BETA26 FXGeneric advances age before its first visible quad. The
-        // modern block-entity queue can ask the particle to render at age -1
-        // and 0 before it reaches that first legacy-visible state. Do not draw
-        // those pre-roll states (age -1 would even select atlas cell 263).
+        // BETA26 FXGeneric first renders after its first onUpdate at age 1.
+        // Do not draw the constructor state; tick() freezes the first age-one
+        // update if the modern queue advances it again before this first render.
         if (this.age < 1) return;
+        this.firstVisibleRenderDone = true;
         super.render(buffer, camera, partialTick);
     }
 
@@ -228,6 +232,17 @@ final class NitorParticle extends TextureSheetParticle {
             return;
         }
 
+        // A queued NeoForge particle can be ticked again before its first render.
+        // FXGeneric has already reached its first visible update at age 1; preserve
+        // that exact state instead of consuming extra animation/motion/RNG updates.
+        if (!this.firstVisibleRenderDone && this.age > 1) {
+            this.age = 1;
+            this.xo = this.firstVisibleXo;
+            this.yo = this.firstVisibleYo;
+            this.zo = this.firstVisibleZo;
+            return;
+        }
+
         int frameAge = Math.min(this.age, this.lifetime);
         float scale = scaleAt(frameAge);
         this.quadSize = 0.1F * scale;
@@ -250,6 +265,15 @@ final class NitorParticle extends TextureSheetParticle {
         if (this.onGround && SLOW_DOWN != 1.0D) {
             this.xd *= 0.699999988079071D;
             this.zd *= 0.699999988079071D;
+        }
+
+        // Preserve the previous-position side of FXGeneric's first rendered
+        // interpolation. If another queue tick arrives before render(), tick()
+        // restores these coordinates while holding age 1.
+        if (!this.firstVisibleRenderDone && this.age == 1) {
+            this.firstVisibleXo = this.xo;
+            this.firstVisibleYo = this.yo;
+            this.firstVisibleZo = this.zo;
         }
     }
 
