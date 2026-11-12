@@ -64,7 +64,7 @@ expect_rejected(commands + commands + creative,
                 "ambiguous allowCommands tag passed")
 expect_rejected(commands + creative + byte_tag("Difficulty", 4),
                 "invalid difficulty diagnostic passed")
-expect_rejected(commands + int_tag("GameType", 1)[:5],
+expect_rejected(commands + b"\\x03\\x00\\x08GameType\\x00\\x00",
                 "truncated GameType passed")
 
 print(f"Workbench world gate: OK ({checks} assertions)")
