@@ -291,7 +291,20 @@ PY
   # about six client ticks (0.30s), still below the 0.3-hardness jar's bare-hand
   # break time. The authoritative server block check below rejects any break.
   send_chat '/item replace entity @p hotbar.0 with minecraft:air'
-  send_chat '/tp @p 250.5 150 250.5 0 35'
+  # Open chat to release the captured pointer, move it to the actual Minecraft
+  # window center, then submit the teleport. Closing chat re-grabs the pointer
+  # at the crosshair; moving it after chat closes can rotate the camera instead.
+  hit_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+  eval "$hit_geometry"
+  jar_hit_center_x=$((X + WIDTH / 2))
+  jar_hit_center_y=$((Y + HEIGHT / 2))
+  xdotool key --clearmodifiers t
+  sleep 0.2
+  xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"
+  xdotool type --clearmodifiers --delay 24 '/tp @p 250.5 150 250.5 0 35'
+  xdotool key --clearmodifiers Return
+  sleep 4
+  echo "JAR_HIT_POINTER_CENTER=$jar_hit_center_x,$jar_hit_center_y" | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100a-jar-hit-aim.png
   send_chat '/stopsound @p'
   sleep 0.25
@@ -300,10 +313,33 @@ PY
   capture_pid=$!
   sleep 0.6
   xdotool mousedown 1
-  sleep 0.30
+  sleep 0.18
+  import -display :99 -window root -silent client-smoke/screenshots/100b-jar-hit-damage-overlay.png
+  sleep 0.12
   xdotool mouseup 1
   sleep 0.4
   wait "$capture_pid" || test "$?" -eq 124
+
+  # A server-side "jar still exists" check cannot prove that the client attack
+  # reached the block. Require the real block-damage overlay in a fixed ROI
+  # around the crosshair before interpreting a silent PCM capture as a sound bug.
+  jar_hit_roi_x=$((jar_hit_center_x - 110))
+  jar_hit_roi_y=$((jar_hit_center_y - 110))
+  convert client-smoke/screenshots/100a-jar-hit-aim.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
+    client-smoke/hit-aim-roi.png
+  convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
+    client-smoke/hit-damage-roi.png
+  jar_hit_damage_pixels="$(compare -metric AE client-smoke/hit-aim-roi.png \
+    client-smoke/hit-damage-roi.png null: 2>&1 || true)"
+  jar_hit_damage_pixels="${jar_hit_damage_pixels%% *}"
+  if ! [[ "$jar_hit_damage_pixels" =~ ^[0-9]+$ ]] || (( jar_hit_damage_pixels < 40 )); then
+    echo "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES pixels=$jar_hit_damage_pixels" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS pixels=$jar_hit_damage_pixels" | tee -a client-smoke-status.txt
+
   crop_pcm_frames client-smoke/hit-event.pcm client-smoke/hit-event-window.pcm 26400 120000
   send_chat '/execute if block 250 150 252 thaumcraft:jar_normal run say JAR_HIT_BLOCK_RETAINED'
   if ! grep -Fq 'JAR_HIT_BLOCK_RETAINED' client-smoke/client.log; then
