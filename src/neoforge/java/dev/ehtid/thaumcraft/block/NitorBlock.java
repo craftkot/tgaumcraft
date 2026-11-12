@@ -6,9 +6,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
 import dev.ehtid.thaumcraft.registry.NitorBlockEntityRegistration;
 import java.util.Locale;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.world.item.DyeColor;
-import org.joml.Vector3f;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -40,7 +38,6 @@ public final class NitorBlock extends BaseEntityBlock {
 
     private final int flameRgb;
     private final int particleRgb;
-    private final DustParticleOptions coloredGlow;
     private boolean smokeColorReported;
 
     public NitorBlock(BlockBehaviour.Properties props) {
@@ -51,10 +48,6 @@ public final class NitorBlock extends BaseEntityBlock {
         super(props);
         this.flameRgb = flameRgb & 0xFFFFFF;
         this.particleRgb = mapColorForDyeRgb(this.flameRgb);
-        this.coloredGlow = new DustParticleOptions(new Vector3f(
-                ((this.particleRgb >> 16) & 0xFF) / 255.0f,
-                ((this.particleRgb >> 8) & 0xFF) / 255.0f,
-                (this.particleRgb & 0xFF) / 255.0f), 0.85f);
     }
 
     /**
@@ -77,14 +70,14 @@ public final class NitorBlock extends BaseEntityBlock {
 
     public int particleRgb() { return particleRgb; }
 
-    public DustParticleOptions coloredGlow() {
+    /** Emit one opt-in proof that the particle provider uses BETA26 MapColor RGB. */
+    public void reportParticleColorIfNeeded() {
         if (SMOKE_PROBE && !smokeColorReported) {
             smokeColorReported = true;
             System.out.println("TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb="
                     + flameRgb + " mapColor=" + particleRgb
                     + " particleColor=" + particleRgb);
         }
-        return coloredGlow;
     }
 
     @Override
