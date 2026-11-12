@@ -25,15 +25,27 @@ if source.count(options_line) != 1:
     raise SystemExit("Minecraft options line changed; refusing unsafe injection")
 if source.count(anchor) != 1:
     raise SystemExit("Workbench-to-scanner anchor changed; refusing unsafe injection")
+world_gate = "python3 tools/assert_client_world_commands.py run/saves | tee -a client-smoke-status.txt"
+workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves | tee -a client-smoke-status.txt"
+if source.count(world_gate) != 1:
+    raise SystemExit("Shared world NBT gate changed; refusing unsafe injection")
 
 replacement = (
     "printf 'guiScale:%s\\nlang:%s\\n' "
     "\"$TC_WORKBENCH_GUI_SCALE\" \"$TC_WORKBENCH_LANG\" > run/options.txt"
 )
 source = source.replace(options_line, replacement, 1)
+source = source.replace(world_gate, workbench_gate, 1)
 
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
+
+  # The shared bootstrap's initial NBT gate is narrowed only in this generated
+  # copy: require real cheats + Creative, then set Peaceful and persist it before
+  # any scripted block/item interaction. The shared client_smoke.sh is untouched.
+  send_chat '/difficulty peaceful'
+  send_chat '/save-all flush'
+  python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt
 
   # The existing real workbench at 12,149,7 is opened by an actual right click.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
