@@ -29,27 +29,42 @@ def expect(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-valid = byte_tag("allowCommands", 1) + int_tag("GameType", 1) + byte_tag("Difficulty", 2)
-expect(module.assert_workbench_world(valid) == 2,
-       "Creative+commands world with a not-yet-peaceful persisted byte must pass and report it")
-
-no_difficulty = byte_tag("allowCommands", 1) + int_tag("GameType", 1)
-expect(module.assert_workbench_world(no_difficulty) is None,
-       "difficulty is diagnostic-only for the workbench smoke")
-
-for blob, message in [
-    (byte_tag("allowCommands", 0) + int_tag("GameType", 1), "commands-off world passed"),
-    (byte_tag("allowCommands", 1) + int_tag("GameType", 0), "non-Creative world passed"),
-    (byte_tag("allowCommands", 1) + byte_tag("allowCommands", 1) + int_tag("GameType", 1),
-     "ambiguous allowCommands tag passed"),
-    (byte_tag("allowCommands", 1) + int_tag("GameType", 1) + byte_tag("Difficulty", 4),
-     "invalid difficulty diagnostic passed"),
-]:
+def expect_rejected(blob: bytes, message: str, *, require_peaceful: bool = False) -> None:
     try:
-        module.assert_workbench_world(blob)
+        module.assert_workbench_world(blob, require_peaceful=require_peaceful)
     except AssertionError:
         expect(True, message)
     else:
         expect(False, message)
+
+
+commands = byte_tag("allowCommands", 1)
+creative = int_tag("GameType", 1)
+normal = byte_tag("Difficulty", 2)
+peaceful = byte_tag("Difficulty", 0)
+
+expect(module.assert_workbench_world(commands + creative + normal) == 2,
+       "initial Creative world must pass before its first save even if difficulty is still Normal")
+expect(module.assert_workbench_world(commands + creative) is None,
+       "initial world gate must not require Difficulty to have been flushed")
+expect(module.assert_workbench_world(commands + creative + peaceful, require_peaceful=True) == 0,
+       "final gate must accept the persisted Peaceful byte")
+expect_rejected(commands + creative + normal,
+                "final gate accepted a world that remained Normal", require_peaceful=True)
+expect_rejected(commands + creative,
+                "final gate accepted a missing Difficulty byte", require_peaceful=True)
+expect_rejected(commands + creative + peaceful + normal,
+                "final gate accepted ambiguous Difficulty tags", require_peaceful=True)
+
+expect_rejected(byte_tag("allowCommands", 0) + creative,
+                "commands-off world passed")
+expect_rejected(commands + int_tag("GameType", 0),
+                "non-Creative world passed")
+expect_rejected(commands + commands + creative,
+                "ambiguous allowCommands tag passed")
+expect_rejected(commands + creative + byte_tag("Difficulty", 4),
+                "invalid difficulty diagnostic passed")
+expect_rejected(commands + int_tag("GameType", 1)[:5],
+                "truncated GameType passed")
 
 print(f"Workbench world gate: OK ({checks} assertions)")
