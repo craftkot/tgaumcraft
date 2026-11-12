@@ -1,6 +1,7 @@
 name: M16 real Arcane Workbench GUI RU/EN client
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feature/closure-near-complete
@@ -10,6 +11,8 @@ on:
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayoutTest.java'
       - 'tools/test_readable_text_layout.sh'
       - 'tools/client_workbench_gui_smoke.py'
+      - 'tools/assert_client_workbench_world.py'
+      - 'tools/test_client_workbench_world.py'
       - '.github/workflows/closure-workbench-gui-client.yml'
 
 permissions:
@@ -58,6 +61,7 @@ jobs:
           tesseract --list-langs
       - name: Generate isolated smoke from the proven real-world boot
         run: |
+          python3 tools/test_client_workbench_world.py
           python3 tools/client_workbench_gui_smoke.py > client-workbench-gui-generated.sh
           bash -n client-workbench-gui-generated.sh
       - name: Open the actual Arcane Workbench and inspect localized GUI pixels
