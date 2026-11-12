@@ -105,6 +105,27 @@ body = r'''
     -crop "$gui_width"x"$gui_height"+"$gui_left"+"$gui_top" +repage \
     client-smoke/screenshots/workbench-gui-crop.png
 
+  # Recreate the tested OCR regions from the actual GUI crop. These files were
+  # removed during the PSM 6/11 switch, leaving Tesseract to read nonexistent
+  # paths and the OCR helper to receive empty strings.
+  title_x=$((12 * scale))
+  title_width=$((120 * scale))
+  title_height=$((24 * scale))
+  panel_x=$((144 * scale))
+  panel_y=$((42 * scale))
+  panel_width=$((46 * scale))
+  panel_height=$((54 * scale))
+  convert client-smoke/screenshots/workbench-gui-crop.png \\
+    -crop "$title_width"x"$title_height"+"$title_x"+0 +repage \\
+    -resize 300% -colorspace Gray -contrast-stretch 0x12% \\
+    client-smoke/screenshots/workbench-title-ocr.png
+  convert client-smoke/screenshots/workbench-gui-crop.png \\
+    -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \\
+    -resize 400% -colorspace Gray -contrast-stretch 0x12% \\
+    client-smoke/screenshots/workbench-vis-ocr.png
+  test -s client-smoke/screenshots/workbench-title-ocr.png
+  test -s client-smoke/screenshots/workbench-vis-ocr.png
+
   # The tutorial toast can cover the title at GUI scale 3. Disable it in the
   # isolated options file above; do not dismiss it by moving the player.
   # Run two Tesseract page-segmentation modes because Minecraft's bitmap glyphs
