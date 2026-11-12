@@ -57,6 +57,10 @@ assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
 assert "CORE_FRAME = 457" in PARTICLE
 assert "this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;" in PARTICLE
+assert "this.age = 1;" in PARTICLE
+assert "this.quadSize = 0.1F * scaleAt(this.age);" in PARTICLE
+assert "private static final AtomicInteger FLAME_FRAME_MASK" in PARTICLE
+assert "FLAME_FRAME_MASK.getAndUpdate(mask -> mask | bit)" in PARTICLE
 assert "this.alpha = flame ? 0.66F : 1.0F;" in PARTICLE
 assert "this.randomX = flame ? 0.0025D : 0.0002D;" in PARTICLE
 assert "this.randomY = flame ? 0.0D : 0.0002D;" in PARTICLE
@@ -106,8 +110,8 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
         "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1",
     ]
     lines.extend(
-        f"TC_SMOKE_NITOR_FLAME_FRAME=YES id=1 age={age} frame={264 + age % 8}"
-        for age in range(1, 9)
+        f"TC_SMOKE_NITOR_FLAME_FRAME=YES frame={frame}"
+        for frame in range(264, 272)
     )
     if omit == "last-frame":
         lines = [line for line in lines if "frame=271" not in line]

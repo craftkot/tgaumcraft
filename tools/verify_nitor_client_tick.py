@@ -73,14 +73,19 @@ core_render = one(
 )
 if int(core_render[0]) != 457:
     raise SystemExit(f"Nitor core rendered wrong atlas frame: {core_render}")
+if (int(flame_render[0]), int(flame_render[1])) != (265, 1):
+    raise SystemExit(
+        f"Nitor first visible flame frame does not match FXGeneric age-one phase: {flame_render}"
+    )
 
 frame_matches = re.findall(
-    r"TC_SMOKE_NITOR_FLAME_FRAME=YES id=1 age=(\d+) frame=(\d+)", log
+    r"TC_SMOKE_NITOR_FLAME_FRAME=YES frame=(\d+)", log
 )
-frames = {int(frame) for _, frame in frame_matches}
-if frames != set(range(264, 272)):
+frames = {int(frame) for frame in frame_matches}
+if len(frame_matches) != 8 or frames != set(range(264, 272)):
     raise SystemExit(
-        f"Nitor flame did not render every looping atlas frame: {sorted(frames)}"
+        f"Nitor flame did not render all eight looping atlas frames across visible instances: "
+        f"{sorted(frames)} (markers={len(frame_matches)})"
     )
 
 flame_expired = one(

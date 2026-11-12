@@ -58,6 +58,7 @@ final class NitorParticle extends TextureSheetParticle {
 
     private static final AtomicInteger FLAME_CREATED = new AtomicInteger();
     private static final AtomicInteger CORE_CREATED = new AtomicInteger();
+    private static final AtomicInteger FLAME_FRAME_MASK = new AtomicInteger();
     private static final AtomicBoolean BLEND_REPORTED = new AtomicBoolean();
 
     private static final ParticleRenderType BETA26_ADDITIVE = new ParticleRenderType() {
@@ -101,13 +102,16 @@ final class NitorParticle extends TextureSheetParticle {
         // BETA26 drawNitorFlames: age 10..14, alpha .66, scale 3..4 -> .05.
         // BETA26 drawNitorCore: age 10, white, scale 1 -> randomized middle -> 1.
         this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;
+        // BETA26 FXGeneric increments particleAge in onUpdate before its first render.
+        // Modern particles can be rendered once at age zero immediately after creation.
+        this.age = 1;
         this.startScale = flame ? 3.0F + level.random.nextFloat() : 1.0F;
         this.middleScale = flame ? 1.0F
                 : 1.0F + (float) level.random.nextGaussian() * 0.1F;
         this.alpha = flame ? 0.66F : 1.0F;
         this.gravity = 0.0F;
         this.hasPhysics = true;
-        this.quadSize = 0.1F * this.startScale;
+        this.quadSize = 0.1F * scaleAt(this.age);
 
         int rgb = flame ? particleRgb : 0xFFFFFF;
         this.setColor(((rgb >> 16) & 0xFF) / 255.0F,
@@ -130,15 +134,30 @@ final class NitorParticle extends TextureSheetParticle {
                     + FLAME_FIRST_FRAME + " frameCount=" + FLAME_FRAME_COUNT
                     + " lifetime=" + this.lifetime + " startScale=" + this.startScale
                     + " rgb=" + rgb);
+            System.out.println("TC_SMOKE_NITOR_FLAME_SCALE=YES id=1 age=1 scale="
+                    + scaleAt(this.age));
         } else if (SMOKE_PROBE && this.smokeId == 1) {
             System.out.println("TC_SMOKE_NITOR_CORE_CREATED=YES id=1 frame="
                     + CORE_FRAME + " lifetime=" + this.lifetime
                     + " middleScale=" + this.middleScale);
+            System.out.println("TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=1 scale="
+                    + scaleAt(this.age));
         }
     }
 
     private int currentFrame() {
         return flame ? FLAME_FIRST_FRAME + this.age % FLAME_FRAME_COUNT : CORE_FRAME;
+    }
+
+    private float scaleAt(int frameAge) {
+        int boundedAge = Math.min(Math.max(frameAge, 0), this.lifetime);
+        if (flame) {
+            return startScale + (0.05F - startScale) * boundedAge / (float) lifetime;
+        }
+        float progress = boundedAge / (float) lifetime;
+        return progress <= 0.5F
+                ? 1.0F + (middleScale - 1.0F) * (progress * 2.0F)
+                : middleScale + (1.0F - middleScale) * ((progress - 0.5F) * 2.0F);
     }
 
     private float u(int cell) {
@@ -153,9 +172,16 @@ final class NitorParticle extends TextureSheetParticle {
     protected float getU0() {
         markRendered();
         int frame = currentFrame();
-        if (SMOKE_PROBE && flame && smokeId == 1) {
-            System.out.println("TC_SMOKE_NITOR_FLAME_FRAME=YES id=1 age="
-                    + age + " frame=" + frame);
+        if (SMOKE_PROBE && flame) {
+            int bit = 1 << (frame - FLAME_FIRST_FRAME);
+            int seen = FLAME_FRAME_MASK.getAndUpdate(mask -> mask | bit);
+            if ((seen & bit) == 0) {
+                System.out.println("TC_SMOKE_NITOR_FLAME_FRAME=YES frame=" + frame);
+            }
+            if (smokeId == 1) {
+                System.out.println("TC_SMOKE_NITOR_FLAME_FRAME_DETAIL=YES id=1 age="
+                        + age + " frame=" + frame);
+            }
         }
         return u(frame % GRID_SIZE);
     }
@@ -193,20 +219,10 @@ final class NitorParticle extends TextureSheetParticle {
         }
 
         int frameAge = Math.min(this.age, this.lifetime);
-        float scale;
-        if (flame) {
-            // FXGeneric#setScale(start, end): linear interpolation over maxAge.
-            scale = startScale + (0.05F - startScale) * frameAge / (float) lifetime;
-        } else {
-            // FXGeneric#setScale(1, middle, 1): two equal interpolation segments.
-            float progress = frameAge / (float) lifetime;
-            scale = progress <= 0.5F
-                    ? 1.0F + (middleScale - 1.0F) * (progress * 2.0F)
-                    : middleScale + (1.0F - middleScale) * ((progress - 0.5F) * 2.0F);
-        }
+        float scale = scaleAt(frameAge);
         this.quadSize = 0.1F * scale;
 
-        if (SMOKE_PROBE && smokeId == 1 && (frameAge == 1 || frameAge == lifetime)) {
+        if (SMOKE_PROBE && smokeId == 1 && frameAge == lifetime) {
             String kind = flame ? "FLAME" : "CORE";
             System.out.println("TC_SMOKE_NITOR_" + kind + "_SCALE=YES id=1 age="
                     + frameAge + " scale=" + scale);

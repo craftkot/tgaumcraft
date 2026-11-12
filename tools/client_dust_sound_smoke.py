@@ -7,8 +7,9 @@ anchor = "  capture 08k-firststeps-real-bookshelf-before-salis\n"
 end = "  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post"
 if source.count(anchor) != 1 or source.count(end) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Real-client fixture changed; refuse unsafe injection")
-replacement = """  # Keep one fixed view that includes the adjacent Nitor and Salis bookshelf.
-  send_chat '/tp @p 2.5 150 11.5 -27 0'
+replacement = """  # Observe Nitor from the open approach, not from 0.5 blocks beside the bookshelf.
+  # The Salis audio probe switches back to its close microphone position below.
+  send_chat '/tp @p 2.5 150 8.5 -14 0'
   xdotool key --clearmodifiers F1
   sleep 0.4
   capture 08m-nitor-particles-before

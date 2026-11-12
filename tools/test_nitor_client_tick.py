@@ -56,8 +56,9 @@ verify = generated.index("python3 tools/verify_nitor_client_tick.py client-smoke
 remove = generated.index("send_chat '/setblock 3 151 12 minecraft:air'")
 salis = generated.index("xdotool click 3", remove)
 assert baseline < place < active < verify < remove < salis
-assert "send_chat '/tp @p 2.5 150 11.5 -27 0'" in generated
+assert "send_chat '/tp @p 2.5 150 8.5 -14 0'" in generated
 assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
+assert generated.index("send_chat '/tp @p 2.5 150 8.5 -14 0'") < baseline
 assert "FIRSTSTEPS_REAL_DREAM_SALIS_BOOKSHELF_OK" in generated
 assert "assert_smoke_event BOOKSHELF_SALIS_USED" in generated
 assert "assert_smoke_event BOOKSHELF_TRANSFORMED" in generated
