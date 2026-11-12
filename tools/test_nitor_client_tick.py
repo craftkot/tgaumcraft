@@ -69,10 +69,6 @@ def verify_log(name: str, color_marker: str | None) -> subprocess.CompletedProce
             cwd=ROOT, capture_output=True, text=True,
         )
 
-good = verify_log(
-    "good",
-    "TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb=16767037 mapColor=150663? particleColor=150663?",
-)
 # Use a deterministic, distinct synthetic map color; the verifier tests equality,
 # not a hard-coded vanilla palette value.
 good = verify_log(
