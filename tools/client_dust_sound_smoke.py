@@ -102,7 +102,7 @@ replacement = """  # Keep one fixed view that includes the adjacent Nitor and Sa
 # Isolate the quiet actor-only dust sound from randomly starting world music.
 # The real Minecraft options are written before gradle runClient starts.
 # Keep PLAYERS/master audible: those categories carry thaumcraft:dust.
-options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt"
+options = "printf 'guiScale:2\\n' > run/options.txt"
 if source.count(options) != 1:
     raise SystemExit("Minecraft options fixture changed; refuse unsafe audio injection")
 head = source.split(end, 1)[0].replace(anchor, replacement)
