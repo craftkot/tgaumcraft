@@ -56,9 +56,9 @@ jobs:
       - name: Install real-client graphics, input and OCR tools
         run: |
           sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \\
-            xvfb x11-utils xdotool openbox mesa-utils \\
-            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \\
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
             tesseract-ocr tesseract-ocr-rus
           tesseract --list-langs
       - name: Generate isolated smoke from the proven real-world boot
