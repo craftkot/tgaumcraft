@@ -46,3 +46,35 @@ if "TC_SMOKE_SALIS_NATIVE_CHUNK_TICKET_CLEANED=YES" not in smoke:
     raise SystemExit("SALIS_NATIVE_CLEANUP_MARKER_NOT_REQUIRED=FAIL")
 
 print("SALIS_NATIVE_CHUNK_PROBE_TICKET_CLEANUP=PASS")
+
+for required in (
+    "ClientboundLevelParticlesPacket",
+    "ChannelOutboundHandlerAdapter",
+    "actor.connection.getConnection()",
+    'pipeline.addBefore("packet_handler"',
+    "packet.getParticle() == SalisSparkleParticleRegistration.TYPE",
+    "packet.getCount() == 0",
+    "packet.getX()",
+    "OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet()",
+    "context.write(message, promise)",
+    "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
+    "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
+):
+    if required not in probe:
+        raise SystemExit(f"SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=FAIL missing {required!r}")
+
+phase0 = section(probe, "if (phase == 0)", "if (phase == 1)")
+phase2 = section(probe, "if (phase == 2)", "if (phase == 3)")
+phase3 = section(probe, "if (phase == 3)", "} catch (RuntimeException | AssertionError ex)")
+if not (
+    phase0.index("installOutboundParticleRecorder(actor)")
+    < phase0.index("OUTBOUND_PROBE_PACKET_COUNT.get()")
+    < phase0.index("SalisSparkleTrailQueue.emitFaceOrQueue")
+):
+    raise SystemExit("SALIS_OUTBOUND_PACKET_INSTALL_ORDER=FAIL")
+if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase2:
+    raise SystemExit("SALIS_OUTBOUND_PACKET_UNLOAD_ASSERTION=FAIL")
+if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase3:
+    raise SystemExit("SALIS_OUTBOUND_PACKET_RELOAD_ASSERTION=FAIL")
