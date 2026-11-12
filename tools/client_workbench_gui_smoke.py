@@ -23,6 +23,7 @@ if scale not in {"2", "3"}:
 if tess_language != ("eng" if language == "en_us" else "rus"):
     raise SystemExit("Tesseract language does not match Minecraft language")
 subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)
+subprocess.run([sys.executable, "tools/test_workbench_crystal_mask_sync.py"], check=True, stdout=sys.stderr)
 if source.count(options_line) != 1:
     raise SystemExit("Minecraft options line changed; refusing unsafe injection")
 if source.count(anchor) != 1:
