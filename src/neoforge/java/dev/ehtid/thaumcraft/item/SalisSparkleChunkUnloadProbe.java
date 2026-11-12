@@ -1,15 +1,22 @@
 package dev.ehtid.thaumcraft.item;
 
 import com.mojang.logging.LogUtils;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
+import java.util.concurrent.atomic.AtomicInteger;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
@@ -26,6 +33,8 @@ public final class SalisSparkleChunkUnloadProbe {
     private static final int DELAY_TICKS = 1200;
     private static final int UNLOAD_TIMEOUT_TICKS = 900;
     private static final BlockPos ORIGIN = new BlockPos(CHUNK_X * 16 + 8, 100, CHUNK_Z * 16 + 8);
+    private static final String OUTBOUND_HANDLER_NAME = "thaumcraft_salis_chunk_unload_probe";
+    private static final AtomicInteger OUTBOUND_PROBE_PACKET_COUNT = new AtomicInteger();
 
     private static MinecraftServer active;
     private static ServerLevel targetLevel;
@@ -39,6 +48,8 @@ public final class SalisSparkleChunkUnloadProbe {
     private static boolean chunkUnloaded;
     private static boolean fixtureTicketHeld;
     private static boolean finished;
+    private static volatile Channel outboundProbeChannel;
+    private static int outboundPacketsBefore;
 
     private SalisSparkleChunkUnloadProbe() {}
 
@@ -53,11 +64,15 @@ public final class SalisSparkleChunkUnloadProbe {
         chunkUnloaded = false;
         fixtureTicketHeld = false;
         finished = false;
+        OUTBOUND_PROBE_PACKET_COUNT.set(0);
+        outboundProbeChannel = null;
+        outboundPacketsBefore = 0;
     }
 
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         if (active == event.getServer()) {
+            removeOutboundParticleRecorder();
             cleanupFixtureTicketOnStop();
             active = null;
             targetLevel = null;
@@ -88,6 +103,10 @@ public final class SalisSparkleChunkUnloadProbe {
                         || ThaumcraftSmokeAudit.count("BOOKSHELF_SALIS_USED") == 0
                         || SalisSparkleTrailQueue.pendingCountForServer(active) != 0) return;
 
+                installOutboundParticleRecorder(actor);
+                outboundPacketsBefore = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(outboundPacketsBefore == 0,
+                        "probe-origin Salis packet was emitted before the unload scenario");
                 targetLevel = level;
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not acquire its one remote chunk ticket");
@@ -141,6 +160,9 @@ public final class SalisSparkleChunkUnloadProbe {
                         "unload cancellation count changed while chunk stayed absent");
                 require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
                         "cancelled Salis effect remained queued");
+                require(OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore,
+                        "cancelled Salis effect produced an outbound particle packet while its origin chunk was unloaded");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD");
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not reacquire remote chunk ticket");
                 fixtureTicketHeld = true;
@@ -161,6 +183,11 @@ public final class SalisSparkleChunkUnloadProbe {
                         "expected exactly one native unload cancellation");
                 require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
                         "Salis queue retained a stale effect after reload");
+                require(OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore,
+                        "cancelled Salis effect emitted a real outbound particle packet after chunk reload");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD");
+                removeOutboundParticleRecorder();
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED");
                 require(releaseFixtureTicket(),
                         "fixture could not release its final remote chunk ticket after reload");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED");
@@ -171,11 +198,81 @@ public final class SalisSparkleChunkUnloadProbe {
                 active.halt(false);
             }
         } catch (RuntimeException | AssertionError ex) {
+            removeOutboundParticleRecorder();
             cleanupFixtureTicketAfterFailure();
             finished = true;
             ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_FAILED");
             LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_FAILED", ex);
             active.halt(false);
+        }
+    }
+
+    private static void installOutboundParticleRecorder(ServerPlayer actor) {
+        Connection connection = actor.connection.getConnection();
+        Channel channel = connection.channel();
+        require(channel != null && channel.isActive(),
+                "actor connection has no active Netty channel for outbound packet capture");
+        Runnable install = () -> {
+            var pipeline = channel.pipeline();
+            if (pipeline.get(OUTBOUND_HANDLER_NAME) != null) {
+                pipeline.remove(OUTBOUND_HANDLER_NAME);
+            }
+            pipeline.addBefore("packet_handler", OUTBOUND_HANDLER_NAME, new ChannelOutboundHandlerAdapter() {
+                @Override
+                public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
+                        throws Exception {
+                    if (message instanceof ClientboundLevelParticlesPacket packet
+                            && isProbeParticlePacket(packet)) {
+                        int count = OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet();
+                        System.out.println("TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=" + count
+                                + " x=" + packet.getX()
+                                + " y=" + packet.getY()
+                                + " z=" + packet.getZ()
+                                + " particle=thaumcraft:salis_sparkle"
+                                + " particle_count=" + packet.getCount()
+                                + " long_distance=" + packet.isLongDistance());
+                    }
+                    context.write(message, promise);
+                }
+            });
+        };
+        if (channel.eventLoop().inEventLoop()) {
+            install.run();
+        } else {
+            channel.eventLoop().submit(install).syncUninterruptibly();
+        }
+        outboundProbeChannel = channel;
+        require(channel.pipeline().get(OUTBOUND_HANDLER_NAME) != null,
+                "outbound Salis packet recorder was not installed");
+        ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED");
+    }
+
+    private static boolean isProbeParticlePacket(ClientboundLevelParticlesPacket packet) {
+        return packet.getParticle() == SalisSparkleParticleRegistration.TYPE
+                && packet.getCount() == 0
+                && Double.compare(packet.getX(), ORIGIN.getX() + 0.5D) == 0
+                && Double.compare(packet.getY(), ORIGIN.getY() + 0.5D) == 0
+                && Double.compare(packet.getZ(), ORIGIN.getZ() + 0.5D) == 0;
+    }
+
+    private static void removeOutboundParticleRecorder() {
+        Channel channel = outboundProbeChannel;
+        outboundProbeChannel = null;
+        if (channel == null || !channel.isOpen()) return;
+        Runnable remove = () -> {
+            if (channel.pipeline().get(OUTBOUND_HANDLER_NAME) != null) {
+                channel.pipeline().remove(OUTBOUND_HANDLER_NAME);
+            }
+        };
+        try {
+            if (channel.eventLoop().inEventLoop()) {
+                remove.run();
+            } else {
+                channel.eventLoop().submit(remove).syncUninterruptibly();
+            }
+        } catch (RuntimeException failure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_CLEANUP_FAILED", failure);
         }
     }
 
