@@ -15,6 +15,7 @@ VERIFIER = ROOT / "tools/verify_nitor_client_tick.py"
 WORKFLOW = (ROOT / ".github/workflows/closure-dust-client.yml").read_text()
 
 assert "extends BaseEntityBlock" in BLOCK
+assert "this(props, LegacyNitorColors.variants().get(0).particleRgb());" in BLOCK
 assert "public static final MapCodec<NitorBlock> CODEC = simpleCodec(NitorBlock::new);" in BLOCK
 assert "protected MapCodec<? extends BaseEntityBlock> codec()" in BLOCK
 assert "animateTick(" not in BLOCK, "Nitor must not depend on random display ticks"
