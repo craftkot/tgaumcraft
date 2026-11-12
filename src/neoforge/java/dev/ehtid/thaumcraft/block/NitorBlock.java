@@ -44,7 +44,7 @@ public final class NitorBlock extends BaseEntityBlock {
     private boolean smokeColorReported;
 
     public NitorBlock(BlockBehaviour.Properties props) {
-        this(props, 0xFFFFFF);
+        this(props, LegacyNitorColors.variants().get(0).particleRgb());
     }
 
     public NitorBlock(BlockBehaviour.Properties props, int flameRgb) {
