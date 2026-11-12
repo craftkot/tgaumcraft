@@ -2,8 +2,8 @@ package dev.ehtid.thaumcraft.blockentity;
 
 import dev.ehtid.thaumcraft.block.NitorBlock;
 import dev.ehtid.thaumcraft.registry.NitorBlockEntityRegistration;
+import dev.ehtid.thaumcraft.registry.NitorParticleRegistration;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -13,8 +13,7 @@ import net.minecraft.world.level.block.state.BlockState;
  * BETA26 TileNitor cadence. The original tile updates only on the client:
  * drawNitorFlames once per tick and drawNitorCore when count++ % 10 == 0.
  *
- * Dust/END_ROD remain temporary vanilla visual substitutes for the original
- * FXGeneric atlas frames 264..271 and 457; this class restores timing only.
+ * The client uses the original FXGeneric flame frames 264..271 and core frame 457.
  */
 public final class NitorBlockEntity extends BlockEntity {
     private static final boolean SMOKE_PROBE =
@@ -40,7 +39,7 @@ public final class NitorBlockEntity extends BlockEntity {
 
         // BETA26 TileNitor.update -> drawNitorFlames: Gaussian X/Z drift,
         // a 0..0.06 upward velocity, and one effect every client tick.
-        level.addParticle(nitor.coloredGlow(), x, y, z,
+        level.addParticle(NitorParticleRegistration.FLAME_TYPE, x, y, z,
                 random.nextGaussian() * 0.0025D,
                 random.nextFloat() * 0.06D,
                 random.nextGaussian() * 0.0025D);
@@ -50,7 +49,7 @@ public final class NitorBlockEntity extends BlockEntity {
         // Original TileNitor starts with count=0, so the first tick also emits
         // the core; subsequent cores are exactly ten client ticks apart.
         if (tick % 10 == 0) {
-            level.addParticle(ParticleTypes.END_ROD,
+            level.addParticle(NitorParticleRegistration.CORE_TYPE,
                     pos.getX() + 0.5D, pos.getY() + 0.49D, pos.getZ() + 0.5D,
                     0.0D, 0.0D, 0.0D);
             blockEntity.smokeCores++;
