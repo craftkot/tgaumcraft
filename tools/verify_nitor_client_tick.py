@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Verify the real Minecraft client's BETA26 Nitor cadence and map-color particle."""
+"""Verify BETA26 Nitor client cadence, MapColor, atlas frames and render layers."""
 from pathlib import Path
+import math
 import re
 import sys
 
@@ -8,43 +9,117 @@ if len(sys.argv) != 2:
     raise SystemExit("usage: verify_nitor_client_tick.py <client.log>")
 log = Path(sys.argv[1]).read_text(encoding="utf-8", errors="replace")
 
-tick_matches = re.findall(
-    r"TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=(\d+) flames=(\d+) cores=(\d+)",
-    log,
-)
-if len(tick_matches) != 1:
-    raise SystemExit(
-        f"NITOR_REAL_CLIENT_TICK=FAIL expected one 20/20/2 marker, got {len(tick_matches)}"
-    )
-actual = tuple(int(value) for value in tick_matches[0])
-if actual != (20, 20, 2):
-    raise SystemExit(f"NITOR_REAL_CLIENT_TICK=FAIL expected (20, 20, 2), got {actual}")
+def one(pattern: str, label: str):
+    matches = re.findall(pattern, log)
+    if len(matches) != 1:
+        raise SystemExit(f"{label}: expected exactly one marker, found {len(matches)}")
+    return matches[0]
 
-color_matches = re.findall(
-    r"TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb=(\d+) mapColor=(\d+) particleColor=(\d+)",
-    log,
+tick = one(
+    r"TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=(\d+) flames=(\d+) cores=(\d+)",
+    "Nitor client cadence",
 )
-if len(color_matches) != 1:
+if tuple(map(int, tick)) != (20, 20, 2):
+    raise SystemExit(f"Nitor cadence mismatch: {tick}")
+
+color = one(
+    r"TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb=(\d+) mapColor=(\d+) particleColor=(\d+)",
+    "Nitor MapColor source",
+)
+dye_rgb, map_rgb, particle_rgb = map(int, color)
+if not (0 <= dye_rgb <= 0xFFFFFF and 0 <= map_rgb <= 0xFFFFFF
+        and 0 <= particle_rgb <= 0xFFFFFF):
+    raise SystemExit(f"Nitor RGB outside 24-bit range: {color}")
+if map_rgb == dye_rgb or particle_rgb != map_rgb:
     raise SystemExit(
-        "NITOR_REAL_CLIENT_COLOR=FAIL expected one dye/map/particle color marker, "
-        f"got {len(color_matches)}"
+        f"Nitor flame did not use block MapColor: dye={dye_rgb:#08x}, "
+        f"map={map_rgb:#08x}, particle={particle_rgb:#08x}"
     )
-dye_rgb, map_color, particle_color = (int(value) for value in color_matches[0])
-if any(value < 0 or value > 0xFFFFFF for value in (dye_rgb, map_color, particle_color)):
-    raise SystemExit("NITOR_REAL_CLIENT_COLOR=FAIL RGB value outside 24-bit range")
-if map_color != particle_color:
+if "TC_SMOKE_NITOR_PARTICLE_COLOR_SOURCE=FAIL" in log:
+    raise SystemExit("Nitor flame particle could not resolve its source block")
+
+flame = one(
+    r"TC_SMOKE_NITOR_FLAME_CREATED=YES id=1 frameStart=(\d+) frameCount=(\d+) "
+    r"lifetime=(\d+) startScale=([0-9.eE+-]+) rgb=(\d+)",
+    "Nitor flame creation",
+)
+flame_start, flame_count, flame_lifetime = map(int, flame[:3])
+start_scale = float(flame[3])
+flame_rgb = int(flame[4])
+if (flame_start, flame_count) != (264, 8):
+    raise SystemExit(f"Nitor flame atlas sequence mismatch: {flame[:2]}")
+if not 10 <= flame_lifetime <= 14 or not 3.0 <= start_scale <= 4.0:
+    raise SystemExit(f"Nitor flame lifetime/scale outside BETA26 range: {flame}")
+if flame_rgb != particle_rgb:
+    raise SystemExit(f"Nitor flame particle RGB differs from block MapColor: {flame_rgb:#08x}")
+
+core = one(
+    r"TC_SMOKE_NITOR_CORE_CREATED=YES id=1 frame=(\d+) lifetime=(\d+) "
+    r"middleScale=([0-9.eE+-]+)",
+    "Nitor core creation",
+)
+if (int(core[0]), int(core[1])) != (457, 10):
+    raise SystemExit(f"Nitor core source frame/lifetime mismatch: {core}")
+if not math.isfinite(float(core[2])):
+    raise SystemExit(f"Nitor core middle scale is not finite: {core}")
+
+flame_render = one(
+    r"TC_SMOKE_NITOR_FLAME_RENDERED=YES id=1 frame=(\d+) age=(\d+)",
+    "Nitor flame render",
+)
+core_render = one(
+    r"TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=(\d+) age=(\d+)",
+    "Nitor core render",
+)
+if int(core_render[0]) != 457:
+    raise SystemExit(f"Nitor core rendered wrong atlas frame: {core_render}")
+
+frame_matches = re.findall(
+    r"TC_SMOKE_NITOR_FLAME_FRAME=YES id=1 age=(\d+) frame=(\d+)", log
+)
+frames = {int(frame) for _, frame in frame_matches}
+if frames != set(range(264, 272)):
     raise SystemExit(
-        "NITOR_REAL_CLIENT_COLOR=FAIL particle RGB does not match BlockState map color: "
-        f"map={map_color:#08x} particle={particle_color:#08x}"
+        f"Nitor flame did not render every looping atlas frame: {sorted(frames)}"
     )
-if map_color == dye_rgb:
-    raise SystemExit(
-        "NITOR_REAL_CLIENT_COLOR=FAIL particle still uses the legacy dye/firework RGB"
-    )
-if "TC_SMOKE_NITOR_CLIENT_TICK=FAIL" in log or "TC_SMOKE_NITOR_PARTICLE_COLOR=FAIL" in log:
-    raise SystemExit("NITOR_REAL_CLIENT=FAIL client emitted an explicit failure marker")
+
+flame_expired = one(
+    r"TC_SMOKE_NITOR_FLAME_EXPIRED=YES id=1 age=(\d+) lifetime=(\d+)",
+    "Nitor flame expiry",
+)
+core_expired = one(
+    r"TC_SMOKE_NITOR_CORE_EXPIRED=YES id=1 age=(\d+) lifetime=(\d+)",
+    "Nitor core expiry",
+)
+if tuple(map(int, flame_expired)) != (flame_lifetime, flame_lifetime):
+    raise SystemExit(f"Nitor flame lifetime did not expire at maxAge: {flame_expired}")
+if tuple(map(int, core_expired)) != (10, 10):
+    raise SystemExit(f"Nitor core lifetime did not expire at maxAge: {core_expired}")
+
+blend = one(
+    r"TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES src=(\d+) dst=(\d+)",
+    "Nitor additive render layer",
+)
+if tuple(map(int, blend)) != (770, 1):
+    raise SystemExit(f"Nitor flame blend is not BETA26 layer 0 additive: {blend}")
+
+scale_markers = re.findall(
+    r"TC_SMOKE_NITOR_FLAME_SCALE=YES id=1 age=(\d+) scale=([0-9.eE+-]+)", log
+)
+scales = {int(age): float(scale) for age, scale in scale_markers}
+if 1 not in scales or flame_lifetime not in scales:
+    raise SystemExit(f"Nitor flame keyframe scale markers incomplete: {scales}")
+expected_first = start_scale + (0.05 - start_scale) / flame_lifetime
+if not math.isclose(scales[1], expected_first, rel_tol=0.0, abs_tol=1e-4):
+    raise SystemExit(f"Nitor flame first scale keyframe mismatch: {scales[1]} != {expected_first}")
+if not math.isclose(scales[flame_lifetime], 0.05, rel_tol=0.0, abs_tol=1e-4):
+    raise SystemExit(f"Nitor flame final scale keyframe mismatch: {scales[flame_lifetime]}")
+
+if "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES" not in log:
+    raise SystemExit("Nitor additive render layer was not entered")
 
 print(
-    "NITOR_REAL_CLIENT_TICK=PASS ticks=20 flames=20 cores=2 "
-    f"mapColor={map_color:#08x} particleColor={particle_color:#08x} dyeRgb={dye_rgb:#08x}"
+    "NITOR_REAL_CLIENT_PARTICLES=PASS "
+    f"flameFrames=264..271 coreFrame=457 "
+    f"mapColor={map_rgb:#08x} additive=770/1"
 )
