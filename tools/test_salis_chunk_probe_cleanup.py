@@ -36,9 +36,13 @@ if not (
 catch = section(probe, "} catch (RuntimeException | AssertionError ex) {", "private static boolean releaseFixtureTicket()")
 if "cleanupFixtureTicketAfterFailure();" not in catch:
     raise SystemExit("SALIS_NATIVE_FAILURE_CLEANUP=FAIL")
+if "removeOutboundParticleRecorder();" not in catch:
+    raise SystemExit("SALIS_NATIVE_PACKET_RECORDER_FAILURE_CLEANUP=FAIL")
 stopped = section(probe, "public static void onServerStopped", "@SubscribeEvent")
 if "cleanupFixtureTicketOnStop();" not in stopped:
     raise SystemExit("SALIS_NATIVE_SERVER_STOP_CLEANUP=FAIL")
+if "removeOutboundParticleRecorder();" not in stopped:
+    raise SystemExit("SALIS_NATIVE_PACKET_RECORDER_STOP_CLEANUP=FAIL")
 release = section(probe, "private static boolean releaseFixtureTicket()", "private static void cleanupFixtureTicketAfterFailure()")
 if "targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)" not in release or "fixtureTicketHeld = false;" not in release:
     raise SystemExit("SALIS_NATIVE_RELEASE_HELPER=FAIL")
@@ -78,3 +82,5 @@ if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase2:
     raise SystemExit("SALIS_OUTBOUND_PACKET_UNLOAD_ASSERTION=FAIL")
 if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase3:
     raise SystemExit("SALIS_OUTBOUND_PACKET_RELOAD_ASSERTION=FAIL")
+
+print("SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=PASS")
