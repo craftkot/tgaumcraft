@@ -3,7 +3,90 @@
 from pathlib import Path
 import sys
 source = Path("tools/client_smoke.sh").read_text()
-anchor = "  capture 08k-firststeps-real-bookshelf-before-salis\n  xdotool click 3\n  sleep 4\n"
+anchor = "  # BETA26 Nitor emits a flame particle every client tick and a core every ten.
+  # Keep the camera fixed and HUD hidden for before/active/expired captures.
+  xdotool key --clearmodifiers F1
+  sleep 0.4
+  capture 08m-nitor-particles-before
+  send_chat '/setblock 4 151 12 thaumcraft:nitor_yellow'
+  send_chat '/execute if block 4 151 12 thaumcraft:nitor_yellow run say NITOR_CLIENT_BLOCK_READY'
+  grep -Fq 'NITOR_CLIENT_BLOCK_READY' client-smoke/client.log
+  for _ in $(seq 1 50); do
+    if grep -Fq 'TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=20 flames=20 cores=2' client-smoke/client.log; then
+      break
+    fi
+    sleep 0.1
+  done
+  sleep 0.25
+  capture 08n-nitor-flame-core-active
+  python3 tools/verify_nitor_client_tick.py client-smoke/client.log
+  echo 'NITOR_CLIENT_PARTICLES=PASS' | tee -a client-smoke-status.txt
+  send_chat '/setblock 4 151 12 minecraft:air'
+  # Existing particles must expire after the source block is removed.
+  sleep 0.8
+  capture 08k-firststeps-real-bookshelf-before-salis
+  pactl list short sinks | grep -Fq 'tc_dust_sink'
+  timeout --signal=TERM 2s parec --device=tc_dust_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/dust-baseline.pcm || test "$?" -eq 124
+  python3 tools/check_dust_capture_noise.py client-smoke/dust-baseline.pcm
+  timeout --signal=TERM 5s parec --device=tc_dust_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/dust-event.pcm &
+  dust_capture_pid=$!
+  sleep 0.6
+  xdotool click 3
+  # BETA26 face particles are staggered by distance*16 + 0..4 ticks.
+  # Capture several early frames while the short-lived fallback is visible;
+  # do not change pixel thresholds or accept persistent scenery as FX.
+  # Real client #41525689264 rendered 92 transient pixels at the first
+  # post-delay capture and zero at the second. Sample the shorter-lived
+  # interval instead of lowering the unchanged >=100-pixel acceptance gate.
+  # Log actual wall-clock capture times; import duration is variable.
+  sleep 0.30
+  echo "SALIS_FRAME_EARLY_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-early.png
+  sleep 0.18
+  echo "SALIS_FRAME_MID_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-mid.png
+  sleep 0.18
+  echo "SALIS_FRAME_PEAK_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-peak.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-peak.png
+  sleep 0.18
+  echo "SALIS_FRAME_TAIL_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-tail.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-tail.png
+  sleep 0.18
+  echo "SALIS_FRAME_FINAL_CAPTURE_MS=$(date +%s%3N)"
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-final.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-final.png
+  # Defer ImageMagick thumbnail processing and base64 output until AFTER
+  # the PCM monitor stops, avoiding interference with quiet 0.33-volume dust.
+  sleep 2.65
+  wait "$dust_capture_pid" || test "$?" -eq 124
+  # Salis CONSUMES the bookshelf: without restoring the test fixture, the
+  # late screenshot shows distant sky/terrain, not the original scene.
+  # Rebuild only the disposable bookshelf after the real use/audio capture.
+  # Keep the player and camera unchanged; this is a visual negative control,
+  # not a second gameplay acceptance or evidence of BETA26 sprite parity.
+  send_chat '/setblock 2 151 12 minecraft:bookshelf'
+  send_chat '/execute if block 2 151 12 minecraft:bookshelf run say SALIS_TEMPORAL_CONTROL_RESTORED'
+  grep -Fq 'SALIS_TEMPORAL_CONTROL_RESTORED' client-smoke/client.log
+  xdotool key --clearmodifiers F1
+  sleep 1
+  # At >4s after use, with the same shelf restored, FX must have expired.
+  import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-late.png
+  test -s client-smoke/screenshots/08k-salis-sparkles-late.png
+  identify client-smoke/screenshots/08k-salis-sparkles-early.png
+  convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize 512x320 -colors 64 \
+    PNG8:client-smoke/screenshots/08k-salis-sparkles-early-thumb.png
+  echo -n 'REAL_CLIENT_SCREEN_08k-salis-sparkles-early='
+  base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png
+  echo
+"
 end = "  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post"
 if source.count(anchor) != 1 or source.count(end) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Real-client fixture changed; refuse unsafe injection")
@@ -90,7 +173,7 @@ replacement = """  # BETA26 TileNitor.update is a real client ticker, not a rand
 # Isolate the quiet actor-only dust sound from randomly starting world music.
 # The real Minecraft options are written before gradle runClient starts.
 # Keep PLAYERS/master audible: those categories carry thaumcraft:dust.
-options = "printf 'guiScale:2\\n' > run/options.txt"
+options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt"
 if source.count(options) != 1:
     raise SystemExit("Minecraft options fixture changed; refuse unsafe audio injection")
 head = source.split(end, 1)[0].replace(anchor, replacement)
