@@ -2750,3 +2750,29 @@ Fresh-state review:
 - Files changed in this iteration: `tools/client_jar_sound_smoke.py`, `tools/verify_jar_label_sound.py`, and this journal. No production Java, sound resources, shared registries, Gradle, global CI, main or foreign branch is changed.
 - Next: inspect the exact-head jar client run. If the command control fails, fix PulseAudio/OpenAL routing/capture only. If the control passes but the real configured-face click still fails while its client branch marker is present, investigate the local sound call's playback scheduling/attenuation against the BETA26 positional `world.playSound`; do not substitute the command control for the real action.
 - Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded.
+
+
+### 12.11 — BETA26 jar-label PAGE accepted; Nitor flame color corrected to block MapColor
+
+#### Jar label / M41 acceptance (previous exact code HEAD `e4df793`)
+- Real Minecraft 1.21.1 NeoForge smoke [#43122495880](https://github.com/craftkot/tgaumcraft/actions/runs/43122495880) **SUCCESS**. The actual client chose the PAGE branch on the configured face, the server removed the filter and dropped the blank label, and the original `page2.ogg` matched the captured PCM at correlation **1.0000**. The wrong face emitted no PAGE; the empty-jar interaction emitted no PAGE. The same run accepted M42 emptying and all four M43 SoundType events: Place `jar4.ogg` 0.9979, Hit `jar1.ogg` 0.6227, Step `jar4.ogg` 0.9999, Fall `jar3.ogg` 0.3776. This closes the previous M41 PAGE/PCM blocker on that exact HEAD; it does not close M16 as a whole.
+
+#### Nitor flame RGB source mismatch (new code)
+- Pinned BETA26 `TileNitor.update` passes `state.getBlock().getMapColor(...).colorValue` into `FXDispatcher.drawNitorFlames`; `BlockNitor.getMapColor` uses `MapColor.getBlockColor(dye)`. The port instead built `DustParticleOptions` from `LegacyNitorColors.Variant.particleRgb`, which is the modern dye/firework RGB palette (e.g. yellow `0xFED83D`), not the block MapColor. The modern registry already assigns each Nitor block `DyeColor.getMapColor()`, so the particle now uses that same map-color RGB.
+- `NitorBlock` maps each of the 16 legacy dye RGB identifiers through its `LegacyNitorColors.Variant.modernDye` to `DyeColor.getMapColor().col`, caches the resulting `DustParticleOptions`, and emits an opt-in runtime marker with dye/map/particle RGB. Unknown legacy variant colors fail fast rather than silently using the wrong shade. The codec's one-argument constructor uses the first valid legacy variant (white), not an unmapped `0xFFFFFF` sentinel.
+- The smoke verifier now requires exactly one 20/20/2 client-tick marker and exactly one color marker; it rejects mismatched particle/map RGB, reuse of the dye RGB, missing evidence, and out-of-range values. The regression script checks all 16 legacy variant identifiers and exercises positive/negative verifier fixtures.
+
+#### Exact commits / files
+- [`d727fe8`](https://github.com/craftkot/tgaumcraft/commit/d727fe8bb1033fff5228ded4a5aaeb37b76c5f13) — map-color particle implementation and opt-in runtime marker.
+- [`74d4867`](https://github.com/craftkot/tgaumcraft/commit/74d486760c6721dea9038d49d2914fdb21a61538) — require runtime map-color evidence in verifier.
+- [`8c898fa`](https://github.com/craftkot/tgaumcraft/commit/8c898fa644dd103328f2fc76da19793570b63768) — positive/negative verifier fixtures and 16-variant source contract.
+- [`26fd94d`](https://github.com/craftkot/tgaumcraft/commit/26fd94d7633c9d430a22c4fb592e4a80d589d45a) — remove a temporary malformed synthetic fixture.
+- [`41bba45`](https://github.com/craftkot/tgaumcraft/commit/41bba45e80fa2d3abe1ae05ce7727e37b8d6c225) — preserve a valid white fallback for the block codec constructor.
+- [`6217787`](https://github.com/craftkot/tgaumcraft/commit/621778730e704f45b55544863316f21c7c4fe51d) — assert the codec fallback in the regression test.
+- Changed gameplay/test paths: `src/neoforge/java/dev/ehtid/thaumcraft/block/NitorBlock.java`, `tools/verify_nitor_client_tick.py`, `tools/test_nitor_client_tick.py`. No common registry, Gradle, workflow YAML, global localization, main, or other feature branch was changed.
+
+#### Verification state at `6217787`
+- CircleCI `verify-connection`: **SUCCESS** on exact HEAD (Core only).
+- GitHub Actions exact-head jobs were queued at last check: [Nitor real-client smoke #43127196999](https://github.com/craftkot/tgaumcraft/actions/runs/43127196999), [full NeoForge/JAR/dedicated-server CI #43127197017](https://github.com/craftkot/tgaumcraft/actions/runs/43127197017), [Aura/Crystal GameTests #43127196880](https://github.com/craftkot/tgaumcraft/actions/runs/43127196880), plus the existing M16 regression/client suite. No result is claimed for these queued jobs. Earlier Nitor smoke [#43122495968](https://github.com/craftkot/tgaumcraft/actions/runs/43122495968) passed only the old 20/20/2 cadence and did not test color.
+- Historical rubric remains **59/100**, M16 **4/6**. No point awarded: the new code has not yet passed exact-HEAD NeoForge and real-client verification.
+- Next action: inspect #43127196999 first. Require the actual client log marker to show `mapColor == particleColor != dyeRgb`, then verify #43127197017 and GameTests. If these pass, continue M16 with the remaining original FXGeneric Nitor atlas frames; do not claim M16 complete while exact sprites, other particles, and remaining assets are still absent.
