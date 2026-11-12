@@ -3073,3 +3073,14 @@ Fresh-state review:
 - Exact-head four-cell real-client matrix [#43287502196](https://github.com/craftkot/tgaumcraft/actions/runs/43287502196) is queued; no new client screenshots or GUI acceptance exist yet. Exact-head full NeoForge, Aura/Crystal and other M16 workflows are also queued. The previous two runs are harness failures, not gameplay GUI failures: run #43286876230 failed apt setup; run #43287007498 failed the stale preflight assertion before launching Minecraft.
 - Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No score awarded: this iteration repaired observability and a broken test generator, not production parity. PR #4 remains Draft and unmerged; the existing PR #3/#4 `SalisMundusItem.java` overlap remains unresolved and untouched.
 - Next: inspect #43287502196. Require all four jobs to pass package setup, world-gate tests, script generation, actual Minecraft launch, right-click GUI capture, OCR and PNG inspection. If the matrix passes, resume the next independently unverified BETA26 visual/audio item; do not count the OCR harness correction as category completion.
+
+
+## 12.11.2026 — M16 Arcane Workbench client smoke: generated-shell contamination
+
+**Observed failure:** [GitHub Actions #43287796076](https://github.com/craftkot/tgaumcraft/actions/runs/43287796076) failed all four EN/RU, GUI scale 2/3 matrix jobs *before Minecraft launched*. In job 131425679579, `tools/test_client_workbench_world.py` passed 44 assertions, but `bash -n client-workbench-gui-generated.sh` failed on line 1: `Workbench GUI OCR matcher: PASS (20 positive/negative assertions)`. The generator executed the OCR self-test with inherited stdout, so its diagnostic text preceded the generated Bash script. This is a confirmed smoke-harness defect, **not evidence of a broken game GUI**.
+
+**Fix:** `tools/client_workbench_gui_smoke.py` routes the OCR self-test's stdout to stderr while retaining `check=True`, leaving stdout exclusively for the generated shell. `tools/test_client_workbench_world.py` now asserts this contract. No global CI/workflow, game Java, registries, or parallel lanes were changed.
+
+**Commits:** `3f77d6d32a15b7c0217de54e96c95acb037053b2` (generator), `de99196ac048ee7f977314148de0380d421cd440` (regression), `619ca4ca7b04caf29583cb83dc4e96c277992931` (test newline correction). The old failing run is definitive; **new exact-head CI must be checked before claiming a pass**. Local git checkout remains blocked by DNS `Could not resolve host: github.com`. No real Minecraft GUI acceptance is claimed from this harness repair.
+
+**Audit:** historical 59/100, M16 4/6 unchanged. Next: verify new four-matrix workbench run, inspect screenshots/OCR and fix any genuine game/client failure; then return to native Salis chunk unload/reload and outgoing-packet/ticket observation. PR #4 remains Draft, no merge.
