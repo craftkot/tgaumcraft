@@ -36,6 +36,17 @@ def core_scale(middle: float, age: int, lifetime: int) -> float:
         return 1.0 + (middle - 1.0) * (progress * 2.0)
     return middle + (1.0 - middle) * ((progress - 0.5) * 2.0)
 
+# NitorBlockEntity emits during the client level tick; the particle engine
+# advances pending particles before their first rendered frame. Starting at
+# zero therefore produces the BETA26 FXGeneric age-one sample on screen.
+def first_visible_age_after_client_tick(initial_age: int) -> int:
+    return initial_age + 1
+
+first_visible_age = first_visible_age_after_client_tick(0)
+assert first_visible_age == 1
+assert 264 + first_visible_age % 8 == 265
+assert first_visible_age_after_client_tick(1) == 2
+
 # Compare the modern formulas against the exact source keyframe interpolator.
 for lifetime in range(10, 15):
     for start in (3.0, 3.375, 4.0):
@@ -57,7 +68,7 @@ assert "FLAME_FIRST_FRAME = 264" in PARTICLE
 assert "FLAME_FRAME_COUNT = 8" in PARTICLE
 assert "CORE_FRAME = 457" in PARTICLE
 assert "this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;" in PARTICLE
-assert "this.age = 1;" in PARTICLE
+assert "this.age = 0;" in PARTICLE
 assert "this.quadSize = 0.1F * scaleAt(this.age);" in PARTICLE
 assert "private static final AtomicInteger FLAME_FRAME_MASK" in PARTICLE
 assert "FLAME_FRAME_MASK.getAndUpdate(mask -> mask | bit)" in PARTICLE
@@ -105,6 +116,8 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
         "TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=1",
         "TC_SMOKE_NITOR_FLAME_SCALE=YES id=1 age=1 scale=3.155",
         "TC_SMOKE_NITOR_FLAME_SCALE=YES id=1 age=10 scale=0.05",
+        "TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=1 scale=1.02",
+        "TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=10 scale=1.0",
         "TC_SMOKE_NITOR_CORE_EXPIRED=YES id=1 age=10 lifetime=10",
         "TC_SMOKE_NITOR_FLAME_EXPIRED=YES id=1 age=10 lifetime=10",
         "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1",
@@ -117,6 +130,8 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
         lines = [line for line in lines if "frame=271" not in line]
     if omit == "core-render":
         lines = [line for line in lines if "TC_SMOKE_NITOR_CORE_RENDERED" not in line]
+    if omit == "core-first-scale":
+        lines = [line for line in lines if "TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=1" not in line]
     if omit == "blend":
         lines = [line for line in lines if "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN" not in line]
     if wrong == "dye":
@@ -124,6 +139,9 @@ def verifier_result(name: str, omit: str | None = None, wrong: str | None = None
                               "mapColor=16701501 particleColor=16701501") for line in lines]
     if wrong == "particle":
         lines = [line.replace("particleColor=15066419", "particleColor=16701501") for line in lines]
+    if wrong == "core-phase":
+        lines = [line.replace("TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=1",
+                              "TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=457 age=2") for line in lines]
     with tempfile.TemporaryDirectory() as directory:
         log = Path(directory) / f"{name}.log"
         log.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -136,6 +154,8 @@ good = verifier_result("good")
 assert good.returncode == 0, good.stdout + good.stderr
 assert verifier_result("missing-last-frame", omit="last-frame").returncode != 0
 assert verifier_result("missing-core-render", omit="core-render").returncode != 0
+assert verifier_result("missing-core-first-scale", omit="core-first-scale").returncode != 0
+assert verifier_result("wrong-core-phase", wrong="core-phase").returncode != 0
 assert verifier_result("missing-additive", omit="blend").returncode != 0
 assert verifier_result("old-dye-rgb", wrong="dye").returncode != 0
 assert verifier_result("wrong-particle-rgb", wrong="particle").returncode != 0

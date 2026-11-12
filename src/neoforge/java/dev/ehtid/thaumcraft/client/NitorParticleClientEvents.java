@@ -102,9 +102,11 @@ final class NitorParticle extends TextureSheetParticle {
         // BETA26 drawNitorFlames: age 10..14, alpha .66, scale 3..4 -> .05.
         // BETA26 drawNitorCore: age 10, white, scale 1 -> randomized middle -> 1.
         this.lifetime = flame ? 10 + level.random.nextInt(5) : 10;
-        // BETA26 FXGeneric increments particleAge in onUpdate before its first render.
-        // Modern particles can be rendered once at age zero immediately after creation.
-        this.age = 1;
+        // NitorBlockEntity emits from the client level tick. ParticleEngine ticks
+        // pending particles before the next render, so start at age 0: the first
+        // visible sample is age 1, matching FXGeneric.onUpdate. The real-client
+        // probe observed age=2 when initialized at 1, skipping the source phase.
+        this.age = 0;
         this.startScale = flame ? 3.0F + level.random.nextFloat() : 1.0F;
         this.middleScale = flame ? 1.0F
                 : 1.0F + (float) level.random.nextGaussian() * 0.1F;
@@ -134,14 +136,10 @@ final class NitorParticle extends TextureSheetParticle {
                     + FLAME_FIRST_FRAME + " frameCount=" + FLAME_FRAME_COUNT
                     + " lifetime=" + this.lifetime + " startScale=" + this.startScale
                     + " rgb=" + rgb);
-            System.out.println("TC_SMOKE_NITOR_FLAME_SCALE=YES id=1 age=1 scale="
-                    + scaleAt(this.age));
         } else if (SMOKE_PROBE && this.smokeId == 1) {
             System.out.println("TC_SMOKE_NITOR_CORE_CREATED=YES id=1 frame="
                     + CORE_FRAME + " lifetime=" + this.lifetime
                     + " middleScale=" + this.middleScale);
-            System.out.println("TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=1 scale="
-                    + scaleAt(this.age));
         }
     }
 
@@ -221,6 +219,12 @@ final class NitorParticle extends TextureSheetParticle {
         int frameAge = Math.min(this.age, this.lifetime);
         float scale = scaleAt(frameAge);
         this.quadSize = 0.1F * scale;
+
+        // Record the first post-update sample, not the constructor's pre-tick state.
+        if (SMOKE_PROBE && smokeId == 1 && frameAge == 1) {
+            String kind = flame ? "FLAME" : "CORE";
+            System.out.println("TC_SMOKE_NITOR_" + kind + "_SCALE=YES id=1 age=1 scale=" + scale);
+        }
 
         if (SMOKE_PROBE && smokeId == 1 && frameAge == lifetime) {
             String kind = flame ? "FLAME" : "CORE";

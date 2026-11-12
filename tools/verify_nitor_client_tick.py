@@ -71,8 +71,10 @@ core_render = one(
     r"TC_SMOKE_NITOR_CORE_RENDERED=YES id=1 frame=(\d+) age=(\d+)",
     "Nitor core render",
 )
-if int(core_render[0]) != 457:
-    raise SystemExit(f"Nitor core rendered wrong atlas frame: {core_render}")
+if tuple(map(int, core_render)) != (457, 1):
+    raise SystemExit(
+        f"Nitor first visible core frame does not match FXGeneric age-one phase: {core_render}"
+    )
 if (int(flame_render[0]), int(flame_render[1])) != (265, 1):
     raise SystemExit(
         f"Nitor first visible flame frame does not match FXGeneric age-one phase: {flame_render}"
@@ -119,6 +121,20 @@ if not math.isclose(scales[1], expected_first, rel_tol=0.0, abs_tol=1e-4):
     raise SystemExit(f"Nitor flame first scale keyframe mismatch: {scales[1]} != {expected_first}")
 if not math.isclose(scales[flame_lifetime], 0.05, rel_tol=0.0, abs_tol=1e-4):
     raise SystemExit(f"Nitor flame final scale keyframe mismatch: {scales[flame_lifetime]}")
+
+core_scale_markers = re.findall(
+    r"TC_SMOKE_NITOR_CORE_SCALE=YES id=1 age=(\d+) scale=([0-9.eE+-]+)", log
+)
+core_scales = {int(age): float(scale) for age, scale in core_scale_markers}
+if 1 not in core_scales or 10 not in core_scales:
+    raise SystemExit(f"Nitor core keyframe scale markers incomplete: {core_scales}")
+expected_core_first = 1.0 + (float(core[2]) - 1.0) * 0.2
+if not math.isclose(core_scales[1], expected_core_first, rel_tol=0.0, abs_tol=1e-4):
+    raise SystemExit(
+        f"Nitor core first scale keyframe mismatch: {core_scales[1]} != {expected_core_first}"
+    )
+if not math.isclose(core_scales[10], 1.0, rel_tol=0.0, abs_tol=1e-4):
+    raise SystemExit(f"Nitor core final scale keyframe mismatch: {core_scales[10]}")
 
 if "TC_SMOKE_NITOR_ADDITIVE_BLEND_BEGIN=YES" not in log:
     raise SystemExit("Nitor additive render layer was not entered")
