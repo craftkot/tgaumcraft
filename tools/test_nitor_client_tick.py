@@ -61,6 +61,10 @@ assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
 assert "FIRSTSTEPS_REAL_DREAM_SALIS_BOOKSHELF_OK" in generated
 assert "assert_smoke_event BOOKSHELF_SALIS_USED" in generated
 assert "assert_smoke_event BOOKSHELF_TRANSFORMED" in generated
+assert "capture 08l-firststeps-real-bookshelf-after-salis" in generated
+assert "client-smoke/dust-baseline.pcm" in generated
+assert "client-smoke/dust-event.pcm" in generated
+assert "python3 tools/match_dust_audio_pcm.py" in generated
 assert "TC_SMOKE_NITOR_CLIENT_TICK=YES ticks=20 flames=20 cores=2" in generated
 
 for path in (
