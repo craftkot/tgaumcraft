@@ -27,7 +27,7 @@ replacement = """  # Keep one fixed view that includes the adjacent Nitor and Sa
   python3 tools/verify_nitor_client_tick.py client-smoke/client.log
   echo 'NITOR_CLIENT_TICK=PASS' | tee -a client-smoke-status.txt
   send_chat '/setblock 3 151 12 minecraft:air'
-  # Restore the centered bookshelf view; the HUD remains hidden for both captures.
+  # Restore the centered bookshelf view; keep the HUD hidden for both captures.
   send_chat '/tp @p 2.5 150 11.5 0 0'
   sleep 0.5
   capture 08k-firststeps-real-bookshelf-before-salis
