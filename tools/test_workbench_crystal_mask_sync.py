@@ -40,9 +40,9 @@ client_signature, client_body = method_body(
 )
 require(
     re.search(
-        r"DataSlot\\.standalone\\(\\)\\s*,\\s*"
-        r"DataSlot\\.standalone\\(\\)\\s*,\\s*"
-        r"DataSlot\\.standalone\\(\\)",
+        r"DataSlot\.standalone\(\)\s*,\s*"
+        r"DataSlot\.standalone\(\)\s*,\s*"
+        r"DataSlot\.standalone\(\)",
         client_body,
     ) is not None,
     "client menu must own a writable standalone slot for the required crystal mask",
@@ -80,7 +80,7 @@ mask_signature, mask_body = method_body(
     "private static DataSlot crystalMaskSlot(Container bench)"
 )
 require(
-    re.search(r"matchesThaumometerPattern\\(\\)\\s*return 0b111111;", mask_body)
+    re.search(r"matchesThaumometerPattern\(\)\s*return 0b111111;", mask_body)
     is not None,
     "BETA26 Thaumometer preview must require all six primal crystals",
 )
