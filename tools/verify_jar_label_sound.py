@@ -149,10 +149,14 @@ for marker in (
 ):
     if marker not in smoke:
         raise SystemExit(f"Jar-empty real-client assertion is missing: {marker}")
-if "execute if items entity @p hotbar.* thaumcraft:label" not in smoke:
-    raise SystemExit("Real-client smoke must detect a blank label already picked up by the player")
-if "JAR_LABEL_SERVER_BLANK_DROP_ENTITY_PRESENT" not in smoke or "JAR_LABEL_SERVER_BLANK_DROP_INVENTORY_PRESENT" not in smoke:
-    raise SystemExit("Real-client smoke must accept either the dropped label entity or its inventory pickup")
+for token in (
+    "send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'",
+    "send_chat '/data get entity @p Inventory'",
+    "grep -Fq 'id:\"thaumcraft:label\"' client-smoke/client.log",
+    "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
+):
+    if token not in smoke:
+        raise SystemExit(f"Real-client smoke must identify the blank label from live Item/Inventory NBT: {token}")
 if "send_chat '/clear @p thaumcraft:label'" not in smoke:
     raise SystemExit("M42 must start with an actually empty hand after the label drop")
 empty_baseline_pos = smoke.index("> client-smoke/empty-baseline.pcm")

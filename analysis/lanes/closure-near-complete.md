@@ -2877,3 +2877,12 @@ Fresh-state review:
 - Replaced that post-M41 cleanup command with a general nearby-test-world item-entity cleanup. All stale item entities were already cleared before M41, and no later scenario needs item drops from this stage. This removes the obsolete selector consistently with the new direct Item/Inventory NBT observation.
 - No production Java changed. The next exact-head run must first pass the static verifier, then exercise M41 and the M43 pointer/damage-overlay/PCM sequence. The real-client test remains unaccepted.
 - Fixed-scale readiness remains 59/100; M16 4/6. The planned Arcane Workbench RU/EN GUI screenshot remains deferred until the jar smoke blockers are cleared.
+
+
+
+## 2026-11-12 — M41 verifier alignment: accept direct Item/Inventory NBT evidence
+
+- Exact-head jar workflow [#43162413953](https://github.com/craftkot/tgaumcraft/actions/runs/43162413953) passed the M43 static verifier and resource/audio checks, then stopped in tools/verify_jar_label_sound.py before generating or launching the client. That verifier still required the removed hotbar-only selector and old entity/inventory marker names. The new smoke implementation was not executed.
+- Updated the source/asset verifier to require the replacement live-data path: query the nearest item entity's Item compound, query the player's complete Inventory compound, and require the serialized id thaumcraft:label plus the single combined PASS marker. No gameplay or resource contract was weakened; the old query was the stale assertion.
+- Only tools/verify_jar_label_sound.py and this lane journal changed in this commit. M41/M43 real-client acceptance remains pending; do not infer a pass from static checks.
+- Fixed-scale readiness remains 59/100; M16 4/6. Next: rerun the exact-head jar workflow; if M41 data observation succeeds, continue through the held-hit overlay and original jar1.ogg matcher before returning to Arcane Workbench GUI work.
