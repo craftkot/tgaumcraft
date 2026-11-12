@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Client providers for the original BETA26 Nitor FXGeneric atlas frames. */
-@EventBusSubscriber(modid = "thaumcraft", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class NitorParticleClientEvents {
     private NitorParticleClientEvents() {}
 
