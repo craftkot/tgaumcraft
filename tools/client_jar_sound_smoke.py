@@ -90,6 +90,9 @@ body = r'''
 
   # BETA26 BlockJar: shift-right-click on the labelled face plays SoundsTC.page
   # locally; the server removes the filter and drops one blank label.
+  # M40 can leave a jar/brace item nearby; clear all item entities so the
+  # following server-side Item NBT read can identify only this label drop.
+  send_chat '/kill @e[type=minecraft:item]'
   send_chat '/setblock 250 151 251 thaumcraft:jar_normal{AspectFilter:"aer",Amount:0s,facing:3b}'
   send_chat '/execute if data block 250 151 251 {AspectFilter:"aer",Amount:0s,facing:3b} run say JAR_LABEL_FILTER_READY'
   if ! grep -Fq 'JAR_LABEL_FILTER_READY' client-smoke/client.log; then
@@ -167,8 +170,11 @@ PY
   wait "$capture_pid" || test "$?" -eq 124
   import -display :99 -window root -silent client-smoke/screenshots/99-jar-label-removed.png
   send_chat '/execute unless data block 250 151 251 {AspectFilter:"aer"} run say JAR_LABEL_SERVER_FILTER_REMOVED'
-  send_chat '/execute if entity @e[type=minecraft:item,distance=..3,nbt={Item:{id:"thaumcraft:label"}}] run say JAR_LABEL_SERVER_BLANK_DROP_ENTITY_PRESENT'
-  send_chat '/execute if items entity @p hotbar.* thaumcraft:label run say JAR_LABEL_SERVER_BLANK_DROP_INVENTORY_PRESENT'
+  # Query the actual nearest item entity's serialized Item compound instead
+  # of relying on a legacy NBT selector predicate. If it was picked up,
+  # inspect the player's full Inventory compound as a separate fallback.
+  send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'
+  send_chat '/data get entity @p Inventory'
   if ! grep -Fq 'JAR_LABEL_SERVER_FILTER_REMOVED' client-smoke/client.log; then
     echo 'JAR_LABEL_SERVER_FILTER_NOT_REMOVED=YES' | tee -a client-smoke-status.txt
     exit 1
@@ -177,10 +183,11 @@ PY
     echo 'JAR_LABEL_CONFIGURED_FACE_CLIENT_PAGE_BRANCH_NOT_OBSERVED=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
-  if grep -Eq 'JAR_LABEL_SERVER_BLANK_DROP_(ENTITY|INVENTORY)_PRESENT' client-smoke/client.log; then
-    echo 'JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS' | tee -a client-smoke-status.txt
+  if grep -Fq 'id:"thaumcraft:label"' client-smoke/client.log; then
+    echo 'JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS source=entity-or-inventory-nbt' | tee -a client-smoke-status.txt
   else
     echo 'JAR_LABEL_SERVER_BLANK_DROP_MISSING=YES' | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
     exit 1
   fi
   # The real drop may already be picked up; clear both representations before

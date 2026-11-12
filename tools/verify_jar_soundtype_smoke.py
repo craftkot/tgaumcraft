@@ -84,4 +84,12 @@ assert WORKFLOW.index('if [ -z "$selected" ]') < WORKFLOW.index('apt-get "${apt_
 assert "timeout-minutes: 45" in WORKFLOW and "timeout 360s" in WORKFLOW, "dependency installation and client runtime need bounded, sufficient time"
 assert "python tools/verify_jar_soundtype_smoke.py" in WORKFLOW
 
+assert "send_chat '/kill @e[type=minecraft:item]'" in SMOKE
+assert "send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'" in SMOKE
+assert "send_chat '/data get entity @p Inventory'" in SMOKE
+assert 'id:"thaumcraft:label"' in SMOKE
+assert "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS" in SMOKE
+assert 'nbt={Item:{id:"thaumcraft:label"}}' not in SMOKE
+assert "hotbar.* thaumcraft:label" not in SMOKE
+
 print("BETA26 jar SoundType client contract: place, hit, step and fall each have real interaction, server-state guard and original-PCM matcher: PASS")
