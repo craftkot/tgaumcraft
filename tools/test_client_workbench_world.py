@@ -192,10 +192,11 @@ expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's vertical client-frame offset")
 expect("gui_top=$((Y + (HEIGHT - 234 * scale) / 2))" not in generator,
        "workbench crop still uses the decorated window Y coordinate")
-expect("title_x=$((12 * scale))" in generator
+expect("title_x=$((16 * scale))" in generator
+       and "title_y=$((5 * scale))" in generator
        and "title_width=$((120 * scale))" in generator
-       and "title_height=$((24 * scale))" in generator,
-       "workbench title OCR crop geometry changed without a fixture update")
+       and "title_height=$((9 * scale))" in generator,
+       "workbench title crop no longer isolates the rendered title baseline")
 expect("panel_x=$((144 * scale))" in generator
        and "panel_y=$((42 * scale))" in generator
        and "panel_width=$((46 * scale))" in generator
@@ -206,21 +207,45 @@ expect("client-smoke/screenshots/workbench-title-ocr.png" in generator
        and "test -s client-smoke/screenshots/workbench-title-ocr.png" in generator
        and "test -s client-smoke/screenshots/workbench-vis-ocr.png" in generator,
        "workbench OCR inputs are not generated and checked before Tesseract")
-expect("-resize 300% -colorspace Gray -contrast-stretch 0x12%" in generator,
-       "title OCR no longer uses the tested bitmap-font preprocessing")
+expect("-resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55%" in generator,
+       "title pixel crop no longer uses the tested tight bitmap-font preprocessing")
 expect("-resize 400% -colorspace Gray -contrast-stretch 0x12%" in generator,
-       "panel OCR no longer uses the tested bitmap-font preprocessing")
-expect("--psm 6" in generator and "--psm 11" in generator
-       and "title_text_6" in generator and "title_text_11" in generator
+       "panel OCR no longer uses the tested preprocessing")
+expect("--psm 6" in generator and "--psm 8" in generator and "--psm 11" in generator
+       and "title_text_6" in generator and "title_text_8" in generator
        and "panel_text_6" in generator and "panel_text_11" in generator,
-       "workbench OCR must evaluate both tested segmentation modes for both regions")
+       "workbench OCR diagnostics no longer evaluate both title modes and panel modes")
 expect("assert_client_workbench_gui_ocr.py" in generator,
-       "workbench OCR generator does not call the bounded localized OCR oracle")
+       "workbench OCR generator does not check the clipped localized available label")
+expect("assert_client_workbench_gui_render.py" in generator
+       and "title_ink=" in generator and "panel_ink=" in generator,
+       "workbench generator does not validate the actual render marker and screenshot pixels")
 ocr_helper = Path(__file__).with_name("assert_client_workbench_gui_ocr.py").read_text(encoding="utf-8")
-expect("contains_prefix_near(" in ocr_helper
-       and "contains_label_prefix(" in ocr_helper
-       and "has_cost_pair(" in ocr_helper,
-       "workbench OCR oracle no longer checks bounded localized title/label and paired cost evidence")
+expect("contains_label_prefix(" in ocr_helper and "localized available label" in ocr_helper
+       and "contains_prefix_near(" not in ocr_helper and "has_cost_pair(" not in ocr_helper,
+       "OCR helper still treats unreliable title/cost recognition as authoritative")
+screen = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
+screen_source = screen.read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
+       and "smokeBase64(title.getString())" in screen_source
+       and "smokeBase64(availableText.getString())" in screen_source
+       and "smokeBase64(costText.getString())" in screen_source,
+       "actual ArcaneWorkbenchScreen render path does not emit localized semantic evidence")
+expect(screen_source.index("ThaumcraftReadableText.wrapped")
+       < screen_source.index("emitSmokeAudit(availableText, costText, available, cost);"),
+       "Workbench semantic marker is emitted before the text draw calls")
+render_helper = Path(__file__).with_name("assert_client_workbench_gui_render.py").read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in render_helper
+       and "title pixels present" in render_helper and "Vis panel pixels present" in render_helper
+       and "cost == 20" in render_helper and "crystal_mask" in render_helper,
+       "semantic GUI oracle no longer requires title/cost/menu data and screenshot pixels")
+workflow = Path(__file__).parents[1] / ".github/workflows/closure-workbench-gui-client.yml"
+workflow_source = workflow.read_text(encoding="utf-8")
+expect("python3 tools/test_client_workbench_gui_render.py" in workflow_source
+       and "tools/assert_client_workbench_gui_render.py" in workflow_source
+       and "tools/test_client_workbench_gui_render.py" in workflow_source,
+       "dedicated Workbench workflow does not execute the render-marker regression")
+
 
 print(f"Workbench world gate: OK ({checks} assertions)")
 

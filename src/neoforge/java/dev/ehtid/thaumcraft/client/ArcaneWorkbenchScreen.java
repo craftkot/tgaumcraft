@@ -1,5 +1,8 @@
 package dev.ehtid.thaumcraft.client;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu;
 import dev.ehtid.thaumcraft.port.core.visual.WorkbenchVisPanelLayout;
 import com.mojang.math.Axis;
@@ -18,6 +21,8 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("thaumcraft", "textures/gui/arcaneworkbench.png");
+
+    private boolean smokeAuditEmitted;
 
     public ArcaneWorkbenchScreen(ArcaneWorkbenchMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -55,14 +60,43 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
                 WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.AVAILABLE_Y,
                 WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
                 availableColor);
+        Component costText = cost > 0
+                ? Component.literal(cost + " ").append(Component.translatable("workbench.cost"))
+                : Component.empty();
         if (cost > 0) {
-            Component costText = Component.literal(cost + " ")
-                    .append(Component.translatable("workbench.cost"));
             ThaumcraftReadableText.wrapped(graphics, font, costText,
                     WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.COST_Y,
                     WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
                     ThaumcraftReadableText.MUTED_TEXT);
         }
+        emitSmokeAudit(availableText, costText, available, cost);
+    }
+
+    private void emitSmokeAudit(Component availableText, Component costText, int available, int cost) {
+        if (smokeAuditEmitted || !"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) return;
+        smokeAuditEmitted = true;
+        System.out.println("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES"
+                + " title_b64=" + smokeBase64(title.getString())
+                + " available_text_b64=" + smokeBase64(availableText.getString())
+                + " cost_text_b64=" + smokeBase64(costText.getString())
+                + " available_vis=" + available
+                + " cost_vis=" + cost
+                + " crystal_mask=" + menu.requiredCrystalMask()
+                + " title_width=" + font.width(title)
+                + " title_x=" + titleLabelX
+                + " title_y=" + titleLabelY
+                + " panel_x=" + WorkbenchVisPanelLayout.PANEL_X
+                + " panel_y=" + WorkbenchVisPanelLayout.PANEL_Y
+                + " panel_width=" + WorkbenchVisPanelLayout.PANEL_WIDTH
+                + " panel_height=" + WorkbenchVisPanelLayout.PANEL_HEIGHT
+                + " text_width=" + WorkbenchVisPanelLayout.TEXT_WIDTH
+                + " max_lines=" + WorkbenchVisPanelLayout.MAX_LINES
+                + " gui_width=" + imageWidth
+                + " gui_height=" + imageHeight);
+    }
+
+    private static String smokeBase64(String value) {
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override

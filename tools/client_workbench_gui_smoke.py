@@ -108,16 +108,17 @@ body = r'''
   # Recreate the tested OCR regions from the actual GUI crop. These files were
   # removed during the PSM 6/11 switch, leaving Tesseract to read nonexistent
   # paths and the OCR helper to receive empty strings.
-  title_x=$((12 * scale))
+  title_x=$((16 * scale))
+  title_y=$((5 * scale))
   title_width=$((120 * scale))
-  title_height=$((24 * scale))
+  title_height=$((9 * scale))
   panel_x=$((144 * scale))
   panel_y=$((42 * scale))
   panel_width=$((46 * scale))
   panel_height=$((54 * scale))
   convert client-smoke/screenshots/workbench-gui-crop.png \
-    -crop "$title_width"x"$title_height"+"$title_x"+0 +repage \
-    -resize 300% -colorspace Gray -contrast-stretch 0x12% \
+    -crop "$title_width"x"$title_height"+"$title_x"+"$title_y" +repage \
+    -resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55% \
     client-smoke/screenshots/workbench-title-ocr.png
   convert client-smoke/screenshots/workbench-gui-crop.png \
     -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \
@@ -131,16 +132,26 @@ body = r'''
   # Run two Tesseract page-segmentation modes because Minecraft's bitmap glyphs
   # are inconsistently split/merged by a single OCR mode.
   title_text_6="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
-  title_text_11="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
+  title_text_8="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 8 2>/dev/null || true)"
   panel_text_6="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
   panel_text_11="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
   printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM6_END\n' "$title_text_6" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_TITLE_OCR_PSM11_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM11_END\n' "$title_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_TITLE_OCR_PSM8_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM8_END\n' "$title_text_8" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM6_END\n' "$panel_text_6" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
+  # Tesseract is supplemental: it can misread the pixel-font '0' as '8' and
+  # cannot reliably classify the title at all scales. The actual render-path
+  # marker verifies the localized Components and synced menu data; pixels
+  # independently prove that the title and panel regions were painted.
   python3 tools/assert_client_workbench_gui_ocr.py \
-    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_11" "$panel_text_6" "$panel_text_11" \
+    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_8" "$panel_text_6" "$panel_text_11" \
+    | tee -a client-smoke-status.txt
+  title_ink="$(identify -format '%[fx:mean]' client-smoke/screenshots/workbench-title-ocr.png)"
+  panel_ink="$(convert client-smoke/screenshots/workbench-vis-ocr.png -threshold 85% -format '%[fx:mean]' info:)"
+  printf 'WORKBENCH_GUI_TITLE_INK=%s\nWORKBENCH_GUI_PANEL_INK=%s\n' "$title_ink" "$panel_ink" | tee -a client-smoke-status.txt
+  python3 tools/assert_client_workbench_gui_render.py \
+    "$TC_WORKBENCH_LANG" client-smoke/client.log "$title_ink" "$panel_ink" \
     | tee -a client-smoke-status.txt
 
   if grep -Eiq 'Unable to load model.*thaumcraft:arcane_workbench|Unable to load texture.*arcaneworkbench|Exception in thread "Render thread"|Minecraft has crashed' client-smoke/client.log; then

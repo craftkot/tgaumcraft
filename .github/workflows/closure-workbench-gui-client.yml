@@ -15,6 +15,10 @@ on:
       - 'tools/assert_client_workbench_world.py'
       - 'tools/assert_client_workbench_difficulty.py'
       - 'tools/test_client_workbench_world.py'
+      - 'tools/assert_client_workbench_gui_ocr.py'
+      - 'tools/test_client_workbench_gui_ocr.py'
+      - 'tools/assert_client_workbench_gui_render.py'
+      - 'tools/test_client_workbench_gui_render.py'
       - '.github/workflows/closure-workbench-gui-client.yml'
 
 permissions:
@@ -64,6 +68,7 @@ jobs:
       - name: Generate isolated smoke from the proven real-world boot
         run: |
           python3 tools/test_client_workbench_world.py
+          python3 tools/test_client_workbench_gui_render.py
           python3 tools/client_workbench_gui_smoke.py > client-workbench-gui-generated.sh
           bash -n client-workbench-gui-generated.sh
       - name: Open the actual Arcane Workbench and inspect localized GUI pixels
