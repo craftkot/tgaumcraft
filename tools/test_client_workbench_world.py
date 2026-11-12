@@ -73,9 +73,11 @@ expect_rejected(commands + b"\\x03\\x00\\x08GameType\\x00\\x00",
                 "truncated GameType passed")
 
 # Integrated-server difficulty command evidence (save-all is dedicated-server-only).
-def expect_difficulty(log: str, accepted: bool, message: str) -> None:
+def expect_difficulty(
+    log: str, accepted: bool, message: str, *, start_offset: int = 0
+) -> None:
     try:
-        difficulty_module.assert_peaceful_response(log)
+        difficulty_module.assert_peaceful_response(log, start_offset=start_offset)
     except AssertionError:
         expect(not accepted, message)
     else:
@@ -101,6 +103,24 @@ expect_difficulty(already_peaceful_log, True, "already-Peaceful server response 
 expect_difficulty(client_only_log, False, "client-only echo was trusted without server confirmation")
 expect_difficulty("CLIENT_SENT_DIFFICULTY=YES\n", False, "typed-command marker was trusted")
 expect_difficulty(
+    "prefix\n" + server_set_log,
+    True,
+    "current server response after the captured byte offset was rejected",
+    start_offset=len("prefix\n".encode("utf-8")),
+)
+expect_difficulty(
+    server_set_log + client_only_log,
+    False,
+    "a stale server response written before the command offset was trusted",
+    start_offset=len(server_set_log.encode("utf-8")),
+)
+expect_difficulty(
+    server_set_log,
+    False,
+    "an offset beyond the current log length was accepted",
+    start_offset=len(server_set_log.encode("utf-8")) + 1,
+)
+expect_difficulty(
     server_set_log + "[Render thread/INFO] [minecraft/ChatComponent]: "
     "[System] [CHAT] save-all flush<--[HERE]\n",
     False,
@@ -118,11 +138,17 @@ expect("send_chat '/save-all flush'" not in generator,
        "GUI generator still sends the unavailable singleplayer save-all command")
 expect("assert_client_workbench_difficulty.py client-smoke/client.log" in generator,
        "GUI generator does not verify live integrated-server difficulty feedback")
+offset_capture = 'difficulty_log_offset="$(wc -c < client-smoke/client.log)"'
+expect(offset_capture in generator,
+       "GUI generator does not capture the client-log byte offset before the command")
 expect(
-    generator.index("send_chat '/difficulty peaceful'")
+    generator.index(offset_capture)
+    < generator.index("send_chat '/difficulty peaceful'")
     < generator.index("assert_client_workbench_difficulty.py client-smoke/client.log"),
-    "Peaceful feedback is checked before the difficulty command",
+    "current-command log window is not captured before the Peaceful command",
 )
+expect('--from-offset "$difficulty_log_offset" --wait-seconds 12' in generator,
+       "GUI generator does not use bounded current-command log polling")
 expect("assert_client_workbench_world.py run/saves --require-peaceful" not in generator,
        "GUI generator still reads the stale pre-shutdown difficulty byte")
 

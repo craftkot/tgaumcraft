@@ -47,8 +47,11 @@ body = r'''
   # The initial NBT gate already proved cheats + Creative; now require the
   # integrated server's actual command feedback instead of reading stale
   # pre-save level.dat metadata.
+  difficulty_log_offset="$(wc -c < client-smoke/client.log)"
   send_chat '/difficulty peaceful'
-  python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log | tee -a client-smoke-status.txt
+  python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log \
+    --from-offset "$difficulty_log_offset" --wait-seconds 12 \
+    | tee -a client-smoke-status.txt
 
   # The existing real workbench at 12,149,7 is opened by an actual right click.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots

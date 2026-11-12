@@ -11,6 +11,7 @@ on:
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayoutTest.java'
       - 'tools/test_readable_text_layout.sh'
       - 'tools/client_workbench_gui_smoke.py'
+      - 'tools/client_smoke.sh'
       - 'tools/assert_client_workbench_world.py'
       - 'tools/assert_client_workbench_difficulty.py'
       - 'tools/test_client_workbench_world.py'
