@@ -147,6 +147,7 @@ public final class AuraGenerationGameTests {
         assertDrainVisAndFluxSemantics(aura, center.offset(32, 0, 0));
         assertFluxPollutionBounds(aura, center.offset(48, 0, 0));
         assertSetVisClampsToLegacyCeiling();
+        assertMoonPhaseRegeneration(level, center);
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -354,6 +355,98 @@ public final class AuraGenerationGameTests {
         }
 
         helper.succeed();
+    }
+
+    private static void assertMoonPhaseRegeneration(ServerLevel level, BlockPos loadedPos) {
+        int chunkX = loadedPos.getX() >> 4;
+        int chunkZ = loadedPos.getZ() >> 4;
+        if (!level.hasChunk(chunkX, chunkZ)) {
+            throw new AssertionError("Moon-phase fixture chunk must already be loaded");
+        }
+
+        float[] phaseVis = {0.25F, 0.15F, 0.10F, 0.05F, 0.00F, 0.05F, 0.10F, 0.15F};
+        float[] phaseMax = {1.15F, 1.05F, 1.00F, 0.95F, 0.85F, 0.95F, 1.00F, 1.05F};
+        ThaumcraftAuraSavedData isolated = new ThaumcraftAuraSavedData();
+
+        for (int phase = 0; phase < 8; phase++) {
+            isolated.putChunk(loadedPos, (short) 100, 0.0F, 0.0F);
+            int changed = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, phase);
+            float expected = phaseVis[phase];
+            int expectedChanges = expected > 0.0F ? 1 : 0;
+            if (changed != expectedChanges || Math.abs(isolated.getVis(loadedPos) - expected) > 0.00001F
+                    || isolated.getBase(loadedPos) != 100 || isolated.getFlux(loadedPos) != 0.0F) {
+                throw new AssertionError("BETA26 moon phase " + phase + " recovery mismatch: changed="
+                        + changed + " base=" + isolated.getBase(loadedPos) + " vis=" + isolated.getVis(loadedPos)
+                        + " flux=" + isolated.getFlux(loadedPos));
+            }
+        }
+
+        // phaseMax controls the recovery ceiling, not only the increment.
+        for (int phase = 0; phase < 8; phase++) {
+            isolated.putChunk(loadedPos, (short) 100, 100.5F, 0.0F);
+            int changed = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, phase);
+            float expected = 100.5F;
+            float target = 100.0F * phaseMax[phase];
+            if (expected < target && phaseVis[phase] > 0.0F) {
+                expected += Math.min(target - expected, phaseVis[phase]);
+            }
+            int expectedChanges = expected > 100.5F ? 1 : 0;
+            if (changed != expectedChanges || Math.abs(isolated.getVis(loadedPos) - expected) > 0.0001F) {
+                throw new AssertionError("BETA26 moon phase " + phase + " ceiling mismatch: changed="
+                        + changed + " expectedVis=" + expected + " actualVis=" + isolated.getVis(loadedPos));
+            }
+        }
+
+        isolated.putChunk(loadedPos, (short) 100, 100.5F, 0.25F);
+        int fluxChanged = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, 0);
+        if (fluxChanged != 1 || Math.abs(isolated.getVis(loadedPos) - 100.75F) > 0.0001F
+                || isolated.getFlux(loadedPos) != 0.25F) {
+            throw new AssertionError("Vis recovery must account for total Vis+Flux and preserve Flux");
+        }
+
+        isolated.putChunk(loadedPos, (short) 500, 32_765.9F, 0.0F);
+        int capped = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, 0);
+        if (capped != 1 || isolated.getVis(loadedPos) != 32_766.0F) {
+            throw new AssertionError("Moon-phase recovery exceeded the BETA26 AuraChunk Vis ceiling");
+        }
+
+        int farChunkX = chunkX + 10_000;
+        int farChunkZ = chunkZ + 10_000;
+        BlockPos unloadedPos = new BlockPos(farChunkX * 16 + 8, 50, farChunkZ * 16 + 8);
+        if (level.hasChunk(farChunkX, farChunkZ)) {
+            throw new AssertionError("Distant moon-phase fixture unexpectedly starts loaded");
+        }
+
+        ThaumcraftAuraSavedData unloadedOnly = new ThaumcraftAuraSavedData();
+        unloadedOnly.putChunk(unloadedPos, (short) 100, 0.0F, 0.0F);
+        int unloadedChanges = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, unloadedOnly, 0);
+        if (unloadedChanges != 0 || level.hasChunk(farChunkX, farChunkZ)
+                || unloadedOnly.getVis(unloadedPos) != 0.0F) {
+            throw new AssertionError("Moon-phase recovery loaded or modified an unloaded chunk");
+        }
+
+        ThaumcraftAuraSavedData mixed = new ThaumcraftAuraSavedData();
+        mixed.putChunk(loadedPos, (short) 100, 0.0F, 0.0F);
+        mixed.putChunk(unloadedPos, (short) 100, 0.0F, 0.0F);
+        int mixedChanges = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, mixed, 0);
+        if (mixedChanges != 1 || Math.abs(mixed.getVis(loadedPos) - 0.25F) > 0.00001F
+                || mixed.getVis(unloadedPos) != 0.0F || level.hasChunk(farChunkX, farChunkZ)) {
+            throw new AssertionError("Loaded-only aura recovery did not isolate the distant unloaded record");
+        }
+
+        ThaumcraftAuraSavedData wrapped = new ThaumcraftAuraSavedData();
+        wrapped.putChunk(loadedPos, (short) 100, 0.0F, 0.0F);
+        ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, wrapped, -1);
+        if (Math.abs(wrapped.getVis(loadedPos) - 0.15F) > 0.00001F) {
+            throw new AssertionError("Negative moon phase must wrap to BETA26 phase 7");
+        }
+        wrapped.putChunk(loadedPos, (short) 100, 0.0F, 0.0F);
+        ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, wrapped, 8);
+        if (Math.abs(wrapped.getVis(loadedPos) - 0.25F) > 0.00001F) {
+            throw new AssertionError("Moon phase 8 must wrap to BETA26 phase 0");
+        }
+
+        System.out.println("TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0");
     }
 
     private static void assertSetVisClampsToLegacyCeiling() {

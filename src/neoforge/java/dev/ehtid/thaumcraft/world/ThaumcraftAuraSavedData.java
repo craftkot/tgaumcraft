@@ -40,6 +40,11 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         return level.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
     }
 
+    /** Returns persisted aura data only when it already exists; does not create an empty save. */
+    public static ThaumcraftAuraSavedData getIfPresent(ServerLevel level) {
+        return level.getDataStorage().get(FACTORY, DATA_NAME);
+    }
+
     public static ThaumcraftAuraSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         ThaumcraftAuraSavedData data = new ThaumcraftAuraSavedData();
         ListTag list = tag.getList(TAG_CHUNKS, Tag.TAG_COMPOUND);
@@ -149,6 +154,21 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     public void putChunk(BlockPos pos, short base, float vis, float flux) {
         chunks.put(key(pos), new AuraChunk(base, finiteNonNegative(vis), finiteNonNegative(flux)));
         setDirty();
+    }
+
+    /**
+     * Applies the first BETA26 AuraThread recovery branch once to every known chunk
+     * that is already loaded in this dimension. ChunkPos packed keys are decoded
+     * without asking the chunk source to load anything.
+     */
+    public int regenerateLoadedChunks(ServerLevel level, int moonPhase) {
+        int changed = 0;
+        for (long chunkKey : chunks.keySet()) {
+            if (regenerateLoadedChunk(level, ChunkPos.getX(chunkKey), ChunkPos.getZ(chunkKey), moonPhase)) {
+                changed++;
+            }
+        }
+        return changed;
     }
 
     /**

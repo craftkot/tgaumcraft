@@ -38,6 +38,21 @@ public final class ThaumcraftAuraWorldEvents {
                 }
             }
         }
+
+        // BETA26 AuraThread runs approximately once per second. Process every
+        // persisted aura record in each dimension that already has loaded chunks;
+        // getIfPresent avoids manufacturing empty SavedData in untouched dimensions.
+        for (ServerLevel level : event.getServer().getAllLevels()) {
+            if (level.getChunkSource().getLoadedChunksCount() == 0) continue;
+            ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.getIfPresent(level);
+            if (aura != null) {
+                regenerateLoadedAuraChunks(level, aura, level.getMoonPhase());
+            }
+        }
+    }
+
+    static int regenerateLoadedAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
+        return aura.regenerateLoadedChunks(level, moonPhase);
     }
 
     /**
