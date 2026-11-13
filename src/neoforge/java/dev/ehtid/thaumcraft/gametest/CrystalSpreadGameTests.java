@@ -96,6 +96,16 @@ public final class CrystalSpreadGameTests {
         int baseX = sourceChunkX * 16;
         int baseZ = sourceChunkZ * 16;
         CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
+        BlockPos unsupportedBoundaryPos = new BlockPos(baseX + 15, 20, baseZ + 20);
+        BlockState unsupportedBoundaryState = crystal.defaultBlockState()
+                .setValue(CrystalClusterBlock.SIZE, 3)
+                .setValue(CrystalClusterBlock.GENERATION, 3);
+        if (unsupportedBoundaryState.canSurvive(level, unsupportedBoundaryPos)
+                || level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
+            throw new AssertionError("Server placement support check loaded an absent neighbour or accepted unsupported crystal");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_PLACEMENT_UNLOADED_SUPPORT=PASS no_force_load=YES");
+
         BlockPos destinationBoundarySource = new BlockPos(baseX + 15, 20, baseZ + 4);
         BlockPos supportBoundarySource = new BlockPos(baseX + 14, 20, baseZ + 12);
         BlockState destinationSourceState = placeCrystal(
