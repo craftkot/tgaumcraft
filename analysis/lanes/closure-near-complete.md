@@ -3190,3 +3190,9 @@ Fresh-state review:
 - Hardened the generated client smoke so future runs require all 11 lifecycle markers exactly once and explicitly reject any matching outbound probe-origin particle packet. Extended `tools/test_salis_chunk_probe_cleanup.py` to enforce this gate. This closes the gap between Java assertions and the CI acceptance contract; it does not change production particle behavior.
 - Changed files in this iteration: `tools/client_dust_sound_smoke.py`, `tools/test_salis_chunk_probe_cleanup.py`, and this lane journal. PR #1/#2/#3 have no changed-path overlap with these files. No shared workflow YAML, production Java, foreign branch, or main was changed.
 - No audit points awarded. Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**. Next: verify the strengthened test on the exact new HEAD and inspect its real-client artifact; then continue with the next missing M16 item (jar SoundType place/step/hit/fall hooks) without broadening the accepted Salis claim.
+
+
+## 2026-11-13 — refresh PR overlap inventory
+
+- Re-listed all changed paths for open PR #3 and PR #4. Their actual intersection is **two files**: `src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusItem.java` and `src/neoforge/java/dev/ehtid/thaumcraft/menu/ArcaneWorkbenchMenu.java`. Earlier lane notes that described only the Salis item overlap were incomplete.
+- The current M16 iteration paths (`tools/client_dust_sound_smoke.py`, `tools/test_salis_chunk_probe_cleanup.py`, and this lane journal) do not overlap PR #1, #2, or #3. PR #4 remains Draft/Open/Unmerged; both shared Java files still require explicit reconciliation before any merge. No foreign branch was modified.
