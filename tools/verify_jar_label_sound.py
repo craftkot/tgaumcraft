@@ -124,19 +124,28 @@ for filename, expected in ORIGINAL_PAGE_BLOBS.items():
 
 if not MATCHER_TEST.is_file():
     raise SystemExit("Synthetic page PCM matcher regression test is missing")
-# M41/M42 retain three shift-right-clicks; M43 adds one unshifted BlockItem placement.
+# M41/M42 retain three shift-right-clicks. M44 adds one unshifted
+# brace interaction before M43 adds one unshifted BlockItem placement.
 legacy_smoke, m43_marker, m43_smoke = smoke.partition("  # M43:")
+m44_prefix, m44_marker, m44_smoke = legacy_smoke.partition("  # M44:")
 shift_right_clicks = re.findall(
     r"xdotool keydown Shift_L\s+sleep [^\n]+\s+xdotool click 3\s+sleep [^\n]+\s+xdotool keyup Shift_L",
     legacy_smoke,
 )
 if (
     len(shift_right_clicks) != 3
-    or legacy_smoke.count("xdotool click 3") != 3
+    or legacy_smoke.count("xdotool click 3") != 4
+    or not m44_marker
+    or m44_smoke.count("xdotool click 3") != 1
+    or "xdotool keydown Shift_L" in m44_smoke
+    or "xdotool keyup Shift_L" in m44_smoke
     or not m43_marker
     or m43_smoke.count("xdotool click 3") != 1
 ):
-    raise SystemExit("Real-client smoke must retain three label/empty shift-right-clicks and one unshifted M43 jar placement")
+    raise SystemExit(
+        "Real-client smoke must retain three label/empty shift-right-clicks, "
+        "one unshifted M44 brace interaction, and one unshifted M43 jar placement"
+    )
 # The jar fixture uses facing=3 (SOUTH). Minecraft yaw 0 looks south and
 # yaw 180 looks north, so the north-side attempt must be the negative case.
 wrong_face = "send_chat '/tp @p 250.5 150 249.5 0 0'"
