@@ -24,6 +24,11 @@ fixtures = [
     ("en_us", ("186 available",)),
     ("ru_ru", ("344 доотулно",)),
     ("ru_ru", ("233 доступна",)),
+    # Full-panel PSM11 output from the four actual 2026-11-13 client artifacts.
+    ("en_us", ("2@i available 26 wis",)),
+    ("en_us", ("149 available 246 Wis",)),
+    ("ru_ru", ("149 доступно 2 ЕМС",)),
+    ("ru_ru", ("355 доступно 2 ЕС:",)),
 ]
 checks = 0
 for language, variants in fixtures:
