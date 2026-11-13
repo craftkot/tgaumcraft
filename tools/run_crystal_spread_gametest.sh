@@ -47,7 +47,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=water result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=lava result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES' || return 1
-    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STONE_BRICK_VARIANTS=PASS count=4' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=20' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_AER_MISSING_AURA=PASS size=2' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_VITIUM_MISSING_AURA=PASS size=2' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_ISOLATED=PASS' || return 1
@@ -93,7 +93,7 @@ verify_write_phase() {
 verify_read_phase() {
     local file="$1"
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_SKIPPED_PHASE=read' || return 1
-    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STONE_BRICK_VARIANTS=PASS count=4' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=20' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
