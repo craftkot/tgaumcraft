@@ -152,18 +152,23 @@ body = r'''
   available_text_7="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 7 2>/dev/null || true)"
   available_text_11="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
   available_text_8="$(tesseract client-smoke/screenshots/workbench-available-ocr-inverted.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 8 2>/dev/null || true)"
+  # PSM 11 on the full panel crop is a separate visual fallback. The tighter
+  # thresholded line can distort Russian bitmap strokes at GUI scale 3 even
+  # when the complete label is clearly rendered; the panel crop retains it.
+  panel_text_11="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
   printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM6_END\n' "$title_text_6" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_TITLE_OCR_PSM8_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM8_END\n' "$title_text_8" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_PSM7_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM7_END\n' "$available_text_7" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_PSM11_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM11_END\n' "$available_text_11" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_INVERTED_PSM8_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_INVERTED_PSM8_END\n' "$available_text_8" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_PANEL_OCR_PSM11_BEGIN\n%s\nWORKBENCH_PANEL_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
   # The OCR guard accepts at most two bitmap-glyph substitutions only when
   # all but one character remain; clipped "availab..." prefixes still fail.
   # The render-path marker independently checks the complete Component and
   # the actual half-scale text footprint inside the 46px panel.
   python3 tools/assert_client_workbench_gui_ocr.py \
-    "$TC_WORKBENCH_LANG" "$available_text_7" "$available_text_11" "$available_text_8" \
+    "$TC_WORKBENCH_LANG" "$available_text_7" "$available_text_11" "$available_text_8" "$panel_text_11" \
     | tee -a client-smoke-status.txt
   title_ink="$(identify -format '%[fx:mean]' client-smoke/screenshots/workbench-title-ocr.png)"
   panel_ink="$(convert client-smoke/screenshots/workbench-vis-ocr.png -threshold 85% -format '%[fx:mean]' info:)"
