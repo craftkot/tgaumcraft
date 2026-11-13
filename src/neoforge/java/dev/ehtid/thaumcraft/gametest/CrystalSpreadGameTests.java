@@ -90,9 +90,7 @@ public final class CrystalSpreadGameTests {
         int sourceChunkZ = (anchor.getZ() >> 4) + 64;
         level.getChunk(sourceChunkX, sourceChunkZ); // explicit fixture preload
         int neighborChunkX = sourceChunkX + 1;
-        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
-            throw new AssertionError("Boundary fixture unexpectedly preloaded its east neighbour");
-        }
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-source-preload");
 
         int baseX = sourceChunkX * 16;
         int baseZ = sourceChunkZ * 16;
@@ -101,9 +99,10 @@ public final class CrystalSpreadGameTests {
         BlockState unsupportedBoundaryState = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, 3)
                 .setValue(CrystalClusterBlock.GENERATION, 3);
-        if (unsupportedBoundaryState.canSurvive(level, unsupportedBoundaryPos)
-                || level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
-            throw new AssertionError("Server placement support check loaded an absent neighbour or accepted unsupported crystal");
+        boolean unsupportedSurvives = unsupportedBoundaryState.canSurvive(level, unsupportedBoundaryPos);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-unsupported-can-survive");
+        if (unsupportedSurvives) {
+            throw new AssertionError("Server placement support check accepted an unsupported crystal");
         }
         System.out.println("TC_GAMETEST_CRYSTAL_PLACEMENT_UNLOADED_SUPPORT=PASS no_force_load=YES");
 
@@ -119,39 +118,47 @@ public final class CrystalSpreadGameTests {
         }
         // Avoid neighbor notifications while constructing this fixture: an update
         // from local X=15 would legitimately load the east chunk before randomTick.
-        BlockState destinationSourceState = placeCrystal(
-                level, crystal, destinationBoundarySource, 3, 3, Block.UPDATE_CLIENTS);
-        BlockState supportSourceState = placeCrystal(
-                level, crystal, supportBoundarySource, 3, 3, Block.UPDATE_CLIENTS);
+        BlockState destinationSourceState = placeBoundaryCrystal(
+                level, crystal, destinationBoundarySource, 3, 3,
+                neighborChunkX, sourceChunkZ, "destination-source");
+        BlockState supportSourceState = placeBoundaryCrystal(
+                level, crystal, supportBoundarySource, 3, 3,
+                neighborChunkX, sourceChunkZ, "support-source");
 
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-aura-get");
         aura.putChunk(destinationBoundarySource, (short) 0, 100.0F, 0.0F);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-aura-seed");
         long eastSpreadSeed = findBoundarySpreadSeed();
-        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
-            throw new AssertionError("Crystal fixture setup loaded the east neighbour before randomTick");
-        }
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-seed-search");
 
-        // Source at local X=15 chooses target X=16 in an entirely unloaded chunk.
-        crystal.randomTick(destinationSourceState, level, destinationBoundarySource,
-                RandomSource.create(eastSpreadSeed));
-        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null
-                || aura.getVis(destinationBoundarySource) != 100.0F) {
-            throw new AssertionError("Crystal spread loaded an unloaded destination chunk or spent Vis");
-        }
-        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_DESTINATION=PASS no_force_load=YES vis=100.0");
+        // A one-tick gap distinguishes synchronous fixture side effects from
+        // neighbour generation/ticket work that completes asynchronously.
+        helper.runAfterDelay(1, () -> {
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-one-server-tick");
 
-        // Source at local X=14 chooses target X=15 in the loaded chunk. Its only
-        // possible support face across the east boundary is in the unloaded chunk.
-        // The chosen seed keeps the target above the source's support block.
-        crystal.randomTick(supportSourceState, level, supportBoundarySource,
-                RandomSource.create(eastSpreadSeed));
-        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null
-                || aura.getVis(supportBoundarySource) != 100.0F) {
-            throw new AssertionError("Crystal support lookup loaded an unloaded neighbour or spent Vis");
-        }
-        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_SUPPORT=PASS no_force_load=YES vis=100.0");
-        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_ACCEPTED=YES");
-        helper.succeed();
+            // Source at local X=15 chooses target X=16 in an entirely unloaded chunk.
+            crystal.randomTick(destinationSourceState, level, destinationBoundarySource,
+                    RandomSource.create(eastSpreadSeed));
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-destination-random-tick");
+            if (aura.getVis(destinationBoundarySource) != 100.0F) {
+                throw new AssertionError("Skipped crystal spread spent Vis");
+            }
+            System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_DESTINATION=PASS no_force_load=YES vis=100.0");
+
+            // Source at local X=14 chooses target X=15 in the loaded chunk. Its only
+            // possible support face across the east boundary is in the unloaded chunk.
+            // The chosen seed keeps the target above the source's support block.
+            crystal.randomTick(supportSourceState, level, supportBoundarySource,
+                    RandomSource.create(eastSpreadSeed));
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-support-random-tick");
+            if (aura.getVis(supportBoundarySource) != 100.0F) {
+                throw new AssertionError("Crystal support lookup spent Vis");
+            }
+            System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_SUPPORT=PASS no_force_load=YES vis=100.0");
+            System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_ACCEPTED=YES");
+            helper.succeed();
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -427,6 +434,42 @@ public final class CrystalSpreadGameTests {
             throw new AssertionError("BETA26 Material.ROCK face must support crystals: "
                     + name + " direction=" + supportDirection + " state=" + support);
         }
+    }
+
+    private static void requireBoundaryNeighborUnloaded(
+            ServerLevel level, int neighborChunkX, int sourceChunkZ, String stage) {
+        boolean loaded = level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null;
+        System.out.println("TC_GAMETEST_CRYSTAL_BOUNDARY_FIXTURE stage=" + stage
+                + " east_loaded=" + loaded
+                + " loaded_chunks=" + level.getChunkSource().getLoadedChunksCount());
+        if (loaded) {
+            throw new AssertionError("Crystal fixture setup loaded the east neighbour at stage " + stage);
+        }
+    }
+
+    private static BlockState placeBoundaryCrystal(
+            ServerLevel level, CrystalClusterBlock crystal, BlockPos pos, int size, int generation,
+            int neighborChunkX, int sourceChunkZ, String fixtureName) {
+        level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                fixtureName + "-after-support-set");
+        BlockState state = crystal.defaultBlockState()
+                .setValue(CrystalClusterBlock.SIZE, size)
+                .setValue(CrystalClusterBlock.GENERATION, generation);
+        level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                fixtureName + "-after-crystal-set");
+        BlockState placed = level.getBlockState(pos);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                fixtureName + "-after-state-read");
+        boolean survives = state.canSurvive(level, pos);
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                fixtureName + "-after-can-survive");
+        if (!placed.equals(state) || !survives) {
+            throw new AssertionError("Failed to place supported crystal fixture " + fixtureName
+                    + " at " + pos + ": " + state);
+        }
+        return state;
     }
 
     private static BlockState placeCrystal(
