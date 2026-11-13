@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.world;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -11,6 +12,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.IntUnaryOperator;
 
 /**
  * Persistent per-dimension aura chunks.
@@ -157,6 +159,80 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     }
 
     /**
+     * Processes known aura records in BETA26 AuraThread order: neighbor Vis flow,
+     * then the already-ported moon-phase recovery for loaded chunks. The source
+     * AuraWorld contains unloaded records too; Vis flow updates only this SavedData
+     * map and never requests a chunk. Recovery retains its loaded-chunk guard.
+     */
+    int processAuraChunks(ServerLevel level, int moonPhase, IntUnaryOperator nextInt) {
+        int phase = Math.floorMod(moonPhase, 8);
+        float phaseMax = phaseMaxFor(phase);
+        int changed = 0;
+        for (long chunkKey : chunks.keySet()) {
+            int chunkX = ChunkPos.getX(chunkKey);
+            int chunkZ = ChunkPos.getZ(chunkKey);
+            if (redistributeVisFromChunk(chunkX, chunkZ, phaseMax, nextInt)) {
+                changed++;
+            }
+            if (regenerateLoadedChunk(level, chunkX, chunkZ, phase)) {
+                changed++;
+            }
+        }
+        return changed;
+    }
+
+    /**
+     * BETA26 AuraThread.processAuraChunk: choose the lowest-Vis adjacent known
+     * chunk whose total Vis+Flux is below its moon-phase ceiling, then move at
+     * most one Vis unit when the neighbor has less than 75% of this chunk's Vis.
+     * Direction order is shuffled exactly once per source record.
+     */
+    boolean redistributeVisFromChunk(int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt) {
+        long sourceKey = ChunkPos.asLong(chunkX, chunkZ);
+        AuraChunk source = chunks.get(sourceKey);
+        if (source == null) return false;
+
+        int[] directions = {0, 1, 2, 3};
+        for (int i = directions.length - 1; i > 0; i--) {
+            int j = Math.floorMod(nextInt.applyAsInt(i + 1), i + 1);
+            int swap = directions[i];
+            directions[i] = directions[j];
+            directions[j] = swap;
+        }
+
+        long targetKey = 0L;
+        AuraChunk target = null;
+        float lowestVis = Float.MAX_VALUE;
+        for (int direction : directions) {
+            Direction facing = Direction.from2DDataValue(direction);
+            long neighborKey = ChunkPos.asLong(
+                    chunkX + facing.getStepX(),
+                    chunkZ + facing.getStepZ()
+            );
+            AuraChunk neighbor = chunks.get(neighborKey);
+            if (neighbor == null) continue;
+            if ((target == null || lowestVis > neighbor.vis())
+                    && neighbor.vis() + neighbor.flux() < neighbor.base() * phaseMax) {
+                target = neighbor;
+                targetKey = neighborKey;
+                lowestVis = neighbor.vis();
+            }
+        }
+
+        if (target == null || !(lowestVis < source.vis())
+                || !(lowestVis / source.vis() < 0.75F)) {
+            return false;
+        }
+
+        float transfer = Math.min(source.vis() - lowestVis, 1.0F);
+        if (!(transfer > 0.0F)) return false;
+        chunks.put(sourceKey, new AuraChunk(source.base(), source.vis() - transfer, source.flux()));
+        chunks.put(targetKey, new AuraChunk(target.base(), target.vis() + transfer, target.flux()));
+        setDirty();
+        return true;
+    }
+
+    /**
      * Applies the first BETA26 AuraThread recovery branch once to every known chunk
      * that is already loaded in this dimension. ChunkPos packed keys are decoded
      * without asking the chunk source to load anything.
@@ -173,7 +249,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
     /**
      * Applies the first BETA26 AuraThread recovery branch to one already-loaded chunk.
-     * Neighbor redistribution, flux conversion and rift triggering remain separate
+     * Flux redistribution, Flux conversion and rift triggering remain separate
      * parts of the original AuraThread and are not implied by this method.
      */
     public boolean regenerateLoadedChunk(ServerLevel level, int chunkX, int chunkZ, int moonPhase) {
@@ -190,16 +266,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
             case 6 -> 0.10F;
             default -> 0.15F;
         };
-        float phaseMax = switch (phase) {
-            case 0 -> 1.15F;
-            case 1 -> 1.05F;
-            case 2 -> 1.00F;
-            case 3 -> 0.95F;
-            case 4 -> 0.85F;
-            case 5 -> 0.95F;
-            case 6 -> 1.00F;
-            default -> 1.05F;
-        };
+        float phaseMax = phaseMaxFor(phase);
 
         long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
         AuraChunk current = chunks.get(chunkKey);
@@ -217,6 +284,19 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         chunks.put(chunkKey, new AuraChunk(current.base(), nextVis, current.flux()));
         setDirty();
         return true;
+    }
+
+    private static float phaseMaxFor(int phase) {
+        return switch (phase) {
+            case 0 -> 1.15F;
+            case 1 -> 1.05F;
+            case 2 -> 1.00F;
+            case 3 -> 0.95F;
+            case 4 -> 0.85F;
+            case 5 -> 0.95F;
+            case 6 -> 1.00F;
+            default -> 1.05F;
+        };
     }
 
     /** Updates only vis, preserving generated base/flux. */
