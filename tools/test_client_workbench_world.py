@@ -210,11 +210,18 @@ expect("client-smoke/screenshots/workbench-title-ocr.png" in generator
 expect("-resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55%" in generator,
        "title pixel crop no longer uses the tested tight bitmap-font preprocessing")
 expect("-resize 600% -colorspace Gray -contrast-stretch 0x12%" in generator,
-       "panel OCR no longer upscales the BETA26 half-scale label")
-expect("--psm 6" in generator and "--psm 8" in generator and "--psm 11" in generator
+       "panel pixel crop no longer preserves the full Vis panel")
+expect("available_height=$((12 * scale))" in generator
+       and "workbench-available-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-available-ocr.png" in generator,
+       "available-label OCR crop must isolate the BETA26 readout line")
+expect("-resize 1000% -colorspace Gray -contrast-stretch 0x12% -threshold 55%" in generator,
+       "available-label OCR crop must use the tested 10x bitmap preprocessing")
+expect("--psm 6" in generator and "--psm 8" in generator
+       and "--psm 7" in generator and "--psm 11" in generator
        and "title_text_6" in generator and "title_text_8" in generator
-       and "panel_text_6" in generator and "panel_text_11" in generator,
-       "workbench OCR diagnostics no longer evaluate both title modes and panel modes")
+       and "available_text_7" in generator and "available_text_11" in generator,
+       "workbench OCR must evaluate the title and isolated available line with both modes")
 expect("assert_client_workbench_gui_ocr.py" in generator,
        "workbench OCR generator does not check the clipped localized available label")
 expect("assert_client_workbench_gui_render.py" in generator

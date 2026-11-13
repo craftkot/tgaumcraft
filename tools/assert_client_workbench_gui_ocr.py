@@ -39,8 +39,7 @@ def contains_full_label(value: str, expected: str) -> bool:
 
 def assert_workbench_ocr(
     language: str,
-    _title_variants: tuple[str, ...],
-    panel_variants: tuple[str, ...],
+    available_variants: tuple[str, ...],
 ) -> dict[str, bool]:
     if language == "en_us":
         available_label = "available"
@@ -51,30 +50,29 @@ def assert_workbench_ocr(
     return {
         "localized available label": any(
             contains_full_label(text, available_label)
-            for text in panel_variants
+            for text in available_variants
         )
     }
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 6:
+    if len(argv) != 4:
         print(
-            "usage: assert_client_workbench_gui_ocr.py "
-            "LANG TITLE_PSM6 TITLE_PSM8 PANEL_PSM6 PANEL_PSM11",
+            "usage: assert_client_workbench_gui_ocr.py LANG AVAILABLE_PSM7 AVAILABLE_PSM11",
             file=sys.stderr,
         )
         return 2
-    language, title6, title8, panel6, panel11 = argv[1:]
+    language, available7, available11 = argv[1:]
     try:
-        checks = assert_workbench_ocr(language, (title6, title8), (panel6, panel11))
+        checks = assert_workbench_ocr(language, (available7, available11))
     except ValueError as exc:
         print(f"WORKBENCH_OCR_ERROR: {exc}", file=sys.stderr)
         return 2
     for name, passed in checks.items():
         print(f"WORKBENCH_OCR_{name.upper().replace(' ', '_')}={'PASS' if passed else 'FAIL'}")
     if not all(checks.values()):
-        print("WORKBENCH_OCR_TOKENS_PANEL_PSM6=" + repr(tokens(panel6)))
-        print("WORKBENCH_OCR_TOKENS_PANEL_PSM11=" + repr(tokens(panel11)))
+        print("WORKBENCH_OCR_TOKENS_AVAILABLE_PSM7=" + repr(tokens(available7)))
+        print("WORKBENCH_OCR_TOKENS_AVAILABLE_PSM11=" + repr(tokens(available11)))
         return 1
     return 0
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression fixtures for full EN/RU Workbench Vis labels and clipped-prefix rejection."""
+"""Regression fixtures for isolated full EN/RU Workbench available-label OCR."""
 import importlib.util
 from pathlib import Path
 
@@ -9,28 +9,32 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
 fixtures = [
-    ("en_us", ("; ¥", "Meeane Workbench"), ("196\navailable\n20 vis", "196\navailabl\n20 wis")),
-    ("en_us", ("Arcane Workbench",), ("148\navailabk\n20 vis", "148\navailable\n26 wis")),
-    ("ru_ru", ("Магический верстак",), ("139\nдоступно\n20 вис", "139\nдоступн\n28 вис")),
-    ("ru_ru", ("Магический верстак",), ("155\nдоступнo\n2 вис", "155\nдоступно\n2 вис")),
+    ("en_us", ("196\navailable", "196\navailabl")),
+    ("en_us", ("148\navailabk", "148\navailable")),
+    # Actual EN scale-3 client OCR: one bitmap glyph is substituted.
+    ("en_us", ("232 avaiable", "232 avaiable")),
+    ("ru_ru", ("139\nдоступно", "139\nдоступн")),
+    ("ru_ru", ("155\nдоступнo", "155\nдоступно")),
+    # Actual RU scale-3 client OCR from the isolated available-line crop.
+    ("ru_ru", ("148 доступно.", "148 доступно.")),
 ]
 checks = 0
-for language, title, panel in fixtures:
-    result = module.assert_workbench_ocr(language, title, panel)
-    assert all(result.values()), (language, title, panel, result)
+for language, variants in fixtures:
+    result = module.assert_workbench_ocr(language, variants)
+    assert all(result.values()), (language, variants, result)
     checks += len(result)
 
 negative = [
-    ("en_us", ("Arcane Workbench",), ("196\navailab...\n20 vis",)),
-    ("en_us", ("Arcane Workbench",), ("196\navailab\n20 vis",)),
-    ("en_us", ("Arcane Workbench",), ("196\navail\n20 vis",)),
-    ("ru_ru", ("Магический верстак",), ("139\nдост...\n20 вис",)),
-    ("ru_ru", ("Магический верстак",), ("139\nдоступ\n20 вис",)),
-    ("ru_ru", ("Магический верстак",), ("139\nдос...\n20 вис",)),
+    ("en_us", ("196\navailab...",)),
+    ("en_us", ("196\navailab",)),
+    ("en_us", ("196\navail",)),
+    ("ru_ru", ("139\nдост...",)),
+    ("ru_ru", ("139\nдоступ",)),
+    ("ru_ru", ("139\nдос...",)),
 ]
-for language, title, panel in negative:
-    result = module.assert_workbench_ocr(language, title, panel)
-    assert not all(result.values()), (language, title, panel, result)
+for language, variants in negative:
+    result = module.assert_workbench_ocr(language, variants)
+    assert not all(result.values()), (language, variants, result)
     checks += 1
 
-print(f"Workbench full available-label OCR: PASS ({checks} positive/negative assertions)")
+print(f"Workbench isolated available-label OCR: PASS ({checks} positive/negative assertions)")

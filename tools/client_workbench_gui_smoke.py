@@ -125,29 +125,34 @@ body = r'''
     -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \
     -resize 600% -colorspace Gray -contrast-stretch 0x12% \
     client-smoke/screenshots/workbench-vis-ocr.png
+  # OCR the compact BETA26 half-scale available line separately from the larger
+  # 20-vis cost line; mixing both text sizes makes Tesseract split the label.
+  available_height=$((12 * scale))
+  convert client-smoke/screenshots/workbench-gui-crop.png \
+    -crop "$panel_width"x"$available_height"+"$panel_x"+"$panel_y" +repage \
+    -resize 1000% -colorspace Gray -contrast-stretch 0x12% -threshold 55% \
+    client-smoke/screenshots/workbench-available-ocr.png
   test -s client-smoke/screenshots/workbench-title-ocr.png
   test -s client-smoke/screenshots/workbench-vis-ocr.png
+  test -s client-smoke/screenshots/workbench-available-ocr.png
 
   # The tutorial toast can cover the title at GUI scale 3. Disable it in the
   # isolated options file above; do not dismiss it by moving the player.
-  # Run two Tesseract page-segmentation modes because Minecraft's bitmap glyphs
-  # are inconsistently split/merged by a single OCR mode.
   title_text_6="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
   title_text_8="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 8 2>/dev/null || true)"
-  panel_text_6="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 6 2>/dev/null || true)"
-  panel_text_11="$(tesseract client-smoke/screenshots/workbench-vis-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
+  available_text_7="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 7 2>/dev/null || true)"
+  available_text_11="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
   printf 'WORKBENCH_TITLE_OCR_PSM6_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM6_END\n' "$title_text_6" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_TITLE_OCR_PSM8_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM8_END\n' "$title_text_8" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM6_END\n' "$panel_text_6" | tee -a client-smoke-status.txt
-  printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_AVAILABLE_OCR_PSM7_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM7_END\n' "$available_text_7" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_AVAILABLE_OCR_PSM11_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM11_END\n' "$available_text_11" | tee -a client-smoke-status.txt
 
-  # The OCR guard requires the complete localized available word; it accepts
-  # at most two bitmap-glyph substitutions only when all but one character
-  # remain, so the old clipped "availab..." prefix cannot pass.
+  # The OCR guard accepts at most two bitmap-glyph substitutions only when
+  # all but one character remain; clipped "availab..." prefixes still fail.
   # The render-path marker independently checks the complete Component and
   # the actual half-scale text footprint inside the 46px panel.
   python3 tools/assert_client_workbench_gui_ocr.py \
-    "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_8" "$panel_text_6" "$panel_text_11" \
+    "$TC_WORKBENCH_LANG" "$available_text_7" "$available_text_11" \
     | tee -a client-smoke-status.txt
   title_ink="$(identify -format '%[fx:mean]' client-smoke/screenshots/workbench-title-ocr.png)"
   panel_ink="$(convert client-smoke/screenshots/workbench-vis-ocr.png -threshold 85% -format '%[fx:mean]' info:)"
