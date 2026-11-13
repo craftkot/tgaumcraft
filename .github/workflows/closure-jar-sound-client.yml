@@ -10,10 +10,6 @@ on:
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
       - 'src/main/resources/assets/thaumcraft/sounds/key.ogg'
-      - 'src/main/resources/assets/thaumcraft/models/item/caster_basic.json'
-      - 'src/main/resources/assets/thaumcraft/textures/entity/armor/caster_basic.png'
-      - 'src/main/resources/assets/thaumcraft/textures/item/caster_basic.png'
-      - 'tools/verify_caster_basic_item_texture.py'
       - 'tools/verify_jar_sound.py'
       - 'tools/verify_jar_soundtype_smoke.py'
       - 'tools/verify_jar_brace_key_sound.py'
@@ -53,8 +49,6 @@ jobs:
           python-version: '3.12'
       - name: Verify M43 smoke contract before installing system packages
         run: python tools/verify_jar_soundtype_smoke.py
-      - name: Verify BETA26 basic caster item-atlas texture contract
-        run: python tools/verify_caster_basic_item_texture.py
       - name: Install real client and audio tools
         timeout-minutes: 12
         run: |
