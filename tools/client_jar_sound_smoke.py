@@ -45,6 +45,37 @@ body = r'''
   send_chat '/tp @p 250.5 150 250.5 0 0'
   xdotool key --clearmodifiers 1
   sleep 3
+  # M45: the 1.21.1 default blocks atlas includes item/ sprites, not entity/armor/.
+  # Keep the original BETA26 armor texture untouched and render the same bytes via item/.
+  send_chat '/item replace entity @p hotbar.0 with minecraft:air'
+  xdotool key --clearmodifiers 1
+  sleep 1
+  import -display :99 -window root -silent client-smoke/screenshots/caster-basic-empty-hand.png
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:caster_basic'
+  send_chat '/execute if items entity @p hotbar.0 thaumcraft:caster_basic run say CASTER_BASIC_ITEM_READY'
+  if ! grep -Fq 'CASTER_BASIC_ITEM_READY' client-smoke/client.log; then
+    echo 'CASTER_BASIC_ITEM_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  xdotool key --clearmodifiers 1
+  sleep 1
+  import -display :99 -window root -silent client-smoke/screenshots/caster-basic-in-hand.png
+  if grep -Fq 'Missing textures in model thaumcraft:caster_basic#inventory' client-smoke/client.log; then
+    echo 'CASTER_BASIC_MODEL_MISSING_TEXTURE=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  convert client-smoke/screenshots/caster-basic-empty-hand.png -crop 200x200+824+550 +repage client-smoke/caster-basic-empty-hand-roi.png
+  convert client-smoke/screenshots/caster-basic-in-hand.png -crop 200x200+824+550 +repage client-smoke/caster-basic-in-hand-roi.png
+  caster_basic_pixels="$(compare -metric AE client-smoke/caster-basic-empty-hand-roi.png client-smoke/caster-basic-in-hand-roi.png null: 2>&1 || true)"
+  caster_basic_pixels="${caster_basic_pixels%% *}"
+  if ! [[ "$caster_basic_pixels" =~ ^[0-9]+$ ]] || (( caster_basic_pixels < 100 )); then
+    echo "CASTER_BASIC_ITEM_MODEL_NOT_VISIBLE=YES pixels=$caster_basic_pixels" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "CASTER_BASIC_ITEM_TEXTURE_REAL_CLIENT=PASS pixels=$caster_basic_pixels" | tee -a client-smoke-status.txt
+  send_chat '/item replace entity @p hotbar.0 with minecraft:air'
+  xdotool key --clearmodifiers 1
+  sleep 1
   import -display :99 -window root -silent client-smoke/screenshots/97-jar-before.png
   pactl list short sinks | grep -Fq 'tc_jar_sink'
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/jar-baseline.pcm || test "$?" -eq 124
