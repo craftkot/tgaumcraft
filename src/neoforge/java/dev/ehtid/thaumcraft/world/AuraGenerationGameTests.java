@@ -149,6 +149,7 @@ public final class AuraGenerationGameTests {
         assertSetVisClampsToLegacyCeiling();
         assertMoonPhaseRegeneration(level, center);
         assertVisNeighborRedistribution(level, center);
+        assertFluxNeighborRedistribution(level, center);
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -552,6 +553,118 @@ public final class AuraGenerationGameTests {
         }
 
         System.out.println("TC_GAMETEST_AURA_VIS_NEIGHBOR=PASS lowest=2.0 transfer=1.0 conserved=YES threshold=0.75 ceiling=115 unloaded=updated no_force_load=YES");
+    }
+
+    private static void assertFluxNeighborRedistribution(ServerLevel level, BlockPos loadedPos) {
+        int chunkX = loadedPos.getX() >> 4;
+        int chunkZ = loadedPos.getZ() >> 4;
+        BlockPos source = sampleCenter(chunkX, chunkZ);
+        BlockPos north = sampleCenter(chunkX, chunkZ - 1);
+        BlockPos south = sampleCenter(chunkX, chunkZ + 1);
+        BlockPos west = sampleCenter(chunkX - 1, chunkZ);
+        BlockPos east = sampleCenter(chunkX + 1, chunkZ);
+
+        ThaumcraftAuraSavedData selected = new ThaumcraftAuraSavedData();
+        selected.putChunk(source, (short) 100, 10.0F, 20.0F);
+        selected.putChunk(north, (short) 100, 10.0F, 12.0F);
+        selected.putChunk(south, (short) 100, 10.0F, 2.0F);
+        selected.putChunk(west, (short) 100, 10.0F, 3.0F);
+        selected.putChunk(east, (short) 100, 10.0F, 1.0F);
+        float beforeTotal = selected.getFlux(source) + selected.getFlux(north)
+                + selected.getFlux(south) + selected.getFlux(west) + selected.getFlux(east);
+        if (!selected.redistributeFluxFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || selected.getFlux(source) != 19.0F
+                || selected.getFlux(east) != 2.0F
+                || selected.getFlux(north) != 12.0F
+                || selected.getFlux(south) != 2.0F
+                || selected.getFlux(west) != 3.0F) {
+            throw new AssertionError("BETA26 Flux flow must select the lowest-Flux neighbor and cap one transfer at 1");
+        }
+        float afterTotal = selected.getFlux(source) + selected.getFlux(north)
+                + selected.getFlux(south) + selected.getFlux(west) + selected.getFlux(east);
+        if (beforeTotal != afterTotal) {
+            throw new AssertionError("BETA26 neighbor Flux transfer must conserve total Flux");
+        }
+
+        ThaumcraftAuraSavedData sourceThreshold = new ThaumcraftAuraSavedData();
+        sourceThreshold.putChunk(source, (short) 100, 10.0F, 10.0F);
+        sourceThreshold.putChunk(east, (short) 100, 10.0F, 0.0F);
+        if (sourceThreshold.redistributeFluxFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || sourceThreshold.getFlux(source) != 10.0F
+                || sourceThreshold.getFlux(east) != 0.0F) {
+            throw new AssertionError("BETA26 Flux source threshold is strict: currentFlux must exceed max(5, base/10)");
+        }
+
+        ThaumcraftAuraSavedData ratioThreshold = new ThaumcraftAuraSavedData();
+        ratioThreshold.putChunk(source, (short) 100, 10.0F, 17.5F);
+        ratioThreshold.putChunk(east, (short) 100, 10.0F, 10.0F);
+        if (ratioThreshold.redistributeFluxFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || ratioThreshold.getFlux(source) != 17.5F
+                || ratioThreshold.getFlux(east) != 10.0F) {
+            throw new AssertionError("BETA26 Flux neighbor ratio is strict: lowestFlux must be below currentFlux/1.75");
+        }
+
+        ThaumcraftAuraSavedData noVisCeiling = new ThaumcraftAuraSavedData();
+        noVisCeiling.putChunk(source, (short) 100, 10.0F, 20.0F);
+        noVisCeiling.putChunk(north, (short) 100, 10.0F, 5.0F);
+        noVisCeiling.putChunk(south, (short) 100, 10.0F, 6.0F);
+        noVisCeiling.putChunk(west, (short) 100, 10.0F, 7.0F);
+        noVisCeiling.putChunk(east, (short) 10, 10.0F, 4.0F);
+        if (!noVisCeiling.redistributeFluxFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || noVisCeiling.getFlux(source) != 19.0F
+                || noVisCeiling.getFlux(east) != 5.0F) {
+            throw new AssertionError("BETA26 Flux target selection must not apply the Vis+Flux phase ceiling");
+        }
+
+        ThaumcraftAuraSavedData upperClamp = new ThaumcraftAuraSavedData();
+        upperClamp.putChunk(source, (short) 100, 10.0F, 40_000.0F);
+        upperClamp.putChunk(east, (short) 100, 10.0F, 0.0F);
+        if (!upperClamp.redistributeFluxFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || upperClamp.getFlux(source) != 32_766.0F
+                || upperClamp.getFlux(east) != 1.0F) {
+            throw new AssertionError("BETA26 AuraChunk.setFlux clamps both transfer endpoints to [0, 32766]");
+        }
+
+        ThaumcraftAuraSavedData runtime = new ThaumcraftAuraSavedData();
+        runtime.putChunk(source, (short) 100, 10.0F, 20.0F);
+        runtime.putChunk(east, (short) 100, 0.0F, 0.0F);
+        AtomicInteger runtimeShuffleCalls = new AtomicInteger();
+        int runtimeChanges = runtime.processAuraChunks(level, 0, bound -> {
+            runtimeShuffleCalls.incrementAndGet();
+            return 0;
+        });
+        if (runtimeChanges != 4 || runtimeShuffleCalls.get() != 6
+                || Math.abs(runtime.getVis(source) - 9.25F) > 0.0001F
+                || Math.abs(runtime.getVis(east) - 1.25F) > 0.0001F
+                || runtime.getFlux(source) != 19.0F
+                || runtime.getFlux(east) != 1.0F) {
+            throw new AssertionError("Production aura pass must share one direction shuffle, transfer Vis+Flux, then recover loaded chunks: changes="
+                    + runtimeChanges + " shuffleCalls=" + runtimeShuffleCalls.get()
+                    + " sourceVis=" + runtime.getVis(source)
+                    + " neighborVis=" + runtime.getVis(east)
+                    + " sourceFlux=" + runtime.getFlux(source)
+                    + " neighborFlux=" + runtime.getFlux(east));
+        }
+
+        int farX = chunkX + 80;
+        int farZ = chunkZ + 80;
+        if (level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
+            throw new AssertionError("Unloaded Flux-flow fixture unexpectedly starts loaded");
+        }
+        BlockPos farSource = sampleCenter(farX, farZ);
+        BlockPos farEast = sampleCenter(farX + 1, farZ);
+        ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
+        unloaded.putChunk(farSource, (short) 100, 10.0F, 20.0F);
+        unloaded.putChunk(farEast, (short) 100, 10.0F, 0.0F);
+        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0);
+        if (unloadedChanges != 1
+                || unloaded.getFlux(farSource) != 19.0F
+                || unloaded.getFlux(farEast) != 1.0F
+                || level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
+            throw new AssertionError("Aura Flux flow must update known unloaded records without force-loading either chunk");
+        }
+
+        System.out.println("TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=updated no_force_load=YES");
     }
 
     private static void assertSetVisClampsToLegacyCeiling() {

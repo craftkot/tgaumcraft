@@ -171,9 +171,10 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         for (long chunkKey : chunks.keySet()) {
             int chunkX = ChunkPos.getX(chunkKey);
             int chunkZ = ChunkPos.getZ(chunkKey);
-            if (redistributeVisFromChunk(chunkX, chunkZ, phaseMax, nextInt)) {
-                changed++;
-            }
+            // BETA26 shuffles once, then selects both channel destinations from
+            // that same order before applying Vis and Flux transfers.
+            changed += Integer.bitCount(redistributeNeighborChannelsFromChunk(
+                    chunkX, chunkZ, phaseMax, nextInt, true, true));
             if (regenerateLoadedChunk(level, chunkX, chunkZ, phase)) {
                 changed++;
             }
@@ -181,16 +182,31 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         return changed;
     }
 
-    /**
-     * BETA26 AuraThread.processAuraChunk: choose the lowest-Vis adjacent known
-     * chunk whose total Vis+Flux is below its moon-phase ceiling, then move at
-     * most one Vis unit when the neighbor has less than 75% of this chunk's Vis.
-     * Direction order is shuffled exactly once per source record.
-     */
+    /** BETA26 Vis-only helper retained for focused regression tests. */
     boolean redistributeVisFromChunk(int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt) {
+        return (redistributeNeighborChannelsFromChunk(
+                chunkX, chunkZ, phaseMax, nextInt, true, false) & 1) != 0;
+    }
+
+    /** BETA26 Flux-only helper retained for focused regression tests. */
+    boolean redistributeFluxFromChunk(int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt) {
+        return (redistributeNeighborChannelsFromChunk(
+                chunkX, chunkZ, phaseMax, nextInt, false, true) & 2) != 0;
+    }
+
+    /**
+     * BETA26 AuraThread.processAuraChunk neighbor pass. One shuffled horizontal
+     * direction order selects both destinations. Vis requires the phase ceiling;
+     * Flux deliberately does not. Each channel transfers at most one unit.
+     *
+     * @return bit 0 when Vis moved, bit 1 when Flux moved
+     */
+    private int redistributeNeighborChannelsFromChunk(
+            int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt,
+            boolean transferVis, boolean transferFlux) {
         long sourceKey = ChunkPos.asLong(chunkX, chunkZ);
         AuraChunk source = chunks.get(sourceKey);
-        if (source == null) return false;
+        if (source == null) return 0;
 
         int[] directions = {0, 1, 2, 3};
         for (int i = directions.length - 1; i > 0; i--) {
@@ -200,9 +216,13 @@ public final class ThaumcraftAuraSavedData extends SavedData {
             directions[j] = swap;
         }
 
-        long targetKey = 0L;
-        AuraChunk target = null;
+        long visTargetKey = 0L;
+        AuraChunk visTarget = null;
         float lowestVis = Float.MAX_VALUE;
+        long fluxTargetKey = 0L;
+        AuraChunk fluxTarget = null;
+        float lowestFlux = Float.MAX_VALUE;
+
         for (int direction : directions) {
             Direction facing = Direction.from2DDataValue(direction);
             long neighborKey = ChunkPos.asLong(
@@ -211,25 +231,62 @@ public final class ThaumcraftAuraSavedData extends SavedData {
             );
             AuraChunk neighbor = chunks.get(neighborKey);
             if (neighbor == null) continue;
-            if ((target == null || lowestVis > neighbor.vis())
+
+            if (transferVis
+                    && (visTarget == null || lowestVis > neighbor.vis())
                     && neighbor.vis() + neighbor.flux() < neighbor.base() * phaseMax) {
-                target = neighbor;
-                targetKey = neighborKey;
+                visTarget = neighbor;
+                visTargetKey = neighborKey;
                 lowestVis = neighbor.vis();
+            }
+
+            // BETA26 chooses the lowest-Flux neighbor independently of the Vis
+            // capacity rule; an over-ceiling neighbor may still receive Flux.
+            if (transferFlux && (fluxTarget == null || lowestFlux > neighbor.flux())) {
+                fluxTarget = neighbor;
+                fluxTargetKey = neighborKey;
+                lowestFlux = neighbor.flux();
             }
         }
 
-        if (target == null || !(lowestVis < source.vis())
-                || !(lowestVis / source.vis() < 0.75F)) {
-            return false;
+        int changed = 0;
+        if (transferVis && visTarget != null && lowestVis < source.vis()
+                && lowestVis / source.vis() < 0.75F) {
+            float transfer = Math.min(source.vis() - lowestVis, 1.0F);
+            if (transfer > 0.0F) {
+                AuraChunk sourceNow = chunks.get(sourceKey);
+                AuraChunk targetNow = chunks.get(visTargetKey);
+                chunks.put(sourceKey, new AuraChunk(
+                        sourceNow.base(), sourceNow.vis() - transfer, sourceNow.flux()));
+                chunks.put(visTargetKey, new AuraChunk(
+                        targetNow.base(), targetNow.vis() + transfer, targetNow.flux()));
+                changed |= 1;
+            }
         }
 
-        float transfer = Math.min(source.vis() - lowestVis, 1.0F);
-        if (!(transfer > 0.0F)) return false;
-        chunks.put(sourceKey, new AuraChunk(source.base(), source.vis() - transfer, source.flux()));
-        chunks.put(targetKey, new AuraChunk(target.base(), target.vis() + transfer, target.flux()));
-        setDirty();
-        return true;
+        if (transferFlux && fluxTarget != null
+                && source.flux() > Math.max(5.0F, source.base() / 10.0F)
+                && lowestFlux < source.flux() / 1.75F) {
+            float transfer = Math.min(source.flux() - lowestFlux, 1.0F);
+            if (transfer > 0.0F) {
+                // The Vis branch may have updated either of these records.
+                // Preserve those latest Vis values while applying Flux.
+                AuraChunk sourceNow = chunks.get(sourceKey);
+                AuraChunk targetNow = chunks.get(fluxTargetKey);
+                float nextSourceFlux = Math.min(AURA_CHUNK_VALUE_MAX,
+                        Math.max(0.0F, sourceNow.flux() - transfer));
+                float nextTargetFlux = Math.min(AURA_CHUNK_VALUE_MAX,
+                        Math.max(0.0F, targetNow.flux() + transfer));
+                chunks.put(sourceKey, new AuraChunk(
+                        sourceNow.base(), sourceNow.vis(), nextSourceFlux));
+                chunks.put(fluxTargetKey, new AuraChunk(
+                        targetNow.base(), targetNow.vis(), nextTargetFlux));
+                changed |= 2;
+            }
+        }
+
+        if (changed != 0) setDirty();
+        return changed;
     }
 
     /**
