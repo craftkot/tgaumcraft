@@ -234,9 +234,10 @@ expect("contains_full_label(" in ocr_helper and "localized available label" in o
        and "contains_label_prefix(" not in ocr_helper
        and "contains_prefix_near(" not in ocr_helper and "has_cost_pair(" not in ocr_helper,
        "OCR helper must reject clipped prefixes and ignore unreliable title/cost OCR")
-expect("len(argv) != 5" in ocr_helper and "AVAILABLE_INVERTED_PSM8" in ocr_helper
-       and "available8" in ocr_helper,
-       "OCR helper must evaluate the additional inverted-crop PSM8 result")
+expect("len(argv) != 6" in ocr_helper and "AVAILABLE_INVERTED_PSM8" in ocr_helper
+       and "available8" in ocr_helper and "panel11" in ocr_helper
+       and "available_variants" in ocr_helper,
+       "OCR helper must evaluate inverted-crop PSM8 and full-panel PSM11 results")
 screen = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
 screen_source = screen.read_text(encoding="utf-8")
 expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
