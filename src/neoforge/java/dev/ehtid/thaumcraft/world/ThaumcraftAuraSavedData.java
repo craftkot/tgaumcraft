@@ -12,6 +12,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
 
 /**
@@ -159,12 +160,13 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     }
 
     /**
-     * Processes known aura records in BETA26 AuraThread order: neighbor Vis flow,
-     * then the already-ported moon-phase recovery for loaded chunks. The source
-     * AuraWorld contains unloaded records too; Vis flow updates only this SavedData
-     * map and never requests a chunk. Recovery retains its loaded-chunk guard.
+     * Processes known aura records in BETA26 AuraThread order: one shared neighbor
+     * shuffle/Vis+Flux transfer, then the original recovery-or-Vis→Flux branch.
+     * Recovery remains guarded by loaded chunks; conversions update SavedData only
+     * and never request a chunk.
      */
-    int processAuraChunks(ServerLevel level, int moonPhase, IntUnaryOperator nextInt) {
+    int processAuraChunks(
+            ServerLevel level, int moonPhase, IntUnaryOperator nextInt, DoubleSupplier nextFloat) {
         int phase = Math.floorMod(moonPhase, 8);
         float phaseMax = phaseMaxFor(phase);
         int changed = 0;
@@ -175,7 +177,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
             // that same order before applying Vis and Flux transfers.
             changed += Integer.bitCount(redistributeNeighborChannelsFromChunk(
                     chunkX, chunkZ, phaseMax, nextInt, true, true));
-            if (regenerateLoadedChunk(level, chunkX, chunkZ, phase)) {
+            if (processAuraChunkRecoveryOrConversion(level, chunkX, chunkZ, phase, nextFloat)) {
                 changed++;
             }
         }
@@ -290,6 +292,48 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     }
 
     /**
+     * BETA26 AuraThread's local recovery / Vis-to-Flux else-if chain, after neighbor
+     * transfers. The low-Vis Flux branch is retained even though, for positive base
+     * and non-negative channels, the preceding recovery condition normally wins.
+     */
+    private boolean processAuraChunkRecoveryOrConversion(
+            ServerLevel level, int chunkX, int chunkZ, int phase, DoubleSupplier nextFloat) {
+        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+        AuraChunk current = chunks.get(chunkKey);
+        if (current == null) return false;
+
+        float phaseVis = phaseVisFor(phase);
+        float phaseFlux = 0.25F - phaseVis;
+        float base = current.base() * phaseMaxFor(phase);
+        float currentVis = current.vis();
+        float currentFlux = current.flux();
+
+        if (currentVis + currentFlux < base) {
+            if (!level.hasChunk(chunkX, chunkZ)) return false;
+            float increase = Math.min(base - (currentVis + currentFlux), phaseVis);
+            if (!(increase > 0.0F)) return false;
+            currentVis += increase;
+        } else if (currentVis > base * 1.25F) {
+            if (!(nextFloat.getAsDouble() < 0.1D)) return false;
+            currentVis -= phaseFlux;
+            currentFlux += phaseFlux;
+        } else if (currentVis <= base * 0.1F && currentVis >= currentFlux) {
+            if (!(nextFloat.getAsDouble() < 0.1D)) return false;
+            currentFlux += phaseFlux;
+        } else {
+            return false;
+        }
+
+        chunks.put(chunkKey, new AuraChunk(
+                current.base(),
+                Math.min(AURA_CHUNK_VALUE_MAX, finiteNonNegative(currentVis)),
+                Math.min(AURA_CHUNK_VALUE_MAX, finiteNonNegative(currentFlux))
+        ));
+        setDirty();
+        return true;
+    }
+
+    /**
      * Applies the first BETA26 AuraThread recovery branch once to every known chunk
      * that is already loaded in this dimension. ChunkPos packed keys are decoded
      * without asking the chunk source to load anything.
@@ -305,24 +349,15 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     }
 
     /**
-     * Applies the first BETA26 AuraThread recovery branch to one already-loaded chunk.
-     * Flux redistribution, Flux conversion and rift triggering remain separate
-     * parts of the original AuraThread and are not implied by this method.
+     * Standalone loaded-chunk recovery helper retained for focused tests. Production
+     * processing uses processAuraChunkRecoveryOrConversion to preserve BETA26's
+     * recovery-before-conversion else-if ordering.
      */
     public boolean regenerateLoadedChunk(ServerLevel level, int chunkX, int chunkZ, int moonPhase) {
         if (!level.hasChunk(chunkX, chunkZ)) return false;
 
         int phase = Math.floorMod(moonPhase, 8);
-        float phaseVis = switch (phase) {
-            case 0 -> 0.25F;
-            case 1 -> 0.15F;
-            case 2 -> 0.10F;
-            case 3 -> 0.05F;
-            case 4 -> 0.00F;
-            case 5 -> 0.05F;
-            case 6 -> 0.10F;
-            default -> 0.15F;
-        };
+        float phaseVis = phaseVisFor(phase);
         float phaseMax = phaseMaxFor(phase);
 
         long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
@@ -353,6 +388,19 @@ public final class ThaumcraftAuraSavedData extends SavedData {
             case 5 -> 0.95F;
             case 6 -> 1.00F;
             default -> 1.05F;
+        };
+    }
+
+    private static float phaseVisFor(int phase) {
+        return switch (phase) {
+            case 0 -> 0.25F;
+            case 1 -> 0.15F;
+            case 2 -> 0.10F;
+            case 3 -> 0.05F;
+            case 4 -> 0.00F;
+            case 5 -> 0.05F;
+            case 6 -> 0.10F;
+            default -> 0.15F;
         };
     }
 
