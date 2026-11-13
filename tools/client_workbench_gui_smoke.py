@@ -126,8 +126,10 @@ body = r'''
     -resize 600% -colorspace Gray -contrast-stretch 0x12% \
     client-smoke/screenshots/workbench-vis-ocr.png
   # OCR the compact BETA26 half-scale available line separately from the larger
-  # 20-vis cost line; mixing both text sizes makes Tesseract split the label.
-  available_height=$((12 * scale))
+  # 20-vis cost line. Keep 24 logical pixels of vertical context: a 12px crop
+  # rendered the label correctly but left Tesseract PSM 7/11 with no tokens.
+  # At this height the crop still ends above the separate 20-vis cost readout.
+  available_height=$((24 * scale))
   convert client-smoke/screenshots/workbench-gui-crop.png \
     -crop "$panel_width"x"$available_height"+"$panel_x"+"$panel_y" +repage \
     -resize 1000% -colorspace Gray -contrast-stretch 0x12% -threshold 55% \
