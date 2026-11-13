@@ -96,7 +96,13 @@ public final class CrystalClusterBlock extends Block {
                 && support.isFaceSturdy(level,side,d.getOpposite());
     }
 
-    private static boolean touchesStone(ServerLevel level,BlockPos pos) {
+    private static boolean touchesStone(LevelReader level,BlockPos pos) {
+        for(Direction d:Direction.values())
+            if(hasCrystalSupport(level,pos,d)) return true;
+        return false;
+    }
+
+    private static boolean touchesLoadedStone(ServerLevel level,BlockPos pos) {
         for(Direction d:Direction.values()) {
             BlockPos supportPos=pos.relative(d);
             // A support face in an unloaded neighbour is simply unavailable
@@ -176,7 +182,7 @@ public final class CrystalClusterBlock extends Block {
         if(!LegacyBlockCrystalGrowthRules.canSpreadInto(
                 destination.liquid(),
                 destination.isAir()||destination.canBeReplaced())) return;
-        if(random.nextInt(16)!=0||!touchesStone(level,other)) return;
+        if(random.nextInt(16)!=0||!touchesLoadedStone(level,other)) return;
         if(!aura.trySpendCrystalAura(pos,flux,10)) return;
         var child=LegacyBlockCrystalGrowthRules.child(s,random.nextInt(6)==0);
         level.setBlock(other,defaultBlockState()
