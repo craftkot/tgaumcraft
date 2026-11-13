@@ -55,14 +55,15 @@ for name, (baseline, event, window, first, last, state_marker, pass_marker, acti
 
 assert positions == sorted(positions), "SoundType scenarios must run place -> hit -> step -> fall"
 hit_section = SMOKE.split("# M43 HIT:", 1)[1].split("# Rebuild a five-block row", 1)[0]
-assert re.search(r"xdotool mousedown 1\s+sleep 0\.18\s+import -display :99 -window root -silent client-smoke/screenshots/100b-jar-hit-damage-overlay\.png\s+sleep 0\.12\s+xdotool mouseup 1", hit_section), (
-    "Hit probe must capture the target while the real left button is held"
+assert hit_section.index("xdotool mousedown 1") < hit_section.index("sleep 0.30") < hit_section.index("JAR_HIT_CAPTURE_AFTER_0_30S=YES") < hit_section.index("100b-jar-hit-damage-overlay.png") < hit_section.index("xdotool mouseup 1"), (
+    "Hit probe must capture the damage overlay after the complete 0.30s hold and before releasing the left button"
 )
 assert "100a-jar-hit-aim.png" in hit_section, "Hit probe must preserve a pre-input aim screenshot"
 assert "JAR_HIT_POINTER_CENTER=" in hit_section, "Hit probe must log its actual window-center pointer"
 assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit_section
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in hit_section
+assert "JAR_HIT_CAPTURE_AFTER_0_30S=YES" in hit_section
 assert "compare -metric AE" in hit_section and "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
 assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE

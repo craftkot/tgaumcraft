@@ -361,9 +361,11 @@ PY
   capture_pid=$!
   sleep 0.6
   xdotool mousedown 1
-  sleep 0.18
+  # Capture after the full 0.30s hold; the earlier 0.18s screenshot sampled
+  # before the six-tick window described above had elapsed.
+  sleep 0.30
+  echo 'JAR_HIT_CAPTURE_AFTER_0_30S=YES' | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100b-jar-hit-damage-overlay.png
-  sleep 0.12
   xdotool mouseup 1
   sleep 0.4
   wait "$capture_pid" || test "$?" -eq 124
