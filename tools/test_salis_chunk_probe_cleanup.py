@@ -64,6 +64,8 @@ for marker in required_runtime_markers:
         raise SystemExit(f"SALIS_NATIVE_RUNTIME_MARKER_NOT_REQUIRED=FAIL missing {marker!r}")
 if 'grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log' not in smoke:
     raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_EXACTLY_ONCE_GATE=FAIL")
+if "SALIS_NATIVE_LIFECYCLE_ORDER=PASS" not in smoke or "positions != sorted(set(positions))" not in smoke:
+    raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_ORDER_GATE=FAIL")
 if "TC_SMOKE_SALIS_OUTBOUND_PACKET=YES" not in smoke:
     raise SystemExit("SALIS_NATIVE_UNEXPECTED_PACKET_NEGATIVE_GATE=FAIL")
 
