@@ -12,6 +12,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -88,7 +89,7 @@ public final class CrystalSpreadGameTests {
         BlockPos anchor = helper.absolutePos(new BlockPos(8, TEST_Y, 8));
         int sourceChunkX = (anchor.getX() >> 4) + 64;
         int sourceChunkZ = (anchor.getZ() >> 4) + 64;
-        level.getChunk(sourceChunkX, sourceChunkZ); // explicit fixture preload
+        LevelChunk sourceChunk = level.getChunk(sourceChunkX, sourceChunkZ); // explicit fixture preload
         int neighborChunkX = sourceChunkX + 1;
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-source-preload");
 
@@ -119,11 +120,11 @@ public final class CrystalSpreadGameTests {
         // Avoid neighbor notifications while constructing this fixture: an update
         // from local X=15 would legitimately load the east chunk before randomTick.
         BlockState destinationSourceState = placeBoundaryCrystal(
-                level, crystal, destinationBoundarySource, 3, 3,
-                neighborChunkX, sourceChunkZ, "destination-source");
+                level, sourceChunk, sourceChunkX, sourceChunkZ, crystal, destinationBoundarySource, 3, 3,
+                neighborChunkX, "destination-source");
         BlockState supportSourceState = placeBoundaryCrystal(
-                level, crystal, supportBoundarySource, 3, 3,
-                neighborChunkX, sourceChunkZ, "support-source");
+                level, sourceChunk, sourceChunkX, sourceChunkZ, crystal, supportBoundarySource, 3, 3,
+                neighborChunkX, "support-source");
 
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-aura-get");
@@ -448,18 +449,26 @@ public final class CrystalSpreadGameTests {
     }
 
     private static BlockState placeBoundaryCrystal(
-            ServerLevel level, CrystalClusterBlock crystal, BlockPos pos, int size, int generation,
-            int neighborChunkX, int sourceChunkZ, String fixtureName) {
-        level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), Block.UPDATE_CLIENTS);
+            ServerLevel level, LevelChunk sourceChunk, int sourceChunkX, int sourceChunkZ,
+            CrystalClusterBlock crystal, BlockPos pos, int size, int generation,
+            int neighborChunkX, String fixtureName) {
+        if ((pos.getX() >> 4) != sourceChunkX || (pos.getZ() >> 4) != sourceChunkZ) {
+            throw new AssertionError("Boundary fixture write escaped its already-loaded chunk: " + pos);
+        }
+        // Level#setBlock runs the world update/light path even with UPDATE_CLIENTS;
+        // at local X=15 that path can bring in the east neighbour. This test is
+        // about randomTick's chunk access, so write fixture states directly into
+        // the already-loaded LevelChunk and deliberately skip world notifications.
+        sourceChunk.setBlockState(pos.below(), Blocks.STONE.defaultBlockState(), false);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
                 fixtureName + "-after-support-set");
         BlockState state = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, size)
                 .setValue(CrystalClusterBlock.GENERATION, generation);
-        level.setBlock(pos, state, Block.UPDATE_CLIENTS);
+        sourceChunk.setBlockState(pos, state, false);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
                 fixtureName + "-after-crystal-set");
-        BlockState placed = level.getBlockState(pos);
+        BlockState placed = sourceChunk.getBlockState(pos);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
                 fixtureName + "-after-state-read");
         boolean survives = state.canSurvive(level, pos);
