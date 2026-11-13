@@ -404,10 +404,19 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("Vis recovery must account for total Vis+Flux and preserve Flux");
         }
 
+        // Valid BETA26 base is at most 500, so the full-moon recovery target is at most 575.
+        // A record already above that target must not be changed by the recovery branch.
         isolated.putChunk(loadedPos, (short) 500, 32_765.9F, 0.0F);
-        int capped = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, 0);
-        if (capped != 1 || isolated.getVis(loadedPos) != 32_766.0F) {
-            throw new AssertionError("Moon-phase recovery exceeded the BETA26 AuraChunk Vis ceiling");
+        int aboveTarget = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, 0);
+        if (aboveTarget != 0 || Math.abs(isolated.getVis(loadedPos) - 32_765.9F) > 0.001F) {
+            throw new AssertionError("Moon-phase recovery changed a chunk already above its phase target");
+        }
+
+        // At the valid maximum base, recovery stops exactly at the phase target (575 Vis).
+        isolated.putChunk(loadedPos, (short) 500, 574.9F, 0.0F);
+        int nearTarget = ThaumcraftAuraWorldEvents.regenerateLoadedAuraChunks(level, isolated, 0);
+        if (nearTarget != 1 || Math.abs(isolated.getVis(loadedPos) - 575.0F) > 0.001F) {
+            throw new AssertionError("Moon-phase recovery overshot the valid maximum-base target");
         }
 
         int farChunkX = chunkX + 10_000;
