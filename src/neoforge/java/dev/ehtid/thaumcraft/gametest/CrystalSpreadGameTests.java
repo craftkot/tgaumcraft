@@ -13,6 +13,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.state.properties.SlabType;
@@ -96,7 +97,7 @@ public final class CrystalSpreadGameTests {
         int baseX = sourceChunkX * 16;
         int baseZ = sourceChunkZ * 16;
         CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
-        BlockPos unsupportedBoundaryPos = new BlockPos(baseX + 15, 20, baseZ + 20);
+        BlockPos unsupportedBoundaryPos = new BlockPos(baseX + 15, 20, baseZ + 4);
         BlockState unsupportedBoundaryState = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, 3)
                 .setValue(CrystalClusterBlock.GENERATION, 3);
@@ -108,10 +109,20 @@ public final class CrystalSpreadGameTests {
 
         BlockPos destinationBoundarySource = new BlockPos(baseX + 15, 20, baseZ + 4);
         BlockPos supportBoundarySource = new BlockPos(baseX + 14, 20, baseZ + 12);
+        for (BlockPos fixturePos : new BlockPos[]{
+                unsupportedBoundaryPos, destinationBoundarySource, supportBoundarySource}) {
+            if ((fixturePos.getX() >> 4) != sourceChunkX
+                    || (fixturePos.getZ() >> 4) != sourceChunkZ) {
+                throw new AssertionError(
+                        "Crystal boundary fixture escaped its preloaded source chunk: " + fixturePos);
+            }
+        }
+        // Avoid neighbor notifications while constructing this fixture: an update
+        // from local X=15 would legitimately load the east chunk before randomTick.
         BlockState destinationSourceState = placeCrystal(
-                level, crystal, destinationBoundarySource, 3, 3);
+                level, crystal, destinationBoundarySource, 3, 3, Block.UPDATE_CLIENTS);
         BlockState supportSourceState = placeCrystal(
-                level, crystal, supportBoundarySource, 3, 3);
+                level, crystal, supportBoundarySource, 3, 3, Block.UPDATE_CLIENTS);
 
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
         aura.putChunk(destinationBoundarySource, (short) 0, 100.0F, 0.0F);
@@ -420,11 +431,17 @@ public final class CrystalSpreadGameTests {
 
     private static BlockState placeCrystal(
             ServerLevel level, CrystalClusterBlock crystal, BlockPos pos, int size, int generation) {
-        level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
+        return placeCrystal(level, crystal, pos, size, generation, 3);
+    }
+
+    private static BlockState placeCrystal(
+            ServerLevel level, CrystalClusterBlock crystal, BlockPos pos,
+            int size, int generation, int updateFlags) {
+        level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), updateFlags);
         BlockState state = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, size)
                 .setValue(CrystalClusterBlock.GENERATION, generation);
-        level.setBlock(pos, state, 3);
+        level.setBlock(pos, state, updateFlags);
         if (!level.getBlockState(pos).equals(state) || !state.canSurvive(level, pos)) {
             throw new AssertionError("Failed to place supported crystal fixture at " + pos + ": " + state);
         }
