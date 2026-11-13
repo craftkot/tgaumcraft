@@ -211,7 +211,7 @@ expect("-resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55%" in 
        "title pixel crop no longer uses the tested tight bitmap-font preprocessing")
 expect("-resize 600% -colorspace Gray -contrast-stretch 0x12%" in generator,
        "panel pixel crop no longer preserves the full Vis panel")
-expect("available_height=$((12 * scale))" in generator
+expect("available_height=$((24 * scale))" in generator
        and "workbench-available-ocr.png" in generator
        and "test -s client-smoke/screenshots/workbench-available-ocr.png" in generator,
        "available-label OCR crop must isolate the BETA26 readout line")
