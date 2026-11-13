@@ -96,9 +96,14 @@ public final class CrystalClusterBlock extends Block {
                 && support.isFaceSturdy(level,side,d.getOpposite());
     }
 
-    private static boolean touchesStone(LevelReader level,BlockPos pos) {
-        for(Direction d:Direction.values())
+    private static boolean touchesStone(ServerLevel level,BlockPos pos) {
+        for(Direction d:Direction.values()) {
+            BlockPos supportPos=pos.relative(d);
+            // A support face in an unloaded neighbour is simply unavailable
+            // for this tick; never load that neighbour to answer the query.
+            if(!level.hasChunkAt(supportPos)) continue;
             if(hasCrystalSupport(level,pos,d)) return true;
+        }
         return false;
     }
     @Override public boolean canSurvive(BlockState state,LevelReader world,BlockPos pos) {
@@ -160,6 +165,10 @@ public final class CrystalClusterBlock extends Block {
         int dx=random.nextInt(3)-1,dy=random.nextInt(3)-1,dz=random.nextInt(3)-1;
         if(!LegacyBlockCrystalGrowthRules.spreadOffset(dx,dy,dz)) return;
         BlockPos other=pos.offset(dx,dy,dz);
+        // Random ticks can occur at a chunk edge. ServerLevel#getBlockState may
+        // request an absent chunk, so do not inspect a spread destination until
+        // its chunk is already loaded.
+        if (!level.hasChunkAt(other)) return;
         BlockState destination=level.getBlockState(other);
         // BETA26 checks the block Material, not whether its FluidState is non-empty.
         // BlockState.liquid() retains the legacy liquid-material flag in 1.21.1;
