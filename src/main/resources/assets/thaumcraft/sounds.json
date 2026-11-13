@@ -49,5 +49,14 @@
         "stream": false
       }
     ]
+  },
+  "key": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "thaumcraft:key",
+        "stream": false
+      }
+    ]
   }
 }

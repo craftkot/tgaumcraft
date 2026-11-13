@@ -5,11 +5,16 @@ on:
     branches: [main]
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/JarBraceItem.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
+      - 'src/main/resources/assets/thaumcraft/sounds/key.ogg'
       - 'tools/verify_jar_sound.py'
       - 'tools/verify_jar_soundtype_smoke.py'
+      - 'tools/verify_jar_brace_key_sound.py'
+      - 'tools/match_key_audio_pcm.py'
+      - 'tools/test_key_audio_match.py'
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
       - 'tools/client_jar_sound_smoke.py'
@@ -92,7 +97,7 @@ jobs:
           for command in Xvfb xdpyinfo xdotool openbox glxinfo import ffmpeg pulseaudio pactl parec; do
             command -v "$command" >/dev/null || { echo "CLIENT_TOOL_MISSING=$command"; exit 1; }
           done
-      - name: Verify original BETA26 jar SoundType, label and emptying sound contracts
+      - name: Verify original BETA26 jar SoundType, label, emptying and brace-key sound contracts
         run: |
           python -m pip install numpy==2.2.6
           python tools/verify_jar_sound.py
@@ -101,6 +106,8 @@ jobs:
           python tools/test_page_audio_match.py
           python tools/verify_jar_empty_sound.py
           python tools/test_bottle_fill_audio.py
+          python tools/verify_jar_brace_key_sound.py
+          python tools/test_key_audio_match.py
       - name: Generate and syntax-check actual Minecraft smoke
         run: |
           python3 tools/client_jar_sound_smoke.py > client-jar-generated.sh

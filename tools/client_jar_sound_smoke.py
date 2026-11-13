@@ -257,6 +257,47 @@ PY
   echo 'JAR_EMPTY_BETA26_SOUND_PAIR_AND_SERVER_RESET=PASS' | tee -a client-smoke-status.txt
 
 
+  # M44: original BETA26 BlockJar brace application plays SoundsTC.key on the client.
+  send_chat '/setblock 250 151 251 minecraft:air'
+  send_chat '/setblock 250 151 251 thaumcraft:jar_normal'
+  send_chat '/execute if block 250 151 251 thaumcraft:jar_normal run say JAR_BRACE_FIXTURE_READY'
+  if ! grep -Fq 'JAR_BRACE_FIXTURE_READY' client-smoke/client.log; then
+    echo 'JAR_BRACE_FIXTURE_SETUP_FAILED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/gamemode survival @p'
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_brace'
+  send_chat '/execute if items entity @p hotbar.0 thaumcraft:jar_brace run say JAR_BRACE_ITEM_READY'
+  if ! grep -Fq 'JAR_BRACE_ITEM_READY' client-smoke/client.log; then
+    echo 'JAR_BRACE_ITEM_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/tp @p 250.5 150 250.5 0 0'
+  xdotool key --clearmodifiers 1
+  sleep 2
+  send_chat '/stopsound @p'
+  sleep 0.25
+  timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/key-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/key-event.pcm &
+  capture_pid=$!
+  sleep 0.6
+  xdotool click 3
+  sleep 3
+  wait "$capture_pid" || test "$?" -eq 124
+  import -display :99 -window root -silent client-smoke/screenshots/101-jar-braced.png
+  send_chat '/execute if data block 250 151 251 {blocked:1b} run say JAR_BRACE_SERVER_APPLIED'
+  send_chat '/execute unless items entity @p hotbar.0 thaumcraft:jar_brace run say JAR_BRACE_ITEM_CONSUMED'
+  if ! grep -Fq 'JAR_BRACE_SERVER_APPLIED' client-smoke/client.log; then
+    echo 'JAR_BRACE_SERVER_STATE_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  if ! grep -Fq 'JAR_BRACE_ITEM_CONSUMED' client-smoke/client.log; then
+    echo 'JAR_BRACE_ITEM_NOT_CONSUMED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  python3 tools/match_key_audio_pcm.py client-smoke/key-baseline.pcm client-smoke/key-event.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/key-source-match.txt
+  echo 'JAR_BRACE_KEY_INTERACTION_AND_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+
   # M43: exercise the four SoundType hooks not covered by the earlier break test.
   # Use a real BlockItem placement, survival mining tap, grounded movement across
   # a narrow but continuous jar row, and a real fall onto the jar collision top.

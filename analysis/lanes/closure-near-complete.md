@@ -3204,3 +3204,9 @@ Fresh-state review:
 - Added fail-closed Python log-order verification inside the generated real-client shell script; it requires strictly increasing unique line positions for recorder install, ticket release, unload/cancel, zero packets, reload, zero packets, recorder removal, ticket cleanup and final acceptance. Added source-regression guard in `tools/test_salis_chunk_probe_cleanup.py`. Commits `a5220be4da4f78aff0ce369ce6212839645e0566` and `48c4f183fd23f9833deb2de638345d2ec4c4eb00`.
 - No production Java or shared workflow files changed, no foreign branches touched, no merge. This is test-gate hardening, **not a new gameplay fix**. New exact-head client run is required before claiming the stronger gate passed; local native compile/client unavailable due to DNS. Audit unchanged **59/100**, M16 **4/6**.
 - Next: inspect exact-head CI and real-client artifact for `SALIS_NATIVE_LIFECYCLE_ORDER=PASS`, then choose the next distinct BETA26 visual/audio discrepancy rather than duplicating accepted Salis and jar checks.
+
+
+## 2026-11-13 — M16: restore original BETA26 jar-brace KEY sound
+
+- Fresh state before editing: main = a4280834adc5a20b6951098af937d30ca4aeca56; feature/closure-near-complete = 50bf671901bff7fa792ff48f801d9dad7774f9ea (parent tree 84da2e94c7eb5715a4cc2dacf9a75cc80f9adcd8). Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md, fixed audit and this lane. The official roadmap still reserves M16; this lane continues because the owner explicitly assigned it. Current PR #4 remains Open/Draft/Unmerged.
+NaNNaNNaNNaNNaNNaNNaNNaN

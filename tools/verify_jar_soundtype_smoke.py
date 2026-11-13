@@ -92,4 +92,24 @@ assert "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS" in SMOKE
 assert 'nbt={Item:{id:"thaumcraft:label"}}' not in SMOKE
 assert "hotbar.* thaumcraft:label" not in SMOKE
 
-print("BETA26 jar SoundType client contract: place, hit, step and fall each have real interaction, server-state guard and original-PCM matcher: PASS")
+
+brace_section = SMOKE.split("# M44:", 1)[1].split("# M43:", 1)[0]
+for token in (
+    "JAR_BRACE_FIXTURE_READY",
+    "JAR_BRACE_ITEM_READY",
+    "client-smoke/key-baseline.pcm",
+    "client-smoke/key-event.pcm",
+    "xdotool click 3",
+    "JAR_BRACE_SERVER_APPLIED",
+    "JAR_BRACE_ITEM_CONSUMED",
+    "match_key_audio_pcm.py",
+    "JAR_BRACE_KEY_INTERACTION_AND_ORIGINAL_PCM=PASS",
+):
+    assert token in brace_section, f"Real-client jar-brace KEY scenario missing {token}"
+assert brace_section.index("JAR_BRACE_SERVER_APPLIED") < brace_section.index("JAR_BRACE_ITEM_CONSUMED")
+assert "tools/verify_jar_brace_key_sound.py" in WORKFLOW
+assert "tools/test_key_audio_match.py" in WORKFLOW
+assert "src/neoforge/java/dev/ehtid/thaumcraft/item/JarBraceItem.java" in WORKFLOW
+assert "src/main/resources/assets/thaumcraft/sounds/key.ogg" in WORKFLOW
+
+print("BETA26 jar SoundType + brace KEY client contract: place, hit, step and fall each have real interaction, server-state guard and original-PCM matcher: PASS")
