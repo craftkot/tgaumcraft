@@ -3286,3 +3286,14 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Reverted the model path, removed the redundant `textures/item/caster_basic.png` and temporary verifier, and removed the added M45 client-smoke and workflow steps. This restores compatibility with PR #1's source contract and leaves its atlas implementation untouched. No foreign branch, shared test, global atlas, registry, main or merge state was modified.
 - The new jar client run [#43364637550](https://github.com/craftkot/tgaumcraft/actions/runs/43364637550) was already in progress on the temporary commit when the revert was made; its result, if any, is evidence for the discarded experiment only and does not change the ownership decision.
 - Current branch after the revert is a cleanup commit; PR #4 remains Draft/Open/Unmerged. Historical fixed audit remains `59/100`, M16 `4/6`; no point is awarded. Next action: select a distinct M16 asset/interaction defect on paths not owned by PR #1–#3, or wait for PR #1 to land before revalidating the caster model.
+
+## 2026-11-13 — M08: restore all BETA26 stone-brick crystal supports
+
+- Fresh integration base: `main` HEAD `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- Work branch before this iteration: `feature/closure-near-complete` HEAD `c37a6a34dba1469be7f7c41a3dacf3cddba3baec`; PR #4 remains open/Draft and unmerged.
+- Audited PR #1, #2, and #3 changed-path lists before editing. None overlaps the four paths changed in this iteration.
+- Source proof: BETA26 `BlockCrystal` accepts adjacent blocks with `Material.ROCK` and a solid face. The pinned 1.12.2 `BlockStoneBrick` implementation uses `Material.rock` for the shared default/mossy/cracked/chiseled variants. The modern support tag contained only `minecraft:stone_bricks`, omitting the other three 1.12 variants.
+- Change: added `minecraft:mossy_stone_bricks`, `minecraft:cracked_stone_bricks`, and `minecraft:chiseled_stone_bricks` to `thaumcraft:crystal_supports`. Added a native NeoForge GameTest that places an Aer crystal on all four stone-brick variants and checks both `hasCrystalSupport(..., DOWN)` and `BlockState.canSurvive`.
+- Runner now requires the fifth GameTest summary and the stone-brick marker in both cold-restart phases. No production Java logic, shared registry, Gradle file, or common workflow was changed.
+- Verification status at commit time: source comparison and path-isolation checks passed; GitHub Actions results are pending. This is not a completed M08 category and does not change the 59/100 audit score.
+- Next: require the native aura/crystal GameTest workflow to pass on this exact commit; inspect the write/read logs and full NeoForge CI before choosing another gap.

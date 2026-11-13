@@ -163,6 +163,44 @@ public final class CrystalSpreadGameTests {
         helper.succeed();
     }
 
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 40
+    )
+    public static void stoneBrickVariantsRemainCrystalSupports(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
+        BlockState[] supports = {
+                Blocks.STONE_BRICKS.defaultBlockState(),
+                Blocks.MOSSY_STONE_BRICKS.defaultBlockState(),
+                Blocks.CRACKED_STONE_BRICKS.defaultBlockState(),
+                Blocks.CHISELED_STONE_BRICKS.defaultBlockState()
+        };
+        String[] names = {"stone", "mossy", "cracked", "chiseled"};
+        BlockState crystalState = crystal.defaultBlockState()
+                .setValue(CrystalClusterBlock.SIZE, 0)
+                .setValue(CrystalClusterBlock.GENERATION, 3);
+
+        for (int i = 0; i < supports.length; i++) {
+            BlockPos pos = helper.absolutePos(new BlockPos(2 + i * 3, TEST_Y, TEST_Z));
+            level.setBlock(pos.below(), supports[i], 3);
+            level.setBlock(pos, crystalState, 3);
+
+            if (!CrystalClusterBlock.hasCrystalSupport(level, pos, Direction.DOWN)
+                    || !crystalState.canSurvive(level, pos)
+                    || !level.getBlockState(pos).equals(crystalState)) {
+                throw new AssertionError("BETA26 stone-brick variant must support crystals: "
+                        + names[i] + " state=" + supports[i]);
+            }
+        }
+
+        System.out.println("TC_GAMETEST_CRYSTAL_STONE_BRICK_VARIANTS=PASS count=4");
+        helper.succeed();
+    }
+
     private static BlockState placeCrystal(
             ServerLevel level, CrystalClusterBlock crystal, BlockPos pos, int size, int generation) {
         level.setBlock(pos.below(), Blocks.STONE.defaultBlockState(), 3);
