@@ -15,6 +15,8 @@ fixtures = [
     ("en_us", ("232 avaiable", "232 avaiable")),
     ("ru_ru", ("139\nдоступно", "139\nдоступн")),
     ("ru_ru", ("155\nдоступнo", "155\nдоступно")),
+    # Actual RU scale-2 client artifact: PSM11 reads the full word, with one digit substitution.
+    ("ru_ru", ("192 доступно", "192 доступно")),
     # Actual RU scale-3 client OCR from the isolated available-line crop.
     ("ru_ru", ("148 доступно.", "148 доступно.")),
 ]
@@ -30,6 +32,7 @@ negative = [
     ("en_us", ("196\navail",)),
     ("ru_ru", ("139\nдост...",)),
     ("ru_ru", ("139\nдоступ",)),
+    ("ru_ru", ("192 доступн",)),
     ("ru_ru", ("139\nдос...",)),
 ]
 for language, variants in negative:
