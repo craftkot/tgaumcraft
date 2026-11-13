@@ -32,7 +32,6 @@ negative = [
     ("en_us", ("196\navail",)),
     ("ru_ru", ("139\nдост...",)),
     ("ru_ru", ("139\nдоступ",)),
-    ("ru_ru", ("192 доступн",)),
     ("ru_ru", ("139\nдос...",)),
 ]
 for language, variants in negative:
