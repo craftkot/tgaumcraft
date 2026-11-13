@@ -170,34 +170,63 @@ public final class CrystalSpreadGameTests {
             templateNamespace = ThaumcraftPort.MOD_ID,
             timeoutTicks = 40
     )
-    public static void stoneBrickVariantsRemainCrystalSupports(GameTestHelper helper) {
+    public static void legacyRockVariantsRemainCrystalSupports(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
         BlockState[] supports = {
                 Blocks.STONE_BRICKS.defaultBlockState(),
                 Blocks.MOSSY_STONE_BRICKS.defaultBlockState(),
                 Blocks.CRACKED_STONE_BRICKS.defaultBlockState(),
-                Blocks.CHISELED_STONE_BRICKS.defaultBlockState()
+                Blocks.CHISELED_STONE_BRICKS.defaultBlockState(),
+                Blocks.WHITE_CONCRETE.defaultBlockState(),
+                Blocks.ORANGE_CONCRETE.defaultBlockState(),
+                Blocks.MAGENTA_CONCRETE.defaultBlockState(),
+                Blocks.LIGHT_BLUE_CONCRETE.defaultBlockState(),
+                Blocks.YELLOW_CONCRETE.defaultBlockState(),
+                Blocks.LIME_CONCRETE.defaultBlockState(),
+                Blocks.PINK_CONCRETE.defaultBlockState(),
+                Blocks.GRAY_CONCRETE.defaultBlockState(),
+                Blocks.LIGHT_GRAY_CONCRETE.defaultBlockState(),
+                Blocks.CYAN_CONCRETE.defaultBlockState(),
+                Blocks.PURPLE_CONCRETE.defaultBlockState(),
+                Blocks.BLUE_CONCRETE.defaultBlockState(),
+                Blocks.BROWN_CONCRETE.defaultBlockState(),
+                Blocks.GREEN_CONCRETE.defaultBlockState(),
+                Blocks.RED_CONCRETE.defaultBlockState(),
+                Blocks.BLACK_CONCRETE.defaultBlockState()
         };
-        String[] names = {"stone", "mossy", "cracked", "chiseled"};
+        String[] names = {
+                "stone", "mossy", "cracked", "chiseled",
+                "white concrete", "orange concrete", "magenta concrete", "light blue concrete",
+                "yellow concrete", "lime concrete", "pink concrete", "gray concrete",
+                "light gray concrete", "cyan concrete", "purple concrete", "blue concrete",
+                "brown concrete", "green concrete", "red concrete", "black concrete"
+        };
+        if (supports.length != names.length) {
+            throw new AssertionError("Support fixture names do not match the block-state list");
+        }
         BlockState crystalState = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, 0)
                 .setValue(CrystalClusterBlock.GENERATION, 3);
 
+        // Keep the 20 independent placements inside the 16x16 empty GameTest
+        // template while checking every 1.12.2 concrete metadata color.
+        int columns = 5;
         for (int i = 0; i < supports.length; i++) {
-            BlockPos pos = helper.absolutePos(new BlockPos(2 + i * 3, TEST_Y, TEST_Z));
+            BlockPos pos = helper.absolutePos(new BlockPos(
+                    2 + (i % columns) * 3, TEST_Y, TEST_Z + (i / columns) * 3));
             level.setBlock(pos.below(), supports[i], 3);
             level.setBlock(pos, crystalState, 3);
 
             if (!CrystalClusterBlock.hasCrystalSupport(level, pos, Direction.DOWN)
                     || !crystalState.canSurvive(level, pos)
                     || !level.getBlockState(pos).equals(crystalState)) {
-                throw new AssertionError("BETA26 stone-brick variant must support crystals: "
+                throw new AssertionError("BETA26 Material.ROCK variant must support crystals: "
                         + names[i] + " state=" + supports[i]);
             }
         }
 
-        System.out.println("TC_GAMETEST_CRYSTAL_STONE_BRICK_VARIANTS=PASS count=4");
+        System.out.println("TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=" + supports.length);
         helper.succeed();
     }
 
