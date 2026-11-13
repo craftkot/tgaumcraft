@@ -19,6 +19,11 @@ fixtures = [
     ("ru_ru", ("192 доступно", "192 доступно")),
     # Actual RU scale-3 client OCR from the isolated available-line crop.
     ("ru_ru", ("148 доступно.", "148 доступно.")),
+    # Inverted-crop PSM8 output from the four exact-head real-client artifacts.
+    ("en_us", ("14 avaiable",)),
+    ("en_us", ("186 available",)),
+    ("ru_ru", ("344 доотулно",)),
+    ("ru_ru", ("233 доступна",)),
 ]
 checks = 0
 for language, variants in fixtures:

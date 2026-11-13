@@ -220,8 +220,10 @@ expect("-resize 1000% -colorspace Gray -contrast-stretch 0x12% -threshold 55%" i
 expect("--psm 6" in generator and "--psm 8" in generator
        and "--psm 7" in generator and "--psm 11" in generator
        and "title_text_6" in generator and "title_text_8" in generator
-       and "available_text_7" in generator and "available_text_11" in generator,
-       "workbench OCR must evaluate the title and isolated available line with both modes")
+       and "available_text_7" in generator and "available_text_11" in generator
+       and "available_text_8" in generator and "available-ocr-inverted.png" in generator
+       and "-negate" in generator,
+       "workbench OCR must include the inverted glyph-only PSM8 fallback")
 expect("assert_client_workbench_gui_ocr.py" in generator,
        "workbench OCR generator does not check the clipped localized available label")
 expect("assert_client_workbench_gui_render.py" in generator
@@ -232,6 +234,9 @@ expect("contains_full_label(" in ocr_helper and "localized available label" in o
        and "contains_label_prefix(" not in ocr_helper
        and "contains_prefix_near(" not in ocr_helper and "has_cost_pair(" not in ocr_helper,
        "OCR helper must reject clipped prefixes and ignore unreliable title/cost OCR")
+expect("len(argv) != 5" in ocr_helper and "AVAILABLE_INVERTED_PSM8" in ocr_helper
+       and "available8" in ocr_helper,
+       "OCR helper must evaluate the additional inverted-crop PSM8 result")
 screen = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
 screen_source = screen.read_text(encoding="utf-8")
 expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
