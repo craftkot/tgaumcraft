@@ -56,7 +56,8 @@ def assert_workbench_render(
         "title_b64", "available_text_b64", "cost_text_b64", "available_vis",
         "cost_vis", "crystal_mask", "title_width", "title_x", "title_y",
         "panel_x", "panel_y", "panel_width", "panel_height", "text_width",
-        "max_lines", "gui_width", "gui_height",
+        "available_source_width", "available_rendered_width", "available_scale_milli",
+        "available_center_x", "available_y", "max_lines", "gui_width", "gui_height",
     }
     missing = sorted(required - fields.keys())
     if missing:
@@ -72,6 +73,13 @@ def assert_workbench_render(
     title_x = _integer(fields, "title_x")
     title_y = _integer(fields, "title_y")
     gui_width = _integer(fields, "gui_width")
+    panel_width = _integer(fields, "panel_width")
+    available_source_width = _integer(fields, "available_source_width")
+    available_rendered_width = _integer(fields, "available_rendered_width")
+    available_scale_milli = _integer(fields, "available_scale_milli")
+    available_center_x = _integer(fields, "available_center_x")
+    available_y = _integer(fields, "available_y")
+    available_scale = available_scale_milli / 1000.0
 
     checks = {
         "localized title component": title == expected_title,
@@ -80,11 +88,22 @@ def assert_workbench_render(
         "20-vis recipe preview": cost == 20,
         "sufficient synced Vis": available >= cost,
         "six BETA26 primal requirements": _integer(fields, "crystal_mask") == 0b111111,
+        "available label fits panel without clipping": (
+            available_source_width > 0
+            and available_rendered_width == math.ceil(
+                available_source_width * available_scale + available_scale
+            )
+            and available_rendered_width <= panel_width - 4
+        ),
+        "available label uses BETA26 half-scale placement": (
+            available_scale_milli == 500 and available_center_x == 168
+            and available_y == 46
+        ),
         "title stays inside GUI": title_width > 0 and title_x == 16 and title_y == 5
         and title_x + title_width <= gui_width - 2,
         "original panel geometry": (
             _integer(fields, "panel_x"), _integer(fields, "panel_y"),
-            _integer(fields, "panel_width"), _integer(fields, "panel_height"),
+            panel_width, _integer(fields, "panel_height"),
             _integer(fields, "text_width"), _integer(fields, "max_lines"),
             _integer(fields, "gui_width"), _integer(fields, "gui_height"),
         ) == (144, 42, 46, 54, 43, 2, 190, 234),

@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""Supplementary OCR check for the clipped localized available-Vis label.
+"""Fail-closed OCR check for the complete localized available-Vis label.
 
-The exact title and 20-Vis cost are verified by the actual screen render-path
-marker plus screenshot pixels. Tesseract is deliberately not authoritative for
-Minecraft's bitmap-font title or the glyph '0'.
+Minecraft bitmap OCR may substitute one or two glyphs, but a clipped prefix is
+not accepted: at least all but one character of the localized word must remain.
 """
 from __future__ import annotations
 
@@ -31,9 +30,9 @@ def edit_distance(left: str, right: str) -> int:
     return previous[-1]
 
 
-def contains_label_prefix(value: str, expected: str) -> bool:
+def contains_full_label(value: str, expected: str) -> bool:
     return any(
-        len(word) >= len(expected) and edit_distance(word, expected) <= 1
+        len(word) >= len(expected) - 1 and edit_distance(word, expected) <= 2
         for word in tokens(value)
     )
 
@@ -44,14 +43,14 @@ def assert_workbench_ocr(
     panel_variants: tuple[str, ...],
 ) -> dict[str, bool]:
     if language == "en_us":
-        available_prefix = "availab"
+        available_label = "available"
     elif language == "ru_ru":
-        available_prefix = "дост"
+        available_label = "доступно"
     else:
         raise ValueError(f"unsupported Minecraft language: {language}")
     return {
         "localized available label": any(
-            contains_label_prefix(text, available_prefix)
+            contains_full_label(text, available_label)
             for text in panel_variants
         )
     }

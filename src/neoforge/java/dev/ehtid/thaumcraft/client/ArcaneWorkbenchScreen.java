@@ -21,6 +21,7 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("thaumcraft", "textures/gui/arcaneworkbench.png");
+    private static final float AVAILABLE_TEXT_SCALE = 0.5F;
 
     private boolean smokeAuditEmitted;
 
@@ -56,10 +57,12 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
                 .append(Component.translatable("workbench.available"));
         int availableColor = available < cost
                 ? ThaumcraftReadableText.BAD_TEXT : ThaumcraftReadableText.GREEN_TEXT;
-        ThaumcraftReadableText.wrapped(graphics, font, availableText,
-                WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.AVAILABLE_Y,
-                WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
-                availableColor);
+        // BETA26 draws the complete localized available-Vis label at half scale,
+        // centered at x=168. Restore that compact readout instead of clipping the
+        // final letters inside the narrow right-hand strip.
+        int availableSourceWidth = font.width(availableText);
+        int availableRenderedWidth = drawAvailableLabel(
+                graphics, availableText, availableSourceWidth, availableColor);
         Component costText = cost > 0
                 ? Component.literal(cost + " ").append(Component.translatable("workbench.cost"))
                 : Component.empty();
@@ -69,10 +72,23 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
                     WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
                     ThaumcraftReadableText.MUTED_TEXT);
         }
-        emitSmokeAudit(availableText, costText, available, cost);
+        emitSmokeAudit(availableText, costText, available, cost,
+                availableSourceWidth, availableRenderedWidth);
     }
 
-    private void emitSmokeAudit(Component availableText, Component costText, int available, int cost) {
+    private int drawAvailableLabel(GuiGraphics graphics, Component message,
+                                   int sourceWidth, int color) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(168.0F, WorkbenchVisPanelLayout.AVAILABLE_Y, 0.0F);
+        graphics.pose().scale(AVAILABLE_TEXT_SCALE, AVAILABLE_TEXT_SCALE, 1.0F);
+        graphics.drawString(font, message, -sourceWidth / 2, 0, color, true);
+        graphics.pose().popPose();
+        // Include the scaled one-pixel vanilla text shadow in the actual footprint.
+        return (int) Math.ceil(sourceWidth * AVAILABLE_TEXT_SCALE + AVAILABLE_TEXT_SCALE);
+    }
+
+    private void emitSmokeAudit(Component availableText, Component costText, int available, int cost,
+                                int availableSourceWidth, int availableRenderedWidth) {
         if (smokeAuditEmitted || !"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) return;
         int crystalMask = menu.requiredCrystalMask();
         // Wait for the server-synced Thaumometer preview; the first client frame may still carry zeroed DataSlots.
@@ -93,6 +109,11 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
                 + " panel_width=" + WorkbenchVisPanelLayout.PANEL_WIDTH
                 + " panel_height=" + WorkbenchVisPanelLayout.PANEL_HEIGHT
                 + " text_width=" + WorkbenchVisPanelLayout.TEXT_WIDTH
+                + " available_source_width=" + availableSourceWidth
+                + " available_rendered_width=" + availableRenderedWidth
+                + " available_scale_milli=" + Math.round(AVAILABLE_TEXT_SCALE * 1000.0F)
+                + " available_center_x=168"
+                + " available_y=" + WorkbenchVisPanelLayout.AVAILABLE_Y
                 + " max_lines=" + WorkbenchVisPanelLayout.MAX_LINES
                 + " gui_width=" + imageWidth
                 + " gui_height=" + imageHeight);

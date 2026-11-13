@@ -123,7 +123,7 @@ body = r'''
     client-smoke/screenshots/workbench-title-ocr.png
   convert client-smoke/screenshots/workbench-gui-crop.png \
     -crop "$panel_width"x"$panel_height"+"$panel_x"+"$panel_y" +repage \
-    -resize 400% -colorspace Gray -contrast-stretch 0x12% \
+    -resize 600% -colorspace Gray -contrast-stretch 0x12% \
     client-smoke/screenshots/workbench-vis-ocr.png
   test -s client-smoke/screenshots/workbench-title-ocr.png
   test -s client-smoke/screenshots/workbench-vis-ocr.png
@@ -141,10 +141,11 @@ body = r'''
   printf 'WORKBENCH_VIS_OCR_PSM6_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM6_END\n' "$panel_text_6" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_VIS_OCR_PSM11_BEGIN\n%s\nWORKBENCH_VIS_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
-  # Tesseract is supplemental: it can misread the pixel-font '0' as '8' and
-  # cannot reliably classify the title at all scales. The actual render-path
-  # marker verifies the localized Components and synced menu data; pixels
-  # independently prove that the title and panel regions were painted.
+  # The OCR guard requires the complete localized available word; it accepts
+  # at most two bitmap-glyph substitutions only when all but one character
+  # remain, so the old clipped "availab..." prefix cannot pass.
+  # The render-path marker independently checks the complete Component and
+  # the actual half-scale text footprint inside the 46px panel.
   python3 tools/assert_client_workbench_gui_ocr.py \
     "$TC_WORKBENCH_LANG" "$title_text_6" "$title_text_8" "$panel_text_6" "$panel_text_11" \
     | tee -a client-smoke-status.txt
