@@ -13,6 +13,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
@@ -193,14 +195,23 @@ public final class CrystalSpreadGameTests {
                 Blocks.BROWN_CONCRETE.defaultBlockState(),
                 Blocks.GREEN_CONCRETE.defaultBlockState(),
                 Blocks.RED_CONCRETE.defaultBlockState(),
-                Blocks.BLACK_CONCRETE.defaultBlockState()
+                Blocks.BLACK_CONCRETE.defaultBlockState(),
+                Blocks.BONE_BLOCK.defaultBlockState(),
+                Blocks.MAGMA_BLOCK.defaultBlockState(),
+                Blocks.OBSERVER.defaultBlockState(),
+                Blocks.END_STONE_BRICKS.defaultBlockState(),
+                Blocks.PURPUR_BLOCK.defaultBlockState(),
+                Blocks.PURPUR_PILLAR.defaultBlockState(),
+                Blocks.PURPUR_SLAB.defaultBlockState().setValue(SlabBlock.TYPE, SlabType.DOUBLE)
         };
         String[] names = {
                 "stone", "mossy", "cracked", "chiseled",
                 "white concrete", "orange concrete", "magenta concrete", "light blue concrete",
                 "yellow concrete", "lime concrete", "pink concrete", "gray concrete",
                 "light gray concrete", "cyan concrete", "purple concrete", "blue concrete",
-                "brown concrete", "green concrete", "red concrete", "black concrete"
+                "brown concrete", "green concrete", "red concrete", "black concrete",
+                "bone block", "magma block", "observer", "end stone bricks",
+                "purpur block", "purpur pillar", "purpur double slab"
         };
         if (supports.length != names.length) {
             throw new AssertionError("Support fixture names do not match the block-state list");
@@ -208,26 +219,58 @@ public final class CrystalSpreadGameTests {
         BlockState crystalState = crystal.defaultBlockState()
                 .setValue(CrystalClusterBlock.SIZE, 0)
                 .setValue(CrystalClusterBlock.GENERATION, 3);
+        BlockPos crystalPos = helper.absolutePos(new BlockPos(8, TEST_Y, 8));
+        int faceChecks = 0;
 
-        // Keep the 20 independent placements inside the 16x16 empty GameTest
-        // template while checking every 1.12.2 concrete metadata color.
-        int columns = 5;
+        // Every full-cube legacy ROCK block must support crystals on all six
+        // faces. The old single purpur slab is directional; its two supported
+        // faces are checked separately below, matching BlockSlab's 1.12 shape.
         for (int i = 0; i < supports.length; i++) {
-            BlockPos pos = helper.absolutePos(new BlockPos(
-                    2 + (i % columns) * 3, TEST_Y, TEST_Z + (i / columns) * 3));
-            level.setBlock(pos.below(), supports[i], 3);
-            level.setBlock(pos, crystalState, 3);
-
-            if (!CrystalClusterBlock.hasCrystalSupport(level, pos, Direction.DOWN)
-                    || !crystalState.canSurvive(level, pos)
-                    || !level.getBlockState(pos).equals(crystalState)) {
-                throw new AssertionError("BETA26 Material.ROCK variant must support crystals: "
-                        + names[i] + " state=" + supports[i]);
+            for (Direction direction : Direction.values()) {
+                assertCrystalSupport(level, crystalPos, crystalState, supports[i], direction, names[i]);
+                faceChecks++;
             }
         }
 
-        System.out.println("TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=" + supports.length);
+        BlockState purpurBottomSlab = Blocks.PURPUR_SLAB.defaultBlockState()
+                .setValue(SlabBlock.TYPE, SlabType.BOTTOM);
+        assertCrystalSupport(level, crystalPos, crystalState, purpurBottomSlab,
+                Direction.UP, "purpur bottom slab underside");
+        faceChecks++;
+        BlockState purpurTopSlab = Blocks.PURPUR_SLAB.defaultBlockState()
+                .setValue(SlabBlock.TYPE, SlabType.TOP);
+        assertCrystalSupport(level, crystalPos, crystalState, purpurTopSlab,
+                Direction.DOWN, "purpur top slab top face");
+        faceChecks++;
+
+        int expectedFaceChecks = supports.length * Direction.values().length + 2;
+        if (faceChecks != expectedFaceChecks) {
+            throw new AssertionError("Expected " + expectedFaceChecks + " legacy ROCK face checks, got " + faceChecks);
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=27 faces=" + faceChecks);
         helper.succeed();
+    }
+
+    private static void assertCrystalSupport(
+            ServerLevel level,
+            BlockPos crystalPos,
+            BlockState crystalState,
+            BlockState support,
+            Direction supportDirection,
+            String name
+    ) {
+        BlockPos supportPos = crystalPos.relative(supportDirection);
+        level.setBlock(supportPos, support, 3);
+        level.setBlock(crystalPos, crystalState, 3);
+        boolean supported = CrystalClusterBlock.hasCrystalSupport(level, crystalPos, supportDirection);
+        boolean survives = crystalState.canSurvive(level, crystalPos);
+        BlockState actual = level.getBlockState(crystalPos);
+        level.removeBlock(crystalPos, false);
+        level.removeBlock(supportPos, false);
+        if (!supported || !survives || !actual.equals(crystalState)) {
+            throw new AssertionError("BETA26 Material.ROCK face must support crystals: "
+                    + name + " direction=" + supportDirection + " state=" + support);
+        }
     }
 
     private static BlockState placeCrystal(

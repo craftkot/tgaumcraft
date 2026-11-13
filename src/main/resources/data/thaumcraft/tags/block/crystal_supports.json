@@ -99,6 +99,13 @@
     "minecraft:nether_brick_slab",
     "minecraft:sandstone_slab",
     "minecraft:red_sandstone_slab",
-    "minecraft:quartz_slab"
+    "minecraft:quartz_slab",
+    "minecraft:bone_block",
+    "minecraft:magma_block",
+    "minecraft:observer",
+    "minecraft:end_stone_bricks",
+    "minecraft:purpur_block",
+    "minecraft:purpur_pillar",
+    "minecraft:purpur_slab"
   ]
 }
