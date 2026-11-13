@@ -74,6 +74,70 @@ public final class CrystalSpreadGameTests {
     @GameTest(
             template = "crystal_spread_empty",
             templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 60
+    )
+    public static void spreadDoesNotForceLoadUnloadedNeighborChunks(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos anchor = helper.absolutePos(new BlockPos(8, TEST_Y, 8));
+        int sourceChunkX = (anchor.getX() >> 4) + 64;
+        int sourceChunkZ = (anchor.getZ() >> 4) + 64;
+        level.getChunk(sourceChunkX, sourceChunkZ); // explicit fixture preload
+        int neighborChunkX = sourceChunkX + 1;
+        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
+            throw new AssertionError("Boundary fixture unexpectedly preloaded its east neighbour");
+        }
+
+        int baseX = sourceChunkX * 16;
+        int baseZ = sourceChunkZ * 16;
+        CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
+        BlockPos destinationBoundarySource = new BlockPos(baseX + 15, 20, baseZ + 4);
+        BlockPos supportBoundarySource = new BlockPos(baseX + 14, 20, baseZ + 12);
+        BlockState destinationSourceState = placeCrystal(
+                level, crystal, destinationBoundarySource, 3, 3);
+        BlockState supportSourceState = placeCrystal(
+                level, crystal, supportBoundarySource, 3, 3);
+
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+        aura.putChunk(destinationBoundarySource, (short) 0, 100.0F, 0.0F);
+        long eastSpreadSeed = findBoundarySpreadSeed();
+        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null) {
+            throw new AssertionError("Crystal fixture setup loaded the east neighbour before randomTick");
+        }
+
+        // Source at local X=15 chooses target X=16 in an entirely unloaded chunk.
+        crystal.randomTick(destinationSourceState, level, destinationBoundarySource,
+                RandomSource.create(eastSpreadSeed));
+        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null
+                || aura.getVis(destinationBoundarySource) != 100.0F) {
+            throw new AssertionError("Crystal spread loaded an unloaded destination chunk or spent Vis");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_DESTINATION=PASS no_force_load=YES vis=100.0");
+
+        // Source at local X=14 chooses target X=15 in the loaded chunk. Its only
+        // possible support face across the east boundary is in the unloaded chunk.
+        // The chosen seed keeps the target above the source's support block.
+        crystal.randomTick(supportSourceState, level, supportBoundarySource,
+                RandomSource.create(eastSpreadSeed));
+        if (level.getChunkSource().getChunkNow(neighborChunkX, sourceChunkZ) != null
+                || aura.getVis(supportBoundarySource) != 100.0F) {
+            throw new AssertionError("Crystal support lookup loaded an unloaded neighbour or spent Vis");
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_SUPPORT=PASS no_force_load=YES vis=100.0");
+        System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_ACCEPTED=YES");
+        helper.succeed();
+    }
+
+    @SuppressWarnings("deprecation")
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
             timeoutTicks = 100
     )
     public static void missingAuraChunkUsesBETA26ZeroAuraStarvation(GameTestHelper helper) {
@@ -469,6 +533,19 @@ public final class CrystalSpreadGameTests {
             }
         }
         throw new AssertionError("No support direction available");
+    }
+
+    private static long findBoundarySpreadSeed() {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource random = RandomSource.create(seed);
+            if (random.nextInt(6) != 0) continue;
+            int dx = random.nextInt(3) - 1;
+            int dy = random.nextInt(3) - 1;
+            random.nextInt(3); // dz; any horizontal depth is valid for this boundary fixture
+            if (dx != 1 || dy < 0 || random.nextInt(16) != 0) continue;
+            return seed;
+        }
+        throw new AssertionError("Could not find deterministic east-boundary crystal-spread seed");
     }
 
     private static SpreadPlan findSpreadPlan() {
