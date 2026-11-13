@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -23,6 +25,7 @@ import java.util.function.DoubleSupplier;
 public final class ThaumcraftAuraWorldEvents {
     private ThaumcraftAuraWorldEvents() {}
     private static final int SAMPLE_SPACING = 16;
+    private static final Map<ServerLevel, Long> LAST_AURA_WORLD_TIMES = new WeakHashMap<>();
 
     public static void onServerTick(ServerTickEvent.Post event) {
         if (event.getServer().getTickCount() % 20 != 0) return;
@@ -46,13 +49,22 @@ public final class ThaumcraftAuraWorldEvents {
             if (level.getChunkSource().getLoadedChunksCount() == 0) continue;
             ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.getIfPresent(level);
             if (aura != null) {
-                regenerateLoadedAuraChunks(level, aura, level.getMoonPhase());
+                long worldTime = level.getDayTime();
+                Long previousWorldTime = LAST_AURA_WORLD_TIMES.put(level, worldTime);
+                long lastWorldTime = previousWorldTime == null ? 0L : previousWorldTime;
+                if (shouldProcessAuraWorldTime(lastWorldTime, worldTime)) {
+                    regenerateLoadedAuraChunks(level, aura, level.getMoonPhase());
+                }
             }
         }
     }
 
     static int regenerateLoadedAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
         return aura.regenerateLoadedChunks(level, moonPhase);
+    }
+
+    static boolean shouldProcessAuraWorldTime(long previousWorldTime, long currentWorldTime) {
+        return previousWorldTime != currentWorldTime;
     }
 
     /**

@@ -455,6 +455,13 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("Moon phase 8 must wrap to BETA26 phase 0");
         }
 
+        if (ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(0L, 0L)
+                || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(0L, 1L)
+                || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(1L, 1L)
+                || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(1L, 0L)) {
+            throw new AssertionError("Aura recovery must follow BETA26 lastWorldTime gating");
+        }
+        System.out.println("TC_GAMETEST_AURA_WORLD_TIME_GATE=PASS frozen=0 advanced=1 reverse=1");
         System.out.println("TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0");
     }
 

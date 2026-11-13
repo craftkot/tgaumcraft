@@ -80,6 +80,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SET_VIS_CLAMP=PASS existing=32766.0 migration=32766.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_WORLD_TIME_GATE=PASS frozen=0 advanced=1 reverse=1' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_CAPPED=PASS flux=32766.0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_GUARDS=PASS' || return 1
