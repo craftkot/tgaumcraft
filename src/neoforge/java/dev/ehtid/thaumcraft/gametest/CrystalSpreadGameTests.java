@@ -4,6 +4,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.block.CrystalClusterBlock;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
+import dev.ehtid.thaumcraft.world.CrystalClusterWorldGen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -248,7 +249,77 @@ public final class CrystalSpreadGameTests {
             throw new AssertionError("Expected " + expectedFaceChecks + " legacy ROCK face checks, got " + faceChecks);
         }
         System.out.println("TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=27 faces=" + faceChecks);
+        if (!"read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            verifyCrystalClusterWorldGen(level, helper);
+        }
         helper.succeed();
+    }
+
+
+    private static void verifyCrystalClusterWorldGen(ServerLevel level, GameTestHelper helper) {
+        BlockPos center = helper.absolutePos(new BlockPos(8, 4, 8));
+        // A 5x5x5 stone shell creates a supported 3x3x3 cavity, like the
+        // underground air/rock boundary used by BETA26 crystal clusters.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    level.setBlock(center.offset(dx, dy, dz), Blocks.STONE.defaultBlockState(), 3);
+                }
+            }
+        }
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    level.setBlock(center.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 3);
+                }
+            }
+        }
+        level.setBlock(center, Blocks.WATER.defaultBlockState(), 3);
+
+        int loadedChunksBefore = level.getChunkSource().getLoadedChunksCount();
+        int crystalAmount = CrystalClusterWorldGen.generateClusterAt(
+                level, center, ThaumcraftBlocks.CRYSTAL_AER.get(), RandomSource.create(0xC0FFEE));
+        int crystalBlocks = 0;
+        int summedSize = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    BlockPos pos = center.offset(dx, dy, dz);
+                    BlockState state = level.getBlockState(pos);
+                    if (!(state.getBlock() instanceof CrystalClusterBlock)) continue;
+                    int size = state.getValue(CrystalClusterBlock.SIZE);
+                    if (size < 1 || size > 3
+                            || state.getValue(CrystalClusterBlock.GENERATION) != 1
+                            || !state.canSurvive(level, pos)) {
+                        throw new AssertionError("Generated BETA26 crystal has invalid state/support: " + pos + " " + state);
+                    }
+                    crystalBlocks++;
+                    summedSize += size;
+                }
+            }
+        }
+        if (crystalBlocks == 0 || crystalAmount != summedSize) {
+            throw new AssertionError("Crystal cluster generator placed no valid blocks or miscounted SIZE: "
+                    + crystalBlocks + "/" + crystalAmount + "/" + summedSize);
+        }
+        if (!level.getBlockState(center).is(Blocks.WATER)) {
+            throw new AssertionError("BETA26 crystal generation must not replace liquid blocks");
+        }
+        if (loadedChunksBefore != level.getChunkSource().getLoadedChunksCount()) {
+            throw new AssertionError("Crystal generation loaded a chunk while checking support");
+        }
+
+        System.out.println("TC_GAMETEST_CRYSTAL_WORLDGEN=PASS blocks=" + crystalBlocks
+                + " amount=" + crystalAmount + " water=preserved no_force_load=YES");
+
+        // Do not leave the fixture in the cold-restart world.
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dy = -2; dy <= 2; dy++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    level.removeBlock(center.offset(dx, dy, dz), false);
+                }
+            }
+        }
     }
 
     private static void assertCrystalSupport(

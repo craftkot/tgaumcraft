@@ -57,9 +57,70 @@ public final class CrystalGrowthParityTest {
         LegacyModernBiomeCompatibility.auraModifier("minecraft:ocean"));
     eq(150, AuraGenerationLogic.generatedBase(.3F,.3F,.3F,.3F,.3F,0.0D));
     eq(50, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y); // pinned BETA26 AuraHandler.generateAura
+    verifyCrystalWorldGenLogic();
     verifyNeoForgeSpreadLiquidAdapter();
+    verifyCrystalWorldGenAdapter();
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
   }
+
+  private static void verifyCrystalWorldGenLogic() {
+    eq(8, LegacyCrystalWorldGenLogic.attemptCount(100));
+    eq(64, LegacyCrystalWorldGenLogic.maximumCrystalAmount(100));
+    eq(12, LegacyCrystalWorldGenLogic.attemptCount(150));
+    eq(0, LegacyCrystalWorldGenLogic.maximumCrystalAmount(0));
+    eq(1, LegacyCrystalWorldGenLogic.clusterSize(0));
+    eq(2, LegacyCrystalWorldGenLogic.clusterSize(1));
+    eq(3, LegacyCrystalWorldGenLogic.clusterSize(2));
+    yes(LegacyCrystalWorldGenLogic.canPlace(false, true, true));
+    no(LegacyCrystalWorldGenLogic.canPlace(true, true, true));
+    no(LegacyCrystalWorldGenLogic.canPlace(false, false, true));
+    no(LegacyCrystalWorldGenLogic.canPlace(false, true, false));
+    eq(Integer.valueOf(1), LegacyCrystalWorldGenLogic.aspectMetadata("MESA"));
+    eq(Integer.valueOf(5), LegacyCrystalWorldGenLogic.aspectMetadata("DRY"));
+    eq(null, LegacyCrystalWorldGenLogic.aspectMetadata("RARE"));
+
+    // BETA26 order: random metadata, one-in-three override, random biome type.
+    eq(0, scriptedShardMetadata("minecraft:plains",
+        new int[]{6, 3, 1}, new int[]{5, 0, 0}));
+    // MESA's final type list is [MESA, SANDY, DRY]; DRY was overwritten to ENTROPY.
+    eq(5, scriptedShardMetadata("minecraft:badlands",
+        new int[]{6, 3, 3}, new int[]{0, 0, 2}));
+    // A newly added biome has no BETA26 type list: failed lookup falls back to a fresh random meta.
+    eq(4, scriptedShardMetadata("modded:forest",
+        new int[]{6, 3, 6}, new int[]{2, 0, 4}));
+    // BETA26's RARE type is not registered in biomeInfo and therefore also falls back.
+    eq(4, scriptedShardMetadata("minecraft:sunflower_plains",
+        new int[]{6, 3, 2, 6}, new int[]{2, 0, 1, 4}));
+    // If the one-in-three override does not fire, the first metadata is retained.
+    eq(5, scriptedShardMetadata("minecraft:plains",
+        new int[]{6, 3}, new int[]{5, 1}));
+  }
+
+  private static int scriptedShardMetadata(String biomeId, int[] bounds, int[] values) {
+    int[] index = {0};
+    int metadata = LegacyCrystalWorldGenLogic.chooseShardMetadata(biomeId, bound -> {
+      if (index[0] >= bounds.length) throw new AssertionError("Unexpected nextInt(" + bound + ")");
+      eq(bounds[index[0]], bound);
+      return values[index[0]++];
+    });
+    eq(values.length, index[0]);
+    return metadata;
+  }
+
+  private static void verifyCrystalWorldGenAdapter() {
+    try {
+      String source = Files.readString(Path.of(
+          "src/neoforge/java/dev/ehtid/thaumcraft/world/CrystalClusterWorldGen.java"));
+      yes(source.contains("event.isNewChunk()"));
+      yes(source.contains("getChunkSource().getChunkNow"));
+      yes(source.contains("level.hasChunkAt"));
+      no(source.contains("level.getChunk("));
+      yes(source.contains("RandomSource.create(chunkSeed"));
+    } catch (IOException e) {
+      throw new AssertionError("Unable to inspect NeoForge crystal worldgen adapter", e);
+    }
+  }
+
   private static void verifyNeoForgeSpreadLiquidAdapter() {
     try {
       String source = Files.readString(Path.of(
