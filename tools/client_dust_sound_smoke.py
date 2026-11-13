@@ -155,10 +155,14 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
     tail -120 client-smoke/client.log >&2
     exit 1
   fi
-  for marker in SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY; do
-    grep -Fq "TC_SMOKE_${marker}=YES" client-smoke/client.log || exit 1
+  for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
+    test "$(grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log)" -eq 1 || exit 1
   done
-  test "$(grep -Fc 'TC_SMOKE_SALIS_NATIVE_CHUNK_TICKET_CLEANED=YES' client-smoke/client.log)" -eq 1
+  if grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' client-smoke/client.log; then
+    echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL unexpected probe-origin packet' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS zero matching packets across unload/reload' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_TICKET_CLEANED=PASS' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS' | tee -a client-smoke-status.txt
   exit 0

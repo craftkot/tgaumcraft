@@ -46,10 +46,29 @@ if "removeOutboundParticleRecorder();" not in stopped:
 release = section(probe, "private static boolean releaseFixtureTicket()", "private static void cleanupFixtureTicketAfterFailure()")
 if "targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)" not in release or "fixtureTicketHeld = false;" not in release:
     raise SystemExit("SALIS_NATIVE_RELEASE_HELPER=FAIL")
-if "TC_SMOKE_SALIS_NATIVE_CHUNK_TICKET_CLEANED=YES" not in smoke:
-    raise SystemExit("SALIS_NATIVE_CLEANUP_MARKER_NOT_REQUIRED=FAIL")
+required_runtime_markers = (
+    "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
+    "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
+    "SALIS_NATIVE_CHUNK_UNLOADED",
+    "SALIS_NATIVE_CHUNK_CANCELLED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
+    "SALIS_NATIVE_CHUNK_RELOADED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
+    "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
+    "SALIS_NATIVE_CHUNK_TICKET_CLEANED",
+    "SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY",
+    "SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED",
+)
+for marker in required_runtime_markers:
+    if marker not in smoke:
+        raise SystemExit(f"SALIS_NATIVE_RUNTIME_MARKER_NOT_REQUIRED=FAIL missing {marker!r}")
+if 'grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log' not in smoke:
+    raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_EXACTLY_ONCE_GATE=FAIL")
+if "TC_SMOKE_SALIS_OUTBOUND_PACKET=YES" not in smoke:
+    raise SystemExit("SALIS_NATIVE_UNEXPECTED_PACKET_NEGATIVE_GATE=FAIL")
 
 print("SALIS_NATIVE_CHUNK_PROBE_TICKET_CLEANUP=PASS")
+print("SALIS_NATIVE_OUTBOUND_PACKET_RUNTIME_MARKERS_REQUIRED=PASS")
 
 for required in (
     "ClientboundLevelParticlesPacket",
