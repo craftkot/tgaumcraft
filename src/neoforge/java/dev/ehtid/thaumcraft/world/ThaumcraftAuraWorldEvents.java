@@ -53,10 +53,14 @@ public final class ThaumcraftAuraWorldEvents {
                 Long previousWorldTime = LAST_AURA_WORLD_TIMES.put(level, worldTime);
                 long lastWorldTime = previousWorldTime == null ? 0L : previousWorldTime;
                 if (shouldProcessAuraWorldTime(lastWorldTime, worldTime)) {
-                    regenerateLoadedAuraChunks(level, aura, level.getMoonPhase());
+                    processAuraChunks(level, aura, level.getMoonPhase());
                 }
             }
         }
+    }
+
+    static int processAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
+        return aura.processAuraChunks(level, moonPhase, level.getRandom()::nextInt);
     }
 
     static int regenerateLoadedAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
