@@ -151,6 +151,54 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         setDirty();
     }
 
+    /**
+     * Applies the first BETA26 AuraThread recovery branch to one already-loaded chunk.
+     * Neighbor redistribution, flux conversion and rift triggering remain separate
+     * parts of the original AuraThread and are not implied by this method.
+     */
+    public boolean regenerateLoadedChunk(ServerLevel level, int chunkX, int chunkZ, int moonPhase) {
+        if (!level.hasChunk(chunkX, chunkZ)) return false;
+
+        int phase = Math.floorMod(moonPhase, 8);
+        float phaseVis = switch (phase) {
+            case 0 -> 0.25F;
+            case 1 -> 0.15F;
+            case 2 -> 0.10F;
+            case 3 -> 0.05F;
+            case 4 -> 0.00F;
+            case 5 -> 0.05F;
+            case 6 -> 0.10F;
+            default -> 0.15F;
+        };
+        float phaseMax = switch (phase) {
+            case 0 -> 1.15F;
+            case 1 -> 1.05F;
+            case 2 -> 1.00F;
+            case 3 -> 0.95F;
+            case 4 -> 0.85F;
+            case 5 -> 0.95F;
+            case 6 -> 1.00F;
+            default -> 1.05F;
+        };
+
+        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+        AuraChunk current = chunks.get(chunkKey);
+        if (current == null) return false;
+
+        float target = current.base() * phaseMax;
+        float total = current.vis() + current.flux();
+        if (total >= target || phaseVis <= 0.0F) return false;
+
+        float increase = Math.min(target - total, phaseVis);
+        float nextVis = Math.min(AURA_CHUNK_VALUE_MAX,
+                Math.max(0.0F, current.vis() + increase));
+        if (nextVis == current.vis()) return false;
+
+        chunks.put(chunkKey, new AuraChunk(current.base(), nextVis, current.flux()));
+        setDirty();
+        return true;
+    }
+
     /** Updates only vis, preserving generated base/flux. */
     public void setVis(BlockPos pos, float vis) {
         long key = key(pos);
