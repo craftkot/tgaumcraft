@@ -146,6 +146,7 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_REENTRY_PRESERVED=YES");
         assertDrainVisAndFluxSemantics(aura, center.offset(32, 0, 0));
         assertFluxPollutionBounds(aura, center.offset(48, 0, 0));
+        assertSetVisClampsToLegacyCeiling();
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -353,6 +354,27 @@ public final class AuraGenerationGameTests {
         }
 
         helper.succeed();
+    }
+
+    private static void assertSetVisClampsToLegacyCeiling() {
+        ThaumcraftAuraSavedData isolated = new ThaumcraftAuraSavedData();
+        BlockPos existing = new BlockPos(0, 64, 0);
+        isolated.putChunk(existing, (short) 120, 17.0F, 4.0F);
+        isolated.setVis(existing, 40_000.0F);
+        if (isolated.getVis(existing) != 32_766.0F
+                || isolated.getBase(existing) != 120
+                || isolated.getFlux(existing) != 4.0F) {
+            throw new AssertionError("BETA26 AuraChunk.setVis must clamp existing chunks to 32766 while preserving base/flux");
+        }
+
+        BlockPos migration = new BlockPos(32, 64, 0);
+        isolated.setVis(migration, 40_000.0F);
+        if (isolated.getVis(migration) != 32_766.0F
+                || isolated.getBase(migration) != 500
+                || isolated.getFlux(migration) != 0.0F) {
+            throw new AssertionError("Aura migration setVis path must obey the same 32766 ceiling");
+        }
+        System.out.println("TC_GAMETEST_AURA_SET_VIS_CLAMP=PASS existing=32766.0 migration=32766.0");
     }
 
     private static void assertFluxPollutionBounds(ThaumcraftAuraSavedData aura, BlockPos pos) {

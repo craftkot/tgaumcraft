@@ -154,7 +154,7 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     /** Updates only vis, preserving generated base/flux. */
     public void setVis(BlockPos pos, float vis) {
         long key = key(pos);
-        float normalized = finiteNonNegative(vis);
+        float normalized = Math.min(AURA_CHUNK_VALUE_MAX, finiteNonNegative(vis));
         AuraChunk old = chunks.get(key);
         if (old == null) {
             // Migration path for pre-aura-bridge workbenches: retain the cached
