@@ -505,6 +505,14 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("BETA26 neighbor flow threshold is strict: neighborVis/currentVis must be below 0.75");
         }
 
+        ThaumcraftAuraSavedData partial = new ThaumcraftAuraSavedData();
+        partial.putChunk(source, (short) 100, 1.0F, 0.0F);
+        partial.putChunk(east, (short) 100, 0.5F, 0.0F);
+        if (!partial.redistributeVisFromChunk(chunkX, chunkZ, 1.15F, bound -> 0)
+                || partial.getVis(source) != 0.5F || partial.getVis(east) != 1.0F) {
+            throw new AssertionError("BETA26 neighbor flow must equalize a sub-unit difference without over-transferring");
+        }
+
         ThaumcraftAuraSavedData capacity = new ThaumcraftAuraSavedData();
         capacity.putChunk(source, (short) 100, 10.0F, 0.0F);
         capacity.putChunk(east, (short) 100, 100.0F, 15.0F);
