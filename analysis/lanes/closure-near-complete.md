@@ -3297,3 +3297,12 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Runner now requires the fifth GameTest summary and the stone-brick marker in both cold-restart phases. No production Java logic, shared registry, Gradle file, or common workflow was changed.
 - Verification status at commit time: source comparison and path-isolation checks passed; GitHub Actions results are pending. This is not a completed M08 category and does not change the 59/100 audit score.
 - Next: require the native aura/crystal GameTest workflow to pass on this exact commit; inspect the write/read logs and full NeoForge CI before choosing another gap.
+
+
+## 2026-11-13 — exact-head native stone-brick crystal support acceptance
+
+- Verified `main` HEAD `a4280834adc5a20b6951098af937d30ca4aeca56`, own branch `2f6902bf737cd30fb7e0ac89ab94cfef6c92792f`, PR #1–#4 (all open/Draft) and prior M08 source proof. No foreign branch or overlapping path was edited.
+- Exact-head [Aura/crystal GameTests #43372207836](https://github.com/craftkot/tgaumcraft/actions/runs/43372207836) **SUCCESS**. Native NeoForge GameTest log explicitly contains `TC_GAMETEST_CRYSTAL_STONE_BRICK_VARIANTS=PASS count=4` in both the write and read phases, `All 5 required tests passed :)` in each phase, and two distinct GameTest server processes (`pid=3316`, `pid=3712`). Artifact ID `14012578912`. This validates support and survival for the four stone-brick variants in the tested GameTest world, not full natural crystal growth parity.
+- Exact-head [Port CI #43372207885](https://github.com/craftkot/tgaumcraft/actions/runs/43372207885) **SUCCESS**. All 18 PR-triggered workflow runs for this SHA report SUCCESS, including Salis/Nitor client, Workbench and jar; these are existing regression coverage, not newly claimed feature acceptance.
+- This follow-up changes only the lane journal; no additional Java/resource/test edits. Local checkout remains blocked by `Could not resolve host: github.com`; no local Gradle or client run was performed. PR #4 remains Draft/unmerged. Fixed audit remains **59/100**, M16 **4/6**.
+- Next: select an independently evidenced BETA26 M16 resource/FX defect outside PR #1–#3, or obtain a separate real-client crystal support/survival observation. Preserve the existing Salis native packet/ticket lifecycle checks and do not replace them with JVM-only stubs.
