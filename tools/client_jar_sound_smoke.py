@@ -381,14 +381,9 @@ PY
   convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \
     -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
     client-smoke/hit-damage-roi.png
-  jar_hit_damage_pixels="$(compare -metric AE client-smoke/hit-aim-roi.png \
-    client-smoke/hit-damage-roi.png null: 2>&1 || true)"
-  jar_hit_damage_pixels="${jar_hit_damage_pixels%% *}"
-  if ! [[ "$jar_hit_damage_pixels" =~ ^[0-9]+$ ]] || (( jar_hit_damage_pixels < 40 )); then
-    echo "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES pixels=$jar_hit_damage_pixels" | tee -a client-smoke-status.txt
-    exit 1
-  fi
-  echo "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS pixels=$jar_hit_damage_pixels" | tee -a client-smoke-status.txt
+  python3 tools/verify_jar_damage_overlay.py \
+    client-smoke/hit-aim-roi.png \
+    client-smoke/hit-damage-roi.png | tee -a client-smoke-status.txt
 
   crop_pcm_frames client-smoke/hit-event.pcm client-smoke/hit-event-window.pcm 26400 120000
   send_chat '/execute if block 250 150 252 thaumcraft:jar_normal run say JAR_HIT_BLOCK_RETAINED'

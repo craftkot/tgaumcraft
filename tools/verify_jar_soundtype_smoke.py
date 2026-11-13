@@ -64,7 +64,9 @@ assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in hit_section
 assert "JAR_HIT_CAPTURE_AFTER_0_30S=YES" in hit_section
-assert "compare -metric AE" in hit_section and "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
+assert "verify_jar_damage_overlay.py" in hit_section
+assert "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
+assert "compare -metric AE" not in hit_section
 assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE
 assert "JAR_STEP_STANDING_READY" in SMOKE and "JAR_STEP_MOVED_ON_ROW" in SMOKE

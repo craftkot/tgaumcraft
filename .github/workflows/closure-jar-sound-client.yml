@@ -17,6 +17,8 @@ on:
       - 'tools/test_key_audio_match.py'
       - 'tools/match_jar_audio_pcm.py'
       - 'tools/test_jar_audio_match.py'
+      - 'tools/verify_jar_damage_overlay.py'
+      - 'tools/test_jar_damage_overlay.py'
       - 'tools/client_jar_sound_smoke.py'
       - 'tools/verify_jar_label_sound.py'
       - 'tools/match_page_audio_pcm.py'
@@ -102,6 +104,7 @@ jobs:
           python -m pip install numpy==2.2.6
           python tools/verify_jar_sound.py
           python tools/test_jar_audio_match.py
+          python tools/test_jar_damage_overlay.py
           python tools/verify_jar_label_sound.py
           python tools/test_page_audio_match.py
           python tools/verify_jar_empty_sound.py
