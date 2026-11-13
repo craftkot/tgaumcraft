@@ -87,7 +87,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
-    require_marker "$file" 'All 5 required tests passed' || return 1
+    require_marker "$file" 'All 6 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=write' || return 1
@@ -100,7 +100,7 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
-    require_marker "$file" 'All 5 required tests passed' || return 1
+    require_marker "$file" 'All 6 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=read' || return 1
@@ -121,7 +121,7 @@ run_phase() {
 
     local shutdown_seen=0
     while kill -0 "$timeout_pid" 2>/dev/null; do
-        if grep -Fq 'All 5 required tests passed' "$phase_log" \
+        if grep -Fq 'All 6 required tests passed' "$phase_log" \
                 && grep -Fq 'Saving worlds' "$phase_log"; then
             shutdown_seen=1
             # The aura file was explicitly flushed by the GameTest before it
@@ -139,7 +139,7 @@ run_phase() {
     local gradle_status=$?
     set -e
 
-    if grep -Fq 'All 5 required tests passed' "$phase_log" \
+    if grep -Fq 'All 6 required tests passed' "$phase_log" \
             && grep -Fq 'Saving worlds' "$phase_log"; then
         shutdown_seen=1
     fi
