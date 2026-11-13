@@ -3249,3 +3249,8 @@ Compared against pinned BETA26 source GuiArcaneWorkbench.java at 954022bb777b754
 Changed files in this iteration: ArcaneWorkbenchScreen.java; assert_client_workbench_gui_render.py; assert_client_workbench_gui_ocr.py; test_client_workbench_gui_ocr.py; test_client_workbench_gui_render.py; client_workbench_gui_smoke.py; and this lane journal.
 
 No production recipe, server state, registry, shared Gradle/CI, or other lane was changed. The M16 GUI issue is not accepted until the new full NeoForge CI and all four real-client screenshots prove the complete localized word. Fixed rubric remains 59/100; no point is awarded for this correction alone.
+
+
+## 2026-11-13 — Workbench guard regression fixed before client launch
+
+Commit 991930c added the BETA26 half-scale available-label draw and full-word render/OCR assertions. Its first Workbench matrix #43358360844 failed before Minecraft launch in tools/test_client_workbench_world.py: the static guard still required 400% panel preprocessing, the old contains_label_prefix helper, and the former emitSmokeAudit call signature. This is a stale cross-file test contract, not a Java compile or game failure. Updated those guards to require 600% preprocessing, contains_full_label, the actual half-scale draw/width marker, and the no-clipping renderer assertion. The dedicated workflow now also executes tools/test_client_workbench_gui_ocr.py (it was in the path filter but had not been run). The next run must reach Minecraft before any visual claim is made. No score change: 59/100; M16 remains unaccepted.

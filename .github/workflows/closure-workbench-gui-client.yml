@@ -68,6 +68,7 @@ jobs:
       - name: Generate isolated smoke from the proven real-world boot
         run: |
           python3 tools/test_client_workbench_world.py
+          python3 tools/test_client_workbench_gui_ocr.py
           python3 tools/test_client_workbench_gui_render.py
           python3 tools/client_workbench_gui_smoke.py > client-workbench-gui-generated.sh
           bash -n client-workbench-gui-generated.sh

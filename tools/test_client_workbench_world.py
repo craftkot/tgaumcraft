@@ -209,8 +209,8 @@ expect("client-smoke/screenshots/workbench-title-ocr.png" in generator
        "workbench OCR inputs are not generated and checked before Tesseract")
 expect("-resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55%" in generator,
        "title pixel crop no longer uses the tested tight bitmap-font preprocessing")
-expect("-resize 400% -colorspace Gray -contrast-stretch 0x12%" in generator,
-       "panel OCR no longer uses the tested preprocessing")
+expect("-resize 600% -colorspace Gray -contrast-stretch 0x12%" in generator,
+       "panel OCR no longer upscales the BETA26 half-scale label")
 expect("--psm 6" in generator and "--psm 8" in generator and "--psm 11" in generator
        and "title_text_6" in generator and "title_text_8" in generator
        and "panel_text_6" in generator and "panel_text_11" in generator,
@@ -221,9 +221,10 @@ expect("assert_client_workbench_gui_render.py" in generator
        and "title_ink=" in generator and "panel_ink=" in generator,
        "workbench generator does not validate the actual render marker and screenshot pixels")
 ocr_helper = Path(__file__).with_name("assert_client_workbench_gui_ocr.py").read_text(encoding="utf-8")
-expect("contains_label_prefix(" in ocr_helper and "localized available label" in ocr_helper
+expect("contains_full_label(" in ocr_helper and "localized available label" in ocr_helper
+       and "contains_label_prefix(" not in ocr_helper
        and "contains_prefix_near(" not in ocr_helper and "has_cost_pair(" not in ocr_helper,
-       "OCR helper still treats unreliable title/cost recognition as authoritative")
+       "OCR helper must reject clipped prefixes and ignore unreliable title/cost OCR")
 screen = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
 screen_source = screen.read_text(encoding="utf-8")
 expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
@@ -232,13 +233,16 @@ expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
        and "smokeBase64(costText.getString())" in screen_source
        and "cost != 20 || available < cost || crystalMask != 0b111111" in screen_source,
        "actual ArcaneWorkbenchScreen render path does not wait for the synced Thaumometer preview before emitting evidence")
-expect(screen_source.index("ThaumcraftReadableText.wrapped")
-       < screen_source.index("emitSmokeAudit(availableText, costText, available, cost);"),
-       "Workbench semantic marker is emitted before the text draw calls")
+expect(screen_source.index("drawAvailableLabel(")
+       < screen_source.index("emitSmokeAudit(availableText, costText, available, cost,")
+       and "AVAILABLE_TEXT_SCALE = 0.5F" in screen_source
+       and "available_rendered_width=" in screen_source,
+       "Workbench marker must follow the BETA26 half-scale available-label draw")
 render_helper = Path(__file__).with_name("assert_client_workbench_gui_render.py").read_text(encoding="utf-8")
 expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in render_helper
        and "title pixels present" in render_helper and "Vis panel pixels present" in render_helper
-       and "cost == 20" in render_helper and "crystal_mask" in render_helper,
+       and "cost == 20" in render_helper and "crystal_mask" in render_helper
+       and "available label fits panel without clipping" in render_helper,
        "semantic GUI oracle no longer requires title/cost/menu data and screenshot pixels")
 workflow = Path(__file__).parents[1] / ".github/workflows/closure-workbench-gui-client.yml"
 workflow_source = workflow.read_text(encoding="utf-8")
