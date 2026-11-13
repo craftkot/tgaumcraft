@@ -60,7 +60,8 @@ public final class ThaumcraftAuraWorldEvents {
     }
 
     static int processAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
-        return aura.processAuraChunks(level, moonPhase, level.getRandom()::nextInt);
+        var random = level.getRandom();
+        return aura.processAuraChunks(level, moonPhase, random::nextInt, random::nextFloat);
     }
 
     static int regenerateLoadedAuraChunks(ServerLevel level, ThaumcraftAuraSavedData aura, int moonPhase) {
