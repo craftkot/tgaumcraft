@@ -158,6 +158,34 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
   for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
     test "$(grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log)" -eq 1 || exit 1
   done
+  # Verify lifecycle ordering, not just marker presence. A stale or reordered
+  # marker sequence must not pass the native unload/reload acceptance gate.
+  python3 - <<'SALIS_LIFECYCLE_ORDER'
+from pathlib import Path
+markers = (
+    'SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED',
+    'SALIS_NATIVE_CHUNK_TICKETS_RELEASED',
+    'SALIS_NATIVE_CHUNK_UNLOADED',
+    'SALIS_NATIVE_CHUNK_CANCELLED',
+    'SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD',
+    'SALIS_NATIVE_CHUNK_RELOADED',
+    'SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD',
+    'SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED',
+    'SALIS_NATIVE_CHUNK_TICKET_CLEANED',
+    'SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY',
+    'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED',
+)
+log = Path('client-smoke/client.log').read_text(errors='replace').splitlines()
+positions = []
+for marker in markers:
+    matches = [i for i, line in enumerate(log) if f'TC_SMOKE_{marker}=YES' in line]
+    if len(matches) != 1:
+        raise SystemExit(f'SALIS_NATIVE_MARKER_COUNT=FAIL {marker}: {len(matches)}')
+    positions.append(matches[0])
+if positions != sorted(set(positions)):
+    raise SystemExit('SALIS_NATIVE_LIFECYCLE_ORDER=FAIL')
+print('SALIS_NATIVE_LIFECYCLE_ORDER=PASS')
+SALIS_LIFECYCLE_ORDER
   if grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' client-smoke/client.log; then
     echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL unexpected probe-origin packet' | tee -a client-smoke-status.txt
     exit 1
