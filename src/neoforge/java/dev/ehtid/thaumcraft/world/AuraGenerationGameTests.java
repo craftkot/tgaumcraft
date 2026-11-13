@@ -150,6 +150,7 @@ public final class AuraGenerationGameTests {
         assertMoonPhaseRegeneration(level, center);
         assertVisNeighborRedistribution(level, center);
         assertFluxNeighborRedistribution(level, center);
+        assertVisFluxConversion(level, center);
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -526,7 +527,7 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData runtime = new ThaumcraftAuraSavedData();
         runtime.putChunk(source, (short) 100, 10.0F, 0.0F);
         runtime.putChunk(east, (short) 100, 0.0F, 0.0F);
-        int runtimeChanges = runtime.processAuraChunks(level, 0, bound -> 0);
+        int runtimeChanges = runtime.processAuraChunks(level, 0, bound -> 0, () -> 1.0D);
         if (runtimeChanges != 3
                 || Math.abs(runtime.getVis(source) - 9.25F) > 0.0001F
                 || Math.abs(runtime.getVis(east) - 1.25F) > 0.0001F) {
@@ -544,7 +545,7 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
         unloaded.putChunk(farSource, (short) 100, 10.0F, 0.0F);
         unloaded.putChunk(farEast, (short) 100, 0.0F, 0.0F);
-        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0);
+        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0, () -> 1.0D);
         if (unloadedChanges != 1
                 || unloaded.getVis(farSource) != 9.0F
                 || unloaded.getVis(farEast) != 1.0F
@@ -632,7 +633,7 @@ public final class AuraGenerationGameTests {
         int runtimeChanges = runtime.processAuraChunks(level, 0, bound -> {
             runtimeShuffleCalls.incrementAndGet();
             return 0;
-        });
+        }, () -> 1.0D);
         if (runtimeChanges != 4 || runtimeShuffleCalls.get() != 6
                 || Math.abs(runtime.getVis(source) - 9.25F) > 0.0001F
                 || Math.abs(runtime.getVis(east) - 1.25F) > 0.0001F
@@ -656,7 +657,7 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
         unloaded.putChunk(farSource, (short) 100, 10.0F, 20.0F);
         unloaded.putChunk(farEast, (short) 100, 10.0F, 0.0F);
-        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0);
+        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0, () -> 1.0D);
         if (unloadedChanges != 1
                 || unloaded.getFlux(farSource) != 19.0F
                 || unloaded.getFlux(farEast) != 1.0F
@@ -665,6 +666,136 @@ public final class AuraGenerationGameTests {
         }
 
         System.out.println("TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=updated no_force_load=YES");
+    }
+
+    private static void assertVisFluxConversion(ServerLevel level, BlockPos loadedPos) {
+        int chunkX = loadedPos.getX() >> 4;
+        int chunkZ = loadedPos.getZ() >> 4;
+        BlockPos source = sampleCenter(chunkX, chunkZ);
+
+        ThaumcraftAuraSavedData highVis = new ThaumcraftAuraSavedData();
+        highVis.putChunk(source, (short) 100, 110.0F, 1.0F);
+        AtomicInteger shuffleCalls = new AtomicInteger();
+        AtomicInteger floatCalls = new AtomicInteger();
+        StringBuilder randomOrder = new StringBuilder();
+        int highChanges = highVis.processAuraChunks(level, 4, bound -> {
+            shuffleCalls.incrementAndGet();
+            randomOrder.append('I').append(bound).append(';');
+            return 0;
+        }, () -> {
+            floatCalls.incrementAndGet();
+            randomOrder.append("F;");
+            return 0.099D;
+        });
+        if (highChanges != 1
+                || highVis.getVis(source) != 109.75F
+                || highVis.getFlux(source) != 1.25F
+                || highVis.getVis(source) + highVis.getFlux(source) != 111.0F
+                || shuffleCalls.get() != 3
+                || floatCalls.get() != 1
+                || !"I4;I3;I2;F;".contentEquals(randomOrder)) {
+            throw new AssertionError("BETA26 high-Vis conversion must conserve Vis+Flux and draw after the single direction shuffle: "
+                    + "changes=" + highChanges + " vis=" + highVis.getVis(source)
+                    + " flux=" + highVis.getFlux(source) + " order=" + randomOrder);
+        }
+
+        ThaumcraftAuraSavedData highChanceBoundary = new ThaumcraftAuraSavedData();
+        highChanceBoundary.putChunk(source, (short) 100, 110.0F, 1.0F);
+        AtomicInteger highBoundaryCalls = new AtomicInteger();
+        if (highChanceBoundary.processAuraChunks(level, 4, bound -> 0, () -> {
+                    highBoundaryCalls.incrementAndGet();
+                    return 0.1D;
+                }) != 0
+                || highChanceBoundary.getVis(source) != 110.0F
+                || highChanceBoundary.getFlux(source) != 1.0F
+                || highBoundaryCalls.get() != 1) {
+            throw new AssertionError("BETA26 high-Vis conversion probability must use strict nextFloat < 0.1");
+        }
+
+        ThaumcraftAuraSavedData highVisThreshold = new ThaumcraftAuraSavedData();
+        highVisThreshold.putChunk(source, (short) 100, 106.25F, 0.0F);
+        AtomicInteger highThresholdCalls = new AtomicInteger();
+        if (highVisThreshold.processAuraChunks(level, 4, bound -> 0, () -> {
+                    highThresholdCalls.incrementAndGet();
+                    return 0.0D;
+                }) != 0
+                || highVisThreshold.getVis(source) != 106.25F
+                || highThresholdCalls.get() != 0) {
+            throw new AssertionError("BETA26 high-Vis threshold must be strict: currentVis > base * 1.25");
+        }
+
+        float[] expectedPhaseFlux = {0.0F, 0.10F, 0.15F, 0.20F, 0.25F, 0.20F, 0.15F, 0.10F};
+        for (int phase = 0; phase < expectedPhaseFlux.length; phase++) {
+            ThaumcraftAuraSavedData lowVis = new ThaumcraftAuraSavedData();
+            lowVis.putChunk(source, (short) 0, 0.0F, 0.0F);
+            AtomicInteger lowCalls = new AtomicInteger();
+            int lowChanges = lowVis.processAuraChunks(level, phase, bound -> 0, () -> {
+                lowCalls.incrementAndGet();
+                return 0.099D;
+            });
+            if (lowChanges != 1
+                    || lowVis.getVis(source) != 0.0F
+                    || Math.abs(lowVis.getFlux(source) - expectedPhaseFlux[phase]) > 0.00001F
+                    || lowCalls.get() != 1) {
+                throw new AssertionError("BETA26 low-Vis Flux accumulation mismatch at moon phase " + phase
+                        + ": changes=" + lowChanges + " vis=" + lowVis.getVis(source)
+                        + " flux=" + lowVis.getFlux(source) + " expectedFlux=" + expectedPhaseFlux[phase]);
+            }
+        }
+
+        ThaumcraftAuraSavedData lowChanceBoundary = new ThaumcraftAuraSavedData();
+        lowChanceBoundary.putChunk(source, (short) 0, 0.0F, 0.0F);
+        AtomicInteger lowBoundaryCalls = new AtomicInteger();
+        if (lowChanceBoundary.processAuraChunks(level, 4, bound -> 0, () -> {
+                    lowBoundaryCalls.incrementAndGet();
+                    return 0.1D;
+                }) != 0
+                || lowChanceBoundary.getFlux(source) != 0.0F
+                || lowBoundaryCalls.get() != 1) {
+            throw new AssertionError("BETA26 low-Vis accumulation probability must use strict nextFloat < 0.1");
+        }
+
+        ThaumcraftAuraSavedData lowVisGuard = new ThaumcraftAuraSavedData();
+        lowVisGuard.putChunk(source, (short) 0, 0.0F, 0.1F);
+        AtomicInteger lowGuardCalls = new AtomicInteger();
+        if (lowVisGuard.processAuraChunks(level, 4, bound -> 0, () -> {
+                    lowGuardCalls.incrementAndGet();
+                    return 0.0D;
+                }) != 0
+                || lowVisGuard.getFlux(source) != 0.1F
+                || lowGuardCalls.get() != 0) {
+            throw new AssertionError("BETA26 low-Vis accumulation requires currentVis >= currentFlux before drawing RNG");
+        }
+
+        ThaumcraftAuraSavedData recoveryPrecedence = new ThaumcraftAuraSavedData();
+        recoveryPrecedence.putChunk(source, (short) 100, 0.0F, 0.0F);
+        AtomicInteger recoveryRandomCalls = new AtomicInteger();
+        if (recoveryPrecedence.processAuraChunks(level, 0, bound -> 0, () -> {
+                    recoveryRandomCalls.incrementAndGet();
+                    return 0.0D;
+                }) != 1
+                || recoveryPrecedence.getVis(source) != 0.25F
+                || recoveryPrecedence.getFlux(source) != 0.0F
+                || recoveryRandomCalls.get() != 0) {
+            throw new AssertionError("BETA26 recovery branch must precede both Vis-to-Flux probability branches");
+        }
+
+        int farX = chunkX + 96;
+        int farZ = chunkZ + 96;
+        if (level.hasChunk(farX, farZ)) {
+            throw new AssertionError("Unloaded conversion fixture unexpectedly starts loaded");
+        }
+        BlockPos farSource = sampleCenter(farX, farZ);
+        ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
+        unloaded.putChunk(farSource, (short) 0, 0.0F, 0.0F);
+        int unloadedChanges = unloaded.processAuraChunks(level, 4, bound -> 0, () -> 0.099D);
+        if (unloadedChanges != 1
+                || unloaded.getFlux(farSource) != 0.25F
+                || level.hasChunk(farX, farZ)) {
+            throw new AssertionError("BETA26 Vis-to-Flux conversion must update known unloaded records without force-loading");
+        }
+
+        System.out.println("TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenFloat recoveryPriority=YES unloaded=updated no_force_load=YES");
     }
 
     private static void assertSetVisClampsToLegacyCeiling() {
