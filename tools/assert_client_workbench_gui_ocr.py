@@ -56,15 +56,15 @@ def assert_workbench_ocr(
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 5:
+    if len(argv) != 6:
         print(
-            "usage: assert_client_workbench_gui_ocr.py LANG AVAILABLE_PSM7 AVAILABLE_PSM11 AVAILABLE_INVERTED_PSM8",
+            "usage: assert_client_workbench_gui_ocr.py LANG AVAILABLE_PSM7 AVAILABLE_PSM11 AVAILABLE_INVERTED_PSM8 PANEL_PSM11",
             file=sys.stderr,
         )
         return 2
-    language, available7, available11, available8 = argv[1:]
+    language, available7, available11, available8, panel11 = argv[1:]
     try:
-        checks = assert_workbench_ocr(language, (available7, available11, available8))
+        checks = assert_workbench_ocr(language, (available7, available11, available8, panel11))
     except ValueError as exc:
         print(f"WORKBENCH_OCR_ERROR: {exc}", file=sys.stderr)
         return 2
@@ -74,6 +74,7 @@ def main(argv: list[str]) -> int:
         print("WORKBENCH_OCR_TOKENS_AVAILABLE_PSM7=" + repr(tokens(available7)))
         print("WORKBENCH_OCR_TOKENS_AVAILABLE_PSM11=" + repr(tokens(available11)))
         print("WORKBENCH_OCR_TOKENS_AVAILABLE_INVERTED_PSM8=" + repr(tokens(available8)))
+        print("WORKBENCH_OCR_TOKENS_PANEL_PSM11=" + repr(tokens(panel11)))
         return 1
     return 0
 
