@@ -68,6 +68,9 @@ public final class CrystalGrowthParityTest {
     eq(64, LegacyCrystalWorldGenLogic.maximumCrystalAmount(100));
     eq(12, LegacyCrystalWorldGenLogic.attemptCount(150));
     eq(0, LegacyCrystalWorldGenLogic.maximumCrystalAmount(0));
+    eq(95, LegacyCrystalWorldGenLogic.yRange(0, 100));
+    eq(123, LegacyCrystalWorldGenLogic.yRange(-64, 64));
+    eq(5, LegacyCrystalWorldGenLogic.yRange(-64, -64));
     eq(1, LegacyCrystalWorldGenLogic.clusterSize(0));
     eq(2, LegacyCrystalWorldGenLogic.clusterSize(1));
     eq(3, LegacyCrystalWorldGenLogic.clusterSize(2));

@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.chunk.ChunkPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -99,8 +99,9 @@ public final class CrystalClusterWorldGen {
         for (int attempt = 0; attempt < attempts; attempt++) {
             int x = chunkPos.getMinBlockX() + 8 + random.nextInt(13) - 6;
             int z = chunkPos.getMinBlockZ() + 8 + random.nextInt(13) - 6;
-            int maxY = Math.max(5, level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 5);
-            int y = random.nextInt(maxY);
+            int minY = level.getMinBuildHeight();
+            int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+            int y = minY + random.nextInt(LegacyCrystalWorldGenLogic.yRange(minY, surfaceY));
             BlockPos center = new BlockPos(x, y, z);
 
             String biomeId = level.getBiome(center).unwrapKey()

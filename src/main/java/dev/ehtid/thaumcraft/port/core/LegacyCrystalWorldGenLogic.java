@@ -24,6 +24,11 @@ public final class LegacyCrystalWorldGenLogic {
         return Math.round(64.0F * density);
     }
 
+    /** Converts the source-era zero-based Y range to modern worlds with negative min build height. */
+    public static int yRange(int minBuildHeight, int surfaceY) {
+        return Math.max(5, surfaceY - minBuildHeight - 5);
+    }
+
     public static int clusterSize(int zeroBasedRoll) {
         if (zeroBasedRoll < 0 || zeroBasedRoll > 2) {
             throw new IllegalArgumentException("Crystal cluster size roll must be in [0,2]");
