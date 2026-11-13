@@ -7,6 +7,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SMOKE = (ROOT / "tools/client_jar_sound_smoke.py").read_text(encoding="utf-8")
 BLOCK = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github/workflows/closure-jar-sound-client.yml").read_text(encoding="utf-8")
+OVERLAY = (ROOT / "tools/verify_jar_damage_overlay.py").read_text(encoding="utf-8")
 
 for hook in ("Break", "Step", "Place", "Hit", "Fall"):
     pattern = r"@Override\s+public SoundEvent get" + hook + r"Sound\(\)\s*\{\s*return ThaumcraftSounds\.JAR\.get\(\);\s*\}"
@@ -62,11 +63,16 @@ assert "100a-jar-hit-aim.png" in hit_section, "Hit probe must preserve a pre-inp
 assert "JAR_HIT_POINTER_CENTER=" in hit_section, "Hit probe must log its actual window-center pointer"
 assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit_section
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
-assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in hit_section
 assert "JAR_HIT_CAPTURE_AFTER_0_30S=YES" in hit_section
 assert "verify_jar_damage_overlay.py" in hit_section
 assert "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
 assert "compare -metric AE" not in hit_section
+assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in OVERLAY
+assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in OVERLAY
+assert 'FUZZ = "8%"' in OVERLAY and "MIN_CHANGED_PIXELS = 40" in OVERLAY
+assert "tools/verify_jar_damage_overlay.py" in WORKFLOW
+assert WORKFLOW.count("tools/test_jar_damage_overlay.py") >= 2
+assert "python tools/test_jar_damage_overlay.py" in WORKFLOW
 assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE
 assert "JAR_STEP_STANDING_READY" in SMOKE and "JAR_STEP_MOVED_ON_ROW" in SMOKE
