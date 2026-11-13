@@ -113,6 +113,9 @@ public final class CrystalClusterBlock extends Block {
         return false;
     }
     @Override public boolean canSurvive(BlockState state,LevelReader world,BlockPos pos) {
+        // Server-side placement at a chunk edge must not load a neighbour just
+        // to test its support face. Client shape/placement queries stay read-only.
+        if (world instanceof ServerLevel serverLevel) return touchesLoadedStone(serverLevel,pos);
         return touchesStone(world,pos);
     }
     @Override protected void neighborChanged(BlockState state,
