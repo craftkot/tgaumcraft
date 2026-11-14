@@ -112,7 +112,6 @@ send_chat_anchor = """  send_chat() {
   }"""
 send_chat_replacement = """  send_chat() {
     local raw_command="$1"
-    local command_body="${raw_command#/}"
     xdotool windowactivate --sync "$WIN"
     xdotool windowfocus --sync "$WIN"
     active_window="$(xdotool getactivewindow)"
@@ -120,9 +119,11 @@ send_chat_replacement = """  send_chat() {
     target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
     target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
-    xdotool key --clearmodifiers slash
+    # Use Minecraft's ordinary chat key and type the complete slash-prefixed
+    # command, matching the shared client smoke's proven input path.
+    xdotool key --clearmodifiers t
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$command_body"
+    xdotool type --clearmodifiers --delay 24 "$raw_command"
     xdotool key --clearmodifiers Return
     sleep 4
   }"""
@@ -209,14 +210,15 @@ body = r'''
   echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
 
 
-  # Verify that an actual server-side entity-data query reaches the integrated
-  # world before issuing any fixture mutations. A typed command or a /say echo
-  # is not evidence that the server accepted the command.
+  # Verify that a real client command reaches the integrated server and that
+  # its response returns to the client log before fixture mutations. This
+  # marker proves command round-trip only; the later /data block-id query is
+  # the independent assertion that the actual Workbench BlockEntity exists.
   workbench_command_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/data get entity @p Pos'
+  send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'
   workbench_command_response=NO
   for attempt in {1..12}; do
-    if tail -c "+$((workbench_command_log_offset + 1))" client-smoke/client.log | grep -Fq 'has the following entity data:'; then
+    if tail -c "+$((workbench_command_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_COMMAND_RESPONSE_GATE'; then
       workbench_command_response=YES
       break
     fi

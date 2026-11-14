@@ -150,11 +150,11 @@ expect("xdotool key --clearmodifiers F3" in generator
        and "capture 05a-after-f3-input-probe" in generator,
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
-expect('xdotool key --clearmodifiers slash' in replacement_body
-       and 'local command_body="${raw_command#/}"' in replacement_body
-       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
-       and 'xdotool key --clearmodifiers t' not in replacement_body,
-       "Workbench command helper must open command chat explicitly and type only the command body")
+expect('xdotool key --clearmodifiers t' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$raw_command"' in replacement_body
+       and 'local command_body=' not in replacement_body
+       and 'xdotool key --clearmodifiers slash' not in replacement_body,
+       "Workbench command helper must use the shared T-chat path and type the full slash-prefixed command")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body
        and 'capture 05b-chat-open-after-slash' not in replacement_body
        and 'capture 05c-chat-text-before-enter' not in replacement_body
@@ -196,10 +196,11 @@ expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "post_force_load_" not in generator,
        "Workbench generator still depends on the removed remote-chunk command probe")
 
-expect("send_chat '/data get entity @p Pos'" in generator
+expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" in generator
        and "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" in generator
-       and "has the following entity data:" in generator,
-       "Workbench smoke does not require a real server-side entity-data response before fixture mutations")
+       and "grep -Fq 'TC_WORKBENCH_COMMAND_RESPONSE_GATE'" in generator
+       and "has the following entity data:" not in generator,
+       "Workbench smoke must use a locale-independent command round-trip marker before fixture mutations")
 expect("send_chat '/data get block ~ ~-1 ~4 id'" in generator
        and "grep -Fq 'thaumcraft:arcane_workbench'" in generator
        and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" in generator
