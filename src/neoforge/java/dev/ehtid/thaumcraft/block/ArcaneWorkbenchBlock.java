@@ -43,18 +43,32 @@ public final class ArcaneWorkbenchBlock extends BaseEntityBlock {
         return new ArcaneWorkbenchBlockEntity(pos, state);
     }
 
-    private void openWorkbench(Level level, BlockPos pos, Player player) {
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity bench) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, viewer) -> new ArcaneWorkbenchMenu(id, inventory, bench),
-                    Component.translatable("container.thaumcraft.arcane_workbench")));
+    private static void smokeMarker(String message) {
+        if ("1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            System.out.println(message);
         }
+    }
+
+    private void openWorkbench(Level level, BlockPos pos, Player player, String interactionPath) {
+        if (level.isClientSide) return;
+        if (!(level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity bench)) {
+            smokeMarker("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO path=" + interactionPath + " pos=" + pos);
+            return;
+        }
+        smokeMarker("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES path=" + interactionPath + " pos=" + pos);
+        var menuId = player.openMenu(new SimpleMenuProvider(
+                (id, inventory, viewer) -> new ArcaneWorkbenchMenu(id, inventory, bench),
+                Component.translatable("container.thaumcraft.arcane_workbench")));
+        smokeMarker("TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT="
+                + (menuId.isPresent() ? "YES" : "NO")
+                + (menuId.isPresent() ? " container_id=" + menuId.getAsInt() : "")
+                + " path=" + interactionPath);
     }
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        openWorkbench(level, pos, player);
+        openWorkbench(level, pos, player, "empty_hand");
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
@@ -66,7 +80,7 @@ public final class ArcaneWorkbenchBlock extends BaseEntityBlock {
     protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
                                               BlockPos pos, Player player, InteractionHand hand,
                                               BlockHitResult hit) {
-        openWorkbench(level, pos, player);
+        openWorkbench(level, pos, player, "item_on");
         return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
