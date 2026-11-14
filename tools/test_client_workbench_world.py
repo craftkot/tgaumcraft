@@ -184,8 +184,8 @@ expect("chat_probe_anchor = (" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
        "Workbench smoke must verify a second real world mutation after teleport before granting the Crucible")
-expect(shared_smoke.count("  send_chat '/gamemode creative'\\n") > 1
-       and shared_smoke.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
+expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
+       and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
 
 expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
