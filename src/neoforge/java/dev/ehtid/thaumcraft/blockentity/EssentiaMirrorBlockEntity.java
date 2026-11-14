@@ -38,6 +38,8 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
     private int nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
     /** A one-tick memo for remote source discovery, never authoritative for debit. */
     private long sourceScanTick=Long.MIN_VALUE;
+    /** Immutable endpoint key of the reciprocal mirror used for that scan. */
+    private LegacyEssentiaMirrorLogic.Endpoint sourceScanPartner;
     private RemoteSource cachedSource;
 
     private record RemoteSource(ServerLevel world, BlockPos pos,
@@ -122,11 +124,25 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         EssentiaMirrorBlockEntity remoteMirror=partnerLoaded(local);
         if(remoteMirror==null || !(remoteMirror.level instanceof ServerLevel remote))return null;
         long tick=local.getGameTime();
-        if(sourceScanTick==tick) {
-            if(stillValidSource(cachedSource,requestedAspect))return cachedSource;
+        var currentPartner=endpoint(remote,remoteMirror.worldPosition);
+        if(LegacyEssentiaMirrorLogic.sameSourceScan(
+                sourceScanPartner,currentPartner,sourceScanTick,tick)) {
+            // A previously discovered BlockEntity may still exist even after
+            // the reciprocal mirror address changes via restored/merged NBT.
+            // Never consume it unless it is in this CURRENT partner's world
+            // AND original source-search box.
+            if(cachedSource!=null
+                    && cachedSource.world()==remote
+                    && LegacyEssentiaMirrorLogic.inPartnerSearchBox(
+                            cachedSource.pos().getX()-remoteMirror.worldPosition.getX(),
+                            cachedSource.pos().getY()-remoteMirror.worldPosition.getY(),
+                            cachedSource.pos().getZ()-remoteMirror.worldPosition.getZ())
+                    && stillValidSource(cachedSource,requestedAspect))
+                return cachedSource;
             if(cachedSource==null && requestedAspect==null)return null;
         }
         sourceScanTick=tick;
+        sourceScanPartner=currentPartner;
         cachedSource=null;
         for(var offset:LegacyEssentiaSourceOrder.nullFacing(LegacyEssentiaMirrorLogic.SEARCH_RANGE)) {
             BlockPos target=remoteMirror.worldPosition.offset(offset.x(),offset.y(),offset.z());
@@ -195,8 +211,22 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
                 sink.jar().canReceiveMirror(aspect),aspect,
                 source.transportAmount(sourceFace),sourceSuction,destinationSuction)
                 ||source.transportMinimumSuction()>destinationSuction)return;
+        int sourceBefore=source.transportAmount(sourceFace);
+        int sinkBefore=sink.jar().snapshot().amount();
         if(!sink.jar().receiveOneFromMirror(aspect,
                 () -> source.takeTransport(aspect,1,sourceFace)==1))return;
+        // A live server-thread audit: the transport port and the remote
+        // BlockEntity must BOTH have changed by precisely one unit. This is
+        // diagnostic only; do not fabricate, replenish or re-credit items.
+        int sourceAfter=source.transportAmount(sourceFace);
+        int sinkAfter=sink.jar().snapshot().amount();
+        if(LegacyEssentiaMirrorLogic.conservedOneUnit(
+                sourceBefore,sourceAfter,sinkBefore,sinkAfter))
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_REVERSE_UNIT_CONSERVED");
+        if(sourceBefore==12 && sourceAfter==11 && sinkBefore==0 && sinkAfter==1)
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_REVERSE_FIRST_UNIT_12_11_0_1");
         // The source was physically debited and remote jar credited.
         instability=LegacyEssentiaMirrorLogic.afterTransfer(instability,1,true);
         EssentiaMirrorBlockEntity partner=partnerLoaded(local);
@@ -229,7 +259,14 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         RemoteSource source=remoteSource(aspect);
         if(!stillValidSource(source,aspect))return 0;
         // No local or remote state is changed until the real source returns 1.
+        int sourceBefore=source.port().transportAmount(source.face());
         if(source.port().takeTransport(aspect,1,source.face())!=1)return 0;
+        int sourceAfter=source.port().transportAmount(source.face());
+        // Preserve an independent before/after assertion for the fixture's
+        // initial 12 Aer. The recipient's jar credit has its own server mark.
+        if(sourceBefore==12 && sourceAfter==11)
+            dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark(
+                    "MIRROR_SOURCE_FIRST_UNIT_12_TO_11");
         // This marker is emitted only after an actual remote BlockEntity debit.
         dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_REMOTE_DEBIT");
         EssentiaMirrorBlockEntity partner=partnerLoaded(local);
@@ -241,6 +278,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         }
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         return 1;
     }
 
@@ -359,6 +397,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         linked=false;
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         setChanged();
         if(level!=null&&!level.isClientSide())
             level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
@@ -370,6 +409,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
         linked=true;
         cachedSource=null;
         sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
         setChanged();
         if(level!=null&&!level.isClientSide())
             level.sendBlockUpdated(worldPosition,getBlockState(),getBlockState(),3);
@@ -424,6 +464,13 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
                 ?new BlockPos(tag.getInt("linkX"),tag.getInt("linkY"),tag.getInt("linkZ")):null;
         if(linkPosition==null||linkDimension==null)linked=false;
         instability=Math.max(0,tag.getInt("instability"));
+        // Loading a saved or /data-merged BlockEntity is not a fresh remote
+        // source discovery. Both the old endpoint and any cached neighbour
+        // could have been removed, moved or re-linked between loads.
+        cachedSource=null;
+        sourceScanTick=Long.MIN_VALUE;
+        sourceScanPartner=null;
+        nextCheck=LegacyEssentiaMirrorLogic.LINK_RETRY_START;
     }
 
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {

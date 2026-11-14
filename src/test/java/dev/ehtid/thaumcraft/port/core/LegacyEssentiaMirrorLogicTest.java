@@ -33,6 +33,20 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,false,false));
         eq(false, LegacyEssentiaMirrorLogic.canRestore(a,b,true,true,true));
 
+        // A scan from another (even nearby) mirror or dimension must never
+        // serve a new link just because its previous source is still loaded.
+        var nearbyB = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:the_nether",-49,90,7);
+        var overworldB = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:overworld",-50,90,7);
+        eq(true,LegacyEssentiaMirrorLogic.sameSourceScan(b,b,123L,123L));
+        eq(true,LegacyEssentiaMirrorLogic.sameSourceScan(b,
+                new LegacyEssentiaMirrorLogic.Endpoint("minecraft:the_nether",-50,90,7),
+                123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,nearbyB,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,overworldB,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,b,123L,124L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(null,b,123L,123L));
+        eq(false,LegacyEssentiaMirrorLogic.sameSourceScan(b,null,123L,123L));
+
         eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",64,"aqua"));
         eq(true,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,null));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayDebit(1,true,true,true,"aqua",1,"ignis"));
@@ -57,6 +71,9 @@ public final class LegacyEssentiaMirrorLogicTest {
                 LegacyEssentiaJarLogic.accepts(aerLabel,"ignis"),"ignis",1,32,64));
                 eq(true,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,32,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",12,64,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,
+                "aer",12,LegacyEssentiaJarLogic.FILTERED_SUCTION,
+                LegacyEssentiaJarLogic.UNFILTERED_SUCTION));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,"aer",0,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,false,"aer",1,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,false,true,"aer",1,0,64));
@@ -64,8 +81,61 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(2,true,true,true,true,"aer",2,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,true,null,1,0,64));
         eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,false,true,true,true,"aer",1,0,64));
+        // Only a live one-unit debit AND matching sink credit constitutes
+        // authoritative conservation. Reject false positive/no-op/duplication.
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,1));
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(1,0,63,64));
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,
+                LegacyEssentiaJarLogic.CAPACITY-1,LegacyEssentiaJarLogic.CAPACITY));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,12,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,2));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,10,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(0,-1,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,-1,0));
+        // Aligned with live negative mirror world scenarios: a mismatched
+        // filter or full jar never qualifies for a one-unit credit.
+        var wrongAspect = new LegacyEssentiaJarLogic.State(null,"ignis",0);
+        var fullAer = new LegacyEssentiaJarLogic.State("aer","aer",LegacyEssentiaJarLogic.CAPACITY);
+        eq(false,LegacyEssentiaJarLogic.accepts(wrongAspect,"aer"));
+        eq(0,LegacyEssentiaJarLogic.add(fullAer,"aer",1).transferred());
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                LegacyEssentiaJarLogic.accepts(wrongAspect,"aer"),"aer",12,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                LegacyEssentiaJarLogic.add(fullAer,"aer",1).transferred()==1,
+                "aer",12,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,true,true,true,
+                true,"aer",0,0,64));
+        eq(false,LegacyEssentiaMirrorLogic.mayRelayCredit(1,false,true,true,
+                true,"aer",12,0,64));
+
         eq(1,LegacyEssentiaMirrorLogic.TRANSFER_MAX);
         eq(8,LegacyEssentiaMirrorLogic.SEARCH_RANGE);
+        // Match actual BETA26 nullFacing(range=8) boundaries, including
+        // asymmetric Y. Cached remote sources outside the CURRENT partner's
+        // search box must never be reused after an NBT/relink.
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(-8,-8,-8));
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(8,7,8));
+        eq(true,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,1));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,8,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,-9,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(9,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(-9,0,0));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,9));
+        eq(false,LegacyEssentiaMirrorLogic.inPartnerSearchBox(0,0,-9));
+        // Exhaustively compare the optimization against the ORIGINAL
+        // nullFacing source enumeration at every in-box and out-of-box
+        // coordinate, not just representative boundary examples.
+        var originalScanOffsets = new java.util.HashSet<>(
+                LegacyEssentiaSourceOrder.nullFacing(
+                        LegacyEssentiaMirrorLogic.SEARCH_RANGE));
+        for(int dx=-9;dx<=9;dx++)
+            for(int dy=-9;dy<=8;dy++)
+                for(int dz=-9;dz<=9;dz++)
+                    eq(originalScanOffsets.contains(
+                            new LegacyEssentiaSourceOrder.Offset(dx,dy,dz)),
+                            LegacyEssentiaMirrorLogic.inPartnerSearchBox(dx,dy,dz));
         eq(true,LegacyEssentiaMirrorLogic.canTransfer(1,true,true,true));
         for(int count:new int[]{0,2,10})
             eq(false,LegacyEssentiaMirrorLogic.canTransfer(count,true,true,true));
