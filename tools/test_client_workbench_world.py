@@ -356,5 +356,41 @@ empty_hand_body = workbench_block_source.split(
 expect("openWorkbench(level, pos, player);" in empty_hand_body,
        "empty-hand interaction no longer shares the Workbench menu-opening path")
 
+# Vanilla chat feedback is a HUD event, not a dependable client.log response.
+# Require real server BlockEntity/menu results and client screen/render markers.
+expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
+       and "workbench_command_log_offset" not in generator
+       and "WORKBENCH_COMMAND_RESPONSE_GATE" not in generator,
+       "Workbench smoke still treats vanilla /say chat text as a client.log acknowledgement")
+expect("workbench_block_log_offset" not in generator
+       and "WORKBENCH_SERVER_POSITION_GATE" not in generator,
+       "Workbench smoke still scrapes /data get block feedback from client.log")
+expect("wait_for_workbench_marker" in generator
+       and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in generator
+       and "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES" in generator
+       and "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in generator
+       and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
+       "Workbench smoke does not require the real server-to-client menu lifecycle")
+type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$raw_command"')
+return_index = replacement_body.index('xdotool key --clearmodifiers Return')
+expect("sleep 1" in replacement_body[type_index:return_index],
+       "chat helper does not wait for Minecraft to process the complete typed command")
+before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
+after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
+expect("xdotool key --clearmodifiers F3" in before_open
+       and "xdotool key --clearmodifiers F3" in after_open,
+       "Workbench smoke lacks an F3 target-block screenshot before and after interaction setup")
+
+expect("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in workbench_block_source
+       and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO" in workbench_block_source
+       and "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=" in workbench_block_source
+       and "menuId.isPresent()" in workbench_block_source,
+       "server block interaction does not report BlockEntity and openMenu result")
+screen_path = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
+screen_source = screen_path.read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in screen_source
+       and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source,
+       "client smoke does not distinguish screen construction from actual GUI rendering")
+
 print(f"Workbench world gate: OK ({checks} assertions)")
 
