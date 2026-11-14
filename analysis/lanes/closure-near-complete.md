@@ -4101,3 +4101,10 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Updated the lane-owned static regression to require the T-chat/full-command path and the locale-independent acknowledgement, and to reject the old English-only entity-data phrase. No production Java, shared smoke, Gradle, CI workflow, registry, localization or foreign PR path changed.
 - Exact-head static/Game/GUI validation is pending. No production Workbench defect, GUI acceptance, score increase or category closure is claimed. M16 remains 4/6; project audit remains 59/100.
 - Next: run the updated 4-way real-client matrix. If the command marker still fails, inspect the new client screenshot/log before changing production code; if it passes, require the actual block-id gate and visible ArcaneWorkbenchScreen render/OCR in all four configurations.
+
+
+### Workbench command-gate regression test correction (2026-11-14)
+
+- First exact-head Workbench workflow [#43620987115](https://github.com/craftkot/tgaumcraft/actions/runs/43620987115) started two matrix jobs, but both stopped before Minecraft launch because the static test still ordered the removed `/data get entity` probe. This was a stale test oracle introduced while replacing that probe, not a game/client failure.
+- Corrected the ordering assertion to require the new locale-independent command acknowledgement, then fixture inventory setup, then the actual `/data get block ... id` check, then GUI capture. The real-client jobs that had not started are expected to rerun on this new HEAD.
+- No production code changed; exact-head validation is still pending.

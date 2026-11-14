@@ -206,11 +206,11 @@ expect("send_chat '/data get block ~ ~-1 ~4 id'" in generator
        and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" in generator
        and "TC_WORKBENCH_POSITION_CONFIRMED" not in generator,
        "Workbench position gate must read the actual target BlockEntity id, not trust a /say echo")
-expect(generator.index("send_chat '/data get entity @p Pos'")
+expect(generator.index("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'")
        < generator.index("send_chat '/execute at @p run item replace block")
        < generator.index("send_chat '/data get block ~ ~-1 ~4 id'")
        < generator.index("capture 08c-workbench-before-open"),
-       "Workbench server-state gates must bracket fixture setup and precede the GUI click")
+       "Workbench command acknowledgement and BlockEntity state gates must bracket fixture setup and precede the GUI click")
 expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
        and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
        "Workbench position gate still depends on obsolete fixed world coordinates")
