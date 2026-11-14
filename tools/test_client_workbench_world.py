@@ -348,12 +348,12 @@ expect("protected ItemInteractionResult useItemOn(" in workbench_block_source,
        "Arcane Workbench does not implement the modern item-held interaction path")
 item_use_body = workbench_block_source.split(
     "protected ItemInteractionResult useItemOn(", 1)[1].split("\n    @Override", 1)[0]
-expect("openWorkbench(level, pos, player);" in item_use_body
+expect('openWorkbench(level, pos, player, "item_on");' in item_use_body
        and "ItemInteractionResult.sidedSuccess(level.isClientSide)" in item_use_body,
        "item-held interaction does not open the same server menu as empty-hand activation")
 empty_hand_body = workbench_block_source.split(
     "protected InteractionResult useWithoutItem(", 1)[1].split("\n    @Override", 1)[0]
-expect("openWorkbench(level, pos, player);" in empty_hand_body,
+expect('openWorkbench(level, pos, player, "empty_hand");' in empty_hand_body,
        "empty-hand interaction no longer shares the Workbench menu-opening path")
 
 # Vanilla chat feedback is a HUD event, not a dependable client.log response.
