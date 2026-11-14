@@ -43,6 +43,14 @@ public final class WorldgenHeightGateTest {
         check(!WorldgenHeightGate.spanWithinBuildHeight(
                 Integer.MAX_VALUE, 0, 0, Integer.MIN_VALUE, Integer.MAX_VALUE),
                 "exclusive max integer");
+        // A shifted footprint can lie inside build height while its origin is
+        // outside. Reject it: vanilla placement contexts require a valid origin.
+        check(!WorldgenHeightGate.spanWithinBuildHeight(400, -100, -90, -64, 320),
+                "origin above dimension despite in-bounds footprint");
+        check(!WorldgenHeightGate.spanWithinBuildHeight(-100, 40, 50, -64, 320),
+                "origin below dimension despite in-bounds footprint");
+        check(WorldgenHeightGate.spanWithinBuildHeight(320, -1, 0, -64, 321),
+                "valid upper origin with negative span");
         System.out.println("M12 WorldgenHeightGate: OK (" + assertions + " assertions)");
     }
 }
