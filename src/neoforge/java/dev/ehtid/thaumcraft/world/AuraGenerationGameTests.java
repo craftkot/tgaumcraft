@@ -10,6 +10,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.level.storage.LevelResource;
@@ -46,13 +47,14 @@ public final class AuraGenerationGameTests {
             timeoutTicks = 100
     )
     public static void samplesFiveBETA26BiomesAtY50AndPersistsAura(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos anchor = helper.absolutePos(new BlockPos(8, 2, 8));
+        assertCrystalWorldGenQueueDefersReentrantEnqueue(level, anchor);
         if (isColdRestartReadPhase()) {
             System.out.println("TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read");
             helper.succeed();
             return;
         }
-        ServerLevel level = helper.getLevel();
-        BlockPos anchor = helper.absolutePos(new BlockPos(8, 2, 8));
         int chunkX = anchor.getX() >> 4;
         int chunkZ = anchor.getZ() >> 4;
         BlockPos center = sampleCenter(chunkX, chunkZ);
@@ -956,6 +958,40 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_DRAIN_MISSING=PASS");
         System.out.println("TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES");
+    }
+
+    private static void assertCrystalWorldGenQueueDefersReentrantEnqueue(ServerLevel level, BlockPos anchor) {
+        ChunkPos firstChunk = new ChunkPos(anchor.getX() >> 4, anchor.getZ() >> 4);
+        ChunkPos nextChunk = new ChunkPos(firstChunk.x + 1, firstChunk.z);
+        level.getChunk(firstChunk.x, firstChunk.z);
+        level.getChunk(nextChunk.x, nextChunk.z);
+
+        CrystalClusterWorldGen.PendingQueue queue = new CrystalClusterWorldGen.PendingQueue();
+        int tick = level.getServer().getTickCount();
+        queue.enqueue(new CrystalClusterWorldGen.Pending(level, firstChunk, tick));
+        AtomicInteger generated = new AtomicInteger();
+
+        int firstBatch = queue.process(level.getServer(), tick, 4, (targetLevel, targetChunk) -> {
+            generated.incrementAndGet();
+            // A generation callback can synchronously cause a chunk-load event.
+            // The in-flight key prevents a duplicate, while a new chunk waits for
+            // the next tick because process() drains only its initial batch size.
+            queue.enqueue(new CrystalClusterWorldGen.Pending(targetLevel, targetChunk, tick));
+            queue.enqueue(new CrystalClusterWorldGen.Pending(targetLevel, nextChunk, tick));
+        });
+        if (firstBatch != 1 || generated.get() != 1 || queue.size() != 1) {
+            throw new AssertionError("Reentrant crystal worldgen enqueue was not deferred/deduplicated: "
+                    + "processed=" + firstBatch + " callbacks=" + generated.get() + " queued=" + queue.size());
+        }
+
+        int secondBatch = queue.process(level.getServer(), tick + 1, 4,
+                (targetLevel, targetChunk) -> generated.incrementAndGet());
+        if (secondBatch != 1 || generated.get() != 2 || queue.size() != 0) {
+            throw new AssertionError("Deferred crystal worldgen chunk did not run on the next batch: "
+                    + "processed=" + secondBatch + " callbacks=" + generated.get() + " queued=" + queue.size());
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_WORLDGEN_QUEUE_REENTRANT_ENQUEUE=PASS "
+                + "firstBatch=1 deferred=1 duplicateInFlight=ignored");
     }
 
     private static boolean isColdRestartReadPhase() {

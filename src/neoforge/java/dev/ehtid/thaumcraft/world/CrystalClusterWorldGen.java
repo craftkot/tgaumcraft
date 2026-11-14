@@ -19,9 +19,11 @@ import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 /**
  * BETA26 ThaumcraftWorldGenerator.generateOres crystal branch.
@@ -36,9 +38,76 @@ import java.util.List;
 public final class CrystalClusterWorldGen {
     private static final int MAX_PENDING_AGE_TICKS = 1200;
     private static final int MAX_CHUNKS_PER_TICK = 4;
-    private static final List<Pending> PENDING = new ArrayList<>();
+    private static final PendingQueue PENDING = new PendingQueue();
 
-    private record Pending(ServerLevel level, ChunkPos chunkPos, int queuedAtTick) {}
+    record Pending(ServerLevel level, ChunkPos chunkPos, int queuedAtTick) {}
+
+    /**
+     * A tick drains only the entries that existed at its start. Chunk generation
+     * may synchronously fire ChunkEvent.Load and enqueue more work; those new
+     * entries must wait until the next tick rather than mutate an active iterator.
+     */
+    static final class PendingQueue {
+        private final Deque<Pending> entries = new ArrayDeque<>();
+        private final Set<PendingKey> queued = new HashSet<>();
+
+        void enqueue(Pending pending) {
+            PendingKey key = new PendingKey(pending.level(), pending.chunkPos());
+            if (queued.add(key)) entries.addLast(pending);
+        }
+
+        int process(
+                MinecraftServer server,
+                int currentTick,
+                int maxChunks,
+                BiConsumer<ServerLevel, ChunkPos> generator
+        ) {
+            int batchSize = entries.size();
+            int processed = 0;
+            for (int index = 0; index < batchSize && processed < maxChunks; index++) {
+                Pending pending = entries.pollFirst();
+                if (pending == null) break;
+
+                ServerLevel level = pending.level();
+                ChunkPos chunkPos = pending.chunkPos();
+                PendingKey key = new PendingKey(level, chunkPos);
+                if (level.getServer() != server) {
+                    entries.addLast(pending);
+                    continue;
+                }
+                if (currentTick - pending.queuedAtTick() > MAX_PENDING_AGE_TICKS) {
+                    queued.remove(key);
+                    continue;
+                }
+                // Both checks are non-loading. If the new chunk unloads before the
+                // deferred pass, keep the request briefly and wait for it to return.
+                if (!level.hasChunk(chunkPos.x, chunkPos.z)
+                        || level.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z) == null) {
+                    entries.addLast(pending);
+                    continue;
+                }
+
+                try {
+                    generator.accept(level, chunkPos);
+                    processed++;
+                } finally {
+                    queued.remove(key);
+                }
+            }
+            return processed;
+        }
+
+        int size() {
+            return entries.size();
+        }
+
+        void clear() {
+            entries.clear();
+            queued.clear();
+        }
+
+        private record PendingKey(ServerLevel level, ChunkPos chunkPos) {}
+    }
 
     private CrystalClusterWorldGen() {}
 
@@ -50,37 +119,19 @@ public final class CrystalClusterWorldGen {
         if (level.dimension().equals(Level.NETHER)) return;
 
         ChunkPos chunkPos = event.getChunk().getPos();
-        for (Pending pending : PENDING) {
-            if (pending.level() == level && pending.chunkPos().equals(chunkPos)) return;
-        }
-        PENDING.add(new Pending(level, chunkPos, level.getServer().getTickCount()));
+        PENDING.enqueue(new Pending(level, chunkPos, level.getServer().getTickCount()));
     }
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         MinecraftServer server = event.getServer();
-        int processed = 0;
-        Iterator<Pending> iterator = PENDING.iterator();
-        while (iterator.hasNext() && processed < MAX_CHUNKS_PER_TICK) {
-            Pending pending = iterator.next();
-            ServerLevel level = pending.level();
-            ChunkPos chunkPos = pending.chunkPos();
-            if (level.getServer() != server) continue;
-            if (server.getTickCount() - pending.queuedAtTick() > MAX_PENDING_AGE_TICKS) {
-                iterator.remove();
-                continue;
-            }
-            // Both checks are non-loading. If the new chunk unloads before the
-            // deferred pass, keep the request briefly and wait for it to return.
-            if (!level.hasChunk(chunkPos.x, chunkPos.z)
-                    || level.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z) == null) {
-                continue;
-            }
-
-            iterator.remove();
-            generateChunk(level, chunkPos, RandomSource.create(chunkSeed(level, chunkPos)));
-            processed++;
-        }
+        PENDING.process(
+                server,
+                server.getTickCount(),
+                MAX_CHUNKS_PER_TICK,
+                (level, chunkPos) -> generateChunk(
+                        level, chunkPos, RandomSource.create(chunkSeed(level, chunkPos)))
+        );
     }
 
     @SubscribeEvent
