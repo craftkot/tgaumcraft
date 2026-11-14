@@ -32,6 +32,26 @@ public final class WorldgenChunkGate {
                 && positionInsideCurrentChunk;
     }
 
+    /**
+     * Coordinate-checked variant for actual worldgen adapters. The origin
+     * membership is derived rather than trusted as a caller-supplied flag.
+     * A neighboring chunk must never be fetched merely to answer this check.
+     */
+    public static boolean mayAttemptPlacementAt(
+            boolean generatingNewChunk,
+            boolean allowedDimension,
+            boolean currentChunkAvailable,
+            int originBlockX,
+            int originBlockZ,
+            int generatingChunkX,
+            int generatingChunkZ) {
+        return mayAttemptPlacement(
+                generatingNewChunk,
+                allowedDimension,
+                currentChunkAvailable,
+                originInChunk(originBlockX, originBlockZ, generatingChunkX, generatingChunkZ));
+    }
+
     /** Minecraft block coordinate to chunk coordinate, including negatives. */
     public static int chunkCoordinate(int blockCoordinate) {
         return Math.floorDiv(blockCoordinate, 16);
