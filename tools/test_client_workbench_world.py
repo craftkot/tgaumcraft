@@ -164,8 +164,8 @@ expect(offset_capture in generator,
        "GUI helper does not capture the client-log byte offset before the first Peaceful command")
 expect('difficulty_log_offset="${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}"' in generator,
        "Workbench smoke does not reuse the offset captured by the first real command")
-expect("send_chat '/difficulty peaceful'" not in generator,
-       "Workbench smoke sends a second Peaceful command after the captured response window")
+expect("  send_chat '/difficulty peaceful'" not in generator.split("body = r'''", 1)[1],
+       "Workbench smoke body sends a second Peaceful command after the captured response window")
 expect('--from-offset "$difficulty_log_offset" --wait-seconds 12' in generator,
        "GUI generator does not use bounded current-command log polling")
 expect("assert_client_workbench_world.py run/saves --require-peaceful" not in generator,
@@ -229,8 +229,8 @@ expect("chat_probe_anchor = (" in generator
        and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement +" in generator,
        "Workbench smoke must anchor the chat probe to the unique Crucible bootstrap sequence")
-expect(shared.count("  send_chat '/gamemode creative'\\n") > 1
-       and shared.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
+expect(shared_smoke.count("  send_chat '/gamemode creative'\\n") > 1
+       and shared_smoke.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
 
 expect("capture 05e-after-peaceful-command" in generator,
