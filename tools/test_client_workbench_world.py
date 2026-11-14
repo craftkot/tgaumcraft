@@ -158,7 +158,7 @@ expect("xdotool key --clearmodifiers F3" in generator
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
 expect('xdotool key --clearmodifiers slash' in replacement_body
-       and 'local command_body="\${raw_command#/}"' in replacement_body
+       and 'local command_body="${raw_command#/}"' in replacement_body
        and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
@@ -171,19 +171,21 @@ expect('local probe_prefix="${2:-05}"' in probe_body
 expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
        "command probe must identify which input sequence its screenshots belong to")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
-       "Workbench helper must not special-case a no-op difficulty command")       "Workbench helper must not special-case a no-op difficulty command")
+       "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator
        and "  send_chat '/gamemode creative'\\n" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "chat_probe_replacement = (" in generator
-       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'" in generator
-       and "send_chat '/tp @p ~ ~ ~ 0 28'" in generator
-       and "send_chat '/give @p thaumcraft:crucible'" in generator
+       and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\\n" in generator
+       and "  send_chat '/tp @p ~ ~ ~ 0 28'\\n" in generator
+       and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\\n" in generator
+       and "WORKBENCH_POST_TP_MUTATION=PASS" in generator
+       and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
-       "Workbench smoke must replace the unique initial bootstrap with only the required Crucible grant")
-expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
-       and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
+       "Workbench smoke must verify a second real world mutation after teleport before granting the Crucible")
+expect(shared_smoke.count("  send_chat '/gamemode creative'\\n") > 1
+       and shared_smoke.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
 
 expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
