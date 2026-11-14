@@ -33,6 +33,9 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
         inventoryLabelY = 140;
         titleLabelX = 16;
         titleLabelY = 5;
+        if ("1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            System.out.println("TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES");
+        }
     }
 
     @Override
