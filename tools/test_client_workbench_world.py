@@ -221,11 +221,18 @@ expect('if [[ "$raw_command" == "/say TC_WORKBENCH_CHAT_INPUT_OK" ]]' in replace
        "Workbench chat probe must capture the real GUI before text entry, before Enter, and after submit")
 expect('WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"' in replacement_body,
        "Workbench helper does not capture the first Peaceful command response window")
-expect("chat_probe_anchor = \"  send_chat '/gamemode creative'\\n\"" in generator
+expect("chat_probe_anchor = (" in generator
+       and "  send_chat '/gamemode creative'\\n" in generator
+       and "  send_chat '/difficulty peaceful'\\n" in generator
+       and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log" in generator
        and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
-       and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
-       "Workbench smoke does not require a vanilla server-side chat-input probe before GUI interaction")
+       and "source = source.replace(chat_probe_anchor, chat_probe_replacement +" in generator,
+       "Workbench smoke must anchor the chat probe to the unique Crucible bootstrap sequence")
+expect(shared.count("  send_chat '/gamemode creative'\\n") > 1
+       and shared.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
+       "Shared creative command changed: verify unique Crucible bootstrap anchor")
+
 expect("capture 05e-after-peaceful-command" in generator,
        "Workbench smoke does not retain the screenshot after server-confirmed Peaceful command")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
