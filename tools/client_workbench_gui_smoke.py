@@ -45,7 +45,6 @@ send_chat_anchor = """  send_chat() {
   }"""
 send_chat_replacement = """  send_chat() {
     local raw_command="$1"
-    local command="${raw_command#/}"
     xdotool windowactivate --sync "$WIN"
     xdotool windowfocus --sync "$WIN"
     active_window="$(xdotool getactivewindow)"
@@ -53,11 +52,27 @@ send_chat_replacement = """  send_chat() {
     target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
     target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
-    # Slash opens Minecraft's command-entry screen directly; do not depend on
-    # the configurable chat key (T) after the integrated-world transition.
-    xdotool key --clearmodifiers slash
+    # Probe the default chat key with screenshots before text entry and submit.
+    # A server-side /say marker proves receipt; window focus alone does not.
+    if [[ "$raw_command" == "/say TC_WORKBENCH_CHAT_INPUT_OK" ]]; then
+      xdotool key --clearmodifiers t
+      sleep 1
+      capture 05b-chat-open-after-t
+      xdotool type --clearmodifiers --delay 24 "$raw_command"
+      sleep 1
+      capture 05c-chat-text-before-enter
+      xdotool key --clearmodifiers Return
+      sleep 4
+      capture 05d-chat-submit-result
+      return
+    fi
+    if [[ "$raw_command" == "/difficulty peaceful" && -z "${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}" ]]; then
+      WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"
+      echo "WORKBENCH_DIFFICULTY_LOG_OFFSET=$WORKBENCH_DIFFICULTY_LOG_OFFSET" | tee -a client-smoke-status.txt
+    fi
+    xdotool key --clearmodifiers t
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$command"
+    xdotool type --clearmodifiers --delay 24 "$raw_command"
     xdotool key --clearmodifiers Return
     sleep 4
   }"""
@@ -80,6 +95,19 @@ source = source.replace(world_gate, workbench_gate, 1)
 # server-thread login record in this generated copy only.
 source = source.replace(login_gate, login_replacement, 1)
 source = source.replace(send_chat_anchor, send_chat_replacement, 1)
+
+chat_probe_anchor = "  send_chat '/gamemode creative'\n"
+chat_probe_replacement = """  send_chat '/say TC_WORKBENCH_CHAT_INPUT_OK'
+  if ! grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log; then
+    echo 'WORKBENCH_CHAT_INPUT_PROBE=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  fi
+  echo 'WORKBENCH_CHAT_INPUT_PROBE=PASS' | tee -a client-smoke-status.txt
+"""
+if source.count(chat_probe_anchor) != 1:
+    raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
+source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)
 
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
@@ -117,9 +145,12 @@ body = r'''
   # The initial NBT gate already proved cheats + Creative; now require the
   # integrated server's actual command feedback instead of reading stale
   # pre-save level.dat metadata.
-  difficulty_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/difficulty peaceful'
-  capture 05b-after-peaceful-command
+  difficulty_log_offset="${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}"
+  if [[ -z "$difficulty_log_offset" ]]; then
+    echo 'WORKBENCH_DIFFICULTY_LOG_OFFSET=NOT_CAPTURED' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  capture 05e-after-peaceful-command
   python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log \
     --from-offset "$difficulty_log_offset" --wait-seconds 12 \
     | tee -a client-smoke-status.txt
