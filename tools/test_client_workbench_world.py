@@ -184,6 +184,23 @@ expect("chat_probe_anchor = (" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
        "Workbench smoke must verify a second real world mutation after teleport before granting the Crucible")
+
+expect("[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: " in generator
+        and "WORKBENCH_SERVER_MUTATION_COUNT=$mutation_count RENDER_CHAT_ECHO_COUNT=$render_chat_count" in generator,
+        "Workbench post-teleport gate must count authoritative integrated-server command records and report render-thread echoes separately")
+
+mutation_marker = "Changed the block at -129, 67, 69"
+server_record = f"[21:59:12] [Server thread/INFO] [minecraft/MinecraftServer]: [Dev: {mutation_marker}]"
+chat_echo = f"[21:59:12] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] {mutation_marker}"
+server_pattern = f"[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: {mutation_marker}]"
+all_threads = subprocess.run(["grep", "-F", "-c", server_pattern], input=f"{server_record}\n{chat_echo}\n",
+                             text=True, capture_output=True, check=False)
+expect(all_threads.stdout.strip() == "1",
+       "a render-thread chat echo must not be counted as a second server-side block mutation")
+render_only = subprocess.run(["grep", "-F", "-c", server_pattern], input=f"{chat_echo}\n",
+                              text=True, capture_output=True, check=False)
+expect(render_only.stdout.strip() == "0",
+       "a client-only chat echo must never satisfy the authoritative mutation gate")
 expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
        and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
