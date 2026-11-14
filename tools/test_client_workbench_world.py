@@ -4,6 +4,7 @@ import importlib.util
 import os
 from pathlib import Path
 import subprocess
+import sys
 
 path = Path(__file__).with_name("assert_client_workbench_world.py")
 spec = importlib.util.spec_from_file_location("assert_client_workbench_world", path)
