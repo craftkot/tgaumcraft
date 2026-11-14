@@ -4168,3 +4168,6 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 
 
 - Added an offline regression guard that compiles client_workbench_gui_smoke.py as Python before generating shell. This specifically prevents another literal-newline source corruption from reaching the real-client workflow; it does not execute the generator or claim gameplay acceptance.
+
+
+- Artifact-based correction to the first slash-path probe: the earlier plan to gate on Tesseract reading F3 yaw/pitch was rejected after testing the same OCR preprocessing against a real F3 screenshot (it misread the numeric orientation), and the small chat-line OCR also misread a visible ASCII marker. The probe now uses a visible world mutation instead: /setblock ~ ~1 ~1 minecraft:gold_block, with real chat-open/typed/submitted screenshots. The gold block must be visible in 05d before the fixture fill replaces it; no OCR output is promoted to a success signal.

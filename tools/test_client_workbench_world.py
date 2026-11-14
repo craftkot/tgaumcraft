@@ -165,10 +165,8 @@ expect('xdotool key --clearmodifiers slash' in replacement_body
 expect('capture 05b-chat-open-after-slash' in replacement_body
        and 'capture 05c-chat-text-before-enter' in replacement_body
        and 'capture 05d-chat-submit-result' in replacement_body
-       and 'capture 05e-f3-after-chat-probe' in replacement_body
-       and "grep -Fq '0.0/28.0'" in replacement_body
-       and 'WORKBENCH_CHAT_COMMAND_PROBE=PASS' in replacement_body,
-       "Workbench command probe must capture the typed command and verify the live F3 rotation result")
+       and 'WORKBENCH_CHAT_PROBE_INPUT_SENT=YES' in replacement_body,
+       "Workbench command probe must preserve chat-open, typed-command and post-submit screenshots without OCR success claims")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
        "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator
@@ -176,7 +174,8 @@ expect("chat_probe_anchor = (" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "chat_probe_replacement = (" in generator
-       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in generator
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'" in generator
+       and "send_chat '/tp @p ~ ~ ~ 0 28'" in generator
        and "send_chat '/give @p thaumcraft:crucible'" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
        "Workbench smoke must replace the unique initial bootstrap with only the required Crucible grant")
@@ -396,10 +395,11 @@ type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split(")", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
-       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'" in chat_probe_replacement_body
+       and "send_chat '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
        and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
-       and chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28'") < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
-       "chat helper must wait after typing and run a real rotation-changing probe before the first item grant")
+       and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'") < chat_probe_replacement_body.index("send_chat '/tp @p ~ ~ ~ 0 28'") < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
+       "chat helper must prove a world-mutating command before the look reset and first item grant")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
 expect("xdotool key --clearmodifiers F3" in before_open
