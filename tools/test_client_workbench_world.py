@@ -159,15 +159,13 @@ expect("send_chat '/save-all flush'" not in generator,
        "GUI generator still sends the unavailable singleplayer save-all command")
 expect("assert_client_workbench_difficulty.py client-smoke/client.log" in generator,
        "GUI generator does not verify live integrated-server difficulty feedback")
-offset_capture = 'difficulty_log_offset="$(wc -c < client-smoke/client.log)"'
+offset_capture = 'WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"'
 expect(offset_capture in generator,
-       "GUI generator does not capture the client-log byte offset before the command")
-expect(
-    generator.index(offset_capture)
-    < generator.index("send_chat '/difficulty peaceful'")
-    < generator.index("assert_client_workbench_difficulty.py client-smoke/client.log"),
-    "current-command log window is not captured before the Peaceful command",
-)
+       "GUI helper does not capture the client-log byte offset before the first Peaceful command")
+expect('difficulty_log_offset="${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}"' in generator,
+       "Workbench smoke does not reuse the offset captured by the first real command")
+expect("send_chat '/difficulty peaceful'" not in generator,
+       "Workbench smoke sends a second Peaceful command after the captured response window")
 expect('--from-offset "$difficulty_log_offset" --wait-seconds 12' in generator,
        "GUI generator does not use bounded current-command log polling")
 expect("assert_client_workbench_world.py run/saves --require-peaceful" not in generator,
@@ -212,12 +210,24 @@ expect("xdotool key --clearmodifiers F3" in generator
        and "capture 05a-after-f3-input-probe" in generator,
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
-expect('xdotool key --clearmodifiers slash' in replacement_body
-       and 'command="${raw_command#/}"' in replacement_body
-       and 'xdotool key --clearmodifiers t' not in replacement_body,
-       "Workbench command helper must use the direct slash command binding rather than configurable T chat")
-expect("capture 05b-after-peaceful-command" in generator,
-       "Workbench smoke does not retain a screenshot immediately after the first real command")
+expect('xdotool key --clearmodifiers t' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$raw_command"' in replacement_body
+       and 'xdotool key --clearmodifiers slash' not in replacement_body,
+       "Workbench command helper must open the default T chat and type the complete slash command")
+expect('if [[ "$raw_command" == "/say TC_WORKBENCH_CHAT_INPUT_OK" ]]' in replacement_body
+       and 'capture 05b-chat-open-after-t' in replacement_body
+       and 'capture 05c-chat-text-before-enter' in replacement_body
+       and 'capture 05d-chat-submit-result' in replacement_body,
+       "Workbench chat probe must capture the real GUI before text entry, before Enter, and after submit")
+expect('WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"' in replacement_body,
+       "Workbench helper does not capture the first Peaceful command response window")
+expect("chat_probe_anchor = \\\"  send_chat '/gamemode creative'\\\\n\\\"" in generator
+       and "grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log" in generator
+       and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
+       and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
+       "Workbench smoke does not require a vanilla server-side chat-input probe before GUI interaction")
+expect("capture 05e-after-peaceful-command" in generator,
+       "Workbench smoke does not retain the screenshot after server-confirmed Peaceful command")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
 expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
