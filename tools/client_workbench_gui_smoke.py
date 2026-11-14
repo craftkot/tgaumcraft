@@ -124,12 +124,9 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers t
     sleep 1
     xdotool type --clearmodifiers --delay 24 "$raw_command"
-    # Capture the literal chat input before submitting the unique round-trip
-    # probe. This distinguishes a closed chat / missing slash / wrong focus
-    # from a server response that was not recorded in client.log.
-    if [ "$raw_command" = '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE' ]; then
-      capture 05b0-workbench-command-typed-before-enter
-    fi
+    # X11 key events are queued; let Minecraft process the full command
+    # before Return so the trailing characters are not dropped.
+    sleep 1
     xdotool key --clearmodifiers Return
     sleep 4
   }"""
@@ -216,25 +213,23 @@ body = r'''
   echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
 
 
-  # Verify that a real client command reaches the integrated server and that
-  # its response returns to the client log before fixture mutations. This
-  # marker proves command round-trip only; the later /data block-id query is
-  # the independent assertion that the actual Workbench BlockEntity exists.
-  workbench_command_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'
-  workbench_command_response=NO
-  for attempt in {1..12}; do
-    if tail -c "+$((workbench_command_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_COMMAND_RESPONSE_GATE'; then
-      workbench_command_response=YES
-      break
-    fi
-    sleep 1
-  done
-  echo "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" | tee -a client-smoke-status.txt
-  if [ "$workbench_command_response" != YES ]; then
-    capture 05b-workbench-command-response-not-confirmed
+  # The next gates use the actual block interaction and menu lifecycle.
+  # Vanilla /say and /data get feedback is rendered in the chat HUD and is
+  # not a reliable client.log signal; never treat an absent log line as a
+  # failed command or as proof that the GUI did not open.
+  wait_for_workbench_marker() {
+    local marker="$1"
+    for attempt in {1..12}; do
+      if grep -Fq "$marker" client-smoke/client.log; then
+        echo "WORKBENCH_MARKER_SEEN=$marker" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 1
+    done
+    echo "WORKBENCH_MARKER_MISSING=$marker" | tee -a client-smoke-status.txt
+    capture 08e-workbench-open-marker-missing
     exit 1
-  fi
+  }
 
   # The Workbench and its inventory fixture are four blocks ahead of the
   # logged-in player, inside the already-loaded spawn area.
@@ -250,25 +245,14 @@ body = r'''
 
   # Reset the look direction without teleporting to an unloaded test region.
   send_chat '/tp @p ~ ~ ~ 0 28'
-  # Read the real block-entity id at the player-relative fixture position.
-  # This is a server state query, not a client-generated /say acknowledgement.
-  workbench_block_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/data get block ~ ~-1 ~4 id'
-  workbench_position_confirmed=NO
-  for attempt in {1..12}; do
-    if tail -c "+$((workbench_block_log_offset + 1))" client-smoke/client.log | grep -Fq 'thaumcraft:arcane_workbench'; then
-      workbench_position_confirmed=YES
-      break
-    fi
-    sleep 1
-  done
-  echo "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" | tee -a client-smoke-status.txt
-  if [ "$workbench_position_confirmed" != YES ]; then
-    capture 08c-workbench-position-not-confirmed
-    exit 1
-  fi
-  sleep 2
+  # F3 records the real block targeted by the player's crosshair. The
+  # server-side interaction marker below is the authoritative BlockEntity
+  # and openMenu check, so no /data command response is scraped from client.log.
+  xdotool key --clearmodifiers F3
+  sleep 1
   capture 08c-workbench-before-open
+  xdotool key --clearmodifiers F3
+  sleep 1
   # The item-model screenshot above deliberately selects hotbar slot 0 with a
   # workbench block in hand. Right-click with that placeable item can consume
   # the interaction before the target block's menu path is exercised. First
@@ -281,6 +265,10 @@ body = r'''
   xdotool click 3
   sleep 4
   capture 08d-workbench-gui-open
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'
 
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
