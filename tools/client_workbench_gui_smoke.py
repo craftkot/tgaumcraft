@@ -238,7 +238,7 @@ chat_probe_replacement = (
     "    exit 1\n"
     "  fi\n"
     "  capture 06f-post-teleport-gold-cleared\n"
-    "  send_chat '/give @p thaumcraft:crucible'\n"
+    "  send_chat_probe '/give @p thaumcraft:crucible' 06g\n"
 )
 if source.count(chat_probe_anchor) != 1:
     raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
