@@ -196,21 +196,24 @@ expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "post_force_load_" not in generator,
        "Workbench generator still depends on the removed remote-chunk command probe")
 
-expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" in generator
-       and "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" in generator
-       and "grep -Fq 'TC_WORKBENCH_COMMAND_RESPONSE_GATE'" in generator
-       and "has the following entity data:" not in generator,
-       "Workbench smoke must use a locale-independent command round-trip marker before fixture mutations")
-expect("send_chat '/data get block ~ ~-1 ~4 id'" in generator
-       and "grep -Fq 'thaumcraft:arcane_workbench'" in generator
-       and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" in generator
-       and "TC_WORKBENCH_POSITION_CONFIRMED" not in generator,
-       "Workbench position gate must read the actual target BlockEntity id, not trust a /say echo")
-expect(generator.index("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'")
-       < generator.index("send_chat '/execute at @p run item replace block")
-       < generator.index("send_chat '/data get block ~ ~-1 ~4 id'")
-       < generator.index("capture 08c-workbench-before-open"),
-       "Workbench command acknowledgement and BlockEntity state gates must bracket fixture setup and precede the GUI click")
+# Chat HUD feedback is not a stable client.log signal. The real-client
+# acceptance must instead use independent server/client lifecycle markers.
+expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
+       and "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" not in generator
+       and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" not in generator
+       and "grep -Fq 'thaumcraft:arcane_workbench'" not in generator,
+       "Workbench smoke must not mistake vanilla chat HUD output for log evidence")
+expect("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator,
+       "Workbench must require independent real server and client menu lifecycle evidence")
+expect(generator.index("send_chat '/execute at @p run item replace block")
+       < generator.index("send_chat '/execute at @p run data get block ~ ~-1 ~4 Items'")
+       < generator.index("capture 08c-workbench-before-open")
+       < generator.index("xdotool click 3")
+       < generator.index("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
+       "Workbench fixture, screenshot, click and lifecycle gates must stay ordered")
 expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
        and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
        "Workbench position gate still depends on obsolete fixed world coordinates")
