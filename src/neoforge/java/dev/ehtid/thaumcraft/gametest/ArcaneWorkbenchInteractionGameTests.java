@@ -47,7 +47,7 @@ public final class ArcaneWorkbenchInteractionGameTests {
     public static void heldItemStillOpensWorkbenchMenu(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(2, 2, 2));
-        helper.setBlock(pos, ThaumcraftBlocks.ARCANE_WORKBENCH.get().defaultBlockState());
+        level.setBlock(pos, ThaumcraftBlocks.ARCANE_WORKBENCH.get().defaultBlockState(), 3);
         BlockState state = level.getBlockState(pos);
         if (!(level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity)) {
             throw new AssertionError("Arcane Workbench test fixture did not create its block entity");
