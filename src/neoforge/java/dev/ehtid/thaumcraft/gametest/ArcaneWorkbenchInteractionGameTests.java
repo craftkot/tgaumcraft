@@ -15,6 +15,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -36,7 +37,11 @@ public final class ArcaneWorkbenchInteractionGameTests {
         BlockState state = ThaumcraftBlocks.ARCANE_WORKBENCH.get().defaultBlockState();
         helper.setBlock(pos, state);
 
-        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        // Avoid GameTestHelper's mock login path: PlayerList.placeNewPlayer fires
+        // ThaumcraftPlayerEvents.onLogin and tries to sync a clientbound payload to
+        // the embedded test connection. NeoForge's FakePlayer supplies a local
+        // ServerPlayer connection without synthesizing a network login.
+        ServerPlayer player = FakePlayerFactory.getMinecraft(level);
         player.setPos(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 2.5D);
         ItemStack held = new ItemStack(Items.STICK);
         player.setItemInHand(InteractionHand.MAIN_HAND, held);
