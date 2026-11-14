@@ -5,8 +5,8 @@ package dev.ehtid.thaumcraft.port.core;
  * The caller supplies the actual dimension build limits; no chunk is queried
  * or loaded here. The upper build limit is exclusive, as in Minecraft.
  *
- * <p>This only validates the origin. Tree canopy/root extent and original
- * BETA26 biome/frequency rules must be checked by the concrete feature.
+ * <p>The origin and optional full vertical span are checked independently.
+ * Original BETA26 biome/frequency rules must be checked by the concrete feature.
  */
 public final class WorldgenHeightGate {
     private WorldgenHeightGate() {}
@@ -35,6 +35,7 @@ public final class WorldgenHeightGate {
         }
         long bottom = (long) originY + minOffsetY;
         long top = (long) originY + maxOffsetY;
-        return bottom >= minBuildY && top < maxBuildYExclusive;
+        return originWithinBuildHeight(originY, minBuildY, maxBuildYExclusive)
+                && bottom >= minBuildY && top < maxBuildYExclusive;
     }
 }
