@@ -10,6 +10,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -17,9 +18,11 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.common.IOUtilities;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -55,6 +58,7 @@ public final class AuraGenerationGameTests {
             helper.succeed();
             return;
         }
+        assertCrystalWorldGenUsesLiveSurfaceHeightmap(level, anchor);
         int chunkX = anchor.getX() >> 4;
         int chunkZ = anchor.getZ() >> 4;
         BlockPos center = sampleCenter(chunkX, chunkZ);
@@ -992,6 +996,43 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_CRYSTAL_WORLDGEN_QUEUE_REENTRANT_ENQUEUE=PASS "
                 + "firstBatch=1 deferred=1 duplicateInFlight=ignored");
+    }
+
+    private static void assertCrystalWorldGenUsesLiveSurfaceHeightmap(ServerLevel level, BlockPos anchor) {
+        int chunkX = anchor.getX() >> 4;
+        int chunkZ = anchor.getZ() >> 4;
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) {
+            throw new AssertionError("Crystal heightmap fixture chunk must already be loaded");
+        }
+
+        int x = chunkX * 16 + 8;
+        int z = chunkZ * 16 + 8;
+        int supportY = level.getMaxBuildHeight() - 16;
+        for (int y = supportY + 1; y < level.getMaxBuildHeight(); y++) {
+            level.setBlock(new BlockPos(x, y, z), Blocks.AIR.defaultBlockState(), 3);
+        }
+        level.setBlock(new BlockPos(x, supportY, z), Blocks.STONE.defaultBlockState(), 3);
+
+        int expectedSurfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        if (expectedSurfaceY != supportY + 1) {
+            throw new AssertionError("Runtime crystal fixture did not establish its known surface: expected="
+                    + (supportY + 1) + " actual=" + expectedSurfaceY);
+        }
+        int actualSurfaceY = CrystalClusterWorldGen.runtimeSurfaceHeight(level, x, z);
+        if (actualSurfaceY != expectedSurfaceY) {
+            throw new AssertionError("Deferred crystal worldgen did not sample the live surface heightmap: expected="
+                    + expectedSurfaceY + " actual=" + actualSurfaceY);
+        }
+
+        int generatedSize = CrystalClusterWorldGen.generateChunk(
+                level, new ChunkPos(chunkX, chunkZ), RandomSource.create(0x544341555241L));
+        int finalSurfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
+        if (finalSurfaceY != expectedSurfaceY) {
+            throw new AssertionError("Crystal cluster generation unexpectedly changed the fixture surface: expected="
+                    + expectedSurfaceY + " actual=" + finalSurfaceY);
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_RUNTIME_SURFACE_HEIGHTMAP=PASS surfaceY="
+                + actualSurfaceY + " generatedSize=" + generatedSize);
     }
 
     private static boolean isColdRestartReadPhase() {
