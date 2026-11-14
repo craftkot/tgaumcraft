@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for the workbench-only world safety gate."""
 import importlib.util
+import os
 from pathlib import Path
 import subprocess
 
@@ -88,6 +89,31 @@ expect("send_chat '/difficulty peaceful'" not in generator.split("body = r'''", 
 # The shared smoke's English chat sentence is localized in ru_ru. The isolated
 # workbench runner must replace it with the invariant PlayerList server log.
 shared_smoke = Path(__file__).with_name("client_smoke.sh").read_text(encoding="utf-8")
+
+title_click_anchor = "title_click_y=$((Y + HEIGHT * 33 / 100))"
+expect(shared_smoke.count(title_click_anchor) == 1,
+       "shared title-screen Singleplayer click anchor changed; review the isolated replacement")
+expect('title_click_y_anchor = "title_click_y=$((Y + HEIGHT * 33 / 100))"' in generator
+       and 'title_click_percent = {"2": 33, "3": 39}[scale]' in generator
+       and "source.count(title_click_y_anchor) != 1" in generator
+       and "source = source.replace(title_click_y_anchor, title_click_y_replacement, 1)" in generator,
+       "Workbench generator does not replace the title click with a GUI-scale-specific coordinate")
+for gui_scale, percent, expected_y in (("2", 33, 273), ("3", 39, 319)):
+    env = os.environ.copy()
+    env.update({
+        "TC_WORKBENCH_LANG": "en_us",
+        "TC_WORKBENCH_TESS_LANG": "eng",
+        "TC_WORKBENCH_GUI_SCALE": gui_scale,
+    })
+    generated = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("client_workbench_gui_smoke.py"))],
+        check=True, capture_output=True, text=True, env=env,
+    ).stdout
+    expect(f"title_click_y=$((Y + HEIGHT * {percent} / 100))" in generated,
+           f"GUI scale {gui_scale} generated the wrong title-screen click percentage")
+    actual_y = 20 + (768 * percent // 100)
+    expect(actual_y == expected_y,
+           f"GUI scale {gui_scale} click must land at root y={expected_y}, got {actual_y}")
 english_login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
 expect(english_login_gate in shared_smoke,
        "shared smoke login anchor changed; generator replacement must be reviewed")
