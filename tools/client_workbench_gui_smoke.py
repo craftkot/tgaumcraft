@@ -76,7 +76,7 @@ echo "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=mode:$mode_x,$mode_y difficulty:$
   | tee -a client-smoke-status.txt"""
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
 
-world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids a\n"
+world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\n"
 world_fixture_end = "  capture 08b-source-arcane-workbench-item-model\n"
 world_fixture_replacement = """  # Build beside the real player spawn. The previous fixed fixture force-loaded
   # chunk (0,0), hundreds of blocks from a random spawn; that remote chunk
