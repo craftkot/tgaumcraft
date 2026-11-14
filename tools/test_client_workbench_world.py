@@ -193,7 +193,7 @@ expect("chat_probe_anchor = (" in generator
        and "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\\n" in generator
        and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\\n" in generator
        and "WORKBENCH_POST_TP_MUTATION=PASS" in generator
-       and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
+       and "  send_chat_probe '/give @p thaumcraft:crucible' 06g\\n" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
        "Workbench smoke must verify a second real world mutation after teleport before granting the Crucible")
 
@@ -436,12 +436,12 @@ expect("sleep 1" in replacement_body[type_index:return_index]
        and "(Changed the block at|Изменён блок в точке)" in chat_probe_replacement_body
        and "grep -F -c" in chat_probe_replacement_body
        and "capture 06f-post-teleport-gold-cleared" in chat_probe_replacement_body
-       and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
+       and "send_chat_probe '/give @p thaumcraft:crucible' 06g" in chat_probe_replacement_body
        and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05")
            < chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp")
            < chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06")
            < chat_probe_replacement_body.index("WORKBENCH_POST_TP_MUTATION=PASS")
-           < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
+           < chat_probe_replacement_body.index("send_chat_probe '/give @p thaumcraft:crucible' 06g"),
        "Workbench smoke must prove a second real world mutation after teleport before granting items or building the fixture")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
