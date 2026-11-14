@@ -133,6 +133,7 @@ send_chat_replacement = """  send_chat() {
   }
   send_chat_probe() {
     local raw_command="$1"
+    local probe_prefix="\${2:-05}"
     if [[ "$raw_command" != /* ]]; then
       echo "WORKBENCH_CHAT_PROBE_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
       exit 1
@@ -147,14 +148,14 @@ send_chat_replacement = """  send_chat() {
     echo "WORKBENCH_CHAT_PROBE_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
-    capture 05b-chat-open-after-slash
+    capture "\${probe_prefix}b-chat-open-after-slash"
     xdotool type --clearmodifiers --delay 24 "$command_body"
     sleep 1
-    capture 05c-chat-text-before-enter
+    capture "\${probe_prefix}c-chat-text-before-enter"
     xdotool key --clearmodifiers Return
     sleep 4
-    capture 05d-chat-submit-result
-    echo 'WORKBENCH_CHAT_PROBE_INPUT_SENT=YES' | tee -a client-smoke-status.txt
+    capture "\${probe_prefix}d-chat-submit-result"
+    echo "WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix" | tee -a client-smoke-status.txt
   }"""
 if source.count(send_chat_anchor) != 1:
     raise SystemExit("Shared send_chat helper changed; refusing unsafe injection")
@@ -199,8 +200,30 @@ chat_probe_anchor = (
     "  send_chat '/give @p thaumcraft:crucible'\n"
 )
 chat_probe_replacement = (
-    "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'\n"
+    "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\n"
     "  send_chat '/tp @p ~ ~ ~ 0 28'\n"
+    "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\n"
+    "  first_workbench_mutation=\"$(grep -m1 -Eo 'Changed the block at -?[0-9]+, -?[0-9]+, -?[0-9]+' client-smoke/client.log || true)\"\n"
+    "  if [[ -z \"$first_workbench_mutation\" ]]; then\n"
+    "    echo 'WORKBENCH_POST_TP_MUTATION=NO_INITIAL_MARKER' | tee -a client-smoke-status.txt\n"
+    "    capture 06e-post-teleport-mutation-missing\n"
+    "    exit 1\n"
+    "  fi\n"
+    "  mutation_count=0\n"
+    "  for attempt in {1..12}; do\n"
+    "    mutation_count=\"$(grep -F -c \"$first_workbench_mutation\" client-smoke/client.log || true)\"\n"
+    "    if [[ \"$mutation_count\" -ge 2 ]]; then\n"
+    "      echo 'WORKBENCH_POST_TP_MUTATION=PASS' | tee -a client-smoke-status.txt\n"
+    "      break\n"
+    "    fi\n"
+    "    sleep 1\n"
+    "  done\n"
+    "  if [[ \"$mutation_count\" -lt 2 ]]; then\n"
+    "    echo \"WORKBENCH_POST_TP_MUTATION=FAIL count=$mutation_count marker=$first_workbench_mutation\" | tee -a client-smoke-status.txt\n"
+    "    capture 06e-post-teleport-mutation-missing\n"
+    "    exit 1\n"
+    "  fi\n"
+    "  capture 06f-post-teleport-gold-cleared\n"
     "  send_chat '/give @p thaumcraft:crucible'\n"
 )
 if source.count(chat_probe_anchor) != 1:

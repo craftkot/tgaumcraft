@@ -158,17 +158,20 @@ expect("xdotool key --clearmodifiers F3" in generator
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
 expect('xdotool key --clearmodifiers slash' in replacement_body
-       and 'local command_body="${raw_command#/}"' in replacement_body
+       and 'local command_body="\${raw_command#/}"' in replacement_body
        and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
-expect('capture 05b-chat-open-after-slash' in replacement_body
-       and 'capture 05c-chat-text-before-enter' in replacement_body
-       and 'capture 05d-chat-submit-result' in replacement_body
-       and 'WORKBENCH_CHAT_PROBE_INPUT_SENT=YES' in replacement_body,
-       "Workbench command probe must preserve chat-open, typed-command and post-submit screenshots without OCR success claims")
+probe_body = generator.split("send_chat_probe() {", 1)[1].split("\\n  }", 1)[0]
+expect('local probe_prefix="\${2:-05}"' in probe_body
+       and 'capture "\${probe_prefix}b-chat-open-after-slash"' in probe_body
+       and 'capture "\${probe_prefix}c-chat-text-before-enter"' in probe_body
+       and 'capture "\${probe_prefix}d-chat-submit-result"' in probe_body,
+       "second command probe must preserve a distinct screenshot set instead of overwriting the initial probe")
+expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
+       "command probe must identify which input sequence its screenshots belong to")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
-       "Workbench helper must not special-case a no-op difficulty command")
+       "Workbench helper must not special-case a no-op difficulty command")       "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator
        and "  send_chat '/gamemode creative'\\n" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
@@ -393,13 +396,21 @@ expect("wait_for_workbench_marker" in generator
        "Workbench smoke does not require the real server-to-client menu lifecycle")
 type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
-chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split(")", 1)[0]
+chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
-       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'" in chat_probe_replacement_body
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05" in chat_probe_replacement_body
        and "send_chat '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" in chat_probe_replacement_body
+       and "WORKBENCH_POST_TP_MUTATION=PASS" in chat_probe_replacement_body
+       and "grep -F -c" in chat_probe_replacement_body
+       and "capture 06f-post-teleport-gold-cleared" in chat_probe_replacement_body
        and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
-       and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block'") < chat_probe_replacement_body.index("send_chat '/tp @p ~ ~ ~ 0 28'") < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
-       "chat helper must prove a world-mutating command before the look reset and first item grant")
+       and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05")
+           < chat_probe_replacement_body.index("send_chat '/tp @p ~ ~ ~ 0 28'")
+           < chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06")
+           < chat_probe_replacement_body.index("WORKBENCH_POST_TP_MUTATION=PASS")
+           < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
+       "Workbench smoke must prove a second real world mutation after teleport before granting items or building the fixture")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
 expect("xdotool key --clearmodifiers F3" in before_open
