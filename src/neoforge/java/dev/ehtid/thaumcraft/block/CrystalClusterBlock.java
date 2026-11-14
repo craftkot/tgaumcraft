@@ -91,6 +91,11 @@ public final class CrystalClusterBlock extends Block {
     /** World and renderer MUST use identical attached-face criteria. */
     public static boolean hasCrystalSupport(BlockGetter level, BlockPos pos, Direction d) {
         BlockPos side=pos.relative(d);
+        // Outline queries run on both the logical server and the client. A
+        // world-backed getter must not load a neighbouring chunk just to decide
+        // whether this face supports the crystal; until it is loaded, treat it
+        // as absent. Chunk-only render getters remain local to their own view.
+        if (level instanceof LevelReader reader && !reader.hasChunkAt(side)) return false;
         BlockState support=level.getBlockState(side);
         return support.is(CRYSTAL_SUPPORTS)
                 && support.isFaceSturdy(level,side,d.getOpposite());

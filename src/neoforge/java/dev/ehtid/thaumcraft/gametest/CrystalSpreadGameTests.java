@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.CollisionContext;
 
 /**
  * Executes the production CrystalClusterBlock.randomTick method in a real
@@ -125,6 +126,19 @@ public final class CrystalSpreadGameTests {
         BlockState supportSourceState = placeBoundaryCrystal(
                 level, sourceChunk, sourceChunkX, sourceChunkZ, crystal, supportBoundarySource, 3, 3,
                 neighborChunkX, "support-source");
+
+        // Shape/outline queries inspect all six support faces. The east face is
+        // across the unloaded chunk boundary; the loaded DOWN support must still
+        // select BETA26's lower half-cube without requesting that neighbour.
+        var boundaryOutline = crystal.getShape(
+                destinationSourceState, level, destinationBoundarySource, CollisionContext.empty());
+        AABB outlineBounds = boundaryOutline.bounds();
+        if (Math.abs(outlineBounds.minY) > 0.0001D
+                || Math.abs(outlineBounds.maxY - 0.5D) > 0.0001D) {
+            throw new AssertionError("Crystal outline lost its single loaded DOWN support: " + outlineBounds);
+        }
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-outline-shape");
+        System.out.println("TC_GAMETEST_CRYSTAL_OUTLINE_UNLOADED_SUPPORT=PASS no_force_load=YES bounds=down-half");
 
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-aura-get");
