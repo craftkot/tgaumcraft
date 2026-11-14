@@ -4165,3 +4165,6 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 
 
 - Follow-up syntax review caught that commit 6fa94a7 encoded the line breaks surrounding the Python chat_probe_replacement tuple as literal backslash-n text outside string literals. Corrected the tuple to real Python source lines while retaining one escaped newline inside each replacement string. The 6fa94a7/8981778b workflow results are not acceptance evidence; only the corrected exact head can be considered.
+
+
+- Added an offline regression guard that compiles client_workbench_gui_smoke.py as Python before generating shell. This specifically prevents another literal-newline source corruption from reaching the real-client workflow; it does not execute the generator or claim gameplay acceptance.

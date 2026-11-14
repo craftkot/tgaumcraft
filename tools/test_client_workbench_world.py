@@ -72,7 +72,14 @@ expect_rejected(commands + b"\\x03\\x00\\x08GameType\\x00\\x00",
 
 expect((chr(92) + "nexpect(") not in Path(__file__).read_text(encoding="utf-8"),
        "test source contains a literal escaped newline between Python statements")
-generator = Path(__file__).with_name("client_workbench_gui_smoke.py").read_text(encoding="utf-8")
+generator_path = Path(__file__).with_name("client_workbench_gui_smoke.py")
+generator = generator_path.read_text(encoding="utf-8")
+try:
+    compile(generator, str(generator_path), "exec")
+except SyntaxError as exc:
+    expect(False, f"Workbench generator has invalid Python syntax: {exc}")
+else:
+    expect(True, "Workbench generator parses as Python before shell generation")
 expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)' in generator,
        "OCR self-test must write diagnostics to stderr, not corrupt generated shell stdout")
 expect("send_chat '/save-all flush'" not in generator,
