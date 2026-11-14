@@ -194,7 +194,11 @@ body = r'''
   # The marker is emitted ONLY if the server sees the player near the bench.
   # Check the fresh log tail, not an old chat line from a previous attempt.
   workbench_position_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'
+  # The actual integrated-server log reports the preceding teleport result as
+  # (12.5, 151.5, 3.5). The former predicate was centered 1.5 blocks below
+  # that position with a 1-block radius, so its condition was mathematically
+  # false even though the player had reached the platform.
+  send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'
   workbench_position_confirmed=NO
   for attempt in {1..12}; do
     if tail -c "+$((workbench_position_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POSITION_CONFIRMED'; then
