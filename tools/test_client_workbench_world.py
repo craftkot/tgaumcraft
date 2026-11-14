@@ -229,8 +229,8 @@ expect("chat_probe_anchor = (" in generator
        and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement +" in generator,
        "Workbench smoke must anchor the chat probe to the unique Crucible bootstrap sequence")
-expect(shared_smoke.count("  send_chat '/gamemode creative'\\n") > 1
-       and shared_smoke.count("  send_chat '/gamemode creative'\\n  send_chat '/difficulty peaceful'\\n  send_chat '/give @p thaumcraft:crucible'\\n") == 1,
+expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
+       and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
 
 expect("capture 05e-after-peaceful-command" in generator,
