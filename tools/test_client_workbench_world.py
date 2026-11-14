@@ -8,11 +8,6 @@ spec = importlib.util.spec_from_file_location("assert_client_workbench_world", p
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 
-difficulty_path = Path(__file__).with_name("assert_client_workbench_difficulty.py")
-difficulty_spec = importlib.util.spec_from_file_location("assert_client_workbench_difficulty", difficulty_path)
-difficulty_module = importlib.util.module_from_spec(difficulty_spec)
-difficulty_spec.loader.exec_module(difficulty_module)
-
 
 def byte_tag(name: str, value: int) -> bytes:
     encoded = name.encode("utf-8")
@@ -72,84 +67,6 @@ expect_rejected(commands + creative + byte_tag("Difficulty", 4),
 expect_rejected(commands + b"\\x03\\x00\\x08GameType\\x00\\x00",
                 "truncated GameType passed")
 
-# Integrated-server difficulty command evidence (save-all is dedicated-server-only).
-def expect_difficulty(
-    log: str, accepted: bool, message: str, *, start_offset: int = 0
-) -> None:
-    try:
-        difficulty_module.assert_peaceful_response(log, start_offset=start_offset)
-    except AssertionError:
-        expect(not accepted, message)
-    else:
-        expect(accepted, message)
-
-
-server_set_log = (
-    "[09:13:35] [Server thread/INFO] [minecraft/MinecraftServer]: "
-    "[Dev: The difficulty has been set to Peaceful]\n"
-    "[09:13:35] [Render thread/INFO] [minecraft/ChatComponent]: "
-    "[System] [CHAT] The difficulty has been set to Peaceful\n"
-)
-already_peaceful_log = (
-    "[09:13:35] [Render thread/INFO] [minecraft/ChatComponent]: "
-    "[System] [CHAT] The difficulty did not change; it is already set to peaceful\n"
-)
-already_peaceful_log_ru = (
-    "[16:33:49] [Render thread/INFO] [minecraft/ChatComponent]: "
-    "[System] [CHAT] Сложность не изменилась; уже выставлено значение «peaceful»\n"
-)
-client_only_log = (
-    "[09:13:35] [Render thread/INFO] [minecraft/ChatComponent]: "
-    "[System] [CHAT] The difficulty has been set to Peaceful\n"
-)
-expect_difficulty(server_set_log, True, "server-confirmed Peaceful command was rejected")
-expect_difficulty(already_peaceful_log, True, "already-Peaceful English response was rejected")
-expect_difficulty(already_peaceful_log_ru, True, "already-Peaceful Russian response was rejected")
-expect_difficulty(
-    "prefix\n" + already_peaceful_log_ru,
-    True,
-    "current-command Russian response after the captured byte offset was rejected",
-    start_offset=len("prefix\n".encode("utf-8")),
-)
-expect_difficulty(
-    already_peaceful_log_ru + "prefix\n",
-    False,
-    "a stale Russian response written before the command offset was trusted",
-    start_offset=len((already_peaceful_log_ru + "prefix\n").encode("utf-8")),
-)
-expect_difficulty(client_only_log, False, "client-only echo was trusted without server confirmation")
-expect_difficulty("CLIENT_SENT_DIFFICULTY=YES\n", False, "typed-command marker was trusted")
-expect_difficulty(
-    "prefix\n" + server_set_log,
-    True,
-    "current server response after the captured byte offset was rejected",
-    start_offset=len("prefix\n".encode("utf-8")),
-)
-expect_difficulty(
-    server_set_log + client_only_log,
-    False,
-    "a stale server response written before the command offset was trusted",
-    start_offset=len(server_set_log.encode("utf-8")),
-)
-expect_difficulty(
-    server_set_log,
-    False,
-    "an offset beyond the current log length was accepted",
-    start_offset=len(server_set_log.encode("utf-8")) + 1,
-)
-expect_difficulty(
-    server_set_log + "[Render thread/INFO] [minecraft/ChatComponent]: "
-    "[System] [CHAT] save-all flush<--[HERE]\n",
-    False,
-    "rejected singleplayer save-all command was ignored",
-)
-expect_difficulty(
-    "[09:13:35] [Server thread/INFO] [minecraft/MinecraftServer]: "
-    "[Dev: The difficulty has been set to Hard]\n",
-    False,
-    "Hard difficulty was accepted as Peaceful",
-)
-
 expect((chr(92) + "nexpect(") not in Path(__file__).read_text(encoding="utf-8"),
        "test source contains a literal escaped newline between Python statements")
 generator = Path(__file__).with_name("client_workbench_gui_smoke.py").read_text(encoding="utf-8")
@@ -157,19 +74,14 @@ expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"
        "OCR self-test must write diagnostics to stderr, not corrupt generated shell stdout")
 expect("send_chat '/save-all flush'" not in generator,
        "GUI generator still sends the unavailable singleplayer save-all command")
-expect("assert_client_workbench_difficulty.py client-smoke/client.log" in generator,
-       "GUI generator does not verify live integrated-server difficulty feedback")
-offset_capture = 'WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"'
-expect(offset_capture in generator,
-       "GUI helper does not capture the client-log byte offset before the first Peaceful command")
-expect('difficulty_log_offset="${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}"' in generator,
-       "Workbench smoke does not reuse the offset captured by the first real command")
-expect("  send_chat '/difficulty peaceful'" not in generator.split("body = r'''", 1)[1],
-       "Workbench smoke body sends a second Peaceful command after the captured response window")
-expect('--from-offset "$difficulty_log_offset" --wait-seconds 12' in generator,
-       "GUI generator does not use bounded current-command log polling")
-expect("assert_client_workbench_world.py run/saves --require-peaceful" not in generator,
-       "GUI generator still reads the stale pre-shutdown difficulty byte")
+expect('workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt"' in generator,
+       "Workbench smoke must verify Peaceful from authoritative world NBT before any scripted command")
+expect("assert_client_workbench_difficulty.py" not in generator,
+       "Workbench smoke must not poll client.log for chat feedback that Minecraft does not log")
+expect("WORKBENCH_DIFFICULTY_LOG_OFFSET" not in generator,
+       "Workbench smoke still captures an irrelevant client-log offset")
+expect("send_chat '/difficulty peaceful'" not in generator.split("body = r'''", 1)[1],
+       "Workbench smoke still sends a redundant no-op difficulty command")
 
 
 # The shared smoke's English chat sentence is localized in ru_ru. The isolated
@@ -215,26 +127,24 @@ expect('xdotool key --clearmodifiers slash' in replacement_body
        and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat explicitly and type only the command body")
-expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' in replacement_body
-       and 'capture 05b-chat-open-after-slash' in replacement_body
-       and 'capture 05c-chat-text-before-enter' in replacement_body
-       and 'capture 05d-chat-submit-result' in replacement_body,
-       "Workbench command probe must capture slash-opened chat, typed command and submit result")
-expect('WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"' in replacement_body,
-       "Workbench helper does not capture the first Peaceful command response window")
+expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body
+       and 'capture 05b-chat-open-after-slash' not in replacement_body
+       and 'capture 05c-chat-text-before-enter' not in replacement_body
+       and 'capture 05d-chat-submit-result' not in replacement_body,
+       "Workbench helper must not special-case a no-op difficulty command or depend on chat screenshots")
 expect("chat_probe_anchor = (" in generator
        and "  send_chat '/gamemode creative'\\n" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
-       and "chat_probe_replacement = \"  send_chat '/difficulty peaceful'\\n\"" in generator
-       and "source = source.replace(chat_probe_anchor, chat_probe_replacement + \"  send_chat '/give @p thaumcraft:crucible'\\n\", 1)" in generator,
-       "Workbench smoke must anchor the chat probe to the unique Crucible bootstrap sequence")
+       and "chat_probe_replacement = \"  send_chat '/give @p thaumcraft:crucible'\\n\"" in generator
+       and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
+       "Workbench smoke must replace the unique initial bootstrap with only the required Crucible grant")
 expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
        and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
 
-expect("capture 05e-after-peaceful-command" in generator,
-       "Workbench smoke does not retain the screenshot after server-confirmed Peaceful command")
+expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
+       "Workbench smoke does not record the authoritative pre-command Peaceful world gate")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
 expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,

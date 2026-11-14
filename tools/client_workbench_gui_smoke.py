@@ -29,7 +29,7 @@ if source.count(options_line) != 1:
 if source.count(anchor) != 1:
     raise SystemExit("Workbench-to-scanner anchor changed; refusing unsafe injection")
 world_gate = "python3 tools/assert_client_world_commands.py run/saves | tee -a client-smoke-status.txt"
-workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves | tee -a client-smoke-status.txt"
+workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt"
 login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
 
@@ -53,24 +53,6 @@ send_chat_replacement = """  send_chat() {
     target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
     target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
-    if [[ "$raw_command" == "/difficulty peaceful" && -z "${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}" ]]; then
-      WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"
-      echo "WORKBENCH_DIFFICULTY_LOG_OFFSET=$WORKBENCH_DIFFICULTY_LOG_OFFSET" | tee -a client-smoke-status.txt
-    fi
-    if [[ "$raw_command" == "/difficulty peaceful" ]]; then
-      # Slash opens Minecraft's command chat. Type only the remainder so
-      # the command prefix is neither lost nor doubled by the key binding.
-      xdotool key --clearmodifiers slash
-      sleep 1
-      capture 05b-chat-open-after-slash
-      xdotool type --clearmodifiers --delay 24 "$command_body"
-      sleep 1
-      capture 05c-chat-text-before-enter
-      xdotool key --clearmodifiers Return
-      sleep 4
-      capture 05d-chat-submit-result
-      return
-    fi
     xdotool key --clearmodifiers slash
     sleep 1
     xdotool type --clearmodifiers --delay 24 "$command_body"
@@ -103,10 +85,10 @@ chat_probe_anchor = (
     "  send_chat '/difficulty peaceful'\n"
     "  send_chat '/give @p thaumcraft:crucible'\n"
 )
-chat_probe_replacement = "  send_chat '/difficulty peaceful'\n"
+chat_probe_replacement = "  send_chat '/give @p thaumcraft:crucible'\n"
 if source.count(chat_probe_anchor) != 1:
     raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
-source = source.replace(chat_probe_anchor, chat_probe_replacement + "  send_chat '/give @p thaumcraft:crucible'\n", 1)
+source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)
 
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
@@ -137,22 +119,12 @@ body = r'''
   xdotool key --clearmodifiers F3
   sleep 1
 
-  # The shared bootstrap's initial NBT gate is narrowed only in this generated
-  # copy: require real cheats + Creative, then set Peaceful and persist it before
-  # any scripted block/item interaction. The shared client_smoke.sh is untouched.
-  # Integrated singleplayer does not register /save-all (dedicated-server-only).
-  # The initial NBT gate already proved cheats + Creative; now require the
-  # integrated server's actual command feedback instead of reading stale
-  # pre-save level.dat metadata.
-  difficulty_log_offset="${WORKBENCH_DIFFICULTY_LOG_OFFSET:-}"
-  if [[ -z "$difficulty_log_offset" ]]; then
-    echo 'WORKBENCH_DIFFICULTY_LOG_OFFSET=NOT_CAPTURED' | tee -a client-smoke-status.txt
-    exit 1
-  fi
-  capture 05e-after-peaceful-command
-  python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log \
-    --from-offset "$difficulty_log_offset" --wait-seconds 12 \
-    | tee -a client-smoke-status.txt
+  # The generated world gate above has already checked the authoritative
+  # level.dat Difficulty byte is Peaceful, along with cheats and Creative.
+  # Do not issue a redundant /difficulty peaceful command: Minecraft's
+  # no-op response is not reliably written to client.log.
+  echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
+
 
   # The existing real workbench at 12,149,7 is opened by an actual right click.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots

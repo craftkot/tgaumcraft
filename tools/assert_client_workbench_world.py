@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Verify the real Minecraft world used by the isolated Arcane Workbench smoke.
 
-The generated copy replaces only the shared initial world gate with this
-narrower check: real allowCommands=1 and Creative must be present before any
-scripted interaction. Difficulty is changed in the live integrated server and
-verified from its command feedback; /save-all is unavailable in singleplayer.
-The --require-peaceful mode remains available for a post-shutdown NBT check.
+The generated copy requires authoritative level.dat evidence before any
+scripted interaction: cheats enabled, Creative game mode and Peaceful
+difficulty. The world-creation UI sets these options before the integrated
+server starts, so no redundant difficulty command or chat-log heuristic is
+needed. The same NBT gate can be used after shutdown.
 """
 from pathlib import Path
 import gzip
