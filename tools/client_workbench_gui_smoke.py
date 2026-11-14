@@ -140,6 +140,25 @@ body = r'''
 
   # Stand on the real platform and aim at the block's south face.
   send_chat '/tp @p 12.5 150 3.5 0 31'
+  # Native server-side position gate: the previous failed run captured jungle
+  # at the spawn point, then OCR'd world pixels as if the GUI were open.
+  # The marker is emitted ONLY if the server sees the player near the bench.
+  # Check the fresh log tail, not an old chat line from a previous attempt.
+  workbench_position_log_offset="$(wc -c < client-smoke/client.log)"
+  send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'
+  workbench_position_confirmed=NO
+  for attempt in {1..12}; do
+    if tail -c "+$((workbench_position_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POSITION_CONFIRMED'; then
+      workbench_position_confirmed=YES
+      break
+    fi
+    sleep 1
+  done
+  echo "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" | tee -a client-smoke-status.txt
+  if [ "$workbench_position_confirmed" != YES ]; then
+    capture 08c-workbench-position-not-confirmed
+    exit 1
+  fi
   sleep 2
   capture 08c-workbench-before-open
   xdotool click 3
