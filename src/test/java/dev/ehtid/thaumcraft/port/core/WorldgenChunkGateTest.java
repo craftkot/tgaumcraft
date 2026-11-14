@@ -45,6 +45,38 @@ public final class WorldgenChunkGateTest {
                         "coordinate gate rejects reload " + x + "," + z);
             }
         }
+        // The coordinate-aware adapter must reject every incomplete context, not
+        // just reloads. This guards against accidentally bypassing dimension or
+        // availability checks when the caller supplies a valid origin.
+        for (int mask = 0; mask < 8; mask++) {
+            boolean fresh = (mask & 1) != 0;
+            boolean dimension = (mask & 2) != 0;
+            boolean available = (mask & 4) != 0;
+            for (int x : edges) {
+                for (int z : edges) {
+                    int cx = WorldgenChunkGate.chunkCoordinate(x);
+                    int cz = WorldgenChunkGate.chunkCoordinate(z);
+                    check(WorldgenChunkGate.mayAttemptPlacementAt(
+                                    fresh, dimension, available, x, z, cx, cz) == (mask == 7),
+                            "coordinate flags " + mask + " at " + x + "," + z);
+                }
+            }
+        }
+        // Chunk coordinates at int extrema must not overflow via +/-15
+        // arithmetic, especially on negative world borders.
+        int[] extremeBlocks = {Integer.MIN_VALUE, Integer.MIN_VALUE + 15,
+                Integer.MIN_VALUE + 16, Integer.MAX_VALUE - 15,
+                Integer.MAX_VALUE};
+        int[] extremeChunks = {-134217728, -134217728, -134217727,
+                134217727, 134217727};
+        for (int i = 0; i < extremeBlocks.length; i++) {
+            int b = extremeBlocks[i];
+            int c = extremeChunks[i];
+            check(WorldgenChunkGate.chunkCoordinate(b) == c, "extreme chunk " + b);
+            check(WorldgenChunkGate.originInChunk(b, b, c, c), "extreme origin " + b);
+            check(WorldgenChunkGate.mayAttemptPlacementAt(true, true, true, b, b, c, c),
+                    "extreme placement " + b);
+        }
         System.out.println("M12 WorldgenChunkGate: OK (" + assertions + " assertions)");
     }
 }
