@@ -98,12 +98,50 @@ send_chat_replacement = """  send_chat() {
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
+    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
+      capture 07a-post-forceload-chat-open
+    fi
     xdotool type --clearmodifiers --delay 24 "$command_body"
+    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
+      sleep 1
+      capture 07b-post-forceload-chat-text
+    fi
     xdotool key --clearmodifiers Return
-    sleep 4
+    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
+      sleep 2
+      capture 07c-post-forceload-chat-submit
+      sleep 2
+    else
+      sleep 4
+    fi
   }"""
 if source.count(send_chat_anchor) != 1:
     raise SystemExit("Shared send_chat helper changed; refusing unsafe injection")
+
+post_force_load_anchor = """  send_chat '/forceload add 0 0'
+  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
+"""
+post_force_load_replacement = """  send_chat '/forceload add 0 0'
+  post_force_load_log_offset="$(wc -c < client-smoke/client.log)"
+  send_chat '/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'
+  post_force_load_chat_confirmed=NO
+  for attempt in {1..8}; do
+    if tail -c "+$((post_force_load_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'; then
+      post_force_load_chat_confirmed=YES
+      break
+    fi
+    sleep 1
+  done
+  echo "WORKBENCH_POST_FORCELOAD_CHAT_GATE=$post_force_load_chat_confirmed" | tee -a client-smoke-status.txt
+  if [ "$post_force_load_chat_confirmed" != YES ]; then
+    capture 07d-post-forceload-chat-not-confirmed
+    exit 1
+  fi
+  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
+"""
+
+if source.count(post_force_load_anchor) != 1:
+    raise SystemExit("Post-forceload command sequence changed; refusing unsafe injection")
 
 if source.count(world_gate) != 1:
     raise SystemExit("Shared world NBT gate changed; refusing unsafe injection")
@@ -127,6 +165,7 @@ if source.count(world_settings_anchor) != 1:
     raise SystemExit("Shared world-setting coordinates changed; refusing unsafe injection")
 source = source.replace(world_settings_anchor, world_settings_replacement, 1)
 source = source.replace(send_chat_anchor, send_chat_replacement, 1)
+source = source.replace(post_force_load_anchor, post_force_load_replacement, 1)
 
 # Match the unique initial Crucible bootstrap, not other creative commands.
 chat_probe_anchor = (
