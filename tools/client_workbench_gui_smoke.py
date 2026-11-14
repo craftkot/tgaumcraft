@@ -224,7 +224,10 @@ chat_probe_anchor = (
     "  send_chat '/difficulty peaceful'\n"
     "  send_chat '/give @p thaumcraft:crucible'\n"
 )
-chat_probe_replacement = (\n    "  send_chat_probe '/tp @p ~ ~ ~ 0 28'\\n"\n    "  send_chat '/give @p thaumcraft:crucible'\\n"\n)
+chat_probe_replacement = (
+    "  send_chat_probe '/tp @p ~ ~ ~ 0 28'\n"
+    "  send_chat '/give @p thaumcraft:crucible'\n"
+)
 if source.count(chat_probe_anchor) != 1:
     raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
 source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)

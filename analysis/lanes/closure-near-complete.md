@@ -4162,3 +4162,6 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 
 
 - Static-oracle review immediately after commit 6fa94a7 caught that the command-order assertion compared the injected probe against the earlier source anchor rather than the replacement body. Scoped the order check to chat_probe_replacement_body; no production behavior changed. The exact-head Workbench run on 6fa94a7 is not accepted until its offline regression result is known.
+
+
+- Follow-up syntax review caught that commit 6fa94a7 encoded the line breaks surrounding the Python chat_probe_replacement tuple as literal backslash-n text outside string literals. Corrected the tuple to real Python source lines while retaining one escaped newline inside each replacement string. The 6fa94a7/8981778b workflow results are not acceptance evidence; only the corrected exact head can be considered.
