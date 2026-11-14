@@ -404,6 +404,7 @@ expect("sleep 1" in replacement_body[type_index:return_index]
        and "send_chat '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
        and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" in chat_probe_replacement_body
        and "WORKBENCH_POST_TP_MUTATION=PASS" in chat_probe_replacement_body
+       and "(Changed the block at|Изменён блок в точке)" in chat_probe_replacement_body
        and "grep -F -c" in chat_probe_replacement_body
        and "capture 06f-post-teleport-gold-cleared" in chat_probe_replacement_body
        and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
