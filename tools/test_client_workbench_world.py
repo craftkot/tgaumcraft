@@ -221,7 +221,7 @@ expect('if [[ "$raw_command" == "/say TC_WORKBENCH_CHAT_INPUT_OK" ]]' in replace
        "Workbench chat probe must capture the real GUI before text entry, before Enter, and after submit")
 expect('WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"' in replacement_body,
        "Workbench helper does not capture the first Peaceful command response window")
-expect("chat_probe_anchor = \\\"  send_chat '/gamemode creative'\\\\n\\\"" in generator
+expect("chat_probe_anchor = \"  send_chat '/gamemode creative'\\n\"" in generator
        and "grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log" in generator
        and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
