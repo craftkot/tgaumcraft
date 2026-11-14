@@ -157,10 +157,15 @@ public final class CrystalClusterBlock extends Block {
                 if(flux) aura.polluteFlux(pos,10); else aura.addVis(pos,10);
             } else {
                 boolean touchingSame=false;
-                for(Direction d:Direction.values())
-                    if(level.getBlockState(pos.relative(d)).is(this)) {
+                for(Direction d:Direction.values()) {
+                    BlockPos neighbor=pos.relative(d);
+                    // A size-zero crystal may be on a chunk edge. Never load an
+                    // adjacent chunk just to answer this same-variant adjacency check.
+                    if(!level.hasChunkAt(neighbor)) continue;
+                    if(level.getBlockState(neighbor).is(this)) {
                         touchingSame=true;break;
                     }
+                }
                 if(LegacyBlockCrystalGrowthRules.removeStarved(s,touchingSame)) {
                     // Source removes block and returns aura without manual
                     // crystal item drops in this starvation-only branch.

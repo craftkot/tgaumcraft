@@ -54,6 +54,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_ISOLATED=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_SAME=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_OTHER_VARIANT=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_UNLOADED_NEIGHBOR=PASS no_force_load=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_NO_DROPS=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_NO_AURA_CREATED=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_ACCEPTED=YES' || return 1

@@ -171,6 +171,27 @@ public final class CrystalSpreadGameTests {
                 throw new AssertionError("Crystal support lookup spent Vis");
             }
             System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_UNLOADED_SUPPORT=PASS no_force_load=YES vis=100.0");
+            // The size-zero starvation branch also scans same-variant neighbors.
+            // Put its source at local X=15 so EAST is an unloaded chunk; use a
+            // high, empty Y to avoid unrelated worldgen crystals in the fixture.
+            BlockPos starvationBoundaryPos = new BlockPos(baseX + 15, 200, baseZ + 8);
+            BlockState starvationBoundaryState = crystal.defaultBlockState()
+                    .setValue(CrystalClusterBlock.SIZE, 0)
+                    .setValue(CrystalClusterBlock.GENERATION, 3);
+            sourceChunk.setBlockState(starvationBoundaryPos.below(), Blocks.STONE.defaultBlockState(), false);
+            sourceChunk.setBlockState(starvationBoundaryPos, starvationBoundaryState, false);
+            aura.setVis(starvationBoundaryPos, 0.0F);
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                    "before-starvation-random-tick");
+            crystal.randomTick(starvationBoundaryState, level, starvationBoundaryPos,
+                    RandomSource.create(findStarvationSeed()));
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                    "after-starvation-random-tick");
+            if (!sourceChunk.getBlockState(starvationBoundaryPos).equals(starvationBoundaryState)) {
+                throw new AssertionError("An isolated size-zero crystal must remain during zero-aura starvation");
+            }
+            System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_UNLOADED_NEIGHBOR=PASS no_force_load=YES");
+
             System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_ACCEPTED=YES");
             helper.succeed();
         });
