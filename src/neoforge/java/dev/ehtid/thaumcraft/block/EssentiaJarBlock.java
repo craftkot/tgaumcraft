@@ -11,11 +11,17 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.BlockHitResult;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -29,7 +35,19 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public final class EssentiaJarBlock extends BaseEntityBlock {
  public static final MapCodec<EssentiaJarBlock> CODEC = simpleCodec(EssentiaJarBlock::new);
  private static final VoxelShape SHAPE = box(3,0,3,13,12,13);
- public EssentiaJarBlock(BlockBehaviour.Properties props) { super(props); }
+ // BETA26 BlockJar uses SoundsTC.JAR for break, step, place, hit and fall.
+ private static final SoundType ORIGINAL_JAR_SOUND = new SoundType(
+         0.5F, 1.0F,
+         SoundType.GLASS.getBreakSound(), SoundType.GLASS.getStepSound(),
+         SoundType.GLASS.getPlaceSound(), SoundType.GLASS.getHitSound(),
+         SoundType.GLASS.getFallSound()) {
+  @Override public SoundEvent getBreakSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getStepSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getPlaceSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getHitSound() { return ThaumcraftSounds.JAR.get(); }
+  @Override public SoundEvent getFallSound() { return ThaumcraftSounds.JAR.get(); }
+ };
+ public EssentiaJarBlock(BlockBehaviour.Properties props) { super(props.sound(ORIGINAL_JAR_SOUND)); }
  @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
  @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
  @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
@@ -47,7 +65,25 @@ public final class EssentiaJarBlock extends BaseEntityBlock {
  @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                        Player player, BlockHitResult hit) {
   if (!player.isShiftKeyDown()) return InteractionResult.PASS;
-  if (level.isClientSide) return InteractionResult.SUCCESS;
+  if (level.isClientSide) {
+   // BETA26 BlockJar: the labelled face removes the label and plays PAGE.
+   // Any other sneak + empty-hand interaction falls through to jar + bottle fill.
+   if (level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar
+           && jar.snapshot().filter() != null
+           && jar.facing() == hit.getDirection().get3DDataValue()) {
+    level.playLocalSound(pos, ThaumcraftSounds.PAGE.get(), SoundSource.BLOCKS,
+            1.0F, 1.0F, false);
+    ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED");
+   } else {
+    level.playLocalSound(pos, ThaumcraftSounds.JAR.get(), SoundSource.BLOCKS,
+            0.4F, 1.0F, false);
+    float pitch = 1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.3F;
+    level.playLocalSound(pos, SoundEvents.BOTTLE_FILL, SoundSource.BLOCKS,
+            0.5F, pitch, false);
+    ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED");
+   }
+   return InteractionResult.SUCCESS;
+  }
   if (!player.mayInteract(level, pos)) return InteractionResult.FAIL;
   if (!(level.getBlockEntity(pos) instanceof EssentiaJarBlockEntity jar))
    return InteractionResult.PASS;

@@ -1,0 +1,66 @@
+name: M16 real Minecraft label art and tint smoke
+
+on:
+  push:
+    branches:
+      - feature/closure-near-complete
+    paths:
+      - 'tools/client_label_smoke.py'
+      - '.github/workflows/closure-label-client.yml'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+  pull_request:
+    paths:
+      - 'tools/client_label_smoke.py'
+      - '.github/workflows/closure-label-client.yml'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
+      - 'src/main/resources/assets/thaumcraft/models/item/label*.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/jar_brace.json'
+      - 'src/main/resources/assets/thaumcraft/textures/item/label*.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/jar_brace.png'
+
+permissions:
+  contents: read
+
+jobs:
+  real-label-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install virtual graphics and input tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
+      - name: Generate isolated script from verified world boot and validate syntax
+        run: |
+          python3 tools/client_label_smoke.py > client-label-smoke-generated.sh
+          bash -n client-label-smoke-generated.sh
+      - name: Run REAL Minecraft client and capture original art and aspect colors
+        run: bash client-label-smoke-generated.sh
+      - name: Upload actual game screenshots and diagnostics even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-real-label-inventory-screenshots
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

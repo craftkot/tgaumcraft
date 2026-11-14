@@ -5,8 +5,11 @@ import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu;
 import net.minecraft.world.Containers;
@@ -40,15 +43,31 @@ public final class ArcaneWorkbenchBlock extends BaseEntityBlock {
         return new ArcaneWorkbenchBlockEntity(pos, state);
     }
 
-    @Override
-    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
-                                               Player player, BlockHitResult hit) {
+    private void openWorkbench(Level level, BlockPos pos, Player player) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity bench) {
             player.openMenu(new SimpleMenuProvider(
                     (id, inventory, viewer) -> new ArcaneWorkbenchMenu(id, inventory, bench),
                     Component.translatable("container.thaumcraft.arcane_workbench")));
         }
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
+                                               Player player, BlockHitResult hit) {
+        openWorkbench(level, pos, player);
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /**
+     * BETA26 onBlockActivated opened the GUI for either hand, even when the
+     * player held an item. Preserve that behavior on the 1.21.1 item-on-block path.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+                                              BlockPos pos, Player player, InteractionHand hand,
+                                              BlockHitResult hit) {
+        openWorkbench(level, pos, player);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override

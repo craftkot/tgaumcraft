@@ -6,5 +6,57 @@
         "stream": false
       }
     ]
+  },
+  "page": {
+    "category": "master",
+    "sounds": [
+      "thaumcraft:page1",
+      "thaumcraft:page2"
+    ]
+  },
+  "learn": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "thaumcraft:learn",
+        "stream": false
+      }
+    ]
+  },
+  "crystal": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "thaumcraft:crystal",
+        "stream": false
+      }
+    ]
+  },
+  "jar": {
+    "category": "block",
+    "sounds": [
+      "thaumcraft:jar1",
+      "thaumcraft:jar2",
+      "thaumcraft:jar3",
+      "thaumcraft:jar4"
+    ]
+  },
+  "dust": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "thaumcraft:dust",
+        "stream": false
+      }
+    ]
+  },
+  "key": {
+    "category": "ambient",
+    "sounds": [
+      {
+        "name": "thaumcraft:key",
+        "stream": false
+      }
+    ]
   }
 }

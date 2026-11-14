@@ -39,15 +39,16 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory) {
         this(id, inventory, new SimpleContainer(ArcaneWorkbenchRuntime.SLOT_COUNT),
-                DataSlot.standalone(), DataSlot.standalone());
+                DataSlot.standalone(), DataSlot.standalone(), DataSlot.standalone());
     }
 
     public ArcaneWorkbenchMenu(int id, Inventory inventory, Container bench) {
-        this(id, inventory, bench, visSlot(bench), recipeCostSlot(bench));
+        this(id, inventory, bench, visSlot(bench), recipeCostSlot(bench), crystalMaskSlot(bench));
     }
 
     private ArcaneWorkbenchMenu(int id, Inventory inventory, Container bench,
-                                DataSlot availableVis, DataSlot displayedVisCost) {
+                                DataSlot availableVis, DataSlot displayedVisCost,
+                                DataSlot requiredCrystalMask) {
         super(ThaumcraftMenus.ARCANE_WORKBENCH.get(), id);
         checkContainerSize(bench, ArcaneWorkbenchRuntime.SLOT_COUNT);
         this.bench = bench;
@@ -56,7 +57,7 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         this.displayedVisCost = displayedVisCost;
         addDataSlot(availableVis);
         addDataSlot(displayedVisCost);
-        requiredCrystalMask = crystalMaskSlot(bench);
+        this.requiredCrystalMask = requiredCrystalMask;
         addDataSlot(requiredCrystalMask);
         bench.startOpen(inventory.player);
         addSlot(new Slot(result, 0, 160, 64) {

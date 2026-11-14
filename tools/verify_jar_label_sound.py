@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Source/asset contract for the BETA26 labelled-jar removal sound."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+BLOCK = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java"
+SOUNDS = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java"
+MANIFEST = ROOT / "src/main/resources/assets/thaumcraft/sounds.json"
+AUDIO = ROOT / "src/main/resources/assets/thaumcraft/sounds"
+SMOKE = ROOT / "tools/client_jar_sound_smoke.py"
+MATCHER_TEST = ROOT / "tools/test_page_audio_match.py"
+
+# Git blob IDs from the pinned Thaumcraft 6.1.BETA26 source commit
+# 954022bb777b7546281fb36df8522f0ba6b43f81.
+ORIGINAL_PAGE_BLOBS = {
+    "page1.ogg": "a0c4f5b01b58e5720e79978637c20f425b79f2c5",
+    "page2.ogg": "2db59662cb448028f88c54d8df245be03d00b09e",
+}
+
+
+def git_blob_sha1(data: bytes) -> str:
+    header = f"blob {len(data)}\0".encode("ascii")
+    return hashlib.sha1(header + data).hexdigest()
+
+
+block = BLOCK.read_text(encoding="utf-8")
+sounds = SOUNDS.read_text(encoding="utf-8")
+manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+smoke = SMOKE.read_text(encoding="utf-8")
+
+LABEL_NBT_GREP = r'(^|[^[:alnum:]_])id:[[:space:]]*"thaumcraft:label"'
+if f"grep -Eq '{LABEL_NBT_GREP}' client-smoke/client.log" not in smoke:
+    raise SystemExit("M41 must parse the exact label item id with Minecraft SNBT whitespace")
+label_nbt_samples = (
+    ('Jar Label has the following entity data: {count: 1, id: "thaumcraft:label"}', True),
+    ('Dev has the following entity data: [{Slot: 0b, id: "thaumcraft:label", count: 1}]', True),
+    ('Item: {id:"thaumcraft:label",count:1}', True),
+    ('Item: {id: "thaumcraft:label_overlay",count:1}', False),
+    ('Item: {id: "minecraft:paper",count:1}', False),
+    ('Item: {custom_id: "thaumcraft:label",count:1}', False),
+)
+for sample, expected in label_nbt_samples:
+    result = subprocess.run(
+        ["grep", "-Eq", LABEL_NBT_GREP],
+        input=sample,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if (result.returncode == 0) != expected:
+        raise SystemExit(f"Minecraft SNBT label matcher regression: {sample!r}")
+print("MINECRAFT_SNBT_LABEL_WHITESPACE_MATCHER=PASS (6 fixtures)")
+
+
+method_start = block.index("protected InteractionResult useWithoutItem")
+client_start = block.index("if (level.isClientSide) {", method_start)
+client_end = block.index("return InteractionResult.SUCCESS;", client_start)
+client_branch = block[client_start:client_end]
+
+required_conditions = (
+    "jar.snapshot().filter() != null",
+    "jar.facing() == hit.getDirection().get3DDataValue()",
+)
+required_call = (
+    "level.playLocalSound(pos, ThaumcraftSounds.PAGE.get(), SoundSource.BLOCKS,"
+)
+if not all(condition in client_branch for condition in required_conditions):
+    raise SystemExit("Client page sound is not guarded by the original label-face predicate")
+if required_call not in client_branch:
+    raise SystemExit("Client label-removal branch does not play the original PAGE event")
+if 'ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED")' not in client_branch:
+    raise SystemExit("Client PAGE branch lacks its opt-in runtime branch marker")
+if 'ThaumcraftSmokeAudit.mark("JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED")' not in client_branch:
+    raise SystemExit("Client jar/bottle fallback lacks its opt-in runtime branch marker")
+if "1.0F, 1.0F, false);" not in client_branch:
+    raise SystemExit("BETA26 label-removal sound volume/pitch/local flag changed")
+if block.count("playLocalSound(") != 3:
+    raise SystemExit("EssentiaJarBlock must contain only PAGE, jar-empty and bottle-fill local sound calls")
+if "import net.minecraft.sounds.SoundEvents;" not in block:
+    raise SystemExit("Vanilla bottle-fill SoundEvents import is missing")
+fallback = client_branch.split("} else {", 1)
+if len(fallback) != 2:
+    raise SystemExit("Jar-empty fallback must be mutually exclusive with the labelled-face PAGE branch")
+fallback = fallback[1]
+for call in (
+    "ThaumcraftSounds.JAR.get()",
+    "SoundEvents.BOTTLE_FILL",
+    "0.4F, 1.0F, false);",
+    "0.5F, pitch, false);",
+    "1.0F + (level.random.nextFloat() - level.random.nextFloat()) * 0.3F",
+):
+    if call not in fallback:
+        raise SystemExit(f"BETA26 jar-empty fallback sound contract is missing: {call}")
+if "import net.minecraft.sounds.SoundSource;" not in block:
+    raise SystemExit("SoundSource import missing")
+
+server_branch = block[client_end:]
+if "jar.removeLabel(hit.getDirection())" not in server_branch:
+    raise SystemExit("Server-side label removal is missing")
+if "new ItemStack(ThaumcraftItems.JAR_LABEL.get())" not in server_branch:
+    raise SystemExit("Server no longer drops a blank label")
+
+page = manifest.get("page")
+if not isinstance(page, dict) or page.get("category") != "master" or page.get("sounds") != [
+    "thaumcraft:page1", "thaumcraft:page2"
+]:
+    raise SystemExit("PAGE event manifest differs from the original two-clip event")
+if not re.search(r'PAGE\s*=\s*SOUND_EVENTS\.register\("page"', sounds):
+    raise SystemExit("ThaumcraftSounds.PAGE is not registered")
+
+for filename, expected in ORIGINAL_PAGE_BLOBS.items():
+    path = AUDIO / filename
+    if not path.is_file():
+        raise SystemExit(f"Missing original BETA26 audio: {path}")
+    actual = git_blob_sha1(path.read_bytes())
+    if actual != expected:
+        raise SystemExit(f"{filename} differs from pinned BETA26 blob: {actual}")
+
+if not MATCHER_TEST.is_file():
+    raise SystemExit("Synthetic page PCM matcher regression test is missing")
+# M41/M42 retain three shift-right-clicks. M44 adds one unshifted
+# brace interaction before M43 adds one unshifted BlockItem placement.
+legacy_smoke, m43_marker, m43_smoke = smoke.partition("  # M43:")
+m44_prefix, m44_marker, m44_smoke = legacy_smoke.partition("  # M44:")
+shift_right_clicks = re.findall(
+    r"xdotool keydown Shift_L\s+sleep [^\n]+\s+xdotool click 3\s+sleep [^\n]+\s+xdotool keyup Shift_L",
+    legacy_smoke,
+)
+if (
+    len(shift_right_clicks) != 3
+    or legacy_smoke.count("xdotool click 3") != 4
+    or not m44_marker
+    or m44_smoke.count("xdotool click 3") != 1
+    or "xdotool keydown Shift_L" in m44_smoke
+    or "xdotool keyup Shift_L" in m44_smoke
+    or not m43_marker
+    or m43_smoke.count("xdotool click 3") != 1
+):
+    raise SystemExit(
+        "Real-client smoke must retain three label/empty shift-right-clicks, "
+        "one unshifted M44 brace interaction, and one unshifted M43 jar placement"
+    )
+# The jar fixture uses facing=3 (SOUTH). Minecraft yaw 0 looks south and
+# yaw 180 looks north, so the north-side attempt must be the negative case.
+wrong_face = "send_chat '/tp @p 250.5 150 249.5 0 0'"
+configured_face = "send_chat '/tp @p 250.5 150 253.5 180 0'"
+if wrong_face not in smoke or configured_face not in smoke:
+    raise SystemExit("Label smoke must hit NORTH as wrong face and SOUTH as configured face")
+if "JAR_LABEL_WRONG_FACE_EXPECTED=NORTH" not in smoke:
+    raise SystemExit("Wrong-face geometry marker is missing")
+if "JAR_LABEL_CONFIGURED_FACE=SOUTH" not in smoke:
+    raise SystemExit("Configured-face geometry marker is missing")
+# The same original PAGE event is first exercised as a diagnostic output-path
+# control. This must remain separate from the real label-removal acceptance.
+page_control = "send_chat '/playsound thaumcraft:page block @p 250.5 151.5 251.5 1 1 0'"
+if page_control not in smoke or "JAR_PAGE_AUDIO_COMMAND_CONTROL_ONLY=PASS" not in smoke:
+    raise SystemExit("PAGE output-path positive control is missing")
+if not all(token in smoke for token in (
+    "pactl info > client-smoke/pulse-info.txt",
+    "pactl list short sinks > client-smoke/pulse-sinks.txt",
+    "pactl list short sink-inputs > client-smoke/pulse-sink-inputs.txt",
+    "pactl list sink-inputs > client-smoke/pulse-sink-input-details.txt",
+)):
+    raise SystemExit("PulseAudio sink and Minecraft stream diagnostics are incomplete")
+for capture in ("label-wrong-baseline.pcm", "label-baseline.pcm"):
+    capture_pos = smoke.index(">" + " client-smoke/" + capture)
+    stop_pos = smoke.rfind("send_chat '/stopsound @p'", 0, capture_pos)
+    if stop_pos < 0:
+        raise SystemExit(f"{capture}: baseline must follow /stopsound @p")
+if "JAR_EMPTY_WRONG_FACE_EXPECTED=NORTH" not in smoke:
+    raise SystemExit("Jar-empty fallback geometry marker is missing")
+for marker in (
+    "JAR_EMPTY_SERVER_RESET_FILTER_RETAINED",
+    "match_jar_audio_pcm.py",
+    "match_bottle_fill_audio_pcm.py",
+    "JAR_EMPTY_BETA26_SOUND_PAIR_AND_SERVER_RESET=PASS",
+):
+    if marker not in smoke:
+        raise SystemExit(f"Jar-empty real-client assertion is missing: {marker}")
+for token in (
+    "send_chat '/data get entity @e[type=minecraft:item,sort=nearest,limit=1] Item'",
+    "send_chat '/data get entity @p Inventory'",
+    "grep -Eq '(^|[^[:alnum:]_])id:[[:space:]]*\"thaumcraft:label\"' client-smoke/client.log",
+    "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
+):
+    if token not in smoke:
+        raise SystemExit(f"Real-client smoke must identify the blank label from live Item/Inventory NBT: {token}")
+if "send_chat '/clear @p thaumcraft:label'" not in smoke:
+    raise SystemExit("M42 must start with an actually empty hand after the label drop")
+empty_baseline_pos = smoke.index("> client-smoke/empty-baseline.pcm")
+empty_stop_pos = smoke.rfind("send_chat '/stopsound @p'", 0, empty_baseline_pos)
+empty_previous_capture_end = smoke.rfind('wait "$capture_pid"', 0, empty_baseline_pos)
+if empty_stop_pos <= empty_previous_capture_end:
+    raise SystemExit("M42 baseline must start after stopping unrelated game audio")
+if "crop_pcm_frames client-smoke/empty-event.pcm client-smoke/empty-event-window.pcm 31200 117600" not in smoke:
+    raise SystemExit("M42 must isolate the 0.65–2.45s post-click PCM window")
+if "JAR_EMPTY_POST_CLICK_WINDOW=PASS" not in smoke:
+    raise SystemExit("M42 post-click PCM window marker is missing")
+if "match_jar_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event-window.pcm" not in smoke:
+    raise SystemExit("M42 jar matcher must inspect only the post-click PCM window")
+if "match_bottle_fill_audio_pcm.py client-smoke/empty-baseline.pcm client-smoke/empty-event-window.pcm" not in smoke:
+    raise SystemExit("M42 bottle matcher must inspect only the post-click PCM window")
+for marker in (
+    "JAR_LABEL_WRONG_SIDE_PRESERVED",
+    "JAR_LABEL_WRONG_SIDE_NO_PAGE_SOUND=PASS",
+    "JAR_LABEL_SERVER_FILTER_REMOVED",
+    "JAR_LABEL_SERVER_BLANK_DROP_OR_PICKUP_PRESENT=PASS",
+    "match_page_audio_pcm.py",
+    "JAR_LABEL_REMOVE_AND_ORIGINAL_PAGE_PCM=PASS",
+    "TC_SMOKE_JAR_LABEL_CLIENT_FALLBACK_SOUND_REQUESTED=YES",
+    "TC_SMOKE_JAR_LABEL_CLIENT_PAGE_SOUND_REQUESTED=YES",
+):
+    if marker not in smoke:
+        raise SystemExit(f"Real-client smoke is missing required assertion: {marker}")
+
+print("BETA26_PAGE_EVENT_MANIFEST=PASS")
+print("BETA26_PAGE_AUDIO_BLOBS=PASS")
+print("JAR_LABEL_CLIENT_SIDE_PREDICATE_AND_SOUND=PASS")
+print("JAR_LABEL_SERVER_REMOVAL_AND_BLANK_DROP=PASS")
+print("JAR_LABEL_REAL_CLIENT_WRONG_AND_CORRECT_SIDE_ASSERTIONS=PASS")
+print("JAR_EMPTY_PCM_WINDOW_ISOLATION=PASS")

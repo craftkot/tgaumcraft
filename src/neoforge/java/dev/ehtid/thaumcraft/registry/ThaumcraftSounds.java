@@ -20,6 +20,36 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "scan")));
 
+    // BETA26 SoundsTC.page, used on every Thaumonomicon right-click.
+    public static final Supplier<SoundEvent> PAGE = SOUND_EVENTS.register("page",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "page")));
+
+    // BETA26 SoundsTC.learn: Curio right-click knowledge/warp reveal.
+    public static final Supplier<SoundEvent> LEARN = SOUND_EVENTS.register("learn",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "learn")));
+
+    // BETA26 SoundsTC.CRYSTAL: one original event for all five block sounds.
+    public static final Supplier<SoundEvent> CRYSTAL = SOUND_EVENTS.register("crystal",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crystal")));
+
+    // BETA26 SoundsTC.JAR: four original random clips shared by all five BlockJar sounds.
+    public static final Supplier<SoundEvent> JAR = SOUND_EVENTS.register("jar",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "jar")));
+
+    // BETA26 SoundsTC.key: client feedback when a jar brace is applied.
+    public static final Supplier<SoundEvent> KEY = SOUND_EVENTS.register("key",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "key")));
+
+    // BETA26 ItemMagicDust#doSparkles, valid Salis Mundus use only.
+    public static final Supplier<SoundEvent> DUST = SOUND_EVENTS.register("dust",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "dust")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }

@@ -52,6 +52,10 @@ public final class LegacyBlockCrystalGrowthRules {
         if(parent.generation()>=MAX_GEN) throw new IllegalArgumentException("gen max");
         return new State(0,parent.generation()+(lucky?0:1));
     }
+    /** BETA26 checks Block#getMaterial().isLiquid(), not FluidState.isEmpty(). */
+    public static boolean canSpreadInto(boolean blockMaterialLiquid, boolean airOrReplaceable) {
+        return !blockMaterialLiquid && airOrReplaceable;
+    }
     /** BETA26 spreadCrystal: +/-1 on each axis; never same position. */
     public static boolean spreadOffset(int dx,int dy,int dz) {
         return dx>=-1&&dx<=1&&dy>=-1&&dy<=1&&dz>=-1&&dz<=1

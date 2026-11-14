@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.client;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu;
+import dev.ehtid.thaumcraft.port.core.visual.WorkbenchVisPanelLayout;
 import com.mojang.math.Axis;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -10,9 +14,6 @@ import net.minecraft.world.entity.player.Inventory;
 
 /** FIRSTSTEPS arcane workbench screen; legacy slot geometry is owned by the menu. */
 public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneWorkbenchMenu> {
-    private static final int[][] ASPECT_LOCS = {
-            {72, 21}, {24, 43}, {24, 102}, {72, 124}, {120, 102}, {120, 43}
-    };
     // ShardType metadata order in BETA26: AIR, FIRE, WATER, EARTH, ORDER, ENTROPY.
     private static final int[] ASPECT_COLORS = {
             16777086, 16734721, 3986684, 5685248, 14013676, 4210752
@@ -20,6 +21,9 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
     private static final ResourceLocation TEXTURE =
             ResourceLocation.fromNamespaceAndPath("thaumcraft", "textures/gui/arcaneworkbench.png");
+    private static final float AVAILABLE_TEXT_SCALE = 0.5F;
+
+    private boolean smokeAuditEmitted;
 
     public ArcaneWorkbenchScreen(ArcaneWorkbenchMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -43,19 +47,80 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
 
         int available = menu.availableVis();
         int cost = menu.displayedVisCost();
-        ThaumcraftReadableText.panel(graphics, 9, 112, 173, 24);
+        // The old full-width panel at y=112 covered the three lower BETA26
+        // crystal sockets. Move the readout into the unused wooden strip at
+        // the right edge; the six animated requirement icons remain visible.
+        ThaumcraftReadableText.panel(graphics,
+                WorkbenchVisPanelLayout.PANEL_X, WorkbenchVisPanelLayout.PANEL_Y,
+                WorkbenchVisPanelLayout.PANEL_WIDTH, WorkbenchVisPanelLayout.PANEL_HEIGHT);
         Component availableText = Component.literal(available + " ")
                 .append(Component.translatable("workbench.available"));
         int availableColor = available < cost
                 ? ThaumcraftReadableText.BAD_TEXT : ThaumcraftReadableText.GREEN_TEXT;
-        ThaumcraftReadableText.centeredLabel(graphics, font, availableText,
-                15, 115, 161, availableColor);
+        // BETA26 draws the complete localized available-Vis label at half scale,
+        // centered at x=168. Restore that compact readout instead of clipping the
+        // final letters inside the narrow right-hand strip.
+        int availableSourceWidth = font.width(availableText);
+        int availableRenderedWidth = drawAvailableLabel(
+                graphics, availableText, availableSourceWidth, availableColor);
+        Component costText = cost > 0
+                ? Component.literal(cost + " ").append(Component.translatable("workbench.cost"))
+                : Component.empty();
         if (cost > 0) {
-            Component costText = Component.literal(cost + " ")
-                    .append(Component.translatable("workbench.cost"));
-            ThaumcraftReadableText.centeredLabel(graphics, font, costText,
-                    15, 125, 161, ThaumcraftReadableText.MUTED_TEXT);
+            ThaumcraftReadableText.wrapped(graphics, font, costText,
+                    WorkbenchVisPanelLayout.TEXT_X, WorkbenchVisPanelLayout.COST_Y,
+                    WorkbenchVisPanelLayout.TEXT_WIDTH, WorkbenchVisPanelLayout.MAX_LINES,
+                    ThaumcraftReadableText.MUTED_TEXT);
         }
+        emitSmokeAudit(availableText, costText, available, cost,
+                availableSourceWidth, availableRenderedWidth);
+    }
+
+    private int drawAvailableLabel(GuiGraphics graphics, Component message,
+                                   int sourceWidth, int color) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(168.0F, WorkbenchVisPanelLayout.AVAILABLE_Y, 0.0F);
+        graphics.pose().scale(AVAILABLE_TEXT_SCALE, AVAILABLE_TEXT_SCALE, 1.0F);
+        graphics.drawString(font, message, -sourceWidth / 2, 0, color, true);
+        graphics.pose().popPose();
+        // Include the scaled one-pixel vanilla text shadow in the actual footprint.
+        return (int) Math.ceil(sourceWidth * AVAILABLE_TEXT_SCALE + AVAILABLE_TEXT_SCALE);
+    }
+
+    private void emitSmokeAudit(Component availableText, Component costText, int available, int cost,
+                                int availableSourceWidth, int availableRenderedWidth) {
+        if (smokeAuditEmitted || !"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) return;
+        int crystalMask = menu.requiredCrystalMask();
+        // Wait for the server-synced Thaumometer preview; the first client frame may still carry zeroed DataSlots.
+        if (cost != 20 || available < cost || crystalMask != 0b111111) return;
+        smokeAuditEmitted = true;
+        System.out.println("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES"
+                + " title_b64=" + smokeBase64(title.getString())
+                + " available_text_b64=" + smokeBase64(availableText.getString())
+                + " cost_text_b64=" + smokeBase64(costText.getString())
+                + " available_vis=" + available
+                + " cost_vis=" + cost
+                + " crystal_mask=" + crystalMask
+                + " title_width=" + font.width(title)
+                + " title_x=" + titleLabelX
+                + " title_y=" + titleLabelY
+                + " panel_x=" + WorkbenchVisPanelLayout.PANEL_X
+                + " panel_y=" + WorkbenchVisPanelLayout.PANEL_Y
+                + " panel_width=" + WorkbenchVisPanelLayout.PANEL_WIDTH
+                + " panel_height=" + WorkbenchVisPanelLayout.PANEL_HEIGHT
+                + " text_width=" + WorkbenchVisPanelLayout.TEXT_WIDTH
+                + " available_source_width=" + availableSourceWidth
+                + " available_rendered_width=" + availableRenderedWidth
+                + " available_scale_milli=" + Math.round(AVAILABLE_TEXT_SCALE * 1000.0F)
+                + " available_center_x=168"
+                + " available_y=" + WorkbenchVisPanelLayout.AVAILABLE_Y
+                + " max_lines=" + WorkbenchVisPanelLayout.MAX_LINES
+                + " gui_width=" + imageWidth
+                + " gui_height=" + imageHeight);
+    }
+
+    private static String smokeBase64(String value) {
+        return Base64.getEncoder().encodeToString(value.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -71,7 +136,7 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
         if (crystalMask == 0) return;
 
         int ticks = minecraft != null && minecraft.player != null ? minecraft.player.tickCount : 0;
-        for (int i = 0; i < ASPECT_LOCS.length; i++) {
+        for (int i = 0; i < 6; i++) {
             // BETA26 only highlights aspects actually required by the
             // currently matched recipe, not all six primal crystals.
             if ((crystalMask & (1 << i)) == 0) continue;
@@ -81,8 +146,8 @@ public final class ArcaneWorkbenchScreen extends AbstractContainerScreen<ArcaneW
             float blue = (color & 0xFF) / 255.0F;
 
             graphics.pose().pushPose();
-            graphics.pose().translate(leftPos + ASPECT_LOCS[i][0] + 7.5F,
-                    topPos + ASPECT_LOCS[i][1] + 8.0F, 0.0F);
+            graphics.pose().translate(leftPos + WorkbenchVisPanelLayout.aspectX(i) + 7.5F,
+                    topPos + WorkbenchVisPanelLayout.aspectY(i) + 8.0F, 0.0F);
             graphics.pose().mulPose(Axis.ZP.rotationDegrees(i * 60.0F + (ticks % 360) + partialTick));
             graphics.pose().scale(0.5F, 0.5F, 1.0F);
             graphics.setColor(red, green, blue, 0.33F);

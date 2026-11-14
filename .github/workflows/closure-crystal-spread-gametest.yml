@@ -1,0 +1,64 @@
+name: Closure aura and crystal GameTests
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'build.gradle'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java'
+      - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
+      - '.github/workflows/closure-crystal-spread-gametest.yml'
+      - 'tools/run_crystal_spread_gametest.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'build.gradle'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/gametest/**'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java'
+      - 'src/main/resources/data/thaumcraft/structure/crystal_spread_empty.nbt'
+      - '.github/workflows/closure-crystal-spread-gametest.yml'
+      - 'tools/run_crystal_spread_gametest.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  aura-and-crystal-gametests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Gradle 9.2.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+
+      - name: Validate GameTest runner
+        run: bash -n tools/run_crystal_spread_gametest.sh
+
+      - name: Run native NeoForge aura and crystal GameTests with bounded shutdown
+        run: bash tools/run_crystal_spread_gametest.sh
+
+      - name: Upload GameTest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-and-crystal-gametest
+          path: |
+            run/closure-gametest/logs/**
+            run/closure-gametest/crash-reports/**
+            build/reports/**
+          if-no-files-found: warn
