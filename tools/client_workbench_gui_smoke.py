@@ -91,7 +91,7 @@ world_fixture_replacement = """  # Build beside the real player spawn. The previ
   send_chat '/execute at @p run setblock ~2 ~-1 ~2 thaumcraft:crucible'
   sleep 5
   capture 08-actual-crucible-block
-  send_chat '/execute at @p run setblock ~ ~-1 ~4 thaumcraft:arcane_workbench'
+  send_chat '/execute at @p run setblock ~ ~ ~1 thaumcraft:arcane_workbench'
   sleep 3
   capture 08a-source-arcane-workbench-world-model
   send_chat '/item replace entity @p hotbar.0 with thaumcraft:arcane_workbench 1'
@@ -231,17 +231,17 @@ body = r'''
     exit 1
   }
 
-  # The Workbench and its inventory fixture are four blocks ahead of the
-  # logged-in player, inside the already-loaded spawn area.
+  # The Workbench and inventory fixture occupy the exact block the previous
+  # F3 frame showed under the crosshair: one block ahead at the player's feet Y.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
   # around a center glass pane. This exposes the synced 20-vis preview and all
   # six requirement icons without granting research or crafting the result.
-  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.1 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.3 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.4 with minecraft:glass_pane 1'
-  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.5 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.7 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run data get block ~ ~-1 ~4 Items'
+  send_chat '/execute at @p run item replace block ~ ~ ~1 container.1 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~1 container.3 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~1 container.4 with minecraft:glass_pane 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~1 container.5 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~1 container.7 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run data get block ~ ~ ~1 Items'
 
   # Reset the look direction without teleporting to an unloaded test region.
   send_chat '/tp @p ~ ~ ~ 0 28'
