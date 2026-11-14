@@ -326,5 +326,22 @@ for scale, gui_height, mode_y, expected_mode_y, difficulty_y, expected_difficult
         expect(result.stdout.strip() == f"512 {expected_y}",
                f"scale-{scale} {label} click mapped to {result.stdout.strip()}, expected 512 {expected_y}")
 
+# BETA26 BlockArcaneWorkbench.onBlockActivated opened its GUI regardless of
+# which hand was used or whether that hand held an item. Preserve both modern
+# interaction dispatch paths.
+workbench_block = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/block/ArcaneWorkbenchBlock.java"
+workbench_block_source = workbench_block.read_text(encoding="utf-8")
+expect("protected ItemInteractionResult useItemOn(" in workbench_block_source,
+       "Arcane Workbench does not implement the modern item-held interaction path")
+item_use_body = workbench_block_source.split(
+    "protected ItemInteractionResult useItemOn(", 1)[1].split("\n    @Override", 1)[0]
+expect("openWorkbench(level, pos, player);" in item_use_body
+       and "ItemInteractionResult.sidedSuccess(level.isClientSide)" in item_use_body,
+       "item-held interaction does not open the same server menu as empty-hand activation")
+empty_hand_body = workbench_block_source.split(
+    "protected InteractionResult useWithoutItem(", 1)[1].split("\n    @Override", 1)[0]
+expect("openWorkbench(level, pos, player);" in empty_hand_body,
+       "empty-hand interaction no longer shares the Workbench menu-opening path")
+
 print(f"Workbench world gate: OK ({checks} assertions)")
 
