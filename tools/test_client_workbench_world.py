@@ -150,21 +150,27 @@ expect("xdotool key --clearmodifiers F3" in generator
        and "capture 05a-after-f3-input-probe" in generator,
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
-expect('xdotool key --clearmodifiers t' in replacement_body
-       and 'xdotool type --clearmodifiers --delay 24 "$raw_command"' in replacement_body
-       and 'local command_body=' not in replacement_body
-       and 'xdotool key --clearmodifiers slash' not in replacement_body,
-       "Workbench command helper must use the shared T-chat path and type the full slash-prefixed command")
-expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body
-       and 'capture 05b-chat-open-after-slash' not in replacement_body
-       and 'capture 05c-chat-text-before-enter' not in replacement_body
-       and 'capture 05d-chat-submit-result' not in replacement_body,
-       "Workbench helper must not special-case a no-op difficulty command or depend on chat screenshots")
+expect('xdotool key --clearmodifiers slash' in replacement_body
+       and 'local command_body="${raw_command#/}"' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
+       and 'xdotool key --clearmodifiers t' not in replacement_body,
+       "Workbench command helper must open command chat with slash and strip exactly one leading slash")
+expect('capture 05b-chat-open-after-slash' in replacement_body
+       and 'capture 05c-chat-text-before-enter' in replacement_body
+       and 'capture 05d-chat-submit-result' in replacement_body
+       and 'capture 05e-f3-after-chat-probe' in replacement_body
+       and "grep -Fq '0.0/28.0'" in replacement_body
+       and 'WORKBENCH_CHAT_COMMAND_PROBE=PASS' in replacement_body,
+       "Workbench command probe must capture the typed command and verify the live F3 rotation result")
+expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
+       "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator
        and "  send_chat '/gamemode creative'\\n" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
-       and "chat_probe_replacement = \"  send_chat '/give @p thaumcraft:crucible'\\n\"" in generator
+       and "chat_probe_replacement = (" in generator
+       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in generator
+       and "send_chat '/give @p thaumcraft:crucible'" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
        "Workbench smoke must replace the unique initial bootstrap with only the required Crucible grant")
 expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
@@ -185,7 +191,7 @@ expect(shared_smoke.count(fixture_start) == 1
 expect("world_fixture_start = " in generator and "world_fixture_end = " in generator
        and "source = source[:world_fixture_start_index] + world_fixture_replacement + source[world_fixture_end_index:]" in generator,
        "Workbench generator does not replace the remote fixed-coordinate fixture")
-expect("send_chat '/tp @p ~ ~ ~ 0 28'" in fixture_replacement
+expect("send_chat '/tp @p ~ ~ ~ 0 28'" not in fixture_replacement
        and "send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'" in fixture_replacement
        and "send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'" in fixture_replacement
        and "send_chat '/execute at @p run setblock ~ ~ ~1 thaumcraft:arcane_workbench'" in fixture_replacement,
@@ -379,10 +385,12 @@ expect("wait_for_workbench_marker" in generator
        and "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in generator
        and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
        "Workbench smoke does not require the real server-to-client menu lifecycle")
-type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$raw_command"')
+type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
-expect("sleep 1" in replacement_body[type_index:return_index],
-       "chat helper does not wait for Minecraft to process the complete typed command")
+expect("sleep 1" in replacement_body[type_index:return_index]
+       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in generator
+       and generator.index("send_chat_probe '/tp @p ~ ~ ~ 0 28'") < generator.index("send_chat '/give @p thaumcraft:crucible'"),
+       "chat helper must wait after typing and run a real rotation-changing probe before the first item grant")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
 expect("xdotool key --clearmodifiers F3" in before_open

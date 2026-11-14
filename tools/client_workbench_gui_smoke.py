@@ -85,7 +85,6 @@ world_fixture_replacement = """  # Build beside the real player spawn. The previ
   # chunk (0,0), hundreds of blocks from a random spawn; that remote chunk
   # command was the first unconfirmed server action in the real-client run.
   # Keep the fixture inside already-loaded spawn chunks instead.
-  send_chat '/tp @p ~ ~ ~ 0 28'
   send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'
   send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'
   send_chat '/execute at @p run setblock ~2 ~-1 ~2 thaumcraft:crucible'
@@ -112,6 +111,11 @@ send_chat_anchor = """  send_chat() {
   }"""
 send_chat_replacement = """  send_chat() {
     local raw_command="$1"
+    if [[ "$raw_command" != /* ]]; then
+      echo "WORKBENCH_CHAT_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    local command_body="${raw_command#/}"
     xdotool windowactivate --sync "$WIN"
     xdotool windowfocus --sync "$WIN"
     active_window="$(xdotool getactivewindow)"
@@ -119,16 +123,64 @@ send_chat_replacement = """  send_chat() {
     target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
     target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
-    # Use Minecraft's ordinary chat key and type the complete slash-prefixed
-    # command, matching the shared client smoke's proven input path.
-    xdotool key --clearmodifiers t
+    # Exact-head artifacts proved T does not open chat in this Xvfb client;
+    # the direct slash binding opens command chat and is independent of T.
+    echo 'WORKBENCH_CHAT_INPUT_METHOD=SLASH_COMMAND_KEY' | tee -a client-smoke-status.txt
+    xdotool key --clearmodifiers slash
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$raw_command"
-    # X11 key events are queued; let Minecraft process the full command
-    # before Return so the trailing characters are not dropped.
+    xdotool type --clearmodifiers --delay 24 "$command_body"
     sleep 1
     xdotool key --clearmodifiers Return
     sleep 4
+  }
+  send_chat_probe() {
+    local raw_command="$1"
+    if [[ "$raw_command" != /* ]]; then
+      echo "WORKBENCH_CHAT_PROBE_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    local command_body="${raw_command#/}"
+    xdotool windowactivate --sync "$WIN"
+    xdotool windowfocus --sync "$WIN"
+    active_window="$(xdotool getactivewindow)"
+    focused_window="$(xdotool getwindowfocus)"
+    target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
+    target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+    echo "WORKBENCH_CHAT_PROBE_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
+    xdotool key --clearmodifiers slash
+    sleep 1
+    capture 05b-chat-open-after-slash
+    xdotool type --clearmodifiers --delay 24 "$command_body"
+    sleep 1
+    capture 05c-chat-text-before-enter
+    convert client-smoke/screenshots/05c-chat-text-before-enter.png \
+      -crop 1024x80+0+688 +repage -resize 200% -colorspace Gray -contrast-stretch 0x5% \
+      client-smoke/screenshots/05c-chat-input-ocr.png
+    typed_command="$(tesseract client-smoke/screenshots/05c-chat-input-ocr.png stdout -l eng --psm 7 2>/dev/null || true)"
+    printf 'WORKBENCH_CHAT_TYPED_COMMAND_OCR_BEGIN\\n%s\\nWORKBENCH_CHAT_TYPED_COMMAND_OCR_END\\n' "$typed_command" | tee -a client-smoke-status.txt
+    if ! grep -Eiq 'tp.*@p|@p.*tp' <<< "$typed_command"; then
+      echo 'WORKBENCH_CHAT_TYPED_COMMAND=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    xdotool key --clearmodifiers Return
+    sleep 4
+    capture 05d-chat-submit-result
+    xdotool key --clearmodifiers F3
+    sleep 1
+    capture 05e-f3-after-chat-probe
+    xdotool key --clearmodifiers F3
+    sleep 1
+    convert client-smoke/screenshots/05e-f3-after-chat-probe.png \
+      -crop 740x300+0+0 +repage -resize 200% -colorspace Gray -contrast-stretch 0x5% \
+      client-smoke/screenshots/05e-f3-after-chat-probe-ocr.png
+    f3_text="$(tesseract client-smoke/screenshots/05e-f3-after-chat-probe-ocr.png stdout -l eng --psm 6 2>/dev/null || true)"
+    printf 'WORKBENCH_CHAT_F3_OCR_BEGIN\\n%s\\nWORKBENCH_CHAT_F3_OCR_END\\n' "$f3_text" | tee -a client-smoke-status.txt
+    compact_f3_text="$(printf '%s' "$f3_text" | tr -d '[:space:]')"
+    if ! grep -Fq '0.0/28.0' <<< "$compact_f3_text"; then
+      echo 'WORKBENCH_CHAT_COMMAND=NOT_APPLIED' | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    echo 'WORKBENCH_CHAT_COMMAND_PROBE=PASS' | tee -a client-smoke-status.txt
   }"""
 if source.count(send_chat_anchor) != 1:
     raise SystemExit("Shared send_chat helper changed; refusing unsafe injection")
@@ -172,7 +224,7 @@ chat_probe_anchor = (
     "  send_chat '/difficulty peaceful'\n"
     "  send_chat '/give @p thaumcraft:crucible'\n"
 )
-chat_probe_replacement = "  send_chat '/give @p thaumcraft:crucible'\n"
+chat_probe_replacement = (\n    "  send_chat_probe '/tp @p ~ ~ ~ 0 28'\\n"\n    "  send_chat '/give @p thaumcraft:crucible'\\n"\n)
 if source.count(chat_probe_anchor) != 1:
     raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
 source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)
