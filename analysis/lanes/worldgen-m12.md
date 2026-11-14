@@ -62,3 +62,12 @@
 - Тест [d3e10bd](https://github.com/craftkot/tgaumcraft/commit/d3e10bdd0b7935fd1e75e407a14e0b19de673741): 19 assertions для границ, корней/кроны, пустых/перевёрнутых диапазонов и переполнений. Runner [79e6563](https://github.com/craftkot/tgaumcraft/commit/79e6563c34e08b07737c2f9803c9bb06be01ebf0): `bash tools/test_worldgen_height_gate.sh`.
 - **Не подтверждено:** тесты не запускались из checkout (сетевой `git clone` в доступном окружении завершился `Could not resolve host: github.com`); CI, NeoForge build, реальный Minecraft worldgen и соответствие конкретной частоты/биомов BETA26 не проверены. Новые классы пока не подключены к игровому генератору.
 - Следующий шаг: получить фактическое дерево worldgen и исходные BETA26 placement rules, связать guard с конкретной feature без затрагивания общих регистров, запустить оба Java runners и настоящий worldgen smoke. Общий индекс 59/100 без изменений.
+
+## 15.11.2026 — M12.1, запрет origin за пределами высоты мира
+
+- Fresh-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, текущий lane и список веток/PR #1–#8. Работа только в `feature/worldgen-m12`.
+- Выявлен дефект собственного `WorldgenHeightGate.spanWithinBuildHeight`: он разрешал origin вне build limits, если относительные offsets сдвигали весь проверяемый span обратно внутрь (например, originY=400 и offsets [-100,-90] при мире [-64,320)).
+- Исправление [53ad226](https://github.com/craftkot/tgaumcraft/commit/53ad226c99cd49c85998f2db63d3b533dbac15a9) требует, чтобы сам origin был допустим, независимо от границ span; скорректирован комментарий API.
+- Регрессии [4b474fd](https://github.com/craftkot/tgaumcraft/commit/4b474fd05d95ffc4a8bce70ac62cc36ef04ed103): два запрещённых out-of-world origin с формально допустимыми footprints и один допустимый near-ceiling origin. Ожидаемое количество height assertions теперь **22**, не подтверждённый PASS.
+- Точное исполнение файлов из GitHub checkout и полный NeoForge build в этом подходе не выполнены: окружение `git ls-remote` вернуло `Could not resolve host: github.com`. Новые CI/GameTest/worldgen smoke не подтверждены. Это исправление loader-neutral helper, **не реальная генерация деревьев**.
+- Следующий приоритет: получить исходники worldgen и оригинальные BETA26 biome/frequency rules, внедрить один узкий реальный placement hook, выполнить Java 21 + NeoForge + генерацию новых чанков. Индекс 59/100 без изменения.
