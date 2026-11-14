@@ -203,9 +203,20 @@ expect("send_chat_anchor = " in generator
        "Workbench generator does not replace the shared chat helper with its focused copy")
 expect('xdotool windowactivate --sync "$WIN"' in generator
        and 'xdotool windowfocus --sync "$WIN"' in generator
-       and "WORKBENCH_INPUT_FOCUS=$focused_window" in generator,
-       "Workbench chat helper does not re-activate and diagnose the Minecraft window")
-expect("capture 05a-after-peaceful-command" in generator,
+       and "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window" in generator,
+       "Workbench chat helper does not log the target, active and focused X11 windows")
+expect("mapfile -t workbench_windows" in generator
+       and "WORKBENCH_POST_LOGIN_WINDOW=$WIN" in generator,
+       "Workbench smoke does not re-resolve and log the visible GLFW window after world login")
+expect("xdotool key --clearmodifiers F3" in generator
+       and "capture 05a-after-f3-input-probe" in generator,
+       "Workbench smoke lacks a client-side F3 keyboard/focus probe")
+replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
+expect('xdotool key --clearmodifiers slash' in replacement_body
+       and 'command="${raw_command#/}"' in replacement_body
+       and 'xdotool key --clearmodifiers t' not in replacement_body,
+       "Workbench command helper must use the direct slash command binding rather than configurable T chat")
+expect("capture 05b-after-peaceful-command" in generator,
        "Workbench smoke does not retain a screenshot immediately after the first real command")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
