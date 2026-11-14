@@ -139,7 +139,8 @@ def render() -> str:
   sleep 0.12
   tube_capture 74-valve-break-early-c
   tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'
-  tube_send_chat '/execute if block 9 149 12 minecraft:air if block 10 149 12 thaumcraft:tube if block 11 149 12 thaumcraft:tube_restrict run say TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES'
+  tube_send_chat '/execute if block 10 149 12 thaumcraft:tube run say TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES' 'TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES'
+  tube_send_chat '/execute if block 11 149 12 thaumcraft:tube_restrict run say TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES' 'TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES'
   sleep 2.2
   tube_capture 75-valve-break-late
   tube_particle_diff VALVE \
@@ -158,7 +159,8 @@ def render() -> str:
   sleep 0.12
   tube_capture 78-restrict-break-early-c
   tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'
-  tube_send_chat '/execute if block 9 149 12 minecraft:air if block 10 149 12 thaumcraft:tube if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_ONLY_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_ONLY_DESTROYED=YES'
+  tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_STAYS_AIR_AFTER_RESTRICT_BREAK=YES' 'TC_SMOKE_TUBE_VALVE_STAYS_AIR_AFTER_RESTRICT_BREAK=YES'
+  tube_send_chat '/execute if block 10 149 12 thaumcraft:tube run say TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES' 'TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES'
   sleep 2.2
   tube_capture 79-restrict-break-late
   tube_particle_diff RESTRICT \

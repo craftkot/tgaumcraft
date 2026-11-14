@@ -30,7 +30,11 @@ def main() -> int:
         "TUBE_RESTRICT_BREAK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "TUBE_EVIDENCE_ROI=420x150+300+290",
         "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_DESTROYED=YES' 'TC_SMOKE_TUBE_VALVE_DESTROYED=YES'",
+        "tube_send_chat '/execute if block 10 149 12 thaumcraft:tube run say TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES' 'TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES'",
+        "tube_send_chat '/execute if block 11 149 12 thaumcraft:tube_restrict run say TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES' 'TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES'",
         "tube_send_chat '/execute if block 11 149 12 minecraft:air run say TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES' 'TC_SMOKE_TUBE_RESTRICT_DESTROYED=YES'",
+        "tube_send_chat '/execute if block 9 149 12 minecraft:air run say TC_SMOKE_TUBE_VALVE_STAYS_AIR_AFTER_RESTRICT_BREAK=YES' 'TC_SMOKE_TUBE_VALVE_STAYS_AIR_AFTER_RESTRICT_BREAK=YES'",
+        "tube_send_chat '/execute if block 10 149 12 thaumcraft:tube run say TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES' 'TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES'",
         "sleep 1",
         "--delay 24",
         "seq 1 80",
@@ -39,8 +43,10 @@ def main() -> int:
         "TC_SMOKE_TUBE_VALVE_EAST_CONNECTED=YES",
         "TC_SMOKE_TUBE_MIDDLE_BOTH_SIDES_CONNECTED=YES",
         "TC_SMOKE_TUBE_RESTRICT_WEST_CONNECTED=YES",
-        "TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES",
-        "TC_SMOKE_TUBE_RESTRICT_ONLY_DESTROYED=YES",
+        "TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES",
+        "TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES",
+        "TC_SMOKE_TUBE_VALVE_STAYS_AIR_AFTER_RESTRICT_BREAK=YES",
+        "TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES",
         "TUBE_NO_MISSING_MODEL_TEXTURES=PASS",
     )
     for marker in required_shell:
@@ -134,10 +140,22 @@ def main() -> int:
             screenshots,
         ), "missing real setblock acknowledgement must fail"
         assert verify_tube_texture_client_log.verify(
-            log.replace("TC_SMOKE_TUBE_VALVE_ONLY_DESTROYED=YES", ""),
+            log.replace("TC_SMOKE_TUBE_MIDDLE_SURVIVES_VALVE_BREAK=YES", ""),
             status,
             screenshots,
-        ), "breaking the wrong tube must fail the exact-block verifier"
+        ), "missing middle-tube survival after valve break must fail"
+
+        assert verify_tube_texture_client_log.verify(
+            log.replace("TC_SMOKE_TUBE_RESTRICT_SURVIVES_VALVE_BREAK=YES", ""),
+            status,
+            screenshots,
+        ), "missing restrict-tube survival after valve break must fail"
+
+        assert verify_tube_texture_client_log.verify(
+            log.replace("TC_SMOKE_TUBE_MIDDLE_SURVIVES_RESTRICT_BREAK=YES", ""),
+            status,
+            screenshots,
+        ), "missing middle-tube survival after restrict break must fail"
 
         assert verify_tube_texture_client_log.verify(
             log.replace("TC_SMOKE_TUBE_VALVE_DESTROYED=YES", ""),
