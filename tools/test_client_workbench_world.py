@@ -170,6 +170,12 @@ expect('local probe_prefix="${2:-05}"' in probe_body
        "second command probe must preserve a distinct screenshot set instead of overwriting the initial probe")
 expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
        "command probe must identify which input sequence its screenshots belong to")
+expect('capture "${probe_prefix}e-f3-after-submit"' in probe_body
+       and probe_body.index('xdotool key --clearmodifiers Return')
+           < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+       and probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+           < probe_body.index('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix'),
+       "command probe must preserve a real F3 world-state frame after Enter and before fail-fast checks")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
        "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator

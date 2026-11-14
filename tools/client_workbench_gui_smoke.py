@@ -155,6 +155,14 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers Return
     sleep 4
     capture "${probe_prefix}d-chat-submit-result"
+    # Preserve an authoritative F3 frame before the fail-fast mutation gate.
+    # It records player coordinates and the actual block under the crosshair;
+    # a missing log line alone cannot distinguish rejected input from a bad target.
+    xdotool key --clearmodifiers F3
+    sleep 1
+    capture "${probe_prefix}e-f3-after-submit"
+    xdotool key --clearmodifiers F3
+    sleep 1
     echo "WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix" | tee -a client-smoke-status.txt
   }"""
 if source.count(send_chat_anchor) != 1:
