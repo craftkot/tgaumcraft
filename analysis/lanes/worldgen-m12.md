@@ -53,3 +53,12 @@
 - [da07b81](https://github.com/craftkot/tgaumcraft/commit/da07b813af120fd6291ef32292d42f6697ab5f99): расширен **реальный репозиторный тест** `WorldgenChunkGateTest` для `mayAttemptPlacementAt`: 8 комбинаций флагов × 13² origin-позиций (1352 assertions), плюс 15 проверок предельных `int` координат. Вместе с прежними 733 ожидается **2100 assertions**.
 - Это усиление тестового покрытия существующего core gate, **не подключение к NeoForge worldgen**. Новые проверки пока **не исполнялись**; число 2100 — расчёт ожидаемого количества, не PASS. CI, full NeoForge и игровой smoke не подтверждены.
 - Следующий шаг: исполнить точный `tools/test_worldgen_chunk_gate.sh` из checkout, затем аудит оригинальных BETA26 правил и реального размещения Silverwood/Greatwood. Общий индекс **59/100** неизменен.
+
+
+## 14.11.2026 — M12.1, вертикальные границы генерации
+
+- Fresh-read `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` и журнал ветки; проверены открытые PR #1–#8. Рабочая ветка только `feature/worldgen-m12`.
+- Код [0b22fb6](https://github.com/craftkot/tgaumcraft/commit/0b22fb68975fb5dc6d2fcd5d9d5d8ec2dac686a6): отдельный loader-neutral `WorldgenHeightGate` для проверки вертикальной точки размещения и полного диапазона корней/кроны относительно dimension build limits (верхняя граница exclusive). Арифметика расширена до `long`, чтобы избежать переполнения при крайних координатах.
+- Тест [d3e10bd](https://github.com/craftkot/tgaumcraft/commit/d3e10bdd0b7935fd1e75e407a14e0b19de673741): 19 assertions для границ, корней/кроны, пустых/перевёрнутых диапазонов и переполнений. Runner [79e6563](https://github.com/craftkot/tgaumcraft/commit/79e6563c34e08b07737c2f9803c9bb06be01ebf0): `bash tools/test_worldgen_height_gate.sh`.
+- **Не подтверждено:** тесты не запускались из checkout (сетевой `git clone` в доступном окружении завершился `Could not resolve host: github.com`); CI, NeoForge build, реальный Minecraft worldgen и соответствие конкретной частоты/биомов BETA26 не проверены. Новые классы пока не подключены к игровому генератору.
+- Следующий шаг: получить фактическое дерево worldgen и исходные BETA26 placement rules, связать guard с конкретной feature без затрагивания общих регистров, запустить оба Java runners и настоящий worldgen smoke. Общий индекс 59/100 без изменений.
