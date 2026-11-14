@@ -147,6 +147,36 @@ expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
 expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
        "Workbench smoke does not record the authoritative pre-command Peaceful world gate")
 
+# The RU/scale-2 artifact 14108316522 showed that the first four chat
+# commands worked, but no command after /forceload reached the integrated
+# server. Insert a fresh /say marker before the first /fill and capture the
+# actual chat-open, typed-text and post-submit frame to locate the failure.
+post_force_load_sequence = """  send_chat '/forceload add 0 0'
+  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
+"""
+expect(shared_smoke.count(post_force_load_sequence) == 1,
+       "Post-forceload sequence is no longer unique; review the diagnostic injection")
+expect("post_force_load_anchor = " in generator
+       and "post_force_load_replacement = " in generator
+       and "source.count(post_force_load_anchor) != 1" in generator
+       and "source = source.replace(post_force_load_anchor, post_force_load_replacement, 1)" in generator,
+       "Workbench generator does not inject the isolated post-forceload chat probe")
+expect("send_chat '/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'" in generator
+       and "WORKBENCH_POST_FORCELOAD_CHAT_GATE=$post_force_load_chat_confirmed" in generator
+       and "post_force_load_log_offset" in generator
+       and "tail -c \"+$((post_force_load_log_offset + 1))\" client-smoke/client.log" in generator,
+       "post-forceload chat probe does not require a fresh server-side marker")
+probe_helper = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
+expect(probe_helper.index("capture 07a-post-forceload-chat-open")
+       < probe_helper.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
+       < probe_helper.index("capture 07b-post-forceload-chat-text")
+       < probe_helper.index("xdotool key --clearmodifiers Return")
+       < probe_helper.index("capture 07c-post-forceload-chat-submit"),
+       "post-forceload diagnostic frames do not bracket the actual chat input/submission")
+expect("capture 07d-post-forceload-chat-not-confirmed" in generator,
+       "failed post-forceload chat marker does not preserve a final diagnostic frame")
+
+
 # Artifact 14107008823 records the actual server teleport result as
 # (12.5, 151.5, 3.5). The old gate centered at y=150 with radius 1 was
 # 1.5 blocks away, so it rejected the correctly positioned player.
