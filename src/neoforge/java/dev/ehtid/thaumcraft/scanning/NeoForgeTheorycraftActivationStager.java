@@ -27,8 +27,8 @@ import java.util.Random;
  * 33-class activation effect staging implementation.
  *
  * Do not call from a passive UI preview: staging consumes the real player's
- * RNG. This method MUST remain unreachable from menu activation until the
- * full atomic table/player inventory, ink/paper and XP commit is installed.
+ * RNG. Live menu activation calls this after preflight; the block entity
+ * owns authoritative inventory/ink/paper/XP payments after staging.
  * It never changes table/knowledge/warp itself, and it refuses to guess
  * an item's visSize from partial or unported aspect tables.
  */

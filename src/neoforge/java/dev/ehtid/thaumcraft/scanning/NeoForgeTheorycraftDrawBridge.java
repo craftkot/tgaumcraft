@@ -20,9 +20,9 @@ import java.util.Objects;
  * ISOLATED candidate preview, with true subclass NBT produced by the
  * NeoForge server player and the actual registered mod item mappings.
  *
- * Still no user-facing draw button or resource payment. The caller owns
- * paper+ink debit, original-card activation, and an atomic save transition
- * BEFORE exposing it in gameplay. Missing 1.21 source items FAIL closed.
+ * Called by live menu buttons 2/3 through ResearchTableBlockEntity. The
+ * block entity charges paper for accepted draws; activation and other payments
+ * occur on menu buttons 4..6. Missing 1.21 source items FAIL closed.
  *
  * The passed RNG is consumed in original call order, but no inventory,
  * knowledge, warp, inspiration, aidCards or pending choices are mutated.

@@ -19,8 +19,8 @@ import java.util.Objects;
  * budgets BOTH the inner ink+paper AND outer ink. Nothing is ever debited
  * from a UI hover or a failed activation preview.
  *
- * This is a staging bridge: do not expose buttons 4..6 before 33 original
- * activation effects and a commit-time revalidation are implemented.
+ * Live menu buttons 4..6 invoke this check. It is nonmutating, not proof of
+ * full card playability; the block entity revalidates before actual payment.
  */
 public final class NeoForgeTheorycraftActivationPreflight {
     private NeoForgeTheorycraftActivationPreflight() {}

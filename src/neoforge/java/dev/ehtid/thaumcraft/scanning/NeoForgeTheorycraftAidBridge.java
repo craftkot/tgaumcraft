@@ -8,13 +8,16 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
 /**
  * Reads real loaded Minecraft blocks for original BETA26 theorycraft aids.
- * Original Thaumcraft blocks not yet in the NeoForge registry (e.g. crucible,
- * brain jar, infusion matrix) are NOT guessed or substituted.
+ * Only registered original block identities are recognized (including the
+ * real crucible and infusion matrix). Unported aids such as the brain jar
+ * are NOT guessed or substituted.
  *
  * Vanilla picked-stack aids (enchanting table, beacon) have canonical vanilla
  * pick items and no variant metadata; their source selectors are ItemStacks.
@@ -28,7 +31,8 @@ public final class NeoForgeTheorycraftAidBridge {
     public static Set<String> discover(Level world, BlockPos origin) {
         Objects.requireNonNull(world);
         Objects.requireNonNull(origin);
-        return Set.copyOf(LegacyTheorycraftAidScanner.scan(new LegacyTheorycraftAidScanner.Probe() {
+        return Collections.unmodifiableSet(new LinkedHashSet<>(
+                LegacyTheorycraftAidScanner.scan(new LegacyTheorycraftAidScanner.Probe() {
             @Override
             public boolean matches(String aid, LegacyTheorycraftAidScanner.Kind kind,
                                    int dx, int dy, int dz) {
@@ -41,7 +45,9 @@ public final class NeoForgeTheorycraftAidBridge {
                         case API + "AidBookshelf" -> Blocks.BOOKSHELF;
                         case COMMON + "AidPortal$AidPortalEnd" -> Blocks.END_PORTAL;
                         case COMMON + "AidPortal$AidPortalNether" -> Blocks.NETHER_PORTAL;
+                        case COMMON + "AidBasicAlchemy" -> ThaumcraftBlocks.CRUCIBLE.get();
                         case COMMON + "AidBasicArtifice" -> ThaumcraftBlocks.ARCANE_WORKBENCH.get();
+                        case COMMON + "AidBasicInfusion" -> ThaumcraftBlocks.INFUSION_MATRIX.get();
                         default -> null; // Unported blocks have no identity in this version.
                     };
                     return original != null && state.is(original);
@@ -65,6 +71,6 @@ public final class NeoForgeTheorycraftAidBridge {
                 // for arbitrary portal particles/entities.
                 return false;
             }
-        }));
+        })));
     }
 }
