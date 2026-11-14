@@ -76,6 +76,27 @@ echo "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=mode:$mode_x,$mode_y difficulty:$
   | tee -a client-smoke-status.txt"""
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
 
+world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids a\n"
+world_fixture_end = "  capture 08b-source-arcane-workbench-item-model\n"
+world_fixture_replacement = """  # Build beside the real player spawn. The previous fixed fixture force-loaded
+  # chunk (0,0), hundreds of blocks from a random spawn; that remote chunk
+  # command was the first unconfirmed server action in the real-client run.
+  # Keep the fixture inside already-loaded spawn chunks instead.
+  send_chat '/tp @p ~ ~ ~ 0 28'
+  send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'
+  send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'
+  send_chat '/execute at @p run setblock ~2 ~-1 ~2 thaumcraft:crucible'
+  sleep 5
+  capture 08-actual-crucible-block
+  send_chat '/execute at @p run setblock ~ ~-1 ~4 thaumcraft:arcane_workbench'
+  sleep 3
+  capture 08a-source-arcane-workbench-world-model
+  send_chat '/item replace entity @p hotbar.0 with thaumcraft:arcane_workbench 1'
+  xdotool key --clearmodifiers 1
+  sleep 3
+  capture 08b-source-arcane-workbench-item-model
+"""
+
 # The shared helper is used after the title-to-world transition, which can
 # leave X11 focus on PointerRoot. Patch only this generated Workbench smoke;
 # keep shared client_smoke.sh read-only.
@@ -98,50 +119,14 @@ send_chat_replacement = """  send_chat() {
     echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
-    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
-      capture 07a-post-forceload-chat-open
-    fi
     xdotool type --clearmodifiers --delay 24 "$command_body"
-    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
-      sleep 1
-      capture 07b-post-forceload-chat-text
-    fi
     xdotool key --clearmodifiers Return
-    if [[ "$raw_command" == "/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" ]]; then
-      sleep 2
-      capture 07c-post-forceload-chat-submit
-      sleep 2
-    else
-      sleep 4
-    fi
+    sleep 4
   }"""
 if source.count(send_chat_anchor) != 1:
     raise SystemExit("Shared send_chat helper changed; refusing unsafe injection")
 
-post_force_load_anchor = """  send_chat '/forceload add 0 0'
-  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
-"""
-post_force_load_replacement = """  send_chat '/forceload add 0 0'
-  post_force_load_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'
-  post_force_load_chat_confirmed=NO
-  for attempt in {1..8}; do
-    if tail -c "+$((post_force_load_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'; then
-      post_force_load_chat_confirmed=YES
-      break
-    fi
-    sleep 1
-  done
-  echo "WORKBENCH_POST_FORCELOAD_CHAT_GATE=$post_force_load_chat_confirmed" | tee -a client-smoke-status.txt
-  if [ "$post_force_load_chat_confirmed" != YES ]; then
-    capture 07d-post-forceload-chat-not-confirmed
-    exit 1
-  fi
-  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
-"""
 
-if source.count(post_force_load_anchor) != 1:
-    raise SystemExit("Post-forceload command sequence changed; refusing unsafe injection")
 
 if source.count(world_gate) != 1:
     raise SystemExit("Shared world NBT gate changed; refusing unsafe injection")
@@ -165,7 +150,11 @@ if source.count(world_settings_anchor) != 1:
     raise SystemExit("Shared world-setting coordinates changed; refusing unsafe injection")
 source = source.replace(world_settings_anchor, world_settings_replacement, 1)
 source = source.replace(send_chat_anchor, send_chat_replacement, 1)
-source = source.replace(post_force_load_anchor, post_force_load_replacement, 1)
+if source.count(world_fixture_start) != 1 or source.count(world_fixture_end) != 1:
+    raise SystemExit("Shared remote Workbench fixture changed; refusing unsafe replacement")
+world_fixture_start_index = source.index(world_fixture_start)
+world_fixture_end_index = source.index(world_fixture_end, world_fixture_start_index) + len(world_fixture_end)
+source = source[:world_fixture_start_index] + world_fixture_replacement + source[world_fixture_end_index:]
 
 # Match the unique initial Crucible bootstrap, not other creative commands.
 chat_probe_anchor = (
@@ -214,30 +203,22 @@ body = r'''
   echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
 
 
-  # The existing real workbench at 12,149,7 is opened by an actual right click.
+  # The Workbench and its inventory fixture are four blocks ahead of the
+  # logged-in player, inside the already-loaded spawn area.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
   # around a center glass pane. This exposes the synced 20-vis preview and all
   # six requirement icons without granting research or crafting the result.
-  send_chat '/fill 11 149 3 13 149 4 minecraft:stone'
-  send_chat '/item replace block 12 149 7 container.1 with minecraft:gold_ingot 1'
-  send_chat '/item replace block 12 149 7 container.3 with minecraft:gold_ingot 1'
-  send_chat '/item replace block 12 149 7 container.4 with minecraft:glass_pane 1'
-  send_chat '/item replace block 12 149 7 container.5 with minecraft:gold_ingot 1'
-  send_chat '/item replace block 12 149 7 container.7 with minecraft:gold_ingot 1'
-  send_chat '/data get block 12 149 7 Items'
+  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.1 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.3 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.4 with minecraft:glass_pane 1'
+  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.5 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~-1 ~4 container.7 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run data get block ~ ~-1 ~4 Items'
 
-  # Stand on the real platform and aim at the block's south face.
-  send_chat '/tp @p 12.5 150 3.5 0 31'
-  # Native server-side position gate: the previous failed run captured jungle
-  # at the spawn point, then OCR'd world pixels as if the GUI were open.
-  # The marker is emitted ONLY if the server sees the player near the bench.
-  # Check the fresh log tail, not an old chat line from a previous attempt.
+  # Reset the look direction without teleporting to an unloaded test region.
+  send_chat '/tp @p ~ ~ ~ 0 28'
   workbench_position_log_offset="$(wc -c < client-smoke/client.log)"
-  # The actual integrated-server log reports the preceding teleport result as
-  # (12.5, 151.5, 3.5). The former predicate was centered 1.5 blocks below
-  # that position with a 1-block radius, so its condition was mathematically
-  # false even though the player had reached the platform.
-  send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'
+  send_chat '/execute at @p if block ~ ~-1 ~4 thaumcraft:arcane_workbench run say TC_WORKBENCH_POSITION_CONFIRMED'
   workbench_position_confirmed=NO
   for attempt in {1..12}; do
     if tail -c "+$((workbench_position_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POSITION_CONFIRMED'; then
