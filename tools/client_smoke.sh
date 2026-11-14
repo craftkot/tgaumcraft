@@ -925,6 +925,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
   # interact with a real 25-Aer jar using the actual empty glass bottle,
   # then re-use the filled bottle to return its contents. Both operations
   # are backed by item.useOn and atomic jar BlockEntity writes.
+  # Crystal screenshots leave the player in spectator mode, which cannot
+  # use the held phial; restore interaction before selecting its hotbar slot.
+  send_chat '/gamemode creative'
   send_chat '/fill 103 148 76 107 148 82 minecraft:stone'
   send_chat '/setblock 105 149 80 thaumcraft:jar_normal'
   send_chat '/data merge block 105 149 80 {Aspect:"aer",Amount:25s}'

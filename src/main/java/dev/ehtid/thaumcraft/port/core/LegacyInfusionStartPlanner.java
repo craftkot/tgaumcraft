@@ -83,7 +83,8 @@ public final class LegacyInfusionStartPlanner {
         AspectListData result = new AspectListData();
         for (AspectData aspect : base.getAspects()) {
             int units = (int) (base.getAmount(aspect) * cost);
-            if (units > 0) result.add(aspect, units);
+            // BETA26 retains even floored-zero keys; missing ingredients can add one back later.
+            result.add(aspect, units);
         }
         return result;
     }

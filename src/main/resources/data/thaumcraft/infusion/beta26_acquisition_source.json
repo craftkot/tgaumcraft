@@ -1,0 +1,288 @@
+{
+  "schema": "thaumcraft:beta26_infusion_acquisition_source/v1",
+  "recipe_count": 5,
+  "legacy_mappings": {
+    "net/minecraft/init/Blocks.field_150484_ah": "minecraft:diamond_block",
+    "thaumcraft/api/blocks/BlocksTC.matrixSpeed": "thaumcraft:matrix_speed",
+    "thaumcraft/api/blocks/BlocksTC.matrixCost": "thaumcraft:matrix_cost",
+    "thaumcraft/api/blocks/BlocksTC.stabilizer": "thaumcraft:stabilizer",
+    "thaumcraft/api/blocks/BlocksTC.inlay": "thaumcraft:inlay",
+    "thaumcraft/api/blocks/BlocksTC.slabArcaneStone": "thaumcraft:slab_arcane_stone"
+  },
+  "source_mapping_evidence": {
+    "net/minecraft/init/Blocks.field_150484_ah": "MCP stable39 fields.csv: DIAMOND_BLOCK",
+    "thaumcraft/api/blocks/BlocksTC.slabArcaneStone": "ConfigBlocks.initBlocks@488..509",
+    "thaumcraft/api/blocks/BlocksTC.matrixSpeed": "ConfigBlocks.initBlocks@1928..1938",
+    "thaumcraft/api/blocks/BlocksTC.matrixCost": "ConfigBlocks.initBlocks@1945..1955",
+    "thaumcraft/api/blocks/BlocksTC.inlay": "BlockInlay constructor, ConfigBlocks.initBlocks@2291",
+    "thaumcraft/api/blocks/BlocksTC.stabilizer": "BlockStabilizer constructor, ConfigBlocks.initBlocks@3070"
+  },
+  "recipes": [
+    {
+      "id": "thaumcraft:mirrorglass",
+      "recipe_class": "thaumcraft/api/crafting/ShapelessArcaneRecipe",
+      "source": {
+        "method": "initializeArcaneRecipes",
+        "start_offset": 2174,
+        "constructor_offset": 2250,
+        "registration_offset": 2253
+      },
+      "research": "BASEARTIFICE",
+      "vis": 50,
+      "crystals": {
+        "WATER": 1,
+        "ORDER": 1
+      },
+      "output": {
+        "kind": "stack",
+        "item": {
+          "kind": "item",
+          "legacy_field": "thaumcraft/api/items/ItemsTC.mirroredGlass"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "ingredients": [
+        {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.quicksilver"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        {
+          "kind": "ore",
+          "alias": "paneGlass"
+        }
+      ]
+    },
+    {
+      "id": "thaumcraft:MatrixMotion",
+      "recipe_class": "thaumcraft/api/crafting/ShapedArcaneRecipe",
+      "source": {
+        "method": "initializeArcaneRecipes",
+        "start_offset": 4445,
+        "constructor_offset": 4581,
+        "registration_offset": 4584
+      },
+      "research": "INFUSIONBOOST",
+      "vis": 500,
+      "crystals": {
+        "AIR": 1,
+        "ORDER": 1
+      },
+      "output": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.matrixSpeed"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "pattern": [
+        "SNS",
+        "NGN",
+        "SNS"
+      ],
+      "key": {
+        "S": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.stoneArcane"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        "N": {
+          "kind": "ore",
+          "alias": "nitor"
+        },
+        "G": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150484_ah"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:MatrixCost",
+      "recipe_class": "thaumcraft/api/crafting/ShapedArcaneRecipe",
+      "source": {
+        "method": "initializeArcaneRecipes",
+        "start_offset": 4587,
+        "constructor_offset": 4737,
+        "registration_offset": 4740
+      },
+      "research": "INFUSIONBOOST",
+      "vis": 500,
+      "crystals": {
+        "AIR": 1,
+        "WATER": 1,
+        "ENTROPY": 1
+      },
+      "output": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.matrixCost"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "pattern": [
+        "SAS",
+        "AGA",
+        "SAS"
+      ],
+      "key": {
+        "S": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.stoneArcane"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        "A": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.alumentum"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        "G": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "net/minecraft/init/Blocks.field_150484_ah"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:Stabilizer",
+      "recipe_class": "thaumcraft/api/crafting/ShapedArcaneRecipe",
+      "source": {
+        "method": "initializeArcaneRecipes",
+        "start_offset": 9689,
+        "constructor_offset": 9887,
+        "registration_offset": 9890
+      },
+      "research": "INFUSIONSTABLE",
+      "vis": 250,
+      "crystals": {
+        "EARTH": 1,
+        "WATER": 1,
+        "ENTROPY": 1
+      },
+      "output": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.stabilizer"
+        },
+        "count": 1,
+        "metadata": 0
+      },
+      "pattern": [
+        "SRS",
+        "BVB",
+        "IMI"
+      ],
+      "key": {
+        "R": {
+          "kind": "ore",
+          "alias": "blockRedstone"
+        },
+        "S": {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.slabArcaneStone"
+          }
+        },
+        "B": {
+          "kind": "item_any_metadata",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.stoneArcane"
+          }
+        },
+        "M": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.mechanismComplex"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        "V": {
+          "kind": "stack",
+          "item": {
+            "kind": "item",
+            "legacy_field": "thaumcraft/api/items/ItemsTC.visResonator"
+          },
+          "count": 1,
+          "metadata": 0
+        },
+        "I": {
+          "kind": "stack",
+          "item": {
+            "kind": "block",
+            "legacy_field": "thaumcraft/api/blocks/BlocksTC.inlay"
+          },
+          "count": 1,
+          "metadata": 0
+        }
+      }
+    },
+    {
+      "id": "thaumcraft:RedstoneInlay",
+      "recipe_class": "thaumcraft/api/crafting/ShapelessArcaneRecipe",
+      "source": {
+        "method": "initializeArcaneRecipes",
+        "start_offset": 9893,
+        "constructor_offset": 9956,
+        "registration_offset": 9959
+      },
+      "research": "INFUSIONSTABLE",
+      "vis": 25,
+      "crystals": {
+        "WATER": 1
+      },
+      "output": {
+        "kind": "stack",
+        "item": {
+          "kind": "block",
+          "legacy_field": "thaumcraft/api/blocks/BlocksTC.inlay"
+        },
+        "count": 2,
+        "metadata": 0
+      },
+      "ingredients": [
+        {
+          "kind": "ore",
+          "alias": "dustRedstone"
+        },
+        {
+          "kind": "ore",
+          "alias": "ingotGold"
+        }
+      ]
+    }
+  ]
+}

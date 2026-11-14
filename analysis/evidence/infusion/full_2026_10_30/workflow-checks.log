@@ -1,0 +1,35 @@
+CHECK: Verify source BETA26 Arcane Workbench block and item models
+Original BETA26 Arcane Workbench model and textures: OK
+CHECK: Check FIRSTSTEPS loader sources
+CHECK: Check BETA26 celestial note textures and models
+Celestial art, 13 variants, two languages and two recipes: OK
+CHECK: Verify original wooden and research table gameplay assets
+Original BETA26 Research Table art, wooden crafting, facing states, loot and translations: OK
+CHECK: Verify original BETA26 infusion pedestal assets
+BETA26 3 pedestals, 6 original textures, models, loot and 16 charge states: OK
+CHECK: Verify infusion pillar/matrix registration and states
+Original OBJ geometry, all 3 pillar and 12 stone PNGs, 2-stone loot: OK; ritual pending
+CHECK: Verify source-era Crystal Farmer recipe runtime adapter
+CHECK: Verify original BlockCrystal registrations, textures and drops
+BETA26 crystal world assets: 7 variants, 16 states, source PNGs, aspect loot OK
+CHECK: Verify original scanner and Salis Mundus resources
+Original BETA26 scanner OBJ/PNG hashes and Salis Mundus animated art: OK
+CHECK: Verify resource-backed infusion jar bridge
+CHECK: Verify original BETA26 jar models and texture bytes
+Source BETA26 jar PNGs, translucency and original geometry: OK
+CHECK: Verify persisted infusion source accounting
+CHECK: Verify paid infusion progress, receipts and finish reservation
+BETA26 generic infusion runtime: OK
+BETA26 infusion output semantics: OK
+BETA26 infusion ingredient queue: OK (379 assertions)
+BETA26 infusion instability: OK (198 assertions)
+BETA26 infusion surroundings: OK (20 assertions)
+BETA26 infusion mitigation: OK (4111 assertions)
+BETA26 stability arcane recipes: OK (1229 assertions)
+CHECK: Verify source BASIC caster and server-only infusion activation
+BETA26 BASIC caster: original model/texture, player-only two-step activation, research gate
+CHECK: Verify authentic Thaumonomicon chapter source art and server gate
+Original book art / synced research page / server-only progression: OK
+CHECK: Verify original yellow Nitor theory option resolves to the real BlockItem
+BETA26 CardInfuse yellow Nitor source option uses real registered BlockItem
+ALL_WORKFLOW_STATIC_CHECKS_OK

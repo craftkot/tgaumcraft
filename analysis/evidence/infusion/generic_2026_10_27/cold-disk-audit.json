@@ -1,0 +1,104 @@
+{
+  "audit": "Independent raw MCA NBT parse after final cold read graceful stop",
+  "ritual": "e4af369f-99cb-4f3d-8958-fb2741d13799",
+  "matrix": {
+    "recipeinst": 0,
+    "cycleTime": 10,
+    "active": 1,
+    "costMult": 1.0,
+    "crafting": 0,
+    "keepPacked": 0,
+    "x": 8,
+    "y": 128,
+    "z": 8,
+    "id": "thaumcraft:infusion_matrix",
+    "countDelay": 5,
+    "stability": 2.499999761581421,
+    "stabilityReplenish": 0.0
+  },
+  "pedestals": [
+    {
+      "PortInfusionOutputRitual": [
+        -458279265,
+        -1714729155,
+        -1990657241,
+        1104230297
+      ],
+      "keepPacked": 0,
+      "PortInfusionOutputItem": "thaumcraft:crystal_aer",
+      "x": 8,
+      "y": 126,
+      "Items": [
+        {
+          "count": 1,
+          "Slot": 0,
+          "id": "thaumcraft:crystal_aer"
+        }
+      ],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    },
+    {
+      "PortInfusionRemovalBit": 2,
+      "keepPacked": 0,
+      "PortInfusionRemovalRitual": [
+        -458279265,
+        -1714729155,
+        -1990657241,
+        1104230297
+      ],
+      "x": 11,
+      "y": 126,
+      "Items": [],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    },
+    {
+      "PortInfusionRemovalBit": 1,
+      "keepPacked": 0,
+      "PortInfusionRemovalRitual": [
+        -458279265,
+        -1714729155,
+        -1990657241,
+        1104230297
+      ],
+      "x": 5,
+      "y": 126,
+      "Items": [],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    }
+  ],
+  "jars": [
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 12,
+      "facing": 2,
+      "y": 126,
+      "z": 6,
+      "id": "thaumcraft:jar_normal"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 4,
+      "facing": 2,
+      "y": 126,
+      "z": 6,
+      "id": "thaumcraft:jar_normal"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 8,
+      "facing": 2,
+      "y": 126,
+      "z": 4,
+      "id": "thaumcraft:jar_normal"
+    }
+  ]
+}

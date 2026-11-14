@@ -25,6 +25,8 @@ public final class ThaumcraftPort {
 
     public ThaumcraftPort(IEventBus modBus) {
         ThaumcraftBlocks.register(modBus);
+        dev.ehtid.thaumcraft.infusion.InfusionStabilityBlocks.register(modBus);
+        dev.ehtid.thaumcraft.infusion.InfusionHazardContent.register(modBus);
         ThaumcraftBlockEntities.register(modBus);
         ThaumcraftMenus.register(modBus);
         ThaumcraftItems.register(modBus);

@@ -1,0 +1,38 @@
+{
+  "golems": [
+    {
+      "id": 40560878967,
+      "name": "Thaumcraft Port CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/craftkot/tgaumcraft/actions/runs/40560878967",
+      "head_sha": "b50226a64d0bf2bbb03b74d6adc3bf018e48b0ff"
+    },
+    {
+      "id": 40560871788,
+      "name": "Thaumcraft Port CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/craftkot/tgaumcraft/actions/runs/40560871788",
+      "head_sha": "b50226a64d0bf2bbb03b74d6adc3bf018e48b0ff"
+    }
+  ],
+  "infusion": [
+    {
+      "id": 40561533951,
+      "name": "Thaumcraft Port CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/craftkot/tgaumcraft/actions/runs/40561533951",
+      "head_sha": "951ae9361e2715f2cc2e60265e1ffe7d682db223"
+    },
+    {
+      "id": 40561523794,
+      "name": "Thaumcraft Port CI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/craftkot/tgaumcraft/actions/runs/40561523794",
+      "head_sha": "951ae9361e2715f2cc2e60265e1ffe7d682db223"
+    }
+  ]
+}

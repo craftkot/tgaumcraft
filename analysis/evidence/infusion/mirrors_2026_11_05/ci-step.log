@@ -1,0 +1,10 @@
+Verify resource-backed infusion jar bridge
+Verify paid infusion progress, receipts and finish reservation
+BETA26 generic infusion runtime: OK
+BETA26 infusion output semantics: OK
+BETA26 infusion ingredient queue: OK (379 assertions)
+BETA26 infusion instability: OK (198 assertions)
+BETA26 infusion surroundings: OK (20 assertions)
+BETA26 infusion mitigation: OK (4111 assertions)
+BETA26 stability arcane recipes: OK (1229 assertions)
+BETA26 infusion source volume: OK (172 assertions)

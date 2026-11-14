@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 /**
  * BETA26 BlockInfusionMatrix: its Tile is the server-side gate for all
  * real infusion recipes. Original rendered via TileEntityRenderer rather
- * than baked block; current readable model is visual interim only.
+ * than a baked block; the port renders its eight animated cubes separately.
  * No fake crafting is performed on item/right click.
  */
 public final class InfusionMatrixBlock extends BaseEntityBlock {
@@ -27,7 +27,7 @@ public final class InfusionMatrixBlock extends BaseEntityBlock {
 
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
 
-    @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
+    @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.ENTITYBLOCK_ANIMATED; }
 
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new InfusionMatrixBlockEntity(pos, state);

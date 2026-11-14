@@ -1,0 +1,9 @@
+{
+  "run": "https://github.com/craftkot/tgaumcraft/actions/runs/40560919689",
+  "job_id": 122389362727,
+  "failed_step": "Verify live Crystal Farmer pedestal debit is gated",
+  "exit_code": 1,
+  "cause": "obsolete grep for itemProgress.afterActualPedestalRemoval(nextBit); current receipt-backed generic runtime uses a different implementation",
+  "resolution": "execute InfusionGenericRuntimeTest instead of old method-name greps; update caster compatibility-route verifier",
+  "local_workflow_static_steps": "all passed; full build/server/core already verified separately"
+}

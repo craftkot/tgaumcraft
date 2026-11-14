@@ -1,0 +1,187 @@
+{
+  "phase": "partial",
+  "ritual": "8e6d3e1d-3cd0-4641-b40a-4eb7cb37dd00",
+  "matrix": {
+    "recipeinst": 0,
+    "cycleTime": 10,
+    "active": 1,
+    "costMult": 1.0,
+    "crafting": 1,
+    "PortInfusionLedger": {
+      "FinishPhase": "WAITING",
+      "OriginalCenterInput": {
+        "Items": [
+          {
+            "count": 1,
+            "Slot": 0,
+            "components": {
+              "minecraft:custom_data": {
+                "Aspects": [
+                  {
+                    "amount": 1,
+                    "key": "aer"
+                  }
+                ]
+              }
+            },
+            "id": "thaumcraft:crystal_essence"
+          }
+        ]
+      },
+      "RecipeFingerprint": "d214a1aa82468fe7745fbba4600e97158378299f021c03e802f87fa0cdc64d46",
+      "RitualId": [
+        -1905443299,
+        1020282433,
+        -1274392905,
+        -885531392
+      ],
+      "OriginalSideInputs": {
+        "Items": [
+          {
+            "count": 1,
+            "Slot": 0,
+            "id": "minecraft:wheat_seeds"
+          },
+          {
+            "count": 1,
+            "Slot": 1,
+            "id": "thaumcraft:salis_mundus"
+          }
+        ]
+      },
+      "Recipe": "thaumcraft:CrystalClusterAir",
+      "Surcharges": {},
+      "Paid": 8,
+      "SidePedestals": [
+        1374389567614,
+        3023657009278
+      ],
+      "RecipeCostMult": 1.0,
+      "Format": 3,
+      "ActiveIngredient": 0,
+      "ConsumedItems": 0,
+      "PlannedOutput": {
+        "Items": [
+          {
+            "count": 1,
+            "Slot": 0,
+            "id": "thaumcraft:crystal_aer"
+          }
+        ]
+      },
+      "ItemCountdown": 0,
+      "Remaining": {
+        "vinculum": 5,
+        "vitreus": 10,
+        "aer": 2
+      },
+      "Initial": {
+        "vinculum": 5,
+        "vitreus": 10,
+        "aer": 10
+      }
+    },
+    "keepPacked": 0,
+    "x": 8,
+    "y": 128,
+    "z": 8,
+    "id": "thaumcraft:infusion_matrix",
+    "countDelay": 5,
+    "stability": 25.0,
+    "stabilityReplenish": 0.32880860567092896
+  },
+  "center": {
+    "keepPacked": 0,
+    "x": 8,
+    "y": 126,
+    "Items": [
+      {
+        "count": 1,
+        "Slot": 0,
+        "components": {
+          "minecraft:custom_data": {
+            "Aspects": [
+              {
+                "amount": 1,
+                "key": "aer"
+              }
+            ]
+          }
+        },
+        "id": "thaumcraft:crystal_essence"
+      }
+    ],
+    "z": 8,
+    "id": "thaumcraft:pedestal"
+  },
+  "sides": [
+    {
+      "keepPacked": 0,
+      "x": 5,
+      "y": 126,
+      "Items": [
+        {
+          "count": 1,
+          "Slot": 0,
+          "id": "minecraft:wheat_seeds"
+        }
+      ],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    },
+    {
+      "keepPacked": 0,
+      "x": 11,
+      "y": 126,
+      "Items": [
+        {
+          "count": 1,
+          "Slot": 0,
+          "id": "thaumcraft:salis_mundus"
+        }
+      ],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    }
+  ],
+  "jars": [
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 2,
+      "x": 4,
+      "facing": 2,
+      "y": 126,
+      "z": 6,
+      "id": "thaumcraft:jar_normal",
+      "Aspect": "aer"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 10,
+      "x": 8,
+      "facing": 2,
+      "y": 126,
+      "z": 4,
+      "id": "thaumcraft:jar_normal",
+      "Aspect": "vitreus"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 5,
+      "x": 12,
+      "facing": 2,
+      "y": 126,
+      "z": 6,
+      "id": "thaumcraft:jar_normal",
+      "Aspect": "vinculum"
+    }
+  ],
+  "verified_jar_amounts": [
+    2,
+    10,
+    5
+  ]
+}

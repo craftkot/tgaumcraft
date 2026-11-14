@@ -1,0 +1,15 @@
+{
+  "source_commit": "45d2f8e54cd4de4ceeb8e571a473d30552960669",
+  "files": {
+    "infusion/test/java/dev/ehtid/thaumcraft/infusion/test/InfusionMirrorGameTests.java": "a4368acf96ae1a28fa8bc10e0e1acbfcafc06c3620f6562624de3b77c8035333",
+    "infusion/test/java/dev/ehtid/thaumcraft/infusion/test/InfusionMirrorIsolationGameTests.java": "35ffd66fcf3c99960985ac46d63f445a903d06b9d7f54e91523f9592e76dd301",
+    "infusion/test/java/dev/ehtid/thaumcraft/infusion/test/PaidInfusionFixture.java": "42915112e045fd43a8d1da5d797e1843d7f959f433d8fcac32576d5705d48663",
+    "infusion/test/java/dev/ehtid/thaumcraft/infusion/test/PaidInfusionRestartProbe.java": "9b52f6e120588b66ea350a137ef266ea7f2392d0a29d904c337879b3ae53f1c9",
+    "infusion/test/resources/data/thaumcraft_infusion_mirror/structure/infusion_mirror_blank.nbt": "723820241cc38ad6e33ed93f2beb5c7968e312cd25e72c4baaeac5d52f35c60a",
+    "src/main/java/dev/ehtid/thaumcraft/port/core/LegacyInfusionSourceVolume.java": "1a221c7445e5e817a72c270727cc3395b6f03d00da4e4cb71bb79180a2c2cb90",
+    "src/neoforge/java/dev/ehtid/thaumcraft/blockentity/EssentiaMirrorBlockEntity.java": "9216918a4c5c064aefaa40096045399a61d77037e8d0f28ba318116baf8165c6",
+    "src/neoforge/java/dev/ehtid/thaumcraft/crafting/InfusionJarSourceBridge.java": "58c500264929e415c39f606759c6910bb2b0d3e81c1521eee1864465fcb94961",
+    "src/test/java/dev/ehtid/thaumcraft/port/core/InfusionSourceVolumeTest.java": "4e2b3b088f4bafa772d70acb4fa8b41161b7286c37092adb3e1e14afd542f9a1",
+    "tools/infusion.gradle": "61a6beec8fa82dee0a6ba7f16b80b9f013fdda19eef2070927099661a8131e70"
+  }
+}

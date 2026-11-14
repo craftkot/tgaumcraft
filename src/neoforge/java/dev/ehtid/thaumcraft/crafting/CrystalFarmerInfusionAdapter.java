@@ -15,8 +15,9 @@ import net.minecraft.world.item.Items;
  * Actual 1.21.1 ItemStack adapter to the seven BETA26 Crystal Farmer recipes.
  * Reads REAL pedestal inventory and source-era Crystal Essence CUSTOM_DATA.
  *
- * Preview only: the seven BlockCrystal outputs and networked essentia jars
- * are not yet ported. Do NOT grant items or set crafting from this method.
+ * Legacy crystal-specific read-only preview retained for callers. The live
+ * matrix now uses InfusionRecipeAdapter for the shared registered recipe path.
+ * This preview never consumes resources or grants output.
  */
 public final class CrystalFarmerInfusionAdapter {
     private CrystalFarmerInfusionAdapter() {}
@@ -43,13 +44,14 @@ public final class CrystalFarmerInfusionAdapter {
         if (!centerItem.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())) return null;
         String originalAspect = CrystalEssenceItem.legacyAspect(centerItem);
         var spec = LegacyInfusionCrystalFarmerCatalog.forAspect(originalAspect);
-        if (spec == null) return null;
+        if (spec == null || !CrystalEssenceItem.isOriginalInfusionCrystal(
+                centerItem, spec.aspectTag())) return null;
         // The original ItemStack-containing-NBT becomes IngredientNBTTC.
         // Never match another aspect just because Item IDs are identical.
         var original = LegacyInfusionCrystalFarmerCatalog.matcher(
                 spec, ASPECTS,
-                (ItemStack item) -> item.is(ThaumcraftItems.CRYSTAL_ESSENCE.get())
-                        && spec.aspectTag().equals(CrystalEssenceItem.legacyAspect(item)),
+                (ItemStack item) ->
+                        CrystalEssenceItem.isOriginalInfusionCrystal(item, spec.aspectTag()),
                 (ItemStack item) -> item.is(Items.WHEAT_SEEDS),
                 (ItemStack item) -> item.is(ThaumcraftItems.SALIS_MUNDUS.get()));
         var prepared = matrix.prepareInfusionStartFromWorld(knowledge, original);

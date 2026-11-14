@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.menu;
 
 import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
+import dev.ehtid.thaumcraft.crafting.InfusionStabilityArcaneAdapter;
 import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
 import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
 import dev.ehtid.thaumcraft.port.core.ArcaneWorkbenchRuntime;
@@ -62,12 +63,26 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         addSlot(new Slot(result, 0, 160, 64) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }
             @Override public boolean mayPickup(Player player) {
-                if (player instanceof ServerPlayer sp) return canCraftCurrentRecipe(sp, 0.0F);
+                if (player instanceof ServerPlayer) {
+                    ItemStack current = currentResult();
+                    return !current.isEmpty() && ItemStack.matches(result.getItem(0), current);
+                }
                 return !result.getItem(0).isEmpty();
             }
             @Override public void onTake(Player player, ItemStack stack) {
-                if (player instanceof ServerPlayer sp)
-                    craftSelectedRecipe(sp, stack, 0.0F);
+                if (player instanceof ServerPlayer sp) {
+                    ItemStack expected = stack;
+                    ItemStack full = currentResult();
+                    // A normal click may split a virtual result. Pay for the
+                    // complete recipe and deliver every earned output item.
+                    if (ItemStack.isSameItemSameComponents(stack, full) && stack.getCount() < full.getCount())
+                        expected = full;
+                    ItemStack earned = craftSelectedRecipe(sp, expected, 0.0F);
+                    if (expected != stack && !earned.isEmpty() && earned.getCount() > stack.getCount()) {
+                        ItemStack remainder = earned.copyWithCount(earned.getCount() - stack.getCount());
+                        if (!player.getInventory().add(remainder)) player.drop(remainder, false);
+                    }
+                }
                 super.onTake(player, stack);
             }
         });
@@ -110,6 +125,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
             @Override
             public int get() {
                 if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                int stabilityCost = InfusionStabilityArcaneAdapter.displayedVisCost(workbench);
+                if (stabilityCost > 0) return stabilityCost;
                 if (workbench.matchesThaumometerPattern())
                     return dev.ehtid.thaumcraft.port.core.ThaumometerRecipeLogic.BASE_VIS;
                 if (workbench.matchesVisResonatorPattern())
@@ -152,6 +169,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return new DataSlot() {
             @Override public int get() {
                 if (!(bench instanceof ArcaneWorkbenchBlockEntity workbench)) return 0;
+                int stabilityMask = InfusionStabilityArcaneAdapter.crystalMask(workbench);
+                if (stabilityMask != 0) return stabilityMask;
                 if (workbench.matchesThaumometerPattern()) return 0b111111;
                 if (workbench.matchesVisResonatorPattern())
                     return dev.ehtid.thaumcraft.port.core.VisResonatorRecipeLogic.REQUIRED_CRYSTAL_MASK;
@@ -437,7 +456,8 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
     }
 
     private boolean canCraftCurrentRecipe(ServerPlayer player, float totalDiscount) {
-        return canCraftThaumometer(player, totalDiscount)
+        return canCraftInfusionStability(player, totalDiscount)
+                || canCraftThaumometer(player, totalDiscount)
                 || canCraftVisResonator(player, totalDiscount)
                 || canCraftWardedJar(player, totalDiscount)
                 || canCraftVoidJar(player, totalDiscount)
@@ -455,6 +475,12 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
                 || canCraftAdvancedAlchemyConstruct(player,totalDiscount)
                 || canCraftUpgradedSmelter(player,Kind.THAUMIUM,totalDiscount)
                 || canCraftUpgradedSmelter(player,Kind.VOID,totalDiscount);
+    }
+
+    private boolean canCraftInfusionStability(ServerPlayer player, float discount) {
+        return bench instanceof ArcaneWorkbenchBlockEntity workbench && stillValid(player)
+                && InfusionStabilityArcaneAdapter.canCraft(workbench,
+                player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), discount);
     }
 
     /** Server-authoritative FIRSTSTEPS craft endpoint; output is granted only after the atomic commit. */
@@ -500,6 +526,15 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
 
     private ItemStack craftSelectedRecipe(ServerPlayer player, ItemStack expected,
                                           float totalDiscount) {
+        if (bench instanceof ArcaneWorkbenchBlockEntity workbench && stillValid(player)) {
+            ItemStack stability = InfusionStabilityArcaneAdapter.craft(workbench,
+                    player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge(), expected, totalDiscount);
+            if (!stability.isEmpty()) {
+                refreshResult();
+                broadcastChanges();
+                return stability;
+            }
+        }
         if (expected.is(ThaumcraftItems.THAUMOMETER.get())
                 && craftThaumometer(player, totalDiscount))
             return new ItemStack(ThaumcraftItems.THAUMOMETER.get());
@@ -557,50 +592,58 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         return ItemStack.EMPTY;
     }
 
-    private void refreshResult() {
-        if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
-            result.setItem(0, new ItemStack(ThaumcraftItems.THAUMOMETER.get()));
+    /** Compute a fresh authorized preview without changing an existing viewer's virtual slot. */
+    private ItemStack currentResult() {
+        if (owner instanceof ServerPlayer sp && canCraftInfusionStability(sp, 0.0F)
+                && bench instanceof ArcaneWorkbenchBlockEntity workbench)
+            return InfusionStabilityArcaneAdapter.output(InfusionStabilityArcaneAdapter.selected(workbench));
+        else if (owner instanceof ServerPlayer sp && canCraftThaumometer(sp, 0.0F))
+            return new ItemStack(ThaumcraftItems.THAUMOMETER.get());
         else if (owner instanceof ServerPlayer sp && canCraftVisResonator(sp, 0.0F))
-            result.setItem(0, new ItemStack(ThaumcraftItems.VIS_RESONATOR.get()));
+            return new ItemStack(ThaumcraftItems.VIS_RESONATOR.get());
         else if (owner instanceof ServerPlayer sp && canCraftWardedJar(sp, 0.0F))
-            result.setItem(0, new ItemStack(ThaumcraftItems.JAR_NORMAL.get()));
+            return new ItemStack(ThaumcraftItems.JAR_NORMAL.get());
         else if (owner instanceof ServerPlayer sp && canCraftVoidJar(sp, 0.0F)
                 && bench instanceof ArcaneWorkbenchBlockEntity wb)
-            result.setItem(0, wb.previewVoidJar());
+            return wb.previewVoidJar();
         else if (owner instanceof ServerPlayer sp && canCraftEssentiaTubes(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.TUBE.get(),
-                    dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT));
+            return new ItemStack(ThaumcraftItems.TUBE.get(),
+                    dev.ehtid.thaumcraft.port.core.LegacyEssentiaTubeRecipe.OUTPUT);
         else if(owner instanceof ServerPlayer sp&&canCraftTubeUpgrade(sp,0.0F)
                 &&bench instanceof ArcaneWorkbenchBlockEntity wb)
-            result.setItem(0,tubeUpgradeOutput(wb.selectedTubeUpgrade()));
+            return tubeUpgradeOutput(wb.selectedTubeUpgrade());
         else if(owner instanceof ServerPlayer sp&&canCraftFilteredTube(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.TUBE_FILTER.get()));
+            return new ItemStack(ThaumcraftItems.TUBE_FILTER.get());
         else if(owner instanceof ServerPlayer sp&&canCraftUpgradedSmelter(sp,Kind.THAUMIUM,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_THAUMIUM.get()));
+            return new ItemStack(ThaumcraftItems.SMELTER_THAUMIUM.get());
         else if(owner instanceof ServerPlayer sp&&canCraftUpgradedSmelter(sp,Kind.VOID,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_VOID.get()));
+            return new ItemStack(ThaumcraftItems.SMELTER_VOID.get());
         else if(owner instanceof ServerPlayer sp&&canCraftAdvancedAlchemyConstruct(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL_ADVANCED.get()));
+            return new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL_ADVANCED.get());
         else if(owner instanceof ServerPlayer sp&&canCraftAlchemyConstruct(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL.get(),
-                    LegacyAlchemyConstructArcaneRecipe.OUTPUT));
+            return new ItemStack(ThaumcraftItems.METAL_ALCHEMICAL.get(),
+                    LegacyAlchemyConstructArcaneRecipe.OUTPUT);
         else if(owner instanceof ServerPlayer sp&&canCraftAlchemyFilter(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.FILTER.get(),LegacyAlchemyFilterArcaneRecipe.OUTPUT));
+            return new ItemStack(ThaumcraftItems.FILTER.get(),LegacyAlchemyFilterArcaneRecipe.OUTPUT);
         else if (owner instanceof ServerPlayer sp && canCraftAlembic(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.ALEMBIC.get()));
+            return new ItemStack(ThaumcraftItems.ALEMBIC.get());
         else if (owner instanceof ServerPlayer sp && canCraftTubeBuffer(sp, 0.0F))
-            result.setItem(0, new ItemStack(ThaumcraftItems.TUBE_BUFFER.get()));
+            return new ItemStack(ThaumcraftItems.TUBE_BUFFER.get());
         else if(owner instanceof ServerPlayer sp
                 &&canCraftSmelterAttachment(sp,LegacySmelterAttachmentArcaneRecipe.Kind.AUX,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_AUX.get()));
+            return new ItemStack(ThaumcraftItems.SMELTER_AUX.get());
         else if(owner instanceof ServerPlayer sp
                 &&canCraftSmelterAttachment(sp,LegacySmelterAttachmentArcaneRecipe.Kind.VENT,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_VENT.get()));
+            return new ItemStack(ThaumcraftItems.SMELTER_VENT.get());
         else if(owner instanceof ServerPlayer sp&&canCraftBellows(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.BELLOWS.get()));
+            return new ItemStack(ThaumcraftItems.BELLOWS.get());
         else if(owner instanceof ServerPlayer sp&&canCraftBasicSmelter(sp,0.0F))
-            result.setItem(0,new ItemStack(ThaumcraftItems.SMELTER_BASIC.get()));
-        else result.setItem(0, ItemStack.EMPTY);
+            return new ItemStack(ThaumcraftItems.SMELTER_BASIC.get());
+        else return ItemStack.EMPTY;
+    }
+
+    private void refreshResult() {
+        result.setItem(0, currentResult());
     }
 
     @Override public void broadcastChanges() {
@@ -632,17 +675,16 @@ public final class ArcaneWorkbenchMenu extends AbstractContainerMenu {
         ItemStack stack = source.getItem();
         ItemStack before = stack.copy();
         if (index == 0) {
-            if (!(player instanceof ServerPlayer sp) || !canCraftCurrentRecipe(sp, 0.0F))
+            if (!(player instanceof ServerPlayer sp) || !ItemStack.matches(before, currentResult()))
                 return ItemStack.EMPTY;
             if (!hasInventorySpace(stack)) return ItemStack.EMPTY;
             // The output stack is virtual: commit whichever BETA26 recipe
             // matches the exact preview, then insert only the earned item.
             ItemStack crafted = craftSelectedRecipe(sp, before, 0.0F);
             if (crafted.isEmpty()) return ItemStack.EMPTY;
-            if (!moveItemStackTo(crafted, 16, 52, true)) {
-                // Defensive fallback: a concurrently filled inventory must not delete the item.
-                player.drop(crafted, false);
-            }
+            moveItemStackTo(crafted, 16, 52, true);
+            // A successful move can be partial; retain every paid output item.
+            if (!crafted.isEmpty()) player.drop(crafted, false);
             broadcastChanges();
             return before;
         } else if (index < 16) {

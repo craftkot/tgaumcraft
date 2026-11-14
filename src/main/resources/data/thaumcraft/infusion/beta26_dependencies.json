@@ -1,0 +1,417 @@
+{
+  "schema": "thaumcraft:beta26_infusion_dependencies/v1",
+  "source_recipe_count": 56,
+  "scope": "Infusion branch content registrations; optional golem module is a separate module",
+  "counts": {
+    "OPTIONAL_GOLEM_MODULE": 4,
+    "BUILT_IN": 7,
+    "EXTERNAL_CONTENT_REQUIRED": 35,
+    "RUNTIME_DATA": 10
+  },
+  "dynamic_limits": [
+    "Vanilla armor/tools supported; Baubles requires its real external equipment subsystem",
+    "Source ore aliases use the actual built-in amber and the registered 16-color nitor item tag"
+  ],
+  "recipes": [
+    {
+      "legacyId": "thaumcraft:SealHarvest",
+      "status": "OPTIONAL_GOLEM_MODULE",
+      "missing_registered_content": [
+        "thaumcraft:seal"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:SealButcher",
+      "status": "OPTIONAL_GOLEM_MODULE",
+      "missing_registered_content": [
+        "thaumcraft:seal"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:SealBreak",
+      "status": "OPTIONAL_GOLEM_MODULE",
+      "missing_registered_content": [
+        "thaumcraft:seal"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterAir",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterFire",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterWater",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterEarth",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterOrder",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterEntropy",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:CrystalClusterFlux",
+      "status": "BUILT_IN",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:focus_2",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:focus_1",
+        "thaumcraft:focus_2"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:focus_3",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:focus_2",
+        "thaumcraft:focus_3"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:JarBrain",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:brain",
+        "thaumcraft:jar_brain"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VisAmulet",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:amulet_vis",
+        "thaumcraft:baubles"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:RunicArmor",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:Mirror",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:mirror"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MirrorHand",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:hand_mirror",
+        "thaumcraft:mirror"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MirrorEssentia",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:ElementalAxe",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_axe",
+        "thaumcraft:thaumium_axe"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ElementalPick",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_pick",
+        "thaumcraft:thaumium_pick"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ElementalSword",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_sword",
+        "thaumcraft:thaumium_sword"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ElementalShovel",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_shovel",
+        "thaumcraft:thaumium_shovel"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ElementalHoe",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_hoe",
+        "thaumcraft:thaumium_hoe"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:IEBURROWING",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IECOLLECTOR",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IEDESTRUCTIVE",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IEREFINING",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IESOUNDING",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IEARCING",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IEESSENCE",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:IELAMPLIGHT",
+      "status": "RUNTIME_DATA",
+      "missing_registered_content": []
+    },
+    {
+      "legacyId": "thaumcraft:BootsTraveller",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:traveller_boots"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MindBiothaumic",
+      "status": "OPTIONAL_GOLEM_MODULE",
+      "missing_registered_content": [
+        "thaumcraft:brain",
+        "thaumcraft:mechanism_complex",
+        "thaumcraft:mind"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ArcaneBore",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:mechanism_complex",
+        "thaumcraft:morphic_resonator",
+        "thaumcraft:turret"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:LampGrowth",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:lamp_arcane",
+        "thaumcraft:lamp_growth"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:LampFertility",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:lamp_arcane",
+        "thaumcraft:lamp_fertility"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ThaumiumFortressHelm",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_helm",
+        "thaumcraft:thaumium_helm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ThaumiumFortressChest",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_chest",
+        "thaumcraft:thaumium_chest"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:ThaumiumFortressLegs",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_legs",
+        "thaumcraft:thaumium_legs"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VoidRobeHelm",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:goggles",
+        "thaumcraft:void_helm",
+        "thaumcraft:void_robe_helm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VoidRobeChest",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:cloth_chest",
+        "thaumcraft:void_chest",
+        "thaumcraft:void_robe_chest"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VoidRobeLegs",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:cloth_legs",
+        "thaumcraft:void_legs",
+        "thaumcraft:void_robe_legs"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:HelmGoggles",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_helm",
+        "thaumcraft:goggles"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MaskGrinningDevil",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:brain",
+        "thaumcraft:fortress_helm",
+        "thaumcraft:shimmerleaf"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MaskAngryGhost",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_helm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:MaskSippingFiend",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:fortress_helm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:PrimalCrusher",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:elemental_pick",
+        "thaumcraft:elemental_shovel",
+        "thaumcraft:primal_crusher",
+        "thaumcraft:void_pick",
+        "thaumcraft:void_shovel"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VerdantHeart",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:baubles",
+        "thaumcraft:verdant_charm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VerdantHeartLife",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:verdant_charm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VerdantHeartSustain",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:triple_meat_treat",
+        "thaumcraft:verdant_charm"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:CLOUDRING",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:baubles",
+        "thaumcraft:cloud_ring"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:CuriosityBand",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:baubles",
+        "thaumcraft:curiosity_band"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:CHARMUNDYING",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:charm_undying"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:CausalityCollapser",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:causality_collapser",
+        "thaumcraft:morphic_resonator"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VoidSiphon",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:mechanism_complex",
+        "thaumcraft:metal_void",
+        "thaumcraft:void_siphon"
+      ]
+    },
+    {
+      "legacyId": "thaumcraft:VoidseerPearl",
+      "status": "EXTERNAL_CONTENT_REQUIRED",
+      "missing_registered_content": [
+        "thaumcraft:baubles",
+        "thaumcraft:brain",
+        "thaumcraft:void_seed",
+        "thaumcraft:voidseer_charm"
+      ]
+    }
+  ]
+}

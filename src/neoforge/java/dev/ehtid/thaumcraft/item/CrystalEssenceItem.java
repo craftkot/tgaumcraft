@@ -107,6 +107,33 @@ public final class CrystalEssenceItem extends Item {
     }
 
     /**
+     * Only the seven actual BETA26 makeCrystal(aspect) infusion inputs:
+     * exactly one raw Aspects:[{key,amount:1}] compound and no other
+     * CUSTOM_DATA fields. Do not accept an arbitrary essence stack whose
+     * first aspect happens to have the requested key.
+     */
+    public static boolean isOriginalInfusionCrystal(ItemStack stack, String expectedAspect) {
+        if (stack == null || stack.isEmpty()
+                || !stack.is(dev.ehtid.thaumcraft.registry.ThaumcraftItems.CRYSTAL_ESSENCE.get()))
+            return false;
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null || data.isEmpty()) return false;
+        CompoundTag root = data.copyTag();
+        if (root.getAllKeys().size() != 1
+                || !root.contains("Aspects", Tag.TAG_LIST)) return false;
+        ListTag aspects = root.getList("Aspects", Tag.TAG_COMPOUND);
+        if (aspects.size() != 1) return false;
+        CompoundTag row = aspects.getCompound(0);
+        if (row.getAllKeys().size() != 2
+                || !row.contains("key", Tag.TAG_STRING)
+                || !row.contains("amount", Tag.TAG_INT)) return false;
+        return dev.ehtid.thaumcraft.port.core.LegacyInfusionCrystalFarmerCatalog
+                .exactOriginalCrystalEntries(expectedAspect,
+                        List.of(new LegacyContainedAspectTags.Entry(
+                                row.getString("key"), row.getInt("amount"))));
+    }
+
+    /**
      * Preserve the original TC6 ItemGenericEssentiaContainer contained-Vis
      * override for object scanning. NBT entries are the exact old key/amount
      * fields in CUSTOM_DATA; repeated keys are merged before the TC6 500 cap.

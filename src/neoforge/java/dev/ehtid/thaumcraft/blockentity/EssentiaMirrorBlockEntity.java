@@ -39,6 +39,9 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
     /** A one-tick memo for remote source discovery, never authoritative for debit. */
     private long sourceScanTick=Long.MIN_VALUE;
     private RemoteSource cachedSource;
+    /** Wireless IAspectSource cache; separate from the pre-existing pipe transport path. */
+    private final dev.ehtid.thaumcraft.crafting.InfusionJarSourceBridge infusionSources =
+            new dev.ehtid.thaumcraft.crafting.InfusionJarSourceBridge();
 
     private record RemoteSource(ServerLevel world, BlockPos pos,
                                 EssentiaTransportPort port, Direction face) {}
@@ -246,6 +249,26 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
 
     @Override public int addTransport(String aspect,int amount,Direction face) {return 0;}
 
+    /**
+     * BETA26 IAspectSource.takeFromContainer: the partner searches only its front
+     * volume, range8, with all mirrors excluded. This is independent of pipe
+     * suction/exposed-face checks. A successful remote physical debit adds one
+     * instability to this endpoint only (source addInstability(null,amount)).
+     */
+    public boolean takeForInfusion(String aspect, int amount) {
+        if (!(level instanceof ServerLevel local) || amount != 1 || aspect == null
+                || aspect.isBlank() || !hasValidLink()) return false;
+        EssentiaMirrorBlockEntity partner = partnerLoaded(local);
+        if (partner == null || !(partner.level instanceof ServerLevel remote)) return false;
+        Direction facing = partner.getBlockState().getValue(EssentiaMirrorBlock.FACING);
+        if (!partner.infusionSources.drainOne(remote, partner.worldPosition, aspect,
+                LegacyEssentiaMirrorLogic.SEARCH_RANGE, 5, facing, true)) return false;
+        instability = LegacyEssentiaMirrorLogic.afterTransfer(instability, amount, true);
+        setChanged();
+        dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("INFUSION_MIRROR_REMOTE_DEBIT_PROVEN");
+        return true;
+    }
+
 
     public EssentiaMirrorBlockEntity(BlockPos pos,BlockState state) {
         super(ThaumcraftBlockEntities.MIRROR_ESSENTIA.get(),pos,state);
@@ -417,6 +440,7 @@ public final class EssentiaMirrorBlockEntity extends BlockEntity implements Esse
 
     @Override protected void loadAdditional(CompoundTag tag,HolderLookup.Provider registries) {
         super.loadAdditional(tag,registries);
+        infusionSources.reset();
         linked=tag.getBoolean("linked");
         linkDimension=tag.contains("linkDim",Tag.TAG_STRING)?tag.getString("linkDim"):null;
         linkPosition=tag.contains("linkX",Tag.TAG_INT)&&tag.contains("linkY",Tag.TAG_INT)

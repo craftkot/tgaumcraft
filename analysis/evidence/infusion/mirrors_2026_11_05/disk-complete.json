@@ -1,0 +1,143 @@
+{
+  "phase": "complete",
+  "ritual": "337bc494-31dd-4651-81e5-874b9da6d4a6",
+  "matrix": {
+    "recipeinst": 0,
+    "cycleTime": 10,
+    "active": 1,
+    "costMult": 1.0,
+    "crafting": 0,
+    "keepPacked": 0,
+    "x": 8,
+    "y": 128,
+    "z": 8,
+    "id": "thaumcraft:infusion_matrix",
+    "countDelay": 5,
+    "stability": 25.0,
+    "stabilityReplenish": 0.32880860567092896
+  },
+  "center": {
+    "PortInfusionOutputRitual": [
+      863749268,
+      836585041,
+      -2115664053,
+      -1650010970
+    ],
+    "keepPacked": 0,
+    "PortInfusionOutputItem": "thaumcraft:crystal_aer",
+    "x": 8,
+    "y": 126,
+    "Items": [
+      {
+        "count": 1,
+        "Slot": 0,
+        "id": "thaumcraft:crystal_aer"
+      }
+    ],
+    "z": 8,
+    "PortInfusionOutputStack": {
+      "count": 1,
+      "id": "thaumcraft:crystal_aer"
+    },
+    "id": "thaumcraft:pedestal"
+  },
+  "sides": [
+    {
+      "PortInfusionRemovalRemainder": {},
+      "PortInfusionRemovalBit": 1,
+      "keepPacked": 0,
+      "PortInfusionRemovalRitual": [
+        863749268,
+        836585041,
+        -2115664053,
+        -1650010970
+      ],
+      "x": 5,
+      "y": 126,
+      "Items": [],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    },
+    {
+      "PortInfusionRemovalRemainder": {},
+      "PortInfusionRemovalBit": 2,
+      "keepPacked": 0,
+      "PortInfusionRemovalRitual": [
+        863749268,
+        836585041,
+        -2115664053,
+        -1650010970
+      ],
+      "x": 11,
+      "y": 126,
+      "Items": [],
+      "z": 8,
+      "id": "thaumcraft:pedestal"
+    }
+  ],
+  "jars": [
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 7,
+      "facing": 2,
+      "y": 130,
+      "z": 40,
+      "id": "thaumcraft:jar_normal"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 8,
+      "facing": 2,
+      "y": 130,
+      "z": 40,
+      "id": "thaumcraft:jar_normal"
+    },
+    {
+      "blocked": 0,
+      "keepPacked": 0,
+      "Amount": 0,
+      "x": 9,
+      "facing": 2,
+      "y": 130,
+      "z": 40,
+      "id": "thaumcraft:jar_normal"
+    }
+  ],
+  "mirrors": [
+    {
+      "linkDim": "minecraft:overworld",
+      "linkZ": 40,
+      "keepPacked": 0,
+      "instability": 23,
+      "x": 10,
+      "y": 128,
+      "z": 8,
+      "id": "thaumcraft:mirror_essentia",
+      "linkY": 128,
+      "linkX": 8,
+      "linked": 1
+    },
+    {
+      "linkDim": "minecraft:overworld",
+      "linkZ": 8,
+      "keepPacked": 0,
+      "instability": 0,
+      "x": 8,
+      "y": 128,
+      "z": 40,
+      "id": "thaumcraft:mirror_essentia",
+      "linkY": 128,
+      "linkX": 10,
+      "linked": 1
+    }
+  ],
+  "verified_remote_jar_amounts": [
+    0,
+    0,
+    0
+  ]
+}
