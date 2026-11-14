@@ -147,48 +147,29 @@ expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
 expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
        "Workbench smoke does not record the authoritative pre-command Peaceful world gate")
 
-# The RU/scale-2 artifact 14108316522 showed that the first four chat
-# commands worked, but no command after /forceload reached the integrated
-# server. Insert a fresh /say marker before the first /fill and capture the
-# actual chat-open, typed-text and post-submit frame to locate the failure.
-post_force_load_sequence = """  send_chat '/forceload add 0 0'
-  send_chat '/fill 0 148 0 4 148 6 minecraft:stone'
-"""
-expect(shared_smoke.count(post_force_load_sequence) == 1,
-       "Post-forceload sequence is no longer unique; review the diagnostic injection")
-expect("post_force_load_anchor = " in generator
-       and "post_force_load_replacement = " in generator
-       and "source.count(post_force_load_anchor) != 1" in generator
-       and "source = source.replace(post_force_load_anchor, post_force_load_replacement, 1)" in generator,
-       "Workbench generator does not inject the isolated post-forceload chat probe")
-expect("send_chat '/say TC_WORKBENCH_POST_FORCELOAD_CHAT_OK'" in generator
-       and "WORKBENCH_POST_FORCELOAD_CHAT_GATE=$post_force_load_chat_confirmed" in generator
-       and "post_force_load_log_offset" in generator
-       and "tail -c \"+$((post_force_load_log_offset + 1))\" client-smoke/client.log" in generator,
-       "post-forceload chat probe does not require a fresh server-side marker")
-probe_helper = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
-expect(probe_helper.index("capture 07a-post-forceload-chat-open")
-       < probe_helper.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
-       < probe_helper.index("capture 07b-post-forceload-chat-text")
-       < probe_helper.index("xdotool key --clearmodifiers Return")
-       < probe_helper.index("capture 07c-post-forceload-chat-submit"),
-       "post-forceload diagnostic frames do not bracket the actual chat input/submission")
-expect("capture 07d-post-forceload-chat-not-confirmed" in generator,
-       "failed post-forceload chat marker does not preserve a final diagnostic frame")
+# The current generator deliberately keeps the fixture inside the loaded spawn
+# chunks. The earlier remote /forceload probe was removed together with the
+# remote fixed-coordinate platform, so its old test oracle must not survive.
+fixture_replacement = generator.split('world_fixture_replacement = """', 1)[1].split('"""', 1)[0]
+expect("world_fixture_start = " in generator and "world_fixture_end = " in generator
+       and "source = source[:world_fixture_start_index] + world_fixture_replacement + source[world_fixture_end_index:]" in generator,
+       "Workbench generator does not replace the remote fixed-coordinate fixture")
+expect("send_chat '/tp @p ~ ~ ~ 0 28'" in fixture_replacement
+       and "send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'" in fixture_replacement
+       and "send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'" in fixture_replacement
+       and "send_chat '/execute at @p run setblock ~ ~-1 ~4 thaumcraft:arcane_workbench'" in fixture_replacement,
+       "Workbench fixture is not built relative to the logged-in player inside spawn chunks")
+expect("send_chat '/forceload add 0 0'" not in fixture_replacement
+       and "send_chat '/fill 0 148 0 4 148 6 minecraft:stone'" not in fixture_replacement
+       and "TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" not in generator
+       and "post_force_load_" not in generator,
+       "Workbench generator still depends on the removed remote-chunk command probe")
 
-
-# Artifact 14107008823 records the actual server teleport result as
-# (12.5, 151.5, 3.5). The old gate centered at y=150 with radius 1 was
-# 1.5 blocks away, so it rejected the correctly positioned player.
-observed_player_position = (12.5, 151.5, 3.5)
-old_gate_position = (12.5, 150.0, 3.5)
-old_gate_distance = sum((a - b) ** 2 for a, b in zip(observed_player_position, old_gate_position)) ** 0.5
-expect(old_gate_distance == 1.5 and old_gate_distance > 1.0,
-       "position-gate regression fixture no longer reproduces the old false negative")
-expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" in generator,
-       "Workbench position gate does not match the server-observed player position")
-expect("send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
-       "Workbench position gate still rejects the observed player position")
+expect("send_chat '/execute at @p if block ~ ~-1 ~4 thaumcraft:arcane_workbench run say TC_WORKBENCH_POSITION_CONFIRMED'" in generator,
+       "Workbench position gate does not verify the spawn-relative block placed by the current fixture")
+expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
+       and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
+       "Workbench position gate still depends on obsolete fixed world coordinates")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
 expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
