@@ -2,6 +2,7 @@
 """Regression tests for the workbench-only world safety gate."""
 import importlib.util
 from pathlib import Path
+import subprocess
 
 path = Path(__file__).with_name("assert_client_workbench_world.py")
 spec = importlib.util.spec_from_file_location("assert_client_workbench_world", path)
@@ -223,6 +224,44 @@ expect("python3 tools/test_client_workbench_gui_render.py" in workflow_source
        and "tools/test_client_workbench_gui_render.py" in workflow_source,
        "dedicated Workbench workflow does not execute the render-marker regression")
 
+
+
+# The shared smoke's old fixed percentages were calibrated for GUI scale 2.
+# At scale 3, the same difficulty click landed on the Game Mode row; the real
+# client screenshot showed Creative + Normal and the strict NBT gate rejected
+# it. Exercise the actual shared coordinate helper for both layouts.
+generator_source = generator
+expect("world_settings_anchor = " in generator_source
+       and "world_settings_replacement = " in generator_source
+       and "source.count(world_settings_anchor) != 1" in generator_source
+       and "source = source.replace(world_settings_anchor, world_settings_replacement, 1)" in generator_source,
+       "Workbench generator does not patch the shared world-setting clicks through the scale-aware helper")
+expect("minecraft_gui_point" in generator_source
+       and "mode_gui_y=99" in generator_source and "difficulty_gui_y=127" in generator_source
+       and "mode_gui_y=81" in generator_source and "difficulty_gui_y=109" in generator_source
+       and "WORLD_SAFE_CREATE_COORDS=" in generator_source,
+       "Workbench generator lacks the measured scale-2/scale-3 world-setting coordinates")
+
+coordinate_helper = Path(__file__).with_name("minecraft_gui_coordinates.sh")
+for scale, gui_height, mode_y, expected_mode_y, difficulty_y, expected_difficulty_y in (
+    (2, 384, 99, 219, 127, 275),
+    (3, 256, 81, 264, 109, 348),
+):
+    gui_width = 1024 // scale
+    center_x = (gui_width - 1) // 2
+    for label, logical_y, expected_y in (
+        ("mode", mode_y, expected_mode_y),
+        ("difficulty", difficulty_y, expected_difficulty_y),
+    ):
+        command = (
+            f'source "{coordinate_helper}"; '
+            f'minecraft_gui_point 1 20 1024 768 {scale} {gui_width} {gui_height} '
+            f'{center_x} {logical_y}'
+        )
+        result = subprocess.run(["bash", "-c", command], check=True,
+                                capture_output=True, text=True)
+        expect(result.stdout.strip() == f"512 {expected_y}",
+               f"scale-{scale} {label} click mapped to {result.stdout.strip()}, expected 512 {expected_y}")
 
 print(f"Workbench world gate: OK ({checks} assertions)")
 
