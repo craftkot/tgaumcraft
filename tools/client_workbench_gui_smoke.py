@@ -261,6 +261,15 @@ body = r'''
   fi
   sleep 2
   capture 08c-workbench-before-open
+  # The item-model screenshot above deliberately selects hotbar slot 0 with a
+  # workbench block in hand. Right-click with that placeable item can consume
+  # the interaction before the target block's menu path is exercised. First
+  # prove the empty-hand GUI path in the actual client, not merely GameTest.
+  send_chat '/item replace entity @p hotbar.1 with minecraft:air'
+  xdotool key --clearmodifiers 2
+  sleep 2
+  echo 'WORKBENCH_OPEN_ATTEMPT=EMPTY_HAND_HOTBAR_1' | tee -a client-smoke-status.txt
+  capture 08c1-workbench-empty-hand-before-open
   xdotool click 3
   sleep 4
   capture 08d-workbench-gui-open
