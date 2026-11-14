@@ -162,11 +162,11 @@ expect('xdotool key --clearmodifiers slash' in replacement_body
        and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
-probe_body = generator.split("send_chat_probe() {", 1)[1].split("\\n  }", 1)[0]
-expect('local probe_prefix="\${2:-05}"' in probe_body
-       and 'capture "\${probe_prefix}b-chat-open-after-slash"' in probe_body
-       and 'capture "\${probe_prefix}c-chat-text-before-enter"' in probe_body
-       and 'capture "\${probe_prefix}d-chat-submit-result"' in probe_body,
+probe_body = generator.split("send_chat_probe() {", 1)[1].split("\n  }", 1)[0]
+expect('local probe_prefix="${2:-05}"' in probe_body
+       and 'capture "${probe_prefix}b-chat-open-after-slash"' in probe_body
+       and 'capture "${probe_prefix}c-chat-text-before-enter"' in probe_body
+       and 'capture "${probe_prefix}d-chat-submit-result"' in probe_body,
        "second command probe must preserve a distinct screenshot set instead of overwriting the initial probe")
 expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
        "command probe must identify which input sequence its screenshots belong to")

@@ -133,7 +133,7 @@ send_chat_replacement = """  send_chat() {
   }
   send_chat_probe() {
     local raw_command="$1"
-    local probe_prefix="\${2:-05}"
+    local probe_prefix="${2:-05}"
     if [[ "$raw_command" != /* ]]; then
       echo "WORKBENCH_CHAT_PROBE_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
       exit 1
@@ -148,13 +148,13 @@ send_chat_replacement = """  send_chat() {
     echo "WORKBENCH_CHAT_PROBE_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
-    capture "\${probe_prefix}b-chat-open-after-slash"
+    capture "${probe_prefix}b-chat-open-after-slash"
     xdotool type --clearmodifiers --delay 24 "$command_body"
     sleep 1
-    capture "\${probe_prefix}c-chat-text-before-enter"
+    capture "${probe_prefix}c-chat-text-before-enter"
     xdotool key --clearmodifiers Return
     sleep 4
-    capture "\${probe_prefix}d-chat-submit-result"
+    capture "${probe_prefix}d-chat-submit-result"
     echo "WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix" | tee -a client-smoke-status.txt
   }"""
 if source.count(send_chat_anchor) != 1:
