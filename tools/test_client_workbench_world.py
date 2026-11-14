@@ -146,6 +146,19 @@ expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
 
 expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
        "Workbench smoke does not record the authoritative pre-command Peaceful world gate")
+
+# Artifact 14107008823 records the actual server teleport result as
+# (12.5, 151.5, 3.5). The old gate centered at y=150 with radius 1 was
+# 1.5 blocks away, so it rejected the correctly positioned player.
+observed_player_position = (12.5, 151.5, 3.5)
+old_gate_position = (12.5, 150.0, 3.5)
+old_gate_distance = sum((a - b) ** 2 for a, b in zip(observed_player_position, old_gate_position)) ** 0.5
+expect(old_gate_distance == 1.5 and old_gate_distance > 1.0,
+       "position-gate regression fixture no longer reproduces the old false negative")
+expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" in generator,
+       "Workbench position gate does not match the server-observed player position")
+expect("send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
+       "Workbench position gate still rejects the observed player position")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
 expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
