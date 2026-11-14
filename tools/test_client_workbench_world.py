@@ -210,24 +210,24 @@ expect("xdotool key --clearmodifiers F3" in generator
        and "capture 05a-after-f3-input-probe" in generator,
        "Workbench smoke lacks a client-side F3 keyboard/focus probe")
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
-expect('xdotool key --clearmodifiers t' in replacement_body
-       and 'xdotool type --clearmodifiers --delay 24 "$raw_command"' in replacement_body
-       and 'xdotool key --clearmodifiers slash' not in replacement_body,
-       "Workbench command helper must open the default T chat and type the complete slash command")
-expect('if [[ "$raw_command" == "/say TC_WORKBENCH_CHAT_INPUT_OK" ]]' in replacement_body
-       and 'capture 05b-chat-open-after-t' in replacement_body
+expect('xdotool key --clearmodifiers slash' in replacement_body
+       and 'local command_body="${raw_command#/}"' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
+       and 'xdotool key --clearmodifiers t' not in replacement_body,
+       "Workbench command helper must open command chat explicitly and type only the command body")
+expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' in replacement_body
+       and 'capture 05b-chat-open-after-slash' in replacement_body
        and 'capture 05c-chat-text-before-enter' in replacement_body
        and 'capture 05d-chat-submit-result' in replacement_body,
-       "Workbench chat probe must capture the real GUI before text entry, before Enter, and after submit")
+       "Workbench command probe must capture slash-opened chat, typed command and submit result")
 expect('WORKBENCH_DIFFICULTY_LOG_OFFSET="$(wc -c < client-smoke/client.log)"' in replacement_body,
        "Workbench helper does not capture the first Peaceful command response window")
 expect("chat_probe_anchor = (" in generator
        and "  send_chat '/gamemode creative'\\n" in generator
        and "  send_chat '/difficulty peaceful'\\n" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
-       and "grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log" in generator
-       and "WORKBENCH_CHAT_INPUT_PROBE=PASS" in generator
-       and "source = source.replace(chat_probe_anchor, chat_probe_replacement +" in generator,
+       and "chat_probe_replacement = \"  send_chat '/difficulty peaceful'\\n\"" in generator
+       and "source = source.replace(chat_probe_anchor, chat_probe_replacement + \"  send_chat '/give @p thaumcraft:crucible'\\n\", 1)" in generator,
        "Workbench smoke must anchor the chat probe to the unique Crucible bootstrap sequence")
 expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
        and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
