@@ -126,9 +126,11 @@ send_chat_replacement = """  send_chat() {
     echo 'WORKBENCH_CHAT_INPUT_METHOD=SLASH_COMMAND_KEY' | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$command_body"
+    xdotool type --clearmodifiers --delay 50 "$command_body"
     sleep 1
-    xdotool key --clearmodifiers Return
+    xdotool keydown --clearmodifiers Return
+    sleep 0.15
+    xdotool keyup --clearmodifiers Return
     sleep 4
   }
   send_chat_probe() {
@@ -149,10 +151,12 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers slash
     sleep 1
     capture "${probe_prefix}b-chat-open-after-slash"
-    xdotool type --clearmodifiers --delay 24 "$command_body"
+    xdotool type --clearmodifiers --delay 50 "$command_body"
     sleep 1
     capture "${probe_prefix}c-chat-text-before-enter"
-    xdotool key --clearmodifiers Return
+    xdotool keydown --clearmodifiers Return
+    sleep 0.15
+    xdotool keyup --clearmodifiers Return
     sleep 4
     capture "${probe_prefix}d-chat-submit-result"
     # Preserve an authoritative F3 frame before the fail-fast mutation gate.
@@ -209,7 +213,7 @@ chat_probe_anchor = (
 )
 chat_probe_replacement = (
     "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\n"
-    "  send_chat '/tp @p ~ ~ ~ 0 28'\n"
+    "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\n"
     "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\n"
     "  first_workbench_mutation=\"$(grep -m1 -F '[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: ' client-smoke/client.log | grep -Eo '(Changed the block at|Изменён блок в точке) -?[0-9]+, -?[0-9]+, -?[0-9]+' || true)\"\n"
     "  if [[ -z \"$first_workbench_mutation\" ]]; then\n"

@@ -159,9 +159,14 @@ expect("xdotool key --clearmodifiers F3" in generator
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
 expect('xdotool key --clearmodifiers slash' in replacement_body
        and 'local command_body="${raw_command#/}"' in replacement_body
-       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 50 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
+expect(replacement_body.count('xdotool type --clearmodifiers --delay 50 "$command_body"') == 2
+       and replacement_body.count('xdotool keydown --clearmodifiers Return') == 2
+       and replacement_body.count('sleep 0.15') == 2
+       and replacement_body.count('xdotool keyup --clearmodifiers Return') == 2,
+       "all Workbench commands must use slower text entry and a held Enter key event")
 probe_body = generator.split("send_chat_probe() {", 1)[1].split("\n  }", 1)[0]
 expect('local probe_prefix="${2:-05}"' in probe_body
        and 'capture "${probe_prefix}b-chat-open-after-slash"' in probe_body
@@ -171,8 +176,9 @@ expect('local probe_prefix="${2:-05}"' in probe_body
 expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
        "command probe must identify which input sequence its screenshots belong to")
 expect('capture "${probe_prefix}e-f3-after-submit"' in probe_body
-       and probe_body.index('xdotool key --clearmodifiers Return')
+       and probe_body.index('xdotool keydown --clearmodifiers Return')
            < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+       and probe_body.index('xdotool keyup --clearmodifiers Return') < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
        and probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
            < probe_body.index('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix'),
        "command probe must preserve a real F3 world-state frame after Enter and before fail-fast checks")
@@ -184,7 +190,7 @@ expect("chat_probe_anchor = (" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
        and "chat_probe_replacement = (" in generator
        and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\\n" in generator
-       and "  send_chat '/tp @p ~ ~ ~ 0 28'\\n" in generator
+       and "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\\n" in generator
        and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\\n" in generator
        and "WORKBENCH_POST_TP_MUTATION=PASS" in generator
        and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
@@ -419,12 +425,12 @@ expect("wait_for_workbench_marker" in generator
        and "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in generator
        and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
        "Workbench smoke does not require the real server-to-client menu lifecycle")
-type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
-return_index = replacement_body.index('xdotool key --clearmodifiers Return')
+type_index = replacement_body.index('xdotool type --clearmodifiers --delay 50 "$command_body"')
+return_index = replacement_body.index('xdotool keydown --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
        and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05" in chat_probe_replacement_body
-       and "send_chat '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
+       and "send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp" in chat_probe_replacement_body
        and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" in chat_probe_replacement_body
        and "WORKBENCH_POST_TP_MUTATION=PASS" in chat_probe_replacement_body
        and "(Changed the block at|Изменён блок в точке)" in chat_probe_replacement_body
@@ -432,7 +438,7 @@ expect("sleep 1" in replacement_body[type_index:return_index]
        and "capture 06f-post-teleport-gold-cleared" in chat_probe_replacement_body
        and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
        and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05")
-           < chat_probe_replacement_body.index("send_chat '/tp @p ~ ~ ~ 0 28'")
+           < chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp")
            < chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06")
            < chat_probe_replacement_body.index("WORKBENCH_POST_TP_MUTATION=PASS")
            < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
