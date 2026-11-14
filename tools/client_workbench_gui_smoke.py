@@ -44,15 +44,20 @@ send_chat_anchor = """  send_chat() {
     sleep 4
   }"""
 send_chat_replacement = """  send_chat() {
-    # The integrated-world transition can leave X11 focus on PointerRoot.
-    # Re-activate the actual Minecraft window before every scripted command.
+    local raw_command="$1"
+    local command="${raw_command#/}"
     xdotool windowactivate --sync "$WIN"
     xdotool windowfocus --sync "$WIN"
+    active_window="$(xdotool getactivewindow)"
     focused_window="$(xdotool getwindowfocus)"
-    echo "WORKBENCH_INPUT_FOCUS=$focused_window" | tee -a client-smoke-status.txt
-    xdotool key --clearmodifiers t
+    target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
+    target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+    echo "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid name=$target_name" | tee -a client-smoke-status.txt
+    # Slash opens Minecraft's command-entry screen directly; do not depend on
+    # the configurable chat key (T) after the integrated-world transition.
+    xdotool key --clearmodifiers slash
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool type --clearmodifiers --delay 24 "$command"
     xdotool key --clearmodifiers Return
     sleep 4
   }"""
@@ -79,6 +84,32 @@ source = source.replace(send_chat_anchor, send_chat_replacement, 1)
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
 
+  # Re-resolve the visible GLFW window after the title -> integrated-world
+  # transition. The pre-world handle may no longer be the active game window.
+  mapfile -t workbench_windows < <(xdotool search --onlyvisible --name 'Minecraft' 2>/dev/null || true)
+  if [ "${#workbench_windows[@]}" -eq 0 ]; then
+    echo 'WORKBENCH_POST_LOGIN_WINDOW=NOT_FOUND' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  active_window="$(xdotool getactivewindow)"
+  WIN="$active_window"
+  if [[ ! " ${workbench_windows[*]} " =~ " $WIN " ]]; then
+    WIN="${workbench_windows[$((${#workbench_windows[@]} - 1))]}"
+  fi
+  target_name="$(xdotool getwindowname "$WIN" 2>/dev/null || true)"
+  target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+  echo "WORKBENCH_POST_LOGIN_WINDOW=$WIN active=$active_window pid=$target_pid name=$target_name candidates=${workbench_windows[*]}" | tee -a client-smoke-status.txt
+  xdotool windowactivate --sync "$WIN"
+  xdotool windowfocus --sync "$WIN"
+
+  # F3 is a client-side input probe: its debug overlay must appear in the
+  # immediately following real framebuffer capture, independently of chat.
+  xdotool key --clearmodifiers F3
+  sleep 1
+  capture 05a-after-f3-input-probe
+  xdotool key --clearmodifiers F3
+  sleep 1
+
   # The shared bootstrap's initial NBT gate is narrowed only in this generated
   # copy: require real cheats + Creative, then set Peaceful and persist it before
   # any scripted block/item interaction. The shared client_smoke.sh is untouched.
@@ -88,7 +119,7 @@ body = r'''
   # pre-save level.dat metadata.
   difficulty_log_offset="$(wc -c < client-smoke/client.log)"
   send_chat '/difficulty peaceful'
-  capture 05a-after-peaceful-command
+  capture 05b-after-peaceful-command
   python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log \
     --from-offset "$difficulty_log_offset" --wait-seconds 12 \
     | tee -a client-smoke-status.txt
