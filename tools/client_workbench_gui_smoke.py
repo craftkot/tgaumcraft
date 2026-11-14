@@ -124,6 +124,12 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers t
     sleep 1
     xdotool type --clearmodifiers --delay 24 "$raw_command"
+    # Capture the literal chat input before submitting the unique round-trip
+    # probe. This distinguishes a closed chat / missing slash / wrong focus
+    # from a server response that was not recorded in client.log.
+    if [ "$raw_command" = '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE' ]; then
+      capture 05b0-workbench-command-typed-before-enter
+    fi
     xdotool key --clearmodifiers Return
     sleep 4
   }"""
