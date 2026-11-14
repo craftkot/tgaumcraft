@@ -29,6 +29,7 @@ public final class ThaumcraftPort {
         ThaumcraftMenus.register(modBus);
         ThaumcraftItems.register(modBus);
         ThaumcraftEntities.register(modBus);
+        dev.ehtid.thaumcraft.golem.GolemModule.register(modBus);
         ThaumcraftCreativeTabs.register(modBus);
         ThaumcraftParticles.register(modBus);
         ThaumcraftRecipes.register(modBus);

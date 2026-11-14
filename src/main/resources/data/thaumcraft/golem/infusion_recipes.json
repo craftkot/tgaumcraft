@@ -1,0 +1,206 @@
+[
+  {
+    "legacyId": "thaumcraft:SealHarvest",
+    "research": "SEALHARVEST",
+    "center": {
+      "itemIds": [
+        "thaumcraft:seal_blank"
+      ],
+      "tagIds": [],
+      "crystalAspect": null
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:wheat_seeds"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:pumpkin_seeds"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:melon_seeds"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:beetroot_seeds"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:sugar_cane"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:cactus"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "thaumcraft:seal_harvest",
+    "outputCount": 1,
+    "aspects": {
+      "herba": 10,
+      "sensus": 10,
+      "humanus": 10
+    },
+    "instability": 0
+  },
+  {
+    "legacyId": "thaumcraft:SealButcher",
+    "research": "SEALBUTCHER",
+    "center": {
+      "itemIds": [
+        "thaumcraft:seal_guard"
+      ],
+      "tagIds": [],
+      "crystalAspect": null
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:leather"
+        ],
+        "tagIds": [
+          "c:leathers"
+        ],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [],
+        "tagIds": [
+          "minecraft:wool"
+        ],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:rabbit_hide"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:porkchop"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:mutton"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:beef"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "thaumcraft:seal_butcher",
+    "outputCount": 1,
+    "aspects": {
+      "bestia": 10,
+      "sensus": 10,
+      "humanus": 10
+    },
+    "instability": 0
+  },
+  {
+    "legacyId": "thaumcraft:SealBreak",
+    "research": "SEALBREAK",
+    "center": {
+      "itemIds": [
+        "thaumcraft:seal_blank"
+      ],
+      "tagIds": [],
+      "crystalAspect": null
+    },
+    "components": [
+      {
+        "itemIds": [
+          "minecraft:golden_axe"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:golden_pickaxe"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "minecraft:golden_shovel"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "thaumcraft:seal_breaker",
+    "outputCount": 1,
+    "aspects": {
+      "instrumentum": 10,
+      "perditio": 10,
+      "humanus": 10
+    },
+    "instability": 1
+  },
+  {
+    "legacyId": "thaumcraft:MindBiothaumic",
+    "research": "MINDBIOTHAUMIC",
+    "center": {
+      "itemIds": [
+        "thaumcraft:mind"
+      ],
+      "tagIds": [],
+      "crystalAspect": null
+    },
+    "components": [
+      {
+        "itemIds": [
+          "thaumcraft:brain"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      },
+      {
+        "itemIds": [
+          "thaumcraft:mechanism_complex"
+        ],
+        "tagIds": [],
+        "crystalAspect": null
+      }
+    ],
+    "outputItemId": "thaumcraft:mind_biothaumic",
+    "outputCount": 1,
+    "aspects": {
+      "cognitio": 50,
+      "machina": 25
+    },
+    "instability": 4
+  }
+]

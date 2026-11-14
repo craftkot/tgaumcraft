@@ -1,0 +1,29 @@
+{
+  "server_exit": 0,
+  "client_exit": 0,
+  "verified": true,
+  "xvfb_exit": 0,
+  "captures": [
+    {
+      "marker": "[12:04:55] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_GALLERY_FRAME_OBSERVED actualRenderedMaterials=6 heads=5 arms=5 legs=4 addons=4",
+      "screenshot": "gallery.png",
+      "sha256": "057ccfbc26899a0c71105dec83220e1fa677cc96dc0671c085c777327babb57f",
+      "captured_utc": "2026-10-26T12:04:57.054623+00:00"
+    },
+    {
+      "marker": "[12:05:00] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_CARGO_FRAME_OBSERVED actualIron=11 workerVisible=true raisedCarryArms=true wheelRotationChanged=true",
+      "screenshot": "moving-cargo.png",
+      "sha256": "a9a00cb4273f1ffe316c848059625e0f140360ab79f7292d2cf4e3caa762bd59",
+      "captured_utc": "2026-10-26T12:05:01.707221+00:00"
+    },
+    {
+      "marker": "[12:05:03] [Render thread/INFO] [de.eh.th.cl.GolemPartsClientAssertions/]: GOLEM_PARTS_CLIENT_FINAL_FRAME_OBSERVED actualBarrelIron=11",
+      "screenshot": "deposited.png",
+      "sha256": "5ac8f1ba0034169f2e7d56aa82fa411588a01a09e131e08ceaee93d368d2459b",
+      "captured_utc": "2026-10-26T12:05:04.347524+00:00"
+    }
+  ],
+  "server_directory": "/workspace/tgaumcraft/build/golem-parts-server-m59",
+  "client_directory": "/workspace/tgaumcraft/build/golem-parts-client-m59",
+  "observed_utc": "2026-10-26T12:05:24.016864+00:00"
+}

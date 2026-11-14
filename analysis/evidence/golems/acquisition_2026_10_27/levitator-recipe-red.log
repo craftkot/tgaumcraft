@@ -1,0 +1,4 @@
+Exception in thread "main" java.lang.AssertionError: Missing original arcane levitator acquisition
+	at dev.ehtid.thaumcraft.port.core.GolemLevitatorAcquisitionRecipeTest.lambda$main$1(GolemLevitatorAcquisitionRecipeTest.java:13)
+	at java.base/java.util.Optional.orElseThrow(Optional.java:403)
+	at dev.ehtid.thaumcraft.port.core.GolemLevitatorAcquisitionRecipeTest.main(GolemLevitatorAcquisitionRecipeTest.java:13)

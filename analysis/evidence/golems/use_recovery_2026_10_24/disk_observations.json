@@ -1,0 +1,23 @@
+{
+  "read_only": true,
+  "world": "golem-use-m51-server",
+  "workers": 1,
+  "uuid": [
+    825986029,
+    376783828,
+    -1666469517,
+    -824489750
+  ],
+  "rankXP": 2,
+  "actualHandItems": [
+    {},
+    {}
+  ],
+  "target": {
+    "Name": "minecraft:spruce_planks"
+  },
+  "seals": 2,
+  "pending": 0,
+  "sourceSpruce": 1,
+  "groundItems": 0
+}

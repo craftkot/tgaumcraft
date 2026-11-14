@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "group": "thaumcraft:stone_table",
+  "pattern": [
+    "SSS",
+    "W W"
+  ],
+  "key": {
+    "S": {
+      "item": "minecraft:smooth_stone_slab"
+    },
+    "W": {
+      "tag": "thaumcraft:golem_press_stone"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:table_stone",
+    "count": 1
+  }
+}

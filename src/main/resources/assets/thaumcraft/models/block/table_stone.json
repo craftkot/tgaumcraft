@@ -1,0 +1,9 @@
+{
+  "parent": "thaumcraft:block/table_wood",
+  "textures": {
+    "particle": "minecraft:block/stone",
+    "top": "minecraft:block/stone",
+    "side": "minecraft:block/stone",
+    "bottom": "minecraft:block/stone"
+  }
+}

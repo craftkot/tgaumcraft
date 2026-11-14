@@ -1,0 +1,471 @@
+package dev.ehtid.thaumcraft.entity;
+
+import dev.ehtid.thaumcraft.golem.ai.GolemHomeGoal;
+import dev.ehtid.thaumcraft.golem.ai.GolemFollowOwnerGoal;
+import dev.ehtid.thaumcraft.golem.GolemModule;
+import dev.ehtid.thaumcraft.golem.GolemDyes;
+import dev.ehtid.thaumcraft.golem.inventory.GolemInventoryTransfer;
+import dev.ehtid.thaumcraft.port.core.golem.GolemBellRules;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvents;
+import dev.ehtid.thaumcraft.golem.ai.GolemBlockGoal;
+import dev.ehtid.thaumcraft.golem.ai.GolemPickupGoal;
+import dev.ehtid.thaumcraft.item.GolemPlacerItem;
+import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
+import dev.ehtid.thaumcraft.port.core.golem.GolemTrait;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+import java.util.Optional;
+import java.util.UUID;
+
+/** Server-owned ground/air golem and source melee adapter. Catalog ranged arms use real server projectiles. */
+public final class ThaumcraftGolem extends PathfinderMob implements net.minecraft.world.entity.monster.RangedAttackMob {
+    private static final EntityDataAccessor<Long> DESIGN = SynchedEntityData.defineId(
+            ThaumcraftGolem.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Optional<UUID>> OWNER = SynchedEntityData.defineId(
+            ThaumcraftGolem.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Byte> COLOR = SynchedEntityData.defineId(
+            ThaumcraftGolem.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Byte> FLAGS = SynchedEntityData.defineId(
+            ThaumcraftGolem.class, EntityDataSerializers.BYTE);
+    private static final EntityDataAccessor<Boolean> WORKING = SynchedEntityData.defineId(
+            ThaumcraftGolem.class, EntityDataSerializers.BOOLEAN);
+
+    private static final EntityDataAccessor<Boolean> CLIMBING = SynchedEntityData.defineId(ThaumcraftGolem.class,EntityDataSerializers.BOOLEAN);
+
+    private BlockPos home = BlockPos.ZERO;
+    private int rankXp;
+    private Long invalidDesign;
+    private GolemPickupGoal pickupGoal;
+    private GolemBlockGoal blockGoal;
+    private ItemStack transferRecovery = ItemStack.EMPTY;
+    private final java.util.ArrayDeque<ItemStack> recoveryQueue=new java.util.ArrayDeque<>();
+    private GolemFollowOwnerGoal followGoal;
+
+    public ThaumcraftGolem(EntityType<? extends ThaumcraftGolem> type, Level level) {
+        super(type, level);
+        setPersistenceRequired();
+        setCanPickUpLoot(false); // BETA26 collection goes through a seal task, never vanilla mob pickup.
+        setDropChance(EquipmentSlot.MAINHAND, 2.0F);
+        setDropChance(EquipmentSlot.OFFHAND, 2.0F);
+        xpReward = 5;
+    }
+
+    public static AttributeSupplier.Builder attributes() {
+        return createMobAttributes().add(Attributes.MOVEMENT_SPEED, 0.3)
+                .add(Attributes.MAX_HEALTH, 10).add(Attributes.ATTACK_DAMAGE, 0)
+                .add(Attributes.FOLLOW_RANGE, 40).add(Attributes.ARMOR, 0)
+                .add(Attributes.STEP_HEIGHT, 0.6);
+    }
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(DESIGN, GolemDesign.defaultWood().toLong());
+        builder.define(OWNER, Optional.empty());
+        builder.define(COLOR, (byte) 0);
+        builder.define(FLAGS, (byte) 0);
+        builder.define(WORKING, false);
+        builder.define(CLIMBING, false);
+    }
+
+    @Override
+    protected void registerGoals() {
+        goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this) {
+            @Override public boolean canUse() { return fighter() && getNavigation() instanceof net.minecraft.world.entity.ai.navigation.GroundPathNavigation && super.canUse(); }
+        });
+        goalSelector.addGoal(1,new dev.ehtid.thaumcraft.golem.ai.GolemRangedGoal(this));
+        goalSelector.addGoal(2, new net.minecraft.world.entity.ai.goal.MeleeAttackGoal(this, 1.15, false) {
+            @Override public boolean canUse() { return fighter() && super.canUse(); }
+            @Override public boolean canContinueToUse() { return fighter() && super.canContinueToUse(); }
+        });
+        targetSelector.addGoal(1, new dev.ehtid.thaumcraft.golem.ai.GolemOwnerTargetGoal(this, true));
+        targetSelector.addGoal(2, new dev.ehtid.thaumcraft.golem.ai.GolemOwnerTargetGoal(this, false));
+        targetSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal(this) {
+            @Override public boolean canUse() { return fighter() && super.canUse(); }
+        });
+        pickupGoal = new GolemPickupGoal(this);
+        goalSelector.addGoal(3, pickupGoal);
+        blockGoal = new GolemBlockGoal(this);
+        goalSelector.addGoal(4, blockGoal);
+        followGoal = new GolemFollowOwnerGoal(this);
+        goalSelector.addGoal(4, followGoal);
+        goalSelector.addGoal(5, new GolemHomeGoal(this));
+        goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8));
+        goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+    }
+
+    public GolemDesign design() { return GolemDesign.fromLong(entityData.get(DESIGN)); }
+    public UUID ownerId() { return entityData.get(OWNER).orElse(null); }
+    public byte golemColor() { return entityData.get(COLOR); }
+    public void setGolemColor(byte color) { entityData.set(COLOR, color); }
+    public BlockPos home() { return home; }
+    public int rankXp() { return rankXp; }
+    /** BETA26 addRankXp: server-only SMART, one rank per call, maximum ten. */
+    public void addRankXp(int amount) {
+        GolemDesign current = design();
+        if (level().isClientSide || amount <= 0 || !current.hasTrait(GolemTrait.SMART) || current.rank() >= 10) return;
+        long xp = (long) rankXp + amount;
+        int threshold = (current.rank() + 1) * (current.rank() + 1) * 1000;
+        if (xp >= threshold) {
+            xp -= threshold;
+            entityData.set(DESIGN, current.withRank(current.rank() + 1).toLong());
+            applyDesign();
+        }
+        rankXp = (int) Math.min(Integer.MAX_VALUE, xp);
+    }
+    public boolean hasWorkTask() { return entityData.get(WORKING); }
+    public void setWorking(boolean working) { entityData.set(WORKING, working); }
+    public boolean isFollowingOwner() { return GolemBellRules.following(entityData.get(FLAGS)); }
+    public void setFollowingOwner(boolean following) {
+        if (level().isClientSide || isFollowingOwner() == following || invalidDesign != null) return;
+        if (pickupGoal != null) pickupGoal.stop();
+        if (blockGoal != null) blockGoal.stop();
+        if (followGoal != null) followGoal.stop();
+        getNavigation().stop();
+        setWorking(false);
+        entityData.set(FLAGS, GolemBellRules.following(entityData.get(FLAGS), following));
+        if (!following) home = blockPosition().immutable();
+    }
+
+    public void initialize(GolemDesign design, UUID owner, BlockPos home, int xp) {
+        if(!GolemModule.supportsRuntime(design)) throw new IllegalArgumentException("Unsupported runtime golem construction");
+        entityData.set(DESIGN, design.toLong());
+        entityData.set(OWNER, Optional.ofNullable(owner));
+        this.home = home.immutable();
+        rankXp = Math.max(0, xp);
+        applyDesign();
+        setHealth(getMaxHealth());
+    }
+
+    private void applyDesign() {
+        // Packed design is applied after the default walker constructor and on native NBT restoration.
+        boolean flyer=design().hasTrait(GolemTrait.FLYER),climber=design().hasTrait(GolemTrait.CLIMBER);
+        if(flyer) {
+            if(!(navigation instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation)) navigation=new dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation(this,level());
+            if(!(moveControl instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl)) moveControl=new dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl(this);
+            setNoGravity(true);
+        } else {
+            if(climber&&!(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation)) navigation=new net.minecraft.world.entity.ai.navigation.WallClimberNavigation(this,level());
+            else if(!climber&&(navigation instanceof net.minecraft.world.entity.ai.navigation.WallClimberNavigation||navigation instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightNavigation)) navigation=new net.minecraft.world.entity.ai.navigation.GroundPathNavigation(this,level());
+            if(moveControl instanceof dev.ehtid.thaumcraft.golem.ai.GolemFlightMoveControl) { moveControl=new net.minecraft.world.entity.ai.control.MoveControl(this); setNoGravity(false); }
+        }
+        if(!climber) entityData.set(CLIMBING,false);
+        var stats = design().stats();
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(stats.maxHealth());
+        getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(stats.movementSpeed());
+        getAttribute(Attributes.ARMOR).setBaseValue(stats.armor());
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(stats.attackDamage());
+        getAttribute(Attributes.FOLLOW_RANGE).setBaseValue(stats.followRange());
+        getAttribute(Attributes.STEP_HEIGHT).setBaseValue(stats.stepHeight());
+        restrictTo(home, stats.homeRadius());
+    }
+
+    public boolean fighter() { return invalidDesign == null && design().hasTrait(GolemTrait.FIGHTER); }
+    public boolean ranged() { return fighter()&&design().hasTrait(GolemTrait.RANGED); }
+    @Override public void performRangedAttack(net.minecraft.world.entity.LivingEntity target,float factor) {
+        if(!(level() instanceof net.minecraft.server.level.ServerLevel level)||!ranged()||target==null||!target.isAlive()||isAlliedTo(target)) return;
+        var dart=new GolemDart(level,this);
+        double x=target.getX()-getX(),y=dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.verticalAim(target.getBoundingBox().minY,target.getEyeHeight(),factor,dart.getY()),z=target.getZ()-getZ();
+        if(x*x+y*y+z*z<1e-20) return;
+        dart.setBaseDamage(dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.damage(getAttributeValue(Attributes.ATTACK_DAMAGE),factor,level.getRandom().nextGaussian()));
+        dart.shootLegacy(x,y,z,dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.VELOCITY,dev.ehtid.thaumcraft.port.core.golem.GolemRangedRules.INACCURACY);
+        if(level.addFreshEntity(dart)) playSound(SoundEvents.ARROW_SHOOT,1,1/(level.getRandom().nextFloat()*.4F+.8F));
+    }
+    public Player ownerEntity() { return ownerId() == null ? null : level().getPlayerByUUID(ownerId()); }
+    @Override public net.minecraft.world.scores.PlayerTeam getTeam() {
+        Player owner = ownerEntity();
+        return owner != null ? owner.getTeam() : super.getTeam();
+    }
+    @Override public boolean isAlliedTo(net.minecraft.world.entity.Entity other) {
+        Player owner = ownerEntity();
+        return owner != null ? other == owner || owner.isAlliedTo(other) : super.isAlliedTo(other);
+    }
+    @Override public boolean doHurtTarget(net.minecraft.world.entity.Entity target) {
+        if (level().isClientSide || !fighter() || isAlliedTo(target)) return false;
+        boolean hit = super.doHurtTarget(target);
+        if (hit && target instanceof net.minecraft.world.entity.LivingEntity living) {
+            // Preserve source ordering: lethal first hit cannot retroactively produce player XP.
+            if (design().hasTrait(GolemTrait.DEFT)) living.lastHurtByPlayerTime = 100;
+            if (target instanceof net.minecraft.world.entity.Mob && !living.isAlive()) addRankXp(8);
+        }
+        return hit;
+    }
+
+    @Override public boolean causeFallDamage(float distance,float multiplier,net.minecraft.world.damagesource.DamageSource source) {
+        return !dev.ehtid.thaumcraft.port.core.golem.GolemDamageRules.fallImmune(design())
+                && super.causeFallDamage(distance,multiplier,source);
+    }
+
+    @Override protected void actuallyHurt(net.minecraft.world.damagesource.DamageSource source,float amount) {
+        // NeoForge21.1 actuallyHurt reads its current DamageContainer, not this float argument.
+        // Apply the original pre-armor adjustment to that same nested damage context.
+        if(!damageContainers.isEmpty()) amount=damageContainers.peek().getNewDamage();
+        amount=dev.ehtid.thaumcraft.port.core.golem.GolemDamageRules.amount(design(),amount,getMaxHealth(),
+                source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE),source.is(net.minecraft.tags.DamageTypeTags.IS_EXPLOSION),
+                source.is(net.minecraft.world.damagesource.DamageTypes.CACTUS));
+        if(amount>0) {
+            if(!damageContainers.isEmpty()) damageContainers.peek().setNewDamage(amount);
+            super.actuallyHurt(source,amount);
+        }
+    }
+
+    private EquipmentSlot carrySlot(int i) { return i == 0 ? EquipmentSlot.MAINHAND : EquipmentSlot.OFFHAND; }
+
+    public int canCarryAmount(ItemStack incoming) {
+        if (incoming.isEmpty() || invalidDesign != null) return 0;
+        int capacity = 0;
+        for (int i = 0; i < design().stats().carrySlots(); i++) {
+            ItemStack held = getItemBySlot(carrySlot(i));
+            if (held.isEmpty()) capacity += incoming.getMaxStackSize();
+            else if (ItemStack.isSameItemSameComponents(held, incoming))
+                capacity += Math.max(0, held.getMaxStackSize() - held.getCount());
+        }
+        return capacity;
+    }
+
+    /** Owns unexpected actual extraction remainders; never invent a stack from a simulation. */
+    public boolean hasTransferRecovery() { return !transferRecovery.isEmpty() || !recoveryQueue.isEmpty(); }
+    public ItemStack transferRecovery() { return transferRecovery.copy(); }
+    public java.util.List<ItemStack> transferRecoveryItems() {
+        var result=new java.util.ArrayList<ItemStack>();
+        if(!transferRecovery.isEmpty()) result.add(transferRecovery.copy());
+        recoveryQueue.forEach(s->result.add(s.copy())); return java.util.List.copyOf(result);
+    }
+    /** Returned fake-player inventory/seed escrow may contain several actual variants. No new extraction is allowed until drained. */
+    public void retainTransfer(ItemStack actual) {
+        if(level().isClientSide || actual.isEmpty()) return;
+        var remaining=hasTransferRecovery()?actual.copy():holdItem(actual);
+        if(remaining.isEmpty()) return;
+        if(transferRecovery.isEmpty() && recoveryQueue.isEmpty()) transferRecovery=remaining;
+        else recoveryQueue.addLast(remaining);
+    }
+    private ItemStack popRecovery() {
+        var result=transferRecovery;
+        transferRecovery=recoveryQueue.isEmpty()?ItemStack.EMPTY:recoveryQueue.removeFirst(); return result;
+    }
+    private void restoreRecoveryFirst(ItemStack actual) {
+        if(actual.isEmpty())return;
+        if(!transferRecovery.isEmpty())recoveryQueue.addFirst(transferRecovery);
+        transferRecovery=actual;
+    }
+    private boolean hasCarriedItems() {
+        return !getMainHandItem().isEmpty()||!getOffhandItem().isEmpty()||hasTransferRecovery();
+    }
+    public void holdExtracted(ItemStack actual) {
+        if (level().isClientSide || hasTransferRecovery()) throw new IllegalStateException("Extraction recovery must be drained first");
+        transferRecovery = holdItem(actual);
+    }
+
+    /** Returns a new remainder. No world/container mutation, and no alias to the caller's stack. */
+    public ItemStack holdItem(ItemStack incoming) {
+        ItemStack remainder = incoming.copy();
+        if (invalidDesign != null) return remainder;
+        for (int i = 0; i < design().stats().carrySlots() && !remainder.isEmpty(); i++) {
+            EquipmentSlot slot = carrySlot(i);
+            ItemStack held = getItemBySlot(slot);
+            if (held.isEmpty()) {
+                int accepted = Math.min(remainder.getCount(), remainder.getMaxStackSize());
+                setItemSlot(slot, remainder.split(accepted));
+            } else if (ItemStack.isSameItemSameComponents(held, remainder)) {
+                int accepted = Math.min(remainder.getCount(), Math.max(0, held.getMaxStackSize() - held.getCount()));
+                ItemStack merged = held.copy();
+                merged.grow(accepted);
+                setItemSlot(slot, merged);
+                remainder.shrink(accepted);
+            }
+        }
+        return remainder;
+    }
+
+    @Override public boolean onClimbable() { return entityData.get(CLIMBING); }
+
+    @Override
+    public void tick() {
+        if (!level().isClientSide && getTarget() != null && isAlliedTo(getTarget())) setTarget(null);
+        super.tick();
+        if (!level().isClientSide && design().hasTrait(GolemTrait.FLYER)) setNoGravity(true);
+        if (!level().isClientSide) entityData.set(CLIMBING,invalidDesign==null&&design().hasTrait(GolemTrait.CLIMBER)&&horizontalCollision);
+        if (!level().isClientSide && isAlive() && hasTransferRecovery()) {
+            if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
+            transferRecovery = holdItem(transferRecovery);
+        }
+        if (!level().isClientSide && isAlive() && invalidDesign == null
+                && tickCount % (design().hasTrait(GolemTrait.REPAIR) ? 40 : 100) == 0)
+            heal(1.0F);
+    }
+
+    @Override
+    protected void dropCustomDeathLoot(net.minecraft.server.level.ServerLevel level,
+                                       net.minecraft.world.damagesource.DamageSource source, boolean recentlyHit) {
+        // Cargo is not combat equipment. BETA26 dropCarried does not apply
+        // equipment drop randomness, durability damage or Vanishing to cargo.
+        for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
+            ItemStack held = getItemBySlot(slot);
+            if (held.isEmpty()) continue;
+            setItemSlot(slot, ItemStack.EMPTY);
+            spawnAtLocation(held.copy());
+        }
+        while (hasTransferRecovery()) {
+            ItemStack retained = popRecovery();
+            spawnAtLocation(retained.copy());
+        }
+        super.dropCustomDeathLoot(level, source, recentlyHit);
+    }
+
+    @Override
+    public boolean canDrownInFluidType(net.neoforged.neoforge.fluids.FluidType type) {
+        return type != net.neoforged.neoforge.common.NeoForgeMod.WATER_TYPE.value() && type.canDrownIn(this);
+    }
+
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
+        super.addAdditionalSaveData(tag); // Hands are saved by the vanilla equipment serializer exactly once.
+        tag.putLong("props", invalidDesign != null ? invalidDesign : design().toLong());
+        tag.putLong("homepos", home.asLong());
+        tag.putByte("gflags", entityData.get(FLAGS));
+        tag.putInt("rankXP", rankXp);
+        tag.putByte("color", golemColor());
+        if (!transferRecovery.isEmpty()) tag.put("transferRecovery", transferRecovery.save(registryAccess()));
+        else tag.remove("transferRecovery");
+        var queued=new net.minecraft.nbt.ListTag();
+        for(var stack:recoveryQueue) queued.add(stack.save(registryAccess()));
+        if(!queued.isEmpty()) tag.put("transferRecoveryQueue",queued); else tag.remove("transferRecoveryQueue");
+        if (ownerId() != null) tag.putString("OwnerUUID", ownerId().toString());
+        tag.putBoolean("v", true);
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        GolemDesign design;
+        invalidDesign = null;
+        try {
+            design = GolemDesign.fromLong(tag.getLong("props"));
+            if(!GolemModule.supportsRuntime(design)) throw new IllegalArgumentException("Unsupported saved golem functions");
+        }
+        catch (IllegalArgumentException e) {
+            // Retain malformed configuration and equipment without crashing a world
+            // load or silently converting it into a different functioning worker.
+            invalidDesign = tag.getLong("props");
+            design = GolemDesign.defaultWood();
+            setNoAi(true);
+        }
+        entityData.set(DESIGN, design.toLong());
+        home = tag.contains("homepos") ? BlockPos.of(tag.getLong("homepos")) : blockPosition();
+        UUID owner = null;
+        try { owner = UUID.fromString(tag.getString("OwnerUUID")); }
+        catch (IllegalArgumentException ignored) { /* Legacy ownerless or malformed owner stays unowned. */ }
+        entityData.set(OWNER, Optional.ofNullable(owner));
+        entityData.set(FLAGS, tag.getByte("gflags"));
+        entityData.set(COLOR, tag.getByte("color"));
+        transferRecovery = tag.contains("transferRecovery")
+                ? ItemStack.parseOptional(registryAccess(), tag.getCompound("transferRecovery")) : ItemStack.EMPTY;
+        recoveryQueue.clear();
+        var queued=tag.getList("transferRecoveryQueue",net.minecraft.nbt.Tag.TAG_COMPOUND);
+        for(int i=0;i<queued.size();i++) { var stack=ItemStack.parseOptional(registryAccess(),queued.getCompound(i)); if(!stack.isEmpty()) recoveryQueue.addLast(stack); }
+        rankXp = Math.max(0, tag.getInt("rankXP"));
+        setWorking(false); // Reservations are ephemeral; reacquire after load, never replay a completed pickup.
+        applyDesign();
+    }
+
+    @Override
+    protected InteractionResult mobInteract(Player player, InteractionHand hand) {
+        if (!isAlive() || isRemoved()) return InteractionResult.FAIL;
+        if (!player.isShiftKeyDown()) {
+            ItemStack held = player.getItemInHand(hand);
+            byte color = GolemDyes.color(held);
+            if (color != 0) {
+                if (!player.getUUID().equals(ownerId()) || player.level() != level() || !player.isAlive()
+                        || player.isSpectator() || player.distanceToSqr(this) > 25 || invalidDesign != null)
+                    return InteractionResult.FAIL;
+                if (level().isClientSide) return InteractionResult.SUCCESS;
+                setGolemColor(color);
+                // BETA26 consumes one even in creative or when applying the existing color again.
+                held.shrink(1);
+                playSound(SoundEvents.DYE_USE, 1, 1);
+                player.swing(hand, true);
+                // Original dye interaction does not directly cancel work. Every task callback
+                // rechecks current color; an incompatible goal releases its lease on its next tick.
+                return InteractionResult.CONSUME;
+            }
+        }
+        if (!player.isShiftKeyDown() && player.getItemInHand(hand).is(GolemModule.GOLEM_BELL.get())) {
+            if (!player.getUUID().equals(ownerId()) || player.distanceToSqr(this) > 25 || invalidDesign != null)
+                return InteractionResult.FAIL;
+            if (level().isClientSide) return InteractionResult.SUCCESS;
+            if (!player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge().isResearchKnown(GolemBellRules.RESEARCH))
+                return InteractionResult.PASS;
+            setFollowingOwner(!isFollowingOwner());
+            playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 1, 1);
+            player.displayClientMessage(Component.translatable("message.thaumcraft.golem." + (isFollowingOwner() ? "follow" : "stay")), true);
+            player.swing(hand, true);
+            return InteractionResult.CONSUME;
+        }
+        if (!player.isShiftKeyDown() || hand != InteractionHand.MAIN_HAND || !player.getUUID().equals(ownerId())
+                || player.getItemInHand(hand).is(net.minecraft.world.item.Items.NAME_TAG))
+            return super.mobInteract(player, hand);
+        if (level().isClientSide) return InteractionResult.SUCCESS;
+        var transfer=GolemInventoryTransfer.begin(this);
+        if(transfer==null)return InteractionResult.FAIL;
+        try(transfer){
+            // Returning to an item releases the task when the goal stops. Drop each carried slot once.
+            for (EquipmentSlot slot : new EquipmentSlot[]{EquipmentSlot.MAINHAND, EquipmentSlot.OFFHAND}) {
+                ItemStack held = getItemBySlot(slot);
+                if (held.isEmpty()) continue;
+                setItemSlot(slot, ItemStack.EMPTY);
+                ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), held);
+                if (!GolemInventoryTransfer.publishCargo(this,drop)) return InteractionResult.FAIL;
+            }
+            while (hasTransferRecovery()) {
+                if(transferRecovery.isEmpty() && !recoveryQueue.isEmpty()) transferRecovery=recoveryQueue.removeFirst();
+                ItemStack actual=popRecovery();
+                ItemEntity drop = new ItemEntity(level(), getX(), getY() + 0.5, getZ(), actual);
+                if (!level().addFreshEntity(drop)) {
+                    ItemStack returned=drop.getItem();drop.setItem(ItemStack.EMPTY);
+                    restoreRecoveryFirst(returned);
+                    return InteractionResult.FAIL;
+                }
+            }
+            // A spawn callback may have funded a hand that the loop already visited.
+            // Leave the worker alive for a later retry instead of discarding those real items.
+            if(hasCarriedItems())return InteractionResult.FAIL;
+            ItemEntity placer = new ItemEntity(level(), getX(), getY() + 0.5, getZ(),
+                    GolemPlacerItem.stack(invalidDesign != null ? invalidDesign : design().toLong(), rankXp));
+            if (!level().addFreshEntity(placer)) return InteractionResult.FAIL;
+            if(hasCarriedItems()){
+                // Roll back only the exact new placer owned by this aborted operation.
+                placer.setItem(ItemStack.EMPTY);placer.discard();
+                return InteractionResult.FAIL;
+            }
+            discard();
+            return InteractionResult.CONSUME;
+        }
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (pickupGoal != null && !level().isClientSide) pickupGoal.stop();
+        if (blockGoal != null && !level().isClientSide) blockGoal.stop();
+        if (followGoal != null && !level().isClientSide) followGoal.stop();
+        super.remove(reason);
+    }
+}

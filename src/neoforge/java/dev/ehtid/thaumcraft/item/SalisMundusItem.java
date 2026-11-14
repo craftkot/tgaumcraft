@@ -27,11 +27,14 @@ public final class SalisMundusItem extends Item {
         if (player == null) return InteractionResult.PASS;
         if (!player.mayUseItemAt(context.getClickedPos(), context.getClickedFace(), stack)) return InteractionResult.FAIL;
         if (player.isShiftKeyDown()) return InteractionResult.PASS;
+        if (dev.ehtid.thaumcraft.golem.press.GolemPressStructures.reserved(context.getLevel(), context.getClickedPos()))
+            return InteractionResult.CONSUME;
 
         PlayerKnowledgeData knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
         String blockId = BuiltInRegistries.BLOCK.getKey(context.getLevel().getBlockState(context.getClickedPos()).getBlock()).toString();
         FirstStepsBootstrapLogic.DustTarget target = FirstStepsBootstrapLogic.dustTarget(knowledge, blockId);
-        if (target == FirstStepsBootstrapLogic.DustTarget.NONE) return InteractionResult.PASS;
+        if (target == FirstStepsBootstrapLogic.DustTarget.NONE)
+            return dev.ehtid.thaumcraft.golem.press.GolemPressStructures.use(stack, context);
 
         player.swing(context.getHand(), true);
         if (context.getLevel() instanceof ServerLevel level && player instanceof ServerPlayer serverPlayer) {

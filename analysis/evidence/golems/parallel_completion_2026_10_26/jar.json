@@ -1,0 +1,12 @@
+{
+  "artifact": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "b801675be242b89f7f0437f380da2dcd6fa2f8d111b653a95f099b25721f0c57",
+  "bytes": 2821966,
+  "class_count": 762,
+  "class_major_versions": [
+    65
+  ],
+  "zip_crc": "PASS",
+  "unique_entries": "PASS",
+  "unique_en_ru_keys": "PASS"
+}

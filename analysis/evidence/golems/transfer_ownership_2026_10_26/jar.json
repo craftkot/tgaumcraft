@@ -1,0 +1,13 @@
+{
+  "jar": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "9ddae2452516b08318e135d7810ab374aa1b8bd984762e686b2bc47ec8afb8b9",
+  "crc_ok": true,
+  "classes": 740,
+  "all_java21": true,
+  "en_ru_unique_json": true,
+  "expected_classes_present": [
+    "dev/ehtid/thaumcraft/golem/inventory/GolemInventoryTransfer.class",
+    "dev/ehtid/thaumcraft/golem/inventory/GolemInventoryTransfer$Scope.class",
+    "dev/ehtid/thaumcraft/golem/test/GolemTransferOwnershipGameTests.class"
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "marker": "[16:52:26] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_INITIAL_FRAME_OBSERVED uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3",
+    "screenshot": "initial.png"
+  },
+  {
+    "marker": "[16:52:53] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_FINAL_FRAME_OBSERVED uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3",
+    "screenshot": "final.png"
+  }
+]

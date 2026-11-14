@@ -1,0 +1,24 @@
+UNSAVED WRITE original log excerpt, UTC
+[20:48:28] [Server thread/INFO] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_CHECKPOINT_ASSERTIONS_OK case=unsaved workerIron=13 vanillaEntityGold=17
+[20:48:30] [Server thread/WARN] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_ARMED case=unsaved targetIron=13 workerIron=0 hopperGold=17; Runtime.halt(86), NO_GRACEFUL_SAVE
+> Process 'command '/workspace/toolchain/jdk-21.0.12.1+1/bin/java'' finished with non-zero exit value 86
+BUILD FAILED in 59s
+UNSAVED READ original log excerpt, UTC
+[20:49:37] [Server thread/INFO] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_UNSAVED_READ_ASSERTIONS_OK
+BUILD SUCCESSFUL in 51s
+SAVED WRITE original log excerpt, UTC
+[20:51:37] [Server thread/INFO] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_CHECKPOINT_ASSERTIONS_OK case=saved workerIron=13 vanillaEntityGold=17
+[20:51:39] [Server thread/WARN] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_ARMED case=saved targetIron=13 workerIron=0 hopperGold=17; Runtime.halt(86), NO_GRACEFUL_SAVE
+> Process 'command '/workspace/toolchain/jdk-21.0.12.1+1/bin/java'' finished with non-zero exit value 86
+BUILD FAILED in 49s
+SAVED READ original log excerpt, UTC
+[20:53:03] [Server thread/INFO] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_SAVED_READ_ASSERTIONS_OK
+BUILD SUCCESSFUL in 53s
+SPLIT WRITE original log excerpt, UTC
+[20:54:39] [Server thread/INFO] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_CHECKPOINT_ASSERTIONS_OK case=split workerIron=13 vanillaEntityGold=17
+[20:54:41] [Server thread/WARN] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_ARMED case=split targetIron=13 workerIron=0 hopperGold=17; Runtime.halt(86), NO_GRACEFUL_SAVE
+> Process 'command '/workspace/toolchain/jdk-21.0.12.1+1/bin/java'' finished with non-zero exit value 86
+BUILD FAILED in 42s
+SPLIT READ original log excerpt, UTC
+[20:56:44] [Server thread/WARN] [de.eh.th.go.te.GolemCrashProbe/]: GOLEM_CRASH_SPLIT_SAVE_HAZARD_OBSERVED golemIron=26 vanillaHopperGold=34; NOT_A_RECOVERY_PASS
+BUILD SUCCESSFUL in 46s

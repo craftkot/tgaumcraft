@@ -1,0 +1,123 @@
+{
+  "world": "build/golem-owner-server-m53/world",
+  "method": "read-only gzip SavedData and zlib entity MCA inspection; no world writes",
+  "workers": [
+    {
+      "uuid": "b60f5d09-ce81-4e34-8f2f-d84bf5b777a0",
+      "owner": "b972f44d-ccc3-3a67-8346-9f9731f6a820",
+      "color": 15,
+      "rank_xp": 0,
+      "hand_items": [
+        {
+          "components": {
+            "minecraft:custom_name": "\"M53 Alice actual iron\""
+          },
+          "count": 13,
+          "id": "minecraft:iron_ingot"
+        },
+        {}
+      ],
+      "recovery": {},
+      "recovery_queue": [],
+      "position": [
+        7.291737760792039,
+        120.0,
+        5.876086023080995
+      ]
+    },
+    {
+      "uuid": "b60f5d09-ce81-4e34-8f2f-d84bf5b777a1",
+      "owner": "2288d885-e610-3b79-920d-918be3fb2c75",
+      "color": 15,
+      "rank_xp": 0,
+      "hand_items": [
+        {
+          "components": {
+            "minecraft:custom_name": "\"M53 Bob actual gold\""
+          },
+          "count": 17,
+          "id": "minecraft:gold_ingot"
+        },
+        {}
+      ],
+      "recovery": {},
+      "recovery_queue": [],
+      "position": [
+        7.697223416031042,
+        120.0,
+        5.837403089928337
+      ]
+    }
+  ],
+  "seals": [
+    {
+      "owner": "b972f44d-ccc3-3a67-8346-9f9731f6a820",
+      "area": 1099511644161,
+      "color": 0,
+      "pnbt": 1,
+      "pore": 0,
+      "pmod": 0,
+      "pleave": 0,
+      "pmeta": 1,
+      "bl": 0,
+      "type": "thaumcraft:pickup",
+      "priority": 1,
+      "Sizes": [
+        {
+          "Slot": 0,
+          "Size": 0
+        }
+      ],
+      "face": 1,
+      "pos": 1649267466359,
+      "Items": [
+        {
+          "count": 1,
+          "Slot": 0,
+          "components": {
+            "minecraft:custom_name": "\"M53 Alice actual iron\""
+          },
+          "id": "minecraft:iron_ingot"
+        }
+      ],
+      "locked": 1,
+      "redstone": 0
+    },
+    {
+      "owner": "2288d885-e610-3b79-920d-918be3fb2c75",
+      "area": 1099511644161,
+      "color": 0,
+      "pnbt": 1,
+      "pore": 0,
+      "pmod": 0,
+      "pleave": 0,
+      "pmeta": 1,
+      "bl": 0,
+      "type": "thaumcraft:pickup",
+      "priority": 1,
+      "Sizes": [
+        {
+          "Slot": 0,
+          "Size": 0
+        }
+      ],
+      "face": 1,
+      "pos": 2199023280247,
+      "Items": [
+        {
+          "count": 1,
+          "Slot": 0,
+          "components": {
+            "minecraft:custom_name": "\"M53 Bob actual gold\""
+          },
+          "id": "minecraft:gold_ingot"
+        }
+      ],
+      "locked": 1,
+      "redstone": 0
+    }
+  ],
+  "ground_items": [],
+  "process_exit_codes": null,
+  "exit_observation_note": "Original exec sessions were retired while environment paused. Clean server save and client Minecraft.stop logs are retained; POSIX exit0 is not claimed."
+}

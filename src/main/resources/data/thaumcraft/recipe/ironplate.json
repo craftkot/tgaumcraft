@@ -14,9 +14,7 @@
     "id": "thaumcraft:plate",
     "count": 3,
     "components": {
-      "minecraft:custom_data": {
-        "LegacyPlateMeta": 1
-      },
+      "minecraft:custom_data": "{LegacyPlateMeta:1}",
       "minecraft:custom_model_data": 1
     }
   }

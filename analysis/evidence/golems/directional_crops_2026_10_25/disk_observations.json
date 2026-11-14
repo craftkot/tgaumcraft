@@ -1,0 +1,39 @@
+{
+  "world": "build/golem-directional-restart-m54b/world",
+  "method": "read-only zlib region/entity MCA and gzip SavedData; no world writes",
+  "worker": {
+    "uuid": "6af44574-5cb2-4f7c-b706-a788bd884394",
+    "owner": "7eae222e-670d-4c43-952a-43a040b2e895",
+    "rank_xp": 2,
+    "props": 65792,
+    "no_ai": false,
+    "hands": [
+      {
+        "components": {
+          "minecraft:custom_name": "\"M54 cold directional seed\""
+        },
+        "count": 1,
+        "id": "thaumcraft:adapter_probe_directional"
+      },
+      {}
+    ],
+    "recovery": {},
+    "recovery_queue": []
+  },
+  "crop": {
+    "Properties": {
+      "facing": "east",
+      "age": "0"
+    },
+    "Name": "thaumcraft:adapter_probe_directional"
+  },
+  "east_support": {
+    "Properties": {
+      "axis": "y"
+    },
+    "Name": "minecraft:jungle_log"
+  },
+  "seal_count": 1,
+  "pending_replants": 0,
+  "ground_items": []
+}

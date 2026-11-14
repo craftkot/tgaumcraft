@@ -1,0 +1,13 @@
+{
+  "artifact": "build/libs/thaumcraft-6.1.BETA26-port.stage9.jar",
+  "sha256": "17e30ad7b819e2e235c9fd6ef4086791148ac48af315d0feabf1a94e79f35246",
+  "bytes": 2749702,
+  "class_count": 744,
+  "class_major_versions": [
+    65
+  ],
+  "zip_crc": "PASS",
+  "unique_entries": "PASS",
+  "unique_en_ru_keys": "PASS",
+  "four_typed_plate_recipes": "PASS"
+}

@@ -1,0 +1,18 @@
+# golems-m52-final-server
+[16:52:23] [Server thread/INFO] [de.eh.th.go.te.GolemCropClientProbe/]: GOLEM_CROP_SERVER_INITIAL_READY uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3 seed=2 age=7 startTicks=600
+[16:52:52] [Server thread/INFO] [de.eh.th.go.te.GolemCropClientProbe/]: GOLEM_CROP_SERVER_AI_ENABLED uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3
+[16:52:58] [Server thread/INFO] [de.eh.th.go.te.GolemCropClientProbe/]: GOLEM_CROP_SERVER_ASSERTIONS_OK uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3 seed=1 plant=1 wheat=1 xp=2 pending=0 noReplayTicks=100
+BUILD SUCCESSFUL in 3m 7s
+# golems-m52-client
+[16:52:24] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_REMOTE_CONNECTION_OBSERVED
+[16:52:24] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_INITIAL_ASSERTIONS_OK uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3 seed=2 age=7
+[16:52:26] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_INITIAL_FRAME_OBSERVED uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3
+[16:52:53] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_FINAL_ASSERTIONS_OK uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3 seed=1 age=0 stableClientTicks=10
+[16:52:53] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_FINAL_FRAME_OBSERVED uuid=b60f5d09-ce81-4e34-8f2f-d84bf5b777f3
+[16:53:09] [Render thread/WARN] [minecraft/ClientCommonPacketListenerImpl]: Client disconnected with reason: Сервер закрыт
+[16:53:09] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_STOP_AFTER_REMOTE_PROOF
+[16:53:09] [Render thread/INFO] [de.eh.th.cl.GolemCropClientAssertions/]: GOLEM_CROP_CLIENT_STOP_AFTER_REMOTE_PROOF
+[16:53:09] [Render thread/INFO] [minecraft/Minecraft]: Stopping!
+
+# Tool-observed subprocess completion
+M52_CLIENT_PROCESS_EXIT=0

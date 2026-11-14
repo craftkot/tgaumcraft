@@ -1,0 +1,48 @@
+/workspace/reference/golems-m57-red.log
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: insertioncallbackcannotextractintothesameworker failed at 7871816, -60, -952588! Actual insertion callback cannot start nested extraction; nested=3
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: extractionretainsactualpayloadbesidecallbackfundedrecovery failed at 7871833, -60, -952588! Actual extraction must retain its returned payload when callback already filled recovery: java.lang.IllegalStateException: Extraction recovery must be drained first
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: cancelledreclaimretainstheactualchangedcargo failed at 7871850, -60, -952588! Actual canceled cargo spawn aborts reclaim
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: cancelledfallbackreturnstheactualchangedpayload failed at 7871867, -60, -952588! Changed actual paper9 returns once and the rejected entity retains no payload
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: fallbackspawncannotreclaimthetransferringworker failed at 7871799, -60, -952588! Owner reclaim refuses while actual cargo publication is in progress
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: partialinsertionretainsreturnedremaindercomponents failed at 7871884, -60, -952588! Actual returned eight retain their changed components without snapshot reconstruction
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: reclaimspawncannotrecursivelyreclaimthesameworker failed at 7871901, -60, -952588! One owner reclaim completes and its synchronous recursive reclaim refuses
+[21:23:32] [Server thread/ERROR] [minecraft/LogTestReporter]: fallbackspawncannotrecursivelydepositthesamecargo failed at 7871918, -60, -952588! Actual spawn callback cannot reenter the same worker's deposit; nested=9
+[21:24:11] [Server thread/INFO] [minecraft/GameTestServer]: 8 required tests failed :(
+BUILD FAILED in 1m 43s
+
+/workspace/reference/golems-m57-green.log
+[21:26:42] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[21:27:51] [Server thread/ERROR] [minecraft/LogTestReporter]: rejectedreclaimretainsrecoveryandretrydropseachownedstackonce failed at 10736037, -60, 5216489! Rejected recovery drop preserves it; already accepted cargo no longer in hands
+[21:27:53] [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
+[21:27:56] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+BUILD FAILED in 3m 4s
+
+/workspace/reference/golems-m57-donation-red.log
+[21:31:19] [Server thread/ERROR] [minecraft/LogTestReporter]: reclaimretainscargofundedduringcargopublication failed at -3811183, -60, 4149326! Reclaim stops before creating a placer when its cargo callback funds new cargo
+[21:31:19] [Server thread/ERROR] [minecraft/LogTestReporter]: reclaimretainscargofundedduringplacerpublication failed at -3811149, -60, 4149326! Reclaim stops after its placer callback funds new cargo instead of discarding that cargo
+[21:31:42] [Server thread/INFO] [minecraft/GameTestServer]: 2 required tests failed :(
+BUILD FAILED in 1m 22s
+
+/workspace/reference/golems-m57-final.log
+[21:34:41] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[21:35:44] [Server thread/INFO] [minecraft/GameTestServer]: All 262 required tests passed :)
+[21:35:57] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[21:36:23] [Server thread/INFO] [de.eh.th.go.te.GolemRestartProbe/]: GOLEM_RESTART_WRITE_ASSERTIONS_OK
+BUILD SUCCESSFUL in 3m 58s
+
+/workspace/reference/golems-m57-query-red.log
+[21:38:10] [Server thread/ERROR] [minecraft/LogTestReporter]: insertionquerycannotoverwritecallbackfundedreplacementcargo failed at 12121685, -60, -13694534! Actual stock query replaces paper9 with funded paper12; stale hand reference must abort before debit
+[21:38:33] [Server thread/INFO] [minecraft/GameTestServer]: 1 required tests failed :(
+BUILD FAILED in 1m 19s
+
+/workspace/reference/golems-m57-final-verified.log
+[21:40:50] [Server thread/INFO] [minecraft/GameTestServer]: All 33 required tests passed :)
+[21:42:01] [Server thread/INFO] [minecraft/GameTestServer]: All 263 required tests passed :)
+[21:42:06] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[21:42:36] [Server thread/INFO] [de.eh.th.go.te.GolemRestartProbe/]: GOLEM_RESTART_READ_ASSERTIONS_OK
+BUILD SUCCESSFUL in 3m 40s
+
+/workspace/reference/golems-m57-core.log
+BETA26 golem construction: OK (39962 assertions)
+BETA26 golem task rules, six-face seal areas and exclusive server leases: OK (2909 assertions)
+CIRCLECI_THAUMCRAFT_CORE_PARITY_OK

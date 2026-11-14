@@ -1,0 +1,45 @@
+{
+  "world": "build/golem-m59-nbt/world",
+  "method": "read-only MCA/gzip SavedData after distinct WRITE/READ JVMs",
+  "worker": {
+    "uuid": "671c5d1c-8533-490b-9ac2-e06c973d0d10",
+    "owner": "712b8f88-92c3-4bee-a3d8-53e8248ac89d",
+    "props": 0,
+    "rank_xp": 13,
+    "color": 6,
+    "health": 7.0,
+    "hands": [
+      {
+        "components": {
+          "minecraft:custom_name": "\"M10 restart cargo\""
+        },
+        "count": 37,
+        "id": "minecraft:iron_ingot"
+      },
+      {}
+    ],
+    "recovery": {
+      "count": 3,
+      "id": "minecraft:diamond"
+    },
+    "recovery_queue": []
+  },
+  "barrels": {
+    "(5, 119, 8)": [
+      {
+        "count": 23,
+        "Slot": 0,
+        "id": "minecraft:emerald"
+      }
+    ],
+    "(11, 119, 8)": [
+      {
+        "count": 11,
+        "Slot": 0,
+        "id": "minecraft:gold_ingot"
+      }
+    ]
+  },
+  "ground_items": 0,
+  "seal_count": 3
+}

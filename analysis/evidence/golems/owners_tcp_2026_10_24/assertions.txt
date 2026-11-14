@@ -1,0 +1,38 @@
+/workspace/reference/golems-m53-server.log
+[18:26:37] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_INITIAL_READY players=2 ownerA=b972f44d-ccc3-3a67-8346-9f9731f6a820 ownerB=2288d885-e610-3b79-920d-918be3fb2c75 workerA=b60f5d09-ce81-4e34-8f2f-d84bf5b777a0 workerB=b60f5d09-ce81-4e34-8f2f-d84bf5b777a1
+[18:26:41] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_FOREIGN_DYE_ASSERTIONS_OK attempts=1,1 colors=0,0 dyes=6,6
+[18:26:43] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_OWN_DYE_ASSERTIONS_OK attempts=1,1 color=15 dyes=5,5
+[18:26:44] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_FOREIGN_SEAL_ASSERTIONS_OK attempts=1,1 menus=none priorities=0,0
+[18:26:44] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_OWNER_MENUS_ASSERTIONS_OK priorities=1,1 menuIds=1,1
+[18:26:45] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_AI_ENABLED iron=13 gold=17 wrongOwnerStartsCloser=true
+[18:26:51] [Server thread/INFO] [de.eh.th.go.te.GolemOwnerClientProbe/]: GOLEM_OWNER_SERVER_ASSERTIONS_OK players=2 workers=2 lockedSeals=2 priorities=1,1 iron=13 gold=17 noReplayTicks=100
+[18:27:05] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+
+/workspace/reference/golems-m53-clients/M53Alice.log
+[18:26:40] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_REMOTE_INITIAL_ASSERTIONS_OK role=0 own=b60f5d09-ce81-4e34-8f2f-d84bf5b777a0 other=b60f5d09-ce81-4e34-8f2f-d84bf5b777a1
+[18:26:41] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_DYE_PACKET_SENT role=0
+[18:26:42] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_DYE_REJECTED_OBSERVED role=0
+[18:26:42] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_DYE_PACKET_SENT role=0
+[18:26:43] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_SEAL_PACKET_SENT role=0
+[18:26:44] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_SEAL_PACKET_SENT role=0
+[18:26:44] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_MENU_BUTTON_PACKET_SENT role=0 container=1
+[18:26:45] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_CONCURRENT_MENU_ASSERTIONS_OK role=0 ownPriority=1 otherPriority=1
+[18:26:51] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FINAL_ASSERTIONS_OK role=0 iron=13 gold=17 distinctOwners=2 sameInstances=2 stableClientTicks=104
+[18:26:51] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FINAL_FRAME_OBSERVED role=0 workersVisible=2
+[18:27:01] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_STOP_AFTER_REMOTE_PROOF role=0
+[18:27:01] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_STOP_AFTER_REMOTE_PROOF role=0
+[18:27:02] [Render thread/INFO] [minecraft/Minecraft]: Stopping!
+
+/workspace/reference/golems-m53-clients/M53Bob.log
+[18:26:39] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_REMOTE_INITIAL_ASSERTIONS_OK role=1 own=b60f5d09-ce81-4e34-8f2f-d84bf5b777a1 other=b60f5d09-ce81-4e34-8f2f-d84bf5b777a0
+[18:26:39] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_DYE_PACKET_SENT role=1
+[18:26:41] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_DYE_REJECTED_OBSERVED role=1
+[18:26:41] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_DYE_PACKET_SENT role=1
+[18:26:43] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FOREIGN_SEAL_PACKET_SENT role=1
+[18:26:44] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_SEAL_PACKET_SENT role=1
+[18:26:44] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_OWN_MENU_BUTTON_PACKET_SENT role=1 container=1
+[18:26:45] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_CONCURRENT_MENU_ASSERTIONS_OK role=1 ownPriority=1 otherPriority=1
+[18:26:51] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FINAL_ASSERTIONS_OK role=1 iron=13 gold=17 distinctOwners=2 sameInstances=2 stableClientTicks=102
+[18:26:51] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_FINAL_FRAME_OBSERVED role=1 workersVisible=2
+[18:27:01] [Render thread/INFO] [de.eh.th.cl.GolemOwnerClientAssertions/]: GOLEM_OWNER_CLIENT_STOP_AFTER_REMOTE_PROOF role=1
+[18:27:02] [Render thread/INFO] [minecraft/Minecraft]: Stopping!

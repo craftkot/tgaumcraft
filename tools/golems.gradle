@@ -1,0 +1,98 @@
+// Optional M10 test runs. Load with gradle --init-script tools/golems.gradle.
+// Keeps the shared build/CI configuration unchanged for parallel work lanes.
+allprojects {
+    afterEvaluate { project ->
+        def neo = project.extensions.findByName('neoForge')
+        if (neo != null) {
+            neo.runs.create('golemGameTest') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-gametest')
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft'
+            }
+            neo.runs.create('golemFlightStress') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-flight-stress')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_stress'
+            }
+            neo.runs.create('golemCropIntegration') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-crop-integration')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_crops'
+            }
+            neo.runs.create('golemPlantAdapters') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('golem-plant-adapters')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', 'thaumcraft_golem_plants'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+            }
+            neo.runs.create('golemClient') {
+                client()
+                def scenario = project.findProperty('golemClientScenario') ?: ''
+                gameDirectory = project.layout.buildDirectory.dir(scenario == 'crops' ? 'golem-crop-client' : scenario == 'owners' ? 'golem-owner-client-a' : 'golem-client')
+                jvmArguments.add '-Xmx2G'
+                programArguments.addAll '--width', '1280', '--height', '800'
+                def remote = project.findProperty('golemRemoteAddress') ?: ''
+                if (remote) programArguments.addAll '--quickPlayMultiplayer', remote
+                systemProperty 'thaumcraft.golemSealRemoteProbe', (remote != '').toString()
+                systemProperty 'thaumcraft.golemClientProbe', 'true'
+                systemProperty 'thaumcraft.golemClientScenario', scenario
+                if (scenario == 'crops') {
+                    systemProperty 'thaumcraft.golemCropClientProbe', 'true'
+                    systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+                }
+                if (scenario == 'owners') systemProperty 'thaumcraft.golemOwnerClientProbe', 'true'
+            }
+            neo.runs.create('golemOwnerServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemOwnerServerDirectory') ?: 'golem-owner-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemOwnerClientProbe', 'true'
+            }
+            neo.runs.create('golemSideSupport') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemSideSupportDirectory') ?: 'golem-side-support')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemSideSupportProbe', 'true'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+            }
+            neo.runs.create('golemCropServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir(project.findProperty('golemCropServerDirectory') ?: 'golem-crop-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemCropClientProbe', 'true'
+                systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+                systemProperty 'thaumcraft.golemCropHoldTicks', project.findProperty('golemCropHoldTicks') ?: '600'
+            }
+            neo.runs.create('golemSealServer') {
+                server()
+                gameDirectory = project.layout.buildDirectory.dir('golem-seal-server')
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemClientProbe', 'true'
+                systemProperty 'thaumcraft.golemClientScenario', 'seals'
+                systemProperty 'thaumcraft.golemSealRemoteProbe', 'true'
+            }
+            neo.runs.create('golemCrash') {
+                server()
+                def kind = project.findProperty('golemCrashCase') ?: 'unsaved'
+                if (!(kind in ['unsaved', 'saved', 'split'])) throw new GradleException('Unknown golem crash case')
+                gameDirectory = project.layout.buildDirectory.dir('golem-crash-' + kind)
+                jvmArguments.add '-Xmx1G'
+                systemProperty 'thaumcraft.golemCrashCase', kind
+                systemProperty 'thaumcraft.golemCrashPhase', project.findProperty('golemCrashPhase') ?: ''
+            }
+            neo.runs.create('golemRestart') {
+                server()
+                def scenario = project.findProperty('golemRestartScenario') ?: ''
+                gameDirectory = project.layout.buildDirectory.dir(scenario == 'seeded_directional' ? 'golem-directional-restart' : scenario == 'seeded_callback' ? 'golem-seed-callback-restart' : scenario == 'seeded_external' ? 'golem-seed-external-restart' : scenario == 'seeded_cross' ? 'golem-seed-cross-restart' : scenario == 'seeded' ? 'golem-seed-restart' : scenario == 'clickable' ? 'golem-clickable-restart' : scenario == 'press_chunk' ? 'golem-press-chunk-unload' : scenario == 'chunk' ? 'golem-chunk-unload' : scenario == 'dart' ? 'golem-dart-restart' : scenario == 'flyer' ? 'golem-flyer-restart' : scenario == 'climber' ? 'golem-climber-restart' : scenario == 'guard' ? 'golem-guard-restart' : scenario == 'use' ? 'golem-use-restart' : scenario == 'silk' ? 'golem-silk-restart' : scenario == 'lumber' ? 'golem-lumber-restart' : scenario == 'breaker' ? 'golem-breaker-restart' : scenario == 'advanced' ? 'golem-advanced-restart' : scenario == 'matching' ? 'golem-matching-restart' : scenario == 'cycle' ? 'golem-cycle-restart' : scenario == 'cocoa' ? 'golem-cocoa-restart' : scenario == 'farm' ? 'golem-farm-restart' : scenario == 'construction' ? 'golem-construction-restart' : scenario == 'logistics' ? 'golem-logistics-restart' : scenario == 'formation' ? 'golem-formation-restart' : scenario == 'press' ? 'golem-press-restart' : scenario == 'nbt' ? 'golem-nbt-restart' : scenario == 'leave' ? 'golem-leave-restart' : scenario == 'empty' ? 'golem-empty-restart' : scenario == 'area' ? 'golem-area-restart' : scenario == 'bell' ? 'golem-bell-restart' : scenario == 'controls' ? 'golem-controls-restart' : scenario == 'filter' ? 'golem-filter-restart' : (scenario == 'fill' ? 'golem-fill-restart' : 'golem-restart'))
+                systemProperty 'thaumcraft.golemRestartPhase', project.findProperty('golemRestartPhase') ?: ''
+                def isolatedDirectory = project.findProperty('golemRestartDirectory')
+                if (isolatedDirectory) gameDirectory = project.layout.buildDirectory.dir(isolatedDirectory)
+                systemProperty 'thaumcraft.golemRestartScenario', scenario
+                if (scenario in ['seeded_callback', 'seeded_directional']) systemProperty 'thaumcraft.golemPlantAdapterProbe', 'true'
+            }
+        }
+    }
+}

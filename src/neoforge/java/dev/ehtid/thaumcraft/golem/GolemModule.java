@@ -1,0 +1,189 @@
+package dev.ehtid.thaumcraft.golem;
+
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.golem.crafting.GolemPlateIngredient;
+import dev.ehtid.thaumcraft.entity.ThaumcraftGolem;
+import dev.ehtid.thaumcraft.item.GolemPlacerItem;
+import dev.ehtid.thaumcraft.item.GolemSealItem;
+import dev.ehtid.thaumcraft.item.GolemBellItem;
+import dev.ehtid.thaumcraft.port.core.golem.GolemDesign;
+import dev.ehtid.thaumcraft.golem.press.GolemPressBlock;
+import dev.ehtid.thaumcraft.golem.press.GolemPressBlockEntity;
+import dev.ehtid.thaumcraft.golem.press.GolemPressMenu;
+import dev.ehtid.thaumcraft.golem.press.GolemStoneTableBlock;
+import dev.ehtid.thaumcraft.golem.press.GolemPressPlaceholderBlock;
+import dev.ehtid.thaumcraft.port.core.golem.GolemPressBlueprint.Part;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.item.BlockItem;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
+import net.minecraft.core.Direction;
+import dev.ehtid.thaumcraft.registry.ThaumcraftCreativeTabs;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.flag.FeatureFlags;
+import dev.ehtid.thaumcraft.golem.menu.GolemSealMenu;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredItem;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.neoforged.neoforge.common.crafting.IngredientType;
+
+/** Lane-local registrations: the shared mod entry point needs only register(bus). */
+public final class GolemModule {
+    private GolemModule() {}
+
+    private static final DeferredRegister<EntityType<?>> ENTITIES =
+            DeferredRegister.create(Registries.ENTITY_TYPE, ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister<IngredientType<?>> INGREDIENTS =
+            DeferredRegister.create(NeoForgeRegistries.Keys.INGREDIENT_TYPES, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<IngredientType<?>, IngredientType<GolemPlateIngredient>> PLATE_INGOT =
+            INGREDIENTS.register("golem_ingot", () -> new IngredientType<>(GolemPlateIngredient.CODEC));
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(Registries.BLOCK, ThaumcraftPort.MOD_ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<Block, dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlock> LEVITATOR = BLOCKS.register("levitator",
+            () -> new dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlock(BlockBehaviour.Properties.of().strength(2F).noOcclusion()));
+    public static final DeferredItem<BlockItem> LEVITATOR_ITEM = ITEMS.registerSimpleBlockItem(LEVITATOR, new Item.Properties());
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlockEntity>> LEVITATOR_ENTITY = BLOCK_ENTITIES.register(
+            "levitator", () -> BlockEntityType.Builder.of(dev.ehtid.thaumcraft.golem.levitator.GolemLevitatorBlockEntity::new, LEVITATOR.get()).build(null));
+    public static final DeferredHolder<Block, GolemPressBlock> PRESS = BLOCKS.register("golem_builder",
+            () -> new GolemPressBlock(BlockBehaviour.Properties.of().strength(3.5F)));
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<GolemPressBlockEntity>> PRESS_ENTITY = BLOCK_ENTITIES.register(
+            "golem_builder", () -> BlockEntityType.Builder.of(GolemPressBlockEntity::new, PRESS.get()).build(null));
+    public static final DeferredItem<BlockItem> PRESS_ITEM = ITEMS.registerSimpleBlockItem(PRESS, new Item.Properties());
+    public static final DeferredHolder<Block, GolemStoneTableBlock> STONE_TABLE = BLOCKS.register("table_stone",
+            () -> new GolemStoneTableBlock(BlockBehaviour.Properties.of().strength(2.5F, 1.2F).noOcclusion()
+                    .isRedstoneConductor((state, level, pos) -> false)
+                    .isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)));
+    public static final DeferredItem<BlockItem> STONE_TABLE_ITEM = ITEMS.registerSimpleBlockItem(STONE_TABLE, new Item.Properties());
+    private static DeferredHolder<Block, GolemPressPlaceholderBlock> placeholder(String name, Part part) {
+        return BLOCKS.register(name, () -> new GolemPressPlaceholderBlock(BlockBehaviour.Properties.of().strength(2.5F, 1.2F)
+                .noOcclusion().pushReaction(PushReaction.BLOCK).lightLevel(state -> part == Part.CAULDRON ? 13 : 0), part));
+    }
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_BARS = placeholder("placeholder_bars", Part.BARS);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_ANVIL = placeholder("placeholder_anvil", Part.ANVIL);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_CAULDRON = placeholder("placeholder_cauldron", Part.CAULDRON);
+    public static final DeferredHolder<Block, GolemPressPlaceholderBlock> PLACEHOLDER_TABLE = placeholder("placeholder_table", Part.TABLE);
+    public static final DeferredItem<Item> SIMPLE_MECHANISM = ITEMS.registerSimpleItem("mechanism_simple");
+    public static final DeferredItem<Item> COMPLEX_MECHANISM = ITEMS.registerSimpleItem("mechanism_complex");
+    public static final DeferredItem<Item> ZOMBIE_BRAIN = ITEMS.registerSimpleItem("brain");
+    /** Basic mind@0 is a distinct modern item; advanced metadata variants are not exposed. */
+    public static final DeferredItem<Item> CLOCKWORK_MIND = ITEMS.registerSimpleItem("mind");
+    /** Source mind@1; its infusion acquisition belongs to the M06 integration. */
+    public static final DeferredItem<Item> BIOTHAUMIC_MIND=ITEMS.registerSimpleItem("mind_biothaumic");
+    /** Source modules@0/1 are paid arcane recipes, handled by GolemComponentCrafting. */
+    public static final DeferredItem<Item> VISION_MODULE=ITEMS.registerSimpleItem("module_vision");
+    public static final DeferredItem<Item> AGGRESSION_MODULE=ITEMS.registerSimpleItem("module_aggression");
+
+    private static final DeferredRegister<MenuType<?>> MENUS = DeferredRegister.create(Registries.MENU, ThaumcraftPort.MOD_ID);
+    public static final DeferredHolder<MenuType<?>, MenuType<GolemSealMenu>> SEAL_MENU = MENUS.register(
+            "golem_seal", () -> new MenuType<>(GolemSealMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>, MenuType<GolemPressMenu>> PRESS_MENU = MENUS.register(
+            "golem_press", () -> new MenuType<>(GolemPressMenu::new, FeatureFlags.VANILLA_SET));
+    public static final DeferredHolder<MenuType<?>,MenuType<dev.ehtid.thaumcraft.golem.menu.GolemLogisticsMenu>> LOGISTICS_MENU=MENUS.register(
+            "golem_logistics",()->new MenuType<>(dev.ehtid.thaumcraft.golem.menu.GolemLogisticsMenu::new,FeatureFlags.VANILLA_SET));
+
+    public static final DeferredHolder<EntityType<?>, EntityType<ThaumcraftGolem>> GOLEM = ENTITIES.register(
+            "golem", () -> EntityType.Builder.of(ThaumcraftGolem::new, MobCategory.CREATURE)
+                    .sized(0.4F, 0.9F).eyeHeight(0.7F).clientTrackingRange(8).build("thaumcraft:golem"));
+    public static final DeferredHolder<EntityType<?>,EntityType<dev.ehtid.thaumcraft.entity.GolemDart>> GOLEM_DART=ENTITIES.register("golem_dart",
+            ()->EntityType.Builder.<dev.ehtid.thaumcraft.entity.GolemDart>of(dev.ehtid.thaumcraft.entity.GolemDart::new,MobCategory.MISC).sized(.2F,.2F).clientTrackingRange(4).updateInterval(20).build("thaumcraft:golem_dart"));
+    public static final DeferredItem<GolemPlacerItem> GOLEM_PLACER = ITEMS.registerItem(
+            "golem", GolemPlacerItem::new, new Item.Properties());
+    public static final DeferredItem<GolemBellItem> GOLEM_BELL = ITEMS.registerItem("golem_bell", GolemBellItem::new, new Item.Properties().stacksTo(1));
+    public static final DeferredItem<Item> BLANK_SEAL = ITEMS.registerItem("seal_blank",dev.ehtid.thaumcraft.item.GolemBlankSealItem::new);
+    public static final DeferredItem<GolemSealItem> PICKUP_SEAL = ITEMS.registerItem(
+            "seal_pickup", GolemSealItem::new, new Item.Properties());
+    public static final DeferredItem<GolemSealItem> FILL_SEAL = ITEMS.registerItem(
+            "seal_fill", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.FILL), new Item.Properties());
+    public static final DeferredItem<GolemSealItem> EMPTY_SEAL = ITEMS.registerItem(
+            "seal_empty", p -> new GolemSealItem(p, dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.EMPTY), new Item.Properties());
+    public static final DeferredItem<GolemSealItem> EMPTY_ADVANCED_SEAL=ITEMS.registerItem("seal_empty_advanced",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.EMPTY_ADVANCED),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> PROVIDE_SEAL=ITEMS.registerItem("seal_provider",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.PROVIDE),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> STOCK_SEAL=ITEMS.registerItem("seal_stock",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.STOCK),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> HARVEST_SEAL=ITEMS.registerItem("seal_harvest",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.HARVEST),new Item.Properties());
+
+    public static final DeferredItem<GolemSealItem> PICKUP_ADVANCED_SEAL=ITEMS.registerItem("seal_pickup_advanced",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.PICKUP_ADVANCED));
+    public static final DeferredItem<GolemSealItem> FILL_ADVANCED_SEAL=ITEMS.registerItem("seal_fill_advanced",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.FILL_ADVANCED));
+    public static final DeferredItem<GolemSealItem> BREAKER_SEAL=ITEMS.registerItem("seal_breaker",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.BREAKER),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> LUMBER_SEAL=ITEMS.registerItem("seal_lumber",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.LUMBER),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> BREAKER_ADVANCED_SEAL=ITEMS.registerItem("seal_breaker_advanced",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.BREAKER_ADVANCED),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> USE_SEAL=ITEMS.registerItem("seal_use",
+            p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.USE),new Item.Properties());
+    public static final DeferredItem<GolemSealItem> GUARD_SEAL=ITEMS.registerItem("seal_guard",p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.GUARD));
+    public static final DeferredItem<GolemSealItem> GUARD_ADVANCED_SEAL=ITEMS.registerItem("seal_guard_advanced",p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.GUARD_ADVANCED));
+    public static final DeferredItem<GolemSealItem> BUTCHER_SEAL=ITEMS.registerItem("seal_butcher",p->new GolemSealItem(p,dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type.BUTCHER));
+    public static Item sealItem(dev.ehtid.thaumcraft.golem.seal.GolemSeals.Type type) {
+        return switch(type) { case PICKUP->PICKUP_SEAL.get(); case FILL->FILL_SEAL.get(); case EMPTY->EMPTY_SEAL.get();
+            case EMPTY_ADVANCED->EMPTY_ADVANCED_SEAL.get(); case PROVIDE->PROVIDE_SEAL.get(); case STOCK->STOCK_SEAL.get(); case HARVEST->HARVEST_SEAL.get(); case PICKUP_ADVANCED->PICKUP_ADVANCED_SEAL.get(); case FILL_ADVANCED->FILL_ADVANCED_SEAL.get(); case BREAKER->BREAKER_SEAL.get(); case LUMBER->LUMBER_SEAL.get(); case BREAKER_ADVANCED->BREAKER_ADVANCED_SEAL.get(); case USE->USE_SEAL.get(); case GUARD->GUARD_SEAL.get(); case GUARD_ADVANCED->GUARD_ADVANCED_SEAL.get(); case BUTCHER->BUTCHER_SEAL.get(); };
+    }
+
+    public static void register(IEventBus bus) {
+        ENTITIES.register(bus);
+        ITEMS.register(bus);
+        INGREDIENTS.register(bus);
+        MENUS.register(bus);
+        BLOCKS.register(bus);
+        BLOCK_ENTITIES.register(bus);
+        bus.addListener(GolemModule::capabilities);
+        bus.addListener(GolemModule::attributes);
+        bus.addListener(dev.ehtid.thaumcraft.golem.network.GolemSealSync::register);
+        bus.addListener(GolemModule::creativeContents);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(dev.ehtid.thaumcraft.golem.crafting.GolemBrainDrops::livingDrops);
+    }
+
+    private static void capabilities(RegisterCapabilitiesEvent event) {
+        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, PRESS_ENTITY.get(),
+                (press, face) -> new SidedInvWrapper(press, face == null ? Direction.DOWN : face));
+    }
+
+    private static void attributes(EntityAttributeCreationEvent event) {
+        event.put(GOLEM.get(), ThaumcraftGolem.attributes().build());
+    }
+
+    private static void creativeContents(BuildCreativeModeTabContentsEvent event) {
+        if (event.getTab() == ThaumcraftCreativeTabs.MAIN.get()) {
+            event.accept(GolemPlacerItem.stack(GolemDesign.defaultWood(), 0));
+            event.accept(GOLEM_BELL.get());
+            event.accept(BLANK_SEAL.get());
+            event.accept(PICKUP_SEAL.get());
+            event.accept(FILL_SEAL.get());
+            event.accept(EMPTY_SEAL.get());
+            event.accept(EMPTY_ADVANCED_SEAL.get()); event.accept(PROVIDE_SEAL.get()); event.accept(STOCK_SEAL.get());
+            event.accept(GUARD_SEAL.get()); event.accept(GUARD_ADVANCED_SEAL.get()); event.accept(BUTCHER_SEAL.get()); event.accept(USE_SEAL.get()); event.accept(BREAKER_ADVANCED_SEAL.get()); event.accept(LUMBER_SEAL.get()); event.accept(BREAKER_SEAL.get()); event.accept(HARVEST_SEAL.get()); event.accept(PICKUP_ADVANCED_SEAL.get()); event.accept(FILL_ADVANCED_SEAL.get());
+            event.accept(PRESS_ITEM.get());
+            event.accept(STONE_TABLE_ITEM.get());
+            event.accept(LEVITATOR_ITEM.get());
+            event.accept(SIMPLE_MECHANISM.get());
+            event.accept(COMPLEX_MECHANISM.get());
+            event.accept(ZOMBIE_BRAIN.get());
+            event.accept(CLOCKWORK_MIND.get());
+            event.accept(BIOTHAUMIC_MIND.get()); event.accept(VISION_MODULE.get()); event.accept(AGGRESSION_MODULE.get());
+        }
+    }
+
+    /** Keep unknown packed extensions gated even when all catalog parts are supported. */
+    public static boolean supportsRuntime(GolemDesign design) {
+        return dev.ehtid.thaumcraft.port.core.golem.GolemRuntimeRules.supportsRuntime(design);
+    }
+}

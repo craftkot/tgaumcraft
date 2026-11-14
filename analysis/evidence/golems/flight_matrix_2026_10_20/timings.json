@@ -1,0 +1,162 @@
+[
+  {
+    "seed": 0,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 1,
+    "barrier": false,
+    "actualTicks": 57
+  },
+  {
+    "seed": 2,
+    "barrier": false,
+    "actualTicks": 60
+  },
+  {
+    "seed": 3,
+    "barrier": false,
+    "actualTicks": 57
+  },
+  {
+    "seed": 4,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 5,
+    "barrier": false,
+    "actualTicks": 76
+  },
+  {
+    "seed": 6,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 7,
+    "barrier": false,
+    "actualTicks": 59
+  },
+  {
+    "seed": 8,
+    "barrier": false,
+    "actualTicks": 65
+  },
+  {
+    "seed": 9,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 10,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 11,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 12,
+    "barrier": false,
+    "actualTicks": 58
+  },
+  {
+    "seed": 13,
+    "barrier": false,
+    "actualTicks": 57
+  },
+  {
+    "seed": 14,
+    "barrier": false,
+    "actualTicks": 60
+  },
+  {
+    "seed": 15,
+    "barrier": false,
+    "actualTicks": 70
+  },
+  {
+    "seed": 0,
+    "barrier": true,
+    "actualTicks": 74
+  },
+  {
+    "seed": 1,
+    "barrier": true,
+    "actualTicks": 144
+  },
+  {
+    "seed": 2,
+    "barrier": true,
+    "actualTicks": 232
+  },
+  {
+    "seed": 3,
+    "barrier": true,
+    "actualTicks": 200
+  },
+  {
+    "seed": 4,
+    "barrier": true,
+    "actualTicks": 159
+  },
+  {
+    "seed": 5,
+    "barrier": true,
+    "actualTicks": 273
+  },
+  {
+    "seed": 6,
+    "barrier": true,
+    "actualTicks": 243
+  },
+  {
+    "seed": 7,
+    "barrier": true,
+    "actualTicks": 321
+  },
+  {
+    "seed": 8,
+    "barrier": true,
+    "actualTicks": 180
+  },
+  {
+    "seed": 9,
+    "barrier": true,
+    "actualTicks": 354
+  },
+  {
+    "seed": 10,
+    "barrier": true,
+    "actualTicks": 272
+  },
+  {
+    "seed": 11,
+    "barrier": true,
+    "actualTicks": 332
+  },
+  {
+    "seed": 12,
+    "barrier": true,
+    "actualTicks": 181
+  },
+  {
+    "seed": 13,
+    "barrier": true,
+    "actualTicks": 256
+  },
+  {
+    "seed": 14,
+    "barrier": true,
+    "actualTicks": 201
+  },
+  {
+    "seed": 15,
+    "barrier": true,
+    "actualTicks": 201
+  }
+]

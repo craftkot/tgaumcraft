@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "group": "thaumcraft:brassplate",
+  "pattern": [
+    "BBB"
+  ],
+  "key": {
+    "B": {
+      "type": "thaumcraft:golem_ingot",
+      "metal": "brass"
+    }
+  },
+  "result": {
+    "id": "thaumcraft:plate",
+    "count": 3,
+    "components": {
+      "minecraft:custom_data": "{LegacyPlateMeta:0}",
+      "minecraft:custom_model_data": 0
+    }
+  }
+}

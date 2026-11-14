@@ -1,0 +1,80 @@
+{
+  "world": "build/golem-side-support-m56-final/world",
+  "method": "read-only gzip SavedData and zlib entity/region MCA; no NBT edits",
+  "worker": {
+    "uuid": "1891c405-fef9-4b71-986f-7edbc6f0ed56",
+    "owner": "b9e32535-9f36-4712-ab42-2e5a1d3a5c56",
+    "rank_xp": 2,
+    "no_ai": false,
+    "props": 65792,
+    "hands": [
+      {
+        "components": {
+          "minecraft:custom_name": "\"M56 paid side seed\""
+        },
+        "count": 1,
+        "id": "thaumcraft:adapter_probe_directional"
+      },
+      {}
+    ],
+    "recovery": {},
+    "recovery_queue": []
+  },
+  "crop": {
+    "pos": [
+      15375,
+      120,
+      15366
+    ],
+    "state": {
+      "Properties": {
+        "facing": "east",
+        "age": "0"
+      },
+      "Name": "thaumcraft:adapter_probe_directional"
+    }
+  },
+  "support": {
+    "pos": [
+      15376,
+      120,
+      15366
+    ],
+    "state": {
+      "Properties": {
+        "axis": "y"
+      },
+      "Name": "minecraft:jungle_log"
+    }
+  },
+  "seals": [
+    {
+      "owner": "b9e32535-9f36-4712-ab42-2e5a1d3a5c56",
+      "area": 274877911041,
+      "color": 0,
+      "pnbt": 1,
+      "pore": 0,
+      "pmod": 0,
+      "pleave": 0,
+      "pmeta": 1,
+      "ppro": 0,
+      "bl": 1,
+      "type": "thaumcraft:harvest",
+      "priority": 0,
+      "Sizes": [
+        {
+          "Slot": 0,
+          "Size": 0
+        }
+      ],
+      "face": 1,
+      "pos": 4226247882203255,
+      "prep": 1,
+      "Items": [],
+      "locked": 1,
+      "redstone": 0
+    }
+  ],
+  "ground_items": [],
+  "forced_chunks": []
+}

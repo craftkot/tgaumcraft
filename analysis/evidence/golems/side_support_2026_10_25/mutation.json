@@ -1,0 +1,11 @@
+{
+  "baseline_success": true,
+  "removed_guard": "GolemFarm.eligible: !GolemSeals.active(level,w.pos.relative(plant.support))",
+  "mutant_expected_failure_phase": 2,
+  "mutant_observed_failure": "Inactive side support must refuse the real candidate lease",
+  "mutant_full_success_marker_present": false,
+  "source_restored_exactly_to_head": true,
+  "restored_source_sha256": "68b45906adce4771026eaf622b2577a5e1d8bec2a1ec85de8d53a2509d88c1bd",
+  "final_success": true,
+  "review": "fresh read-only review: no Critical/Important; minor offhand+identity sum corrected before final run; logged-failure exit0 convention requires explicit marker gate"
+}

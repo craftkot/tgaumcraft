@@ -1,0 +1,18 @@
+/workspace/reference/golems-m54-native.log
+[14:45:08] [Server thread/INFO] [minecraft/GameTestServer]: All 30 required tests passed :)
+[14:45:13] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[14:46:14] [Server thread/INFO] [minecraft/GameTestServer]: All 252 required tests passed :)
+[14:46:18] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+[14:46:18] [Server thread/INFO] [minecraft/GameTestServer]: All 4 required tests passed :)
+[14:46:21] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 2m 34s
+
+/workspace/reference/golems-m54-directional-write-final.log
+[14:50:02] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_WRITE_ASSERTIONS_OK crossBlock=false externalMod=false callbackSeed=false directionalSeed=true ordinaryFruit=0
+[14:50:05] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 46s
+
+/workspace/reference/golems-m54-directional-read-final.log
+[14:52:11] [Server thread/INFO] [de.eh.th.go.te.GolemSeedRestartProbe/]: GOLEM_SEED_RESTART_READ_ASSERTIONS_OK crossBlock=false externalMod=false callbackSeed=false directionalSeed=true ordinaryFruit=0
+[14:52:12] [Server thread/INFO] [minecraft/MinecraftServer]: ThreadedAnvilChunkStorage: All dimensions are saved
+BUILD SUCCESSFUL in 54s
