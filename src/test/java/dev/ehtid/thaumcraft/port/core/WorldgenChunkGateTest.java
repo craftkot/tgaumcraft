@@ -30,6 +30,21 @@ public final class WorldgenChunkGateTest {
         }
         check(!WorldgenChunkGate.originInChunk(-1, 0, -1, -1), "mixed Z border");
         check(WorldgenChunkGate.originInChunk(-16, 15, -1, 0), "mixed signs");
+        int[] edges = {-33, -32, -17, -16, -15, -1, 0, 1, 15, 16, 17, 31, 32};
+        for (int x : edges) {
+            for (int z : edges) {
+                int cx = WorldgenChunkGate.chunkCoordinate(x);
+                int cz = WorldgenChunkGate.chunkCoordinate(z);
+                check(WorldgenChunkGate.mayAttemptPlacementAt(true, true, true, x, z, cx, cz),
+                        "coordinate gate accepts own chunk " + x + "," + z);
+                check(!WorldgenChunkGate.mayAttemptPlacementAt(true, true, true, x, z, cx + 1, cz),
+                        "coordinate gate rejects neighbor X " + x + "," + z);
+                check(!WorldgenChunkGate.mayAttemptPlacementAt(true, true, true, x, z, cx, cz - 1),
+                        "coordinate gate rejects neighbor Z " + x + "," + z);
+                check(!WorldgenChunkGate.mayAttemptPlacementAt(false, true, true, x, z, cx, cz),
+                        "coordinate gate rejects reload " + x + "," + z);
+            }
+        }
         System.out.println("M12 WorldgenChunkGate: OK (" + assertions + " assertions)");
     }
 }
