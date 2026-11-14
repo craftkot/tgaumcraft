@@ -74,6 +74,9 @@ read -r _ difficulty_y < <(
 )
 echo "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=mode:$mode_x,$mode_y difficulty:$mode_x,$difficulty_y" \
   | tee -a client-smoke-status.txt"""
+title_click_y_anchor = "title_click_y=$((Y + HEIGHT * 33 / 100))"
+title_click_percent = {"2": 33, "3": 39}[scale]
+title_click_y_replacement = f"title_click_y=$((Y + HEIGHT * {title_click_percent} / 100))"
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
 
 world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\n"
@@ -143,6 +146,9 @@ source = source.replace(world_gate, workbench_gate, 1)
 # server log says "Dev присоединился к игре", so use PlayerList's invariant
 # server-thread login record in this generated copy only.
 source = source.replace(login_gate, login_replacement, 1)
+if source.count(title_click_y_anchor) != 1:
+    raise SystemExit("Shared title-screen Singleplayer click changed; refusing unsafe injection")
+source = source.replace(title_click_y_anchor, title_click_y_replacement, 1)
 if source.count(world_command_anchor) != 1:
     raise SystemExit("Shared world-command coordinates changed; refusing unsafe injection")
 source = source.replace(world_command_anchor, world_command_replacement, 1)
