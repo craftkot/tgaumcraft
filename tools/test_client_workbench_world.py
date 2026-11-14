@@ -151,6 +151,10 @@ expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
 # chunks. The earlier remote /forceload probe was removed together with the
 # remote fixed-coordinate platform, so its old test oracle must not survive.
 fixture_replacement = generator.split('world_fixture_replacement = """', 1)[1].split('"""', 1)[0]
+fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\n"
+expect(shared_smoke.count(fixture_start) == 1
+       and 'world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\\n"' in generator,
+       "Workbench generator fixture anchor does not match the current shared smoke exactly")
 expect("world_fixture_start = " in generator and "world_fixture_end = " in generator
        and "source = source[:world_fixture_start_index] + world_fixture_replacement + source[world_fixture_end_index:]" in generator,
        "Workbench generator does not replace the remote fixed-coordinate fixture")
