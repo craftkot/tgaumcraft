@@ -387,9 +387,11 @@ expect("wait_for_workbench_marker" in generator
        "Workbench smoke does not require the real server-to-client menu lifecycle")
 type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
+chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split(")", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
-       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in generator
-       and generator.index("send_chat_probe '/tp @p ~ ~ ~ 0 28'") < generator.index("send_chat '/give @p thaumcraft:crucible'"),
+       and "send_chat_probe '/tp @p ~ ~ ~ 0 28'" in chat_probe_replacement_body
+       and "send_chat '/give @p thaumcraft:crucible'" in chat_probe_replacement_body
+       and chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28'") < chat_probe_replacement_body.index("send_chat '/give @p thaumcraft:crucible'"),
        "chat helper must wait after typing and run a real rotation-changing probe before the first item grant")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
