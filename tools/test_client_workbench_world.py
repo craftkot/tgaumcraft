@@ -188,7 +188,12 @@ expect("world_fixture_start = " in generator and "world_fixture_end = " in gener
 expect("send_chat '/tp @p ~ ~ ~ 0 28'" in fixture_replacement
        and "send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'" in fixture_replacement
        and "send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'" in fixture_replacement
-       and "send_chat '/execute at @p run setblock ~ ~-1 ~4 thaumcraft:arcane_workbench'" in fixture_replacement,
+       and "send_chat '/execute at @p run setblock ~ ~ ~1 thaumcraft:arcane_workbench'" in fixture_replacement,
+expect("~ ~-1 ~4" not in generator
+       and all(f"send_chat '/execute at @p run item replace block ~ ~ ~1 container.{slot} with " in generator
+               for slot in (1, 3, 4, 5, 7))
+       and "send_chat '/execute at @p run data get block ~ ~ ~1 Items'" in generator,
+       "Workbench block and all five inventory slots must share the F3-confirmed target block")
        "Workbench fixture is not built relative to the logged-in player inside spawn chunks")
 expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "send_chat '/fill 0 148 0 4 148 6 minecraft:stone'" not in fixture_replacement
@@ -209,7 +214,7 @@ expect("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" 
        and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator,
        "Workbench must require independent real server and client menu lifecycle evidence")
 expect(generator.index("send_chat '/execute at @p run item replace block")
-       < generator.index("send_chat '/execute at @p run data get block ~ ~-1 ~4 Items'")
+       < generator.index("send_chat '/execute at @p run data get block ~ ~ ~1 Items'")
        < generator.index("capture 08c-workbench-before-open")
        < generator.index("xdotool click 3")
        < generator.index("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
