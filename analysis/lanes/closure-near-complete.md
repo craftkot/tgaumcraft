@@ -4145,3 +4145,6 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Changed only the isolated generator and its static oracle: place the Workbench at `~ ~ ~1`, the prior F3 crosshair target, and write all five Thaumometer preview inventory slots plus the Items readback to that same block. The regression now rejects the old `~ ~-1 ~4` coordinates and requires the block and inventory fixture to share one target.
 - No production Java, shared smoke, registries, Gradle, CI workflow, localization or foreign lane changed. No gameplay fix or GUI acceptance is claimed. The real matrix must be rerun; the next gate is an F3 screenshot identifying `thaumcraft:arcane_workbench`, followed by server BlockEntity/openMenu and client screen/render markers.
 - Rubric remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded.
+
+
+- **Static-oracle follow-up:** immediate review of the first patch caught a malformed multiline Python `expect` insertion in `tools/test_client_workbench_world.py`. It was corrected in a separate commit before any exact-head CI result was treated as valid. The initial run triggered by the preceding commit is not evidence of a passing regression; wait for the new post-fix workflow.
