@@ -196,8 +196,20 @@ expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "post_force_load_" not in generator,
        "Workbench generator still depends on the removed remote-chunk command probe")
 
-expect("send_chat '/execute at @p if block ~ ~-1 ~4 thaumcraft:arcane_workbench run say TC_WORKBENCH_POSITION_CONFIRMED'" in generator,
-       "Workbench position gate does not verify the spawn-relative block placed by the current fixture")
+expect("send_chat '/data get entity @p Pos'" in generator
+       and "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" in generator
+       and "has the following entity data:" in generator,
+       "Workbench smoke does not require a real server-side entity-data response before fixture mutations")
+expect("send_chat '/data get block ~ ~-1 ~4 id'" in generator
+       and "grep -Fq 'thaumcraft:arcane_workbench'" in generator
+       and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" in generator
+       and "TC_WORKBENCH_POSITION_CONFIRMED" not in generator,
+       "Workbench position gate must read the actual target BlockEntity id, not trust a /say echo")
+expect(generator.index("send_chat '/data get entity @p Pos'")
+       < generator.index("send_chat '/execute at @p run item replace block")
+       < generator.index("send_chat '/data get block ~ ~-1 ~4 id'")
+       < generator.index("capture 08c-workbench-before-open"),
+       "Workbench server-state gates must bracket fixture setup and precede the GUI click")
 expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
        and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
        "Workbench position gate still depends on obsolete fixed world coordinates")

@@ -209,6 +209,25 @@ body = r'''
   echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
 
 
+  # Verify that an actual server-side entity-data query reaches the integrated
+  # world before issuing any fixture mutations. A typed command or a /say echo
+  # is not evidence that the server accepted the command.
+  workbench_command_log_offset="$(wc -c < client-smoke/client.log)"
+  send_chat '/data get entity @p Pos'
+  workbench_command_response=NO
+  for attempt in {1..12}; do
+    if tail -c "+$((workbench_command_log_offset + 1))" client-smoke/client.log | grep -Fq 'has the following entity data:'; then
+      workbench_command_response=YES
+      break
+    fi
+    sleep 1
+  done
+  echo "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" | tee -a client-smoke-status.txt
+  if [ "$workbench_command_response" != YES ]; then
+    capture 05b-workbench-command-response-not-confirmed
+    exit 1
+  fi
+
   # The Workbench and its inventory fixture are four blocks ahead of the
   # logged-in player, inside the already-loaded spawn area.
   # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
@@ -223,11 +242,13 @@ body = r'''
 
   # Reset the look direction without teleporting to an unloaded test region.
   send_chat '/tp @p ~ ~ ~ 0 28'
-  workbench_position_log_offset="$(wc -c < client-smoke/client.log)"
-  send_chat '/execute at @p if block ~ ~-1 ~4 thaumcraft:arcane_workbench run say TC_WORKBENCH_POSITION_CONFIRMED'
+  # Read the real block-entity id at the player-relative fixture position.
+  # This is a server state query, not a client-generated /say acknowledgement.
+  workbench_block_log_offset="$(wc -c < client-smoke/client.log)"
+  send_chat '/data get block ~ ~-1 ~4 id'
   workbench_position_confirmed=NO
   for attempt in {1..12}; do
-    if tail -c "+$((workbench_position_log_offset + 1))" client-smoke/client.log | grep -Fq 'TC_WORKBENCH_POSITION_CONFIRMED'; then
+    if tail -c "+$((workbench_block_log_offset + 1))" client-smoke/client.log | grep -Fq 'thaumcraft:arcane_workbench'; then
       workbench_position_confirmed=YES
       break
     fi
