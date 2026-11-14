@@ -231,27 +231,35 @@ expect("python3 tools/test_client_workbench_gui_render.py" in workflow_source
 # client screenshot showed Creative + Normal and the strict NBT gate rejected
 # it. Exercise the actual shared coordinate helper for both layouts.
 generator_source = generator
-expect("world_settings_anchor = " in generator_source
+expect("world_command_anchor = " in generator_source
+       and "world_command_replacement = " in generator_source
+       and "source.count(world_command_anchor) != 1" in generator_source
+       and "source = source.replace(world_command_anchor, world_command_replacement, 1)" in generator_source
+       and "world_settings_anchor = " in generator_source
        and "world_settings_replacement = " in generator_source
        and "source.count(world_settings_anchor) != 1" in generator_source
        and "source = source.replace(world_settings_anchor, world_settings_replacement, 1)" in generator_source,
-       "Workbench generator does not patch the shared world-setting clicks through the scale-aware helper")
+       "Workbench generator does not patch all three shared world-setting clicks through the scale-aware helper")
 expect("minecraft_gui_point" in generator_source
        and "mode_gui_y=99" in generator_source and "difficulty_gui_y=127" in generator_source
+       and "commands_gui_y=155" in generator_source
        and "mode_gui_y=81" in generator_source and "difficulty_gui_y=109" in generator_source
-       and "WORLD_SAFE_CREATE_COORDS=" in generator_source,
-       "Workbench generator lacks the measured scale-2/scale-3 world-setting coordinates")
+       and "commands_gui_y=137" in generator_source
+       and "WORLD_SAFE_CREATE_COMMANDS_COORD=" in generator_source
+       and "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=" in generator_source,
+       "Workbench generator lacks the measured scale-2/scale-3 coordinates for all world-setting rows")
 
 coordinate_helper = Path(__file__).with_name("minecraft_gui_coordinates.sh")
-for scale, gui_height, mode_y, expected_mode_y, difficulty_y, expected_difficulty_y in (
-    (2, 384, 99, 219, 127, 275),
-    (3, 256, 81, 264, 109, 348),
+for scale, gui_height, mode_y, expected_mode_y, difficulty_y, expected_difficulty_y, commands_y, expected_commands_y in (
+    (2, 384, 99, 219, 127, 275, 155, 331),
+    (3, 256, 81, 264, 109, 348, 137, 432),
 ):
     gui_width = 1024 // scale
     center_x = (gui_width - 1) // 2
     for label, logical_y, expected_y in (
         ("mode", mode_y, expected_mode_y),
         ("difficulty", difficulty_y, expected_difficulty_y),
+        ("commands", commands_y, expected_commands_y),
     ):
         command = (
             f'source "{coordinate_helper}"; '

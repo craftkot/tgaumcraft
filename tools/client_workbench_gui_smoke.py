@@ -31,10 +31,9 @@ if source.count(anchor) != 1:
 world_gate = "python3 tools/assert_client_world_commands.py run/saves | tee -a client-smoke-status.txt"
 workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt"
 login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
-world_settings_anchor = """mode_x=$((X + WIDTH / 2))
-mode_y=$((Y + HEIGHT * 260 / 1000))
-difficulty_y=$((Y + HEIGHT * 340 / 1000))"""
-world_settings_replacement = """world_gui_scale="${TC_WORKBENCH_GUI_SCALE:-2}"
+world_command_anchor = """world_command_x=$((X + WIDTH / 2))
+world_command_y=$((Y + HEIGHT * 405 / 1000))"""
+world_command_replacement = """world_gui_scale="${TC_WORKBENCH_GUI_SCALE:-2}"
 world_gui_width=$((WIDTH / world_gui_scale))
 world_gui_height=$((HEIGHT / world_gui_scale))
 case "$world_gui_scale" in
@@ -42,12 +41,13 @@ case "$world_gui_scale" in
     # Screenshot-derived centers for the 512x384 logical Create World screen.
     mode_gui_y=99
     difficulty_gui_y=127
+    commands_gui_y=155
     ;;
   3)
-    # Scale 3 compresses the screen to 341x256; fixed scale-2 percentages
-    # clicked the Game Mode row instead of Difficulty in the real client.
+    # Scale 3 compresses the screen to 341x256; each row moves independently.
     mode_gui_y=81
     difficulty_gui_y=109
+    commands_gui_y=137
     ;;
   *)
     echo "unsupported Workbench GUI scale: $world_gui_scale" >&2
@@ -55,7 +55,16 @@ case "$world_gui_scale" in
     ;;
 esac
 world_gui_center_x=$(((world_gui_width - 1) / 2))
-read -r mode_x mode_y < <(
+read -r world_command_x world_command_y < <(
+  minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" "$world_gui_scale" \
+    "$world_gui_width" "$world_gui_height" "$world_gui_center_x" "$commands_gui_y"
+)
+echo "WORLD_SAFE_CREATE_COMMANDS_COORD=scale:$world_gui_scale click:$world_command_x,$world_command_y gui:${world_gui_width}x${world_gui_height}" \
+  | tee -a client-smoke-status.txt"""
+world_settings_anchor = """mode_x=$((X + WIDTH / 2))
+mode_y=$((Y + HEIGHT * 260 / 1000))
+difficulty_y=$((Y + HEIGHT * 340 / 1000))"""
+world_settings_replacement = """read -r mode_x mode_y < <(
   minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" "$world_gui_scale" \
     "$world_gui_width" "$world_gui_height" "$world_gui_center_x" "$mode_gui_y"
 )
@@ -63,7 +72,7 @@ read -r _ difficulty_y < <(
   minecraft_gui_point "$X" "$Y" "$WIDTH" "$HEIGHT" "$world_gui_scale" \
     "$world_gui_width" "$world_gui_height" "$world_gui_center_x" "$difficulty_gui_y"
 )
-echo "WORLD_SAFE_CREATE_COORDS=scale:$world_gui_scale mode:$mode_x,$mode_y difficulty:$mode_x,$difficulty_y gui:${world_gui_width}x${world_gui_height}" \
+echo "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=mode:$mode_x,$mode_y difficulty:$mode_x,$difficulty_y" \
   | tee -a client-smoke-status.txt"""
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
 
@@ -111,6 +120,9 @@ source = source.replace(world_gate, workbench_gate, 1)
 # server log says "Dev присоединился к игре", so use PlayerList's invariant
 # server-thread login record in this generated copy only.
 source = source.replace(login_gate, login_replacement, 1)
+if source.count(world_command_anchor) != 1:
+    raise SystemExit("Shared world-command coordinates changed; refusing unsafe injection")
+source = source.replace(world_command_anchor, world_command_replacement, 1)
 if source.count(world_settings_anchor) != 1:
     raise SystemExit("Shared world-setting coordinates changed; refusing unsafe injection")
 source = source.replace(world_settings_anchor, world_settings_replacement, 1)
