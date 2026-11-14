@@ -96,7 +96,12 @@ source = source.replace(world_gate, workbench_gate, 1)
 source = source.replace(login_gate, login_replacement, 1)
 source = source.replace(send_chat_anchor, send_chat_replacement, 1)
 
-chat_probe_anchor = "  send_chat '/gamemode creative'\n"
+# Match the unique initial Crucible bootstrap, not other creative commands.
+chat_probe_anchor = (
+    "  send_chat '/gamemode creative'\n"
+    "  send_chat '/difficulty peaceful'\n"
+    "  send_chat '/give @p thaumcraft:crucible'\n"
+)
 chat_probe_replacement = """  send_chat '/say TC_WORKBENCH_CHAT_INPUT_OK'
   if ! grep -Fq 'TC_WORKBENCH_CHAT_INPUT_OK' client-smoke/client.log; then
     echo 'WORKBENCH_CHAT_INPUT_PROBE=NOT_CONFIRMED' | tee -a client-smoke-status.txt
@@ -107,7 +112,7 @@ chat_probe_replacement = """  send_chat '/say TC_WORKBENCH_CHAT_INPUT_OK'
 """
 if source.count(chat_probe_anchor) != 1:
     raise SystemExit("Initial creative command anchor changed; refusing unsafe chat probe replacement")
-source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)
+source = source.replace(chat_probe_anchor, chat_probe_replacement + "  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n", 1)
 
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
