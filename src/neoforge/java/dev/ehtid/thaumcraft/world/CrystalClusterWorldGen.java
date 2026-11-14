@@ -151,7 +151,7 @@ public final class CrystalClusterWorldGen {
             int x = chunkPos.getMinBlockX() + 8 + random.nextInt(13) - 6;
             int z = chunkPos.getMinBlockZ() + 8 + random.nextInt(13) - 6;
             int minY = level.getMinBuildHeight();
-            int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z);
+            int surfaceY = runtimeSurfaceHeight(level, x, z);
             int y = minY + random.nextInt(LegacyCrystalWorldGenLogic.yRange(minY, surfaceY));
             BlockPos center = new BlockPos(x, y, z);
 
@@ -164,6 +164,15 @@ public final class CrystalClusterWorldGen {
             if (totalCrystalAmount > maximum) break;
         }
         return totalCrystalAmount;
+    }
+
+    /**
+     * BETA26's World#getHeight(BlockPos) samples the live generated surface.
+     * This adapter runs after ChunkEvent.Load, so WORLD_SURFACE_WG is not
+     * primed here; use the runtime WORLD_SURFACE heightmap instead.
+     */
+    static int runtimeSurfaceHeight(ServerLevel level, int x, int z) {
+        return level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z);
     }
 
     /**
