@@ -29,3 +29,12 @@
 - Добавлен `WorldgenChunkGateTest`: все 16 комбинаций разрешающих флагов, 13 отрицательных/положительных границ чанков, проверки смежного чанка и смешанных координат; ожидается **57 assertions** (16 + 39 + 2). Тестовый коммит: [1ac13dc](https://github.com/craftkot/tgaumcraft/commit/1ac13dc1ca6cbd7a0bb0bd9332c2a5b5baa011d8).
 - **Доказательства:** файлы отправлены в GitHub. Java 21 `javac`, полная NeoForge-сборка, CI и Minecraft world smoke **в этом запуске не выполнены**; тесты добавлены, но результат PASS не заявляется. Нет доказательства, что этот guard уже подключён к реальному worldgen. Частота, биомы, деревья и оригинальные правила BETA26 не реализованы этим срезом.
 - **Следующий шаг:** найти реальные M12 классы и исходные BETA26 правила размещения, интегрировать gate в узкий worldgen hook без изменения чужих регистров; затем выполнить Java 21 тест и настоящий worldgen smoke. Исторический индекс **59/100** не изменять.
+
+
+## 14.11.2026 — M12.1, воспроизводимый isolated regression
+
+- Повторно прочитаны актуальные `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` и собственный lane; проверены существующие ветки и открытые PR #1–#8. Чужие ветки и `main` не менялись.
+- Создан `tools/test_worldgen_chunk_gate.sh` — отдельный Java 21 runner, компилирующий именно production `WorldgenChunkGate.java` и `WorldgenChunkGateTest.java` без Gradle/Minecraft. Коммит [ae60d39](https://github.com/craftkot/tgaumcraft/commit/ae60d390d880d68301e7975b0a7a03315e529b0c).
+- В текущем рабочем окружении `javac 21.0.12.1 --release 21` и `java` выполнили локальную эквивалентную компиляцию/запуск скопированных по содержимому двух классов: `M12 WorldgenChunkGate: OK (57 assertions)`. **Это локальная репродукция, не запуск runner из checkout и не CI по commit SHA**.
+- Пока нет игрового worldgen hook, проверки BETA26 частот/биомов, полной NeoForge-сборки, dedicated-server или клиентского world smoke. Никакой дополнительной готовности M12 не заявлено; общий индекс 59/100 неизменен.
+- Следующий шаг: получить полный список исходников worldgen/ресурсов и сверить правила конкретного дерева/кристалла с оригинальным BETA26; подключить безопасный guard в настоящий placement hook и проверить Minecraft generation. Общие registries и чужие подсистемы менять только после согласования.
