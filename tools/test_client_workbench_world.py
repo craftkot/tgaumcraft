@@ -186,6 +186,27 @@ expect("login_replacement = \"if grep -Fq 'logged in with entity id' client-smok
        "workbench generator does not use invariant integrated-server login evidence")
 expect("source = source.replace(login_gate, login_replacement, 1)" in generator,
        "workbench generator does not replace the English-only login gate")
+
+shared_send_chat = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+expect(shared_smoke.count(shared_send_chat) == 1,
+       "shared send_chat helper changed; isolated generator replacement must be reviewed")
+expect("send_chat_anchor = " in generator
+       and "send_chat_replacement = " in generator
+       and "source.count(send_chat_anchor) != 1" in generator
+       and "source = source.replace(send_chat_anchor, send_chat_replacement, 1)" in generator,
+       "Workbench generator does not replace the shared chat helper with its focused copy")
+expect('xdotool windowactivate --sync "$WIN"' in generator
+       and 'xdotool windowfocus --sync "$WIN"' in generator
+       and "WORKBENCH_INPUT_FOCUS=$focused_window" in generator,
+       "Workbench chat helper does not re-activate and diagnose the Minecraft window")
+expect("capture 05a-after-peaceful-command" in generator,
+       "Workbench smoke does not retain a screenshot immediately after the first real command")
 expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
        "workbench crop still adds Openbox's horizontal client-frame offset")
 expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,

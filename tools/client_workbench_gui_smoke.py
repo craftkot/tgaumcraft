@@ -32,6 +32,33 @@ world_gate = "python3 tools/assert_client_world_commands.py run/saves | tee -a c
 workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves | tee -a client-smoke-status.txt"
 login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
 login_replacement = "if grep -Fq 'logged in with entity id' client-smoke/client.log; then"
+
+# The shared helper is used after the title-to-world transition, which can
+# leave X11 focus on PointerRoot. Patch only this generated Workbench smoke;
+# keep shared client_smoke.sh read-only.
+send_chat_anchor = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+send_chat_replacement = """  send_chat() {
+    # The integrated-world transition can leave X11 focus on PointerRoot.
+    # Re-activate the actual Minecraft window before every scripted command.
+    xdotool windowactivate --sync "$WIN"
+    xdotool windowfocus --sync "$WIN"
+    focused_window="$(xdotool getwindowfocus)"
+    echo "WORKBENCH_INPUT_FOCUS=$focused_window" | tee -a client-smoke-status.txt
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+if source.count(send_chat_anchor) != 1:
+    raise SystemExit("Shared send_chat helper changed; refusing unsafe injection")
+
 if source.count(world_gate) != 1:
     raise SystemExit("Shared world NBT gate changed; refusing unsafe injection")
 if source.count(login_gate) != 1:
@@ -47,6 +74,7 @@ source = source.replace(world_gate, workbench_gate, 1)
 # server log says "Dev присоединился к игре", so use PlayerList's invariant
 # server-thread login record in this generated copy only.
 source = source.replace(login_gate, login_replacement, 1)
+source = source.replace(send_chat_anchor, send_chat_replacement, 1)
 
 body = r'''
   echo "WORKBENCH_GUI_MATRIX=$TC_WORKBENCH_LANG/$TC_WORKBENCH_GUI_SCALE" | tee -a client-smoke-status.txt
@@ -60,6 +88,7 @@ body = r'''
   # pre-save level.dat metadata.
   difficulty_log_offset="$(wc -c < client-smoke/client.log)"
   send_chat '/difficulty peaceful'
+  capture 05a-after-peaceful-command
   python3 tools/assert_client_workbench_difficulty.py client-smoke/client.log \
     --from-offset "$difficulty_log_offset" --wait-seconds 12 \
     | tee -a client-smoke-status.txt
