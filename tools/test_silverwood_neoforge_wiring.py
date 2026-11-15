@@ -11,7 +11,9 @@ checks = {
     "blockstate injection": "SilverwoodLegacyFeature(BlockState log, BlockState leaves)" in source,
     "axis mapping": all(s in source for s in ("Direction.Axis.X", "Direction.Axis.Y", "Direction.Axis.Z")),
     "conditional writes": "setIfReplaceable(level, new BlockPos(px, py, pz), leaves)" in source
-                          and "if (setIfReplaceable(level, new BlockPos(px, py, pz), state))" in source,
+                          and "if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves))" in source,
+    "canopy-first log replacement": "existing.is(leafState.getBlock())" in source
+                          and "&& level.setBlock(pos, logState, 2)" in source,
     "successful block-write return": "return placed[0] > 0;" in source,
     "setBlock success propagated": "return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);" in source,
     "failed preflight returns false": "return false;" in source,
