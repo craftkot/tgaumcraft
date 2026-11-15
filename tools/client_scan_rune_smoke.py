@@ -20,8 +20,8 @@ if source.count(world_create_y_anchor) != 1:
     raise SystemExit("Shared world-create coordinate changed; refusing unsafe scan-rune patch")
 source = source.replace(world_create_y_anchor, world_create_y_replacement, 1)
 
-world_create_log_anchor = 'echo "CREATE_NEW_WORLD_CLICK=\${create_world_x},\${create_world_y}" | tee -a client-smoke-status.txt'
-world_create_log_replacement = 'echo "CREATE_NEW_WORLD_CLICK=\${create_world_x},\${create_world_y} LOCAL=$((create_world_x - X)),$((create_world_y - Y))" | tee -a client-smoke-status.txt'
+world_create_log_anchor = 'echo "CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y}" | tee -a client-smoke-status.txt'
+world_create_log_replacement = 'echo "CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y} LOCAL=$((create_world_x - X)),$((create_world_y - Y))" | tee -a client-smoke-status.txt'
 if source.count(world_create_log_anchor) != 1:
     raise SystemExit("Shared world-create logging changed; refusing unsafe scan-rune patch")
 source = source.replace(world_create_log_anchor, world_create_log_replacement, 1)
