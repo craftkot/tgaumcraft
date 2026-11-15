@@ -26,7 +26,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if python3 tools/integration_acceptance_gate.py analysis/evidence/integration/acceptance.json "${GITHUB_SHA}"; then
+          invalid_evidence="$(mktemp)"
+          trap 'rm -f "$invalid_evidence"' EXIT
+          # An empty temp file is always invalid, even after real acceptance evidence is added.
+          if python3 tools/integration_acceptance_gate.py "$invalid_evidence" "${GITHUB_SHA}"; then
             echo "::error::Integration gate accepted missing or unverified evidence"
             exit 1
           fi
