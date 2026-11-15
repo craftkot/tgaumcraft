@@ -10,8 +10,8 @@ checks = {
     "shared core tree phases": "SilverwoodLegacyTree.place(" in source,
     "blockstate injection": "SilverwoodLegacyFeature(BlockState log, BlockState leaves)" in source,
     "axis mapping": all(s in source for s in ("Direction.Axis.X", "Direction.Axis.Y", "Direction.Axis.Z")),
-    "conditional writes": "setIfReplaceable(level, new BlockPos(px, py, pz), leaves)" in source
-                          and "if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, ownLeaves))" in source,
+    "conditional writes": "setIfReplaceable(level, pos, leaves)" in source
+                          and "if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves, ownLeaves))" in source,
     "canopy-first log replacement limited to current attempt": "ownLeaves.contains(pos)" in source
                           and "existing.equals(leavesState)" in source
                           and "&& level.setBlock(pos, logState, 2)" in source,
