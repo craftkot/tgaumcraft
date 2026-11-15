@@ -70,19 +70,29 @@ assert "send_chat '/forceload add -4 149 -4 4 149 10'" not in generated
 assert "send_chat '/forceload add 0 0'" not in generated
 print("SCAN_RUNE_CHAT_INPUT=PASS assertions=9")
 
-# Real-client artifact #14174225163: on the 1024x768 Create World screen,
-# the button spans local y=718..756. The shared 93% formula produces y=714,
-# four pixels above the hitbox; the isolated scan-rune driver must use 96%.
-create_y_line = "create_world_y=$((Y + HEIGHT * 96 / 100))"
+# Real-client artifact 14175364151 from run #43749075503:
+# the screenshot is a 1280x800 ROOT capture; the Minecraft window is
+# 1024x768 at root offset (X=1,Y=20). The button bounds in root pixels are
+# x=205..502, y=718..756. Always compare root click coordinates to root bounds.
+create_x_line = "create_world_x=$((X + WIDTH * 34 / 100))"
+create_y_line = "create_world_y=$((Y + HEIGHT * 935 / 1000))"
+assert generated.count(create_x_line) == 1
 assert generated.count(create_y_line) == 1
-assert "create_world_y=$((Y + HEIGHT * 93 / 100))" not in generated
+assert "create_world_y=$((Y + HEIGHT * 96 / 100))" not in generated
 click_line = 'xdotool mousemove "$create_world_x" "$create_world_y" click 1'
 assert generated.index(click_line) < generated.index("capture 04a-after-create-world-click") < generated.index("world_started=0")
 local_click_marker = 'CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y} LOCAL=$((create_world_x - X)),$((create_world_y - Y))'
 assert local_click_marker in generated
-window_height = 768
-old_local_y = window_height * 93 // 100
-new_local_y = window_height * 96 // 100
-assert not 718 <= old_local_y <= 756, old_local_y
-assert 718 <= new_local_y <= 756, new_local_y
-print(f"SCAN_RUNE_WORLD_CREATE_HITBOX=PASS old={old_local_y} new={new_local_y} bounds=718..756")
+window_x, window_y, window_width, window_height = 1, 20, 1024, 768
+root_x = window_x + window_width * 34 // 100
+root_y = window_y + window_height * 935 // 1000
+previous_96_root_y = window_y + window_height * 96 // 100
+previous_93_root_y = window_y + window_height * 93 // 100
+assert 205 <= root_x <= 502, root_x
+assert 718 <= root_y <= 756, root_y
+assert not 718 <= previous_96_root_y <= 756, previous_96_root_y
+assert 718 <= previous_93_root_y <= 756, previous_93_root_y
+print(
+    f"SCAN_RUNE_WORLD_CREATE_HITBOX=PASS root=({root_x},{root_y}) "
+    f"bounds=x205..502,y718..756 previous96=({root_x},{previous_96_root_y})"
+)

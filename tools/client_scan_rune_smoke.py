@@ -13,9 +13,11 @@ import sys
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 
 world_create_y_anchor = "create_world_y=$((Y + HEIGHT * 93 / 100))"
-world_create_y_replacement = """# The #43743943757 screenshot shows the 1024x768 Create New World button at local y=718..756.
-# 93% (714px) misses above it; 96% (737px) is inside the actual hitbox.
-create_world_y=$((Y + HEIGHT * 96 / 100))"""
+world_create_y_replacement = """# In #43749075503 the root screenshot is 1280x800 while the window is
+# 1024x768 at root offset (1,20). The Create New World button occupies root
+# y=718..756. Adding Y to 96% produced root y=757, one pixel below it;
+# 93.5% local plus Y produces root y=738, near the button centre.
+create_world_y=$((Y + HEIGHT * 935 / 1000))"""
 if source.count(world_create_y_anchor) != 1:
     raise SystemExit("Shared world-create coordinate changed; refusing unsafe scan-rune patch")
 source = source.replace(world_create_y_anchor, world_create_y_replacement, 1)
