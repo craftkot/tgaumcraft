@@ -56,7 +56,7 @@ def validate_scan_sound_driver():
     assert "xdotool key --clearmodifiers t" not in driver
     assert driver.index("xdotool key --clearmodifiers slash") < driver.index("80a-scan-chat-open.png")
     assert driver.index("80a-scan-chat-open.png") < driver.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
-    assert driver.index("xdotool type --clearmodifiers --delay 24 "$command_body"') < driver.index("80b-scan-chat-text-before-enter.png")
+    assert driver.index('xdotool type --clearmodifiers --delay 24 "$command_body"') < driver.index("80b-scan-chat-text-before-enter.png")
     assert driver.index("80b-scan-chat-text-before-enter.png") < driver.index("xdotool key --clearmodifiers Return")
     assert driver.index("xdotool key --clearmodifiers Return") < driver.index("80c-scan-chat-submit-result.png")
     marker_start = generated.index("  wait_for_scan_marker() {")
