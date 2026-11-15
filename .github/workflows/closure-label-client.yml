@@ -48,6 +48,8 @@ jobs:
             libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
       - name: Generate isolated script from verified world boot and validate syntax
         run: |
+          python3 tools/verify_label_brace_source_art.py
+          python3 tools/test_label_smoke_driver.py
           python3 tools/client_label_smoke.py > client-label-smoke-generated.sh
           bash -n client-label-smoke-generated.sh
       - name: Run REAL Minecraft client and capture original art and aspect colors
