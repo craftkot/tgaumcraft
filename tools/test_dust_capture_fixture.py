@@ -61,8 +61,19 @@ assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
 assert generated.count('xdotool windowactivate --sync "$WIN"') == 2
 channel_focus = generated.rindex('xdotool windowactivate --sync "$WIN"')
 channel_raise = unique('xdotool windowraise "$WIN"')
+channel_force_focus = unique('xdotool windowfocus --sync "$WIN"')
 channel_move = unique('xdotool mousemove --window "$WIN" 512 384')
-channel_command = unique("xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'")
+active_window = unique('active="$(xdotool getactivewindow 2>/dev/null || true)"')
+focused_window = unique('focused="$(xdotool getwindowfocus 2>/dev/null || true)"')
+game_pid = unique('game_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"')
+active_pid = unique('active_pid="$(xdotool getwindowpid "$active" 2>/dev/null || true)"')
+focused_pid = unique('focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null || true)"')
+focus_fail = unique("SALIS_INPUT_FOCUS=FAIL")
+focus_capture = unique("capture 05e-command-focus-not-minecraft")
+focus_pass = unique("SALIS_INPUT_FOCUS=PASS")
+channel_command = unique("xdotool key --clearmodifiers slash")
+channel_chat_frame = unique("client-smoke/screenshots/05g-command-chat-open.png")
+channel_type = unique("xdotool type --clearmodifiers --delay 24 'say TC_SMOKE_COMMAND_CHANNEL_READY'")
 channel_ack = unique("grep -Fq 'TC_SMOKE_COMMAND_CHANNEL_READY' run/logs/latest.log")
 channel_fail = unique("SALIS_COMMAND_CHANNEL=FAIL")
 channel_pass = unique("SALIS_COMMAND_CHANNEL=PASS")
@@ -72,12 +83,15 @@ chat_fn = unique('  send_chat() {')
 first_game_command = generated.index("  send_chat '/gamemode creative'", chat_fn)
 assert activate_fn < ensure_fn < chat_fn < first_game_command
 activate_body = generated[activate_fn:ensure_fn]
-assert channel_focus < channel_raise < channel_move
+assert channel_focus < channel_raise < channel_force_focus < channel_move
+assert active_window < focused_window < game_pid < active_pid < focused_pid < focus_fail < focus_capture < focus_pass
 assert 'sleep 0.25' in activate_body
+assert 'SALIS_INPUT_FOCUS=PASS' in activate_body
 ensure_body = generated[ensure_fn:chat_fn]
-assert channel_command < channel_ack < channel_fail < channel_pass
+assert channel_command < channel_chat_frame < channel_type < channel_ack < channel_fail < channel_pass
 assert 'for _ in $(seq 1 40)' in ensure_body
 assert 'capture 05f-command-channel-not-ready' in ensure_body
+assert '05g-command-chat-open.png' in ensure_body
 chat_end = generated.index("\n  }", chat_fn)
 chat_body = generated[chat_fn:chat_end]
 assert chat_body.index('activate_minecraft_client') < chat_body.index('ensure_minecraft_command_channel') < chat_body.index('xdotool key --clearmodifiers t')
