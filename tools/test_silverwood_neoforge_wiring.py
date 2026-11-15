@@ -2,7 +2,8 @@
 """Source-level M12 wiring guard, NOT a NeoForge compilation or gameplay test."""
 from pathlib import Path
 
-source = Path("src/neoforge/java/dev/ehtid/thaumcraft/worldgen/SilverwoodLegacyFeature.java").read_text()
+repo_root = Path(__file__).resolve().parent.parent
+source = (repo_root / "src/neoforge/java/dev/ehtid/thaumcraft/worldgen/SilverwoodLegacyFeature.java").read_text(encoding="utf-8")
 checks = {
     "feature subclass": "extends Feature<NoneFeatureConfiguration>" in source,
     "worldgen context": "FeaturePlaceContext<NoneFeatureConfiguration>" in source,
