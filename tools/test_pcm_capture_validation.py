@@ -34,7 +34,7 @@ def validate_scan_sound_driver():
     driver_start = generated.index("  scan_first_command=1")
     driver_end = generated.index("  # Prove the command path", driver_start)
     driver = generated[driver_start:driver_end]
-    required = (
+    required_driver = (
         "focus_scan_window() {",
         "xdotool windowactivate --sync",
         "xdotool windowfocus --sync",
@@ -45,28 +45,34 @@ def validate_scan_sound_driver():
         "80a-scan-chat-open.png",
         "80b-scan-chat-text-before-enter.png",
         "80c-scan-chat-submit-result.png",
-        "send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'",
-        "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'",
-        "send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'",
-        "wait_for_scan_marker 'SCAN_SOUND_ITEM_READY'",
-        "90a-scan-sound-item-ready.png",
     )
-    missing = [fragment for fragment in required if fragment not in driver]
-    assert not missing, f"generated scan sound command driver is missing: {missing}"
+    missing_driver = [fragment for fragment in required_driver if fragment not in driver]
+    assert not missing_driver, f"generated scan sound command driver is missing: {missing_driver}"
     assert "xdotool key --clearmodifiers t" not in driver
     assert driver.index("xdotool key --clearmodifiers slash") < driver.index("80a-scan-chat-open.png")
     assert driver.index("80a-scan-chat-open.png") < driver.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
     assert driver.index('xdotool type --clearmodifiers --delay 24 "$command_body"') < driver.index("80b-scan-chat-text-before-enter.png")
     assert driver.index("80b-scan-chat-text-before-enter.png") < driver.index("xdotool key --clearmodifiers Return")
     assert driver.index("xdotool key --clearmodifiers Return") < driver.index("80c-scan-chat-submit-result.png")
+
     marker_start = generated.index("  wait_for_scan_marker() {")
     marker_end = generated.index("  # Prove the command path", marker_start)
     marker_gate = generated[marker_start:marker_end]
     assert 'grep -Fq "$marker" run/logs/latest.log' in marker_gate
     assert "client-smoke/client.log" not in marker_gate
-    assert generated.index("send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'") < generated.index(
-        "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'"
-    ) < generated.index("send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'")
+
+    required_calls = (
+        "send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'",
+        "wait_for_scan_marker 'TC_SCAN_SOUND_COMMAND_CHANNEL_READY'",
+        "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'",
+        "send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'",
+        "wait_for_scan_marker 'SCAN_SOUND_ITEM_READY'",
+        "90a-scan-sound-item-ready.png",
+    )
+    missing_calls = [fragment for fragment in required_calls if fragment not in generated]
+    assert not missing_calls, f"scan sound command sequence is incomplete: {missing_calls}"
+    assert generated.index(required_calls[0]) < generated.index(required_calls[1]) < generated.index(required_calls[2])
+    assert generated.index(required_calls[2]) < generated.index(required_calls[3]) < generated.index(required_calls[4]) < generated.index(required_calls[5])
     print("SCAN_SOUND_CLIENT_COMMAND_DRIVER=PASS (slash entry, screenshots, authoritative server log)")
 
 
