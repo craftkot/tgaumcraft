@@ -14,9 +14,11 @@ checks = {
                           and "if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves, ownLeaves))" in source,
     "canopy-first log replacement limited to current attempt": "ownLeaves.contains(pos)" in source
                           and "existing.equals(leavesState)" in source
-                          and "&& level.setBlock(pos, logState, 2)" in source,
+                          and "if (!level.setBlock(pos, logState, 2)) return false;" in source,
     "log overwrite passes exact canopy state": "state, leaves, ownLeaves)" in source
                           and "BlockState logState, BlockState leavesState," in source,
+    "overwrite permission consumed after successful log write": "ownLeaves.remove(pos);" in source
+                          and source.index("if (!level.setBlock(pos, logState, 2)) return false;") < source.index("ownLeaves.remove(pos);"),
     "successful leaf writes tracked": "if (setIfReplaceable(level, pos, leaves))" in source
                           and "ownLeaves.add(pos);" in source,
     "no pre-existing leaf-type bypass": "existing.is(leafState.getBlock())" not in source,
