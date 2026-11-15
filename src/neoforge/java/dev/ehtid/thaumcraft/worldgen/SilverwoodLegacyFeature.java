@@ -46,26 +46,27 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))))) {
             return false;
         }
+        final int[] placed = {0};
         SilverwoodLegacyTree.place(x, y, z, height, random,
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))),
-                (px, py, pz) -> setIfReplaceable(level, new BlockPos(px, py, pz), leaves),
+                (px, py, pz) -> placed[0] += setIfReplaceable(level, new BlockPos(px, py, pz), leaves) ? 1 : 0,
                 (px, py, pz, meta) -> {
                     Direction.Axis axis = meta == 0 ? Direction.Axis.X
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
                             ? log.setValue(RotatedPillarBlock.AXIS, axis) : log;
-                    setIfReplaceable(level, new BlockPos(px, py, pz), state);
+                    if (setIfReplaceable(level, new BlockPos(px, py, pz), state)) {
+                        placed[0]++;
+                    }
                 });
-        return true;
+        return placed[0] > 0;
     }
 
     private static boolean canReplace(BlockState state) {
         return state.isAir() || state.canBeReplaced();
     }
 
-    private static void setIfReplaceable(WorldGenLevel level, BlockPos pos, BlockState state) {
-        if (canReplace(level.getBlockState(pos))) {
-            level.setBlock(pos, state, 2);
-        }
+    private static boolean setIfReplaceable(WorldGenLevel level, BlockPos pos, BlockState state) {
+        return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);
     }
 }
