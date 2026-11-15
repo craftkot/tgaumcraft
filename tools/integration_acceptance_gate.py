@@ -11,6 +11,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REQUIRED = (
     "java_core",
@@ -21,6 +22,29 @@ REQUIRED = (
     "cold_save_reload",
     "anti_duplication",
 )
+
+
+def valid_evidence_url(value: str) -> bool:
+    """Reject malformed, credential-bearing, and non-public HTTPS proof URLs.
+
+    URL syntax alone cannot authenticate a CI result; reviewers must inspect logs.
+    """
+    try:
+        parsed = urlsplit(value)
+        host = parsed.hostname
+        return (
+            parsed.scheme == "https"
+            and bool(host)
+            and "." in host
+            and not host.startswith(".")
+            and not host.endswith(".")
+            and parsed.username is None
+            and parsed.password is None
+            and not any(c.isspace() or ord(c) < 32 for c in value)
+            and parsed.port in (None, 443)
+        )
+    except ValueError:
+        return False
 
 
 def verify(evidence: object, expected_sha: str) -> list[str]:
@@ -43,7 +67,7 @@ def verify(evidence: object, expected_sha: str) -> list[str]:
             problems.append(f"{name}: conclusion is not success")
         # A named workflow alone is not evidence. Demand a retrievable run/log.
         proof = entry.get("evidence_url")
-        if not isinstance(proof, str) or not proof.startswith("https://"):
+        if not isinstance(proof, str) or not valid_evidence_url(proof):
             problems.append(f"{name}: missing HTTPS evidence URL")
         if entry.get("commit_sha") != expected_sha:
             problems.append(f"{name}: evidence SHA mismatch")
