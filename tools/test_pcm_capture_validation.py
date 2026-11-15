@@ -24,7 +24,31 @@ def rejected(baseline: Path, event: Path, expected: str):
         raise AssertionError(f"Expected rejection containing {expected!r}")
 
 
+def validate_scan_sound_driver():
+    source = Path("tools/client_scan_sound_smoke.py").read_text(encoding="utf-8")
+    required = (
+        "focus_scan_window() {",
+        "xdotool windowactivate --sync",
+        "xdotool windowfocus --sync",
+        "xdotool getwindowfocus",
+        "send_scan_chat() {",
+        "send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'",
+        "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'",
+        "send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'",
+        "wait_for_scan_marker 'SCAN_SOUND_ITEM_READY'",
+        "90a-scan-sound-item-ready.png",
+    )
+    missing = [fragment for fragment in required if fragment not in source]
+    assert not missing, f"scan sound command driver is missing: {missing}"
+    assert "send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'" not in source
+    assert source.index("send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'") < source.index(
+        "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'"
+    ) < source.index("send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'")
+    print("SCAN_SOUND_CLIENT_COMMAND_DRIVER=PASS (focus, command acknowledgement, item predicate)")
+
+
 def main():
+    validate_scan_sound_driver()
     with tempfile.TemporaryDirectory() as tmp:
         baseline, event = Path(tmp) / "baseline.pcm", Path(tmp) / "event.pcm"
         pcm(baseline, 2, 8000)
