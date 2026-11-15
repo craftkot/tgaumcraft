@@ -163,10 +163,10 @@ expect('xdotool key --clearmodifiers slash' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
 expect(replacement_body.count('xdotool type --clearmodifiers --delay 50 "$command_body"') == 2
-       and replacement_body.count('xdotool keydown --clearmodifiers Return') == 2
-       and replacement_body.count('sleep 0.15') == 2
-       and replacement_body.count('xdotool keyup --clearmodifiers Return') == 2,
-       "all Workbench commands must use slower text entry and a held Enter key event")
+       and replacement_body.count('xdotool key --clearmodifiers Return') == 2
+       and 'xdotool keydown --clearmodifiers Return' not in replacement_body
+       and 'xdotool keyup --clearmodifiers Return' not in replacement_body,
+       "all Workbench commands must submit through one complete Return key event")
 probe_body = generator.split("send_chat_probe() {", 1)[1].split("\n  }", 1)[0]
 expect('local probe_prefix="${2:-05}"' in probe_body
        and 'capture "${probe_prefix}b-chat-open-after-slash"' in probe_body
@@ -176,12 +176,13 @@ expect('local probe_prefix="${2:-05}"' in probe_body
 expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
        "command probe must identify which input sequence its screenshots belong to")
 expect('capture "${probe_prefix}e-f3-after-submit"' in probe_body
-       and probe_body.index('xdotool keydown --clearmodifiers Return')
+       and probe_body.index('xdotool key --clearmodifiers Return')
            < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
-       and probe_body.index('xdotool keyup --clearmodifiers Return') < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+       and 'xdotool keydown --clearmodifiers Return' not in probe_body
+       and 'xdotool keyup --clearmodifiers Return' not in probe_body
        and probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
            < probe_body.index('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix'),
-       "command probe must preserve a real F3 world-state frame after Enter and before fail-fast checks")
+       "command probe must submit one complete Return event before preserving the F3 frame")
 expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
        "Workbench helper must not special-case a no-op difficulty command")
 expect("chat_probe_anchor = (" in generator
@@ -426,7 +427,7 @@ expect("wait_for_workbench_marker" in generator
        and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
        "Workbench smoke does not require the real server-to-client menu lifecycle")
 type_index = replacement_body.index('xdotool type --clearmodifiers --delay 50 "$command_body"')
-return_index = replacement_body.index('xdotool keydown --clearmodifiers Return')
+return_index = replacement_body.index('xdotool key --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
        and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05" in chat_probe_replacement_body
