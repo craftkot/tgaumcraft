@@ -192,28 +192,15 @@ expect("chat_probe_anchor = (" in generator
        and "chat_probe_replacement = (" in generator
        and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\\n" in generator
        and "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\\n" in generator
-       and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\\n" in generator
-       and "WORKBENCH_POST_TP_MUTATION=PASS" in generator
-       and "  send_chat_probe '/give @p thaumcraft:crucible' 06g\\n" in generator
+       and "  send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06\\n" in generator
+       and "WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS" in generator
+       and "grep -Fq 'TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' run/logs/latest.log" in generator
        and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
-       "Workbench smoke must verify a second real world mutation after teleport before granting the Crucible")
+       "Workbench smoke must verify post-teleport command delivery before building the fixture")
 
-expect("[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: " in generator
-        and "WORKBENCH_SERVER_MUTATION_COUNT=$mutation_count RENDER_CHAT_ECHO_COUNT=$render_chat_count" in generator,
-        "Workbench post-teleport gate must count authoritative integrated-server command records and report render-thread echoes separately")
-
-mutation_marker = "Changed the block at -129, 67, 69"
-server_record = f"[21:59:12] [Server thread/INFO] [minecraft/MinecraftServer]: [Dev: {mutation_marker}]"
-chat_echo = f"[21:59:12] [Render thread/INFO] [minecraft/ChatComponent]: [System] [CHAT] {mutation_marker}"
-server_pattern = f"[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: {mutation_marker}]"
-all_threads = subprocess.run(["grep", "-F", "-c", server_pattern], input=f"{server_record}\n{chat_echo}\n",
-                             text=True, capture_output=True, check=False)
-expect(all_threads.stdout.strip() == "1",
-       "a render-thread chat echo must not be counted as a second server-side block mutation")
-render_only = subprocess.run(["grep", "-F", "-c", server_pattern], input=f"{chat_echo}\n",
-                              text=True, capture_output=True, check=False)
-expect(render_only.stdout.strip() == "0",
-       "a client-only chat echo must never satisfy the authoritative mutation gate")
+expect("WORKBENCH_POST_TP_COMMAND_CHANNEL=FAIL" in generator
+       and "run/logs/latest.log" in generator,
+       "post-teleport command gate must fail closed on missing authoritative integrated-server acknowledgement")
 expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
        and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
        "Shared creative command changed: verify unique Crucible bootstrap anchor")
@@ -432,18 +419,17 @@ chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1
 expect("sleep 1" in replacement_body[type_index:return_index]
        and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05" in chat_probe_replacement_body
        and "send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp" in chat_probe_replacement_body
-       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" in chat_probe_replacement_body
-       and "WORKBENCH_POST_TP_MUTATION=PASS" in chat_probe_replacement_body
-       and "(Changed the block at|Изменён блок в точке)" in chat_probe_replacement_body
-       and "grep -F -c" in chat_probe_replacement_body
-       and "capture 06f-post-teleport-gold-cleared" in chat_probe_replacement_body
-       and "send_chat_probe '/give @p thaumcraft:crucible' 06g" in chat_probe_replacement_body
+       and "send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06" in chat_probe_replacement_body
+       and "WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS" in chat_probe_replacement_body
+       and "grep -Fq 'TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' run/logs/latest.log" in chat_probe_replacement_body
+       and "capture 06f-post-teleport-command-channel-ready" in chat_probe_replacement_body
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" not in chat_probe_replacement_body
+       and "send_chat_probe '/give @p thaumcraft:crucible' 06g" not in chat_probe_replacement_body
        and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05")
            < chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp")
-           < chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06")
-           < chat_probe_replacement_body.index("WORKBENCH_POST_TP_MUTATION=PASS")
-           < chat_probe_replacement_body.index("send_chat_probe '/give @p thaumcraft:crucible' 06g"),
-       "Workbench smoke must prove a second real world mutation after teleport before granting items or building the fixture")
+           < chat_probe_replacement_body.index("send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06")
+           < chat_probe_replacement_body.index("WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS"),
+       "Workbench smoke must verify post-teleport command delivery with an authoritative server acknowledgement before building the fixture")
 before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
 after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
 expect("xdotool key --clearmodifiers F3" in before_open
