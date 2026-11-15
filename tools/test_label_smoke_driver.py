@@ -46,7 +46,7 @@ assert "sleep 0.35" not in generated and "sleep 0.5" not in generated
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
 assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
 assert unique("grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log") < channel_handshake
-return_command = unique("    xdotool key --clearmodifiers Return\\n    echo 'LABEL_COMMAND_RETURN_SENT=YES'")
+return_command = unique("    xdotool key --clearmodifiers Return\n    echo 'LABEL_COMMAND_RETURN_SENT=YES'")
 assert unique("label_capture 58a-label-command-before-submit") < unique("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS") < return_command
 assert return_command < unique("LABEL_COMMAND_RETURN_SENT=YES")
 assert "label_activate_minecraft\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS'" in generated

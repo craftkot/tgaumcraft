@@ -4493,3 +4493,7 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 
 - The shared client prefix also defines `activate_firststeps_advance()` with its own Return key. The initial regression used an unscoped `unique("xdotool key --clearmodifiers Return")`, which would count both the unrelated FIRSTSTEPS helper and the label sender. Scoped the assertion to the label-specific Return immediately followed by `LABEL_COMMAND_RETURN_SENT=YES`; this keeps the test tied to the intended command path without modifying the shared helper.
 - No gameplay result is claimed until the corrected exact-head static preflight and real-client workflow complete.
+
+### Final newline-literal correction for the scoped Return assertion
+
+- Corrected the scoped assertion's Python string escape from a literal backslash-n to a single `\\n` escape, so the regression matches the actual newline between the Return command and its label-specific acknowledgement. The generated shell command is unchanged; this is only a static-test literal correction.
