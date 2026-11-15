@@ -74,7 +74,13 @@ assert "\\n  send_chat '/item replace" not in generated
 assert "label_require_slot" not in generated
 assert "execute if items" not in generated
 assert generated.count("TC_LABEL_COMMAND_CHANNEL_READY") == 2
-assert "TC_LABEL_" not in generated.replace("TC_LABEL_COMMAND_CHANNEL_READY", "")
+assert "TC_LABEL_" not in generated.replace("TC_LABEL_COMMAND_CHANNEL_READY", "").replace("TC_LABEL_POST_FAILURE_CHANNEL_READY", "")
+assert "label_send_chat '/give @p thaumcraft:label 1'" in generated
+assert "label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'" in generated
+assert generated.index("label_send_chat '/give @p thaumcraft:label 1'") < generated.index("label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'")
+assert generated.index("label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'") < generated.index('LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name')
+assert 'LABEL_POST_FAILURE_COMMAND_CHANNEL=PASS' in generated
+assert 'label_capture 59c-label-give-probe' in generated
 
 aer_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \\
     'Air Jar Label'"""
