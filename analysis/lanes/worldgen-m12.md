@@ -244,3 +244,12 @@
 - Found two stale literal assertions in `tools/test_silverwood_neoforge_wiring.py`: the actual leaf callback uses local `pos`, and log helper now requires `leaves` as a separate argument. Corrected test in commit [`69795f5`](https://github.com/craftkot/tgaumcraft/commit/69795f5e7c2b1da4ae42597643469bdbe3b1d06f).
 - Checked all 15 equivalent source substring predicates against freshly fetched exact GitHub source in connector JavaScript: **15/15 true**. This is **not** execution of the Python runner, not NeoForge compilation, not Minecraft GameTest. No gameplay implementation changes in this iteration.
 - Remaining: execute exact Python runner and Java 21 runners from checkout; compile full NeoForge; coordinate feature registration and test real new chunks. Draft PR #9 remains unmerged. No shared registries, Gradle, main or other branches touched; audit index 59/100 unchanged.
+
+
+## 15.11.2026 — M12 Silverwood: одноразовое разрешение на замену собственной листвы
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md и свой lane; проверены main...M12 (перед работой ahead 75, behind 0), список веток и открытых PR. Draft PR #9 остаётся без merge.
+- Production commit 0c4bcd5e315be89642c87dab45d2c9d32d13ec7e: при успешной установке бревна удаляется соответствующая координата из ownLeaves. Неудачный setBlock не расходует разрешение. Повторный callback больше не может использовать старую запись provenance как право на перезапись листьев. Это локальное усиление защиты, не транзакционность и не доказательство происхождения блока при внешней замене на идентичный BlockState.
+- Regression commit ed461ef85a502e919ab6553d45cbb94be5955b79: source guard проверяет порядок успешного setBlock и удаления координаты; устаревшее требование прежнего return-выражения заменено.
+- Прямой git checkout по-прежнему заблокирован DNS (Could not resolve host: github.com); точный Python runner, Java 21 suite, NeoForge compilation, GameTest и Minecraft new-chunk smoke НЕ запускались. Наличие проверки в исходнике не является PASS. Shared registries, Gradle, main и чужие ветки не затронуты. Историческая оценка 59/100 не изменена.
+- Следующий шаг: получить точный checkout, запустить Python guard и Java runners, проверить NeoForge compile и реальный тест сохранности соседней листвы; затем согласовать регистрацию Silverwood и biome/chunk правила с другими lanes.
