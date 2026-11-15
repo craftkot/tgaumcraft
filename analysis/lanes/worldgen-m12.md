@@ -219,3 +219,12 @@
 - Regression source guard updated in `613f4504e997e701b2ca6e252703ba3adc688e91` to verify both canopy-first log path and leaf overwrite condition.
 - CI status API for `613f450` returned no statuses or PR workflow runs. Tests, exact-checkout NeoForge compile, native GameTests and Minecraft new-chunk worldgen **not executed**; no PASS claimed. Current predicate matches leaf block type, not provenance: potential replacement of pre-existing same-type leaves must be addressed with per-attempt placed-leaf tracking before registration. Original BETA26 parity remains unproven.
 - Next: constrain log overwrite to leaves placed by this attempt, execute source guard and NeoForge build, then coordinate Feature registration and in-game worldgen smoke. Historical index 59/100 unchanged.
+
+
+## 15.11.2026 — M12 Silverwood: provenance-limited canopy overwrite
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; inspected branch inventory, open PRs and main...M12 (67 ahead, 0 behind before writes). Existing Draft PR #9 remains open; no merge.
+- Production commit `0b01128999be01a9530aa02930cf45df11ee405b`: track positions of **successful** canopy leaf writes in a per-invocation `HashSet<BlockPos>`. Logs may replace otherwise non-replaceable leaves only at those tracked positions, not arbitrary pre-existing Silverwood foliage. Other replaceable blocks retain the previous rule; `setBlock` success remains required.
+- Source guard commit `7c1633559d7824789d05ab5348141d5076833ac8` checks the provenance set and rejects the previous same-block-type bypass. This is a static source regression, not a behavioral GameTest.
+- Previous HEAD `bf402aa` CircleCI `ci/circleci: verify-connection` FAILURE: https://app.circleci.com/workflow/56412684-2b1a-45ad-9627-f7200d740744/job/e2a100a6-e1d0-4de6-a797-a7ad2dc91521 . Exact checkout Python runner, Java Core suite, NeoForge compilation and in-game new-chunk smoke remain unverified. Failure of verify-connection is not evidence of Java compilation failure.
+- Next: execute source guard and full NeoForge compilation against exact branch checkout, add an executable placement test with a fake world / GameTest that proves adjacent pre-existing foliage survives, then coordinate registration and verify new chunks. BETA26 RNG, soil and biome parity still unproven. Main, shared registries, Gradle and other branches untouched; historical index 59/100 unchanged.
