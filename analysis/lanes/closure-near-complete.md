@@ -4621,3 +4621,7 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Extended `tools/test_scan_rune_log_parser.py` with regression checks for the isolated sender, focus validation, slash submission and the 3D force-load region. No shared `tools/client_smoke.sh`, Java gameplay code, assets, registry, Gradle, workflow or other lane changed.
 - Exact-head real-client rerun and regression workflow are triggered by this commit. Prior exact-head [Port CI #43738258594](https://github.com/craftkot/tgaumcraft/actions/runs/43738258594) passed Core parity, full NeoForge build/JAR and dedicated-server smoke; it does not validate this updated client fixture. The previous rune client failure is recorded without claiming gameplay success.
 - Fixed rubric remains **59/100**; M16 **4/6**, M08 **5/9**. No point or category closure. Next: inspect the new scan-rune run. Require `RUNE_REAL_WORLD_TARGET=PASS`, `RUNE_REAL_ITEM=PASS`, actual spawn/render/expiry markers, both camera views and framebuffer deltas before accepting the rune visual subtask. No merge.
+
+### 2026-11-15 — scan-rune regression import correction
+
+- Before the exact-head CI completed, static review of the newly extended `tools/test_scan_rune_log_parser.py` found that the new `Path(...)` assertion lacked its import. Added `from pathlib import Path`; no gameplay result is claimed and the client workflow must still prove the fixture reaches the target.

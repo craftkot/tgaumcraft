@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for the actual ScanRuneParticle client-log format."""
 from scan_rune_log_parser import parse_scan_rune_log
+from pathlib import Path
 import subprocess
 import sys
 
