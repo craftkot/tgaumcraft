@@ -12,6 +12,19 @@ ROOT = Path(__file__).resolve().parents[1]
 CORE_TESTS = ROOT / "src/test/java/dev/ehtid/thaumcraft/port/core"
 CI = ROOT / ".github/workflows/ci.yml"
 MAIN = re.compile(r"public\s+static\s+void\s+main\s*\(\s*String\s*(?:\[\s*\]\s*\w+|\.\.\.\s*\w+)\s*\)")
+JAVA_TOKENS = re.compile(r'//[^\\n]*|/\\*[\\s\\S]*?\\*/|"(?:\\\\.|[^"\\\\])*"|\\'(?:\\\\.|[^\\'\\\\])*\\'')
+
+
+def uncommented_java(source):
+    """Mask comments and literals before scanning for a Java main declaration."""
+    def mask(match):
+        token = match.group(0)
+        if token.startswith("//") or token.startswith("/*"):
+            return re.sub(r"[^\\n]", " ", token)
+        return token
+    return JAVA_TOKENS.sub(mask, source)
+
+
 RUN = re.compile(r"\bjava\s+-cp\s+[^\n]*?\bdev\.ehtid\.thaumcraft\.port\.core\.([A-Za-z_$][\w$]*)")
 
 
@@ -24,7 +37,7 @@ def inventory(root=ROOT):
     step = ci[start:end if end >= 0 else None]
     runnable = {
         path.stem for path in test_dir.glob("*Test.java")
-        if MAIN.search(path.read_text(encoding="utf-8"))
+        if MAIN.search(uncommented_java(path.read_text(encoding="utf-8")))
     }
     executed = set(RUN.findall(step))
     compiled = set(re.findall(r"src/test/java/dev/ehtid/thaumcraft/port/core/([A-Za-z_$][\w$]*)\.java", step))
