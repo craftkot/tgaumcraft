@@ -6,6 +6,7 @@ on:
       - feature/closure-near-complete
     paths:
       - 'tools/client_label_smoke.py'
+      - 'tools/test_label_smoke_driver.py'
       - '.github/workflows/closure-label-client.yml'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - 'tools/client_label_smoke.py'
+      - 'tools/test_label_smoke_driver.py'
       - '.github/workflows/closure-label-client.yml'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/JarLabelColorEvents.java'
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyLabelTint.java'
