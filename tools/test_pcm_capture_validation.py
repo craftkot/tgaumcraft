@@ -4,6 +4,8 @@ from array import array
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 from check_page_audio_pcm import check
 
@@ -25,26 +27,47 @@ def rejected(baseline: Path, event: Path, expected: str):
 
 
 def validate_scan_sound_driver():
-    source = Path("tools/client_scan_sound_smoke.py").read_text(encoding="utf-8")
+    generated = subprocess.run(
+        [sys.executable, "tools/client_scan_sound_smoke.py"],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    driver_start = generated.index("  scan_first_command=1")
+    driver_end = generated.index("  # Prove the command path", driver_start)
+    driver = generated[driver_start:driver_end]
     required = (
         "focus_scan_window() {",
         "xdotool windowactivate --sync",
         "xdotool windowfocus --sync",
         "xdotool getwindowfocus",
-        "send_scan_chat() {",
+        'if [[ "$raw_command" != /* ]]',
+        'local command_body="${raw_command#/}"',
+        "xdotool key --clearmodifiers slash",
+        "80a-scan-chat-open.png",
+        "80b-scan-chat-text-before-enter.png",
+        "80c-scan-chat-submit-result.png",
         "send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'",
         "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'",
         "send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'",
         "wait_for_scan_marker 'SCAN_SOUND_ITEM_READY'",
         "90a-scan-sound-item-ready.png",
     )
-    missing = [fragment for fragment in required if fragment not in source]
-    assert not missing, f"scan sound command driver is missing: {missing}"
-    assert "send_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'" not in source
-    assert source.index("send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'") < source.index(
+    missing = [fragment for fragment in required if fragment not in driver]
+    assert not missing, f"generated scan sound command driver is missing: {missing}"
+    assert "xdotool key --clearmodifiers t" not in driver
+    assert driver.index("xdotool key --clearmodifiers slash") < driver.index("80a-scan-chat-open.png")
+    assert driver.index("80a-scan-chat-open.png") < driver.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
+    assert driver.index("xdotool type --clearmodifiers --delay 24 "$command_body"') < driver.index("80b-scan-chat-text-before-enter.png")
+    assert driver.index("80b-scan-chat-text-before-enter.png") < driver.index("xdotool key --clearmodifiers Return")
+    assert driver.index("xdotool key --clearmodifiers Return") < driver.index("80c-scan-chat-submit-result.png")
+    marker_start = generated.index("  wait_for_scan_marker() {")
+    marker_end = generated.index("  # Prove the command path", marker_start)
+    marker_gate = generated[marker_start:marker_end]
+    assert 'grep -Fq "$marker" run/logs/latest.log' in marker_gate
+    assert "client-smoke/client.log" not in marker_gate
+    assert generated.index("send_scan_chat '/say TC_SCAN_SOUND_COMMAND_CHANNEL_READY'") < generated.index(
         "send_scan_chat '/item replace entity @p hotbar.0 with thaumcraft:thaumometer 1'"
-    ) < source.index("send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'")
-    print("SCAN_SOUND_CLIENT_COMMAND_DRIVER=PASS (focus, command acknowledgement, item predicate)")
+    ) < generated.index("send_scan_chat '/execute if items entity @p hotbar.0 thaumcraft:thaumometer run say SCAN_SOUND_ITEM_READY'")
+    print("SCAN_SOUND_CLIENT_COMMAND_DRIVER=PASS (slash entry, screenshots, authoritative server log)")
 
 
 def main():
