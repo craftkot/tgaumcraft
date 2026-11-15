@@ -4542,3 +4542,9 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Minecraft was **not launched** in [label workflow #43717619039](https://github.com/craftkot/tgaumcraft/actions/runs/43717619039). The failure is confined to `tools/test_label_smoke_driver.py`.
 - Replacing the contiguous-string check with ordered-position assertions preserves every required step (diagnostics enabled → Jar Brace command/capture → blank-label command → diagnostics disabled) while allowing comments. The next exact-head run must pass source-art + driver preflight before any gameplay conclusion is drawn.
 - No production Java, registry, model, asset, Gradle, workflow, or shared smoke code changed. Rubric remains **59/100**; M16 **4/6**. No acceptance credit or category closure.
+
+
+### 2026-11-15 — avoid another escaped-newline trap in the driver regression
+
+- Reviewing the exact committed test file before the new workflow reached preflight found that the ordered-position correction still used Python `\\n` literals (matching backslash+n, not a line break). Replaced those four needles with unique assignment-line markers and retained the order assertion. This is test-only hardening; no game result is claimed for the in-flight run on `9d5986f`.
+- Next run must prove the source-art verifier, Python driver contract and generated Bash syntax before the real client starts. If this static gate fails again, fix the exact assertion before interpreting gameplay.

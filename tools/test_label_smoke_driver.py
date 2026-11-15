@@ -51,13 +51,13 @@ assert "else\n      sleep 4\n    fi" in send_body
 
 assert "sleep 0.35" not in generated
 setup_sequence = (
-    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1\\n"),
-    unique("  LABEL_DIAGNOSTIC_PREFIX=58\\n"),
+    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1"),
+    unique("  LABEL_DIAGNOSTIC_PREFIX=58"),
     unique("  label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'"),
     unique("  label_capture 60-jar-brace"),
-    unique("  LABEL_DIAGNOSTIC_PREFIX=59\\n"),
+    unique("  LABEL_DIAGNOSTIC_PREFIX=59"),
     unique("  label_set_slot0 'thaumcraft:label' 'Jar Label'"),
-    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0\\n"),
+    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0"),
 )
 assert list(setup_sequence) == sorted(setup_sequence), setup_sequence
 assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"' in generated
