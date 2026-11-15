@@ -55,7 +55,8 @@ assert "label_activate_minecraft\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PA
 assert "\\n  send_chat '/item replace" not in generated
 assert "label_require_slot" not in generated
 assert "execute if items" not in generated
-assert "TC_LABEL_" not in generated
+assert generated.count("TC_LABEL_COMMAND_CHANNEL_READY") == 2
+assert "TC_LABEL_" not in generated.replace("TC_LABEL_COMMAND_CHANNEL_READY", "")
 aer_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \\
     'Air Jar Label'"""
 ignis_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \\
