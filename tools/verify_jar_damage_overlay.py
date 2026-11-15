@@ -40,7 +40,23 @@ def verify(before: Path, after: Path) -> int:
     return pixels
 
 
+def diagnose(before: Path, after: Path) -> int:
+    """Report the overlay without making it a prerequisite for the hit-audio test."""
+    pixels = changed_pixels(before, after)
+    state = "OBSERVED" if pixels >= MIN_CHANGED_PIXELS else "NOT_OBSERVED"
+    print(
+        f"JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC={state} "
+        f"high_contrast_pixels={pixels} min={MIN_CHANGED_PIXELS} fuzz={FUZZ}"
+    )
+    return pixels
+
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: verify_jar_damage_overlay.py BEFORE.png AFTER.png")
-    verify(Path(sys.argv[1]), Path(sys.argv[2]))
+    if len(sys.argv) == 4 and sys.argv[1] == "--diagnostic":
+        diagnose(Path(sys.argv[2]), Path(sys.argv[3]))
+    elif len(sys.argv) == 3:
+        verify(Path(sys.argv[1]), Path(sys.argv[2]))
+    else:
+        raise SystemExit(
+            "usage: verify_jar_damage_overlay.py [--diagnostic] BEFORE.png AFTER.png"
+        )
