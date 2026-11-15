@@ -71,7 +71,7 @@ focused_pid = unique('focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null
 focus_fail = unique("SALIS_INPUT_FOCUS=FAIL")
 focus_capture = unique("capture 05e-command-focus-not-minecraft")
 focus_pass = unique("SALIS_INPUT_FOCUS=PASS")
-channel_chat_key = unique("xdotool key --clearmodifiers t")
+channel_chat_key = generated.index("    xdotool key --clearmodifiers t", generated.index('  ensure_minecraft_command_channel() {'))
 channel_chat_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05g-command-chat-open.png")
 channel_type = unique("xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'")
 channel_text_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05h-command-text-before-submit.png")
@@ -92,8 +92,10 @@ ensure_body = generated[ensure_fn:chat_fn]
 assert channel_chat_key < channel_chat_frame < channel_type < channel_text_frame < channel_ack < channel_fail < channel_pass
 assert 'xdotool key --clearmodifiers slash' not in ensure_body
 assert ensure_body.count('activate_minecraft_client') == 2
-assert ensure_body.index('activate_minecraft_client') > channel_chat_frame
-assert ensure_body.index('xdotool key --clearmodifiers Return') > channel_text_frame
+focus_after_chat = generated.index('activate_minecraft_client', channel_chat_frame)
+focus_before_submit = generated.index('activate_minecraft_client', channel_text_frame)
+submit_return = generated.index('xdotool key --clearmodifiers Return', channel_text_frame)
+assert channel_chat_frame < focus_after_chat < channel_type < channel_text_frame < focus_before_submit < submit_return < channel_ack
 assert 'for _ in $(seq 1 40)' in ensure_body
 assert 'capture 05f-command-channel-not-ready' in ensure_body
 assert '05g-command-chat-open.png' in ensure_body
