@@ -96,3 +96,12 @@ print(
     f"SCAN_RUNE_WORLD_CREATE_HITBOX=PASS root=({root_x},{root_y}) "
     f"bounds=x205..502,y718..756 previous96=({root_x},{previous_96_root_y})"
 )
+
+# Timeout diagnostics must preserve process/thread and world-save evidence without weakening the login gate.
+timeout_diagnostics = ["RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=BEGIN", "capture 04b-world-login-timeout", "jcmd -l", "Thread.print -l", "find . -type f -path '*/logs/latest.log'", "python3 tools/assert_client_world_commands.py run/saves", "RUNE_LOGIN_TIMEOUT_LEVEL_DAT_COUNT=", "RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=END"]
+assert all(marker in generated for marker in timeout_diagnostics), timeout_diagnostics
+assert generated.index("capture 04b-world-login-timeout") < generated.index("jcmd -l")
+assert generated.index("jcmd -l") < generated.index("Thread.print -l")
+assert generated.index("Thread.print -l") < generated.index("RUNE_LOGIN_TIMEOUT_LATEST_LOG=")
+assert generated.index("RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=END") < generated.index("exit 1", generated.index("RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=BEGIN"))
+print("SCAN_RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=PASS assertions=12")
