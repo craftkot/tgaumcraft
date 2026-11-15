@@ -77,8 +77,13 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                                                 BlockState logState, BlockState leavesState,
                                                 Set<BlockPos> ownLeaves) {
         BlockState existing = level.getBlockState(pos);
-        return (canReplace(existing) || (ownLeaves.contains(pos) && existing.equals(leavesState)))
-                && level.setBlock(pos, logState, 2);
+        boolean ownCanopy = ownLeaves.contains(pos) && existing.equals(leavesState);
+        if (!canReplace(existing) && !ownCanopy) return false;
+        if (!level.setBlock(pos, logState, 2)) return false;
+        // Consume provenance only after a successful write; a later callback must
+        // never reuse this position as authorization to overwrite foreign foliage.
+        ownLeaves.remove(pos);
+        return true;
     }
 
     private static boolean canReplace(BlockState state) {
