@@ -86,8 +86,8 @@ ignis_start = unique("  LABEL_DIAGNOSTIC_PREFIX=63\n  label_set_slot0 'thaumcraf
 ignis_end = unique("  label_capture 63-ignis-label")
 assert aer_start < aer_end < ignis_start < ignis_end
 assert (
-    diagnostic_enable[1] < aer_start < aer_end < diagnostic_disable[1]
-    < diagnostic_enable[2] < ignis_start < ignis_end < diagnostic_disable[2]
+    diagnostic_enable[1] < aer_start < diagnostic_disable[1] < aer_end
+    < diagnostic_enable[2] < ignis_start < diagnostic_disable[2] < ignis_end
 )
 
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
