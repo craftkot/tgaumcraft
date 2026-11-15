@@ -32,6 +32,8 @@ assert "LABEL_INPUT_FOCUS=PASS" in generated
 
 send_body = generated[send:set_slot]
 assert send_body.count("label_activate_minecraft") == 2
+assert "LABEL_COMMAND_TEXT=%s" in send_body
+assert send_body.index("LABEL_COMMAND_TEXT") < send_body.index('xdotool type --clearmodifiers --delay 24 "$1"')
 send_sequence = (
     send_body.index("label_activate_minecraft"),
     send_body.index("xdotool key --clearmodifiers t"),
@@ -62,6 +64,12 @@ setup_sequence = (
 assert list(setup_sequence) == sorted(setup_sequence), setup_sequence
 assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"' in generated
 
+aer_start = unique("  LABEL_DIAGNOSTIC_PREFIX=62\\n  label_set_slot0 'thaumcraft:label[")
+aer_end = unique("  label_capture 62-aer-label")
+ignis_start = unique("  LABEL_DIAGNOSTIC_PREFIX=63\\n  label_set_slot0 'thaumcraft:label[")
+ignis_end = unique("  label_capture 63-ignis-label")
+assert aer_start < aer_end < ignis_start < ignis_end
+
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
 assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
 assert unique("grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log") < channel_handshake
@@ -80,7 +88,8 @@ assert "label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'" in generated
 assert generated.index("label_send_chat '/give @p thaumcraft:label 1'") < generated.index("label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'")
 assert generated.index("label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'") < generated.index('LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name')
 assert 'LABEL_POST_FAILURE_COMMAND_CHANNEL=PASS' in generated
-assert 'label_capture 59c-label-give-probe' in generated
+assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-59}c-label-give-probe"' in generated
+assert 'if [[ "$item" == thaumcraft:label* ]]; then' in generated
 
 aer_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \\
     'Air Jar Label'"""
