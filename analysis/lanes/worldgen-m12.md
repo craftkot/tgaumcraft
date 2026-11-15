@@ -270,3 +270,12 @@
 - Regression `881ccef27cbd597cfc5064b4b58ca3eb193afa0a`: static source guard now checks trunk-only success accounting; this is not an executable NeoForge test.
 - No full NeoForge compilation, exact-checkout Python/Java runner, GameTest, or new-chunk Minecraft smoke was performed in this iteration. Source-level edit and test guard are committed, but gameplay behavior is unverified. BETA26 RNG, soil, biome and chance parity remain unproven; registration still requires coordination. Historical project index remains 59/100.
 - Next: test failed-log/partial-canopy behavior with an executable fake-world or NeoForge GameTest; verify exact checkout runners and NeoForge build; coordinate feature registration without touching shared registries unilaterally.
+
+
+## 15.11.2026 — M12 Silverwood canopy-only rollback
+
+- Fresh-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md` and this lane; inspected other branches and open PRs #5–#13. Before edits `main...feature/worldgen-m12` was ahead 83, behind 0.
+- Java change [`39c9c99`](https://github.com/craftkot/tgaumcraft/commit/39c9c99fcb1c6d9e99cfaeae6e15c35d0b6431c6): capture original states of successful leaf writes, and on zero successful log placements restore only positions still equal to injected leaves. Avoid rollback of positions whose current state changed. This is best-effort cleanup, **not transactional generation**; equal-state concurrent replacements cannot be distinguished and failed restore writes are not retried.
+- Source-level regression guard [`db9caf7`](https://github.com/craftkot/tgaumcraft/commit/db9caf7130c7e31a1409b775f82185b56941342d) updated for the new leaf-write path and rollback checks. **Not executed**; it is not a NeoForge/GameTest.
+- No shared registries, Gradle, main or other feature branches changed; Draft PR #9 remains pending. Full NeoForge build, exact-checkout Java tests, in-game generation and BETA26 RNG/biome parity remain **unverified**. Historical audit stays 59/100.
+- Next: execute exact-HEAD Python guard and full NeoForge build; add an executable fake-world/GameTest for failed log writes, rollback and foreign-block preservation before worldgen registration.
