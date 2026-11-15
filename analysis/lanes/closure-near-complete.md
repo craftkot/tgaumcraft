@@ -4594,3 +4594,11 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Only `tools/test_label_smoke_driver.py` and this journal are changed. No production Java, shared launcher, registry, resources, Gradle, workflow or other lane is modified. This is a test-oracle correction, **not** a fix to the label gameplay defect.
 - On the same prior HEAD, Port CI [#43728931636](https://github.com/craftkot/tgaumcraft/actions/runs/43728931636) succeeded (Core parity, full NeoForge build/JAR and dedicated-server smoke); readable-text, caster texture, Thaumonomicon page-sound and aura/crystal GameTests also succeeded. Native label workflow failed before client launch, so those green checks do not accept M16.
 - Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**. No point or category closure. Next: rerun the exact-head label workflow; require static preflight to pass and inspect the real client/server evidence before diagnosing any remaining item or tint behavior. PR #4 stays Draft/unmerged.
+
+
+### 2026-11-15 — correct newline escaping in exact-line test helper
+
+- The first regression correction was pushed as `de14eb6`, but exact-head label run [#43733697148](https://github.com/craftkot/tgaumcraft/actions/runs/43733697148) exposed a second test-only defect before Minecraft launch: the new helper used `line.rstrip("\\\\r\\\\n")`, which matches literal backslash characters rather than CR/LF. The source-art verifier passed; the Python regression failed with `diagnostic_enable=[]`.
+- Corrected the Python literal to `line.rstrip("\\r\\n")`. The generated shell's three top-level diagnostic-enable phases and three matching disable phases are intentional; the helper now strips line endings and can compare exact indentation without counting the nested fallback assignment.
+- No production Java, resources, shared smoke launcher, workflow, Gradle or other lane changed. The previous run did not launch Minecraft and provides no gameplay evidence.
+- Next exact-head CI must show source-art verifier + driver regression + Bash syntax PASS before the real client starts. Fixed score remains **59/100** (M16 4/6, M08 5/9); no category closure or point awarded.

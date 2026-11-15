@@ -56,7 +56,7 @@ def exact_line_positions(expected: str) -> list[int]:
     positions = []
     offset = 0
     for line in generated.splitlines(keepends=True):
-        if line.rstrip("\\r\\n") == expected:
+        if line.rstrip("\r\n") == expected:
             positions.append(offset)
         offset += len(line)
     return positions
