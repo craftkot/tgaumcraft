@@ -2,7 +2,9 @@ package dev.ehtid.thaumcraft.worldgen;
 
 import dev.ehtid.thaumcraft.port.core.SilverwoodLegacyTree;
 import dev.ehtid.thaumcraft.port.core.SilverwoodPlacementPreflight;
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.WorldGenLevel;
@@ -47,15 +49,23 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
             return false;
         }
         final int[] placed = {0};
+        // Only foliage successfully placed by this invocation may be overwritten by its logs.
+        final Set<BlockPos> ownLeaves = new HashSet<>();
         SilverwoodLegacyTree.place(x, y, z, height, random,
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))),
-                (px, py, pz) -> placed[0] += setIfReplaceable(level, new BlockPos(px, py, pz), leaves) ? 1 : 0,
+                (px, py, pz) -> {
+                    BlockPos pos = new BlockPos(px, py, pz);
+                    if (setIfReplaceable(level, pos, leaves)) {
+                        ownLeaves.add(pos);
+                        placed[0]++;
+                    }
+                },
                 (px, py, pz, meta) -> {
                     Direction.Axis axis = meta == 0 ? Direction.Axis.X
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
                             ? log.setValue(RotatedPillarBlock.AXIS, axis) : log;
-                    if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves)) {
+                    if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, ownLeaves)) {
                         placed[0]++;
                     }
                 });
@@ -64,9 +74,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
 
     /** Logs are emitted after canopy; permit replacing this tree's own leaf state. */
     private static boolean setLogOverOwnLeaves(WorldGenLevel level, BlockPos pos,
-                                                BlockState logState, BlockState leafState) {
+                                                BlockState logState, Set<BlockPos> ownLeaves) {
         BlockState existing = level.getBlockState(pos);
-        return (canReplace(existing) || existing.is(leafState.getBlock()))
+        return (canReplace(existing) || ownLeaves.contains(pos))
                 && level.setBlock(pos, logState, 2);
     }
 
