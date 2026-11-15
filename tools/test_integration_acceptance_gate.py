@@ -53,7 +53,7 @@ class GateTests(unittest.TestCase):
             "https://user:password@github.com/actions/runs/123",
             "https://github.com:bad/actions/runs/123",
             "https://github.com:8080/actions/runs/123",
-            "https://github.com/actions/runs/123\\n",
+            "https://github.com/actions/runs/123\n",
             "https://localhost/actions/runs/123",
         )
         for url in bad:
