@@ -11,6 +11,30 @@ from scan_rune_log_parser import parse_scan_rune_log
 import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
+
+world_create_y_anchor = "create_world_y=$((Y + HEIGHT * 93 / 100))"
+world_create_y_replacement = """# The #43743943757 screenshot shows the 1024x768 Create New World button at local y=718..756.
+# 93% (714px) misses above it; 96% (737px) is inside the actual hitbox.
+create_world_y=$((Y + HEIGHT * 96 / 100))"""
+if source.count(world_create_y_anchor) != 1:
+    raise SystemExit("Shared world-create coordinate changed; refusing unsafe scan-rune patch")
+source = source.replace(world_create_y_anchor, world_create_y_replacement, 1)
+
+world_create_log_anchor = 'echo "CREATE_NEW_WORLD_CLICK=\${create_world_x},\${create_world_y}" | tee -a client-smoke-status.txt'
+world_create_log_replacement = 'echo "CREATE_NEW_WORLD_CLICK=\${create_world_x},\${create_world_y} LOCAL=$((create_world_x - X)),$((create_world_y - Y))" | tee -a client-smoke-status.txt'
+if source.count(world_create_log_anchor) != 1:
+    raise SystemExit("Shared world-create logging changed; refusing unsafe scan-rune patch")
+source = source.replace(world_create_log_anchor, world_create_log_replacement, 1)
+
+world_create_click_anchor = """xdotool mousemove "$create_world_x" "$create_world_y" click 1
+# Wait only until the real integrated server announces player login, not an"""
+world_create_click_replacement = """xdotool mousemove "$create_world_x" "$create_world_y" click 1
+sleep 2
+capture 04a-after-create-world-click
+# Wait only until the real integrated server announces player login, not an"""
+if source.count(world_create_click_anchor) != 1:
+    raise SystemExit("Shared world-create click changed; refusing unsafe scan-rune patch")
+source = source.replace(world_create_click_anchor, world_create_click_replacement, 1)
 send_chat_anchor = """  send_chat() {
     xdotool key --clearmodifiers t
     sleep 1
