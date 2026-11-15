@@ -19,42 +19,106 @@ if source.count(anchor) != 1:
 head = source.split(anchor, 1)[0]
 body = r'''
   echo 'LABEL_SMOKE_REAL_INTEGRATED_WORLD=YES' | tee -a client-smoke-status.txt
-  # Real 1.21.1 item components, not Java mock ItemStacks or fabricated PNGs.
-  # Use ONE selected slot and identical camera to isolate item model pixels.
+  # Do not infer item rendering from an empty slot. Re-focus the actual LWJGL
+  # window before every command and require a server-side predicate marker.
+  label_activate_minecraft() {
+    xdotool windowactivate --sync "$WIN"
+    xdotool windowraise "$WIN"
+    xdotool windowfocus --sync "$WIN"
+    xdotool mousemove --window "$WIN" 512 384
+    sleep 0.25
+    local active focused game_pid active_pid focused_pid
+    active="$(xdotool getactivewindow 2>/dev/null || true)"
+    focused="$(xdotool getwindowfocus 2>/dev/null || true)"
+    game_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+    active_pid="$(xdotool getwindowpid "$active" 2>/dev/null || true)"
+    focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null || true)"
+    echo "LABEL_INPUT_FOCUS=window:$WIN active:${active:-none} focus:${focused:-none} game_pid:${game_pid:-none} active_pid:${active_pid:-none} focus_pid:${focused_pid:-none}" \
+      | tee -a client-smoke-status.txt
+    if [ -z "$game_pid" ] || [ "$active_pid" != "$game_pid" ] || [ "$focused_pid" != "$game_pid" ]; then
+      echo 'LABEL_INPUT_FOCUS=FAIL' | tee -a client-smoke-status.txt
+      import -display :99 -window root -silent client-smoke/screenshots/59-label-input-focus-fail.png
+      exit 1
+    fi
+    echo 'LABEL_INPUT_FOCUS=PASS' | tee -a client-smoke-status.txt
+  }
+  label_send_chat() {
+    label_activate_minecraft
+    xdotool key --clearmodifiers t
+    sleep 0.35
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 0.5
+  }
+  label_require_slot() {
+    local slot="$1" predicate="$2" marker="$3"
+    # This marker is emitted by the integrated server only if the requested
+    # item AND its model/NBT components are actually present in this slot.
+    label_send_chat "/execute if items entity @p $slot $predicate run say $marker"
+    for _ in $(seq 1 40); do
+      if grep -Fq "$marker" run/logs/latest.log; then
+        echo "LABEL_SLOT_CONTENT=PASS slot=$slot marker=$marker" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.25
+    done
+    echo "LABEL_SLOT_CONTENT=FAIL slot=$slot marker=$marker" | tee -a client-smoke-status.txt
+    import -display :99 -window root -silent client-smoke/screenshots/59-label-slot-content-fail.png
+    tail -n 80 run/logs/latest.log || true
+    exit 1
+  }
+  label_set_slot0() {
+    local item="$1" predicate="$2" marker="$3"
+    label_send_chat "/item replace entity @p hotbar.0 with $item"
+    label_require_slot hotbar.0 "$predicate" "$marker"
+  }
   label_capture() {
     local name="$1"
     import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
     test -s "client-smoke/screenshots/$name.png"
     echo "REAL_CLIENT_LABEL_SCREEN=$name" | tee -a client-smoke-status.txt
   }
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_brace 1'
-  sleep 3
+
+  label_set_slot0 'thaumcraft:jar_brace' 'thaumcraft:jar_brace' 'TC_LABEL_BRACE_SLOT_READY'
+  sleep 1
   label_capture 60-jar-brace
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:label 1'
-  sleep 3
+  label_set_slot0 'thaumcraft:label' 'thaumcraft:label' 'TC_LABEL_BLANK_SLOT_READY'
+  sleep 1
   label_capture 61-blank-label
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}] 1'
-  sleep 3
+  label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \
+    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}]' \
+    'TC_LABEL_AER_SLOT_READY'
+  sleep 1
   label_capture 62-aer-label
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}] 1'
-  sleep 3
+  label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \
+    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}]' \
+    'TC_LABEL_IGNIS_SLOT_READY'
+  sleep 1
   label_capture 63-ignis-label
 
-  # Inventory screenshot: all four distinct models in actual GUI, not a
-  # synthetic icon montage. Keep the camera/hotbar fixed for pixel comparison.
-  send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_brace 1'
-  send_chat '/item replace entity @p hotbar.1 with thaumcraft:label 1'
-  send_chat '/item replace entity @p hotbar.2 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}] 1'
-  send_chat '/item replace entity @p hotbar.3 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}] 1'
+  # Inventory screenshot: four server-verified stacks in the real creative
+  # inventory. Each predicate checks custom_model_data and custom_data too.
+  label_send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_brace 1'
+  label_require_slot hotbar.0 'thaumcraft:jar_brace' 'TC_LABEL_INVENTORY_BRACE_READY'
+  label_send_chat '/item replace entity @p hotbar.1 with thaumcraft:label 1'
+  label_require_slot hotbar.1 'thaumcraft:label' 'TC_LABEL_INVENTORY_BLANK_READY'
+  label_send_chat '/item replace entity @p hotbar.2 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}] 1'
+  label_require_slot hotbar.2 \
+    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}]' \
+    'TC_LABEL_INVENTORY_AER_READY'
+  label_send_chat '/item replace entity @p hotbar.3 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}] 1'
+  label_require_slot hotbar.3 \
+    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}]' \
+    'TC_LABEL_INVENTORY_IGNIS_READY'
+  label_activate_minecraft
   xdotool key --clearmodifiers e
   sleep 4
   label_capture 64-all-four-in-real-inventory
+  label_activate_minecraft
   xdotool key --clearmodifiers e
 
-  # guiScale:2: a 16x16 item icon is 32 physical pixels. The earlier
-  # crop used Y+HEIGHT-22 and captured only the LOWER HALF of the icon plus
-  # the hotbar border. Real run #41287870087 showed this; move the crop
-  # center 20 pixels up to include the entire item, not the slot decoration.
+  # guiScale:2: a 16x16 item icon is 32 physical pixels. Keep the crop
+  # centered on slot 0 after the server has proved the item is present.
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
   hotbar_x=$((X + WIDTH / 2 - 162))
@@ -64,7 +128,7 @@ body = r'''
   )
   if (( hotbar_x < 16 || hotbar_y < 16 ||
         hotbar_x + 16 > screen_width || hotbar_y + 16 > screen_height )); then
-    echo "LABEL_ICON_CROP_OUTSIDE_SCREEN=x:$hotbar_x y:$hotbar_y screen:${screen_width}x${screen_height}" \
+    echo "LABEL_ICON_CROP_OUTSIDE_SCREEN=x:${hotbar_x} y:${hotbar_y} screen:${screen_width}x${screen_height}" \
       | tee -a client-smoke-status.txt
     exit 1
   fi
@@ -93,10 +157,8 @@ body = r'''
   label_diff 61-blank-label 63-ignis-label
   label_diff 62-aer-label 63-ignis-label
 
-  # A nonzero pixel difference alone is weak evidence: camera movement,
-  # chat or a shifting highlight can make a broken model look "different".
-  # Check the CENTER of the rendered icon, away from the hotbar frame.
-  # Ignis must be substantially redder than Aer (original aspect colors).
+  # A nonzero pixel difference alone is weak evidence: compare the center
+  # of the icon, away from the hotbar frame and selected-slot border.
   aer_red_minus_green="$(convert client-smoke/screenshots/62-aer-label-slot0.png \
     -crop 16x16+8+8 +repage -format '%[fx:mean.r-mean.g]' info:)"
   ignis_red_minus_green="$(convert client-smoke/screenshots/63-ignis-label-slot0.png \
