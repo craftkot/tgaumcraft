@@ -20,6 +20,7 @@ import net.minecraft.sounds.SoundEvent;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -91,10 +92,22 @@ public final class CrystalClusterBlock extends Block {
     /** World and renderer MUST use identical attached-face criteria. */
     public static boolean hasCrystalSupport(BlockGetter level, BlockPos pos, Direction d) {
         BlockPos side=pos.relative(d);
-        // Outline queries run on both the logical server and the client. A
-        // world-backed getter must not load a neighbouring chunk just to decide
-        // whether this face supports the crystal; until it is loaded, treat it
-        // as absent. Chunk-only render getters remain local to their own view.
+        if (level instanceof ServerLevel serverLevel) {
+            // ServerLevel.hasChunkAt can be true while a neighbour is still in
+            // the chunk-loading pipeline. Level.getBlockState then joins that
+            // chunk future; the light worker can do this while the server thread
+            // is itself waiting for a neighbour during crystal placement. Read
+            // only a fully available chunk and never join its load future here.
+            LevelChunk chunk=serverLevel.getChunkSource().getChunkNow(
+                    side.getX() >> 4, side.getZ() >> 4);
+            if (chunk == null) return false;
+            BlockState support=chunk.getBlockState(side);
+            return support.is(CRYSTAL_SUPPORTS)
+                    && support.isFaceSturdy(chunk,side,d.getOpposite());
+        }
+        // Client outline queries stay on the render thread. A world-backed
+        // client getter must still avoid requesting an absent neighbouring chunk;
+        // chunk-only render getters are already local to their own view.
         if (level instanceof LevelReader reader && !reader.hasChunkAt(side)) return false;
         BlockState support=level.getBlockState(side);
         return support.is(CRYSTAL_SUPPORTS)

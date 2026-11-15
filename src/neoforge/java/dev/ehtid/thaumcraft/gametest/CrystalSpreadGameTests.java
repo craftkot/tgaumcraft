@@ -22,6 +22,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Executes the production CrystalClusterBlock.randomTick method in a real
@@ -139,6 +141,23 @@ public final class CrystalSpreadGameTests {
         }
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-outline-shape");
         System.out.println("TC_GAMETEST_CRYSTAL_OUTLINE_UNLOADED_SUPPORT=PASS no_force_load=YES bounds=down-half");
+
+        // The lighting engine evaluates block shapes off the server thread.
+        // This must read only fully available chunks and must not join a pending
+        // neighbour load, even when the outline is queried from a worker thread.
+        AABB offThreadBounds = CompletableFuture.supplyAsync(() ->
+                        crystal.getShape(destinationSourceState, level, destinationBoundarySource,
+                                CollisionContext.empty()).bounds())
+                .orTimeout(5, TimeUnit.SECONDS)
+                .join();
+        if (Math.abs(offThreadBounds.minY) > 0.0001D
+                || Math.abs(offThreadBounds.maxY - 0.5D) > 0.0001D) {
+            throw new AssertionError("Off-thread crystal outline lost its loaded DOWN support: "
+                    + offThreadBounds);
+        }
+        requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                "after-off-thread-outline-shape");
+        System.out.println("TC_GAMETEST_CRYSTAL_OUTLINE_OFF_THREAD=PASS no_force_load=YES bounds=down-half");
 
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
         requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ, "after-aura-get");
