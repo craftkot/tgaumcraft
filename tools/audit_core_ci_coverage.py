@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CORE_TESTS = ROOT / "src/test/java/dev/ehtid/thaumcraft/port/core"
 CI = ROOT / ".github/workflows/ci.yml"
 MAIN = re.compile(r"public\s+static\s+void\s+main\s*\(\s*String\s*(?:\[\s*\]\s*\w+|\.\.\.\s*\w+)\s*\)")
-JAVA_TOKENS = re.compile(r'//[^\\n]*|/\\*[\\s\\S]*?\\*/|"(?:\\\\.|[^"\\\\])*"|\\'(?:\\\\.|[^\\'\\\\])*\\'')
+JAVA_TOKENS = re.compile(r"""//[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'""")
 
 
 def uncommented_java(source):
@@ -20,7 +20,7 @@ def uncommented_java(source):
     def mask(match):
         token = match.group(0)
         if token.startswith("//") or token.startswith("/*"):
-            return re.sub(r"[^\\n]", " ", token)
+            return re.sub(r"[^\n]", " ", token)
         return token
     return JAVA_TOKENS.sub(mask, source)
 
