@@ -85,6 +85,19 @@ body = r'''
       fi
       sleep 0.25
     done
+    # Diagnose the failed label replacement without accepting a substitute item.
+    # The following /give tests runtime item resolution; the independent /say
+    # proves whether a subsequent command still reaches the integrated server.
+    if [ "$item" = 'thaumcraft:label' ]; then
+      label_send_chat '/give @p thaumcraft:label 1'
+      label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'
+      if grep -Fq 'TC_LABEL_POST_FAILURE_CHANNEL_READY' run/logs/latest.log; then
+        echo 'LABEL_POST_FAILURE_COMMAND_CHANNEL=PASS' | tee -a client-smoke-status.txt
+      else
+        echo 'LABEL_POST_FAILURE_COMMAND_CHANNEL=FAIL' | tee -a client-smoke-status.txt
+      fi
+      label_capture 59c-label-give-probe
+    fi
     echo "LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name" | tee -a client-smoke-status.txt
     import -display :99 -window root -silent client-smoke/screenshots/59-label-slot-content-fail.png
     tail -n 80 run/logs/latest.log || true
