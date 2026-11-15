@@ -48,7 +48,7 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))))) {
             return false;
         }
-        final int[] placed = {0};
+        final int[] placedLogs = {0};
         // Only foliage successfully placed by this invocation may be overwritten by its logs.
         final Set<BlockPos> ownLeaves = new HashSet<>();
         SilverwoodLegacyTree.place(x, y, z, height, random,
@@ -57,7 +57,6 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     BlockPos pos = new BlockPos(px, py, pz);
                     if (setIfReplaceable(level, pos, leaves)) {
                         ownLeaves.add(pos);
-                        placed[0]++;
                     }
                 },
                 (px, py, pz, meta) -> {
@@ -66,10 +65,11 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
                             ? log.setValue(RotatedPillarBlock.AXIS, axis) : log;
                     if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves, ownLeaves)) {
-                        placed[0]++;
+                        placedLogs[0]++;
                     }
                 });
-        return placed[0] > 0;
+        // Canopy-only partial writes must not report a successfully generated tree.
+        return placedLogs[0] > 0;
     }
 
     /** Logs are emitted after canopy; permit replacing this tree's own leaf state. */
