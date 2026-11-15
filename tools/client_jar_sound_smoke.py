@@ -376,14 +376,14 @@ PY
   # jar present on the server and match the original BETA26 jar PCM below.
   jar_hit_roi_x=$((jar_hit_center_x - 110))
   jar_hit_roi_y=$((jar_hit_center_y - 110))
-  convert client-smoke/screenshots/100a-jar-hit-aim.png \\
-    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \\
+  convert client-smoke/screenshots/100a-jar-hit-aim.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
     client-smoke/hit-aim-roi.png
-  convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \\
-    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \\
+  convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
     client-smoke/hit-damage-roi.png
-  python3 tools/verify_jar_damage_overlay.py --diagnostic \\
-    client-smoke/hit-aim-roi.png \\
+  python3 tools/verify_jar_damage_overlay.py --diagnostic \
+    client-smoke/hit-aim-roi.png \
     client-smoke/hit-damage-roi.png | tee -a client-smoke-status.txt
 
   crop_pcm_frames client-smoke/hit-event.pcm client-smoke/hit-event-window.pcm 26400 120000
