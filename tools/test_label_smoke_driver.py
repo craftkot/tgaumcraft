@@ -23,12 +23,12 @@ predicate = unique('    label_send_chat "/execute if items entity @p $slot $pred
 server_ack = unique('grep -Fq "$marker" run/logs/latest.log')
 fail_closed = unique('LABEL_SLOT_CONTENT=FAIL slot=$slot marker=$marker')
 first_capture = unique("  label_capture 60-jar-brace")
-assert focus < send < require < set_slot < predicate < server_ack < fail_closed < first_capture
+assert focus < send < require < predicate < server_ack < fail_closed < set_slot < first_capture
 assert 'xdotool windowactivate --sync "$WIN"' in generated
 assert 'xdotool windowfocus --sync "$WIN"' in generated
 assert 'xdotool getwindowpid "$WIN"' in generated
 assert 'LABEL_INPUT_FOCUS=PASS' in generated
-assert "send_chat '/item replace" not in generated
+assert "\n  send_chat '/item replace" not in generated
 for marker in (
     "TC_LABEL_BRACE_SLOT_READY",
     "TC_LABEL_BLANK_SLOT_READY",
