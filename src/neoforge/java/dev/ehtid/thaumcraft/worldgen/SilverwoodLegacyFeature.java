@@ -55,11 +55,19 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
                             ? log.setValue(RotatedPillarBlock.AXIS, axis) : log;
-                    if (setIfReplaceable(level, new BlockPos(px, py, pz), state)) {
+                    if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves)) {
                         placed[0]++;
                     }
                 });
         return placed[0] > 0;
+    }
+
+    /** Logs are emitted after canopy; permit replacing this tree's own leaf state. */
+    private static boolean setLogOverOwnLeaves(WorldGenLevel level, BlockPos pos,
+                                                BlockState logState, BlockState leafState) {
+        BlockState existing = level.getBlockState(pos);
+        return (canReplace(existing) || existing.is(leafState.getBlock()))
+                && level.setBlock(pos, logState, 2);
     }
 
     private static boolean canReplace(BlockState state) {
