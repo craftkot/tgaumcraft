@@ -1,0 +1,55 @@
+package dev.ehtid.thaumcraft.port.core;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public final class SilverwoodLegacyLogsTest {
+    private static int assertions;
+    private static void check(boolean value) {
+        assertions++;
+        if (!value) throw new AssertionError("Silverwood logs assertion " + assertions);
+    }
+
+    public static void main(String[] args) {
+        List<String> writes = new ArrayList<>();
+        Random rolls = new Random(1234L);
+        SilverwoodLegacyLogs.place(8, 64, 8, 7, rolls,
+                (x,y,z,meta) -> writes.add(x + "," + y + "," + z + ":" + meta));
+        for (int dy = 0; dy < 7; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                if (dx == 0 || Math.abs(dx) == 1) {
+                    check(writes.contains((8 + dx) + "," + (64 + dy) + ",8:1"));
+                }
+            }
+            check(writes.contains("8," + (64 + dy) + ",7:1"));
+            check(writes.contains("8," + (64 + dy) + ",9:1"));
+        }
+        check(writes.contains("8,71,8:1"));
+        check(writes.contains("6,63,8:1"));
+        check(writes.contains("10,63,8:1"));
+        check(writes.contains("8,63,6:1"));
+        check(writes.contains("8,63,10:1"));
+        check(writes.contains("6,64,8:0"));
+        check(writes.contains("8,64,6:2"));
+        check(writes.contains("6,67,8:0"));
+        check(writes.contains("8,67,6:2"));
+        check(writes.contains("7,67,7:1"));
+        check(writes.contains("9,67,9:1"));
+
+        List<String> replay = new ArrayList<>();
+        SilverwoodLegacyLogs.place(8,64,8,7,new Random(1234L),
+                (x,y,z,meta) -> replay.add(x + "," + y + "," + z + ":" + meta));
+        check(writes.equals(replay));
+        check(writes.stream().allMatch(s -> {
+            String[] p = s.substring(0,s.indexOf(':')).split(",");
+            int x = Integer.parseInt(p[0]), y = Integer.parseInt(p[1]), z = Integer.parseInt(p[2]);
+            return x >= 3 && x <= 13 && z >= 3 && z <= 13 && y >= 63 && y <= 76;
+        }));
+        boolean rejected = false;
+        try { SilverwoodLegacyLogs.place(8,64,8,11,new Random(1), (x,y,z,m)->{}); }
+        catch (IllegalArgumentException expected) { rejected = true; }
+        check(rejected);
+        System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
+    }
+}
