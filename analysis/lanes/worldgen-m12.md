@@ -279,3 +279,11 @@
 - Source-level regression guard [`db9caf7`](https://github.com/craftkot/tgaumcraft/commit/db9caf7130c7e31a1409b775f82185b56941342d) updated for the new leaf-write path and rollback checks. **Not executed**; it is not a NeoForge/GameTest.
 - No shared registries, Gradle, main or other feature branches changed; Draft PR #9 remains pending. Full NeoForge build, exact-checkout Java tests, in-game generation and BETA26 RNG/biome parity remain **unverified**. Historical audit stays 59/100.
 - Next: execute exact-HEAD Python guard and full NeoForge build; add an executable fake-world/GameTest for failed log writes, rollback and foreign-block preservation before worldgen registration.
+
+
+## 16.11.2026 — M12 Silverwood: repair stale source assertions after canopy rollback
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 86, behind 0 before write), reviewed feature branches and open PRs. Existing Draft PR #9 remains unmerged.
+- Inspected exact GitHub Java and Python guard blobs. Found two stale checks in tools/test_silverwood_neoforge_wiring.py: successful foliage writes were still expected through removed setIfReplaceable(), and success was still expected as return placedLogs[0] > 0 despite new rollback branch. Fixed both in commit 2334f56c760093c5bfd800b850d49ea1e956c4ce. No production Java change.
+- Re-fetched both files and checked six relevant source predicates against the GitHub content (6/6 true); this is **not** execution of the Python runner. CI for code commit was ci/circleci: verify-connection PENDING at inspection: https://app.circleci.com/workflow/bf64d73f-27d8-4cec-81a3-ce97b0c329ba/job/7d276a95-29d7-4162-a0ab-9ba1bc895f83 . Exact-checkout Python/Java tests, NeoForge compilation, GameTest and real new-chunk worldgen remain unverified. BETA26 RNG/biome parity unproven; Feature still unregistered.
+- Next: run exact-head Python guard and Java 21 suites, implement executable rollback/foreign-block GameTest or fake-world test, then compile NeoForge and coordinate registration. Historical index 59/100 unchanged. No changes to main, other branches, shared registries or Gradle.
