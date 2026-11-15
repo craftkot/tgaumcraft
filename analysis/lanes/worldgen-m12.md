@@ -253,3 +253,11 @@
 - Regression commit ed461ef85a502e919ab6553d45cbb94be5955b79: source guard проверяет порядок успешного setBlock и удаления координаты; устаревшее требование прежнего return-выражения заменено.
 - Прямой git checkout по-прежнему заблокирован DNS (Could not resolve host: github.com); точный Python runner, Java 21 suite, NeoForge compilation, GameTest и Minecraft new-chunk smoke НЕ запускались. Наличие проверки в исходнике не является PASS. Shared registries, Gradle, main и чужие ветки не затронуты. Историческая оценка 59/100 не изменена.
 - Следующий шаг: получить точный checkout, запустить Python guard и Java runners, проверить NeoForge compile и реальный тест сохранности соседней листвы; затем согласовать регистрацию Silverwood и biome/chunk правила с другими lanes.
+
+
+## 15.11.2026 — M12 Silverwood: portable source regression runner
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (ahead 78, behind 0 before edit), inspected feature branch inventory. Existing Draft PR #9 remains the intended unmerged review vehicle.
+- Test maintenance commit [6ce9b9b](https://github.com/craftkot/tgaumcraft/commit/6ce9b9b4eb2040efbfade2431b651942c5470b18): tools/test_silverwood_neoforge_wiring.py now resolves its Java source relative to the script's own directory instead of the process working directory. This makes the static source regression usable from any cwd and avoids false failures in isolated runners. No production Java code changed in this iteration.
+- CI on 6ce9b9b: CircleCI verify-connection PENDING at inspection (https://app.circleci.com/workflow/494c771b-09ce-42b0-9b32-93e235b02c1e/job/a49809c0-6af0-4c6c-86c8-873a37404884); GitHub PR workflow runs empty. Local git ls-remote still fails DNS resolution of github.com. Exact checkout Python runner, NeoForge compile, GameTest and Minecraft new-chunk smoke NOT executed. No PASS claimed.
+- Next: obtain exact checkout and run source guard, Java 21 suite and NeoForge compilation; implement an executable placement test for preservation of neighboring blocks, then coordinate feature/biome registration. Shared registries, Gradle, main and other branches untouched. Historical index 59/100 unchanged.
