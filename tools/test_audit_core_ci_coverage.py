@@ -58,5 +58,21 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(inventory(self.root), ([], [], []))
 
 
+    def test_commented_main_not_runnable(self):
+        (self.tests / "CommentedTest.java").write_text(
+            "class CommentedTest { // public static void main(String[] args) {}\\n"
+            "/* public static void main(String[] args) {} */ }"
+        )
+        self.ci()
+        self.assertEqual(inventory(self.root), ([], [], []))
+
+    def test_real_main_after_comments_is_runnable(self):
+        (self.tests / "RealTest.java").write_text(
+            "class RealTest { /* public static void main(String[] args) {} */ "
+            "public static void main(String[] args) {} }"
+        )
+        self.ci(["RealTest"], ["RealTest"])
+        self.assertEqual(inventory(self.root), ([], [], []))
+
 if __name__ == "__main__":
     unittest.main()
