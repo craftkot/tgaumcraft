@@ -86,3 +86,10 @@
 - Changed paths: `tools/client_workbench_gui_smoke.py`, `tools/assert_client_workbench_gui_ocr.py`, `tools/test_client_workbench_gui_ocr.py`, and this lane journal. PR #3 and open PRs #5–#13 were checked by changed-file list; none overlap these four paths. PR #4 remains the only PR containing them.
 - Before this correction, exact-head PR #4 run [#43766820132](https://github.com/craftkot/tgaumcraft/actions/runs/43766820132) failed only `en_us/scale=3`; `ru_ru/scale=3`, both scale-2 matrix entries, real scan-rune, page sound, label art/tint, crystal break/place audio, Curio learn sound, tube particle texture, readable-text regression, aura/crystal GameTests and Thaumcraft Port CI succeeded. The Salis/Nitor, crystal placement/outline and jar audio client jobs were still running at last poll; do not infer their final state here.
 - No fixed-rubric credit: total remains 59/100, M16 4/6, M08 5/9. Next: run the exact-head EN/RU scale matrix and inspect the remaining native client job outcomes. No merge.
+
+
+### 2026-11-15 — OCR source-contract regression updated after PSM 7 fallback
+
+- The first exact-head run after `bc04cda` exposed a stale static contract in `tools/test_client_workbench_world.py`: its generator audit still required `len(argv) != 6` and only knew the old inverted PSM8 argument. The real OCR matcher change was not reached; `en_us/scale=2` stopped in the generation preflight. This is a test-harness assertion failure introduced by the argument expansion, not a Minecraft GUI or Java failure.
+- Updated the source-contract assertions to require the inverted-crop PSM7 invocation/diagnostic marker and the new six-argument helper contract, while retaining PSM8 and full-panel PSM11 checks. The exact-head run [#43768054960](https://github.com/craftkot/tgaumcraft/actions/runs/43768054960) is still running other matrix entries; this correction needs a new exact-head rerun before acceptance.
+- Changed files: `tools/test_client_workbench_world.py` and this lane journal only. PR #3 and open PRs #5–#13 have no changed-path overlap. No production code changed; fixed score remains 59/100 (M16 4/6, M08 5/9).
