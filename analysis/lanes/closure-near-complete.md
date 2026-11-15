@@ -4488,3 +4488,8 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 
 - During exact source review of commit `2e1cfc9a01460c73ad3e693ca0d50828201648a9`, found that two new Python regression assertions double-escaped `\\n`, so they searched for literal backslash-n instead of actual generated-shell newlines. Corrected both assertions to use Python `\n` escapes. The shell driver itself is unchanged by this correction.
 - The first commit's exact-head workflows may fail during static preflight; no real-client result from that attempt is treated as acceptance. The corrected HEAD must pass the driver before the next Minecraft client result is interpreted.
+
+### Return-key assertion scoped to the label sender
+
+- The shared client prefix also defines `activate_firststeps_advance()` with its own Return key. The initial regression used an unscoped `unique("xdotool key --clearmodifiers Return")`, which would count both the unrelated FIRSTSTEPS helper and the label sender. Scoped the assertion to the label-specific Return immediately followed by `LABEL_COMMAND_RETURN_SENT=YES`; this keeps the test tied to the intended command path without modifying the shared helper.
+- No gameplay result is claimed until the corrected exact-head static preflight and real-client workflow complete.
