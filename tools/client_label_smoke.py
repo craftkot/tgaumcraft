@@ -44,6 +44,8 @@ body = r'''
     echo 'LABEL_INPUT_FOCUS=PASS' | tee -a client-smoke-status.txt
   }
   label_send_chat() {
+    # Keep the exact text that reached the X11 input layer for failed component commands.
+    printf 'LABEL_COMMAND_TEXT=%s\n' "$1" | tee -a client-smoke-status.txt
     label_activate_minecraft
     xdotool key --clearmodifiers t
     sleep 1
@@ -88,7 +90,7 @@ body = r'''
     # Diagnose the failed label replacement without accepting a substitute item.
     # The following /give tests runtime item resolution; the independent /say
     # proves whether a subsequent command still reaches the integrated server.
-    if [ "$item" = 'thaumcraft:label' ]; then
+    if [[ "$item" == thaumcraft:label* ]]; then
       label_send_chat '/give @p thaumcraft:label 1'
       label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'
       if grep -Fq 'TC_LABEL_POST_FAILURE_CHANNEL_READY' run/logs/latest.log; then
@@ -96,7 +98,7 @@ body = r'''
       else
         echo 'LABEL_POST_FAILURE_COMMAND_CHANNEL=FAIL' | tee -a client-smoke-status.txt
       fi
-      label_capture 59c-label-give-probe
+      label_capture "${LABEL_DIAGNOSTIC_PREFIX:-59}c-label-give-probe"
     fi
     echo "LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name" | tee -a client-smoke-status.txt
     import -display :99 -window root -silent client-smoke/screenshots/59-label-slot-content-fail.png
@@ -144,12 +146,20 @@ body = r'''
   LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 61-blank-label
+  # The component-bearing commands need the same before-submit/feedback frames
+  # as the blank item: brackets, braces and quoted SNBT must be inspected, not guessed.
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
+  LABEL_DIAGNOSTIC_PREFIX=62
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \
     'Air Jar Label'
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 62-aer-label
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
+  LABEL_DIAGNOSTIC_PREFIX=63
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \
     'Fire Jar Label'
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 63-ignis-label
 
