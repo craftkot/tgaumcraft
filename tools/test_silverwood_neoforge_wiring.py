@@ -23,7 +23,10 @@ checks = {
     "successful leaf writes tracked": "if (setIfReplaceable(level, pos, leaves))" in source
                           and "ownLeaves.add(pos);" in source,
     "no pre-existing leaf-type bypass": "existing.is(leafState.getBlock())" not in source,
-    "successful block-write return": "return placed[0] > 0;" in source,
+    "successful trunk-write return": "return placedLogs[0] > 0;" in source
+                          and "placedLogs[0]++;" in source
+                          and "final int[] placedLogs = {0};" in source
+                          and "placed[0]++;" not in source,
     "setBlock success propagated": "return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);" in source,
     "failed preflight returns false": "return false;" in source,
     "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
