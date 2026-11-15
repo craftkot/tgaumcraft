@@ -109,6 +109,63 @@ if source.count(options) != 1:
 if source.index(anchor) >= source.index(end):
     raise SystemExit("Real-client fixture end marker precedes the injection anchor")
 head = source.split(anchor, 1)[0] + replacement
+send_chat_block = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+send_chat_with_ack = """  activate_minecraft_client() {
+    # World creation can leave the pointer focused on the root window even
+    # though the Minecraft process is still alive. Re-activate the real game
+    # window before every chat command; never trust the earlier title-screen focus.
+    xdotool windowactivate --sync "$WIN"
+    xdotool windowraise "$WIN"
+    xdotool mousemove --window "$WIN" 512 384
+    sleep 0.25
+  }
+
+  ensure_minecraft_command_channel() {
+    if [ "${TC_SMOKE_COMMAND_CHANNEL_READY:-0}" = "1" ]; then
+      return 0
+    fi
+    # One locale-independent server acknowledgement proves that the real
+    # integrated server received keyboard input before any gameplay fixture.
+    xdotool key --clearmodifiers t
+    sleep 0.5
+    xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'
+    xdotool key --clearmodifiers Return
+    local ready=0
+    for _ in $(seq 1 40); do
+      if grep -Fq 'TC_SMOKE_COMMAND_CHANNEL_READY' run/logs/latest.log; then
+        ready=1
+        break
+      fi
+      sleep 0.25
+    done
+    if [ "$ready" -ne 1 ]; then
+      echo 'SALIS_COMMAND_CHANNEL=FAIL' | tee -a client-smoke-status.txt
+      capture 05f-command-channel-not-ready
+      tail -80 run/logs/latest.log >&2 || true
+      exit 1
+    fi
+    export TC_SMOKE_COMMAND_CHANNEL_READY=1
+    echo 'SALIS_COMMAND_CHANNEL=PASS' | tee -a client-smoke-status.txt
+  }
+
+  send_chat() {
+    activate_minecraft_client
+    ensure_minecraft_command_channel
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+if source.count(send_chat_block) != 1 or head.count(send_chat_block) != 1:
+    raise SystemExit("Shared chat driver changed; refuse unverified command-channel injection")
+head = head.replace(send_chat_block, send_chat_with_ack)
 head = head.replace(options,
     "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\n' > run/options.txt")
 # The bookshelf is at (2,151,12); the shared fixture originally records
