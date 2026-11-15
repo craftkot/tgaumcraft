@@ -4651,3 +4651,9 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 - Patched only the isolated scan-rune generator to override the click to 96% (local y=737), record local click coordinates and capture `04a-after-create-world-click.png`. Added a regression assertion that the old coordinate misses and the new one lies inside the screenshot-measured button bounds. The shared `tools/client_smoke.sh` remains unchanged.
 - No production Java, assets, registries, Gradle, workflows or other lane changed. The prior exact-head full Port CI [#43743943975](https://github.com/craftkot/tgaumcraft/actions/runs/43743943975) succeeded, but it does not validate this updated isolated client fixture. Current fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**; no points or category closure.
 - Next: inspect exact-head scan-rune workflow. It must prove world login, persisted command permission, target block/sightlines, real Thaumometer use, particle construction/render/expiry from both views and framebuffer deltas before any visual-parity claim.
+
+
+### 2026-11-15 — exact shell-variable anchor correction
+
+- Static review of the just-created generator commit found that the Python anchor literal for the shared shell log line retained a backslash before `${create_world_x}` / `${create_world_y}`. That would make the isolated generator reject the unchanged shared bootstrap before client launch. Corrected the literal and added a regression assertion for the emitted local click marker; no production behavior or shared launcher changed.
+- The exact-code-head scan-rune run [#43745642987](https://github.com/craftkot/tgaumcraft/actions/runs/43745642987) was queued on the preceding code/test commit `ea4bcd3`; inspect its result honestly, then use the newer exact HEAD rerun for acceptance. No gameplay result is claimed.
