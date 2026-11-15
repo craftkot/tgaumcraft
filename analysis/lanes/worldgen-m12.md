@@ -145,3 +145,12 @@
 - ВАЖНО: исходник сначала делает canopy random rolls, затем log random rolls. Caller обязан использовать тот же Random после canopy для полного parity; этот срез не включает листья, Shimmerleaf, NeoForge blockstate mapping, placement registration или GameTest. Оригинальный BETA26 JAR не сравнивался побайтово.
 - Предыдущий HEAD 92147db CI: CircleCI verify-connection FAILURE; GitHub Actions run #2971 FAILURE. Причина не установлена, без логов не приписывать ошибку к Java-коду. Новый HEAD CI требует повторной проверки.
 - Draft PR #9 остаётся неслитым. Следующий шаг: перенести canopy writes и точный RNG порядок, затем создать в собственном namespace NeoForge Feature с реальными blockstates; изменение общего регистра согласовать отдельно. Full NeoForge и Minecraft new-chunk smoke отсутствуют. Оценка 59/100 без изменений.
+
+
+## 15.11.2026 — M12.1, shared RNG phase ordering (not canopy parity)
+
+- Fresh-read main AGENTS/ROADMAP/PARALLEL_WORKFLOW and this lane; inspected main...M12 (ahead 42, behind 0 before edits) and open PR #1–#10. Draft PR #9 remains unmerged.
+- Production [50aa7c7](https://github.com/craftkot/tgaumcraft/commit/50aa7c79f67a7045acb15c7a870c04449eceba9c): `SilverwoodLegacyTreePhases` executes a supplied canopy phase **before** the existing log/root phase, with the **same Random instance** and eager argument validation. This addresses a documented RNG-order integration hazard; it does **not** implement leaf geometry or a NeoForge Feature.
+- Regression [414866a](https://github.com/craftkot/tgaumcraft/commit/414866a48dc7800bee70f92f43123a39abc691fd): deterministic 7..10-height ordering, callback count, RNG continuation, invalid heights and null callbacks. Java 21 runner [75ad7ea](https://github.com/craftkot/tgaumcraft/commit/75ad7ea9ccea6aa228b5cd68e23d1e481883eb70): `bash tools/test_silverwood_legacy_tree_phases.sh`.
+- **Evidence boundary:** tests committed, not executed on exact checkout; no claim of PASS. Previous HEAD `e0e9856` combined CI = CircleCI verify-connection **FAILURE**, [job](https://app.circleci.com/workflow/47966a49-cbab-4966-b2a1-13eb151a4c24/job/2b3a93b9-57eb-4102-af35-db894b3afc87). Exact-head CI and full NeoForge/Minecraft smoke unverified.
+- Archived third-party Java 1.12 source is not byte-verified BETA26 JAR. Next: recover source-verified canopy write algorithm and integrate it with the phase seam; then isolated NeoForge Feature and coordination for shared registrations. Historical 59/100 unchanged; no main/other branch edits or merge.
