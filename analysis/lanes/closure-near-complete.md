@@ -36,3 +36,9 @@
 - Added fail-only timeout diagnostics to the isolated generator: screenshot at timeout, X11 geometry/focus, Java process list, bounded jcmd Thread.print -l dumps, latest.log tail, and read-only level.dat/allowCommands verification. The 300-second login gate remains strict; no command is issued and no failure is converted to PASS.
 - Current exact-head checks before this diagnostic patch: Thaumcraft Port CI #43755430784 SUCCESS (NeoForge/JAR/dedicated server); Aura/Crystal GameTests #43755430768 SUCCESS; Salis queue-unload JVM #43755430779 SUCCESS; real Scan Rune client #43755430889 FAILURE at player-login gate. Other M16 client workflows have independent failures and are not attributed to this same cause without their own logs.
 - No production Java, shared tools/client_smoke.sh, Gradle, workflow, registry, resource, main, or other workstream branch changed. Historical rubric remains 59/100, M16 4/6, M08 5/9. Next: run this exact-head diagnostic, inspect server/client thread dumps and timeout screenshot, then fix only the demonstrated blocker.
+
+
+### 2026-11-15 — generator patch self-review correction
+
+- Self-review of the first timeout-diagnostics commit 16315c6 found that it defined the replacement text but omitted the guarded source.replace(...) call. The new regression would therefore correctly fail before Bash validation. This was caught by inspecting the exact generator diff, not by a passing CI result.
+- Added the missing unique-anchor guard and actual replacement in dc9372230479b9498f79cfcdbc73ea0bd0937ff8. The test in 4978538 asserts that the generated script contains the timeout screenshot, process list, bounded thread dumps, latest.log and level.dat checks. The earlier workflow queued on eb1e70e is not evidence for the corrected generator; wait for a run on dc93722.
