@@ -46,6 +46,29 @@ class GateTests(unittest.TestCase):
         data["gates"]["native_gametests"].pop("evidence_url")
         self.assertTrue(gate.verify(data, SHA))
 
+    def test_malformed_https_proofs_rejected(self):
+        bad = (
+            "https://",
+            "https:///missing-host",
+            "https://user:password@github.com/actions/runs/123",
+            "https://github.com:bad/actions/runs/123",
+            "https://github.com:8080/actions/runs/123",
+            "https://github.com/actions/runs/123\\n",
+            "https://localhost/actions/runs/123",
+        )
+        for url in bad:
+            with self.subTest(url=url):
+                data = valid()
+                data["gates"]["native_gametests"]["evidence_url"] = url
+                self.assertTrue(gate.verify(data, SHA))
+
+    def test_valid_https_proof_with_default_port(self):
+        data = valid()
+        data["gates"]["native_gametests"]["evidence_url"] = (
+            "https://github.com:443/example/example/actions/runs/123"
+        )
+        self.assertEqual(gate.verify(data, SHA), [])
+
     def test_non_https_proof_rejected(self):
         data = valid()
         data["gates"]["cold_save_reload"]["evidence_url"] = "file:///tmp/log"
