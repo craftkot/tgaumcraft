@@ -211,7 +211,7 @@ chat_probe_replacement = (
     "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\n"
     "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\n"
     "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06\n"
-    "  first_workbench_mutation=\"$(grep -m1 -F '[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: ' client-smoke/client.log | grep -Eo '(Changed the block at|Изменён блок в точке) -?[0-9]+, -?[0-9]+, -?[0-9]+' || true)\"\n"
+    "  first_workbench_mutation=\"$(grep -F '[Server thread/INFO] [minecraft/MinecraftServer]: [Dev: ' client-smoke/client.log | grep -Eo '(Changed the block at|Изменён блок в точке) -?[0-9]+, -?[0-9]+, -?[0-9]+' || true)\"\n"
     "  if [[ -z \"$first_workbench_mutation\" ]]; then\n"
     "    echo 'WORKBENCH_POST_TP_MUTATION=NO_INITIAL_MARKER' | tee -a client-smoke-status.txt\n"
     "    capture 06e-post-teleport-mutation-missing\n"
