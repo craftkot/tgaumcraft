@@ -10,7 +10,7 @@ checks = {
     "shared core tree phases": "SilverwoodLegacyTree.place(" in source,
     "blockstate injection": "SilverwoodLegacyFeature(BlockState log, BlockState leaves)" in source,
     "axis mapping": all(s in source for s in ("Direction.Axis.X", "Direction.Axis.Y", "Direction.Axis.Z")),
-    "conditional writes": "if (canReplace(level.getBlockState(pos)))" in source,
+    "conditional writes": "setIfReplaceable(level, new BlockPos(px, py, pz), leaves)" in source\n                          and "if (setIfReplaceable(level, new BlockPos(px, py, pz), state))" in source,
     "successful block-write return": "return placed[0] > 0;" in source,
     "setBlock success propagated": "return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);" in source,
     "failed preflight returns false": "return false;" in source,
