@@ -70,7 +70,7 @@ body = r'''
   # /fill and /setblock were rejected with "That position is not loaded",
   # leaving the Thaumometer pointing at empty water. Force-load FIRST,
   # then require an actual vanilla block predicate before any right-click.
-  send_chat '/forceload add -4 149 -4 4 149 10'
+  send_chat '/forceload add -4 -4 4 10'
   sleep 5
   target_ready=0
   for attempt in 1 2 3; do
