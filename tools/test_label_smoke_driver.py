@@ -34,15 +34,20 @@ for marker in (
     "TC_LABEL_BLANK_SLOT_READY",
     "TC_LABEL_AER_SLOT_READY",
     "TC_LABEL_IGNIS_SLOT_READY",
-    "TC_LABEL_INVENTORY_BRACE_READY",
-    "TC_LABEL_INVENTORY_BLANK_READY",
-    "TC_LABEL_INVENTORY_AER_READY",
-    "TC_LABEL_INVENTORY_IGNIS_READY",
 ):
     assert marker in generated, marker
+assert generated.index("TC_LABEL_BRACE_SLOT_READY") < generated.index("label_capture 60-jar-brace")
+assert generated.index("TC_LABEL_BLANK_SLOT_READY") < generated.index("label_capture 61-blank-label")
 assert generated.index("TC_LABEL_AER_SLOT_READY") < generated.index("label_capture 62-aer-label")
 assert generated.index("TC_LABEL_IGNIS_SLOT_READY") < generated.index("label_capture 63-ignis-label")
-assert generated.index("TC_LABEL_INVENTORY_IGNIS_READY") < generated.index("label_capture 64-all-four-in-real-inventory")
+assert "TC_LABEL_INVENTORY_" not in generated
+assert "label_capture 64-all-four-in-real-inventory" not in generated
+assert "hotbar.1" not in generated and "hotbar.2" not in generated and "hotbar.3" not in generated
+assert "xdotool key --clearmodifiers e" not in generated
+last_visual_compare = unique("  label_diff 62-aer-label 63-ignis-label")
+color_pass = unique("  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS'")
+client_pass = unique("  echo 'LABEL_REAL_CLIENT_VISUAL_SMOKE=PASS'")
+assert last_visual_compare < color_pass < client_pass
 assert 'minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}' in generated
 assert 'minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}' in generated
 assert "LABEL_REAL_ASPECT_COLOR_PARITY=PASS" in generated

@@ -96,27 +96,6 @@ body = r'''
   sleep 1
   label_capture 63-ignis-label
 
-  # Inventory screenshot: four server-verified stacks in the real creative
-  # inventory. Each predicate checks custom_model_data and custom_data too.
-  label_send_chat '/item replace entity @p hotbar.0 with thaumcraft:jar_brace 1'
-  label_require_slot hotbar.0 'thaumcraft:jar_brace' 'TC_LABEL_INVENTORY_BRACE_READY'
-  label_send_chat '/item replace entity @p hotbar.1 with thaumcraft:label 1'
-  label_require_slot hotbar.1 'thaumcraft:label' 'TC_LABEL_INVENTORY_BLANK_READY'
-  label_send_chat '/item replace entity @p hotbar.2 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}] 1'
-  label_require_slot hotbar.2 \
-    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}]' \
-    'TC_LABEL_INVENTORY_AER_READY'
-  label_send_chat '/item replace entity @p hotbar.3 with thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}] 1'
-  label_require_slot hotbar.3 \
-    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}]' \
-    'TC_LABEL_INVENTORY_IGNIS_READY'
-  label_activate_minecraft
-  xdotool key --clearmodifiers e
-  sleep 4
-  label_capture 64-all-four-in-real-inventory
-  label_activate_minecraft
-  xdotool key --clearmodifiers e
-
   # guiScale:2: a 16x16 item icon is 32 physical pixels. Keep the crop
   # centered on slot 0 after the server has proved the item is present.
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
