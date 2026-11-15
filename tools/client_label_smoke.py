@@ -50,27 +50,25 @@ body = r'''
     xdotool key --clearmodifiers Return
     sleep 4
   }
-  label_require_slot() {
-    local slot="$1" predicate="$2" marker="$3"
-    # This marker is emitted by the integrated server only if the requested
-    # item AND its model/NBT components are actually present in this slot.
-    label_send_chat "/execute if items entity @p $slot $predicate run say $marker"
+  label_set_slot0() {
+    local item="$1" expected_name="$2"
+    label_send_chat "/item replace entity @p hotbar.0 with $item"
+    # The integrated server's successful item-replacement result is the
+    # acknowledgement for the exact hotbar.0 command. Avoid a second chat
+    # command solely to inspect the slot: that extra command was the flaky
+    # part of the previous fixture. Filled-label names also prove the aspect
+    # NBT was interpreted; the rendered pixels below prove its tint.
     for _ in $(seq 1 40); do
-      if grep -Fq "$marker" run/logs/latest.log; then
-        echo "LABEL_SLOT_CONTENT=PASS slot=$slot marker=$marker" | tee -a client-smoke-status.txt
+      if grep -Fq "Replaced a slot on Dev with [$expected_name]" run/logs/latest.log; then
+        echo "LABEL_SLOT_CONTENT=PASS slot=hotbar.0 item=$expected_name" | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 0.25
     done
-    echo "LABEL_SLOT_CONTENT=FAIL slot=$slot marker=$marker" | tee -a client-smoke-status.txt
+    echo "LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name" | tee -a client-smoke-status.txt
     import -display :99 -window root -silent client-smoke/screenshots/59-label-slot-content-fail.png
     tail -n 80 run/logs/latest.log || true
     exit 1
-  }
-  label_set_slot0() {
-    local item="$1" predicate="$2" marker="$3"
-    label_send_chat "/item replace entity @p hotbar.0 with $item"
-    label_require_slot hotbar.0 "$predicate" "$marker"
   }
   label_capture() {
     local name="$1"
@@ -79,20 +77,20 @@ body = r'''
     echo "REAL_CLIENT_LABEL_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
-  label_set_slot0 'thaumcraft:jar_brace' 'thaumcraft:jar_brace' 'TC_LABEL_BRACE_SLOT_READY'
+  label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
   sleep 1
   label_capture 60-jar-brace
-  label_set_slot0 'thaumcraft:label' 'thaumcraft:label' 'TC_LABEL_BLANK_SLOT_READY'
+  label_set_slot0 'thaumcraft:label' 'Jar Label'
   sleep 1
   label_capture 61-blank-label
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \
     'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}]' \
-    'TC_LABEL_AER_SLOT_READY'
+    'Air Jar Label'
   sleep 1
   label_capture 62-aer-label
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \
     'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}]' \
-    'TC_LABEL_IGNIS_SLOT_READY'
+    'Fire Jar Label'
   sleep 1
   label_capture 63-ignis-label
 

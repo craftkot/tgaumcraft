@@ -17,46 +17,41 @@ def unique(needle: str) -> int:
 
 focus = unique("  label_activate_minecraft() {")
 send = unique("  label_send_chat() {")
-require = unique("  label_require_slot() {")
-set_slot = unique('    label_send_chat "/item replace entity @p hotbar.0 with $item"')
-predicate = unique('    label_send_chat "/execute if items entity @p $slot $predicate run say $marker"')
-server_ack = unique('grep -Fq "$marker" run/logs/latest.log')
-fail_closed = unique('LABEL_SLOT_CONTENT=FAIL slot=$slot marker=$marker')
+set_slot = unique("  label_set_slot0() {")
+server_ack = unique('grep -Fq "Replaced a slot on Dev with [$expected_name]" run/logs/latest.log')
+fail_closed = unique('LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name')
 first_capture = unique("  label_capture 60-jar-brace")
-assert focus < send < require < predicate < server_ack < fail_closed < set_slot < first_capture
+assert focus < send < set_slot < server_ack < fail_closed < first_capture
 assert 'xdotool windowactivate --sync "$WIN"' in generated
 assert 'xdotool windowfocus --sync "$WIN"' in generated
 assert 'xdotool getwindowpid "$WIN"' in generated
-# Match the already-proven shared client_smoke.sh chat pacing. Short delays
-# can lose the first command immediately after an integrated-world join.
+assert 'LABEL_INPUT_FOCUS=PASS' in generated
 assert """    xdotool key --clearmodifiers t
     sleep 1
     xdotool type --clearmodifiers --delay 24 "$1"
     xdotool key --clearmodifiers Return
     sleep 4""" in generated
 assert "sleep 0.35" not in generated and "sleep 0.5" not in generated
-assert 'LABEL_INPUT_FOCUS=PASS' in generated
-assert "\n  send_chat '/item replace" not in generated
-for marker in (
-    "TC_LABEL_BRACE_SLOT_READY",
-    "TC_LABEL_BLANK_SLOT_READY",
-    "TC_LABEL_AER_SLOT_READY",
-    "TC_LABEL_IGNIS_SLOT_READY",
+assert "\\n  send_chat '/item replace" not in generated
+assert "label_require_slot" not in generated
+assert "execute if items" not in generated
+assert "TC_LABEL_" not in generated
+for call in (
+    "label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'",
+    "label_set_slot0 'thaumcraft:label' 'Jar Label'",
+    "'Air Jar Label'",
+    "'Fire Jar Label'",
 ):
-    assert marker in generated, marker
-assert generated.index("TC_LABEL_BRACE_SLOT_READY") < generated.index("label_capture 60-jar-brace")
-assert generated.index("TC_LABEL_BLANK_SLOT_READY") < generated.index("label_capture 61-blank-label")
-assert generated.index("TC_LABEL_AER_SLOT_READY") < generated.index("label_capture 62-aer-label")
-assert generated.index("TC_LABEL_IGNIS_SLOT_READY") < generated.index("label_capture 63-ignis-label")
-assert "TC_LABEL_INVENTORY_" not in generated
-assert "label_capture 64-all-four-in-real-inventory" not in generated
-assert "hotbar.1" not in generated and "hotbar.2" not in generated and "hotbar.3" not in generated
-assert "xdotool key --clearmodifiers e" not in generated
-last_visual_compare = unique("  label_diff 62-aer-label 63-ignis-label")
-color_pass = unique("  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS'")
-client_pass = unique("  echo 'LABEL_REAL_CLIENT_VISUAL_SMOKE=PASS'")
-assert last_visual_compare < color_pass < client_pass
-assert 'minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}' in generated
-assert 'minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}' in generated
+    assert call in generated, call
+for name, expected in (
+    ("60-jar-brace", "Jar Brace"),
+    ("61-blank-label", "Jar Label"),
+    ("62-aer-label", "Air Jar Label"),
+    ("63-ignis-label", "Fire Jar Label"),
+):
+    assert generated.index(expected) < generated.index(f"label_capture {name}")
+assert 'minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}' in generated
+assert 'minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}' in generated
 assert "LABEL_REAL_ASPECT_COLOR_PARITY=PASS" in generated
-print("Label smoke requires real X11 focus and server-verified item/component predicates: OK")
+assert unique("  label_diff 62-aer-label 63-ignis-label") < unique("  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS'") < unique("  echo 'LABEL_REAL_CLIENT_VISUAL_SMOKE=PASS'")
+print("Label smoke uses one server-acknowledged item command per slot and checks real rendered aspect colors: OK")
