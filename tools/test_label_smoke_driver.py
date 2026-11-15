@@ -43,12 +43,12 @@ assert """LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
   label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
   LABEL_CAPTURE_INPUT_DIAGNOSTICS=0""" in generated
 assert "sleep 0.35" not in generated and "sleep 0.5" not in generated
-channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\\n  label_require_command_channel\\n\\n  # Capture the first chat transition")
+channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
 assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
 assert unique("grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log") < channel_handshake
 assert unique("label_capture 58a-label-command-before-submit") < unique("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS") < unique("xdotool key --clearmodifiers Return")
 assert unique("xdotool key --clearmodifiers Return") < unique("LABEL_COMMAND_RETURN_SENT=YES")
-assert "label_activate_minecraft\\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS'" in generated
+assert "label_activate_minecraft\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS'" in generated
 assert "\\n  send_chat '/item replace" not in generated
 assert "label_require_slot" not in generated
 assert "execute if items" not in generated
