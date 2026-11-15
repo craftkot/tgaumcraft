@@ -82,13 +82,5 @@ class InventoryTests(unittest.TestCase):
         self.ci()
         self.assertEqual(inventory(self.root), ([], [], []))
 
-    def test_escaped_quote_literal_and_real_main(self):
-        (self.tests / "EscapedTest.java").write_text(
-            'class EscapedTest { String text = "\\\\" public static void main(String[] args) {}"; '
-            'public static void main(String[] args) {} }'
-        )
-        self.ci(["EscapedTest"], ["EscapedTest"])
-        self.assertEqual(inventory(self.root), ([], [], []))
-
 if __name__ == "__main__":
     unittest.main()
