@@ -55,4 +55,32 @@ matcher_source = Path("tools/match_dust_audio_pcm.py").read_text()
 assert "MIN_CORRELATION = 0.20" in matcher_source
 assert "MIN_MARGIN = 0.08" in matcher_source
 assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
-print("Salis quiet client categories, clean PCM baseline gate, screenshot ordering and unchanged waveform thresholds: PASS")
+
+# The first post-world command must be acknowledged by the integrated server.
+# Re-activate the actual window for every send_chat call, not just at title screen.
+assert generated.count('xdotool windowactivate --sync "$WIN"') == 2
+channel_focus = generated.rindex('xdotool windowactivate --sync "$WIN"')
+channel_raise = unique('xdotool windowraise "$WIN"')
+channel_move = unique('xdotool mousemove --window "$WIN" 512 384')
+channel_command = unique("xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'")
+channel_ack = unique("grep -Fq 'TC_SMOKE_COMMAND_CHANNEL_READY' run/logs/latest.log")
+channel_fail = unique("SALIS_COMMAND_CHANNEL=FAIL")
+channel_pass = unique("SALIS_COMMAND_CHANNEL=PASS")
+activate_fn = unique('  activate_minecraft_client() {')
+ensure_fn = unique('  ensure_minecraft_command_channel() {')
+chat_fn = unique('  send_chat() {')
+first_game_command = generated.index("  send_chat '/gamemode creative'", chat_fn)
+assert activate_fn < ensure_fn < chat_fn < first_game_command
+activate_body = generated[activate_fn:ensure_fn]
+assert channel_focus < channel_raise < channel_move
+assert 'sleep 0.25' in activate_body
+ensure_body = generated[ensure_fn:chat_fn]
+assert channel_command < channel_ack < channel_fail < channel_pass
+assert 'for _ in $(seq 1 40)' in ensure_body
+assert 'capture 05f-command-channel-not-ready' in ensure_body
+chat_end = generated.index("\n  }", chat_fn)
+chat_body = generated[chat_fn:chat_end]
+assert chat_body.index('activate_minecraft_client') < chat_body.index('ensure_minecraft_command_channel') < chat_body.index('xdotool key --clearmodifiers t')
+assert 'xdotool type --clearmodifiers --delay 24 "$1"' in chat_body
+
+print("Salis command focus/acknowledgement, quiet client categories, clean PCM baseline gate, screenshot ordering and unchanged waveform thresholds: PASS")
