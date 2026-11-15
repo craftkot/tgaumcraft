@@ -74,6 +74,9 @@ world_login_timeout_replacement = """if [ "$world_started" -ne 1 ]; then
   echo 'RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=END' | tee -a client-smoke-status.txt
   exit 1
 fi"""
+if source.count(world_login_timeout_anchor) != 1:
+    raise SystemExit("Shared player-login timeout changed; refusing unsafe scan-rune diagnostics")
+source = source.replace(world_login_timeout_anchor, world_login_timeout_replacement, 1)
 
 send_chat_anchor = """  send_chat() {
     xdotool key --clearmodifiers t
