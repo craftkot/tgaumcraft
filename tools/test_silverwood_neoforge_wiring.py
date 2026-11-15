@@ -11,7 +11,7 @@ checks = {
     "shared core tree phases": "SilverwoodLegacyTree.place(" in source,
     "blockstate injection": "SilverwoodLegacyFeature(BlockState log, BlockState leaves)" in source,
     "axis mapping": all(s in source for s in ("Direction.Axis.X", "Direction.Axis.Y", "Direction.Axis.Z")),
-    "conditional writes": "setIfReplaceable(level, pos, leaves)" in source
+    "conditional writes": "canReplace(before) && level.setBlock(pos, leaves, 2)" in source
                           and "if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves, ownLeaves))" in source,
     "canopy-first log replacement limited to current attempt": "ownLeaves.contains(pos)" in source
                           and "existing.equals(leavesState)" in source
@@ -27,7 +27,11 @@ checks = {
                           and "placedLogs[0]++;" in source
                           and "final int[] placedLogs = {0};" in source
                           and "placed[0]++;" not in source,
-    "setBlock success propagated": "return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);" in source,
+    "canopy rollback on missing logs": "if (placedLogs[0] == 0)" in source
+                          and "originalLeaves.putIfAbsent(pos, before);" in source
+                          and "level.setBlock(entry.getKey(), entry.getValue(), 2);" in source,
+    "rollback checks unchanged leaf state": "level.getBlockState(entry.getKey()).equals(leaves)" in source,
+    "setBlock success propagated": "canReplace(before) && level.setBlock(pos, leaves, 2)" in source,
     "failed preflight returns false": "return false;" in source,
     "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
 }
