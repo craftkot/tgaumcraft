@@ -31,7 +31,7 @@ def validate_scan_sound_driver():
         [sys.executable, "tools/client_scan_sound_smoke.py"],
         check=True, capture_output=True, text=True,
     ).stdout
-    driver_start = generated.index("  scan_first_command=1")
+    driver_start = generated.index("  focus_scan_window() {")
     driver_end = generated.index("  # Prove the command path", driver_start)
     driver = generated[driver_start:driver_end]
     required_driver = (
