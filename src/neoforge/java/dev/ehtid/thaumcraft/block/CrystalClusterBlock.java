@@ -72,6 +72,14 @@ public final class CrystalClusterBlock extends Block {
         BlockPos pos, CollisionContext context) { return Shapes.empty(); }
     @Override public VoxelShape getShape(BlockState state,BlockGetter level,
         BlockPos pos,CollisionContext context) {
+        // NeoForge's threaded light engine also asks for shapes off the server
+        // thread. This block is noOcclusion with light level 1, so an empty
+        // worker-thread shape preserves light transmission without touching
+        // Level/ServerChunkCache from the lighting worker. Interactive outline
+        // queries on the server thread and client render thread remain exact.
+        if (level instanceof ServerLevel serverLevel && !serverLevel.getServer().isSameThread()) {
+            return Shapes.empty();
+        }
         // BETA26 BlockCrystal#getBoundingBox: a single support face selects
         // its corresponding half-cube; two or more use the full outline.
         boolean up = hasCrystalSupport(level,pos,Direction.UP);
