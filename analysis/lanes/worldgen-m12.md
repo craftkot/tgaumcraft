@@ -99,3 +99,12 @@
 - CI для исходного HEAD `92882e7`: combined status `ci/circleci: verify-connection` = **FAILURE** ([job](https://app.circleci.com/workflow/a1aff789-2a89-45e3-90b7-a0893156d95a/job/1199906a-e2a2-4334-9cbc-f06de5caeeda)); GitHub PR-triggered workflow runs = 0. Причина CircleCI FAILURE без job logs не установлена. Нельзя называть эту ветку CI-green.
 - `git ls-remote` в локальном окружении всё ещё завершается DNS `Could not resolve host: github.com`; точные checkout runners, NeoForge build и Minecraft gameplay в этом подходе не выполнялись. Ранее подтверждённые 314 assertions относятся только к локальной репродукции, не к exact checkout.
 - **Следующий шаг:** извлечь исходные BETA26 правила Silverwood/Greatwood, создать минимальный собственный NeoForge feature/placed-feature путь с guard и тестами новых чанков, согласовать изменение общих registries отдельным PR. Индекс 59/100 не менять.
+
+
+## 15.11.2026 — M12.1, исходный аудит Silverwood/Greatwood
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md и свой lane; проверены HEAD `383f446` до записи, ветки и 9 открытых PR; Draft PR #9 остаётся открытым, без merge.
+- Извлечены архивные Java 1.12 исходники `ThaumcraftWorldGenerator`, `WorldGenSilverwoodTrees`, `WorldGenGreatwoodTrees` из стороннего репозитория SpencerGraffunder/Thaumcraft26 (reference/java_old-1.12). Результат: документ [worldgen-m12-source-audit.md](worldgen-m12-source-audit.md), commit [773a511](https://github.com/craftkot/tgaumcraft/commit/773a511aaa790a6193c44ca57e70712364847442).
+- Установлены исходные попытки 1/80 (Silverwood), 1/25 (Greatwood), смещение центра чанка +/-4, отдельные biome predicates, Silverwood высота 7..10, Greatwood 2x2 trunk, spider flag 1/8. Отмечено, что современный `rarity_filter + in_square` из другого порта не обеспечивает идентичного RNG/позиционного паритета.
+- Это **анализ архивной копии**, а не проверка идентичности с оригинальным BETA26 JAR; никаких новых игровых features, тестовых PASS, full NeoForge или Minecraft smoke в этом запуске нет. CI предыдущего HEAD: `ci/circleci: verify-connection` FAILURE, причина без логов неизвестна. Общая готовность остаётся 59/100.
+- Следующий шаг: реализовать первый реальный Silverwood Feature consumer в собственном namespace, затем согласовать отдельную регистрацию, проверить точный checkout/NeoForge и генерацию новых чанков. Общие регистры, main и чужие ветки не изменены.
