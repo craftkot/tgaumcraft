@@ -11,6 +11,43 @@ from scan_rune_log_parser import parse_scan_rune_log
 import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
+send_chat_anchor = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+send_chat_replacement = """  send_chat() {
+    local raw_command="$1"
+    if [[ "$raw_command" != /* ]]; then
+      echo "RUNE_CHAT_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    local command_body="${raw_command#/}"
+    local active_window focused_window target_pid
+    xdotool windowactivate --sync "$WIN"
+    xdotool windowfocus --sync "$WIN"
+    active_window="$(xdotool getactivewindow)"
+    focused_window="$(xdotool getwindowfocus)"
+    target_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+    echo "RUNE_CHAT_INPUT_TARGET=$WIN active=$active_window focus=$focused_window pid=$target_pid" | tee -a client-smoke-status.txt
+    if [[ "$active_window" != "$WIN" || "$focused_window" != "$WIN" || -z "$target_pid" ]]; then
+      echo "RUNE_CHAT_INPUT_FOCUS=FAIL command=$raw_command" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    xdotool key --clearmodifiers slash
+    sleep 0.5
+    xdotool type --clearmodifiers --delay 24 "$command_body"
+    sleep 0.5
+    echo "RUNE_CHAT_COMMAND_TEXT=$raw_command" | tee -a client-smoke-status.txt
+    xdotool key --clearmodifiers Return
+    echo "RUNE_CHAT_RETURN_SENT=YES" | tee -a client-smoke-status.txt
+    sleep 4
+  }"""
+if source.count(send_chat_anchor) != 1:
+    raise SystemExit("Shared chat sender changed; refusing unsafe scan-rune replacement")
+source = source.replace(send_chat_anchor, send_chat_replacement, 1)
 anchor = "  # The initial world is already creative + peaceful, as established"
 if source.count(anchor) != 1:
     raise SystemExit("World boot hook changed; refusing unsafe smoke injection")
@@ -25,7 +62,7 @@ body = r'''
   # /fill and /setblock were rejected with "That position is not loaded",
   # leaving the Thaumometer pointing at empty water. Force-load FIRST,
   # then require an actual vanilla block predicate before any right-click.
-  send_chat '/forceload add 0 0'
+  send_chat '/forceload add -4 149 -4 4 149 10'
   sleep 5
   target_ready=0
   for attempt in 1 2 3; do

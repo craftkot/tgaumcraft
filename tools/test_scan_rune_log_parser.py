@@ -44,3 +44,23 @@ fixture_checks = [
 ]
 assert all(fixture_checks), f"scan-rune fixture checks failed: {fixture_checks}"
 print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=8")
+# The isolated runner must not inherit the shared smoke's unverified chat sender.
+shared_smoke = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
+shared_sender = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+assert shared_smoke.count(shared_sender) == 1
+sender_body = generated.split("  send_chat() {", 1)[1].split("\n  }", 1)[0]
+assert 'xdotool windowactivate --sync "$WIN"' in sender_body
+assert 'xdotool windowfocus --sync "$WIN"' in sender_body
+assert 'xdotool getactivewindow' in sender_body and 'xdotool getwindowfocus' in sender_body
+assert 'xdotool key --clearmodifiers slash' in sender_body
+assert 'xdotool key --clearmodifiers t' not in sender_body
+assert 'RUNE_CHAT_INPUT_FOCUS=FAIL' in sender_body
+assert "send_chat '/forceload add -4 149 -4 4 149 10'" in generated
+assert "send_chat '/forceload add 0 0'" not in generated
+print("SCAN_RUNE_CHAT_INPUT=PASS assertions=9")
