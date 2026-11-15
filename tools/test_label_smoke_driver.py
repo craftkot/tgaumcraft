@@ -35,6 +35,9 @@ assert """    xdotool key --clearmodifiers t
     if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
       sleep 1
       label_capture 58a-label-command-before-submit
+      # Restore and verify the Minecraft window after capturing the X11 root.
+      label_activate_minecraft
+      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS' | tee -a client-smoke-status.txt
     fi
     xdotool key --clearmodifiers Return
     sleep 4""" in generated
