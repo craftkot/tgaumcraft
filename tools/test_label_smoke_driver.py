@@ -10,46 +10,55 @@ generated = subprocess.run(
 ).stdout
 subprocess.run(["bash", "-n"], input=generated, text=True, check=True)
 
+
 def unique(needle: str) -> int:
     count = generated.count(needle)
     assert count == 1, (needle, count)
     return generated.index(needle)
+
 
 focus = unique("  label_activate_minecraft() {")
 send = unique("  label_send_chat() {")
 set_slot = unique("  label_set_slot0() {")
 server_ack = unique('grep -Fq "Replaced a slot on Dev with [$expected_name]" run/logs/latest.log')
 fail_closed = unique('LABEL_SLOT_CONTENT=FAIL slot=hotbar.0 item=$expected_name')
-first_capture = unique("  label_capture 60-jar-brace")
+first_capture = unique("label_capture 60-jar-brace")
 assert focus < send < set_slot < server_ack < fail_closed < first_capture
+
 assert 'xdotool windowactivate --sync "$WIN"' in generated
 assert 'xdotool windowfocus --sync "$WIN"' in generated
 assert 'xdotool getwindowpid "$WIN"' in generated
-assert 'LABEL_INPUT_FOCUS=PASS' in generated
+assert "LABEL_INPUT_FOCUS=PASS" in generated
+
 send_body = generated[send:set_slot]
 assert send_body.count("label_activate_minecraft") == 2
 send_sequence = (
     send_body.index("label_activate_minecraft"),
     send_body.index("xdotool key --clearmodifiers t"),
-    send_body.index("label_capture 58-label-chat-open"),
+    send_body.index('label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}-label-chat-open"'),
     send_body.index('xdotool type --clearmodifiers --delay 24 "$1"'),
-    send_body.index("label_capture 58a-label-command-before-submit"),
+    send_body.index('label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}a-label-command-before-submit"'),
     send_body.rindex("label_activate_minecraft"),
     send_body.index("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS"),
     send_body.index("xdotool key --clearmodifiers Return"),
-    send_body.index("sleep 4"),
+    send_body.index("LABEL_COMMAND_RETURN_SENT=YES"),
+    send_body.index("sleep 0.5"),
+    send_body.index('label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"'),
+    send_body.index("sleep 3.5"),
 )
 assert list(send_sequence) == sorted(send_sequence), send_sequence
-assert "sleep 0.25\n    local active focused" not in generated
-assert """LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
-  label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
-  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0""" in generated
-assert "sleep 0.35" not in generated and "sleep 0.5" not in generated
+assert "else\n      sleep 4\n    fi" in send_body
+
+assert "sleep 0.35" not in generated
+assert 'LABEL_CAPTURE_INPUT_DIAGNOSTICS=1\n  LABEL_DIAGNOSTIC_PREFIX=58\n  label_set_slot0 \'thaumcraft:jar_brace\' \'Jar Brace\'\n  sleep 1\n  label_capture 60-jar-brace\n  LABEL_DIAGNOSTIC_PREFIX=59\n  label_set_slot0 \'thaumcraft:label\' \'Jar Label\'\n  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0' in generated
+assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"' in generated
+
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
 assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
 assert unique("grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log") < channel_handshake
+
 return_command = unique("    xdotool key --clearmodifiers Return\n    echo 'LABEL_COMMAND_RETURN_SENT=YES'")
-assert unique("label_capture 58a-label-command-before-submit") < unique("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS") < return_command
+assert unique('label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}a-label-command-before-submit"') < unique("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS") < return_command
 assert return_command < unique("LABEL_COMMAND_RETURN_SENT=YES")
 assert "label_activate_minecraft\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS'" in generated
 assert "\\n  send_chat '/item replace" not in generated
@@ -57,6 +66,7 @@ assert "label_require_slot" not in generated
 assert "execute if items" not in generated
 assert generated.count("TC_LABEL_COMMAND_CHANNEL_READY") == 2
 assert "TC_LABEL_" not in generated.replace("TC_LABEL_COMMAND_CHANNEL_READY", "")
+
 aer_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \\
     'Air Jar Label'"""
 ignis_call = """label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \\
@@ -82,4 +92,5 @@ assert 'minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}' in generated
 assert 'minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}' in generated
 assert "LABEL_REAL_ASPECT_COLOR_PARITY=PASS" in generated
 assert unique("  label_diff 62-aer-label 63-ignis-label") < unique("  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS'") < unique("  echo 'LABEL_REAL_CLIENT_VISUAL_SMOKE=PASS'")
-print("Label smoke proves the command channel, restores Minecraft focus after capture, and checks real rendered aspect colors: OK")
+
+print("Label smoke captures each command's immediate chat feedback and preserves fail-closed slot checks: OK")

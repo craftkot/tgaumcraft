@@ -48,12 +48,12 @@ body = r'''
     xdotool key --clearmodifiers t
     sleep 1
     if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
-      label_capture 58-label-chat-open
+      label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}-label-chat-open"
     fi
     xdotool type --clearmodifiers --delay 24 "$1"
     if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
       sleep 1
-      label_capture 58a-label-command-before-submit
+      label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}a-label-command-before-submit"
       # Capturing the root window is outside Minecraft's GLFW event loop.
       # Restore and verify the real game's X11 focus before submitting Enter.
       label_activate_minecraft
@@ -61,7 +61,14 @@ body = r'''
     fi
     xdotool key --clearmodifiers Return
     echo 'LABEL_COMMAND_RETURN_SENT=YES' | tee -a client-smoke-status.txt
-    sleep 4
+    if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
+      # Preserve the server's immediate command feedback before the chat HUD fades.
+      sleep 0.5
+      label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"
+      sleep 3.5
+    else
+      sleep 4
+    fi
   }
   label_set_slot0() {
     local item="$1" expected_name="$2"
@@ -112,11 +119,16 @@ body = r'''
   # server does not acknowledge the item replacement, these two frames
   # distinguish a missing chat-open event from failed text/Enter delivery.
   LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
+  LABEL_DIAGNOSTIC_PREFIX=58
   label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
-  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 60-jar-brace
+  # The first command succeeds, but the next label replacement currently
+  # fails without a visible server acknowledgement. Capture its exact input
+  # and immediate chat feedback before changing any production registration.
+  LABEL_DIAGNOSTIC_PREFIX=59
   label_set_slot0 'thaumcraft:label' 'Jar Label'
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 61-blank-label
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \
