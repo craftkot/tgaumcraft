@@ -26,7 +26,8 @@ body = r'''
     xdotool windowraise "$WIN"
     xdotool windowfocus --sync "$WIN"
     xdotool mousemove --window "$WIN" 512 384
-    sleep 0.25
+    # Let GLFW process the focus transition before synthetic keyboard input.
+    sleep 1
     local active focused game_pid active_pid focused_pid
     active="$(xdotool getactivewindow 2>/dev/null || true)"
     focused="$(xdotool getwindowfocus 2>/dev/null || true)"
@@ -46,7 +47,14 @@ body = r'''
     label_activate_minecraft
     xdotool key --clearmodifiers t
     sleep 1
+    if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
+      label_capture 58-label-chat-open
+    fi
     xdotool type --clearmodifiers --delay 24 "$1"
+    if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
+      sleep 1
+      label_capture 58a-label-command-before-submit
+    fi
     xdotool key --clearmodifiers Return
     sleep 4
   }
@@ -77,19 +85,22 @@ body = r'''
     echo "REAL_CLIENT_LABEL_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
+  # Capture the first chat transition and fully typed command. If the
+  # server does not acknowledge the item replacement, these two frames
+  # distinguish a missing chat-open event from failed text/Enter delivery.
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
   label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
+  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
   sleep 1
   label_capture 60-jar-brace
   label_set_slot0 'thaumcraft:label' 'Jar Label'
   sleep 1
   label_capture 61-blank-label
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}]' \
-    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"aer",amount:1}]}]' \
     'Air Jar Label'
   sleep 1
   label_capture 62-aer-label
   label_set_slot0 'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}]' \
-    'thaumcraft:label[minecraft:custom_model_data=1,minecraft:custom_data~{Aspects:[{key:"ignis",amount:1}]}]' \
     'Fire Jar Label'
   sleep 1
   label_capture 63-ignis-label
