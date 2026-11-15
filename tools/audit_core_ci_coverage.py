@@ -16,10 +16,10 @@ JAVA_TOKENS = re.compile(r"""//[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"|'(?:\\.|[
 
 
 def uncommented_java(source):
-    """Mask comments and literals before scanning for a Java main declaration."""
+    """Mask comments, strings and character literals before finding a Java main."""
     def mask(match):
         token = match.group(0)
-        if token.startswith("//") or token.startswith("/*"):
+        if token.startswith(("//", "/*", "\"", "'")):
             return re.sub(r"[^\n]", " ", token)
         return token
     return JAVA_TOKENS.sub(mask, source)
