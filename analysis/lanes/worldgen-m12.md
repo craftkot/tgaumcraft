@@ -201,3 +201,12 @@
 - Fixed only the owned M12 test script: [26ef715](https://github.com/craftkot/tgaumcraft/commit/26ef7153ec4d3e3c48dc20dffa7a6b71ece163c3) now checks both guarded leaf and log write call sites. This is a test-maintenance change, **not a new worldgen mechanic or evidence of compilation**.
 - CI for 26ef715: CircleCI verify-connection PENDING at inspection (https://app.circleci.com/workflow/1dcd7a4a-a367-4a95-a5fb-b310b994dbd2/job/730184e6-acf9-41bf-a604-fc7141382aaf). Exact-checkout Python runner, full NeoForge compile, and Minecraft new-chunk smoke NOT executed: local git ls-remote still fails DNS resolution of github.com. No PASS claimed.
 - Next: run the corrected script against exact checkout, then compile SilverwoodLegacyFeature with NeoForge, validate block-state injection, and coordinate shared feature/biome registration. Main, other lanes, shared registries and Gradle untouched; historical 59/100 unchanged.
+
+
+## 15.11.2026 — M12.1, repair Python syntax in wiring guard
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (62 ahead, 0 behind before write), inspected open PRs and branch inventory. Draft PR #9 remains open, unmerged.
+- Discovered a **literal backslash-n** embedded in tools/test_silverwood_neoforge_wiring.py after the previous test maintenance edit: `in source\\n                          and`. This is invalid Python syntax, so the source-level wiring guard could not run at all.
+- Fixed the owned script by replacing that escaped text with a real line break in commit bcb392ac87fc4b64bedd849ba2146f40877bc725. No gameplay production code, shared registry, Gradle, main or other lane modified.
+- The fix was confirmed by inspecting the GitHub file content before write; exact-checkout execution, Python syntax compile, NeoForge build and Minecraft new-chunk smoke remain **unverified**. Local git ls-remote continues to fail DNS resolution of github.com. No PASS claimed.
+- Next: execute python3 tools/test_silverwood_neoforge_wiring.py on an exact checkout, then compile the isolated NeoForge Silverwood Feature, resolve any API issues and coordinate feature/biome registration before new-chunk gameplay tests. Historical 59/100 unchanged.
