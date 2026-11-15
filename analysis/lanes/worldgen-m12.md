@@ -71,3 +71,12 @@
 - Регрессии [4b474fd](https://github.com/craftkot/tgaumcraft/commit/4b474fd05d95ffc4a8bce70ac62cc36ef04ed103): два запрещённых out-of-world origin с формально допустимыми footprints и один допустимый near-ceiling origin. Ожидаемое количество height assertions теперь **22**, не подтверждённый PASS.
 - Точное исполнение файлов из GitHub checkout и полный NeoForge build в этом подходе не выполнены: окружение `git ls-remote` вернуло `Could not resolve host: github.com`. Новые CI/GameTest/worldgen smoke не подтверждены. Это исправление loader-neutral helper, **не реальная генерация деревьев**.
 - Следующий приоритет: получить исходники worldgen и оригинальные BETA26 biome/frequency rules, внедрить один узкий реальный placement hook, выполнить Java 21 + NeoForge + генерацию новых чанков. Индекс 59/100 без изменения.
+
+
+## 15.11.2026 — M12.1, единый preflight размещения
+
+- Перечитаны актуальные main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md и собственный lane; просмотрены ветки и восемь открытых PR. Сравнение main...feature/worldgen-m12 перед записью журнала: ahead 21, behind 0; изменения только в собственных M12 core/test/tools/lane файлах.
+- Production [c95324c](https://github.com/craftkot/tgaumcraft/commit/c95324c219bb2a2ff349751e7d7372e75c749363): WorldgenPlacementGate.mayAttempt объединяет проверки нового/доступного чанка, принадлежности origin и вертикального footprint. Не делает world reads, chunk loads или мутаций.
+- Regression [076bd60](https://github.com/craftkot/tgaumcraft/commit/076bd60716d71e1a6d9d7780b312f6fd38bbe682): 314 deterministic assertions (8 flag combinations + 300 coordinate/neighbor cases + 6 vertical/extreme cases); runner [55f14fc](https://github.com/craftkot/tgaumcraft/commit/55f14fcbb4038fbc7063fe49f8596fa77929949a): bash tools/test_worldgen_placement_gate.sh (javac --release 21).
+- Проверка GitHub по 55f14fc: combined statuses пуст, PR-triggered workflow runs пуст. **Тесты не запускались в этом подходе**, PASS не заявлен; не подтверждены full NeoForge compile и настоящий Minecraft worldgen. Класс пока не вызван из реального worldgen feature; оригинальные BETA26 biome/chance/terrain правила не проверены. 59/100 без изменения.
+- Следующий шаг: аудит настоящих M12 NeoForge feature/placed-feature классов и BETA26 генераторов, подключение preflight к одному конкретному оригинальному placement path без правки чужих registries; запуск точного runner и Minecraft smoke новых чанков.
