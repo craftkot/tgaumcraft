@@ -4625,3 +4625,10 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 ### 2026-11-15 — scan-rune regression import correction
 
 - Before the exact-head CI completed, static review of the newly extended `tools/test_scan_rune_log_parser.py` found that the new `Path(...)` assertion lacked its import. Added `from pathlib import Path`; no gameplay result is claimed and the client workflow must still prove the fixture reaches the target.
+
+
+### 2026-11-15 — scan-rune input regression follow-up
+
+- The first exact-head run [#43740378601](https://github.com/craftkot/tgaumcraft/actions/runs/43740378601) executed the orientation and log-parser checks, then failed in the newly added fixture assertion with `NameError: Path is not defined`; Minecraft was not launched. Added the missing `pathlib.Path` import in commit `e6c9eaf`.
+- Extended the isolated sender to verify that the game window remains both active and focused after each submitted command, not only before it. The regression now checks the post-submit focus gate and its ordering after Return. This provides an early, explicit failure if a command sequence loses focus between chat submissions.
+- No Java/gameplay code or shared smoke script changed. Exact-head client rerun is triggered by the sender change; the next result must reach the target markers before any particle behavior is evaluated.

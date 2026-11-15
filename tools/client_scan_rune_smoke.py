@@ -44,6 +44,14 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers Return
     echo "RUNE_CHAT_RETURN_SENT=YES" | tee -a client-smoke-status.txt
     sleep 4
+    local post_active_window post_focused_window
+    post_active_window="$(xdotool getactivewindow)"
+    post_focused_window="$(xdotool getwindowfocus)"
+    if [[ "$post_active_window" != "$WIN" || "$post_focused_window" != "$WIN" ]]; then
+      echo "RUNE_CHAT_POST_SUBMIT_FOCUS=FAIL command=$raw_command active=$post_active_window focus=$post_focused_window" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    echo "RUNE_CHAT_POST_SUBMIT_FOCUS=PASS" | tee -a client-smoke-status.txt
   }"""
 if source.count(send_chat_anchor) != 1:
     raise SystemExit("Shared chat sender changed; refusing unsafe scan-rune replacement")

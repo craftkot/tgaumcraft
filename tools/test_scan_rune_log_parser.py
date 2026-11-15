@@ -62,6 +62,9 @@ assert 'xdotool getactivewindow' in sender_body and 'xdotool getwindowfocus' in 
 assert 'xdotool key --clearmodifiers slash' in sender_body
 assert 'xdotool key --clearmodifiers t' not in sender_body
 assert 'RUNE_CHAT_INPUT_FOCUS=FAIL' in sender_body
+assert "RUNE_CHAT_POST_SUBMIT_FOCUS=FAIL" in sender_body
+assert "RUNE_CHAT_POST_SUBMIT_FOCUS=PASS" in sender_body
+assert sender_body.index("xdotool key --clearmodifiers Return") < sender_body.index("RUNE_CHAT_POST_SUBMIT_FOCUS=PASS")
 assert "send_chat '/forceload add -4 149 -4 4 149 10'" in generated
 assert "send_chat '/forceload add 0 0'" not in generated
 print("SCAN_RUNE_CHAT_INPUT=PASS assertions=9")
