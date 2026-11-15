@@ -52,14 +52,30 @@ assert list(send_sequence) == sorted(send_sequence), send_sequence
 assert "else\n      sleep 4\n    fi" in send_body
 
 assert "sleep 0.35" not in generated
+def exact_line_positions(expected: str) -> list[int]:
+    positions = []
+    offset = 0
+    for line in generated.splitlines(keepends=True):
+        if line.rstrip("\\r\\n") == expected:
+            positions.append(offset)
+        offset += len(line)
+    return positions
+
+
+diagnostic_enable = exact_line_positions("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1")
+diagnostic_disable = exact_line_positions("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0")
+assert len(diagnostic_enable) == 3, diagnostic_enable
+assert len(diagnostic_disable) == 3, diagnostic_disable
+
 setup_sequence = (
-    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1"),
+    diagnostic_enable[0],
     unique("  LABEL_DIAGNOSTIC_PREFIX=58"),
     unique("  label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'"),
     unique("  label_capture 60-jar-brace"),
     unique("  LABEL_DIAGNOSTIC_PREFIX=59"),
     unique("  label_set_slot0 'thaumcraft:label' 'Jar Label'"),
-    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0"),
+    diagnostic_disable[0],
+    diagnostic_enable[1],
 )
 assert list(setup_sequence) == sorted(setup_sequence), setup_sequence
 assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"' in generated
@@ -69,6 +85,10 @@ aer_end = unique("  label_capture 62-aer-label")
 ignis_start = unique("  LABEL_DIAGNOSTIC_PREFIX=63\n  label_set_slot0 'thaumcraft:label[")
 ignis_end = unique("  label_capture 63-ignis-label")
 assert aer_start < aer_end < ignis_start < ignis_end
+assert (
+    diagnostic_enable[1] < aer_start < aer_end < diagnostic_disable[1]
+    < diagnostic_enable[2] < ignis_start < ignis_end < diagnostic_disable[2]
+)
 
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
 assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
