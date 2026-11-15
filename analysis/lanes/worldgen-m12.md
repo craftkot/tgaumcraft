@@ -236,3 +236,11 @@
 - Production d0501aed44c964de80f1a9e16da6ff3cf314cd58: a tracked successful leaf position is no longer sufficient by itself to authorize log overwrite. The current block must still equal this feature invocation's injected leaf BlockState; otherwise the log writer rejects a stale position unless the current block is ordinarily replaceable. This narrows an intervening-write edge case without changing shared registries.
 - Source regression 023ce3ab08603052a91ebe5557a97f24c5b92652: static guard requires exact leaf-state check and propagation of injected leaf state to the log writer.
 - Tests are source assertions only and not executed against a checkout. Full NeoForge compile, GameTest and Minecraft new-chunk smoke remain unverified; no BETA26 RNG/biome/soil parity claimed. Remaining issue: this still is not transactional worldgen, and Feature is unregistered. Next: exact-checkout Python guard, Java/NeoForge compilation, executable GameTest with pre-existing and intervening block writes, then coordinate registration. Historical audit remains 59/100.
+
+
+## 15.11.2026 — M12.1, regression wiring test repair
+
+- Re-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, this lane, open PRs and `main...feature/worldgen-m12` (before edits: ahead 73, behind 0).
+- Found two stale literal assertions in `tools/test_silverwood_neoforge_wiring.py`: the actual leaf callback uses local `pos`, and log helper now requires `leaves` as a separate argument. Corrected test in commit [`69795f5`](https://github.com/craftkot/tgaumcraft/commit/69795f5e7c2b1da4ae42597643469bdbe3b1d06f).
+- Checked all 15 equivalent source substring predicates against freshly fetched exact GitHub source in connector JavaScript: **15/15 true**. This is **not** execution of the Python runner, not NeoForge compilation, not Minecraft GameTest. No gameplay implementation changes in this iteration.
+- Remaining: execute exact Python runner and Java 21 runners from checkout; compile full NeoForge; coordinate feature registration and test real new chunks. Draft PR #9 remains unmerged. No shared registries, Gradle, main or other branches touched; audit index 59/100 unchanged.
