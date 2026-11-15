@@ -46,26 +46,49 @@ body = r'''
     fi
     echo "SCAN_SOUND_CHAT_FOCUS=PASS window=$scan_chat_window" | tee -a client-smoke-status.txt
   }
+  scan_first_command=1
   send_scan_chat() {
-    local chat_command="$1"
+    local raw_command="$1"
+    if [[ "$raw_command" != /* ]]; then
+      echo "SCAN_SOUND_COMMAND_MISSING_SLASH=YES command=$raw_command" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    local command_body="${raw_command#/}"
     focus_scan_window || exit 1
-    echo "SCAN_SOUND_CHAT_TARGET=$scan_chat_window command=${chat_command%% *}" | tee -a client-smoke-status.txt
-    xdotool key --clearmodifiers t
+    echo "SCAN_SOUND_CHAT_TARGET=$scan_chat_window command=${command_body%% *}" | tee -a client-smoke-status.txt
+    # Match the proven Workbench driver: Slash opens the command-entry screen
+    # with its prefix already present. Typing a leading slash after T is less
+    # reliable in this X11/GLFW client and previously produced no server ack.
+    xdotool key --clearmodifiers slash
     sleep 1
-    xdotool type --clearmodifiers --delay 24 "$chat_command"
+    if [[ "$scan_first_command" -eq 1 ]]; then
+      import -display :99 -window root -silent client-smoke/screenshots/80a-scan-chat-open.png
+    fi
+    xdotool type --clearmodifiers --delay 24 "$command_body"
+    sleep 1
+    if [[ "$scan_first_command" -eq 1 ]]; then
+      import -display :99 -window root -silent client-smoke/screenshots/80b-scan-chat-text-before-enter.png
+    fi
     xdotool key --clearmodifiers Return
     sleep 4
+    if [[ "$scan_first_command" -eq 1 ]]; then
+      import -display :99 -window root -silent client-smoke/screenshots/80c-scan-chat-submit-result.png
+      scan_first_command=0
+    fi
   }
   wait_for_scan_marker() {
     local marker="$1"
     for attempt in {1..12}; do
-      if grep -Fq "$marker" client-smoke/client.log; then
+      # latest.log is the integrated server's authoritative log; do not use
+      # the Gradle client stdout stream as a substitute for server execution.
+      if grep -Fq "$marker" run/logs/latest.log; then
         echo "SCAN_SOUND_MARKER_SEEN=$marker" | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 1
     done
     echo "SCAN_SOUND_MARKER_MISSING=$marker" | tee -a client-smoke-status.txt
+    tail -80 run/logs/latest.log >&2
     import -display :99 -window root -silent client-smoke/screenshots/90-scan-sound-marker-missing.png
     exit 1
   }
