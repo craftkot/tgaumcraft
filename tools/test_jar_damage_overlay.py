@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Reject low-amplitude frame noise and accept a high-contrast crack-like overlay."""
+"""Keep strict overlay verification and non-gating diagnostic behavior separate."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from verify_jar_damage_overlay import changed_pixels, verify
+from verify_jar_damage_overlay import changed_pixels, diagnose, verify
 
 WIDTH = HEIGHT = 220
 PIXELS = WIDTH * HEIGHT
@@ -36,6 +36,8 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
 
     assert changed_pixels(before, noisy) == 0, "low-amplitude frame noise must be ignored"
     assert changed_pixels(before, cracked) >= 60, "high-contrast crack pixels must remain visible"
+    assert diagnose(before, noisy) == 0, "diagnostic mode must report a missing overlay without failing"
+    assert diagnose(before, cracked) >= 60, "diagnostic mode must report a visible overlay"
     try:
         verify(before, noisy)
     except SystemExit as exc:
