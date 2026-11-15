@@ -45,10 +45,10 @@ body = r'''
   label_send_chat() {
     label_activate_minecraft
     xdotool key --clearmodifiers t
-    sleep 0.35
+    sleep 1
     xdotool type --clearmodifiers --delay 24 "$1"
     xdotool key --clearmodifiers Return
-    sleep 0.5
+    sleep 4
   }
   label_require_slot() {
     local slot="$1" predicate="$2" marker="$3"

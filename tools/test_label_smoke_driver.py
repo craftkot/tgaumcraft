@@ -27,6 +27,11 @@ assert focus < send < require < predicate < server_ack < fail_closed < set_slot 
 assert 'xdotool windowactivate --sync "$WIN"' in generated
 assert 'xdotool windowfocus --sync "$WIN"' in generated
 assert 'xdotool getwindowpid "$WIN"' in generated
+# Match the already-proven shared client_smoke.sh chat pacing. Short delays
+# can lose the first command immediately after an integrated-world join.
+assert 'xdotool key --clearmodifiers t\\n    sleep 1\\n    xdotool type --clearmodifiers --delay 24 "$1"' in generated
+assert 'xdotool key --clearmodifiers Return\\n    sleep 4' in generated
+assert 'sleep 0.35' not in generated and 'sleep 0.5' not in generated
 assert 'LABEL_INPUT_FOCUS=PASS' in generated
 assert "\n  send_chat '/item replace" not in generated
 for marker in (
