@@ -228,3 +228,11 @@
 - Source guard commit `7c1633559d7824789d05ab5348141d5076833ac8` checks the provenance set and rejects the previous same-block-type bypass. This is a static source regression, not a behavioral GameTest.
 - Previous HEAD `bf402aa` CircleCI `ci/circleci: verify-connection` FAILURE: https://app.circleci.com/workflow/56412684-2b1a-45ad-9627-f7200d740744/job/e2a100a6-e1d0-4de6-a797-a7ad2dc91521 . Exact checkout Python runner, Java Core suite, NeoForge compilation and in-game new-chunk smoke remain unverified. Failure of verify-connection is not evidence of Java compilation failure.
 - Next: execute source guard and full NeoForge compilation against exact branch checkout, add an executable placement test with a fake world / GameTest that proves adjacent pre-existing foliage survives, then coordinate registration and verify new chunks. BETA26 RNG, soil and biome parity still unproven. Main, shared registries, Gradle and other branches untouched; historical index 59/100 unchanged.
+
+
+## 15.11.2026 — M12 Silverwood: stale canopy-position safety
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; inspected open PRs and branch inventory. Before edits main...M12 was ahead 70, behind 0; Draft PR #9 remains unmerged.
+- Production d0501aed44c964de80f1a9e16da6ff3cf314cd58: a tracked successful leaf position is no longer sufficient by itself to authorize log overwrite. The current block must still equal this feature invocation's injected leaf BlockState; otherwise the log writer rejects a stale position unless the current block is ordinarily replaceable. This narrows an intervening-write edge case without changing shared registries.
+- Source regression 023ce3ab08603052a91ebe5557a97f24c5b92652: static guard requires exact leaf-state check and propagation of injected leaf state to the log writer.
+- Tests are source assertions only and not executed against a checkout. Full NeoForge compile, GameTest and Minecraft new-chunk smoke remain unverified; no BETA26 RNG/biome/soil parity claimed. Remaining issue: this still is not transactional worldgen, and Feature is unregistered. Next: exact-checkout Python guard, Java/NeoForge compilation, executable GameTest with pre-existing and intervening block writes, then coordinate registration. Historical audit remains 59/100.
