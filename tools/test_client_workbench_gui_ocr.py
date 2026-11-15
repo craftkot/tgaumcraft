@@ -19,6 +19,10 @@ fixtures = [
     ("ru_ru", ("192 доступно", "192 доступно")),
     # Actual RU scale-3 client OCR from the isolated available-line crop.
     ("ru_ru", ("148 доступно.", "148 доступно.")),
+    # Exact-head scale-3 inverted-crop PSM 7 reads the full localized word
+    # with one bitmap-glyph substitution in both languages.
+    ("en_us", ("275 avaliable",)),
+    ("ru_ru", ("278 доступна",)),
     # Inverted-crop PSM8 output from the four exact-head real-client artifacts.
     ("en_us", ("14 avaiable",)),
     ("en_us", ("186 available",)),
@@ -40,6 +44,7 @@ negative = [
     ("en_us", ("196\navailab...",)),
     ("en_us", ("196\navailab",)),
     ("en_us", ("196\navail",)),
+    ("en_us", ("275 avalabe",)),
     ("ru_ru", ("139\nдост...",)),
     ("ru_ru", ("139\nдоступ",)),
     ("ru_ru", ("139\nдос...",)),

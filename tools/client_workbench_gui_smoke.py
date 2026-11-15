@@ -393,6 +393,9 @@ body = r'''
   title_text_8="$(tesseract client-smoke/screenshots/workbench-title-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 8 2>/dev/null || true)"
   available_text_7="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 7 2>/dev/null || true)"
   available_text_11="$(tesseract client-smoke/screenshots/workbench-available-ocr.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 11 2>/dev/null || true)"
+  # The same inverted glyph row is also read as a single text line. PSM 7
+  # preserves the full EN scale-3 word where PSM 8 can merge bitmap strokes.
+  available_text_7_inverted="$(tesseract client-smoke/screenshots/workbench-available-ocr-inverted.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 7 2>/dev/null || true)"
   available_text_8="$(tesseract client-smoke/screenshots/workbench-available-ocr-inverted.png stdout -l "$TC_WORKBENCH_TESS_LANG" --psm 8 2>/dev/null || true)"
   # PSM 11 on the full panel crop is a separate visual fallback. The tighter
   # thresholded line can distort Russian bitmap strokes at GUI scale 3 even
@@ -402,6 +405,7 @@ body = r'''
   printf 'WORKBENCH_TITLE_OCR_PSM8_BEGIN\n%s\nWORKBENCH_TITLE_OCR_PSM8_END\n' "$title_text_8" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_PSM7_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM7_END\n' "$available_text_7" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_PSM11_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_PSM11_END\n' "$available_text_11" | tee -a client-smoke-status.txt
+  printf 'WORKBENCH_AVAILABLE_OCR_INVERTED_PSM7_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_INVERTED_PSM7_END\n' "$available_text_7_inverted" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_AVAILABLE_OCR_INVERTED_PSM8_BEGIN\n%s\nWORKBENCH_AVAILABLE_OCR_INVERTED_PSM8_END\n' "$available_text_8" | tee -a client-smoke-status.txt
   printf 'WORKBENCH_PANEL_OCR_PSM11_BEGIN\n%s\nWORKBENCH_PANEL_OCR_PSM11_END\n' "$panel_text_11" | tee -a client-smoke-status.txt
 
@@ -410,7 +414,7 @@ body = r'''
   # The render-path marker independently checks the complete Component and
   # the actual half-scale text footprint inside the 46px panel.
   python3 tools/assert_client_workbench_gui_ocr.py \
-    "$TC_WORKBENCH_LANG" "$available_text_7" "$available_text_11" "$available_text_8" "$panel_text_11" \
+    "$TC_WORKBENCH_LANG" "$available_text_7" "$available_text_11" "$available_text_7_inverted" "$available_text_8" "$panel_text_11" \
     | tee -a client-smoke-status.txt
   title_ink="$(identify -format '%[fx:mean]' client-smoke/screenshots/workbench-title-ocr.png)"
   panel_ink="$(convert client-smoke/screenshots/workbench-vis-ocr.png -threshold 85% -format '%[fx:mean]' info:)"
