@@ -71,9 +71,10 @@ focused_pid = unique('focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null
 focus_fail = unique("SALIS_INPUT_FOCUS=FAIL")
 focus_capture = unique("capture 05e-command-focus-not-minecraft")
 focus_pass = unique("SALIS_INPUT_FOCUS=PASS")
-channel_command = unique("xdotool key --clearmodifiers slash")
+channel_chat_key = unique("xdotool key --clearmodifiers t")
 channel_chat_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05g-command-chat-open.png")
-channel_type = unique("xdotool type --clearmodifiers --delay 24 'say TC_SMOKE_COMMAND_CHANNEL_READY'")
+channel_type = unique("xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'")
+channel_text_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05h-command-text-before-submit.png")
 channel_ack = unique("grep -Fq 'TC_SMOKE_COMMAND_CHANNEL_READY' run/logs/latest.log")
 channel_fail = unique("SALIS_COMMAND_CHANNEL=FAIL")
 channel_pass = unique("SALIS_COMMAND_CHANNEL=PASS")
@@ -88,13 +89,18 @@ assert active_window < focused_window < game_pid < active_pid < focused_pid < fo
 assert 'sleep 0.25' in activate_body
 assert 'SALIS_INPUT_FOCUS=PASS' in activate_body
 ensure_body = generated[ensure_fn:chat_fn]
-assert channel_command < channel_chat_frame < channel_type < channel_ack < channel_fail < channel_pass
+assert channel_chat_key < channel_chat_frame < channel_type < channel_text_frame < channel_ack < channel_fail < channel_pass
+assert 'xdotool key --clearmodifiers slash' not in ensure_body
+assert ensure_body.count('activate_minecraft_client') == 2
+assert ensure_body.index('activate_minecraft_client') > channel_chat_frame
+assert ensure_body.index('xdotool key --clearmodifiers Return') > channel_text_frame
 assert 'for _ in $(seq 1 40)' in ensure_body
 assert 'capture 05f-command-channel-not-ready' in ensure_body
 assert '05g-command-chat-open.png' in ensure_body
+assert '05h-command-text-before-submit.png' in ensure_body
 chat_end = generated.index("\n  }", chat_fn)
 chat_body = generated[chat_fn:chat_end]
 assert chat_body.index('activate_minecraft_client') < chat_body.index('ensure_minecraft_command_channel') < chat_body.index('xdotool key --clearmodifiers t')
 assert 'xdotool type --clearmodifiers --delay 24 "$1"' in chat_body
 
-print("Salis command focus/acknowledgement, quiet client categories, clean PCM baseline gate, screenshot ordering and unchanged waveform thresholds: PASS")
+print("Salis focused T-chat/full-slash command acknowledgement, pre-submit evidence, quiet client categories, clean PCM baseline gate, screenshot ordering and unchanged waveform thresholds: PASS")
