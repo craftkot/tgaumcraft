@@ -37,6 +37,44 @@ capture 04a-after-create-world-click
 if source.count(world_create_click_anchor) != 1:
     raise SystemExit("Shared world-create click changed; refusing unsafe scan-rune patch")
 source = source.replace(world_create_click_anchor, world_create_click_replacement, 1)
+world_login_timeout_anchor = """if [ "$world_started" -ne 1 ]; then
+  echo 'INTEGRATED_WORLD_PLAYER_LOGIN=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+  tail -80 client-smoke/client.log >&2
+  exit 1
+fi"""
+world_login_timeout_replacement = """if [ "$world_started" -ne 1 ]; then
+  echo 'INTEGRATED_WORLD_PLAYER_LOGIN=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+  echo 'RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=BEGIN' | tee -a client-smoke-status.txt
+  capture 04b-world-login-timeout || true
+  {
+    echo 'RUNE_LOGIN_TIMEOUT_WINDOW:'
+    xdotool getwindowgeometry --shell "$WIN" 2>&1 || true
+    echo "active=$(xdotool getactivewindow 2>/dev/null || true) focus=$(xdotool getwindowfocus 2>/dev/null || true)"
+    echo 'RUNE_LOGIN_TIMEOUT_PROCESSES:'
+    ps -eo pid,ppid,stat,pcpu,pmem,etime,args | grep -E '[j]ava|[G]radle|[M]inecraft' || true
+    echo 'RUNE_LOGIN_TIMEOUT_JAVA_PROCESSES:'
+    jcmd -l 2>&1 || true
+  } | tee -a client-smoke-status.txt
+  mkdir -p client-smoke/thread-dumps
+  while read -r pid main_class; do
+    [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    timeout 12s jcmd "$pid" Thread.print -l > "client-smoke/thread-dumps/$pid.txt" 2>&1 || echo "RUNE_THREAD_DUMP_CAPTURE_FAILED pid=$pid class=$main_class" | tee -a client-smoke-status.txt
+  done < <(jcmd -l 2>/dev/null)
+  while IFS= read -r world_log; do
+    echo "RUNE_LOGIN_TIMEOUT_LATEST_LOG=$world_log" | tee -a client-smoke-status.txt
+    tail -200 "$world_log" | tee -a client-smoke-status.txt
+  done < <(find . -type f -path '*/logs/latest.log' -print 2>/dev/null | sort)
+  level_dat_count="$(find run/saves -maxdepth 3 -type f -name level.dat -print 2>/dev/null | wc -l)"
+  echo "RUNE_LOGIN_TIMEOUT_LEVEL_DAT_COUNT=$level_dat_count" | tee -a client-smoke-status.txt
+  if (( level_dat_count == 1 )); then
+    python3 tools/assert_client_world_commands.py run/saves > client-smoke/world-level-dat-check.txt 2>&1 || echo 'RUNE_LOGIN_TIMEOUT_LEVEL_DAT_ASSERT=FAIL' | tee -a client-smoke-status.txt
+    cat client-smoke/world-level-dat-check.txt | tee -a client-smoke-status.txt
+  fi
+  tail -120 client-smoke/client.log >&2
+  echo 'RUNE_LOGIN_TIMEOUT_DIAGNOSTICS=END' | tee -a client-smoke-status.txt
+  exit 1
+fi"""
+
 send_chat_anchor = """  send_chat() {
     xdotool key --clearmodifiers t
     sleep 1
