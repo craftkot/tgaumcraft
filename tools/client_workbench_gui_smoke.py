@@ -126,7 +126,7 @@ send_chat_replacement = """  send_chat() {
     echo 'WORKBENCH_CHAT_INPUT_METHOD=SLASH_COMMAND_KEY' | tee -a client-smoke-status.txt
     xdotool key --clearmodifiers slash
     sleep 1
-    xdotool type --clearmodifiers --delay 50 "$command_body"
+    xdotool type --clearmodifiers --delay 24 "$command_body"
     sleep 1
     xdotool key --clearmodifiers Return
     sleep 4
@@ -149,7 +149,7 @@ send_chat_replacement = """  send_chat() {
     xdotool key --clearmodifiers slash
     sleep 1
     capture "${probe_prefix}b-chat-open-after-slash"
-    xdotool type --clearmodifiers --delay 50 "$command_body"
+    xdotool type --clearmodifiers --delay 24 "$command_body"
     sleep 1
     capture "${probe_prefix}c-chat-text-before-enter"
     xdotool key --clearmodifiers Return
