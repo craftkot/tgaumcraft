@@ -91,6 +91,8 @@ body = r'''
     # The following /give tests runtime item resolution; the independent /say
     # proves whether a subsequent command still reaches the integrated server.
     if [[ "$item" == thaumcraft:label* ]]; then
+      # Preserve the failed command's diagnostic frames; fallback commands must not overwrite them.
+      LABEL_CAPTURE_INPUT_DIAGNOSTICS=0
       label_send_chat '/give @p thaumcraft:label 1'
       label_send_chat '/say TC_LABEL_POST_FAILURE_CHANNEL_READY'
       if grep -Fq 'TC_LABEL_POST_FAILURE_CHANNEL_READY' run/logs/latest.log; then
