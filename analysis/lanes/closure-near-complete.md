@@ -4497,3 +4497,12 @@ Commit 991930c added the BETA26 half-scale available-label draw and full-word re
 ### Final newline-literal correction for the scoped Return assertion
 
 - Corrected the scoped assertion's Python string escape from a literal backslash-n to a single `\\n` escape, so the regression matches the actual newline between the Return command and its label-specific acknowledgement. The generated shell command is unchanged; this is only a static-test literal correction.
+
+
+## 2026-11-15 — label smoke preflight: align regression with focus restoration
+
+- Re-read current `main` documents and the fixed audit; `main` remains `a4280834adc5a20b6951098af937d30ca4aeca56`. Current closure branch HEAD before this iteration was `054b4dbf9097da8814f979e0a0194bb94a498e7f`; PR #4 remains the existing Open/Draft M16 lane PR. No changes were made to `main`, other feature branches, shared registries, Gradle, global localization or shared client smoke.
+- Inspected exact-head real-label workflow [#43708345893](https://github.com/craftkot/tgaumcraft/actions/runs/43708345893), job `real-label-client`. Source-art verification passed, but the static driver test failed before launching Minecraft: its expected `label_send_chat` sequence omitted the deliberate `label_activate_minecraft` + `LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS` block inserted after the diagnostic screenshot and before Return. Therefore this run provides **no new gameplay evidence**.
+- Corrected only `tools/test_label_smoke_driver.py`: the expected sequence now includes that post-capture focus restoration and acknowledgement. This preserves the intended safety check rather than weakening/removing it. Commit: [a7da344](https://github.com/craftkot/tgaumcraft/commit/a7da344baa9d885bc34da0e9bed3c8e8881abdb4).
+- The focused real-client rerun and the updated branch's other CI have not yet been observed at this write. No test is claimed PASS for `a7da344`; the previous preflight failure is the only exact-head result currently established. Historical rubric remains **59/100**, M16 **4/6**; no points awarded.
+- Next: require the updated driver preflight to pass, then inspect the real Minecraft command-channel handshake, all four server-side item replacement acknowledgements, screenshot crops and Aer/Ignis tint metrics. If preflight still fails, fix the precise static assertion before interpreting any client behavior.
