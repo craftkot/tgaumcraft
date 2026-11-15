@@ -159,10 +159,10 @@ expect("xdotool key --clearmodifiers F3" in generator
 replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
 expect('xdotool key --clearmodifiers slash' in replacement_body
        and 'local command_body="${raw_command#/}"' in replacement_body
-       and 'xdotool type --clearmodifiers --delay 50 "$command_body"' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
        and 'xdotool key --clearmodifiers t' not in replacement_body,
        "Workbench command helper must open command chat with slash and strip exactly one leading slash")
-expect(replacement_body.count('xdotool type --clearmodifiers --delay 50 "$command_body"') == 2
+expect(replacement_body.count('xdotool type --clearmodifiers --delay 24 "$command_body"') == 2
        and replacement_body.count('xdotool key --clearmodifiers Return') == 2
        and 'xdotool keydown --clearmodifiers Return' not in replacement_body
        and 'xdotool keyup --clearmodifiers Return' not in replacement_body,
@@ -426,7 +426,7 @@ expect("wait_for_workbench_marker" in generator
        and "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in generator
        and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
        "Workbench smoke does not require the real server-to-client menu lifecycle")
-type_index = replacement_body.index('xdotool type --clearmodifiers --delay 50 "$command_body"')
+type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
 expect("sleep 1" in replacement_body[type_index:return_index]
