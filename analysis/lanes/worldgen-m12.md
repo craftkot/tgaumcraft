@@ -210,3 +210,12 @@
 - Fixed the owned script by replacing that escaped text with a real line break in commit bcb392ac87fc4b64bedd849ba2146f40877bc725. No gameplay production code, shared registry, Gradle, main or other lane modified.
 - The fix was confirmed by inspecting the GitHub file content before write; exact-checkout execution, Python syntax compile, NeoForge build and Minecraft new-chunk smoke remain **unverified**. Local git ls-remote continues to fail DNS resolution of github.com. No PASS claimed.
 - Next: execute python3 tools/test_silverwood_neoforge_wiring.py on an exact checkout, then compile the isolated NeoForge Silverwood Feature, resolve any API issues and coordinate feature/biome registration before new-chunk gameplay tests. Historical 59/100 unchanged.
+
+
+## 15.11.2026 — M12 Silverwood: canopy-first log overwrite
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (ahead 64, behind 0 before changes) and inspected open PRs including Draft #9. No shared registries, Gradle or other branches modified.
+- Fixed an actual placement-path conflict: `SilverwoodLegacyTree` writes canopy before logs, while `setIfReplaceable` rejects existing leaves when their state is not replaceable. Commit `ae11ad43c84d0550437256e5dd25979301c50838` adds a dedicated log writer permitting replacement of matching Silverwood leaf blocks while still checking the result of `setBlock`.
+- Regression source guard updated in `613f4504e997e701b2ca6e252703ba3adc688e91` to verify both canopy-first log path and leaf overwrite condition.
+- CI status API for `613f450` returned no statuses or PR workflow runs. Tests, exact-checkout NeoForge compile, native GameTests and Minecraft new-chunk worldgen **not executed**; no PASS claimed. Current predicate matches leaf block type, not provenance: potential replacement of pre-existing same-type leaves must be addressed with per-attempt placed-leaf tracking before registration. Original BETA26 parity remains unproven.
+- Next: constrain log overwrite to leaves placed by this attempt, execute source guard and NeoForge build, then coordinate Feature registration and in-game worldgen smoke. Historical index 59/100 unchanged.
