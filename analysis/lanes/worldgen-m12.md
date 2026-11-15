@@ -261,3 +261,12 @@
 - Test maintenance commit [6ce9b9b](https://github.com/craftkot/tgaumcraft/commit/6ce9b9b4eb2040efbfade2431b651942c5470b18): tools/test_silverwood_neoforge_wiring.py now resolves its Java source relative to the script's own directory instead of the process working directory. This makes the static source regression usable from any cwd and avoids false failures in isolated runners. No production Java code changed in this iteration.
 - CI on 6ce9b9b: CircleCI verify-connection PENDING at inspection (https://app.circleci.com/workflow/494c771b-09ce-42b0-9b32-93e235b02c1e/job/a49809c0-6af0-4c6c-86c8-873a37404884); GitHub PR workflow runs empty. Local git ls-remote still fails DNS resolution of github.com. Exact checkout Python runner, NeoForge compile, GameTest and Minecraft new-chunk smoke NOT executed. No PASS claimed.
 - Next: obtain exact checkout and run source guard, Java 21 suite and NeoForge compilation; implement an executable placement test for preservation of neighboring blocks, then coordinate feature/biome registration. Shared registries, Gradle, main and other branches untouched. Historical index 59/100 unchanged.
+
+
+## 15.11.2026 — M12 Silverwood: canopy-only result is not a tree
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked open PRs (#5–#13), branch inventory and main...M12 (ahead 80, behind 0 before edits). Draft PR #9 remains open.
+- Production `9be6e121fe8c234f397c7bb7213c30988ae75d9d`: Feature.place now returns true only if at least one log write succeeds, rather than counting canopy-only writes as a successful tree. This fixes the reported result but does NOT roll back partial foliage writes when log placement fails.
+- Regression `881ccef27cbd597cfc5064b4b58ca3eb193afa0a`: static source guard now checks trunk-only success accounting; this is not an executable NeoForge test.
+- No full NeoForge compilation, exact-checkout Python/Java runner, GameTest, or new-chunk Minecraft smoke was performed in this iteration. Source-level edit and test guard are committed, but gameplay behavior is unverified. BETA26 RNG, soil, biome and chance parity remain unproven; registration still requires coordination. Historical project index remains 59/100.
+- Next: test failed-log/partial-canopy behavior with an executable fake-world or NeoForge GameTest; verify exact checkout runners and NeoForge build; coordinate feature registration without touching shared registries unilaterally.
