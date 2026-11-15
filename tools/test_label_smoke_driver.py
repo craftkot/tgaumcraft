@@ -26,21 +26,20 @@ assert 'xdotool windowactivate --sync "$WIN"' in generated
 assert 'xdotool windowfocus --sync "$WIN"' in generated
 assert 'xdotool getwindowpid "$WIN"' in generated
 assert 'LABEL_INPUT_FOCUS=PASS' in generated
-assert """    xdotool key --clearmodifiers t
-    sleep 1
-    if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
-      label_capture 58-label-chat-open
-    fi
-    xdotool type --clearmodifiers --delay 24 "$1"
-    if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
-      sleep 1
-      label_capture 58a-label-command-before-submit
-      # Restore and verify the Minecraft window after capturing the X11 root.
-      label_activate_minecraft
-      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS' | tee -a client-smoke-status.txt
-    fi
-    xdotool key --clearmodifiers Return
-    sleep 4""" in generated
+send_body = generated[send:set_slot]
+assert send_body.count("label_activate_minecraft") == 2
+send_sequence = (
+    send_body.index("label_activate_minecraft"),
+    send_body.index("xdotool key --clearmodifiers t"),
+    send_body.index("label_capture 58-label-chat-open"),
+    send_body.index('xdotool type --clearmodifiers --delay 24 "$1"'),
+    send_body.index("label_capture 58a-label-command-before-submit"),
+    send_body.rindex("label_activate_minecraft"),
+    send_body.index("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS"),
+    send_body.index("xdotool key --clearmodifiers Return"),
+    send_body.index("sleep 4"),
+)
+assert list(send_sequence) == sorted(send_sequence), send_sequence
 assert "sleep 0.25\n    local active focused" not in generated
 assert """LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
   label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
