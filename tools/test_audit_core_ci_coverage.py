@@ -60,7 +60,7 @@ class InventoryTests(unittest.TestCase):
 
     def test_commented_main_not_runnable(self):
         (self.tests / "CommentedTest.java").write_text(
-            "class CommentedTest { // public static void main(String[] args) {}\\n"
+            "class CommentedTest { // public static void main(String[] args) {}\n"
             "/* public static void main(String[] args) {} */ }"
         )
         self.ci()
@@ -72,6 +72,22 @@ class InventoryTests(unittest.TestCase):
             "public static void main(String[] args) {} }"
         )
         self.ci(["RealTest"], ["RealTest"])
+        self.assertEqual(inventory(self.root), ([], [], []))
+
+
+    def test_string_literal_main_not_runnable(self):
+        (self.tests / "StringOnlyTest.java").write_text(
+            'class StringOnlyTest { String text = "public static void main(String[] args) {}"; }'
+        )
+        self.ci()
+        self.assertEqual(inventory(self.root), ([], [], []))
+
+    def test_escaped_quote_literal_and_real_main(self):
+        (self.tests / "EscapedTest.java").write_text(
+            'class EscapedTest { String text = "\\\\" public static void main(String[] args) {}"; '
+            'public static void main(String[] args) {} }'
+        )
+        self.ci(["EscapedTest"], ["EscapedTest"])
         self.assertEqual(inventory(self.root), ([], [], []))
 
 if __name__ == "__main__":
