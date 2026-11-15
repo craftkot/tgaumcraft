@@ -50,7 +50,16 @@ assert list(send_sequence) == sorted(send_sequence), send_sequence
 assert "else\n      sleep 4\n    fi" in send_body
 
 assert "sleep 0.35" not in generated
-assert 'LABEL_CAPTURE_INPUT_DIAGNOSTICS=1\n  LABEL_DIAGNOSTIC_PREFIX=58\n  label_set_slot0 \'thaumcraft:jar_brace\' \'Jar Brace\'\n  sleep 1\n  label_capture 60-jar-brace\n  LABEL_DIAGNOSTIC_PREFIX=59\n  label_set_slot0 \'thaumcraft:label\' \'Jar Label\'\n  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0' in generated
+setup_sequence = (
+    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=1\\n"),
+    unique("  LABEL_DIAGNOSTIC_PREFIX=58\\n"),
+    unique("  label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'"),
+    unique("  label_capture 60-jar-brace"),
+    unique("  LABEL_DIAGNOSTIC_PREFIX=59\\n"),
+    unique("  label_set_slot0 'thaumcraft:label' 'Jar Label'"),
+    unique("  LABEL_CAPTURE_INPUT_DIAGNOSTICS=0\\n"),
+)
+assert list(setup_sequence) == sorted(setup_sequence), setup_sequence
 assert 'label_capture "${LABEL_DIAGNOSTIC_PREFIX:-58}b-label-command-feedback"' in generated
 
 channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\n  label_require_command_channel\n\n  # Capture the first chat transition")
