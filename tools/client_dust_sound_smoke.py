@@ -144,14 +144,21 @@ send_chat_with_ack = """  activate_minecraft_client() {
     if [ "${TC_SMOKE_COMMAND_CHANNEL_READY:-0}" = "1" ]; then
       return 0
     fi
-    # Slash opens the command chat directly and inserts its leading slash.
-    # Capture that state before typing so a failed server acknowledgement can
-    # be distinguished from a missing chat/focus transition.
-    xdotool key --clearmodifiers slash
+    # Match the established shared client driver: T opens ordinary chat,
+    # then the complete slash command is typed as text. Direct slash-key
+    # injection opened the field but did not deliver the command to the server.
+    xdotool key --clearmodifiers t
     sleep 0.35
     import -display :99 -window root -silent client-smoke/screenshots/05g-command-chat-open.png
     test -s client-smoke/screenshots/05g-command-chat-open.png
-    xdotool type --clearmodifiers --delay 24 'say TC_SMOKE_COMMAND_CHANNEL_READY'
+    # The screenshot command is read-only, but reassert the real game window
+    # focus before typing so the command cannot land in another X11 client.
+    activate_minecraft_client
+    xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'
+    sleep 0.15
+    import -display :99 -window root -silent client-smoke/screenshots/05h-command-text-before-submit.png
+    test -s client-smoke/screenshots/05h-command-text-before-submit.png
+    activate_minecraft_client
     xdotool key --clearmodifiers Return
     local ready=0
     for _ in $(seq 1 40); do
