@@ -117,24 +117,41 @@ send_chat_block = """  send_chat() {
     sleep 4
   }"""
 send_chat_with_ack = """  activate_minecraft_client() {
-    # World creation can leave the pointer focused on the root window even
-    # though the Minecraft process is still alive. Re-activate the real game
-    # window before every chat command; never trust the earlier title-screen focus.
+    # World creation can leave keyboard focus on a stale/root X11 window.
+    # Activate AND explicitly focus the actual LWJGL window before typing.
     xdotool windowactivate --sync "$WIN"
     xdotool windowraise "$WIN"
+    xdotool windowfocus --sync "$WIN"
     xdotool mousemove --window "$WIN" 512 384
     sleep 0.25
+    local active focused game_pid active_pid focused_pid
+    active="$(xdotool getactivewindow 2>/dev/null || true)"
+    focused="$(xdotool getwindowfocus 2>/dev/null || true)"
+    game_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"
+    active_pid="$(xdotool getwindowpid "$active" 2>/dev/null || true)"
+    focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null || true)"
+    echo "SALIS_INPUT_FOCUS=window:$WIN active:${active:-none} focus:${focused:-none} game_pid:${game_pid:-none} active_pid:${active_pid:-none} focus_pid:${focused_pid:-none}" \
+      | tee -a client-smoke-status.txt
+    if [ -z "$game_pid" ] || [ "$active_pid" != "$game_pid" ] || [ "$focused_pid" != "$game_pid" ]; then
+      echo 'SALIS_INPUT_FOCUS=FAIL' | tee -a client-smoke-status.txt
+      capture 05e-command-focus-not-minecraft
+      exit 1
+    fi
+    echo 'SALIS_INPUT_FOCUS=PASS' | tee -a client-smoke-status.txt
   }
 
   ensure_minecraft_command_channel() {
     if [ "${TC_SMOKE_COMMAND_CHANNEL_READY:-0}" = "1" ]; then
       return 0
     fi
-    # One locale-independent server acknowledgement proves that the real
-    # integrated server received keyboard input before any gameplay fixture.
-    xdotool key --clearmodifiers t
-    sleep 0.5
-    xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'
+    # Slash opens the command chat directly and inserts its leading slash.
+    # Capture that state before typing so a failed server acknowledgement can
+    # be distinguished from a missing chat/focus transition.
+    xdotool key --clearmodifiers slash
+    sleep 0.35
+    import -display :99 -window root -silent client-smoke/screenshots/05g-command-chat-open.png
+    test -s client-smoke/screenshots/05g-command-chat-open.png
+    xdotool type --clearmodifiers --delay 24 'say TC_SMOKE_COMMAND_CHANNEL_READY'
     xdotool key --clearmodifiers Return
     local ready=0
     for _ in $(seq 1 40); do
