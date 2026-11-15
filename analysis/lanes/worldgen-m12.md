@@ -108,3 +108,13 @@
 - Установлены исходные попытки 1/80 (Silverwood), 1/25 (Greatwood), смещение центра чанка +/-4, отдельные biome predicates, Silverwood высота 7..10, Greatwood 2x2 trunk, spider flag 1/8. Отмечено, что современный `rarity_filter + in_square` из другого порта не обеспечивает идентичного RNG/позиционного паритета.
 - Это **анализ архивной копии**, а не проверка идентичности с оригинальным BETA26 JAR; никаких новых игровых features, тестовых PASS, full NeoForge или Minecraft smoke в этом запуске нет. CI предыдущего HEAD: `ci/circleci: verify-connection` FAILURE, причина без логов неизвестна. Общая готовность остаётся 59/100.
 - Следующий шаг: реализовать первый реальный Silverwood Feature consumer в собственном namespace, затем согласовать отдельную регистрацию, проверить точный checkout/NeoForge и генерацию новых чанков. Общие регистры, main и чужие ветки не изменены.
+
+
+## 15.11.2026 — M12.1, source-era tree attempt RNG slice
+
+- Fresh-read main AGENTS/ROADMAP/PARALLEL_WORKFLOW and own lane; inspected PR #9 (Draft) and other open PR; branch compared with main before edits: ahead 26, behind 0.
+- New isolated production `LegacyTreeAttempt` preserves BETA26-style independent 1/80 Silverwood and 1/25 Greatwood attempts, centered nine-wide chunk coordinates, strict biome support thresholds, legacy magical/18/28 overrides and conditional 1/8 spider roll. Caller supplies original RNG; no invented modern biome-ID mapping or shared registration.
+- Commits: production `1410984711e646f82e42430610baaed6eddf39f3`, regression `11b5f952b7e4c8983eba4b5a9f453c92a9cf8640`, Java21 runner `ab42c1c5dd2ad6fc2b58707fb416a29bb2288b26`.
+- Deterministic test exercises 169 assertions including RNG consumption and overflow rejection; **not executed on exact checkout**. Local `git ls-remote` still fails DNS (`Could not resolve host: github.com`); Java 21 is available. No NeoForge build or Minecraft new-chunk smoke; code is a real selection-policy component, **not** a placed-feature consumer.
+- Source reference remains third-party archived Java 1.12, not byte-verified original BETA26 JAR. Do not claim exact RNG parity across modern worldgen call sites until placement integration preserves ordering.
+- Next: implement actual Silverwood Feature and replacement/soil geometry in own namespace, then coordinate shared feature registration and test on new chunks. Draft PR #9 stays unmerged; 59/100 unchanged.
