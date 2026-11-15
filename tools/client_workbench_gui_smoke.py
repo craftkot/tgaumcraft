@@ -128,9 +128,7 @@ send_chat_replacement = """  send_chat() {
     sleep 1
     xdotool type --clearmodifiers --delay 50 "$command_body"
     sleep 1
-    xdotool keydown --clearmodifiers Return
-    sleep 0.15
-    xdotool keyup --clearmodifiers Return
+    xdotool key --clearmodifiers Return
     sleep 4
   }
   send_chat_probe() {
@@ -154,9 +152,7 @@ send_chat_replacement = """  send_chat() {
     xdotool type --clearmodifiers --delay 50 "$command_body"
     sleep 1
     capture "${probe_prefix}c-chat-text-before-enter"
-    xdotool keydown --clearmodifiers Return
-    sleep 0.15
-    xdotool keyup --clearmodifiers Return
+    xdotool key --clearmodifiers Return
     sleep 4
     capture "${probe_prefix}d-chat-submit-result"
     # Preserve an authoritative F3 frame before the fail-fast mutation gate.
