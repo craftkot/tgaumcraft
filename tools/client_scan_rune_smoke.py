@@ -58,6 +58,7 @@ world_login_timeout_replacement = """if [ "$world_started" -ne 1 ]; then
   mkdir -p client-smoke/thread-dumps
   while read -r pid main_class; do
     [[ "$pid" =~ ^[0-9]+$ ]] || continue
+    [[ "$main_class" == jdk.jcmd/* ]] && continue
     timeout 12s jcmd "$pid" Thread.print -l > "client-smoke/thread-dumps/$pid.txt" 2>&1 || echo "RUNE_THREAD_DUMP_CAPTURE_FAILED pid=$pid class=$main_class" | tee -a client-smoke-status.txt
   done < <(jcmd -l 2>/dev/null)
   while IFS= read -r world_log; do
