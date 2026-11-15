@@ -43,6 +43,12 @@ assert """LABEL_CAPTURE_INPUT_DIAGNOSTICS=1
   label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'
   LABEL_CAPTURE_INPUT_DIAGNOSTICS=0""" in generated
 assert "sleep 0.35" not in generated and "sleep 0.5" not in generated
+channel_handshake = unique("label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'\\n  label_require_command_channel\\n\\n  # Capture the first chat transition")
+assert channel_handshake < unique("label_set_slot0 'thaumcraft:jar_brace' 'Jar Brace'")
+assert unique("grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log") < channel_handshake
+assert unique("label_capture 58a-label-command-before-submit") < unique("LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS") < unique("xdotool key --clearmodifiers Return")
+assert unique("xdotool key --clearmodifiers Return") < unique("LABEL_COMMAND_RETURN_SENT=YES")
+assert "label_activate_minecraft\\n      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS'" in generated
 assert "\\n  send_chat '/item replace" not in generated
 assert "label_require_slot" not in generated
 assert "execute if items" not in generated
@@ -72,4 +78,4 @@ assert 'minecraft:custom_data={Aspects:[{key:"aer",amount:1}]}' in generated
 assert 'minecraft:custom_data={Aspects:[{key:"ignis",amount:1}]}' in generated
 assert "LABEL_REAL_ASPECT_COLOR_PARITY=PASS" in generated
 assert unique("  label_diff 62-aer-label 63-ignis-label") < unique("  echo 'LABEL_REAL_ASPECT_COLOR_PARITY=PASS'") < unique("  echo 'LABEL_REAL_CLIENT_VISUAL_SMOKE=PASS'")
-print("Label smoke uses one server-acknowledged item command per slot and checks real rendered aspect colors: OK")
+print("Label smoke proves the command channel, restores Minecraft focus after capture, and checks real rendered aspect colors: OK")

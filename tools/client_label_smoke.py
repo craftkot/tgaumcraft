@@ -54,8 +54,13 @@ body = r'''
     if [ "${LABEL_CAPTURE_INPUT_DIAGNOSTICS:-0}" = "1" ]; then
       sleep 1
       label_capture 58a-label-command-before-submit
+      # Capturing the root window is outside Minecraft's GLFW event loop.
+      # Restore and verify the real game's X11 focus before submitting Enter.
+      label_activate_minecraft
+      echo 'LABEL_INPUT_FOCUS_AFTER_CAPTURE=PASS' | tee -a client-smoke-status.txt
     fi
     xdotool key --clearmodifiers Return
+    echo 'LABEL_COMMAND_RETURN_SENT=YES' | tee -a client-smoke-status.txt
     sleep 4
   }
   label_set_slot0() {
@@ -84,6 +89,24 @@ body = r'''
     test -s "client-smoke/screenshots/$name.png"
     echo "REAL_CLIENT_LABEL_SCREEN=$name" | tee -a client-smoke-status.txt
   }
+  label_require_command_channel() {
+    for _ in $(seq 1 40); do
+      if grep -Fq 'TC_LABEL_COMMAND_CHANNEL_READY' run/logs/latest.log; then
+        echo 'LABEL_COMMAND_CHANNEL=PASS' | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.25
+    done
+    echo 'LABEL_COMMAND_CHANNEL=FAIL' | tee -a client-smoke-status.txt
+    import -display :99 -window root -silent client-smoke/screenshots/58b-command-channel-fail.png
+    tail -n 80 run/logs/latest.log || true
+    exit 1
+  }
+
+  # Prove the ordinary chat-to-integrated-server path independently before
+  # diagnosing item syntax or item registration.
+  label_send_chat '/say TC_LABEL_COMMAND_CHANNEL_READY'
+  label_require_command_channel
 
   # Capture the first chat transition and fully typed command. If the
   # server does not acknowledge the item replacement, these two frames
