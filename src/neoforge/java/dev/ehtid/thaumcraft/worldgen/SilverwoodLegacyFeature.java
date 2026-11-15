@@ -2,7 +2,9 @@ package dev.ehtid.thaumcraft.worldgen;
 
 import dev.ehtid.thaumcraft.port.core.SilverwoodLegacyTree;
 import dev.ehtid.thaumcraft.port.core.SilverwoodPlacementPreflight;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -51,11 +53,15 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
         final int[] placedLogs = {0};
         // Only foliage successfully placed by this invocation may be overwritten by its logs.
         final Set<BlockPos> ownLeaves = new HashSet<>();
+        // Preserve original states so a canopy-only failed attempt can be undone.
+        final Map<BlockPos, BlockState> originalLeaves = new HashMap<>();
         SilverwoodLegacyTree.place(x, y, z, height, random,
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))),
                 (px, py, pz) -> {
                     BlockPos pos = new BlockPos(px, py, pz);
-                    if (setIfReplaceable(level, pos, leaves)) {
+                    BlockState before = level.getBlockState(pos);
+                    if (canReplace(before) && level.setBlock(pos, leaves, 2)) {
+                        originalLeaves.putIfAbsent(pos, before);
                         ownLeaves.add(pos);
                     }
                 },
@@ -69,7 +75,16 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     }
                 });
         // Canopy-only partial writes must not report a successfully generated tree.
-        return placedLogs[0] > 0;
+        if (placedLogs[0] == 0) {
+            // Never overwrite a position modified by another writer after our leaf write.
+            for (Map.Entry<BlockPos, BlockState> entry : originalLeaves.entrySet()) {
+                if (level.getBlockState(entry.getKey()).equals(leaves)) {
+                    level.setBlock(entry.getKey(), entry.getValue(), 2);
+                }
+            }
+            return false;
+        }
+        return true;
     }
 
     /** Logs are emitted after canopy; permit replacing this tree's own leaf state. */
@@ -88,9 +103,5 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
 
     private static boolean canReplace(BlockState state) {
         return state.isAir() || state.canBeReplaced();
-    }
-
-    private static boolean setIfReplaceable(WorldGenLevel level, BlockPos pos, BlockState state) {
-        return canReplace(level.getBlockState(pos)) && level.setBlock(pos, state, 2);
     }
 }
