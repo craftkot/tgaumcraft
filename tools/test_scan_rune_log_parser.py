@@ -78,6 +78,8 @@ assert generated.count(create_y_line) == 1
 assert "create_world_y=$((Y + HEIGHT * 93 / 100))" not in generated
 click_line = 'xdotool mousemove "$create_world_x" "$create_world_y" click 1'
 assert generated.index(click_line) < generated.index("capture 04a-after-create-world-click") < generated.index("world_started=0")
+local_click_marker = 'CREATE_NEW_WORLD_CLICK=${create_world_x},${create_world_y} LOCAL=$((create_world_x - X)),$((create_world_y - Y))'
+assert local_click_marker in generated
 window_height = 768
 old_local_y = window_height * 93 // 100
 new_local_y = window_height * 96 // 100
