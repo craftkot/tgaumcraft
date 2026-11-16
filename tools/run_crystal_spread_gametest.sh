@@ -108,6 +108,7 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS existing_record_preserved=YES gaussian=0 local_target_pending=NO' || return 1
     require_marker "$file" 'All 8 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
