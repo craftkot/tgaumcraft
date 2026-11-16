@@ -106,8 +106,8 @@ class InventoryTests(unittest.TestCase):
         workflow = self.workflow.read_text()
         workflow = workflow.replace(
             "      - name: Other step",
-            "          # javac src/test/java/dev/ehtid/thaumcraft/port/core/AlphaTest.java\\n"
-            "          # java -cp build/classes dev.ehtid.thaumcraft.port.core.AlphaTest\\n"
+            "          # javac src/test/java/dev/ehtid/thaumcraft/port/core/AlphaTest.java\n"
+            "          # java -cp build/classes dev.ehtid.thaumcraft.port.core.AlphaTest\n"
             "      - name: Other step",
         )
         self.workflow.write_text(workflow)
