@@ -117,7 +117,9 @@ public final class CrystalGrowthParityTest {
       yes(source.contains("event.isNewChunk()"));
       yes(source.contains("getChunkSource().getChunkNow"));
       yes(source.contains("ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, chunkPos.x, chunkPos.z)"));
-      yes(source.contains("level.hasChunkAt"));
+      // The five-chunk loaded gate replaces the old center-only hasChunkAt guard.
+      // Do not require the removed guard: a native border GameTest covers it.
+      no(source.contains("level.hasChunkAt"));
       no(source.contains("level.getChunk("));
       yes(source.contains("RandomSource.create(chunkSeed"));
     } catch (IOException e) {
