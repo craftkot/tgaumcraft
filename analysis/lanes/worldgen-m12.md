@@ -336,3 +336,10 @@
 - Extended the exact repository Java 21 rollback regression in commit b3df2d8525103f0111bddfeb5f7f1ff07dd07017 with five assertions: a position changed from own canopy to a successfully written log must not be rolled back; other leaves must restore AIR and WATER; write count must exclude the log.
 - No production or shared files changed. This is a unit regression for the loader-neutral policy, NOT a native WorldGenLevel GameTest. The new assertions were not executed locally in an exact checkout; await CI for code and journal commits. Previous successful workflow run for fac76c7 was not proof of this change.
 - Remaining: exact-head Java runner, NeoForge compile and in-game new-chunk smoke, feature registration coordination, BETA26 RNG/biome parity. Next: inspect fresh CI, then add native WorldGenLevel integration coverage. Audit index remains 59/100; no merge.
+
+## 16.11.2026 — M12 rollback API contract and rejected-write regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; inspected open PR #1–#16 and feature branch inventory. Draft PR #9 remains open and unmerged.
+- Commit [4517f8e](https://github.com/craftkot/tgaumcraft/commit/4517f8e70be7ed880b2505371fd7aa0b5fe16e01) adds seven standalone Java 21 regression assertions to SilverwoodCanopyRollbackTest: four null-dependency guards and three rejected-write/foreign-block preservation checks. The isolated test now has 23 assertions (previously 16). No production, registry, Gradle, main, or other branch changes.
+- Direct git ls-remote still fails with DNS 'Could not resolve host: github.com'. Thus the exact repository runner, full NeoForge compilation, Minecraft GameTest and new-chunk worldgen have not been executed in this iteration; no PASS claimed. Need fresh CI for code commit and journal HEAD.
+- Next: run exact checkout tools/test_silverwood_canopy_rollback.sh and source guard, inspect CI, then implement native WorldGenLevel integration tests and coordinate feature registration. BETA26 biome/RNG parity remains unverified. Audit index remains 59/100.
