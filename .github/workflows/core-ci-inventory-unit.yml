@@ -1,0 +1,17 @@
+name: Core CI inventory regression tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  inventory-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run inventory parser regression tests
+        run: python3 -m unittest discover -s tools -p 'test_audit_core_ci_coverage.py' -v
+      - name: Report inventory gaps without treating them as executed tests
+        run: python3 tools/audit_core_ci_coverage.py
