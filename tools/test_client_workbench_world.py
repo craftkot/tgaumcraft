@@ -456,6 +456,21 @@ expect("xdotool key --clearmodifiers F3" in before_open
        and "xdotool key --clearmodifiers F3" in after_open,
        "Workbench smoke lacks an F3 target-block screenshot before and after interaction setup")
 
+interaction_fixture = generator.split("capture 08c-workbench-before-open", 1)[0]
+player_column_clear = "send_chat '/execute at @p run fill ~ ~ ~ ~ ~2 ~ minecraft:air'"
+workbench_place = "send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'"
+expect(player_column_clear in interaction_fixture and workbench_place in interaction_fixture
+       and interaction_fixture.index(player_column_clear) < interaction_fixture.index(workbench_place),
+       "Workbench fixture must clear a spawn fern from the player's eye column before placing the target")
+
+interaction_setup = generator.split("capture 08c1-workbench-empty-hand-before-open", 1)[1].split("capture 08d-workbench-gui-open", 1)[0]
+expect("xdotool getdisplaygeometry" in interaction_setup
+       and 'xdotool mousemove --sync "$workbench_click_x" "$workbench_click_y"' in interaction_setup
+       and 'pointer_location="$(xdotool getmouselocation --shell)"' in interaction_setup
+       and "WORKBENCH_INTERACTION_POINTER=PASS" in interaction_setup
+       and interaction_setup.index("xdotool mousemove") < interaction_setup.index("xdotool click 3"),
+       "Workbench real-client click must move and verify the pointer at the framebuffer crosshair")
+
 expect("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in workbench_block_source
        and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO" in workbench_block_source
        and "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=" in workbench_block_source

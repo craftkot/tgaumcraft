@@ -294,6 +294,11 @@ body = r'''
   # coordinate instead of accidentally addressing the stale spawn fixture.
   # The source-model fixture at +1 is still directly in front of this target.
   # Remove it after its screenshots; otherwise the ray hits the old empty bench.
+  # The player's eye column can still contain a fern from the random spawn. F3
+  # on the previous real-client run targeted minecraft:grass_fern at the player
+  # position instead of the bench two blocks ahead. Clear only the player column
+  # above the floor before creating and aiming at the real workbench.
+  send_chat '/execute at @p run fill ~ ~ ~ ~ ~2 ~ minecraft:air'
   send_chat '/execute at @p run setblock ~ ~ ~1 minecraft:air'
   sleep 1
   send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
@@ -327,6 +332,22 @@ body = r'''
   sleep 2
   echo 'WORKBENCH_OPEN_ATTEMPT=EMPTY_HAND_HOTBAR_1' | tee -a client-smoke-status.txt
   capture 08c1-workbench-empty-hand-before-open
+  # xdotool retains the Create World click location unless explicitly moved.
+  # Put the pointer on the framebuffer crosshair before sending right-click.
+  read -r workbench_screen_width workbench_screen_height < <(xdotool getdisplaygeometry)
+  workbench_click_x=$((workbench_screen_width / 2))
+  workbench_click_y=$((workbench_screen_height / 2))
+  xdotool windowactivate --sync "$WIN"
+  xdotool windowfocus --sync "$WIN"
+  xdotool mousemove --sync "$workbench_click_x" "$workbench_click_y"
+  pointer_location="$(xdotool getmouselocation --shell)"
+  pointer_x="$(awk -F= '$1 == "X" { print $2 }' <<< "$pointer_location")"
+  pointer_y="$(awk -F= '$1 == "Y" { print $2 }' <<< "$pointer_location")"
+  if [[ "$pointer_x" != "$workbench_click_x" || "$pointer_y" != "$workbench_click_y" ]]; then
+    echo "WORKBENCH_INTERACTION_POINTER=FAIL expected=${workbench_click_x},${workbench_click_y} actual=${pointer_x},${pointer_y}" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "WORKBENCH_INTERACTION_POINTER=PASS x=$pointer_x y=$pointer_y" | tee -a client-smoke-status.txt
   xdotool click 3
   sleep 4
   capture 08d-workbench-gui-open
