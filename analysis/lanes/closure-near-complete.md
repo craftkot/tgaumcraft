@@ -212,3 +212,68 @@
 - Inspected [#43803203372](https://github.com/craftkot/tgaumcraft/actions/runs/43803203372): core checks, NeoForge build, dedicated-server smoke and JAR upload steps all completed successfully on the code commit. The later documentation head 439374add156ba0f94ffe01307ccf4d8ff9a5080 has its own [GameTests #43803398530](https://github.com/craftkot/tgaumcraft/actions/runs/43803398530) and [Port CI #43803398386](https://github.com/craftkot/tgaumcraft/actions/runs/43803398386), both reported SUCCESS by GitHub; not a replacement for inspecting their artifact markers.
 - No Java, test harness, shared CI, registries or other branch changed in this iteration. Only this lane journal is updated to close the pending evidence check. No new test executed locally (DNS blocker); no merge or force push. Fixed audit 59/100, M08 5/9, M16 4/6 unchanged.
 - Next: native M16 Salis boundary tests with real chunk-ticket state and independent packet recording; check remaining original visual/audio differences. Avoid touching SalisMundusItem.java until PR #3/#4 overlap is coordinated.
+
+
+## 2026-11-16 — crystal worldgen waits for border support chunks
+
+Fresh baseline reread on this run:
+- `main`: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- Work branch before this iteration: `13fb4c9c2665199a86ef378d8fb7176274fc9439`.
+- Current work branch after implementation: `237890b3e83f1e0329054d5cc96f5156d64ee11d`.
+- PR #4 remains Draft/Open/Unmerged; 998 commits, 195 changed files, base is the fresh main above. No merge or force update.
+
+### Evidence received before changing code
+
+All 19 PR-triggered workflows associated with the prior code HEAD `13fb4c9c` completed successfully:
+- Aura/crystal native GameTests: 8/8 required tests passed in both cold-restart phases. The read phase logged `TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS existing_record_preserved=YES gaussian=0 local_target_pending=NO`; the persisted Base/Vis/Flux values survived the two separate JVMs.
+- Full Port CI: Core parity, original-resource checks, NeoForge build, dedicated-server smoke and JAR upload all passed.
+- Arcane Workbench real-client matrix: RU/EN at GUI scales 2 and 3, 4/4 passed.
+- Crystal outline real-client smoke: all six support faces and the multi-face full-cube case passed.
+- Other M16 client regressions passed: Salis unload/reload and ticket cleanup, original label art/tint, readable GUI text, Thaumonomicon page sound, Curio learn sound, Thaumometer scan sound/runes, crystal place/break sound, tube particles, Salis dust/Nitor particles, jar interaction/SoundType.
+
+These results validate the prior HEAD only; they do not validate the new change below.
+
+### Source discrepancy found
+
+Pinned BETA26 `BlockUtils.isBlockTouching(IBlockAccess, BlockPos, Material, boolean)` iterates all six `EnumFacing` neighbors and reads each neighbor's block state and (when requested) side solidity. `ThaumcraftWorldGenerator.generateOres` uses that predicate while placing the 3×3×3 crystal cluster.
+
+The port's deferred `CrystalClusterWorldGen.PendingQueue` previously waited only for the center chunk. Its `touchesRock` adapter deliberately skips support positions in unloaded chunks to avoid joining/force-loading them. At a horizontal chunk edge this could turn an actually valid rock support in an unloaded cardinal neighbor into a false negative; the one-shot worldgen request would then be consumed and the missed cluster would not be retried.
+
+### Implemented
+
+The production queue now waits until the center chunk and all four cardinal neighbors are fully available via the existing non-joining `ThaumcraftAuraWorldEvents.fiveChunksLoaded` check. No neighbor is force-loaded. The check is necessary because cluster candidate cells remain inside their own chunk, while one of their horizontal support faces can lie in the adjacent chunk.
+
+Native GameTest added to the existing eight-test suite:
+- creates a remote center chunk with an unloaded west neighbor;
+- proves queue processing invokes no generator and does not increase loaded-chunk count;
+- loads the cardinal neighborhood;
+- places a stone support in the west neighbor;
+- resumes the same queue entry and invokes the production `generateClusterAt` path with deterministic RNG;
+- verifies an actual Aer crystal is placed on the border cell.
+
+The shell runner now requires `TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS no_force_load=YES deferred=1 resumed=1 crystal_placed=YES` in both cold-restart phases. Core parity also checks that the production adapter uses the five-chunk gate.
+
+### Files changed
+
+- `src/neoforge/java/dev/ehtid/thaumcraft/world/CrystalClusterWorldGen.java`
+- `src/neoforge/java/dev/ehtid/thaumcraft/world/AuraGenerationGameTests.java`
+- `src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java`
+- `tools/run_crystal_spread_gametest.sh`
+
+Implementation commit: `eaad92a877f11270693d9bfdea111eed58aa75eb`.
+Deterministic fixture refinement: `237890b3e83f1e0329054d5cc96f5156d64ee11d`.
+
+### Path coordination
+
+Before editing, checked the four code/test paths against changed-file lists for all other open PRs #1–#3 and #5–#16. No overlap was reported. No common registry, Gradle file, CI workflow, global localization file, or foreign feature branch was changed.
+
+### Acceptance status
+
+- Prior HEAD Core parity / NeoForge compile / dedicated server: PASS.
+- Prior HEAD native aura/crystal GameTests: PASS, 8/8 in both phases.
+- Prior HEAD real-client M16 suite: all 19 associated workflows PASS.
+- New border-support GameTest and new Core parity assertion: **not yet run on HEAD `237890b3`**. A new CI run is required before acceptance.
+- No category score awarded. M08 remains `5/9`; whole-port audit remains `59/100`. This is one verified bug candidate, not closure of aura/crystal/world.
+- M16 remains `4/6`: the current tested subset passes, but the full original asset/render/effect inventory is not yet demonstrated.
+
+Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI first. If the border-support test fails, fix that failure before starting another feature. If it passes, continue M08 with a non-overlapping remaining world behavior; Flux Rift entity registration still needs explicit coordination with PR #3 before touching shared entity registration.
