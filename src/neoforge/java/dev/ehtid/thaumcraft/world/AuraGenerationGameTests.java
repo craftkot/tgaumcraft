@@ -744,7 +744,8 @@ public final class AuraGenerationGameTests {
             if (lowChanges != 1
                     || lowVis.getVis(source) != 0.0F
                     || Math.abs(lowVis.getFlux(source) - expectedPhaseFlux[phase]) > 0.00001F
-                    || lowCalls.get() != 1) {
+                    || lowCalls.get() != 2
+                    || lowVis.takePendingRiftTrigger() != null) {
                 throw new AssertionError("BETA26 low-Vis Flux accumulation mismatch at moon phase " + phase
                         + ": changes=" + lowChanges + " vis=" + lowVis.getVis(source)
                         + " flux=" + lowVis.getFlux(source) + " expectedFlux=" + expectedPhaseFlux[phase]);
@@ -771,8 +772,9 @@ public final class AuraGenerationGameTests {
                     return 0.0D;
                 }) != 0
                 || lowVisGuard.getFlux(source) != 0.1F
-                || lowGuardCalls.get() != 0) {
-            throw new AssertionError("BETA26 low-Vis accumulation requires currentVis >= currentFlux before drawing RNG");
+                || lowGuardCalls.get() != 1
+                || !new BlockPos(chunkX * 16, 0, chunkZ * 16).equals(lowVisGuard.takePendingRiftTrigger())) {
+            throw new AssertionError("BETA26 low-Vis conversion must be guarded while the independent post-pass rift roll remains active");
         }
 
         ThaumcraftAuraSavedData recoveryPrecedence = new ThaumcraftAuraSavedData();
@@ -803,7 +805,7 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("BETA26 Vis-to-Flux conversion must update known unloaded records without force-loading");
         }
 
-        System.out.println("TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenFloat recoveryPriority=YES unloaded=updated no_force_load=YES");
+        System.out.println("TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenConversionThenRift recoveryPriority=YES riftRoll=postConversion unloaded=updated no_force_load=YES");
     }
 
     private static void assertSetVisClampsToLegacyCeiling() {
