@@ -1,0 +1,15 @@
+// Opt-in NeoForge native GameTest run for the isolated Alchemy candidate.
+// Does not claim gameplay coverage: tests must be registered in the candidate.
+allprojects {
+    afterEvaluate { project ->
+        def neo = project.extensions.findByName('neoForge')
+        if (neo != null) {
+            neo.runs.create('alchemyGameTest') {
+                type = 'gameTestServer'
+                gameDirectory = project.layout.buildDirectory.dir('alchemy-gametest')
+                jvmArguments.add '-Xmx2G'
+                systemProperty 'neoforge.enabledGameTestNamespaces', project.findProperty('alchemyGameTestNamespaces') ?: 'thaumcraft,thaumcraft_alchemy'
+            }
+        }
+    }
+}
