@@ -22,6 +22,7 @@ phase0 = section(probe, "if (phase == 0)", "if (phase == 4)")
 phase4 = section(probe, "if (phase == 4)", "if (phase == 1)")
 phase2 = section(probe, "if (phase == 2)", "if (phase == 3)")
 phase3 = section(probe, "if (phase == 3)", "} catch (RuntimeException | AssertionError ex)")
+phase5 = section(probe, "if (phase == 5)", "} catch (RuntimeException | AssertionError ex)")
 if "require(releaseFixtureTicket()" not in phase4:
     raise SystemExit("SALIS_NATIVE_INITIAL_TICKET_RELEASE=FAIL")
 if "fixtureTicketHeld = true;" not in phase2:
@@ -63,6 +64,7 @@ required_runtime_markers = (
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
     "SALIS_NATIVE_CHUNK_RELOADED",
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
+    "SALIS_NATIVE_POST_RELOAD_FRESH_PACKET",
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
     "SALIS_NATIVE_CHUNK_TICKET_CLEANED",
     "SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY",
@@ -75,8 +77,15 @@ if 'grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log' not in smoke:
     raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_EXACTLY_ONCE_GATE=FAIL")
 if "SALIS_NATIVE_LIFECYCLE_ORDER=PASS" not in smoke or "positions != sorted(set(positions))" not in smoke:
     raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_ORDER_GATE=FAIL")
-if "grep -Fc 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES'" not in smoke or "count=1 " not in smoke:
-    raise SystemExit("SALIS_NATIVE_PACKET_POSITIVE_CONTROL_GATE=FAIL")
+if (
+    "grep -Fc 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES'" not in smoke
+    or "count=1 " not in smoke
+    or "count=2 " not in smoke
+    or 'packet_count" -ne 2' not in smoke
+):
+    raise SystemExit("SALIS_NATIVE_PACKET_SEQUENCE_GATE=FAIL")
+if "expected_count=2" not in smoke or "SALIS_NATIVE_POST_RELOAD_PACKET_ORDER=PASS count=2 after reload" not in smoke:
+    raise SystemExit("SALIS_NATIVE_POST_RELOAD_PACKET_GATE=FAIL")
 if "SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=PASS" not in smoke:
     raise SystemExit("SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER_GATE=FAIL")
 
@@ -138,6 +147,23 @@ if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase2:
     raise SystemExit("SALIS_OUTBOUND_PACKET_UNLOAD_ASSERTION=FAIL")
 if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase3:
     raise SystemExit("SALIS_OUTBOUND_PACKET_RELOAD_ASSERTION=FAIL")
+if not (
+    phase3.index('mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD")')
+    < phase3.index("moveActorToPacketOrigin(level, probeActor)")
+    < phase3.index("SalisSparkleTrailQueue.emitFaceOrQueue")
+    < phase3.index("phase = 5;")
+):
+    raise SystemExit("SALIS_POST_RELOAD_TRIGGER_ORDER=FAIL")
+if not (
+    "OUTBOUND_PROBE_PACKET_COUNT.get() <= outboundPacketsBefore + 1" in phase5
+    and "if (postReloadPackets != outboundPacketsBefore + 1) return;" in phase5
+    and 'mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET")' in phase5
+    and phase5.index('mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET")')
+        < phase5.index("restoreActorFromPacketOrigin()")
+        < phase5.index("removeOutboundParticleRecorder()")
+        < phase5.index("releaseFixtureTicket()")
+):
+    raise SystemExit("SALIS_POST_RELOAD_PACKET_AND_CLEANUP=FAIL")
 
 print("SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=PASS")
 print("SALIS_OUTBOUND_PACKET_POSITIVE_CONTROL=PASS")
