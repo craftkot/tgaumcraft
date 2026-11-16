@@ -5,6 +5,9 @@ on:
     branches:
       - integration/alchemy-mirror-core-probe-2026-11-16
   workflow_dispatch:
+  pull_request:
+    branches:
+      - integration/verified-port-2026-11-14
 
 jobs:
   mirror-core:
