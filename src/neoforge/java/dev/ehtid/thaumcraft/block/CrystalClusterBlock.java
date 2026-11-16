@@ -15,8 +15,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.sounds.SoundEvent;
@@ -26,7 +24,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -35,9 +32,8 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * Real seven-variant BETA26 BlockCrystal world behavior.
  * Uses the persisted (not imagined) per-chunk Vis/Flux in AuraSavedData.
  * BETA26 Material.ROCK + side-solid support is represented by an explicit,
- * data-driven vanilla compatibility tag that datapacks can extend. Six face-specific
- * mesh orientations are selected by multipart models; per-face randomized shard choice
- * remains a separate visual-parity detail.
+ * data-driven vanilla compatibility tag that datapacks can extend. Advanced multi-face
+ * mesh/outline and original crystal SoundType still require client parity.
  */
 public final class CrystalClusterBlock extends Block {
     // BETA26 SoundsTC.CRYSTAL: 0.5 volume, 1.0 pitch, crystal event for
@@ -57,12 +53,6 @@ public final class CrystalClusterBlock extends Block {
 
     public static final IntegerProperty SIZE=IntegerProperty.create("size",0,3);
     public static final IntegerProperty GENERATION=IntegerProperty.create("gen",1,4);
-    public static final BooleanProperty UP=BooleanProperty.create("up");
-    public static final BooleanProperty DOWN=BooleanProperty.create("down");
-    public static final BooleanProperty EAST=BooleanProperty.create("east");
-    public static final BooleanProperty WEST=BooleanProperty.create("west");
-    public static final BooleanProperty NORTH=BooleanProperty.create("north");
-    public static final BooleanProperty SOUTH=BooleanProperty.create("south");
     private static final TagKey<Block> CRYSTAL_SUPPORTS = TagKey.create(
             Registries.BLOCK, ResourceLocation.parse("thaumcraft:crystal_supports"));
 
@@ -72,14 +62,12 @@ public final class CrystalClusterBlock extends Block {
         // Mark the block dynamic so another position's outline is never reused from a cache.
         super(props.dynamicShape().sound(ORIGINAL_CRYSTAL_SOUND));
         this.aspectTag=aspectTag;
-        registerDefaultState(stateDefinition.any().setValue(SIZE,0).setValue(GENERATION,1)
-                .setValue(UP,false).setValue(DOWN,false).setValue(EAST,false)
-                .setValue(WEST,false).setValue(NORTH,false).setValue(SOUTH,false));
+        registerDefaultState(stateDefinition.any().setValue(SIZE,0).setValue(GENERATION,1));
     }
     public String aspectTag() { return aspectTag; }
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block,BlockState> b) {
-        b.add(SIZE,GENERATION,UP,DOWN,EAST,WEST,NORTH,SOUTH);
+        b.add(SIZE,GENERATION);
     }
     @Override public VoxelShape getCollisionShape(BlockState state,BlockGetter level,
         BlockPos pos, CollisionContext context) { return Shapes.empty(); }
@@ -107,34 +95,8 @@ public final class CrystalClusterBlock extends Block {
                 bounds.maxX()*16.0D,bounds.maxY()*16.0D,bounds.maxZ()*16.0D);
     }
     @Override public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        BlockState state=withSupportFaces(defaultBlockState(),ctx.getLevel(),ctx.getClickedPos());
+        BlockState state=defaultBlockState();
         return state.canSurvive(ctx.getLevel(),ctx.getClickedPos())?state:null;
-    }
-
-    /** Recompute the six source-era extended-state flags without loading neighbours. */
-    private static BlockState withSupportFaces(BlockState state,BlockGetter level,BlockPos pos) {
-        return state.setValue(UP,hasCrystalSupport(level,pos,Direction.UP))
-                .setValue(DOWN,hasCrystalSupport(level,pos,Direction.DOWN))
-                .setValue(EAST,hasCrystalSupport(level,pos,Direction.EAST))
-                .setValue(WEST,hasCrystalSupport(level,pos,Direction.WEST))
-                .setValue(NORTH,hasCrystalSupport(level,pos,Direction.NORTH))
-                .setValue(SOUTH,hasCrystalSupport(level,pos,Direction.SOUTH));
-    }
-
-    @Override protected BlockState updateShape(BlockState state,LevelReader level,
-            ScheduledTickAccess scheduledTickAccess,BlockPos pos,Direction direction,
-            BlockPos neighborPos,BlockState neighborState,RandomSource random) {
-        BlockState updated=super.updateShape(state,level,scheduledTickAccess,pos,
-                direction,neighborPos,neighborState,random);
-        return withSupportFaces(updated,level,pos);
-    }
-
-    @Override protected void onPlace(BlockState state,Level level,BlockPos pos,
-            BlockState oldState,boolean movedByPiston) {
-        super.onPlace(state,level,pos,oldState,movedByPiston);
-        if(level.isClientSide) return;
-        BlockState updated=withSupportFaces(state,level,pos);
-        if(!updated.equals(state)) level.setBlock(pos,updated,2);
     }
     /** World and renderer MUST use identical attached-face criteria. */
     public static boolean hasCrystalSupport(BlockGetter level, BlockPos pos, Direction d) {
@@ -215,12 +177,8 @@ public final class CrystalClusterBlock extends Block {
           net.minecraft.world.level.Level world,BlockPos pos,Block block,
           BlockPos fromPos,boolean movedByPiston) {
         super.neighborChanged(state,world,pos,block,fromPos,movedByPiston);
-        if(world.isClientSide) return;
-        BlockState current=world.getBlockState(pos);
-        if(!current.is(this)) return;
-        BlockState updated=withSupportFaces(current,world,pos);
-        if(!updated.equals(current)) world.setBlock(pos,updated,2);
-        if(!updated.canSurvive(world,pos)) world.scheduleTick(pos,this,1);
+        if(!world.isClientSide&&!state.canSurvive(world,pos))
+            world.scheduleTick(pos,this,1);
     }
     @Override public void tick(BlockState state,ServerLevel level,BlockPos pos,RandomSource rand) {
         BlockState current = level.getBlockState(pos);
@@ -301,9 +259,8 @@ public final class CrystalClusterBlock extends Block {
         if(random.nextInt(16)!=0||!touchesLoadedStone(level,other)) return;
         if(!aura.trySpendCrystalAura(pos,flux,10)) return;
         var child=LegacyBlockCrystalGrowthRules.child(s,random.nextInt(6)==0);
-        BlockState childState=withSupportFaces(defaultBlockState()
+        level.setBlock(other,defaultBlockState()
                 .setValue(SIZE,child.size())
-                .setValue(GENERATION,child.generation()),level,other);
-        level.setBlock(other,childState,3);
+                .setValue(GENERATION,child.generation()),3);
     }
 }

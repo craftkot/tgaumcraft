@@ -2,7 +2,6 @@
 """Static, geometric and rotation-contract tests for crystal outline client smoke."""
 import json
 import math
-import re
 from pathlib import Path
 
 from client_crystal_outline_smoke import (
@@ -282,72 +281,4 @@ assert 'if [ "$face" = "down" ]' in body
 assert "xdotool key --clearmodifiers space" not in body
 assert 'test "$(find client-smoke/screenshots' in body
 assert body.rstrip().endswith("fi")
-
-# The BETA26 CrystalModel adds one rotated OBJ mesh for every supported face.
-# Blockstate x/y rotations are around the block centre and must match the source transforms.
-EXPECTED_FACE_ROTATIONS = {
-    "up": (180, 0), "down": (0, 0), "east": (90, 270),
-    "west": (90, 90), "north": (90, 0), "south": (90, 180),
-}
-def rotate_blockstate(point, x_rotation, y_rotation):
-    x, y, z = (value - 0.5 for value in point)
-    for _ in range((x_rotation % 360) // 90):
-        y, z = -z, y
-    for _ in range((y_rotation % 360) // 90):
-        x, z = z, -x
-    return x + 0.5, y + 0.5, z + 0.5
-
-def expected_crystal_face(face, point):
-    x, y, z = point
-    return {
-        "up": (x, 1 - y, 1 - z), "down": (x, y, z),
-        "east": (1 - y, 1 - z, x), "west": (y, 1 - z, 1 - x),
-        "north": (x, 1 - z, y), "south": (1 - x, 1 - z, 1 - y),
-    }[face]
-
-for face, (x_rotation, y_rotation) in EXPECTED_FACE_ROTATIONS.items():
-    for point in ((0.3, 0.0, 0.7), (0.125, 0.25, 0.5), (0.91, 0.42, 0.17)):
-        actual = rotate_blockstate(point, x_rotation, y_rotation)
-        expected = expected_crystal_face(face, point)
-        assert max(abs(a - b) for a, b in zip(actual, expected)) < 1.0e-9, (
-            face, point, actual, expected
-        )
-
-for aspect in ("aer", "ignis", "aqua", "terra", "ordo", "perditio", "vitium"):
-    blockstate_path = (
-        Path(__file__).resolve().parents[1]
-        / f"src/main/resources/assets/thaumcraft/blockstates/crystal_{aspect}.json"
-    )
-    blockstate = json.loads(blockstate_path.read_text(encoding="utf-8"))
-    assert "variants" not in blockstate, aspect
-    multipart = blockstate.get("multipart")
-    assert isinstance(multipart, list) and len(multipart) == 24, (aspect, multipart)
-    seen = set()
-    for part in multipart:
-        when = part["when"]
-        assert len(when) == 2, (aspect, when)
-        face = next((name for name in EXPECTED_FACE_ROTATIONS if name in when), None)
-        assert face is not None and when[face] == "true", (aspect, when)
-        size = int(when["size"])
-        assert 0 <= size <= 3, (aspect, when)
-        apply = part["apply"]
-        assert apply["model"] == f"thaumcraft:block/crystal_{aspect}_size{size}", (aspect, face, size, apply)
-        assert apply["x"] == EXPECTED_FACE_ROTATIONS[face][0], (aspect, face, apply)
-        assert apply["y"] == EXPECTED_FACE_ROTATIONS[face][1], (aspect, face, apply)
-        seen.add((face, size))
-    assert len(seen) == 24, (aspect, seen)
-
-for property_name in ("UP", "DOWN", "EAST", "WEST", "NORTH", "SOUTH"):
-    assert re.search(
-        rf"BooleanProperty\s+{property_name}\s*=\s*BooleanProperty\.create\(\"{property_name.lower()}\"\)",
-        crystal_source,
-    ), property_name
-assert "b.add(SIZE,GENERATION,UP,DOWN,EAST,WEST,NORTH,SOUTH);" in crystal_source
-assert "private static BlockState withSupportFaces(" in crystal_source
-assert "updateShape(BlockState state,LevelReader level," in crystal_source
-assert "onPlace(BlockState state,Level level,BlockPos pos," in crystal_source
-assert "withSupportFaces(defaultBlockState()" in crystal_source
-assert "CRYSTAL_MODEL_FACE_STATE_$face" in build_body()
-assert "CRYSTAL_MODEL_MULTIFACE_STATE" in build_body()
-
 print("Crystal outline client-smoke contract: PASS (6 faces + multi-face; eye-origin yaw/pitch)")
