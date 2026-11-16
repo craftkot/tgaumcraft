@@ -11,6 +11,16 @@ public final class SilverwoodCanopyRollbackTest {
         if (!ok) throw new AssertionError(message);
     }
 
+    private static void checkThrowsNull(Runnable action, String message) {
+        boolean threw = false;
+        try {
+            action.run();
+        } catch (NullPointerException expected) {
+            threw = true;
+        }
+        check(threw, message);
+    }
+
     public static void main(String[] args) {
         Map<String, String> before = new LinkedHashMap<>();
         before.put("air", "AIR");
@@ -80,6 +90,30 @@ public final class SilverwoodCanopyRollbackTest {
         check("LOG".equals(mixedWorld.get("trunk")), "preserve trunk after canopy cleanup");
         check("WATER".equals(mixedWorld.get("water")), "restore non-air original state");
         check("AIR".equals(mixedWorld.get("canopy")), "restore remaining canopy to air");
+        // Invalid callback dependencies must fail before reading or writing the world.
+        checkThrowsNull(() -> SilverwoodCanopyRollback.restore(null, "LEAVES",
+                pos -> "LEAVES", (pos, state) -> true), "null originals");
+        checkThrowsNull(() -> SilverwoodCanopyRollback.restore(Map.of(), null,
+                pos -> "LEAVES", (pos, state) -> true), "null leaf state");
+        checkThrowsNull(() -> SilverwoodCanopyRollback.restore(Map.of(), "LEAVES",
+                null, (pos, state) -> true), "null state reader");
+        checkThrowsNull(() -> SilverwoodCanopyRollback.restore(Map.of(), "LEAVES",
+                pos -> "LEAVES", null), "null state writer");
+        // A rejected leaf write must not affect any other recorded position.
+        Map<String, String> rejectedWorld = new HashMap<>();
+        rejectedWorld.put("one", "LEAVES");
+        rejectedWorld.put("two", "STONE");
+        int[] rejectedWrites = {0};
+        int rejectedRestores = SilverwoodCanopyRollback.restore(
+                new LinkedHashMap<>(Map.of("one", "AIR", "two", "AIR")), "LEAVES",
+                rejectedWorld::get, (pos, state) -> {
+                    rejectedWrites[0]++;
+                    return false;
+                });
+        check(rejectedRestores == 0, "rejected write is not counted");
+        check(rejectedWrites[0] == 1, "foreign position never reaches rejected writer");
+        check("LEAVES".equals(rejectedWorld.get("one"))
+                && "STONE".equals(rejectedWorld.get("two")), "rejected write leaves world intact");
         System.out.println("SilverwoodCanopyRollbackTest: OK (" + checks + " assertions)");
     }
 }
