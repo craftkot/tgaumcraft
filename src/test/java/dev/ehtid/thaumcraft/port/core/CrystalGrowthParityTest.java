@@ -115,13 +115,23 @@ public final class CrystalGrowthParityTest {
       String source = Files.readString(Path.of(
           "src/neoforge/java/dev/ehtid/thaumcraft/world/CrystalClusterWorldGen.java"));
       yes(source.contains("event.isNewChunk()"));
-      yes(source.contains("getChunkSource().getChunkNow"));
       yes(source.contains("ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, chunkPos.x, chunkPos.z)"));
-      // The five-chunk loaded gate replaces the old center-only hasChunkAt guard.
-      // Do not require the removed guard: a native border GameTest covers it.
-      no(source.contains("level.hasChunkAt"));
+      // The candidate guard avoids reading a block in an unloaded target chunk.
+      // It is distinct from the five-chunk, non-joining readiness check.
+      yes(source.contains("if (!level.hasChunkAt(target)) continue;"));
       no(source.contains("level.getChunk("));
       yes(source.contains("RandomSource.create(chunkSeed"));
+
+      // The five non-joining lookups live in the shared aura helper, not this adapter.
+      String auraEvents = Files.readString(Path.of(
+          "src/neoforge/java/dev/ehtid/thaumcraft/world/ThaumcraftAuraWorldEvents.java"));
+      yes(auraEvents.contains("static boolean fiveChunksLoaded(ServerLevel level, int x, int z)"));
+      yes(auraEvents.contains("chunks.getChunkNow(x, z) != null"));
+      yes(auraEvents.contains("chunks.getChunkNow(x - 1, z) != null"));
+      yes(auraEvents.contains("chunks.getChunkNow(x + 1, z) != null"));
+      yes(auraEvents.contains("chunks.getChunkNow(x, z - 1) != null"));
+      yes(auraEvents.contains("chunks.getChunkNow(x, z + 1) != null"));
+      no(auraEvents.contains("chunks.getChunk("));
     } catch (IOException e) {
       throw new AssertionError("Unable to inspect NeoForge crystal worldgen adapter", e);
     }
