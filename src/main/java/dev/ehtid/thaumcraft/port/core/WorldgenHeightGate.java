@@ -18,7 +18,7 @@ public final class WorldgenHeightGate {
      */
     public static boolean originWithinBuildHeight(
             int originY, int minBuildY, int maxBuildYExclusive) {
-        return minBuildY < maxBuildY
+        return minBuildY < maxBuildYExclusive
                 && originY >= minBuildY
                 && originY < maxBuildYExclusive;
     }
