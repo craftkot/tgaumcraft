@@ -390,3 +390,11 @@
 - Regression [4d26fc8](https://github.com/craftkot/tgaumcraft/commit/4d26fc8f45fec444cb7cd7723292e74d46da983a) adds three checks for a missing *later* original: exception, zero world writes, first log unchanged. Nine standalone assertions now expected, not executed on exact checkout.
 - Prior head 0bc77dd GitHub Actions #3427 concluded SUCCESS, but is not evidence for these new commits or the standalone runner. Exact-head NeoForge build, native WorldGenLevel GameTest, new-chunk smoke and BETA26 RNG/biome parity not verified. Feature remains unregistered. No shared registries, Gradle, main or other branch edits. Historical index 59/100 unchanged.
 - Next: inspect exact-head CI, run standalone Java runner on exact checkout, then implement native WorldGenLevel failure-injection test and coordinate feature registration separately.
+
+## 16.11.2026 — M12 trunk rollback callback-interleaving regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Checked main...feature/worldgen-m12 (ahead 119, behind 0 before test commit), feature branches and open PR inventory. Draft PR #9 remains open, without merge.
+- Confirmed GitHub Actions #3437 (https://github.com/craftkot/tgaumcraft/actions/runs/43931241444) SUCCESS for previous HEAD 689e68c9e2a0f8eed91592414a2f681b564fec3a. This does NOT establish exact standalone runner execution, in-game worldgen, or the new regression's result.
+- Commit ee09dc53a9266e0fceddf0eb6642df122bd03691 adds four regression assertions to SilverwoodTrunkRollbackTest: first restoration callback changes a later log into foreign STONE; the later log must be re-read and skipped, while the first original AIR is restored. Expected test total is now 13 assertions; NOT executed here.
+- New commit's PR-triggered workflow query returned no runs at check time. Exact checkout Java runner, current-head NeoForge build, WorldGenLevel GameTest and new-chunk generation are unverified. Natural feature registration and exact BETA26 biome/RNG parity remain outstanding.
+- Next: execute exact tools/test_silverwood_trunk_rollback.sh, inspect fresh CI, implement native WorldGenLevel failure-injection test and coordinate registration without editing shared registries. No main, Gradle or other branch edits; historical audit remains 59/100.
