@@ -20,9 +20,10 @@ import java.util.function.IntUnaryOperator;
  * Persistent per-dimension aura chunks.
  *
  * BETA26 AuraHandler stores base/vis/flux by chunk, shared by every consumer in
- * that chunk. Generation is intentionally separate: this class only preserves
- * storage/drain semantics so a later exact biome generator can populate it
- * without keeping aura on individual block entities.
+ * that chunk. Chunk-load population is handled separately by
+ * ThaumcraftAuraChunkPopulationQueue and ThaumcraftAuraWorldEvents, so this
+ * class preserves the shared storage/drain semantics without putting aura on
+ * individual block entities.
  */
 public final class ThaumcraftAuraSavedData extends SavedData {
     private static final String DATA_NAME = "thaumcraft_aura";
