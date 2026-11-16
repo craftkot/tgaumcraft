@@ -104,10 +104,16 @@ public final class ThaumcraftAuraWorldEvents {
         return true;
     }
 
-    private static boolean fiveChunksLoaded(ServerLevel level, int x, int z) {
-        return level.hasChunk(x, z)
-                && level.hasChunk(x - 1, z) && level.hasChunk(x + 1, z)
-                && level.hasChunk(x, z - 1) && level.hasChunk(x, z + 1);
+    static boolean fiveChunksLoaded(ServerLevel level, int x, int z) {
+        // hasChunk/hasChunkAt may report a chunk that is still in the load
+        // pipeline. getChunkNow is a non-joining lookup: never block the server
+        // tick while a neighboring chunk is being completed by ChunkMap.
+        var chunks = level.getChunkSource();
+        return chunks.getChunkNow(x, z) != null
+                && chunks.getChunkNow(x - 1, z) != null
+                && chunks.getChunkNow(x + 1, z) != null
+                && chunks.getChunkNow(x, z - 1) != null
+                && chunks.getChunkNow(x, z + 1) != null;
     }
 
     private static float modifier(ServerLevel level, BlockPos pos) {
