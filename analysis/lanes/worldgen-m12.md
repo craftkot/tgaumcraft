@@ -406,3 +406,11 @@
 - Commit [2c180f7](https://github.com/craftkot/tgaumcraft/commit/2c180f7eb0016956277dd5707531dbc6dc0d850e) adds four deterministic standalone trunk rollback assertions: a rejected first restoration leaves that log in place but does not abort a later successful restoration; only accepted writes count. Expected standalone total is 17 assertions, **not an executed PASS**.
 - Exact checkout unavailable (git ls-remote fails DNS resolution of github.com). No local exact-source Java runner, new-head NeoForge compile, native WorldGenLevel GameTest or new-chunk smoke was performed. Feature remains unregistered; BETA26 RNG/biome parity unresolved.
 - Next: execute exact tools/test_silverwood_trunk_rollback.sh, check CI for this new SHA, then add native WorldGenLevel failure-injection coverage and coordinate natural feature registration. No changes to main, shared registries, Gradle or other branches. Historical audit remains 59/100.
+
+## 16.11.2026 — M12 Silverwood log-coordinate uniqueness regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked 26 parallel branches, 24 open PRs and main...feature/worldgen-m12 (ahead 123, behind 0 before edit). Draft PR #9 remains open; no merge.
+- Previous HEAD 44f7c4a33ac98f17e58eddc0bb26bff97490d4eb: GitHub Actions run 43951886410 completed SUCCESS and CircleCI verify-connection SUCCESS. These checks predate the new commit.
+- Commit d852b5b3dd3ae2d415378f956c5ef4013d23b1a3 adds 128 deterministic checks (4 supported heights x 32 seeds) that SilverwoodLegacyLogs never writes the same block coordinate twice. This guards the actual SilverwoodLegacyFeature completion condition (unique written positions == attempted log callbacks). Test has NOT been executed on an exact checkout.
+- Direct git ls-remote still fails DNS resolution of github.com. No exact-source Java runner, NeoForge build, native WorldGenLevel GameTest or new-chunk smoke for this commit. Feature remains unregistered; BETA26 RNG/biome parity unverified.
+- Next: run exact standalone Java 21 runner and check current CI, then implement native WorldGenLevel failure-injection GameTest and coordinate natural generation registration separately. No main, other branches, shared registries or Gradle touched; historical audit remains 59/100.
