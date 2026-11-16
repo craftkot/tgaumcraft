@@ -546,6 +546,10 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("A neighbor at its Vis+Flux phase ceiling must not receive Vis");
         }
 
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null
+                || level.getChunkSource().getChunkNow(chunkX + 1, chunkZ) == null) {
+            throw new AssertionError("Loaded Vis-flow fixture requires its source and east chunks to be loaded");
+        }
         ThaumcraftAuraSavedData runtime = new ThaumcraftAuraSavedData();
         runtime.putChunk(source, (short) 100, 10.0F, 0.0F);
         runtime.putChunk(east, (short) 100, 0.0F, 0.0F);
@@ -559,7 +563,8 @@ public final class AuraGenerationGameTests {
 
         int farX = chunkX + 64;
         int farZ = chunkZ + 64;
-        if (level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
+        if (level.getChunkSource().getChunkNow(farX, farZ) != null
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
             throw new AssertionError("Unloaded neighbor-flow fixture unexpectedly starts loaded");
         }
         BlockPos farSource = sampleCenter(farX, farZ);
@@ -567,15 +572,38 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
         unloaded.putChunk(farSource, (short) 100, 10.0F, 0.0F);
         unloaded.putChunk(farEast, (short) 100, 0.0F, 0.0F);
-        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0, () -> 1.0D);
-        if (unloadedChanges != 1
-                || unloaded.getVis(farSource) != 9.0F
-                || unloaded.getVis(farEast) != 1.0F
-                || level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
-            throw new AssertionError("Aura Vis flow must update known unloaded records without force-loading either chunk");
+        AtomicInteger unloadedShuffleCalls = new AtomicInteger();
+        AtomicInteger unloadedFloatCalls = new AtomicInteger();
+        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> {
+            unloadedShuffleCalls.incrementAndGet();
+            return 0;
+        }, () -> {
+            unloadedFloatCalls.incrementAndGet();
+            return 1.0D;
+        });
+        if (unloadedChanges != 0
+                || unloaded.getVis(farSource) != 10.0F
+                || unloaded.getVis(farEast) != 0.0F
+                || unloadedShuffleCalls.get() != 0
+                || unloadedFloatCalls.get() != 0
+                || level.getChunkSource().getChunkNow(farX, farZ) != null
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
+            throw new AssertionError("BETA26 loaded-aura cache must skip both unloaded Vis-flow records without RNG or force-load");
         }
 
-        System.out.println("TC_GAMETEST_AURA_VIS_NEIGHBOR=PASS lowest=2.0 transfer=1.0 conserved=YES threshold=0.75 ceiling=115 unloaded=updated no_force_load=YES");
+        ThaumcraftAuraSavedData loadedSourceUnloadedTarget = new ThaumcraftAuraSavedData();
+        loadedSourceUnloadedTarget.putChunk(source, (short) 100, 10.0F, 0.0F);
+        loadedSourceUnloadedTarget.putChunk(farEast, (short) 100, 0.0F, 0.0F);
+        int loadedToUnloadedChanges = loadedSourceUnloadedTarget.processAuraChunks(
+                level, 0, bound -> 0, () -> 1.0D);
+        if (loadedToUnloadedChanges != 1
+                || Math.abs(loadedSourceUnloadedTarget.getVis(source) - 10.25F) > 0.00001F
+                || loadedSourceUnloadedTarget.getVis(farEast) != 0.0F
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
+            throw new AssertionError("A loaded Vis source must not transfer into a persisted but unloaded neighbor");
+        }
+
+        System.out.println("TC_GAMETEST_AURA_VIS_NEIGHBOR=PASS lowest=2.0 transfer=1.0 conserved=YES threshold=0.75 ceiling=115 unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES");
     }
 
     private static void assertFluxNeighborRedistribution(ServerLevel level, BlockPos loadedPos) {
@@ -648,6 +676,10 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("BETA26 AuraChunk.setFlux clamps both transfer endpoints to [0, 32766]");
         }
 
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null
+                || level.getChunkSource().getChunkNow(chunkX + 1, chunkZ) == null) {
+            throw new AssertionError("Loaded Flux-flow fixture requires its source and east chunks to be loaded");
+        }
         ThaumcraftAuraSavedData runtime = new ThaumcraftAuraSavedData();
         runtime.putChunk(source, (short) 100, 10.0F, 20.0F);
         runtime.putChunk(east, (short) 100, 0.0F, 0.0F);
@@ -671,7 +703,8 @@ public final class AuraGenerationGameTests {
 
         int farX = chunkX + 80;
         int farZ = chunkZ + 80;
-        if (level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
+        if (level.getChunkSource().getChunkNow(farX, farZ) != null
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
             throw new AssertionError("Unloaded Flux-flow fixture unexpectedly starts loaded");
         }
         BlockPos farSource = sampleCenter(farX, farZ);
@@ -679,21 +712,49 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
         unloaded.putChunk(farSource, (short) 100, 10.0F, 20.0F);
         unloaded.putChunk(farEast, (short) 100, 10.0F, 0.0F);
-        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> 0, () -> 1.0D);
-        if (unloadedChanges != 1
-                || unloaded.getFlux(farSource) != 19.0F
-                || unloaded.getFlux(farEast) != 1.0F
-                || level.hasChunk(farX, farZ) || level.hasChunk(farX + 1, farZ)) {
-            throw new AssertionError("Aura Flux flow must update known unloaded records without force-loading either chunk");
+        AtomicInteger unloadedShuffleCalls = new AtomicInteger();
+        AtomicInteger unloadedFloatCalls = new AtomicInteger();
+        int unloadedChanges = unloaded.processAuraChunks(level, 0, bound -> {
+            unloadedShuffleCalls.incrementAndGet();
+            return 0;
+        }, () -> {
+            unloadedFloatCalls.incrementAndGet();
+            return 1.0D;
+        });
+        if (unloadedChanges != 0
+                || unloaded.getVis(farSource) != 10.0F
+                || unloaded.getFlux(farSource) != 20.0F
+                || unloaded.getFlux(farEast) != 0.0F
+                || unloadedShuffleCalls.get() != 0
+                || unloadedFloatCalls.get() != 0
+                || level.getChunkSource().getChunkNow(farX, farZ) != null
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
+            throw new AssertionError("BETA26 loaded-aura cache must skip both unloaded Flux-flow records without RNG or force-load");
         }
 
-        System.out.println("TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=updated no_force_load=YES");
+        ThaumcraftAuraSavedData loadedSourceUnloadedTarget = new ThaumcraftAuraSavedData();
+        loadedSourceUnloadedTarget.putChunk(source, (short) 100, 10.0F, 20.0F);
+        loadedSourceUnloadedTarget.putChunk(farEast, (short) 100, 10.0F, 0.0F);
+        int loadedToUnloadedChanges = loadedSourceUnloadedTarget.processAuraChunks(
+                level, 0, bound -> 0, () -> 1.0D);
+        if (loadedToUnloadedChanges != 1
+                || Math.abs(loadedSourceUnloadedTarget.getVis(source) - 10.25F) > 0.00001F
+                || loadedSourceUnloadedTarget.getFlux(source) != 20.0F
+                || loadedSourceUnloadedTarget.getFlux(farEast) != 0.0F
+                || level.getChunkSource().getChunkNow(farX + 1, farZ) != null) {
+            throw new AssertionError("A loaded Flux source must not transfer into a persisted but unloaded neighbor");
+        }
+
+        System.out.println("TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES");
     }
 
     private static void assertVisFluxConversion(ServerLevel level, BlockPos loadedPos) {
         int chunkX = loadedPos.getX() >> 4;
         int chunkZ = loadedPos.getZ() >> 4;
         BlockPos source = sampleCenter(chunkX, chunkZ);
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) {
+            throw new AssertionError("Vis-to-Flux conversion fixture chunk must be loaded");
+        }
 
         ThaumcraftAuraSavedData highVis = new ThaumcraftAuraSavedData();
         highVis.putChunk(source, (short) 100, 110.0F, 1.0F);
@@ -807,20 +868,32 @@ public final class AuraGenerationGameTests {
 
         int farX = chunkX + 96;
         int farZ = chunkZ + 96;
-        if (level.hasChunk(farX, farZ)) {
+        if (level.getChunkSource().getChunkNow(farX, farZ) != null) {
             throw new AssertionError("Unloaded conversion fixture unexpectedly starts loaded");
         }
         BlockPos farSource = sampleCenter(farX, farZ);
         ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
         unloaded.putChunk(farSource, (short) 0, 0.0F, 0.0F);
-        int unloadedChanges = unloaded.processAuraChunks(level, 4, bound -> 0, () -> 0.099D);
-        if (unloadedChanges != 1
-                || unloaded.getFlux(farSource) != 0.25F
-                || level.hasChunk(farX, farZ)) {
-            throw new AssertionError("BETA26 Vis-to-Flux conversion must update known unloaded records without force-loading");
+        AtomicInteger unloadedShuffleCalls = new AtomicInteger();
+        AtomicInteger unloadedFloatCalls = new AtomicInteger();
+        int unloadedChanges = unloaded.processAuraChunks(level, 4, bound -> {
+            unloadedShuffleCalls.incrementAndGet();
+            return 0;
+        }, () -> {
+            unloadedFloatCalls.incrementAndGet();
+            return 0.099D;
+        });
+        if (unloadedChanges != 0
+                || unloaded.getVis(farSource) != 0.0F
+                || unloaded.getFlux(farSource) != 0.0F
+                || unloadedShuffleCalls.get() != 0
+                || unloadedFloatCalls.get() != 0
+                || unloaded.takePendingRiftTrigger() != null
+                || level.getChunkSource().getChunkNow(farX, farZ) != null) {
+            throw new AssertionError("BETA26 loaded-aura cache must skip unloaded Vis-to-Flux records without RNG or force-load");
         }
 
-        System.out.println("TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenConversionThenRift recoveryPriority=YES riftRoll=postConversion unloaded=updated no_force_load=YES");
+        System.out.println("TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenConversionThenRift recoveryPriority=YES riftRoll=postConversion unloaded=skipped no_force_load=YES");
     }
 
     private static void assertSetVisClampsToLegacyCeiling() {
@@ -987,8 +1060,38 @@ public final class AuraGenerationGameTests {
         int chunkX = (anchor.getX() >> 4) + 100;
         int chunkZ = (anchor.getZ() >> 4) + 100;
         BlockPos chunkSample = new BlockPos(chunkX * 16 + 8, 50, chunkZ * 16 + 8);
-        if (level.hasChunk(chunkX, chunkZ)) {
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) != null) {
             throw new AssertionError("Rift-trigger fixture chunk must start unloaded");
+        }
+
+        int unloadedX = chunkX + 10_000;
+        int unloadedZ = chunkZ + 10_000;
+        BlockPos unloadedSample = new BlockPos(unloadedX * 16 + 8, 50, unloadedZ * 16 + 8);
+        if (level.getChunkSource().getChunkNow(unloadedX, unloadedZ) != null) {
+            throw new AssertionError("Unloaded rift-trigger fixture unexpectedly starts loaded");
+        }
+        ThaumcraftAuraSavedData unloaded = new ThaumcraftAuraSavedData();
+        unloaded.putChunk(unloadedSample, (short) 100, 80.0F, 80.0F);
+        AtomicInteger unloadedShuffleCalls = new AtomicInteger();
+        AtomicInteger unloadedRiftRolls = new AtomicInteger();
+        int unloadedChanges = unloaded.processAuraChunks(level, 2, bound -> {
+            unloadedShuffleCalls.incrementAndGet();
+            return 0;
+        }, () -> {
+            unloadedRiftRolls.incrementAndGet();
+            return 0.015D;
+        });
+        if (unloadedChanges != 0
+                || unloadedShuffleCalls.get() != 0
+                || unloadedRiftRolls.get() != 0
+                || unloaded.takePendingRiftTrigger() != null
+                || level.getChunkSource().getChunkNow(unloadedX, unloadedZ) != null) {
+            throw new AssertionError("BETA26 must not roll Flux-rift triggers for an unloaded aura-cache entry");
+        }
+
+        level.getChunk(chunkX, chunkZ);
+        if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) {
+            throw new AssertionError("Rift-trigger fixture chunk did not load");
         }
 
         ThaumcraftAuraSavedData triggered = new ThaumcraftAuraSavedData();
@@ -1001,8 +1104,8 @@ public final class AuraGenerationGameTests {
         BlockPos expected = new BlockPos(chunkX * 16, 0, chunkZ * 16);
         if (triggerRolls.get() != 1 || !expected.equals(triggered.takePendingRiftTrigger())
                 || triggered.takePendingRiftTrigger() != null
-                || level.hasChunk(chunkX, chunkZ)) {
-            throw new AssertionError("BETA26 Flux-rift trigger did not queue/consume one unloaded chunk origin");
+                || level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) {
+            throw new AssertionError("BETA26 Flux-rift trigger did not queue/consume one loaded chunk origin");
         }
 
         // The source threshold is strict: exactly 75% must not consume the RNG.
@@ -1045,7 +1148,7 @@ public final class AuraGenerationGameTests {
                 || LegacyFluxRiftTriggerLogic.shouldTrigger(100.0F, 75.0F, 0.0F)) {
             throw new AssertionError("Pure BETA26 Flux-rift trigger probability diverged");
         }
-        System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES");
+        System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES");
     }
 
     private static void assertCrystalWorldGenQueueWaitsForCardinalNeighbors(

@@ -88,11 +88,14 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_SET_VIS_CLAMP=PASS existing=32766.0 migration=32766.0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_WORLD_TIME_GATE=PASS frozen=0 advanced=1 reverse=1' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_VIS_NEIGHBOR=PASS lowest=2.0 transfer=1.0 conserved=YES threshold=0.75 ceiling=115 unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_VIS_FLUX_CONVERSION=PASS highVis=conserved lowVis=8phases strictProbability=0.1 rngOrder=shuffleThenConversionThenRift recoveryPriority=YES riftRoll=postConversion unloaded=skipped no_force_load=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_CAPPED=PASS flux=32766.0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_GUARDS=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES' || return 1
-    require_marker "$file" 'TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
     require_marker "$file" 'All 8 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1

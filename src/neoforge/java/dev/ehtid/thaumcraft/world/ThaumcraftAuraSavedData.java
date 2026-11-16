@@ -173,10 +173,11 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     }
 
     /**
-     * Processes known aura records in BETA26 AuraThread order: one shared neighbor
-     * shuffle/Vis+Flux transfer, then the original recovery-or-Vis→Flux branch.
-     * Recovery remains guarded by loaded chunks; conversions update SavedData only
-     * and never request a chunk.
+     * Processes the BETA26 AuraThread cache: only currently loaded source chunks
+     * participate, and only loaded neighbors can receive transfers. BETA26
+     * ChunkEvents.chunkSave removes an aura entry when its chunk is unloaded;
+     * SavedData retains those records for persistence, so non-joining chunk
+     * lookups reproduce the original loaded-cache boundary.
      */
     int processAuraChunks(
             ServerLevel level, int moonPhase, IntUnaryOperator nextInt, DoubleSupplier nextFloat) {
@@ -186,11 +187,17 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         for (long chunkKey : chunks.keySet()) {
             int chunkX = ChunkPos.getX(chunkKey);
             int chunkZ = ChunkPos.getZ(chunkKey);
+            // ChunkDataEvent.Save removes unloaded entries from the original
+            // AuraWorld cache. SavedData keeps them for persistence, so filter
+            // them with a non-joining lookup before consuming RNG or touching
+            // either side of a neighbor transfer.
+            if (level.getChunkSource().getChunkNow(chunkX, chunkZ) == null) continue;
+
             // BETA26 shuffles once, then selects both channel destinations from
             // that same order before applying Vis and Flux transfers.
             changed += Integer.bitCount(redistributeNeighborChannelsFromChunk(
-                    chunkX, chunkZ, phaseMax, nextInt, true, true));
-            if (processAuraChunkRecoveryOrConversion(level, chunkX, chunkZ, phase, nextFloat)) {
+                    level, chunkX, chunkZ, phaseMax, nextInt, true, true));
+            if (processAuraChunkRecoveryOrConversion(chunkX, chunkZ, phase, nextFloat)) {
                 changed++;
             }
 
@@ -232,6 +239,13 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     private int redistributeNeighborChannelsFromChunk(
             int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt,
             boolean transferVis, boolean transferFlux) {
+        return redistributeNeighborChannelsFromChunk(
+                null, chunkX, chunkZ, phaseMax, nextInt, transferVis, transferFlux);
+    }
+
+    private int redistributeNeighborChannelsFromChunk(
+            ServerLevel level, int chunkX, int chunkZ, float phaseMax, IntUnaryOperator nextInt,
+            boolean transferVis, boolean transferFlux) {
         long sourceKey = ChunkPos.asLong(chunkX, chunkZ);
         AuraChunk source = chunks.get(sourceKey);
         if (source == null) return 0;
@@ -253,12 +267,14 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
         for (int direction : directions) {
             Direction facing = Direction.from2DDataValue(direction);
-            long neighborKey = ChunkPos.asLong(
-                    chunkX + facing.getStepX(),
-                    chunkZ + facing.getStepZ()
-            );
+            int neighborX = chunkX + facing.getStepX();
+            int neighborZ = chunkZ + facing.getStepZ();
+            long neighborKey = ChunkPos.asLong(neighborX, neighborZ);
             AuraChunk neighbor = chunks.get(neighborKey);
             if (neighbor == null) continue;
+            if (level != null && level.getChunkSource().getChunkNow(neighborX, neighborZ) == null) {
+                continue;
+            }
 
             if (transferVis
                     && (visTarget == null || lowestVis > neighbor.vis())
@@ -319,11 +335,11 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
     /**
      * BETA26 AuraThread's local recovery / Vis-to-Flux else-if chain, after neighbor
-     * transfers. The low-Vis Flux branch is retained even though, for positive base
-     * and non-negative channels, the preceding recovery condition normally wins.
+     * transfers. The caller has already established that this source chunk is
+     * present in the original loaded AuraWorld cache.
      */
     private boolean processAuraChunkRecoveryOrConversion(
-            ServerLevel level, int chunkX, int chunkZ, int phase, DoubleSupplier nextFloat) {
+            int chunkX, int chunkZ, int phase, DoubleSupplier nextFloat) {
         long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
         AuraChunk current = chunks.get(chunkKey);
         if (current == null) return false;
@@ -335,7 +351,6 @@ public final class ThaumcraftAuraSavedData extends SavedData {
         float currentFlux = current.flux();
 
         if (currentVis + currentFlux < base) {
-            if (!level.hasChunk(chunkX, chunkZ)) return false;
             float increase = Math.min(base - (currentVis + currentFlux), phaseVis);
             if (!(increase > 0.0F)) return false;
             currentVis += increase;
