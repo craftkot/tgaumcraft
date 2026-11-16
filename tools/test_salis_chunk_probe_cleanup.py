@@ -37,6 +37,8 @@ if not (
 catch = section(probe, "} catch (RuntimeException | AssertionError ex) {", "private static boolean releaseFixtureTicket()")
 if "cleanupFixtureTicketAfterFailure();" not in catch:
     raise SystemExit("SALIS_NATIVE_FAILURE_CLEANUP=FAIL")
+if "restoreActorFromPacketOrigin();" not in catch:
+    raise SystemExit("SALIS_NATIVE_ACTOR_FAILURE_RESTORE=FAIL")
 if "removeOutboundParticleRecorder();" not in catch:
     raise SystemExit("SALIS_NATIVE_PACKET_RECORDER_FAILURE_CLEANUP=FAIL")
 stopped = section(probe, "public static void onServerStopped", "@SubscribeEvent")
@@ -50,7 +52,9 @@ if "targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)" not in release or "fixt
 required_runtime_markers = (
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
     "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
+    "SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN",
     "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
+    "SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN",
     "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
     "SALIS_NATIVE_CHUNK_UNLOADED",
     "SALIS_NATIVE_CHUNK_CANCELLED",
@@ -83,13 +87,19 @@ for required in (
     "actor.connection.getConnection()",
     'pipeline.addBefore("packet_handler"',
     "packet.getParticle() == SalisSparkleParticleRegistration.TYPE",
+    "actorReturnPosition = actor.position();",
+    "actor.teleportTo(level,",
+    "actor.teleportTo(targetLevel, returnPosition.x, returnPosition.y, returnPosition.z,",
+    "positive-control actor is outside vanilla 32-block particle delivery radius",
     "packet.getCount() == 0",
     "packet.getX()",
     "OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet()",
     "context.write(message, promise)",
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
     "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
+    "SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN",
     "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
+    "SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN",
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
@@ -105,6 +115,7 @@ if not (
     phase0.index("installOutboundParticleRecorder(actor)")
     < phase0.index("OUTBOUND_PROBE_PACKET_COUNT.get()")
     < phase0.index('mark("SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE")')
+    < phase0.index("moveActorToPacketOrigin(level, actor)")
     < phase0.index("SalisSparkleTrailQueue.emitFaceOrQueue")
 ):
     raise SystemExit("SALIS_OUTBOUND_PACKET_INSTALL_ORDER=FAIL")
@@ -112,6 +123,7 @@ if not (
     phase4.index("observedPackets != outboundPacketsBefore + 1")
     < phase4.index('mark("SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL")')
     < phase4.index("outboundPacketsBefore = observedPackets")
+    < phase4.index("restoreActorFromPacketOrigin()")
     < phase4.index("SalisSparkleTrailQueue.emitFaceOrQueue")
     < phase4.index("releaseFixtureTicket()")
 ):

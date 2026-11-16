@@ -53,6 +53,9 @@ public final class SalisSparkleChunkUnloadProbe {
     private static int outboundPacketsBefore;
     private static int positiveControlSendsBefore;
     private static ServerPlayer probeActor;
+    private static Vec3 actorReturnPosition;
+    private static float actorReturnYaw;
+    private static float actorReturnPitch;
 
     private SalisSparkleChunkUnloadProbe() {}
 
@@ -72,6 +75,9 @@ public final class SalisSparkleChunkUnloadProbe {
         outboundPacketsBefore = 0;
         positiveControlSendsBefore = 0;
         probeActor = null;
+        actorReturnPosition = null;
+        actorReturnYaw = 0.0F;
+        actorReturnPitch = 0.0F;
     }
 
     @SubscribeEvent
@@ -82,6 +88,7 @@ public final class SalisSparkleChunkUnloadProbe {
             active = null;
             targetLevel = null;
             probeActor = null;
+            actorReturnPosition = null;
         }
     }
 
@@ -127,6 +134,7 @@ public final class SalisSparkleChunkUnloadProbe {
                 require(outboundPacketsBefore == 0,
                         "probe-origin Salis packet was emitted before the positive control");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE");
+                moveActorToPacketOrigin(level, actor);
 
                 positiveControlSendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
                 SalisSparkleTrailQueue.emitFaceOrQueue(level, actor,
@@ -160,6 +168,8 @@ public final class SalisSparkleChunkUnloadProbe {
                 outboundPacketsBefore = observedPackets;
 
                 ServerPlayer actor = probeActor;
+                require(restoreActorFromPacketOrigin(),
+                        "positive-control actor could not return to its original position");
                 sendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
                 cancellationsBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED");
                 enqueuedBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED");
@@ -244,6 +254,10 @@ public final class SalisSparkleChunkUnloadProbe {
                 active.halt(false);
             }
         } catch (RuntimeException | AssertionError ex) {
+            if (!restoreActorFromPacketOrigin()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_RESTORE_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_ACTOR_RESTORE_FAILED");
+            }
             removeOutboundParticleRecorder();
             cleanupFixtureTicketAfterFailure();
             finished = true;
@@ -291,6 +305,40 @@ public final class SalisSparkleChunkUnloadProbe {
         require(channel.pipeline().get(OUTBOUND_HANDLER_NAME) != null,
                 "outbound Salis packet recorder was not installed");
         ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED");
+    }
+
+    private static void moveActorToPacketOrigin(ServerLevel level, ServerPlayer actor) {
+        actorReturnPosition = actor.position();
+        actorReturnYaw = actor.getYRot();
+        actorReturnPitch = actor.getXRot();
+        actor.teleportTo(level,
+                ORIGIN.getX() + 0.5D, ORIGIN.getY() + 0.5D, ORIGIN.getZ() + 0.5D,
+                actorReturnYaw, actorReturnPitch);
+        require(actor.level() == level
+                        && actor.position().distanceToSqr(Vec3.atCenterOf(ORIGIN)) < 1024.0D,
+                "positive-control actor is outside vanilla 32-block particle delivery radius");
+        ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN");
+    }
+
+    private static boolean restoreActorFromPacketOrigin() {
+        Vec3 returnPosition = actorReturnPosition;
+        if (returnPosition == null) return true;
+        ServerPlayer actor = probeActor;
+        if (active == null || targetLevel == null || actor == null
+                || active.getPlayerList().getPlayer(actor.getUUID()) != actor
+                || actor.level() != targetLevel) {
+            actorReturnPosition = null;
+            return false;
+        }
+        actor.teleportTo(targetLevel, returnPosition.x, returnPosition.y, returnPosition.z,
+                actorReturnYaw, actorReturnPitch);
+        boolean restored = actor.level() == targetLevel
+                && actor.position().distanceToSqr(returnPosition) < 1.0E-4D;
+        actorReturnPosition = null;
+        if (restored) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN");
+        }
+        return restored;
     }
 
     private static boolean isProbeParticlePacket(ClientboundLevelParticlesPacket packet) {
