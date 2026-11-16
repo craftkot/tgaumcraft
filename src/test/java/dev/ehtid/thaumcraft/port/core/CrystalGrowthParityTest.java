@@ -59,6 +59,7 @@ public final class CrystalGrowthParityTest {
     eq(50, AuraGenerationLogic.SOURCE_BIOME_SAMPLE_Y); // pinned BETA26 AuraHandler.generateAura
     verifyCrystalWorldGenLogic();
     verifyNeoForgeSpreadLiquidAdapter();
+    verifyCrystalSpreadLoadedDestinationAdapter();
     verifyCrystalWorldGenAdapter();
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
   }
@@ -147,6 +148,21 @@ public final class CrystalGrowthParityTest {
       throw new AssertionError("Unable to inspect NeoForge crystal spread adapter", e);
     }
   }
+  private static void verifyCrystalSpreadLoadedDestinationAdapter() {
+    try {
+      String source = Files.readString(Path.of(
+          "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java"));
+      yes(source.contains("private static BlockState loadedDestination(ServerLevel level, BlockPos pos)"));
+      yes(source.contains("LevelChunk chunk = level.getChunkSource().getChunkNow("));
+      yes(source.contains("return chunk == null ? null : chunk.getBlockState(pos);"));
+      yes(source.contains("BlockState destination = loadedDestination(level, other);"));
+      no(source.contains("if (!level.hasChunkAt(other)) return;"));
+      no(source.contains("BlockState destination=level.getBlockState(other);"));
+    } catch (IOException e) {
+      throw new AssertionError("Unable to inspect non-joining crystal spread destination lookup", e);
+    }
+  }
+
   private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
   private static void yes(boolean b){total++;if(!b)throw new AssertionError("expected true");}
   private static void no(boolean b){total++;if(b)throw new AssertionError("expected false");}

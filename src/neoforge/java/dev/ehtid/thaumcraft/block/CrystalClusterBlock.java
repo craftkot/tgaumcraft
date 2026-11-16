@@ -138,6 +138,18 @@ public final class CrystalClusterBlock extends Block {
         }
         return false;
     }
+    /**
+     * A chunk may be present in the loading pipeline while hasChunkAt already
+     * returns true. Level#getBlockState can join that unfinished future from a
+     * random tick at a chunk edge. Read only a fully available chunk and never
+     * wait for a neighboring chunk from this path.
+     */
+    private static BlockState loadedDestination(ServerLevel level, BlockPos pos) {
+        LevelChunk chunk = level.getChunkSource().getChunkNow(
+                pos.getX() >> 4, pos.getZ() >> 4);
+        return chunk == null ? null : chunk.getBlockState(pos);
+    }
+
     @Override public boolean canSurvive(BlockState state,LevelReader world,BlockPos pos) {
         // Server-side placement at a chunk edge must not load a neighbour just
         // to test its support face. Client shape/placement queries stay read-only.
@@ -208,8 +220,8 @@ public final class CrystalClusterBlock extends Block {
         // Random ticks can occur at a chunk edge. ServerLevel#getBlockState may
         // request an absent chunk, so do not inspect a spread destination until
         // its chunk is already loaded.
-        if (!level.hasChunkAt(other)) return;
-        BlockState destination=level.getBlockState(other);
+        BlockState destination = loadedDestination(level, other);
+        if (destination == null) return;
         // BETA26 checks the block Material, not whether its FluidState is non-empty.
         // BlockState.liquid() retains the legacy liquid-material flag in 1.21.1;
         // waterlogged replaceable solids therefore remain eligible for spreading.
