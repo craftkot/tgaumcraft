@@ -166,7 +166,9 @@ public final class ThaumcraftAuraChunkPopulationQueue {
         };
         int added = 0;
         for (ChunkPos candidate : cross) {
-            if (hasAuraRecord(level, candidate)) continue;
+            // Do not touch DimensionDataStorage from ChunkEvent.Load: its first
+            // lookup may read the SavedData file. The server-tick consumer checks
+            // existing records after the callback has returned.
             if (queue.enqueue(new Pending(level, candidate, currentTick))) added++;
         }
         return added;
