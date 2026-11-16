@@ -287,20 +287,25 @@ body = r'''
     exit 1
   }
 
-  # The Workbench and inventory fixture occupy the exact block the previous
-  # F3 frame showed under the crosshair: one block ahead at the player's feet Y.
-  # Fill the authentic BETA26 Thaumometer preview pattern: four gold ingots
-  # around a center glass pane. This exposes the synced 20-vis preview and all
-  # six requirement icons without granting research or crafting the result.
-  send_chat '/execute at @p run item replace block ~ ~ ~1 container.1 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~1 container.3 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~1 container.4 with minecraft:glass_pane 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~1 container.5 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~1 container.7 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run data get block ~ ~ ~1 Items'
+  # Earlier world-model capture uses the spawn fixture, but shared smoke probes
+  # may move the player before this interaction. Rebuild the real menu target
+  # at the current player position, two blocks ahead on the already-filled
+  # spawn-chunk floor. The inventory, F3 target and right-click now share one
+  # coordinate instead of accidentally addressing the stale spawn fixture.
+  send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
+  sleep 2
+  # Authentic BETA26 Thaumometer preview: four gold ingots around one glass pane.
+  # This exposes the synced 20-vis preview and all six requirement icons without
+  # granting research or crafting the result.
+  send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~2 container.3 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~2 container.4 with minecraft:glass_pane 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~2 container.5 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run item replace block ~ ~ ~2 container.7 with minecraft:gold_ingot 1'
+  send_chat '/execute at @p run data get block ~ ~ ~2 Items'
 
-  # Reset the look direction without teleporting to an unloaded test region.
-  send_chat '/tp @p ~ ~ ~ 0 28'
+  # Aim at the near face of that same block; pitch 35° intersects its center.
+  send_chat '/tp @p ~ ~ ~ 0 35'
   # F3 records the real block targeted by the player's crosshair. The
   # server-side interaction marker below is the authoritative BlockEntity
   # and openMenu check, so no /data command response is scraped from client.log.
