@@ -38,6 +38,26 @@ public final class SilverwoodCanopyRollbackTest {
         check("LEAVES".equals(world.get("failed")), "failed restore remains");
         check(SilverwoodCanopyRollback.restore(Map.of(), "LEAVES",
                 pos -> "LEAVES", (pos, state) -> true) == 0, "empty originals");
+        // A second pass must not undo already-restored blocks or touch foreign writes.
+        int[] repeatedWrites = {0};
+        int secondPass = SilverwoodCanopyRollback.restore(before, "LEAVES",
+                world::get, (pos, state) -> {
+                    repeatedWrites[0]++;
+                    return false;
+                });
+        check(secondPass == 0, "failed retry must not claim restored blocks");
+        check(repeatedWrites[0] == 1, "retry only the leaf whose restore failed");
+
+        // A position changed to a non-leaf state (including an unloaded/unknown
+        // state represented by null) must never be passed to the write callback.
+        int[] unknownWrites = {0};
+        int unknownRestores = SilverwoodCanopyRollback.restore(Map.of("missing", "AIR"),
+                "LEAVES", pos -> null, (pos, state) -> {
+                    unknownWrites[0]++;
+                    return true;
+                });
+        check(unknownRestores == 0, "unknown state cannot be restored");
+        check(unknownWrites[0] == 0, "unknown state must not be overwritten");
         System.out.println("SilverwoodCanopyRollbackTest: OK (" + checks + " assertions)");
     }
 }
