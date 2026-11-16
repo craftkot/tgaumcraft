@@ -164,6 +164,12 @@ PY
     echo "CRYSTAL_OUTLINE_MARKER_CONFIRMED=$marker" | tee -a client-smoke-status.txt
   }
 
+  assert_model_face_state() {
+    local face="$1"
+    send_chat "/execute if block 250 151 251 thaumcraft:crystal_aqua[$face=true] run say CRYSTAL_MODEL_FACE_STATE_$face"
+    assert_outline_marker "CRYSTAL_MODEL_FACE_STATE_$face"
+  }
+
   # A previous absolute-coordinate probe only proved that a crystal existed
   # at a predicted point; it did NOT prove the live player's ray reached it.
   # Check authoritative player Pos/Rotation, then probe from the actual eyes.
@@ -261,6 +267,7 @@ PY
     fi
     send_chat "/execute if block 250 151 251 thaumcraft:crystal_aqua run say CRYSTAL_OUTLINE_SETUP_$face"
     assert_outline_marker "CRYSTAL_OUTLINE_SETUP_$face"
+    assert_model_face_state "$face"
 
     geometry="$(xdotool getwindowgeometry --shell "$WIN")"
     eval "$geometry"
@@ -309,6 +316,8 @@ PY
   send_chat '/setblock 250 151 251 thaumcraft:crystal_aqua'
   send_chat '/execute if block 250 151 251 thaumcraft:crystal_aqua run say CRYSTAL_OUTLINE_SETUP_MULTIFACE'
   assert_outline_marker 'CRYSTAL_OUTLINE_SETUP_MULTIFACE'
+  send_chat '/execute if block 250 151 251 thaumcraft:crystal_aqua[up=true,east=true] run say CRYSTAL_MODEL_MULTIFACE_STATE'
+  assert_outline_marker 'CRYSTAL_MODEL_MULTIFACE_STATE'
   geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$geometry"
   xdotool mousemove "$((X + WIDTH / 2))" "$((Y + HEIGHT / 2))"
