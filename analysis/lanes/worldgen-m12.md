@@ -351,3 +351,10 @@
 - Added four deterministic assertions in commit 6943151aa2124d100073bbed074711d3ca4e7fd6: the first rollback callback mutates a later canopy position into foreign STONE; the later position must be re-read and skipped. Expected standalone test count now 27, NOT an executed PASS.
 - Direct git ls-remote still fails DNS (Could not resolve host: github.com). Exact-checkout Java runner, Python guard, new-head NeoForge build, native GameTest and new-chunk smoke not executed here. BETA26 biome/RNG parity and feature registration unresolved.
 - Next: run exact tools/test_silverwood_canopy_rollback.sh and source guard, inspect new-head CI, then implement native WorldGenLevel GameTest and coordinate registration. Main, shared registries, Gradle and other branches untouched. Historical index 59/100 unchanged.
+
+## 16.11.2026 — M12 rollback partial failure does not abort later positions
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 before editing (ahead 107, behind 0); reviewed 18 open PRs including existing Draft #9. No merge or shared-file edits.
+- Verified GitHub Actions run #43851645913 for preceding HEAD 46f70e37e2c853c41a56548af11fa9a6d09de2ec completed SUCCESS. This is not evidence of exact standalone runner or in-game worldgen.
+- Commit 98068122ad5dccd547312e9b198f5df5c710323f adds four deterministic standalone Java 21 assertions: a failed first canopy restoration does not abort later restoration, both callbacks run, the failed leaf stays unchanged, and the next leaf returns to air. Expected count 31; not an executed PASS.
+- Exact checkout Java runner, NeoForge build for new SHA, native GameTest, new-chunk generation and BETA26 RNG/biome parity remain unverified. Silverwood feature remains unregistered; coordinate shared registration separately. Next: execute exact Java runner and Python source guard, inspect new CI, then native WorldGenLevel integration coverage. Historical index 59/100 unchanged.
