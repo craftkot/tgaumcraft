@@ -60,6 +60,7 @@ public final class CrystalGrowthParityTest {
     verifyCrystalWorldGenLogic();
     verifyNeoForgeSpreadLiquidAdapter();
     verifyCrystalSpreadLoadedDestinationAdapter();
+    verifyCrystalSupportRemovalSafety();
     verifyCrystalWorldGenAdapter();
     System.out.println("Crystal growth BETA26 parity: OK ("+total+" assertions)");
   }
@@ -163,7 +164,25 @@ public final class CrystalGrowthParityTest {
     }
   }
 
-  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
+  private static void verifyCrystalSupportRemovalSafety() {
+    no(LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal(true, true));
+    no(LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal(true, false));
+    no(LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal(false, false));
+    yes(LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal(false, true));
+    try {
+      String source = Files.readString(Path.of(
+          "src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java"));
+      yes(source.contains("private static boolean allSupportChunksLoaded(ServerLevel level, BlockPos pos)"));
+      yes(source.contains("getChunkSource().getChunkNow("));
+      yes(source.contains("LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal("));
+      yes(source.contains("level.scheduleTick(pos, this, 20)"));
+      no(source.contains("if(level.getBlockState(pos).is(this) && !state.canSurvive(level,pos))"));
+    } catch (IOException e) {
+      throw new AssertionError("Unable to inspect crystal support-removal safety adapter", e);
+    }
+  }
+
+  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
   private static void yes(boolean b){total++;if(!b)throw new AssertionError("expected true");}
   private static void no(boolean b){total++;if(b)throw new AssertionError("expected false");}
 }

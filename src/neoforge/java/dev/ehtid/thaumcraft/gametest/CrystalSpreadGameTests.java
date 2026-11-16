@@ -209,6 +209,48 @@ public final class CrystalSpreadGameTests {
             }
             System.out.println("TC_GAMETEST_CRYSTAL_STARVATION_UNLOADED_NEIGHBOR=PASS no_force_load=YES");
 
+            // A support face in an unloaded east neighbour is unknown, not absent.
+            // The scheduled removal tick must defer until that neighbour can be read.
+            BlockPos supportLifecyclePos = new BlockPos(baseX + 15, 220, baseZ + 6);
+            BlockState supportLifecycleState = crystal.defaultBlockState()
+                    .setValue(CrystalClusterBlock.SIZE, 0)
+                    .setValue(CrystalClusterBlock.GENERATION, 1);
+            sourceChunk.setBlockState(supportLifecyclePos, supportLifecycleState, false);
+            crystal.tick(supportLifecycleState, level, supportLifecyclePos, RandomSource.create(0L));
+            if (!sourceChunk.getBlockState(supportLifecyclePos).equals(supportLifecycleState)) {
+                throw new AssertionError("Crystal was removed while its east support chunk was unavailable");
+            }
+            requireBoundaryNeighborUnloaded(level, neighborChunkX, sourceChunkZ,
+                    "after-unavailable-support-removal-tick");
+            requireNoItemDrops(level, supportLifecyclePos);
+            System.out.println("TC_GAMETEST_CRYSTAL_SUPPORT_UNLOADED_DEFER=PASS no_force_load=YES");
+
+            LevelChunk eastSupportChunk = level.getChunk(neighborChunkX, sourceChunkZ);
+            BlockPos eastSupportPos = supportLifecyclePos.east();
+            eastSupportChunk.setBlockState(eastSupportPos, Blocks.STONE.defaultBlockState(), false);
+            crystal.tick(supportLifecycleState, level, supportLifecyclePos, RandomSource.create(0L));
+            if (!sourceChunk.getBlockState(supportLifecyclePos).equals(supportLifecycleState)) {
+                throw new AssertionError("A crystal with a loaded east stone support was removed");
+            }
+            System.out.println("TC_GAMETEST_CRYSTAL_SUPPORT_LOADED_RETAIN=PASS");
+
+            eastSupportChunk.setBlockState(eastSupportPos, Blocks.AIR.defaultBlockState(), false);
+            crystal.tick(supportLifecycleState, level, supportLifecyclePos, RandomSource.create(0L));
+            if (!sourceChunk.getBlockState(supportLifecyclePos).isAir()) {
+                throw new AssertionError("A confirmed unsupported crystal was not removed");
+            }
+            AABB supportDropBounds = new AABB(
+                    supportLifecyclePos.getX() - 1.0D, supportLifecyclePos.getY() - 1.0D,
+                    supportLifecyclePos.getZ() - 1.0D,
+                    supportLifecyclePos.getX() + 2.0D, supportLifecyclePos.getY() + 2.0D,
+                    supportLifecyclePos.getZ() + 2.0D);
+            var supportDrops = level.getEntitiesOfClass(ItemEntity.class, supportDropBounds);
+            if (supportDrops.size() != 1 || supportDrops.get(0).getItem().getCount() != 1) {
+                throw new AssertionError("Confirmed support loss must drop exactly one size-zero crystal: "
+                        + supportDrops.size());
+            }
+            System.out.println("TC_GAMETEST_CRYSTAL_SUPPORT_LOADED_REMOVE=PASS drops=1");
+
             System.out.println("TC_GAMETEST_CRYSTAL_SPREAD_NO_FORCE_LOAD_ACCEPTED=YES");
             helper.succeed();
         });

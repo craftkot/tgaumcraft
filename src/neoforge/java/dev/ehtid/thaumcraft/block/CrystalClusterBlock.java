@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.block;
 
 import dev.ehtid.thaumcraft.port.core.LegacyBlockCrystalGrowthRules;
 import dev.ehtid.thaumcraft.port.core.LegacyCrystalOutlineBounds;
+import dev.ehtid.thaumcraft.port.core.LegacyCrystalSupportLogic;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -138,6 +139,22 @@ public final class CrystalClusterBlock extends Block {
         }
         return false;
     }
+
+    /**
+     * A missing adjacent chunk is not proof that a crystal has lost its support.
+     * Use only non-joining lookups so a scheduled support check never loads a
+     * neighbouring chunk or deletes a crystal while that neighbour is unavailable.
+     */
+    private static boolean allSupportChunksLoaded(ServerLevel level, BlockPos pos) {
+        for (Direction direction : Direction.values()) {
+            BlockPos supportPos = pos.relative(direction);
+            if (level.getChunkSource().getChunkNow(
+                    supportPos.getX() >> 4, supportPos.getZ() >> 4) == null) {
+                return false;
+            }
+        }
+        return true;
+    }
     /**
      * A chunk may be present in the loading pipeline while hasChunkAt already
      * returns true. Level#getBlockState can join that unfinished future from a
@@ -164,10 +181,21 @@ public final class CrystalClusterBlock extends Block {
             world.scheduleTick(pos,this,1);
     }
     @Override public void tick(BlockState state,ServerLevel level,BlockPos pos,RandomSource rand) {
-        if(level.getBlockState(pos).is(this) && !state.canSurvive(level,pos)) {
-            Block.dropResources(state,level,pos);
-            level.removeBlock(pos,false);
+        BlockState current = level.getBlockState(pos);
+        if (!current.is(this)) return;
+
+        boolean hasLoadedSupport = touchesLoadedStone(level, pos);
+        boolean allSupportChunksLoaded = allSupportChunksLoaded(level, pos);
+        if (!LegacyCrystalSupportLogic.shouldRemoveUnsupportedCrystal(
+                hasLoadedSupport, allSupportChunksLoaded)) {
+            // Keep checking while a possible support face is in an unavailable
+            // or in-flight neighbour chunk. Never interpret "unknown" as "air".
+            if (!hasLoadedSupport) level.scheduleTick(pos, this, 20);
+            return;
         }
+
+        Block.dropResources(current, level, pos);
+        level.removeBlock(pos, false);
     }
 
     @Override public void randomTick(BlockState state,ServerLevel level,BlockPos pos,
