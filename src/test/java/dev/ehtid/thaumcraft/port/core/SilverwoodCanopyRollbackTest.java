@@ -114,6 +114,27 @@ public final class SilverwoodCanopyRollbackTest {
         check(rejectedWrites[0] == 1, "foreign position never reaches rejected writer");
         check("LEAVES".equals(rejectedWorld.get("one"))
                 && "STONE".equals(rejectedWorld.get("two")), "rejected write leaves world intact");
+        // Re-read each position at rollback time: a previous callback may change
+        // a later position to a foreign block. Never use a stale snapshot.
+        Map<String, String> changingWorld = new HashMap<>();
+        changingWorld.put("first", "LEAVES");
+        changingWorld.put("later", "LEAVES");
+        Map<String, String> changingOriginals = new LinkedHashMap<>();
+        changingOriginals.put("first", "AIR");
+        changingOriginals.put("later", "AIR");
+        int[] changingWrites = {0};
+        int changingRestored = SilverwoodCanopyRollback.restore(
+                changingOriginals, "LEAVES", changingWorld::get,
+                (pos, state) -> {
+                    changingWrites[0]++;
+                    changingWorld.put(pos, state);
+                    if (pos.equals("first")) changingWorld.put("later", "STONE");
+                    return true;
+                });
+        check(changingRestored == 1, "only first leaf restored after intervening foreign edit");
+        check(changingWrites[0] == 1, "later foreign block must not reach writer");
+        check("AIR".equals(changingWorld.get("first")), "first leaf restored");
+        check("STONE".equals(changingWorld.get("later")), "preserve foreign edit during rollback");
         System.out.println("SilverwoodCanopyRollbackTest: OK (" + checks + " assertions)");
     }
 }
