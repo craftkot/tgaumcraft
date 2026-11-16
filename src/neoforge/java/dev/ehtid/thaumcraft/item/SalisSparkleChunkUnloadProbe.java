@@ -125,6 +125,8 @@ public final class SalisSparkleChunkUnloadProbe {
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not acquire its one remote chunk ticket");
                 fixtureTicketHeld = true;
+                require(level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket missing before initial load");
                 level.getChunk(CHUNK_X, CHUNK_Z);
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
                         "fixture chunk was not loaded before packet-recorder control");
@@ -184,6 +186,8 @@ public final class SalisSparkleChunkUnloadProbe {
                 scheduledAt = now;
                 require(releaseFixtureTicket(),
                         "fixture could not release its only remote chunk ticket");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket remained after first release");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKETS_RELEASED");
                 phaseStarted = now;
                 phase = 1;
@@ -193,6 +197,8 @@ public final class SalisSparkleChunkUnloadProbe {
             if (phase == 1) {
                 require(now - phaseStarted < UNLOAD_TIMEOUT_TICKS,
                         "remote chunk did not unload after releasing the fixture ticket");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket reappeared while awaiting unload");
                 if (!chunkUnloaded
                         || level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null
                         || level.areEntitiesLoaded(ChunkPos.asLong(CHUNK_X, CHUNK_Z))) return;
@@ -205,6 +211,8 @@ public final class SalisSparkleChunkUnloadProbe {
             }
 
             if (phase == 2) {
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket exists during unloaded interval");
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) == null
                                 && !level.areEntitiesLoaded(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
                         "remote chunk loaded before the Salis due tick");
@@ -221,6 +229,8 @@ public final class SalisSparkleChunkUnloadProbe {
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not reacquire remote chunk ticket");
                 fixtureTicketHeld = true;
+                require(level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket missing before reload");
                 level.getChunk(CHUNK_X, CHUNK_Z);
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
                         "remote chunk did not reload under fixture ticket");
@@ -245,6 +255,8 @@ public final class SalisSparkleChunkUnloadProbe {
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED");
                 require(releaseFixtureTicket(),
                         "fixture could not release its final remote chunk ticket after reload");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket remained after final cleanup");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
