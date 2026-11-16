@@ -5,9 +5,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PROBE = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java"
 SMOKE = ROOT / "tools/client_dust_sound_smoke.py"
+QUEUE = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java"
 
 probe = PROBE.read_text(encoding="utf-8")
 smoke = SMOKE.read_text(encoding="utf-8")
+queue = QUEUE.read_text(encoding="utf-8")
 
 
 def section(source: str, start: str, end: str) -> str:
@@ -168,3 +170,57 @@ if not (
 print("SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=PASS")
 print("SALIS_OUTBOUND_PACKET_POSITIVE_CONTROL=PASS")
 print("SALIS_NATIVE_ORIGIN_CHUNK_EDGE=PASS")
+
+
+logout = section(queue, "public static void onPlayerLoggedOut", "@SubscribeEvent")
+if (
+    "pending.actor() != player" not in logout
+    or "pending.playerId().equals(player.getUUID())" not in logout
+    or 'mark("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED")' not in logout
+):
+    raise SystemExit("SALIS_ACTOR_LOGOUT_SESSION_CLEANUP=FAIL")
+if "static int pendingCountForActor(ServerPlayer actor)" not in queue:
+    raise SystemExit("SALIS_ACTOR_PENDING_COUNT=FAIL")
+if "level.sendParticles(player, color, false" not in queue:
+    raise SystemExit("SALIS_ACTOR_ONLY_RECIPIENT=FAIL")
+
+if (
+    "PlayerEvent.PlayerLoggedOutEvent" not in probe
+    or "actor.connection.disconnect(Component.literal(" not in probe
+    or 'mark("SALIS_NATIVE_ACTOR_DISCONNECT_PENDING")' not in probe
+    or 'mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED")' not in probe
+):
+    raise SystemExit("SALIS_NATIVE_ACTOR_DISCONNECT_PROBE=FAIL")
+phase5 = section(probe, "if (phase == 5)", "if (phase == 6)")
+phase6 = section(probe, "if (phase == 6)", "} catch (RuntimeException | AssertionError ex)")
+if not (
+    phase5.index("restoreActorFromPacketOrigin()")
+    < phase5.index("removeOutboundParticleRecorder()")
+    < phase5.index("releaseFixtureTicket()")
+    < phase5.index("SalisSparkleTrailQueue.emitOrQueue")
+    < phase5.index("actor.connection.disconnect")
+    < phase5.index("phase = 6;")
+):
+    raise SystemExit("SALIS_NATIVE_ACTOR_DISCONNECT_CONTROL_ORDER=FAIL")
+if not (
+    "actorDisconnectEventSeen" in phase6
+    and "pendingCountForActor(actor) == 0" in phase6
+    and 'mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED")' in phase6
+    and 'mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED")' in phase6
+):
+    raise SystemExit("SALIS_NATIVE_ACTOR_DISCONNECT_ACCEPTANCE=FAIL")
+for marker in (
+    "SALIS_NATIVE_ACTOR_DISCONNECT_PENDING",
+    "SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED",
+    "SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED",
+):
+    if marker not in smoke:
+        raise SystemExit(f"SALIS_NATIVE_ACTOR_DISCONNECT_MARKER_NOT_REQUIRED=FAIL {marker}")
+if not (
+    "actor_disconnect_pending < actor_disconnect_cancelled < actor_disconnect_cleaned < unload_accepted" in smoke
+):
+    raise SystemExit("SALIS_NATIVE_ACTOR_DISCONNECT_LOG_ORDER_GATE=FAIL")
+
+print("SALIS_ACTOR_LOGOUT_SESSION_CLEANUP=PASS")
+print("SALIS_ACTOR_ONLY_RECIPIENT=PASS")
+print("SALIS_NATIVE_ACTOR_DISCONNECT_PROBE=PASS")
