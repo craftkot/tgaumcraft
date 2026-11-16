@@ -182,7 +182,7 @@ public final class CrystalGrowthParityTest {
     }
   }
 
-  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
+  private static void eq(Object a,Object b){total++;if(!Objects.equals(a,b))throw new AssertionError(a+" != "+b);}
   private static void yes(boolean b){total++;if(!b)throw new AssertionError("expected true");}
   private static void no(boolean b){total++;if(b)throw new AssertionError("expected false");}
 }

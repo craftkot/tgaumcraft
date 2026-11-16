@@ -422,3 +422,8 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Changed files: `src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java`, new `src/main/java/dev/ehtid/thaumcraft/port/core/LegacyCrystalSupportLogic.java`, `src/test/java/dev/ehtid/thaumcraft/port/core/CrystalGrowthParityTest.java`, `src/neoforge/java/dev/ehtid/thaumcraft/gametest/CrystalSpreadGameTests.java`, `tools/run_crystal_spread_gametest.sh`, and this lane journal.
 - Exact-head Core/NeoForge and Aura/Crystal GameTests have not run yet. Local Git/Gradle/Minecraft is unavailable because this runtime cannot resolve `github.com`; no local test is claimed. Fixed audit remains **59/100**, M08 **5/9**, M16 **4/6**; no score awarded.
 - Next: inspect exact-head Full Port CI and both Aura/Crystal GameTest phases. If the new marker sequence passes, keep the safety adaptation documented and continue M08 only with another independent, source-backed world behavior.
+
+
+### Follow-up source review — parity helper duplication
+
+- Immediately after commit `65be0387cba5bcc373dc0a5e44c160aa940be4b4`, reviewed the generated commit diff before accepting CI. The insertion script duplicated the existing `eq` helper declaration on one line in `CrystalGrowthParityTest.java`, which would prevent Java compilation. Corrected in a separate follow-up commit; no force-push or history rewrite. The original commit's CI results are not accepted as validation of the corrected HEAD.
