@@ -84,8 +84,8 @@ class InventoryTests(unittest.TestCase):
 
     def test_java_text_block_main_not_runnable(self):
         (self.tests / "TextBlockOnlyTest.java").write_text(
-            'class TextBlockOnlyTest { String example = """\\n'
-            'public static void main(String[] args) {}\\n'
+            'class TextBlockOnlyTest { String example = """\n'
+            'public static void main(String[] args) {}\n'
             '"""; }'
         )
         self.ci()
@@ -93,8 +93,8 @@ class InventoryTests(unittest.TestCase):
 
     def test_java_text_block_and_real_main(self):
         (self.tests / "TextBlockRealTest.java").write_text(
-            'class TextBlockRealTest { String example = """\\n'
-            'public static void main(String[] args) {}\\n'
+            'class TextBlockRealTest { String example = """\n'
+            'public static void main(String[] args) {}\n'
             '"""; public static void main(String[] args) {} }'
         )
         self.ci(["TextBlockRealTest"], ["TextBlockRealTest"])
