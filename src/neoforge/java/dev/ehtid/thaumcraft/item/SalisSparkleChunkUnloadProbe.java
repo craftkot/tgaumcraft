@@ -251,6 +251,41 @@ public final class SalisSparkleChunkUnloadProbe {
                 require(OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore,
                         "cancelled Salis effect emitted a real outbound particle packet after chunk reload");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD");
+
+                // A new post-reload trigger must be deliverable, independently of the cancelled old one.
+                require(probeActor != null && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "post-reload positive-control actor session changed");
+                moveActorToPacketOrigin(level, probeActor);
+                positiveControlSendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, probeActor,
+                        SalisSparkleParticleRegistration.TYPE, Vec3.atCenterOf(ORIGIN),
+                        new Vec3(2000.0D, 0.0025D, 0.0D), 0);
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "fresh post-reload Salis send was not invoked exactly once");
+                phaseStarted = now;
+                phase = 5;
+                return;
+            }
+
+            if (phase == 5) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "fresh post-reload Salis packet was not observed");
+                require(probeActor != null
+                                && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "post-reload actor session changed before packet capture");
+                int postReloadPackets = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(postReloadPackets <= outboundPacketsBefore + 1,
+                        "fresh post-reload trigger emitted multiple matching packets");
+                if (postReloadPackets != outboundPacketsBefore + 1) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "fresh post-reload server send count changed unexpectedly");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "fresh post-reload Salis effect remained queued");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET");
+                require(restoreActorFromPacketOrigin(),
+                        "post-reload actor could not return to original position");
                 removeOutboundParticleRecorder();
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED");
                 require(releaseFixtureTicket(),
