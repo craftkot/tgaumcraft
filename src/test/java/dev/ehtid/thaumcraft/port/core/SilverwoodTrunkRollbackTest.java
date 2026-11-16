@@ -71,7 +71,24 @@ public final class SilverwoodTrunkRollbackTest {
         check(interleavedWrites[0] == 1, "Foreign position receives no restoration write");
         check(interleavedWorld.get(1).equals("AIR"), "First log restored to original air");
         check(interleavedWorld.get(2).equals("STONE"), "Later foreign block preserved");
-        System.out.println("SilverwoodTrunkRollbackTest: OK (13 assertions)");
+        // A rejected restore must not abort the remaining trunk cleanup.
+        Map<Integer, String> rejectedWorld = new LinkedHashMap<>();
+        rejectedWorld.put(1, "LOG_Y");
+        rejectedWorld.put(2, "LOG_X");
+        final int[] rejectedCalls = {0};
+        int acceptedRestores = SilverwoodTrunkRollback.restore(
+                Map.of(1, "AIR", 2, "WATER"), rejectedWorld,
+                rejectedWorld::get, (pos, state) -> {
+                    rejectedCalls[0]++;
+                    if (pos == 1) return false;
+                    rejectedWorld.put(pos, state);
+                    return true;
+                });
+        check(acceptedRestores == 1, "Only accepted restoration counts");
+        check(rejectedCalls[0] == 2, "Rejected first restoration does not abort later writes");
+        check(rejectedWorld.get(1).equals("LOG_Y"), "Rejected log remains untouched");
+        check(rejectedWorld.get(2).equals("WATER"), "Later log is restored despite first rejection");
+        System.out.println("SilverwoodTrunkRollbackTest: OK (17 assertions)");
     }
 
     private static void check(boolean condition, String message) {
