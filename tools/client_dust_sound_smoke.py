@@ -236,57 +236,112 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
     tail -120 client-smoke/client.log >&2
     exit 1
   fi
-  for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
-    test "$(grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log)" -eq 1 || exit 1
+  for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_POST_RELOAD_FRESH_PACKET SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
+    expected_count=1
+    case "$marker" in
+      SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN|SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN)
+        expected_count=2
+        ;;
+    esac
+    actual_count="$(grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log || true)"
+    if [ "$actual_count" -ne "$expected_count" ]; then
+      echo "SALIS_NATIVE_MARKER_COUNT=FAIL marker=$marker expected=$expected_count actual=$actual_count" >&2
+      exit 1
+    fi
   done
-  # Verify lifecycle ordering, not just marker presence. A stale or reordered
-  # marker sequence must not pass the native unload/reload acceptance gate.
+  # Verify both positive controls and the unload/reload gap in strict order.
   python3 - <<'SALIS_LIFECYCLE_ORDER'
 from pathlib import Path
-markers = (
-    'SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED',
-    'SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE',
-    'SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN',
-    'SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL',
-    'SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN',
-    'SALIS_NATIVE_CHUNK_TICKETS_RELEASED',
-    'SALIS_NATIVE_CHUNK_UNLOADED',
-    'SALIS_NATIVE_CHUNK_CANCELLED',
-    'SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD',
-    'SALIS_NATIVE_CHUNK_RELOADED',
-    'SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD',
-    'SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED',
-    'SALIS_NATIVE_CHUNK_TICKET_CLEANED',
-    'SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY',
-    'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED',
+
+marker_occurrences = (
+    ('SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED', 1),
+    ('SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE', 1),
+    ('SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN', 1),
+    ('SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL', 1),
+    ('SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN', 1),
+    ('SALIS_NATIVE_CHUNK_TICKETS_RELEASED', 1),
+    ('SALIS_NATIVE_CHUNK_UNLOADED', 1),
+    ('SALIS_NATIVE_CHUNK_CANCELLED', 1),
+    ('SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD', 1),
+    ('SALIS_NATIVE_CHUNK_RELOADED', 1),
+    ('SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD', 1),
+    ('SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN', 2),
+    ('SALIS_NATIVE_POST_RELOAD_FRESH_PACKET', 1),
+    ('SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN', 2),
+    ('SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED', 1),
+    ('SALIS_NATIVE_CHUNK_TICKET_CLEANED', 1),
+    ('SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY', 1),
+    ('SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED', 1),
 )
+expected_counts = {}
+for marker, occurrence in marker_occurrences:
+    expected_counts[marker] = max(expected_counts.get(marker, 0), occurrence)
+
 log = Path('client-smoke/client.log').read_text(errors='replace').splitlines()
-positions = []
-for marker in markers:
+matches_by_marker = {}
+for marker, expected_count in expected_counts.items():
     matches = [i for i, line in enumerate(log) if f'TC_SMOKE_{marker}=YES' in line]
-    if len(matches) != 1:
-        raise SystemExit(f'SALIS_NATIVE_MARKER_COUNT=FAIL {marker}: {len(matches)}')
-    positions.append(matches[0])
+    if len(matches) != expected_count:
+        raise SystemExit(
+            f'SALIS_NATIVE_MARKER_COUNT=FAIL {marker}: expected {expected_count}, got {len(matches)}'
+        )
+    matches_by_marker[marker] = matches
+
+positions = [
+    matches_by_marker[marker][occurrence - 1]
+    for marker, occurrence in marker_occurrences
+]
 if positions != sorted(set(positions)):
     raise SystemExit('SALIS_NATIVE_LIFECYCLE_ORDER=FAIL')
-packet_positions = [i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' in line]
-if len(packet_positions) != 1 or 'count=1 ' not in log[packet_positions[0]]:
-    raise SystemExit(f'SALIS_NATIVE_PACKET_POSITIVE_CONTROL=FAIL packets={len(packet_positions)}')
-actor_moved = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN=YES' in line)
-positive_control = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL=YES' in line)
-actor_returned = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN=YES' in line)
-tickets_released = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_CHUNK_TICKETS_RELEASED=YES' in line)
-if not actor_moved < packet_positions[0] < positive_control < actor_returned < tickets_released:
+
+packet_positions = [
+    i for i, line in enumerate(log)
+    if 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' in line
+]
+if (
+    len(packet_positions) != 2
+    or 'count=1 ' not in log[packet_positions[0]]
+    or 'count=2 ' not in log[packet_positions[1]]
+):
+    raise SystemExit(f'SALIS_NATIVE_PACKET_SEQUENCE=FAIL packets={len(packet_positions)}')
+
+actor_moved = matches_by_marker['SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN']
+actor_returned = matches_by_marker['SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN']
+positive_control = matches_by_marker['SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL'][0]
+tickets_released = matches_by_marker['SALIS_NATIVE_CHUNK_TICKETS_RELEASED'][0]
+chunk_reloaded = matches_by_marker['SALIS_NATIVE_CHUNK_RELOADED'][0]
+no_packet_after_reload = matches_by_marker['SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD'][0]
+fresh_packet = matches_by_marker['SALIS_NATIVE_POST_RELOAD_FRESH_PACKET'][0]
+recorder_removed = matches_by_marker['SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED'][0]
+ticket_cleaned = matches_by_marker['SALIS_NATIVE_CHUNK_TICKET_CLEANED'][0]
+reloaded_no_replay = matches_by_marker['SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY'][0]
+unload_accepted = matches_by_marker['SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED'][0]
+
+if not (
+    actor_moved[0] < packet_positions[0] < positive_control
+    < actor_returned[0] < tickets_released
+):
     raise SystemExit('SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=FAIL')
+if not (
+    chunk_reloaded < no_packet_after_reload < actor_moved[1]
+    < packet_positions[1] < fresh_packet < actor_returned[1]
+    < recorder_removed < ticket_cleaned < reloaded_no_replay < unload_accepted
+):
+    raise SystemExit('SALIS_NATIVE_POST_RELOAD_PACKET_ORDER=FAIL')
+
 print('SALIS_NATIVE_LIFECYCLE_ORDER=PASS')
 print('SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=PASS count=1 before unload')
+print('SALIS_NATIVE_POST_RELOAD_PACKET_ORDER=PASS count=2 after reload')
 SALIS_LIFECYCLE_ORDER
   packet_count=$(grep -Fc 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' client-smoke/client.log || true)
-  if [ "$packet_count" -ne 1 ] || ! grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=1 ' client-smoke/client.log; then
-    echo "SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL positive-control packet count=$packet_count" | tee -a client-smoke-status.txt
+  if [ "$packet_count" -ne 2 ] \
+      || ! grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=1 ' client-smoke/client.log \
+      || ! grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=2 ' client-smoke/client.log; then
+    echo "SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL expected=2 actual=$packet_count" | tee -a client-smoke-status.txt
     exit 1
   fi
-  echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS positive_control=1 no_replay=0' | tee -a client-smoke-status.txt
+  echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS positive_control=1 post_reload=1 no_replay=0' | tee -a client-smoke-status.txt
+  echo 'SALIS_NATIVE_POST_RELOAD_PACKET_ORDER=PASS count=2 after reload' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_TICKET_CLEANED=PASS' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS' | tee -a client-smoke-status.txt
   exit 0
