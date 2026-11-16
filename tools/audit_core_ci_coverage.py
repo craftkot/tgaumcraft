@@ -39,8 +39,11 @@ def inventory(root=ROOT):
         path.stem for path in test_dir.glob("*Test.java")
         if MAIN.search(uncommented_java(path.read_text(encoding="utf-8")))
     }
-    executed = set(RUN.findall(step))
-    compiled = set(re.findall(r"src/test/java/dev/ehtid/thaumcraft/port/core/([A-Za-z_$][\w$]*)\.java", step))
+    # Full-line shell comments in the workflow are not executed or compiled.
+    active_step = "\n".join(line for line in step.splitlines()
+                            if not line.lstrip().startswith("#"))
+    executed = set(RUN.findall(active_step))
+    compiled = set(re.findall(r"src/test/java/dev/ehtid/thaumcraft/port/core/([A-Za-z_$][\w$]*)\.java", active_step))
     return sorted(runnable - executed), sorted(runnable - compiled), sorted(executed - runnable)
 
 
