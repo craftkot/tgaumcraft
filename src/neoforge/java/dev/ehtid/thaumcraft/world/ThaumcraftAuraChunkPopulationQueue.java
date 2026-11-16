@@ -14,8 +14,8 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.function.DoubleSupplier;
 
@@ -46,7 +46,7 @@ public final class ThaumcraftAuraChunkPopulationQueue {
      */
     static final class PendingQueue {
         private final Deque<PendingKey> entries = new ArrayDeque<>();
-        private final java.util.Map<PendingKey, Pending> pendingByKey = new java.util.HashMap<>();
+        private final Map<PendingKey, Pending> pendingByKey = new HashMap<>();
 
         boolean enqueue(Pending pending) {
             PendingKey key = new PendingKey(pending.level(), pending.chunkPos());
