@@ -60,8 +60,20 @@ public final class AuraGenerationGameTests {
             return;
         }
         assertCrystalWorldGenUsesLiveSurfaceHeightmap(level, anchor);
-        int chunkX = anchor.getX() >> 4;
-        int chunkZ = anchor.getZ() >> 4;
+        // Use a fresh remote cross rather than the GameTest template chunk:
+        // the production ChunkEvent.Load queue may already have populated the
+        // template's aura before this test method starts.
+        int chunkX = (anchor.getX() >> 4) + 256;
+        int chunkZ = (anchor.getZ() >> 4) + 256;
+        for (ChunkPos sampleChunk : new ChunkPos[]{
+                new ChunkPos(chunkX, chunkZ),
+                new ChunkPos(chunkX, chunkZ - 1),
+                new ChunkPos(chunkX, chunkZ + 1),
+                new ChunkPos(chunkX - 1, chunkZ),
+                new ChunkPos(chunkX + 1, chunkZ)
+        }) {
+            level.getChunk(sampleChunk.x, sampleChunk.z);
+        }
         BlockPos center = sampleCenter(chunkX, chunkZ);
         BlockPos north = center.north(16);
         BlockPos south = center.south(16);
