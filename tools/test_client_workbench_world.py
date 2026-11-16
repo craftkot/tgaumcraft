@@ -230,15 +230,20 @@ expect("~ ~-1 ~4" not in generator
        and "send_chat '/execute at @p run data get block ~ ~ ~2 Items'" in generator,
        "Workbench block and all five inventory slots must share the final local target block")
 interaction_body = generator.split("body = r'''", 1)[1].split("'''", 1)[0]
+local_clear_front = "send_chat '/execute at @p run setblock ~ ~ ~1 minecraft:air'"
 local_fixture = "send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'"
 local_inventory = "send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'"
 local_aim = "send_chat '/tp @p ~ ~ ~ 0 35'"
-expect(local_fixture in interaction_body
+model_capture = "capture 08b-source-arcane-workbench-item-model"
+expect(model_capture in generator and generator.index(model_capture) < generator.index(local_clear_front),
+       "source Workbench model screenshots must be captured before clearing the front fixture")
+expect(local_clear_front in interaction_body
+       and interaction_body.index(local_clear_front) < interaction_body.index(local_fixture)
        and interaction_body.index(local_fixture) < interaction_body.index(local_inventory)
        and interaction_body.index(local_inventory) < interaction_body.index("capture 08c-workbench-before-open")
        and local_aim in interaction_body
        and interaction_body.index(local_aim) < interaction_body.index("capture 08c-workbench-before-open"),
-       "Workbench interaction must place, populate and aim at the same post-probe local block")
+       "Workbench smoke must clear the occluding +1 fixture before populating/aiming at the +2 menu target")
 expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "send_chat '/fill 0 148 0 4 148 6 minecraft:stone'" not in fixture_replacement
        and "TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" not in generator

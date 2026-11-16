@@ -292,6 +292,10 @@ body = r'''
   # at the current player position, two blocks ahead on the already-filled
   # spawn-chunk floor. The inventory, F3 target and right-click now share one
   # coordinate instead of accidentally addressing the stale spawn fixture.
+  # The source-model fixture at +1 is still directly in front of this target.
+  # Remove it after its screenshots; otherwise the ray hits the old empty bench.
+  send_chat '/execute at @p run setblock ~ ~ ~1 minecraft:air'
+  sleep 1
   send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
   sleep 2
   # Authentic BETA26 Thaumometer preview: four gold ingots around one glass pane.
