@@ -30,6 +30,20 @@ jobs:
           set -euo pipefail
           echo "Candidate SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
           gradle --init-script tools/alchemy-gametest.gradle runAlchemyGameTest --no-daemon --console=plain 2>&1 | tee alchemy-native-gametest.log
+      - name: Reject empty or crashed GameTest server
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s alchemy-native-gametest.log
+          if grep -Eiq 'No test functions were given!|Failed to start the minecraft server|Exception in thread|[[:space:]]BUILD FAILED' alchemy-native-gametest.log; then
+            echo 'GameTest server failed or had zero registered tests' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+          if ! grep -Eiq '([1-9][0-9]* tests? passed|All [1-9][0-9]* tests? passed|[1-9][0-9]* tests? succeeded)' alchemy-native-gametest.log; then
+            echo 'No independently verifiable nonzero GameTest pass count' >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
       - name: Record coverage limitation
         if: always()
         shell: bash
