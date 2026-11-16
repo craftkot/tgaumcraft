@@ -45,13 +45,14 @@ public final class ThaumcraftAuraChunkPopulationQueue {
      * again, so an expired edge request is retried when its missing neighbor arrives.
      */
     static final class PendingQueue {
-        private final Deque<Pending> entries = new ArrayDeque<>();
-        private final Set<PendingKey> queued = new HashSet<>();
+        private final Deque<PendingKey> entries = new ArrayDeque<>();
+        private final java.util.Map<PendingKey, Pending> pendingByKey = new java.util.HashMap<>();
 
         boolean enqueue(Pending pending) {
             PendingKey key = new PendingKey(pending.level(), pending.chunkPos());
-            if (!queued.add(key)) return false;
-            entries.addLast(pending);
+            Pending previous = pendingByKey.put(key, pending);
+            if (previous != null) return false;
+            entries.addLast(key);
             return true;
         }
 
@@ -66,27 +67,28 @@ public final class ThaumcraftAuraChunkPopulationQueue {
             int batchSize = Math.min(entries.size(), maxInspections);
             int initialized = 0;
             for (int index = 0; index < batchSize && initialized < maxInitializations; index++) {
-                Pending pending = entries.pollFirst();
-                if (pending == null) break;
+                PendingKey key = entries.pollFirst();
+                if (key == null) break;
+                Pending pending = pendingByKey.get(key);
+                if (pending == null) continue;
 
                 ServerLevel level = pending.level();
                 ChunkPos chunkPos = pending.chunkPos();
-                PendingKey key = new PendingKey(level, chunkPos);
                 if (level.getServer() != server) {
-                    entries.addLast(pending);
+                    entries.addLast(key);
                     continue;
                 }
                 if (currentTick - pending.queuedAtTick() > MAX_PENDING_AGE_TICKS) {
-                    queued.remove(key);
+                    pendingByKey.remove(key);
                     continue;
                 }
                 if (hasAuraRecord(level, chunkPos)) {
-                    queued.remove(key);
+                    pendingByKey.remove(key);
                     initialized++;
                     continue;
                 }
                 if (!ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, chunkPos.x, chunkPos.z)) {
-                    entries.addLast(pending);
+                    entries.addLast(key);
                     continue;
                 }
 
@@ -94,30 +96,30 @@ public final class ThaumcraftAuraChunkPopulationQueue {
                 try {
                     handled = initializer.test(level, chunkPos);
                 } catch (RuntimeException | Error failure) {
-                    entries.addLast(pending);
+                    entries.addLast(key);
                     throw failure;
                 }
                 if (handled) {
-                    queued.remove(key);
+                    pendingByKey.remove(key);
                     initialized++;
                 } else {
-                    entries.addLast(pending);
+                    entries.addLast(key);
                 }
             }
             return initialized;
         }
 
         boolean contains(ServerLevel level, ChunkPos chunkPos) {
-            return queued.contains(new PendingKey(level, chunkPos));
+            return pendingByKey.containsKey(new PendingKey(level, chunkPos));
         }
 
         int size() {
-            return entries.size();
+            return pendingByKey.size();
         }
 
         void clear() {
             entries.clear();
-            queued.clear();
+            pendingByKey.clear();
         }
 
         private record PendingKey(ServerLevel level, ChunkPos chunkPos) {}
