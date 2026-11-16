@@ -116,6 +116,7 @@ public final class CrystalGrowthParityTest {
           "src/neoforge/java/dev/ehtid/thaumcraft/world/CrystalClusterWorldGen.java"));
       yes(source.contains("event.isNewChunk()"));
       yes(source.contains("getChunkSource().getChunkNow"));
+      yes(source.contains("ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, chunkPos.x, chunkPos.z)"));
       yes(source.contains("level.hasChunkAt"));
       no(source.contains("level.getChunk("));
       yes(source.contains("RandomSource.create(chunkSeed"));

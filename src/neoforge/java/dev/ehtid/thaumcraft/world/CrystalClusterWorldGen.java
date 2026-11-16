@@ -79,10 +79,11 @@ public final class CrystalClusterWorldGen {
                     queued.remove(key);
                     continue;
                 }
-                // Both checks are non-loading. If the new chunk unloads before the
-                // deferred pass, keep the request briefly and wait for it to return.
-                if (!level.hasChunk(chunkPos.x, chunkPos.z)
-                        || level.getChunkSource().getChunkNow(chunkPos.x, chunkPos.z) == null) {
+                // BETA26 BlockUtils.isBlockTouching reads all six support neighbors.
+                // Cluster candidates stay inside this chunk, but a support face can
+                // cross any horizontal border. Wait for the center and four cardinal
+                // chunks to be fully available; never join a neighbor load here.
+                if (!ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, chunkPos.x, chunkPos.z)) {
                     entries.addLast(pending);
                     continue;
                 }

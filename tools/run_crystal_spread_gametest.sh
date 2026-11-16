@@ -47,6 +47,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=water result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=lava result=REJECTED vis=100.0' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_ACCEPTED=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS no_force_load=YES deferred=1 resumed=1 crystal_placed=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_WORKBENCH_HELD_ITEM_OPEN=PASS item_preserved=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=27 faces=164' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_AER_MISSING_AURA=PASS size=2' || return 1
@@ -107,6 +108,7 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_SKIPPED_PHASE=read' || return 1
+    require_marker "$file" 'TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS no_force_load=YES deferred=1 resumed=1 crystal_placed=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS existing_record_preserved=YES gaussian=0 local_target_pending=NO' || return 1
     require_marker "$file" 'All 8 required tests passed' || return 1

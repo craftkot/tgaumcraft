@@ -53,6 +53,7 @@ public final class AuraGenerationGameTests {
     public static void samplesFiveBETA26BiomesAtY50AndPersistsAura(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos anchor = helper.absolutePos(new BlockPos(8, 2, 8));
+        assertCrystalWorldGenQueueWaitsForCardinalNeighbors(level, anchor);
         assertCrystalWorldGenQueueDefersReentrantEnqueue(level, anchor);
         if (isColdRestartReadPhase()) {
             System.out.println("TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read");
@@ -1047,11 +1048,96 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES");
     }
 
+    private static void assertCrystalWorldGenQueueWaitsForCardinalNeighbors(
+            ServerLevel level, BlockPos anchor
+    ) {
+        int originX = (anchor.getX() >> 4) + 1024;
+        int originZ = (anchor.getZ() >> 4) + 1024;
+        ChunkPos foundChunk = null;
+        for (int attempt = 0; attempt < 16; attempt++) {
+            ChunkPos candidate = new ChunkPos(originX + attempt * 32, originZ + attempt * 32);
+            level.getChunk(candidate.x, candidate.z);
+            if (level.getChunkSource().getChunkNow(candidate.x - 1, candidate.z) == null) {
+                foundChunk = candidate;
+                break;
+            }
+        }
+        if (foundChunk == null) {
+            throw new AssertionError("Unable to create a crystal worldgen fixture with an unloaded west neighbor");
+        }
+        final ChunkPos targetChunk = foundChunk;
+
+        int minX = targetChunk.getMinBlockX();
+        int minZ = targetChunk.getMinBlockZ();
+        int y = level.getSeaLevel() + 10;
+        BlockPos center = new BlockPos(minX + 1, y + 1, minZ + 2);
+        BlockPos borderTarget = center.offset(-1, -1, -1);
+        if (borderTarget.getX() != minX || borderTarget.getZ() != minZ + 1) {
+            throw new AssertionError("Crystal border fixture no longer targets the west chunk edge");
+        }
+        level.setBlock(borderTarget, Blocks.AIR.defaultBlockState(), 3);
+
+        CrystalClusterWorldGen.PendingQueue queue = new CrystalClusterWorldGen.PendingQueue();
+        int tick = level.getServer().getTickCount();
+        queue.enqueue(new CrystalClusterWorldGen.Pending(level, targetChunk, tick));
+        AtomicInteger generated = new AtomicInteger();
+        int loadedBefore = level.getChunkSource().getLoadedChunksCount();
+        int deferred = queue.process(level.getServer(), tick, 4,
+                (targetLevel, chunk) -> generated.incrementAndGet());
+        int loadedAfter = level.getChunkSource().getLoadedChunksCount();
+        if (deferred != 0 || generated.get() != 0 || queue.size() != 1
+                || loadedAfter != loadedBefore
+                || level.getChunkSource().getChunkNow(targetChunk.x - 1, targetChunk.z) != null) {
+            throw new AssertionError("Crystal worldgen did not defer read-only while a border support chunk was absent: "
+                    + "processed=" + deferred + " generated=" + generated.get()
+                    + " pending=" + queue.size() + " loaded=" + loadedBefore + "->" + loadedAfter);
+        }
+
+        loadCardinalNeighborhood(level, targetChunk);
+        BlockPos westSupport = borderTarget.west();
+        level.setBlock(westSupport, Blocks.STONE.defaultBlockState(), 3);
+        if (!ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, targetChunk.x, targetChunk.z)) {
+            throw new AssertionError("Crystal worldgen fixture did not load the full cardinal neighborhood");
+        }
+
+        AtomicInteger generatedSize = new AtomicInteger();
+        int resumed = queue.process(level.getServer(), tick + 1, 4, (targetLevel, chunk) ->
+                generatedSize.set(CrystalClusterWorldGen.generateClusterAt(
+                        targetLevel, center,
+                        dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.CRYSTAL_AER.get(),
+                        randomAcceptingFirstCrystalCell())));
+        if (resumed != 1 || generatedSize.get() < 1
+                || !level.getBlockState(borderTarget).is(
+                        dev.ehtid.thaumcraft.registry.ThaumcraftBlocks.CRYSTAL_AER.get())
+                || queue.size() != 0) {
+            throw new AssertionError("Crystal worldgen did not place a border-supported cluster after neighbor load: "
+                    + "processed=" + resumed + " amount=" + generatedSize.get()
+                    + " placed=" + level.getBlockState(borderTarget) + " pending=" + queue.size());
+        }
+        System.out.println("TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS "
+                + "no_force_load=YES deferred=1 resumed=1 crystal_placed=YES");
+    }
+
+    private static void loadCardinalNeighborhood(ServerLevel level, ChunkPos center) {
+        level.getChunk(center.x, center.z);
+        level.getChunk(center.x - 1, center.z);
+        level.getChunk(center.x + 1, center.z);
+        level.getChunk(center.x, center.z - 1);
+        level.getChunk(center.x, center.z + 1);
+    }
+
+    private static RandomSource randomAcceptingFirstCrystalCell() {
+        for (long seed = 0; seed < 256; seed++) {
+            if (RandomSource.create(seed).nextInt(3) != 0) return RandomSource.create(seed);
+        }
+        throw new AssertionError("Unable to find deterministic RNG seed for the first crystal candidate");
+    }
+
     private static void assertCrystalWorldGenQueueDefersReentrantEnqueue(ServerLevel level, BlockPos anchor) {
         ChunkPos firstChunk = new ChunkPos(anchor.getX() >> 4, anchor.getZ() >> 4);
         ChunkPos nextChunk = new ChunkPos(firstChunk.x + 1, firstChunk.z);
-        level.getChunk(firstChunk.x, firstChunk.z);
-        level.getChunk(nextChunk.x, nextChunk.z);
+        loadCardinalNeighborhood(level, firstChunk);
+        loadCardinalNeighborhood(level, nextChunk);
 
         CrystalClusterWorldGen.PendingQueue queue = new CrystalClusterWorldGen.PendingQueue();
         int tick = level.getServer().getTickCount();
