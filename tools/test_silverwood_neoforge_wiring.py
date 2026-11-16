@@ -30,8 +30,8 @@ checks = {
                           and "placed[0]++;" not in source,
     "canopy rollback on missing logs": "if (placedLogs[0] == 0)" in source
                           and "originalLeaves.putIfAbsent(pos, before);" in source
-                          and "level.setBlock(entry.getKey(), entry.getValue(), 2);" in source,
-    "rollback checks unchanged leaf state": "level.getBlockState(entry.getKey()).equals(leaves)" in source,
+                          and "SilverwoodCanopyRollback.restore(originalLeaves, leaves," in source,
+    "rollback delegates conditional restore": "level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2)" in source,
     "setBlock success propagated": "canReplace(before) && level.setBlock(pos, leaves, 2)" in source,
     "failed preflight returns false": "return false;" in source,
     "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
