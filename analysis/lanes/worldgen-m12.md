@@ -366,3 +366,11 @@
 - Updated Draft PR #9 description to reflect actual current Silverwood feature and rollback tests instead of its outdated gate-only scope. Explicitly marked absent registration, native WorldGenLevel GameTest, new-chunk smoke and BETA26 RNG/biome parity. No production changes in this iteration.
 - Exact checkout remains unavailable: local `git ls-remote` failed DNS resolution for github.com. Standalone Java runner and Python source guard were not executed on exact checkout; 31 assertions remain expected, not independently verified PASS.
 - Next: add an executable native WorldGenLevel integration test, coordinate registration outside shared registry edits, then validate natural generation on fresh chunks. Keep audit index 59/100; no merge, main, Gradle or other branch changes.
+
+
+## 16.11.2026 — M12 partial-trunk rollback primitive (not wired)
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...M12 (ahead 110, behind 0 before edits), reviewed open PRs including Draft #9. Direct git checkout remains blocked by github.com DNS.
+- Added SilverwoodTrunkRollback.java at commit 90a23d8617d6b5c38fb5e44802be320e54c4c6cf and standalone SilverwoodTrunkRollbackTest.java at c046b5339fd4682260bfd3352726b0ce0dad6bd1. Policy compares each position's expected axis-specific log state before best-effort restoring its original block; skips foreign changes; rejects missing originals. Six assertions written, NOT executed on exact checkout.
+- This is a **loader-neutral primitive only**, not connected to SilverwoodLegacyFeature.place(). It does not yet fix partial-trunk success, nor guarantee atomicity or detect equal-state foreign writes. No registry, Gradle, main, or other branch edits.
+- Next: track original/expected successful log writes in the Feature, use this primitive and canopy cleanup on partial failure, then add real WorldGenLevel GameTest and fresh-chunk validation. Confirm CI for new HEAD and exact Java 21 runner. No BETA26 RNG/biome parity claim; historical index 59/100 unchanged. No merge.
