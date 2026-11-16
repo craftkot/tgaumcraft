@@ -135,6 +135,25 @@ public final class SilverwoodCanopyRollbackTest {
         check(changingWrites[0] == 1, "later foreign block must not reach writer");
         check("AIR".equals(changingWorld.get("first")), "first leaf restored");
         check("STONE".equals(changingWorld.get("later")), "preserve foreign edit during rollback");
+        // A rejected first restoration must not abort cleanup of later leaves.
+        Map<String, String> partialWorld = new LinkedHashMap<>();
+        partialWorld.put("rejected", "LEAVES");
+        partialWorld.put("accepted", "LEAVES");
+        Map<String, String> partialOriginals = new LinkedHashMap<>();
+        partialOriginals.put("rejected", "WATER");
+        partialOriginals.put("accepted", "AIR");
+        int[] partialAttempts = {0};
+        int partialRestored = SilverwoodCanopyRollback.restore(
+                partialOriginals, "LEAVES", partialWorld::get, (pos, state) -> {
+                    partialAttempts[0]++;
+                    if (pos.equals("rejected")) return false;
+                    partialWorld.put(pos, state);
+                    return true;
+                });
+        check(partialRestored == 1, "continue after an earlier rejected restore");
+        check(partialAttempts[0] == 2, "attempt later leaf after failed write");
+        check("LEAVES".equals(partialWorld.get("rejected")), "failed first write remains unchanged");
+        check("AIR".equals(partialWorld.get("accepted")), "later successful write restores air");
         System.out.println("SilverwoodCanopyRollbackTest: OK (" + checks + " assertions)");
     }
 }
