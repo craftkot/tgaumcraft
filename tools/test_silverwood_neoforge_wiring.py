@@ -23,7 +23,8 @@ checks = {
     "successful leaf writes tracked": "if (canReplace(before) && level.setBlock(pos, leaves, 2))" in source
                           and "ownLeaves.add(pos);" in source,
     "no pre-existing leaf-type bypass": "existing.is(leafState.getBlock())" not in source,
-    "successful trunk-write return": "if (placedLogs[0] == 0)" in source\n                          and "return true;" in source
+    "successful trunk-write return": "if (placedLogs[0] == 0)" in source
+                          and "return true;" in source
                           and "placedLogs[0]++;" in source
                           and "final int[] placedLogs = {0};" in source
                           and "placed[0]++;" not in source,
