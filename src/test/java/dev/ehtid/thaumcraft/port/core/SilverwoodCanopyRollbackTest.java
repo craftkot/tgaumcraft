@@ -58,6 +58,28 @@ public final class SilverwoodCanopyRollbackTest {
                 });
         check(unknownRestores == 0, "unknown state cannot be restored");
         check(unknownWrites[0] == 0, "unknown state must not be overwritten");
+        // A successful trunk write must not be rolled back as canopy, even when
+        // the same position was previously recorded as a successful leaf write.
+        Map<String, String> mixedOriginals = new LinkedHashMap<>();
+        mixedOriginals.put("trunk", "AIR");
+        mixedOriginals.put("water", "WATER");
+        mixedOriginals.put("canopy", "AIR");
+        Map<String, String> mixedWorld = new HashMap<>();
+        mixedWorld.put("trunk", "LOG");
+        mixedWorld.put("water", "LEAVES");
+        mixedWorld.put("canopy", "LEAVES");
+        int[] mixedWrites = {0};
+        int mixedRestored = SilverwoodCanopyRollback.restore(mixedOriginals, "LEAVES",
+                mixedWorld::get, (pos, state) -> {
+                    mixedWrites[0]++;
+                    mixedWorld.put(pos, state);
+                    return true;
+                });
+        check(mixedRestored == 2, "restore only remaining canopy positions");
+        check(mixedWrites[0] == 2, "never overwrite the successful trunk");
+        check("LOG".equals(mixedWorld.get("trunk")), "preserve trunk after canopy cleanup");
+        check("WATER".equals(mixedWorld.get("water")), "restore non-air original state");
+        check("AIR".equals(mixedWorld.get("canopy")), "restore remaining canopy to air");
         System.out.println("SilverwoodCanopyRollbackTest: OK (" + checks + " assertions)");
     }
 }
