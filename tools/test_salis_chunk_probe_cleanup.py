@@ -155,7 +155,7 @@ if not (
 ):
     raise SystemExit("SALIS_POST_RELOAD_TRIGGER_ORDER=FAIL")
 if not (
-    "OUTBOUND_PROBE_PACKET_COUNT.get() <= outboundPacketsBefore + 1" in phase5
+    "postReloadPackets <= outboundPacketsBefore + 1" in phase5
     and "if (postReloadPackets != outboundPacketsBefore + 1) return;" in phase5
     and 'mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET")' in phase5
     and phase5.index('mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET")')
