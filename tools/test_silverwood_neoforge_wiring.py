@@ -11,7 +11,7 @@ checks = {
     "shared core tree phases": "SilverwoodLegacyTree.place(" in source,
     "blockstate injection": "SilverwoodLegacyFeature(BlockState log, BlockState leaves)" in source,
     "axis mapping": all(s in source for s in ("Direction.Axis.X", "Direction.Axis.Y", "Direction.Axis.Z")),
-    "conditional writes": "canReplace(before) && level.setBlock(pos, leaves, 2)" in source
+    "conditional writes": "if (canReplace(before)) {" in source and "if (level.setBlock(pos, leaves, 2)) {" in source
                           and "if (setLogOverOwnLeaves(level, pos, state, leaves, ownLeaves))" in source,
     "canopy-first log replacement limited to current attempt": "ownLeaves.contains(pos)" in source
                           and "existing.equals(leavesState)" in source
@@ -23,17 +23,19 @@ checks = {
     "successful leaf writes tracked": "if (canReplace(before) && level.setBlock(pos, leaves, 2))" in source
                           and "ownLeaves.add(pos);" in source,
     "no pre-existing leaf-type bypass": "existing.is(leafState.getBlock())" not in source,
-    "partial trunk rejected": "if (writtenLogs.size() != attemptedLogs[0])" in source
+    "partial trunk rejected": "if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0])" in source
                           and "attemptedLogs[0]++;" in source
                           and "writtenLogs.put(pos, state);" in source,
     "trunk rollback precedes canopy rollback": "SilverwoodTrunkRollback.restore(originalLogs, writtenLogs," in source
                           and source.index("SilverwoodTrunkRollback.restore(") < source.index("SilverwoodCanopyRollback.restore("),
     "original block before own canopy preserved": "originalLeaves.getOrDefault(pos, before)" in source,
-    "canopy rollback on partial trunk": "if (writtenLogs.size() != attemptedLogs[0])" in source
+    "canopy rollback on partial trunk": "if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0])" in source
                           and "originalLeaves.putIfAbsent(pos, before);" in source
                           and "SilverwoodCanopyRollback.restore(originalLeaves, leaves," in source,
     "rollback delegates conditional restore": "level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2)" in source,
-    "setBlock success propagated": "canReplace(before) && level.setBlock(pos, leaves, 2)" in source,
+    "setBlock success propagated": "if (canReplace(before)) {" in source and "if (level.setBlock(pos, leaves, 2)) {" in source,
+    "rejected leaf writes fail placement and trigger rollback": "rejectedLeafWrite[0] = true;" in source
+                          and "if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0])" in source,
     "failed preflight returns false": "return false;" in source,
     "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
 }
