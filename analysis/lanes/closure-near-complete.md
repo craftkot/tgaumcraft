@@ -563,3 +563,11 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - CI has been triggered by the branch updates; no result is claimed until the exact final-head jobs finish. No local Gradle or Minecraft client was available in this run.
 - No audit points awarded: the change closes one queue-lifecycle edge case only. Fixed audit remains **59/100**; M16 **4/6**, M08 **5/9**. PR #4 remains open/unmerged.
 - Next: inspect exact-HEAD Salis JVM and real-client jobs. If either fails, diagnose the first failing assertion or launch stage before making further changes; do not treat the JVM double as real-client evidence.
+
+
+## 2026-11-16 — exact-head CI status for actor logout slice
+
+- The Salis queue JVM job [run #43958601521](https://github.com/craftkot/tgaumcraft/actions/runs/43958601521), checking out commit 8488e0b (the queue implementation and JVM harness were already final at that commit), completed **SUCCESS**. Its job log explicitly contains SALIS_ACTOR_ONLY_RECIPIENT=PASS, SALIS_ACTOR_LOGOUT_CLEANUP=PASS and SALIS_QUEUE_UNLOAD_JVM=PASS. This is the actual queue Java compiled/executed against API doubles; it is not a NeoForge build or a real multiplayer client.
+- Final code/test commit 77fd037 triggered the native Salis real-client run [#43958620720](https://github.com/craftkot/tgaumcraft/actions/runs/43958620720), the final-head queue JVM run [#43958620433](https://github.com/craftkot/tgaumcraft/actions/runs/43958620433), and full Port CI [#43958620952](https://github.com/craftkot/tgaumcraft/actions/runs/43958620952). At the last poll all three were **QUEUED**; no compile/client result is claimed for the new probe yet.
+- Combined status for 77fd037: unknown; 1 status entries were returned. This is a CI status snapshot, not acceptance.
+- Next: wait for #43958620720 and #43958620952; inspect job logs and the uploaded real-client artifact. Only after the logout event marker, empty actor queue, and final unload/reload markers appear in order can this new acceptance slice be called PASS.
