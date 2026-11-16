@@ -88,6 +88,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_GUARDS=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
     require_marker "$file" 'All 7 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1

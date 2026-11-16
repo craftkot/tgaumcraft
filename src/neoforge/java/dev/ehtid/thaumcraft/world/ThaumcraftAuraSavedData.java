@@ -1,5 +1,6 @@
 package dev.ehtid.thaumcraft.world;
 
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftTriggerLogic;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
@@ -37,6 +38,10 @@ public final class ThaumcraftAuraSavedData extends SavedData {
 
     private final Map<Long, AuraChunk> chunks = new HashMap<>();
 
+    // BETA26 AuraThread.riftTrigger is transient and holds one candidate per dimension.
+    // The EntityFluxRift spawn consumer is a separate, still-unported subsystem.
+    private BlockPos pendingRiftTrigger;
+
     public record AuraChunk(short base, float vis, float flux) {}
 
     public static ThaumcraftAuraSavedData get(ServerLevel level) {
@@ -46,6 +51,13 @@ public final class ThaumcraftAuraSavedData extends SavedData {
     /** Returns persisted aura data only when it already exists; does not create an empty save. */
     public static ThaumcraftAuraSavedData getIfPresent(ServerLevel level) {
         return level.getDataStorage().get(FACTORY, DATA_NAME);
+    }
+
+    /** Takes and clears the transient BETA26 per-dimension Flux-rift trigger candidate. */
+    public BlockPos takePendingRiftTrigger() {
+        BlockPos trigger = pendingRiftTrigger;
+        pendingRiftTrigger = null;
+        return trigger;
     }
 
     public static ThaumcraftAuraSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
@@ -179,6 +191,19 @@ public final class ThaumcraftAuraSavedData extends SavedData {
                     chunkX, chunkZ, phaseMax, nextInt, true, true));
             if (processAuraChunkRecoveryOrConversion(level, chunkX, chunkZ, phase, nextFloat)) {
                 changed++;
+            }
+
+            // BETA26 AuraThread checks the post-conversion Flux against 75% of
+            // the phase-adjusted base, then rolls Flux / 500 / 10. The trigger
+            // map is one transient position per dimension; it is not SavedData.
+            AuraChunk current = chunks.get(chunkKey);
+            float phaseAdjustedBase = current.base() * phaseMax;
+            if (current.flux() > phaseAdjustedBase * 0.75F) {
+                float roll = (float) nextFloat.getAsDouble();
+                if (LegacyFluxRiftTriggerLogic.shouldTrigger(
+                        phaseAdjustedBase, current.flux(), roll)) {
+                    pendingRiftTrigger = new BlockPos(chunkX * 16, 0, chunkZ * 16);
+                }
             }
         }
         return changed;

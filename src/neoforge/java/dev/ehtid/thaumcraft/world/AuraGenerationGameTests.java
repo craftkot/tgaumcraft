@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.world;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.port.core.AuraGenerationLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftTriggerLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyModernBiomeCompatibility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -157,6 +158,7 @@ public final class AuraGenerationGameTests {
         assertVisNeighborRedistribution(level, center);
         assertFluxNeighborRedistribution(level, center);
         assertVisFluxConversion(level, center);
+        assertFluxRiftTriggerQueue(level, center);
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -962,6 +964,71 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_DRAIN_MISSING=PASS");
         System.out.println("TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES");
+    }
+
+    private static void assertFluxRiftTriggerQueue(ServerLevel level, BlockPos anchor) {
+        int chunkX = (anchor.getX() >> 4) + 100;
+        int chunkZ = (anchor.getZ() >> 4) + 100;
+        BlockPos chunkSample = new BlockPos(chunkX * 16 + 8, 50, chunkZ * 16 + 8);
+        if (level.hasChunk(chunkX, chunkZ)) {
+            throw new AssertionError("Rift-trigger fixture chunk must start unloaded");
+        }
+
+        ThaumcraftAuraSavedData triggered = new ThaumcraftAuraSavedData();
+        triggered.putChunk(chunkSample, (short) 100, 80.0F, 80.0F);
+        AtomicInteger triggerRolls = new AtomicInteger();
+        triggered.processAuraChunks(level, 2, bound -> 0, () -> {
+            triggerRolls.incrementAndGet();
+            return 0.015D;
+        });
+        BlockPos expected = new BlockPos(chunkX * 16, 0, chunkZ * 16);
+        if (triggerRolls.get() != 1 || !expected.equals(triggered.takePendingRiftTrigger())
+                || triggered.takePendingRiftTrigger() != null
+                || level.hasChunk(chunkX, chunkZ)) {
+            throw new AssertionError("BETA26 Flux-rift trigger did not queue/consume one unloaded chunk origin");
+        }
+
+        // The source threshold is strict: exactly 75% must not consume the RNG.
+        ThaumcraftAuraSavedData threshold = new ThaumcraftAuraSavedData();
+        threshold.putChunk(chunkSample, (short) 100, 80.0F, 75.0F);
+        AtomicInteger thresholdRolls = new AtomicInteger();
+        threshold.processAuraChunks(level, 2, bound -> 0, () -> {
+            thresholdRolls.incrementAndGet();
+            return 0.0D;
+        });
+        if (thresholdRolls.get() != 0 || threshold.takePendingRiftTrigger() != null) {
+            throw new AssertionError("BETA26 Flux-rift threshold must be strictly greater than 75%");
+        }
+
+        // At 80 Flux the source chance is 80 / 500 / 10 = 0.016; equality fails.
+        ThaumcraftAuraSavedData probability = new ThaumcraftAuraSavedData();
+        probability.putChunk(chunkSample, (short) 100, 80.0F, 80.0F);
+        AtomicInteger probabilityRolls = new AtomicInteger();
+        probability.processAuraChunks(level, 2, bound -> 0, () -> {
+            probabilityRolls.incrementAndGet();
+            return 0.016D;
+        });
+        if (probabilityRolls.get() != 1 || probability.takePendingRiftTrigger() != null) {
+            throw new AssertionError("BETA26 Flux-rift probability boundary must be exclusive");
+        }
+
+        // Like the original static trigger map, a pending position is transient,
+        // not part of the persisted aura-chunk NBT.
+        ThaumcraftAuraSavedData transientQueue = new ThaumcraftAuraSavedData();
+        transientQueue.putChunk(chunkSample, (short) 100, 80.0F, 80.0F);
+        transientQueue.processAuraChunks(level, 2, bound -> 0, () -> 0.015D);
+        CompoundTag saved = transientQueue.save(new CompoundTag(), level.registryAccess());
+        ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(saved, level.registryAccess());
+        if (restored.takePendingRiftTrigger() != null) {
+            throw new AssertionError("Transient Flux-rift trigger was incorrectly persisted");
+        }
+
+        if (!LegacyFluxRiftTriggerLogic.shouldTrigger(100.0F, 80.0F, 0.015F)
+                || LegacyFluxRiftTriggerLogic.shouldTrigger(100.0F, 80.0F, 0.016F)
+                || LegacyFluxRiftTriggerLogic.shouldTrigger(100.0F, 75.0F, 0.0F)) {
+            throw new AssertionError("Pure BETA26 Flux-rift trigger probability diverged");
+        }
+        System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES");
     }
 
     private static void assertCrystalWorldGenQueueDefersReentrantEnqueue(ServerLevel level, BlockPos anchor) {
