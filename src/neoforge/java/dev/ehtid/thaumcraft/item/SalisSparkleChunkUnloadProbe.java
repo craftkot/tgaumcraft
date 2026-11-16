@@ -286,7 +286,11 @@ public final class SalisSparkleChunkUnloadProbe {
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET");
                 require(restoreActorFromPacketOrigin(),
                         "post-reload actor could not return to original position");
+                Channel recorderChannel = outboundProbeChannel;
                 removeOutboundParticleRecorder();
+                require(recorderChannel != null
+                                && recorderChannel.pipeline().get(OUTBOUND_HANDLER_NAME) == null,
+                        "outbound particle recorder remained installed after native cleanup");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED");
                 require(releaseFixtureTicket(),
                         "fixture could not release its final remote chunk ticket after reload");
