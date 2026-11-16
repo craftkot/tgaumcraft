@@ -1075,7 +1075,15 @@ public final class AuraGenerationGameTests {
         if (borderTarget.getX() != minX || borderTarget.getZ() != minZ + 1) {
             throw new AssertionError("Crystal border fixture no longer targets the west chunk edge");
         }
-        level.setBlock(borderTarget, Blocks.AIR.defaultBlockState(), 3);
+        // Isolate the 3x3x3 candidate volume: only the west-neighbor stone
+        // below may support the first candidate after that neighbor is loaded.
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    level.setBlock(center.offset(dx, dy, dz), Blocks.AIR.defaultBlockState(), 3);
+                }
+            }
+        }
 
         CrystalClusterWorldGen.PendingQueue queue = new CrystalClusterWorldGen.PendingQueue();
         int tick = level.getServer().getTickCount();
