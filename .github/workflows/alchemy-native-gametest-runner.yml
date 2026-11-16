@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - validation/alchemy-native-gametest-runner-2026-11-16
+      - fix/alchemy-gametest-ci-trigger-2026-11-16
   pull_request:
     branches:
       - integration/alchemy-core-candidate-2026-11-16
+      - fix/alchemy-gametest-fail-closed-2026-11-16
   workflow_dispatch:
 
 jobs:
