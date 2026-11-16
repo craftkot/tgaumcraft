@@ -1,0 +1,43 @@
+name: Alchemy native GameTest runner probe
+
+on:
+  push:
+    branches:
+      - validation/alchemy-native-gametest-runner-2026-11-16
+  pull_request:
+    branches:
+      - integration/alchemy-core-candidate-2026-11-16
+  workflow_dispatch:
+
+jobs:
+  native-gametest-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Run native NeoForge GameTest server (infrastructure probe only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Candidate SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          gradle --init-script tools/alchemy-gametest.gradle runAlchemyGameTest --no-daemon --console=plain 2>&1 | tee alchemy-native-gametest.log
+      - name: Record coverage limitation
+        if: always()
+        shell: bash
+        run: |
+          echo 'Native GameTest runner execution does not establish Alchemy gameplay coverage unless registered in-game tests and assertion counts are independently verified.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alchemy-native-gametest-log
+          path: alchemy-native-gametest.log
+          if-no-files-found: warn
