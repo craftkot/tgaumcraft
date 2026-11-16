@@ -295,3 +295,12 @@
 - The exact GitHub blob of tools/test_silverwood_neoforge_wiring.py still contained a literal `\\n` between two Python boolean-expression lines (`in source\\n and ...`), which is invalid Python syntax. Replaced that escaped sequence with an actual newline in commit 0b271dfcb5c17cae8f72b7f1df66d178b5f35de8. No production worldgen behavior changed.
 - Connector readback and source inspection only; Python runner execution, exact checkout Java suite, NeoForge compilation, Minecraft GameTest/new-chunk smoke are NOT verified. Source assertions remain non-behavioral. Feature is still unregistered; original BETA26 biome/RNG parity unverified. Historical audit 59/100 unchanged.
 - Next: run `python3 tools/test_silverwood_neoforge_wiring.py` on exact checkout, add an executable rollback/foreign-block preservation test, compile NeoForge, then coordinate feature registration. No shared registries, Gradle, main or other branches modified.
+
+
+## 16.11.2026 — M12: fix CI Java compilation blocker
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (ahead 90, behind 0 before edit), inspected 16 branch names and open PR #5–#14. Draft PR #9 remains open, not merged.
+- Retrieved the actual GitHub Actions #3243 verify job log (PR merge checkout f7f08087da545dbe805d26ec946455ade86f8f01): Core parity javac failed at WorldgenHeightGate.java:21, undefined variable maxBuildY. This is a confirmed Java compilation failure, not an inferred Python failure; NeoForge and server smoke were skipped.
+- Fixed the typo in own production file: originWithinBuildHeight now compares minBuildY < maxBuildYExclusive, consistent with the method parameter and exclusive upper limit. Commit addf41ddc733ef45ee837c61e16ef491b059e8cc. No shared files touched.
+- Local JDK 21 is present, but exact checkout still blocked by DNS (Could not resolve host: github.com). Exact-head Java tests, NeoForge compilation and Minecraft GameTest/new-chunk generation NOT verified; await fresh CI for the new SHA. This fix only removes the confirmed compile blocker, not proof of tree generation. BETA26 RNG/biomes and feature registration remain open.
+- Next: inspect CI of corrected HEAD, execute exact checkout Java/Python runners when available, then implement an executable Silverwood rollback/foreign-block test and coordinate registration. Historical audit remains 59/100.
