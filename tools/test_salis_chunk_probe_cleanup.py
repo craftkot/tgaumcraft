@@ -109,7 +109,7 @@ if not (
 ):
     raise SystemExit("SALIS_OUTBOUND_PACKET_INSTALL_ORDER=FAIL")
 if not (
-    phase4.index("OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore + 1")
+    phase4.index("observedPackets != outboundPacketsBefore + 1")
     < phase4.index('mark("SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL")')
     < phase4.index("outboundPacketsBefore = observedPackets")
     < phase4.index("SalisSparkleTrailQueue.emitFaceOrQueue")
