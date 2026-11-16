@@ -32,11 +32,11 @@ public class ServerLevel extends Level {
  public ResourceKey<Level> key=new ResourceKey<>();
  public long getGameTime(){return time;} public ResourceKey<Level> dimension(){return key;}
  public boolean hasChunkAt(BlockPos p){return chunkStates.getOrDefault(new net.minecraft.world.level.ChunkPos(p),loaded);}
- public void sendParticles(ServerPlayer p,net.minecraft.core.particles.ParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
+ public void sendParticles(ServerPlayer p,net.minecraft.core.particles.ParticleOptions d,boolean force,double x,double y,double z,int count,double vx,double vy,double vz,double speed){sends++;p.receivedPackets++;lastRecipient=p;lastForce=force;lastCount=count;lastVx=vx;lastVy=vy;lastVz=vz;lastSpeed=speed;}
 }""",
 "net/minecraft/server/level/ServerPlayer.java": """package net.minecraft.server.level;
 import java.util.UUID; public class ServerPlayer {
- public final UUID id; public ServerLevel world;
+ public final UUID id; public ServerLevel world; public int receivedPackets;
  public ServerPlayer(ServerLevel w){this(w,UUID.randomUUID());}
  public ServerPlayer(ServerLevel w,UUID uuid){world=w;id=uuid;} public UUID getUUID(){return id;}
  public ServerLevel level(){return world;}
@@ -63,6 +63,15 @@ public class ChunkEvent {
  public Level getLevel(){return level;} public Chunk getChunk(){return chunk;}
  }
 }""",
+"net/neoforged/neoforge/event/entity/player/PlayerEvent.java": """package net.neoforged.neoforge.event.entity.player;
+public class PlayerEvent {
+ private final Object entity;
+ public PlayerEvent(Object entity){this.entity=entity;}
+ public Object getEntity(){return entity;}
+ public static class PlayerLoggedOutEvent extends PlayerEvent {
+  public PlayerLoggedOutEvent(Object entity){super(entity);}
+ }
+}""",
 "dev/ehtid/thaumcraft/item/SalisQueueTest.java": """package dev.ehtid.thaumcraft.item;
 import dev.ehtid.thaumcraft.item.SalisSparkleTrailQueue;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
@@ -70,6 +79,7 @@ import net.minecraft.server.*; import net.minecraft.server.level.*;
 import net.minecraft.world.level.*; import net.minecraft.world.phys.Vec3;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 public class SalisQueueTest {
@@ -161,13 +171,18 @@ public class SalisQueueTest {
   cServer.worlds.put(c.key,replacementWorld);
   // Restore the baseline count for the remaining independent assertions.
   a.sends=1;
-  // Disconnect before due tick: no packet must be sent to a departed player.
-  a.loaded=true; a.time=21;
+  // The logout event must remove the exact actor session's pending effect immediately.
+  a.loaded=true; a.time=21; s.players.put(p.id,p);
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
-  s.players.remove(p.id); a.time=24; tick(s);
+  check(SalisSparkleTrailQueue.pendingCountForActor(p)==1,"logout fixture did not queue exactly one actor effect");
+  s.players.remove(p.id);
+  SalisSparkleTrailQueue.onPlayerLoggedOut(new PlayerEvent.PlayerLoggedOutEvent(p));
+  check(SalisSparkleTrailQueue.pendingCountForActor(p)==0,"logout event retained the departed actor's effect");
+  check(ThaumcraftSmokeAudit.count("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED")==1,"logout cancellation marker missing");
+  a.time=24; tick(s);
   check(a.sends==1,"disconnected player received delayed effect");
   // Reconnect with the same UUID must not inherit an old session's pending effect.
-  a.time=24;
+  a.time=24; s.players.put(p.id,p);
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,3);
   var replacement=new ServerPlayer(a,p.id);
   check(replacement.getUUID().equals(p.getUUID()),"reconnect fixture UUID differs");
@@ -214,13 +229,23 @@ public class SalisQueueTest {
   SalisSparkleTrailQueue.emitFaceOrQueue(a,p,dust,origin,v,3);
   s.players.put(p.id,p); a.time=46; tick(s);
   check(a.sends==1,"replaced actor queued delayed effect that fired after restoration");
+  // A second connected actor must not receive the first actor's local Salis effect.
+  var bystander = new ServerPlayer(a);
+  s.players.put(p.id,p);
+  s.players.put(bystander.id,bystander);
+  int actorPacketsBefore = p.receivedPackets;
+  int bystanderPacketsBefore = bystander.receivedPackets;
   // A valid zero-delay call still emits immediately in the player's world.
   p.world=a;
   SalisSparkleTrailQueue.emitOrQueue(a,p,dust,origin,v,0);
   check(a.sends==2,"valid immediate effect suppressed");
   check(a.lastRecipient==p,"particle dispatch must target the acting player only");
+  check(p.receivedPackets==actorPacketsBefore+1,"acting player did not receive exactly one targeted packet");
+  check(bystander.receivedPackets==bystanderPacketsBefore,"second actor received a local Salis packet");
   check(!a.lastForce && a.lastCount==0,"Salis must send a non-forced single particle, not a broadcast burst");
   check(a.lastVx==0 && a.lastVy==0 && a.lastVz==0 && a.lastSpeed==1.0D,"Salis must preserve exact per-particle velocity and speed");
+  System.out.println("SALIS_ACTOR_ONLY_RECIPIENT=PASS");
+  System.out.println("SALIS_ACTOR_LOGOUT_CLEANUP=PASS");
   // Adjacent chunks at the positive 15/16 block boundary are distinct.
   // An unload of chunk (0,0) must cancel only the effect at x=15,
   // leaving the x=16 effect in chunk (1,0) eligible to dispatch.
