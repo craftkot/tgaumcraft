@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
 import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.MinecraftServer;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -49,6 +51,9 @@ public final class SalisSparkleChunkUnloadProbe {
     private static boolean chunkUnloaded;
     private static boolean fixtureTicketHeld;
     private static boolean finished;
+    private static boolean actorDisconnectExpected;
+    private static boolean actorDisconnectEventSeen;
+    private static boolean actorDisconnectAccepted;
     private static volatile Channel outboundProbeChannel;
     private static int outboundPacketsBefore;
     private static int positiveControlSendsBefore;
@@ -70,6 +75,9 @@ public final class SalisSparkleChunkUnloadProbe {
         chunkUnloaded = false;
         fixtureTicketHeld = false;
         finished = false;
+        actorDisconnectExpected = false;
+        actorDisconnectEventSeen = false;
+        actorDisconnectAccepted = false;
         OUTBOUND_PROBE_PACKET_COUNT.set(0);
         outboundProbeChannel = null;
         outboundPacketsBefore = 0;
@@ -83,6 +91,20 @@ public final class SalisSparkleChunkUnloadProbe {
     @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         if (active == event.getServer()) {
+            if (ENABLED && actorDisconnectExpected && !actorDisconnectAccepted) {
+                boolean cleaned = actorDisconnectEventSeen
+                        && probeActor != null
+                        && SalisSparkleTrailQueue.pendingCountForActor(probeActor) == 0
+                        && ThaumcraftSmokeAudit.count("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED") == 1;
+                if (cleaned) {
+                    actorDisconnectAccepted = true;
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED");
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
+                } else {
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_FAILED");
+                    LogUtils.getLogger().error("SALIS_NATIVE_ACTOR_DISCONNECT_FAILED during server stop");
+                }
+            }
             removeOutboundParticleRecorder();
             cleanupFixtureTicketOnStop();
             active = null;
@@ -90,6 +112,12 @@ public final class SalisSparkleChunkUnloadProbe {
             probeActor = null;
             actorReturnPosition = null;
         }
+    }
+
+    @SubscribeEvent
+    public static void onProbeActorLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!ENABLED || !actorDisconnectExpected || event.getEntity() != probeActor) return;
+        actorDisconnectEventSeen = true;
     }
 
     @SubscribeEvent
@@ -298,11 +326,47 @@ public final class SalisSparkleChunkUnloadProbe {
                         "forced-chunk ticket remained after final cleanup");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY");
+
+                // The original BETA26 effect is client-local. Verify that a queued
+                // actor-bound effect is discarded immediately when that exact session logs out.
+                ServerPlayer actor = probeActor;
+                require(actor != null && level.hasChunkAt(BlockPos.containing(actor.position())),
+                        "actor's current chunk is unavailable for the logout cleanup control");
+                require(SalisSparkleTrailQueue.pendingCountForActor(actor) == 0,
+                        "actor already had a pending effect before logout control");
+                int disconnectEnqueuedBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED");
+                SalisSparkleTrailQueue.emitOrQueue(level, actor,
+                        SalisSparkleParticleRegistration.TYPE, actor.position(),
+                        new Vec3(0.0D, 0.0D, 0.0D), 4);
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED") == disconnectEnqueuedBefore + 1
+                                && SalisSparkleTrailQueue.pendingCountForActor(actor) == 1,
+                        "logout control did not enqueue exactly one actor-bound effect");
+                actorDisconnectExpected = true;
+                phaseStarted = now;
+                phase = 6;
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_PENDING");
+                actor.connection.disconnect(Component.literal("Salis actor disconnect cleanup smoke"));
+                return;
+            }
+            if (phase == 6) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "probe actor did not log out after the queued-effect disconnect control");
+                if (!actorDisconnectEventSeen) return;
+                ServerPlayer actor = probeActor;
+                require(actor != null && active.getPlayerList().getPlayer(actor.getUUID()) == null,
+                        "logout event fired while probe actor remained in the player list");
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED") == 1,
+                        "logout event did not cancel exactly one actor-bound Salis effect");
+                require(SalisSparkleTrailQueue.pendingCountForActor(actor) == 0,
+                        "actor logout retained a pending Salis effect");
+                actorDisconnectAccepted = true;
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
                 finished = true;
                 probeActor = null;
                 LogUtils.getLogger().info("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_OK");
                 active.halt(false);
+                return;
             }
         } catch (RuntimeException | AssertionError ex) {
             if (!restoreActorFromPacketOrigin()) {
