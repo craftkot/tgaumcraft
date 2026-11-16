@@ -1,0 +1,36 @@
+name: Alchemy mirror isolated Java Core probe
+
+on:
+  push:
+    branches:
+      - integration/alchemy-mirror-core-probe-2026-11-16
+  workflow_dispatch:
+
+jobs:
+  mirror-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out Alchemy source candidate (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: feature/alchemy
+          persist-credentials: false
+      - name: Record exact candidate SHA
+        run: |
+          git rev-parse HEAD | tee "$GITHUB_STEP_SUMMARY"
+          git status --porcelain
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile and run mirror parity regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=build/alchemy-mirror-core-probe
+          mkdir -p "$OUT"
+          mapfile -t SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
+          javac --release 21 -d "$OUT" "${SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaMirrorLogicTest.java
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.LegacyEssentiaMirrorLogicTest | tee /tmp/mirror-parity.txt
+          grep -q 'BETA26 essentia mirror link and instability parity: OK' /tmp/mirror-parity.txt
