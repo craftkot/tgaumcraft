@@ -370,6 +370,7 @@ public final class AuraGenerationGameTests {
                 System.out.println("TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=" + currentPid
                         + " previousPid=" + previousPid + " seed=" + previousSeed
                         + " base=137 vis=91.25 flux=12.5");
+                assertPersistedAuraSurvivesChunkLoad(level, persistentChunk);
             } catch (IOException exception) {
                 throw new AssertionError("Unable to read cold-restart marker", exception);
             }
@@ -1115,6 +1116,73 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_CRYSTAL_RUNTIME_SURFACE_HEIGHTMAP=PASS surfaceY="
                 + actualSurfaceY + " generatedSize=" + generatedSize);
+    }
+
+
+    /**
+     * After a real process restart, load the persisted aura's previously unloaded
+     * chunk. ChunkEvent.Load must enqueue it, and the production queue must consume
+     * that entry without reseeding base/Vis/Flux or evaluating the Gaussian source.
+     */
+    private static void assertPersistedAuraSurvivesChunkLoad(ServerLevel level, BlockPos persistentPos) {
+        ChunkPos target = new ChunkPos(persistentPos.getX() >> 4, persistentPos.getZ() >> 4);
+        if (level.getChunkSource().getChunkNow(target.x, target.z) != null) {
+            throw new AssertionError("Cold-restart aura fixture chunk must be unloaded before the load event");
+        }
+
+        ChunkPos[] sampleCross = {
+                target,
+                new ChunkPos(target.x - 1, target.z),
+                new ChunkPos(target.x + 1, target.z),
+                new ChunkPos(target.x, target.z - 1),
+                new ChunkPos(target.x, target.z + 1)
+        };
+        for (ChunkPos sample : sampleCross) {
+            level.getChunk(sample.x, sample.z);
+        }
+        if (!ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, target.x, target.z)
+                || !ThaumcraftAuraChunkPopulationQueue.isPending(level, target)) {
+            throw new AssertionError("Real chunk-load events did not enqueue a ready persisted aura chunk");
+        }
+
+        ThaumcraftAuraChunkPopulationQueue.PendingQueue isolatedQueue =
+                new ThaumcraftAuraChunkPopulationQueue.PendingQueue();
+        int enqueued = ThaumcraftAuraChunkPopulationQueue.enqueueLoadedChunk(
+                isolatedQueue, level, target, level.getServer().getTickCount());
+        if (enqueued != 5 || !isolatedQueue.contains(level, target)) {
+            throw new AssertionError("Production chunk-load enqueue helper did not create the five-entry cross");
+        }
+
+        AtomicInteger gaussianCalls = new AtomicInteger();
+        int processed = isolatedQueue.process(
+                level.getServer(),
+                level.getServer().getTickCount(),
+                1,
+                1,
+                (targetLevel, targetChunk) -> ThaumcraftAuraChunkPopulationQueue.initializeAuraChunk(
+                        targetLevel, targetChunk, () -> {
+                            gaussianCalls.incrementAndGet();
+                            return 0.0D;
+                        })
+        );
+        ThaumcraftAuraSavedData restoredAura = ThaumcraftAuraSavedData.get(level);
+        if (processed != 1
+                || isolatedQueue.contains(level, target)
+                || gaussianCalls.get() != 0
+                || !restoredAura.hasChunk(persistentPos)
+                || restoredAura.getBase(persistentPos) != 137
+                || restoredAura.getVis(persistentPos) != 91.25F
+                || restoredAura.getFlux(persistentPos) != 12.5F) {
+            throw new AssertionError("Chunk-load queue reseeded persisted aura after cold restart"
+                    + " processed=" + processed
+                    + " queueTargetPending=" + isolatedQueue.contains(level, target)
+                    + " gaussianCalls=" + gaussianCalls.get()
+                    + " base=" + restoredAura.getBase(persistentPos)
+                    + " vis=" + restoredAura.getVis(persistentPos)
+                    + " flux=" + restoredAura.getFlux(persistentPos));
+        }
+        System.out.println("TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS "
+                + "existing_record_preserved=YES gaussian=0 local_target_pending=NO");
     }
 
     private static boolean isColdRestartReadPhase() {
