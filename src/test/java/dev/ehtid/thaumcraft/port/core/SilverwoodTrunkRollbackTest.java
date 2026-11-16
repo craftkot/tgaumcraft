@@ -34,7 +34,24 @@ public final class SilverwoodTrunkRollbackTest {
         check(SilverwoodTrunkRollback.restore(originals, written, world::get,
                 (pos, state) -> { world.put(pos, state); return true; }) == 0,
                 "Repeated rollback does not overwrite restored positions");
-        System.out.println("SilverwoodTrunkRollbackTest: OK (6 assertions)");
+        // A late missing original must fail before restoring an earlier log.
+        Map<Integer, String> partialOriginals = Map.of(1, "AIR");
+        Map<Integer, String> twoWrites = new LinkedHashMap<>();
+        twoWrites.put(1, "LOG_Y");
+        twoWrites.put(4, "LOG_X");
+        Map<Integer, String> partialWorld = new HashMap<>(twoWrites);
+        final int[] writes = {0};
+        boolean lateRejected = false;
+        try {
+            SilverwoodTrunkRollback.restore(partialOriginals, twoWrites, partialWorld::get,
+                    (pos, state) -> { writes[0]++; partialWorld.put(pos, state); return true; });
+        } catch (IllegalArgumentException expected) {
+            lateRejected = true;
+        }
+        check(lateRejected, "Missing later original rejected");
+        check(writes[0] == 0, "No world writes before complete validation");
+        check(partialWorld.get(1).equals("LOG_Y"), "Earlier log remains untouched");
+        System.out.println("SilverwoodTrunkRollbackTest: OK (9 assertions)");
     }
 
     private static void check(boolean condition, String message) {
