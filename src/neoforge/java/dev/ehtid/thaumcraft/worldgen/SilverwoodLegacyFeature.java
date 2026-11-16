@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.worldgen;
 import dev.ehtid.thaumcraft.port.core.SilverwoodLegacyTree;
 import dev.ehtid.thaumcraft.port.core.SilverwoodCanopyRollback;
 import dev.ehtid.thaumcraft.port.core.SilverwoodPlacementPreflight;
+import dev.ehtid.thaumcraft.port.core.SilverwoodTrunkRollback;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -51,7 +52,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))))) {
             return false;
         }
-        final int[] placedLogs = {0};
+        final int[] attemptedLogs = {0};
+        final Map<BlockPos, BlockState> originalLogs = new HashMap<>();
+        final Map<BlockPos, BlockState> writtenLogs = new HashMap<>();
         // Only foliage successfully placed by this invocation may be overwritten by its logs.
         final Set<BlockPos> ownLeaves = new HashSet<>();
         // Preserve original states so a canopy-only failed attempt can be undone.
@@ -71,13 +74,23 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
                             ? log.setValue(RotatedPillarBlock.AXIS, axis) : log;
-                    if (setLogOverOwnLeaves(level, new BlockPos(px, py, pz), state, leaves, ownLeaves)) {
-                        placedLogs[0]++;
+                    attemptedLogs[0]++;
+                    BlockPos pos = new BlockPos(px, py, pz);
+                    BlockState before = level.getBlockState(pos);
+                    // When a log replaces our canopy, rollback must restore the
+                    // pre-canopy block, not leave an orphaned leaf behind.
+                    BlockState original = originalLeaves.getOrDefault(pos, before);
+                    if (setLogOverOwnLeaves(level, pos, state, leaves, ownLeaves)) {
+                        originalLogs.putIfAbsent(pos, original);
+                        writtenLogs.put(pos, state);
                     }
                 });
-        // Canopy-only partial writes must not report a successfully generated tree.
-        if (placedLogs[0] == 0) {
-            // Best-effort cleanup: preserve positions changed since our leaf write.
+        // Every requested log must succeed; a partial skeleton is not a tree.
+        if (writtenLogs.size() != attemptedLogs[0]) {
+            // Restore logs first, then the remaining canopy. Both passes avoid
+            // overwriting positions changed by another writer since our write.
+            SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
+                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
             SilverwoodCanopyRollback.restore(originalLeaves, leaves,
                     level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
             return false;
