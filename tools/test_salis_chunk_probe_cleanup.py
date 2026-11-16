@@ -198,8 +198,8 @@ if not (
     < phase5.index("removeOutboundParticleRecorder()")
     < phase5.index("releaseFixtureTicket()")
     < phase5.index("SalisSparkleTrailQueue.emitOrQueue")
-    < phase5.index("actor.connection.disconnect")
     < phase5.index("phase = 6;")
+    < phase5.index("actor.connection.disconnect")
 ):
     raise SystemExit("SALIS_NATIVE_ACTOR_DISCONNECT_CONTROL_ORDER=FAIL")
 if not (
