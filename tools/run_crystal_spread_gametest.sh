@@ -72,6 +72,9 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_DISK_REENTRY_PRESERVED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_NO_FORCE_LOAD=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_ACCEPTED=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_DEFERRED=PASS no_force_load=YES' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_INITIALIZED=PASS' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_SIMULATE=PASS vis=4.0 flux=2.0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_PARTIAL=PASS vis=6.0 flux=1.0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_CAPPED=PASS vis=0.0 flux=0.0' || return 1
@@ -90,7 +93,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_POLLUTE_FLUX_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
-    require_marker "$file" 'All 7 required tests passed' || return 1
+    require_marker "$file" 'All 8 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=write' || return 1
@@ -103,8 +106,9 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_LEGACY_ROCK_VARIANTS=PASS count=27 faces=164' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_STARVATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
-    require_marker "$file" 'All 7 required tests passed' || return 1
+    require_marker "$file" 'All 8 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=read' || return 1
@@ -125,7 +129,7 @@ run_phase() {
 
     local shutdown_seen=0
     while kill -0 "$timeout_pid" 2>/dev/null; do
-        if grep -Fq 'All 7 required tests passed' "$phase_log" \
+        if grep -Fq 'All 8 required tests passed' "$phase_log" \
                 && grep -Fq 'Saving worlds' "$phase_log"; then
             shutdown_seen=1
             # The aura file was explicitly flushed by the GameTest before it
@@ -143,7 +147,7 @@ run_phase() {
     local gradle_status=$?
     set -e
 
-    if grep -Fq 'All 7 required tests passed' "$phase_log" \
+    if grep -Fq 'All 8 required tests passed' "$phase_log" \
             && grep -Fq 'Saving worlds' "$phase_log"; then
         shutdown_seen=1
     fi
