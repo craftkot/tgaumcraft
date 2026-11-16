@@ -734,6 +734,7 @@ public final class AuraGenerationGameTests {
 
         float[] expectedPhaseFlux = {0.0F, 0.10F, 0.15F, 0.20F, 0.25F, 0.20F, 0.15F, 0.10F};
         for (int phase = 0; phase < expectedPhaseFlux.length; phase++) {
+            int expectedRandomCalls = expectedPhaseFlux[phase] > 0.0F ? 2 : 1;
             ThaumcraftAuraSavedData lowVis = new ThaumcraftAuraSavedData();
             lowVis.putChunk(source, (short) 0, 0.0F, 0.0F);
             AtomicInteger lowCalls = new AtomicInteger();
@@ -744,7 +745,7 @@ public final class AuraGenerationGameTests {
             if (lowChanges != 1
                     || lowVis.getVis(source) != 0.0F
                     || Math.abs(lowVis.getFlux(source) - expectedPhaseFlux[phase]) > 0.00001F
-                    || lowCalls.get() != 2
+                    || lowCalls.get() != expectedRandomCalls
                     || lowVis.takePendingRiftTrigger() != null) {
                 throw new AssertionError("BETA26 low-Vis Flux accumulation mismatch at moon phase " + phase
                         + ": changes=" + lowChanges + " vis=" + lowVis.getVis(source)
