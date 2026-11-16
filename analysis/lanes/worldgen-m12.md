@@ -343,3 +343,11 @@
 - Commit [4517f8e](https://github.com/craftkot/tgaumcraft/commit/4517f8e70be7ed880b2505371fd7aa0b5fe16e01) adds seven standalone Java 21 regression assertions to SilverwoodCanopyRollbackTest: four null-dependency guards and three rejected-write/foreign-block preservation checks. The isolated test now has 23 assertions (previously 16). No production, registry, Gradle, main, or other branch changes.
 - Direct git ls-remote still fails with DNS 'Could not resolve host: github.com'. Thus the exact repository runner, full NeoForge compilation, Minecraft GameTest and new-chunk worldgen have not been executed in this iteration; no PASS claimed. Need fresh CI for code commit and journal HEAD.
 - Next: run exact checkout tools/test_silverwood_canopy_rollback.sh and source guard, inspect CI, then implement native WorldGenLevel integration tests and coordinate feature registration. BETA26 biome/RNG parity remains unverified. Audit index remains 59/100.
+
+## 16.11.2026 — M12 rollback callback-interleaving regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 105, behind 0 before change), inspected open PR inventory and feature branches. Draft PR #9 remains open, unmerged.
+- GitHub Actions #3339 (https://github.com/craftkot/tgaumcraft/actions/runs/43827600419) for previous HEAD 3b929a00ac050cc2b95c8e96fbb3a3111ae2b934 reports SUCCESS; this does not prove the new test or real tree generation. The standalone runner is not confirmed as executed by CI.
+- Added four deterministic assertions in commit 6943151aa2124d100073bbed074711d3ca4e7fd6: the first rollback callback mutates a later canopy position into foreign STONE; the later position must be re-read and skipped. Expected standalone test count now 27, NOT an executed PASS.
+- Direct git ls-remote still fails DNS (Could not resolve host: github.com). Exact-checkout Java runner, Python guard, new-head NeoForge build, native GameTest and new-chunk smoke not executed here. BETA26 biome/RNG parity and feature registration unresolved.
+- Next: run exact tools/test_silverwood_canopy_rollback.sh and source guard, inspect new-head CI, then implement native WorldGenLevel GameTest and coordinate registration. Main, shared registries, Gradle and other branches untouched. Historical index 59/100 unchanged.
