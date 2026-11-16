@@ -304,3 +304,11 @@
 - Fixed the typo in own production file: originWithinBuildHeight now compares minBuildY < maxBuildYExclusive, consistent with the method parameter and exclusive upper limit. Commit addf41ddc733ef45ee837c61e16ef491b059e8cc. No shared files touched.
 - Local JDK 21 is present, but exact checkout still blocked by DNS (Could not resolve host: github.com). Exact-head Java tests, NeoForge compilation and Minecraft GameTest/new-chunk generation NOT verified; await fresh CI for the new SHA. This fix only removes the confirmed compile blocker, not proof of tree generation. BETA26 RNG/biomes and feature registration remain open.
 - Next: inspect CI of corrected HEAD, execute exact checkout Java/Python runners when available, then implement an executable Silverwood rollback/foreign-block test and coordinate registration. Historical audit remains 59/100.
+
+
+## 16.11.2026 — M12: exact-commit CI verification
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 92, behind 0 before this journal-only commit). Inspected 16 branch names and open PR #5–#14; Draft PR #9 remains unmerged.
+- GitHub Actions [#3265](https://github.com/craftkot/tgaumcraft/actions/runs/43792866032), associated with code/journal HEAD `bf093d9e8f86f1d5fb8771415f9584c83904c7f2`, completed SUCCESS. Verified `verify` job steps: Core parity test SUCCESS, NeoForge build SUCCESS, dedicated server smoke SUCCESS, JAR upload SUCCESS. This clears the earlier `WorldgenHeightGate` compile blocker on that commit.
+- Re-read `SilverwoodLegacyFeature.java` and `tools/test_silverwood_neoforge_wiring.py`: the latter is explicitly source-level only. No executable Silverwood rollback GameTest or new-chunk test executed; no source-verified BETA26 RNG/biome parity. Successful general NeoForge CI does NOT prove unregistered Silverwood gameplay.
+- No production changes in this iteration. Next: create an executable isolated rollback/foreign-block regression test; coordinate feature registration before testing worldgen in new chunks. Historical audit stays 59/100. Main, shared registries, Gradle and other branches untouched.
