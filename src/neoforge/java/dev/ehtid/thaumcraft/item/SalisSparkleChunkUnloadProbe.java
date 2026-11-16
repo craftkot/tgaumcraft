@@ -32,7 +32,8 @@ public final class SalisSparkleChunkUnloadProbe {
     private static final int CHUNK_Z = 512;
     private static final int DELAY_TICKS = 1200;
     private static final int UNLOAD_TIMEOUT_TICKS = 900;
-    private static final BlockPos ORIGIN = new BlockPos(CHUNK_X * 16 + 8, 100, CHUNK_Z * 16 + 8);
+    private static final int PACKET_TIMEOUT_TICKS = 100;
+    private static final BlockPos ORIGIN = new BlockPos(CHUNK_X * 16 + 15, 100, CHUNK_Z * 16 + 8);
     private static final String OUTBOUND_HANDLER_NAME = "thaumcraft_salis_chunk_unload_probe";
     private static final AtomicInteger OUTBOUND_PROBE_PACKET_COUNT = new AtomicInteger();
 
@@ -50,6 +51,8 @@ public final class SalisSparkleChunkUnloadProbe {
     private static boolean finished;
     private static volatile Channel outboundProbeChannel;
     private static int outboundPacketsBefore;
+    private static int positiveControlSendsBefore;
+    private static ServerPlayer probeActor;
 
     private SalisSparkleChunkUnloadProbe() {}
 
@@ -67,6 +70,8 @@ public final class SalisSparkleChunkUnloadProbe {
         OUTBOUND_PROBE_PACKET_COUNT.set(0);
         outboundProbeChannel = null;
         outboundPacketsBefore = 0;
+        positiveControlSendsBefore = 0;
+        probeActor = null;
     }
 
     @SubscribeEvent
@@ -76,6 +81,7 @@ public final class SalisSparkleChunkUnloadProbe {
             cleanupFixtureTicketOnStop();
             active = null;
             targetLevel = null;
+            probeActor = null;
         }
     }
 
@@ -103,18 +109,57 @@ public final class SalisSparkleChunkUnloadProbe {
                         || ThaumcraftSmokeAudit.count("BOOKSHELF_SALIS_USED") == 0
                         || SalisSparkleTrailQueue.pendingCountForServer(active) != 0) return;
 
-                installOutboundParticleRecorder(actor);
-                outboundPacketsBefore = OUTBOUND_PROBE_PACKET_COUNT.get();
-                require(outboundPacketsBefore == 0,
-                        "probe-origin Salis packet was emitted before the unload scenario");
+                probeActor = actor;
                 targetLevel = level;
+                require((ORIGIN.getX() >> 4) == CHUNK_X
+                                && ((ORIGIN.getX() + 1) >> 4) == CHUNK_X + 1
+                                && (ORIGIN.getZ() >> 4) == CHUNK_Z,
+                        "fixture origin is not on the eastern chunk boundary");
                 require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
                         "fixture could not acquire its one remote chunk ticket");
                 fixtureTicketHeld = true;
                 level.getChunk(CHUNK_X, CHUNK_Z);
                 require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
-                        "fixture chunk was not loaded before queue admission");
+                        "fixture chunk was not loaded before packet-recorder control");
 
+                installOutboundParticleRecorder(actor);
+                outboundPacketsBefore = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(outboundPacketsBefore == 0,
+                        "probe-origin Salis packet was emitted before the positive control");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE");
+
+                positiveControlSendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, actor,
+                        SalisSparkleParticleRegistration.TYPE, Vec3.atCenterOf(ORIGIN),
+                        new Vec3(2000.0D, 0.0025D, 0.0D), 0);
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "positive-control Salis send was not invoked");
+                phaseStarted = now;
+                phase = 4;
+                return;
+            }
+
+            if (phase == 4) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "outbound recorder did not observe its positive-control particle packet");
+                require(probeActor != null
+                                && probeActor.level() == level
+                                && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "positive-control actor session changed before packet capture");
+                int observedPackets = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(observedPackets <= outboundPacketsBefore + 1,
+                        "positive control emitted more than one matching outbound particle packet");
+                if (observedPackets != outboundPacketsBefore + 1) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "positive-control server send count changed before packet capture");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "positive-control particle unexpectedly remained queued");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL");
+                outboundPacketsBefore = observedPackets;
+
+                ServerPlayer actor = probeActor;
                 sendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
                 cancellationsBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED");
                 enqueuedBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED");
@@ -194,6 +239,7 @@ public final class SalisSparkleChunkUnloadProbe {
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY");
                 ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
                 finished = true;
+                probeActor = null;
                 LogUtils.getLogger().info("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_OK");
                 active.halt(false);
             }
@@ -201,6 +247,7 @@ public final class SalisSparkleChunkUnloadProbe {
             removeOutboundParticleRecorder();
             cleanupFixtureTicketAfterFailure();
             finished = true;
+            probeActor = null;
             ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_FAILED");
             LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_FAILED", ex);
             active.halt(false);

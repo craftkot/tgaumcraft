@@ -236,7 +236,7 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
     tail -120 client-smoke/client.log >&2
     exit 1
   fi
-  for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
+  for marker in SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL SALIS_NATIVE_CHUNK_TICKETS_RELEASED SALIS_NATIVE_CHUNK_UNLOADED SALIS_NATIVE_CHUNK_CANCELLED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD SALIS_NATIVE_CHUNK_RELOADED SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED SALIS_NATIVE_CHUNK_TICKET_CLEANED SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED; do
     test "$(grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log)" -eq 1 || exit 1
   done
   # Verify lifecycle ordering, not just marker presence. A stale or reordered
@@ -245,6 +245,8 @@ tail = """  # Report actual server sendParticles calls, not packet delivery, eve
 from pathlib import Path
 markers = (
     'SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED',
+    'SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE',
+    'SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL',
     'SALIS_NATIVE_CHUNK_TICKETS_RELEASED',
     'SALIS_NATIVE_CHUNK_UNLOADED',
     'SALIS_NATIVE_CHUNK_CANCELLED',
@@ -265,13 +267,22 @@ for marker in markers:
     positions.append(matches[0])
 if positions != sorted(set(positions)):
     raise SystemExit('SALIS_NATIVE_LIFECYCLE_ORDER=FAIL')
+packet_positions = [i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' in line]
+if len(packet_positions) != 1 or 'count=1 ' not in log[packet_positions[0]]:
+    raise SystemExit(f'SALIS_NATIVE_PACKET_POSITIVE_CONTROL=FAIL packets={len(packet_positions)}')
+positive_control = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL=YES' in line)
+tickets_released = next(i for i, line in enumerate(log) if 'TC_SMOKE_SALIS_NATIVE_CHUNK_TICKETS_RELEASED=YES' in line)
+if not packet_positions[0] < positive_control < tickets_released:
+    raise SystemExit('SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=FAIL')
 print('SALIS_NATIVE_LIFECYCLE_ORDER=PASS')
+print('SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=PASS count=1 before unload')
 SALIS_LIFECYCLE_ORDER
-  if grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' client-smoke/client.log; then
-    echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL unexpected probe-origin packet' | tee -a client-smoke-status.txt
+  packet_count=$(grep -Fc 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES' client-smoke/client.log || true)
+  if [ "$packet_count" -ne 1 ] || ! grep -Fq 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=1 ' client-smoke/client.log; then
+    echo "SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=FAIL positive-control packet count=$packet_count" | tee -a client-smoke-status.txt
     exit 1
   fi
-  echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS zero matching packets across unload/reload' | tee -a client-smoke-status.txt
+  echo 'SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS positive_control=1 no_replay=0' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_TICKET_CLEANED=PASS' | tee -a client-smoke-status.txt
   echo 'SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS' | tee -a client-smoke-status.txt
   exit 0

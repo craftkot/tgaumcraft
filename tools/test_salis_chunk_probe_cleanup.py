@@ -18,10 +18,11 @@ def section(source: str, start: str, end: str) -> str:
 
 if probe.count("fixtureTicketHeld = true;") != 2:
     raise SystemExit("SALIS_NATIVE_TICKET_TRACKING=FAIL expected initial and reload acquisitions")
-phase0 = section(probe, "if (phase == 0)", "if (phase == 1)")
+phase0 = section(probe, "if (phase == 0)", "if (phase == 4)")
+phase4 = section(probe, "if (phase == 4)", "if (phase == 1)")
 phase2 = section(probe, "if (phase == 2)", "if (phase == 3)")
 phase3 = section(probe, "if (phase == 3)", "} catch (RuntimeException | AssertionError ex)")
-if "require(releaseFixtureTicket()" not in phase0:
+if "require(releaseFixtureTicket()" not in phase4:
     raise SystemExit("SALIS_NATIVE_INITIAL_TICKET_RELEASE=FAIL")
 if "fixtureTicketHeld = true;" not in phase2:
     raise SystemExit("SALIS_NATIVE_RELOAD_TICKET_TRACKING=FAIL")
@@ -48,6 +49,8 @@ if "targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)" not in release or "fixt
     raise SystemExit("SALIS_NATIVE_RELEASE_HELPER=FAIL")
 required_runtime_markers = (
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
+    "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
+    "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
     "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
     "SALIS_NATIVE_CHUNK_UNLOADED",
     "SALIS_NATIVE_CHUNK_CANCELLED",
@@ -66,8 +69,10 @@ if 'grep -Fc "TC_SMOKE_${marker}=YES" client-smoke/client.log' not in smoke:
     raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_EXACTLY_ONCE_GATE=FAIL")
 if "SALIS_NATIVE_LIFECYCLE_ORDER=PASS" not in smoke or "positions != sorted(set(positions))" not in smoke:
     raise SystemExit("SALIS_NATIVE_RUNTIME_MARKER_ORDER_GATE=FAIL")
-if "TC_SMOKE_SALIS_OUTBOUND_PACKET=YES" not in smoke:
-    raise SystemExit("SALIS_NATIVE_UNEXPECTED_PACKET_NEGATIVE_GATE=FAIL")
+if "grep -Fc 'TC_SMOKE_SALIS_OUTBOUND_PACKET=YES'" not in smoke or "count=1 " not in smoke:
+    raise SystemExit("SALIS_NATIVE_PACKET_POSITIVE_CONTROL_GATE=FAIL")
+if "SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER=PASS" not in smoke:
+    raise SystemExit("SALIS_NATIVE_PACKET_POSITIVE_CONTROL_ORDER_GATE=FAIL")
 
 print("SALIS_NATIVE_CHUNK_PROBE_TICKET_CLEANUP=PASS")
 print("SALIS_NATIVE_OUTBOUND_PACKET_RUNTIME_MARKERS_REQUIRED=PASS")
@@ -83,6 +88,8 @@ for required in (
     "OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet()",
     "context.write(message, promise)",
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED",
+    "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
+    "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
     "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
     "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
@@ -90,18 +97,34 @@ for required in (
     if required not in probe:
         raise SystemExit(f"SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=FAIL missing {required!r}")
 
-phase0 = section(probe, "if (phase == 0)", "if (phase == 1)")
+phase0 = section(probe, "if (phase == 0)", "if (phase == 4)")
+phase4 = section(probe, "if (phase == 4)", "if (phase == 1)")
 phase2 = section(probe, "if (phase == 2)", "if (phase == 3)")
 phase3 = section(probe, "if (phase == 3)", "} catch (RuntimeException | AssertionError ex)")
 if not (
     phase0.index("installOutboundParticleRecorder(actor)")
     < phase0.index("OUTBOUND_PROBE_PACKET_COUNT.get()")
+    < phase0.index('mark("SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE")')
     < phase0.index("SalisSparkleTrailQueue.emitFaceOrQueue")
 ):
     raise SystemExit("SALIS_OUTBOUND_PACKET_INSTALL_ORDER=FAIL")
+if not (
+    phase4.index("OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore + 1")
+    < phase4.index('mark("SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL")')
+    < phase4.index("outboundPacketsBefore = observedPackets")
+    < phase4.index("SalisSparkleTrailQueue.emitFaceOrQueue")
+    < phase4.index("releaseFixtureTicket()")
+):
+    raise SystemExit("SALIS_OUTBOUND_PACKET_POSITIVE_CONTROL_ORDER=FAIL")
+if "PACKET_TIMEOUT_TICKS" not in probe or "probeActor" not in probe:
+    raise SystemExit("SALIS_OUTBOUND_PACKET_POSITIVE_CONTROL_TIMEOUT_OR_ACTOR_GUARD=FAIL")
+if "((ORIGIN.getX() + 1) >> 4) == CHUNK_X + 1" not in probe:
+    raise SystemExit("SALIS_NATIVE_ORIGIN_CHUNK_EDGE_GUARD=FAIL")
 if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase2:
     raise SystemExit("SALIS_OUTBOUND_PACKET_UNLOAD_ASSERTION=FAIL")
 if "OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore" not in phase3:
     raise SystemExit("SALIS_OUTBOUND_PACKET_RELOAD_ASSERTION=FAIL")
 
 print("SALIS_OUTBOUND_PACKET_CAPTURE_SOURCE=PASS")
+print("SALIS_OUTBOUND_PACKET_POSITIVE_CONTROL=PASS")
+print("SALIS_NATIVE_ORIGIN_CHUNK_EDGE=PASS")
