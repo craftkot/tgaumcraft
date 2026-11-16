@@ -15,6 +15,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.ArrayList;
@@ -142,6 +143,23 @@ public final class SalisSparkleTrailQueue {
     }
 
     @SubscribeEvent
+    public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        int removed = 0;
+        Iterator<Pending> iterator = PENDING.iterator();
+        while (iterator.hasNext()) {
+            Pending pending = iterator.next();
+            // Match the exact connection session; a reconnect may reuse the UUID.
+            if (pending.actor() != player || !pending.playerId().equals(player.getUUID())) continue;
+            iterator.remove();
+            removed++;
+        }
+        if (removed > 0) {
+            ThaumcraftSmokeAudit.mark("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED");
+        }
+    }
+
+    @SubscribeEvent
     public static void onServerStopped(ServerStoppedEvent event) {
         MinecraftServer stopped = event.getServer();
         PENDING.removeIf(pending -> pending.sourceLevel().getServer() == stopped);
@@ -152,6 +170,15 @@ public final class SalisSparkleTrailQueue {
         int count = 0;
         for (Pending pending : PENDING) {
             if (pending.sourceLevel().getServer() == server) count++;
+        }
+        return count;
+    }
+
+    /** Test-only observation of one exact actor session; does not retain the player. */
+    static int pendingCountForActor(ServerPlayer actor) {
+        int count = 0;
+        for (Pending pending : PENDING) {
+            if (pending.actor() == actor) count++;
         }
         return count;
     }
