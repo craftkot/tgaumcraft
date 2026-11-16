@@ -53,6 +53,8 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
             return false;
         }
         final int[] attemptedLogs = {0};
+        // A rejected leaf write must not produce a success-shaped but incomplete tree.
+        final boolean[] rejectedLeafWrite = {false};
         final Map<BlockPos, BlockState> originalLogs = new HashMap<>();
         final Map<BlockPos, BlockState> writtenLogs = new HashMap<>();
         // Only foliage successfully placed by this invocation may be overwritten by its logs.
@@ -64,9 +66,13 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 (px, py, pz) -> {
                     BlockPos pos = new BlockPos(px, py, pz);
                     BlockState before = level.getBlockState(pos);
-                    if (canReplace(before) && level.setBlock(pos, leaves, 2)) {
-                        originalLeaves.putIfAbsent(pos, before);
-                        ownLeaves.add(pos);
+                    if (canReplace(before)) {
+                        if (level.setBlock(pos, leaves, 2)) {
+                            originalLeaves.putIfAbsent(pos, before);
+                            ownLeaves.add(pos);
+                        } else {
+                            rejectedLeafWrite[0] = true;
+                        }
                     }
                 },
                 (px, py, pz, meta) -> {
@@ -86,7 +92,7 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     }
                 });
         // Every requested log must succeed; a partial skeleton is not a tree.
-        if (writtenLogs.size() != attemptedLogs[0]) {
+        if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0]) {
             // Restore logs first, then the remaining canopy. Both passes avoid
             // overwriting positions changed by another writer since our write.
             SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
