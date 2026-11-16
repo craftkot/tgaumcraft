@@ -1,0 +1,45 @@
+name: Alchemy native GameTest availability gate
+
+on:
+  push:
+    branches:
+      - validation/alchemy-native-gametest-discovery-2026-11-16
+  pull_request:
+    branches:
+      - integration/alchemy-core-candidate-2026-11-16
+  workflow_dispatch:
+
+jobs:
+  discover-native-gametests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Set up Gradle 9.2.1
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Discover actual NeoForge native GameTest tasks
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle tasks --all --no-daemon --console=plain | tee native-gametest-tasks.txt
+          echo '### Native GameTest task discovery' >> "$GITHUB_STEP_SUMMARY"
+          if grep -Eiq '^[[:space:]]*(runGameTestServer|runGameTest|gameTestServer)[[:space:]]+-' native-gametest-tasks.txt; then
+            echo 'Native GameTest task found. Execution and assertions are still required.' | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'BLOCKED: No native GameTest execution task found. Do not merge gameplay code.' | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-gametest-task-inventory
+          path: native-gametest-tasks.txt
+          if-no-files-found: warn
