@@ -50,6 +50,17 @@ public final class SilverwoodLegacyLogsTest {
         try { SilverwoodLegacyLogs.place(8,64,8,11,new Random(1), (x,y,z,m)->{}); }
         catch (IllegalArgumentException expected) { rejected = true; }
         check(rejected);
+        // Feature success compares attempted writes with unique successful positions.
+        // Duplicate log coordinates would make a complete tree look like a failure.
+        // Exercise every supported height and a range of branch RNG outcomes.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed = 0; seed < 32; seed++) {
+                List<String> coordinates = new ArrayList<>();
+                SilverwoodLegacyLogs.place(8, 64, 8, height, new Random(seed),
+                        (x, y, z, meta) -> coordinates.add(x + "," + y + "," + z));
+                check(coordinates.size() == new java.util.HashSet<>(coordinates).size());
+            }
+        }
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
