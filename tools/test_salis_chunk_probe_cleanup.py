@@ -37,8 +37,10 @@ if not (
 catch = section(probe, "} catch (RuntimeException | AssertionError ex) {", "private static boolean releaseFixtureTicket()")
 if "cleanupFixtureTicketAfterFailure();" not in catch:
     raise SystemExit("SALIS_NATIVE_FAILURE_CLEANUP=FAIL")
-if "restoreActorFromPacketOrigin();" not in catch:
+if "restoreActorFromPacketOrigin()" not in catch:
     raise SystemExit("SALIS_NATIVE_ACTOR_FAILURE_RESTORE=FAIL")
+if not (catch.index("restoreActorFromPacketOrigin()") < catch.index("removeOutboundParticleRecorder()")):
+    raise SystemExit("SALIS_NATIVE_ACTOR_FAILURE_RESTORE_ORDER=FAIL")
 if "removeOutboundParticleRecorder();" not in catch:
     raise SystemExit("SALIS_NATIVE_PACKET_RECORDER_FAILURE_CLEANUP=FAIL")
 stopped = section(probe, "public static void onServerStopped", "@SubscribeEvent")
