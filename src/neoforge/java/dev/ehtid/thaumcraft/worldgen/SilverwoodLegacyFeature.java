@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.worldgen;
 
 import dev.ehtid.thaumcraft.port.core.SilverwoodLegacyTree;
+import dev.ehtid.thaumcraft.port.core.SilverwoodCanopyRollback;
 import dev.ehtid.thaumcraft.port.core.SilverwoodPlacementPreflight;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -76,12 +77,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 });
         // Canopy-only partial writes must not report a successfully generated tree.
         if (placedLogs[0] == 0) {
-            // Never overwrite a position modified by another writer after our leaf write.
-            for (Map.Entry<BlockPos, BlockState> entry : originalLeaves.entrySet()) {
-                if (level.getBlockState(entry.getKey()).equals(leaves)) {
-                    level.setBlock(entry.getKey(), entry.getValue(), 2);
-                }
-            }
+            // Best-effort cleanup: preserve positions changed since our leaf write.
+            SilverwoodCanopyRollback.restore(originalLeaves, leaves,
+                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
             return false;
         }
         return true;
