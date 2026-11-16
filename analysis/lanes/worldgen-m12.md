@@ -329,3 +329,10 @@
 - Java 21 isolated reproduction of the fetched rollback policy and test scenarios passed 11/11 assertions in a temporary directory. **Not** a byte-for-byte exact-checkout execution of the repository runner: the files were manually reproduced from fetched GitHub text. The earlier seven-assertion baseline also passed in that isolated environment.
 - GitHub status queried for the code commit; status details were inspected separately. Full NeoForge build, real WorldGenLevel/GameTest, new-chunk Minecraft generation and BETA26 RNG/biome parity are NOT established by this unit test. Feature registration still requires coordination. Historical project index 59/100 unchanged.
 - Next: execute the exact committed shell runner in a real checkout and inspect CI; then add a native WorldGenLevel test and coordinate feature/biome registration. No merge.
+
+## 16.11.2026 — M12 trunk preservation in rollback regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Verified branch HEAD fac76c7cf5ad98550310610168da5e0ac56f0f51 before editing; main...M12 ahead 101, behind 0. Inspected open PRs #1–#16; Draft PR #9 remains open, unmerged.
+- Extended the exact repository Java 21 rollback regression in commit b3df2d8525103f0111bddfeb5f7f1ff07dd07017 with five assertions: a position changed from own canopy to a successfully written log must not be rolled back; other leaves must restore AIR and WATER; write count must exclude the log.
+- No production or shared files changed. This is a unit regression for the loader-neutral policy, NOT a native WorldGenLevel GameTest. The new assertions were not executed locally in an exact checkout; await CI for code and journal commits. Previous successful workflow run for fac76c7 was not proof of this change.
+- Remaining: exact-head Java runner, NeoForge compile and in-game new-chunk smoke, feature registration coordination, BETA26 RNG/biome parity. Next: inspect fresh CI, then add native WorldGenLevel integration coverage. Audit index remains 59/100; no merge.
