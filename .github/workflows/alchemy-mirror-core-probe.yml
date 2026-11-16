@@ -17,12 +17,12 @@ jobs:
       - name: Check out Alchemy source candidate (read-only)
         uses: actions/checkout@v4
         with:
-          ref: 633e08875e1e
+          ref: 633e08875e1e0bab98aa0fdcc8c7a29e09142a5a
           persist-credentials: false
       - name: Record exact candidate SHA
         run: |
           ACTUAL_SHA="$(git rev-parse HEAD)"
-          EXPECTED_SHA="633e08875e1e"
+          EXPECTED_SHA="633e08875e1e0bab98aa0fdcc8c7a29e09142a5a"
           echo "Alchemy source SHA: $ACTUAL_SHA" | tee "$GITHUB_STEP_SUMMARY"
           test "${ACTUAL_SHA:0:${#EXPECTED_SHA}}" = "$EXPECTED_SHA"
           git status --porcelain
