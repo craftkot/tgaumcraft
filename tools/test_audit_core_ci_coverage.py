@@ -82,5 +82,23 @@ class InventoryTests(unittest.TestCase):
         self.ci()
         self.assertEqual(inventory(self.root), ([], [], []))
 
+    def test_java_text_block_main_not_runnable(self):
+        (self.tests / "TextBlockOnlyTest.java").write_text(
+            'class TextBlockOnlyTest { String example = """\\n'
+            'public static void main(String[] args) {}\\n'
+            '"""; }'
+        )
+        self.ci()
+        self.assertEqual(inventory(self.root), ([], [], []))
+
+    def test_java_text_block_and_real_main(self):
+        (self.tests / "TextBlockRealTest.java").write_text(
+            'class TextBlockRealTest { String example = """\\n'
+            'public static void main(String[] args) {}\\n'
+            '"""; public static void main(String[] args) {} }'
+        )
+        self.ci(["TextBlockRealTest"], ["TextBlockRealTest"])
+        self.assertEqual(inventory(self.root), ([], [], []))
+
 if __name__ == "__main__":
     unittest.main()
