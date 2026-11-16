@@ -1,0 +1,42 @@
+name: Alchemy mirror isolated Java Core probe
+
+on:
+  push:
+    branches:
+      - integration/alchemy-mirror-core-probe-2026-11-16
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - integration/verified-port-2026-11-14
+
+jobs:
+  mirror-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out Alchemy source candidate (read-only)
+        uses: actions/checkout@v4
+        with:
+          ref: 633e08875e1e
+          persist-credentials: false
+      - name: Record exact candidate SHA
+        run: |
+          ACTUAL_SHA="$(git rev-parse HEAD)"
+          EXPECTED_SHA="633e08875e1e"
+          echo "Alchemy source SHA: $ACTUAL_SHA" | tee "$GITHUB_STEP_SUMMARY"
+          test "${ACTUAL_SHA:0:${#EXPECTED_SHA}}" = "$EXPECTED_SHA"
+          git status --porcelain
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Compile and run mirror parity regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=build/alchemy-mirror-core-probe
+          mkdir -p "$OUT"
+          mapfile -t SOURCES < <(find src/main/java/dev/ehtid/thaumcraft/port/core -name '*.java' -print | sort)
+          javac --release 21 -d "$OUT" "${SOURCES[@]}" src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaMirrorLogicTest.java
+          java -cp "$OUT" dev.ehtid.thaumcraft.port.core.LegacyEssentiaMirrorLogicTest | tee /tmp/mirror-parity.txt
+          grep -q 'BETA26 essentia mirror link and instability parity: OK' /tmp/mirror-parity.txt
