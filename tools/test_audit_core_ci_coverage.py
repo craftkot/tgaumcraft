@@ -100,5 +100,18 @@ class InventoryTests(unittest.TestCase):
         self.ci(["TextBlockRealTest"], ["TextBlockRealTest"])
         self.assertEqual(inventory(self.root), ([], [], []))
 
+    def test_commented_shell_invocations_do_not_count(self):
+        self.java("AlphaTest")
+        self.ci()
+        workflow = self.workflow.read_text()
+        workflow = workflow.replace(
+            "      - name: Other step",
+            "          # javac src/test/java/dev/ehtid/thaumcraft/port/core/AlphaTest.java\\n"
+            "          # java -cp build/classes dev.ehtid.thaumcraft.port.core.AlphaTest\\n"
+            "      - name: Other step",
+        )
+        self.workflow.write_text(workflow)
+        self.assertEqual(inventory(self.root), (["AlphaTest"], ["AlphaTest"], []))
+
 if __name__ == "__main__":
     unittest.main()
