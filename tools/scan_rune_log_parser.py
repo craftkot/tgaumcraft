@@ -30,3 +30,21 @@ def parse_scan_rune_log(log: str) -> tuple[list[tuple[str, ...]], list[tuple[str
         [match.groups() for match in _RENDERED.finditer(log)],
         [match.groups() for match in _EXPIRED.finditer(log)],
     )
+
+def visible_rune_render_samples(rendered: list[tuple[str, ...]]) -> list[tuple[int | float, ...]]:
+    """Keep rendered runes with visible alpha and any positive source scale.
+
+    BETA26 uses particleScale = 1 + gaussian * 0.1 and renders width
+    0.3 * particleScale without a lower clamp. A valid rune can therefore
+    be smaller than 0.25 blocks; only zero/negative size is invisible.
+    """
+    visible = []
+    for row in rendered:
+        if len(row) != 12:
+            raise ValueError(f"Expected 12 scan-rune render fields, got {len(row)}")
+        face = int(row[0])
+        values = tuple(float(value) for value in row[1:])
+        alpha, size = values[0], values[1]
+        if alpha >= 0.25 and size > 0.0:
+            visible.append((face, *values))
+    return visible
