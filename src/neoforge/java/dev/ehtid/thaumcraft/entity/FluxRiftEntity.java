@@ -123,7 +123,7 @@ public final class FluxRiftEntity extends Entity {
             }
 
             try {
-                target.hurt(level().damageSources().outOfWorld(), 2.0F);
+                target.hurt(level().damageSources().fellOutOfWorld(), 2.0F);
                 if (target instanceof ItemEntity) {
                     target.discard();
                 }
