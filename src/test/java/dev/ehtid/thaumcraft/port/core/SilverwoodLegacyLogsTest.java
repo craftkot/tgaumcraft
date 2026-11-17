@@ -61,6 +61,20 @@ public final class SilverwoodLegacyLogsTest {
                 check(coordinates.size() == new java.util.HashSet<>(coordinates).size());
             }
         }
+        // Legacy skeleton coordinates must be translation-invariant across negative
+        // block coordinates and chunk boundaries; seed-dependent branch rolls
+        // must not change when the origin is moved.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed = 0; seed < 16; seed++) {
+                List<String> positive = new ArrayList<>();
+                List<String> negative = new ArrayList<>();
+                SilverwoodLegacyLogs.place(8, 64, 8, height, new Random(seed),
+                        (x, y, z, meta) -> positive.add((x - 8) + "," + (y - 64) + "," + (z - 8) + ":" + meta));
+                SilverwoodLegacyLogs.place(-24, 64, -8, height, new Random(seed),
+                        (x, y, z, meta) -> negative.add((x + 24) + "," + (y - 64) + "," + (z + 8) + ":" + meta));
+                check(positive.equals(negative));
+            }
+        }
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
