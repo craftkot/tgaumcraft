@@ -109,13 +109,22 @@ public final class AuraGenerationGameTests {
             assertFluxRiftBoundsMatchGeometry(rift, "seed-change");
             rift.setRiftSeed(1234568);
             assertFluxRiftBoundsMatchGeometry(rift, "seed-change-again");
+            // Keep the live entity in the already-loaded trigger chunk while
+            // exercising position-dependent geometry. The former +7/-5 offset
+            // could cross into an unloaded neighboring chunk, stopping Entity.tick
+            // and making the 120-tick stability assertion a test-fixture failure.
             rift.moveTo(
-                    rift.getX() + 7.0D,
+                    chunkX * 16 + 8.5D,
                     rift.getY() + 2.0D,
-                    rift.getZ() - 5.0D,
+                    chunkZ * 16 + 8.5D,
                     rift.getYRot(),
                     rift.getXRot()
             );
+            if (level.getChunkSource().getChunkNow(
+                    rift.blockPosition().getX() >> 4,
+                    rift.blockPosition().getZ() >> 4) == null) {
+                throw new AssertionError("Flux Rift relocation fixture left the loaded trigger chunk");
+            }
             assertFluxRiftBoundsMatchGeometry(rift, "position-change");
             System.out.println("TC_GAMETEST_FLUX_RIFT_GEOMETRY_BOUNDS=PASS size=YES seed=YES position=YES");
 
