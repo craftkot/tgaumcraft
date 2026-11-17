@@ -287,6 +287,20 @@ body = r'''
     exit 1
   }
 
+  wait_for_workbench_server_marker() {
+    local marker="$1"
+    for attempt in {1..12}; do
+      if grep -Fq "$marker" run/logs/latest.log; then
+        echo "WORKBENCH_SERVER_MARKER_SEEN=$marker" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 1
+    done
+    echo "WORKBENCH_SERVER_MARKER_MISSING=$marker" | tee -a client-smoke-status.txt
+    capture 08f-workbench-fixture-marker-missing
+    exit 1
+  }
+
   # Earlier world-model capture uses the spawn fixture, but shared smoke probes
   # may move the player before this interaction. Rebuild the real menu target
   # at the current player position, two blocks ahead on the already-filled
@@ -303,6 +317,10 @@ body = r'''
   sleep 1
   send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
   sleep 2
+  # Prove the target block exists in the integrated server before interpreting a
+  # missing interaction marker as a client/input problem.
+  send_chat '/execute at @p if block ~ ~ ~2 thaumcraft:arcane_workbench run say TC_WORKBENCH_FIXTURE_BLOCK_READY'
+  wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'
   # Authentic BETA26 Thaumometer preview: four gold ingots around one glass pane.
   # This exposes the synced 20-vis preview and all six requirement icons without
   # granting research or crafting the result.
@@ -332,19 +350,30 @@ body = r'''
   sleep 2
   echo 'WORKBENCH_OPEN_ATTEMPT=EMPTY_HAND_HOTBAR_1' | tee -a client-smoke-status.txt
   capture 08c1-workbench-empty-hand-before-open
-  # xdotool retains the Create World click location unless explicitly moved.
-  # Put the pointer on the framebuffer crosshair before sending right-click.
-  read -r workbench_screen_width workbench_screen_height < <(xdotool getdisplaygeometry)
-  workbench_click_x=$((workbench_screen_width / 2))
-  workbench_click_y=$((workbench_screen_height / 2))
+  # The X root can be larger than the GLFW window. The previous 1280x800
+  # root-center (640,400) was outside the 1024x768 Minecraft window at (1,20).
+  # Use the already-proven XTest input point at the actual window geometry center.
+  workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+  eval "$workbench_geometry"
+  if (( WIDTH <= 0 || HEIGHT <= 0 )); then
+    echo "WORKBENCH_INTERACTION_WINDOW_GEOMETRY=INVALID $workbench_geometry" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  workbench_click_x=$((X + WIDTH / 2))
+  workbench_click_y=$((Y + HEIGHT / 2))
   xdotool windowactivate --sync "$WIN"
   xdotool windowfocus --sync "$WIN"
+  echo "WORKBENCH_INTERACTION_WINDOW=$WIN geometry=$X,$Y width=$WIDTH height=$HEIGHT input=$workbench_click_x,$workbench_click_y" | tee -a client-smoke-status.txt
   xdotool mousemove --sync "$workbench_click_x" "$workbench_click_y"
   pointer_location="$(xdotool getmouselocation --shell)"
   pointer_x="$(awk -F= '$1 == "X" { print $2 }' <<< "$pointer_location")"
   pointer_y="$(awk -F= '$1 == "Y" { print $2 }' <<< "$pointer_location")"
   if [[ "$pointer_x" != "$workbench_click_x" || "$pointer_y" != "$workbench_click_y" ]]; then
     echo "WORKBENCH_INTERACTION_POINTER=FAIL expected=${workbench_click_x},${workbench_click_y} actual=${pointer_x},${pointer_y}" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  if (( pointer_x < X || pointer_x >= X + WIDTH || pointer_y < Y || pointer_y >= Y + HEIGHT )); then
+    echo "WORKBENCH_INTERACTION_POINTER_OUTSIDE_WINDOW=YES" | tee -a client-smoke-status.txt
     exit 1
   fi
   echo "WORKBENCH_INTERACTION_POINTER=PASS x=$pointer_x y=$pointer_y" | tee -a client-smoke-status.txt

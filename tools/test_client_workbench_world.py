@@ -464,12 +464,30 @@ expect(player_column_clear in interaction_fixture and workbench_place in interac
        "Workbench fixture must clear a spawn fern from the player's eye column before placing the target")
 
 interaction_setup = generator.split("capture 08c1-workbench-empty-hand-before-open", 1)[1].split("capture 08d-workbench-gui-open", 1)[0]
-expect("xdotool getdisplaygeometry" in interaction_setup
+expect('workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"' in interaction_setup
+       and "workbench_click_x=$((X + WIDTH / 2))" in interaction_setup
+       and "workbench_click_y=$((Y + HEIGHT / 2))" in interaction_setup
+       and "xdotool getdisplaygeometry" not in interaction_setup
        and 'xdotool mousemove --sync "$workbench_click_x" "$workbench_click_y"' in interaction_setup
        and 'pointer_location="$(xdotool getmouselocation --shell)"' in interaction_setup
        and "WORKBENCH_INTERACTION_POINTER=PASS" in interaction_setup
+       and "WORKBENCH_INTERACTION_WINDOW=" in interaction_setup
+       and "pointer_x < X || pointer_x >= X + WIDTH" in interaction_setup
        and interaction_setup.index("xdotool mousemove") < interaction_setup.index("xdotool click 3"),
-       "Workbench real-client click must move and verify the pointer at the framebuffer crosshair")
+       "Workbench real-client click must use and verify the actual Minecraft window center, not the X-root center")
+
+expect("WORKBENCH_SERVER_MARKER_SEEN=$marker" in generator
+       and 'grep -Fq "$marker" run/logs/latest.log' in generator
+       and "TC_WORKBENCH_FIXTURE_BLOCK_READY" in generator
+       and generator.index("setblock ~ ~ ~2 thaumcraft:arcane_workbench")
+           < generator.index("TC_WORKBENCH_FIXTURE_BLOCK_READY")
+           < generator.index("capture 08c-workbench-before-open"),
+       "Workbench smoke must prove the server-side target block exists before testing mouse interaction")
+
+expect((1 + 1024 // 2, 20 + 768 // 2) == (513, 404)
+       and (1280 // 2, 800 // 2) == (640, 400)
+       and (640, 400) != (513, 404),
+       "the observed 1280x800 X root / 1024x768 window fixture must keep distinct coordinate spaces")
 
 expect("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in workbench_block_source
        and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO" in workbench_block_source
