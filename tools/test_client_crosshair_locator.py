@@ -43,6 +43,18 @@ except ValueError as exc:
 else:
     raise AssertionError("low-amplitude framebuffer noise was accepted as a crosshair")
 
+# A bright square has the same bounding box and row/column maxima, but is not a reticle.
+square = blank()
+for y in range(41, 60):
+    for x in range(41, 60):
+        paint(square, x, y, BRIGHT)
+try:
+    locate_crosshair_rgb(bytes(square), WIDTH, HEIGHT, 50, 50)
+except ValueError as exc:
+    assert "filled, not a crosshair" in str(exc)
+else:
+    raise AssertionError("a filled bright square was accepted as a crosshair")
+
 # A single bright pixel cannot satisfy the two-stroke geometry.
 point = blank()
 paint(point, 50, 50, BRIGHT)
@@ -53,4 +65,4 @@ except ValueError:
 else:
     raise AssertionError("a single bright pixel was accepted as a crosshair")
 
-print("Minecraft crosshair locator: viewport offset, dim-noise rejection and geometry guard: PASS")
+print("Minecraft crosshair locator: viewport offset, dim-noise, square and point rejection: PASS")
