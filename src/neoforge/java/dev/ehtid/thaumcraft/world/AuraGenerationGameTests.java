@@ -14,6 +14,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -35,6 +36,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -45,6 +47,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @GameTestHolder(ThaumcraftPort.MOD_ID)
 public final class AuraGenerationGameTests {
+    private static final TicketType<ChunkPos> FLUX_RIFT_TEST_TICKET =
+            TicketType.create("thaumcraft_flux_rift_gametest", Comparator.comparingLong(ChunkPos::toLong), 200);
+
     private AuraGenerationGameTests() {}
 
     @PrefixGameTestTemplate(false)
@@ -64,6 +69,11 @@ public final class AuraGenerationGameTests {
         BlockPos anchor = helper.absolutePos(new BlockPos(8, 2, 8));
         int chunkX = (anchor.getX() >> 4) + 512;
         int chunkZ = (anchor.getZ() >> 4) + 512;
+        ChunkPos riftChunk = new ChunkPos(chunkX, chunkZ);
+        // GameTest has no player keeping this remote fixture chunk in simulation
+        // range. Use a bounded, non-persistent test ticket with forceTicks=true;
+        // production Rift spawning must never force-load chunks.
+        level.getChunkSource().addRegionTicket(FLUX_RIFT_TEST_TICKET, riftChunk, 2, riftChunk, true);
         level.getChunk(chunkX, chunkZ);
         BlockPos sample = new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
 
@@ -171,7 +181,7 @@ public final class AuraGenerationGameTests {
                 blocker.discard();
                 System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
                 System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
-                awaitFluxRiftStabilityDecay(helper, rift, initialStabilityBucket, 10.0F, 130);
+                awaitFluxRiftStabilityDecay(helper, level, riftChunk, rift, initialStabilityBucket, 10.0F, 130);
             });
         });
     }
@@ -1287,6 +1297,8 @@ public final class AuraGenerationGameTests {
 
     private static void awaitFluxRiftStabilityDecay(
             GameTestHelper helper,
+            ServerLevel level,
+            ChunkPos riftChunk,
             FluxRiftEntity rift,
             int initialTickBucket,
             float initialStability,
@@ -1307,7 +1319,7 @@ public final class AuraGenerationGameTests {
                             + " stability=" + rift.getRiftStability());
                 }
                 awaitFluxRiftStabilityDecay(
-                        helper, rift, initialTickBucket, initialStability, remainingTicks - 1);
+                        helper, level, riftChunk, rift, initialTickBucket, initialStability, remainingTicks - 1);
                 return;
             }
 
@@ -1320,6 +1332,8 @@ public final class AuraGenerationGameTests {
 
             System.out.println("TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2");
             rift.discard();
+            level.getChunkSource().removeRegionTicket(FLUX_RIFT_TEST_TICKET, riftChunk, 2, riftChunk, true);
+            System.out.println("TC_GAMETEST_FLUX_RIFT_TEST_TICKET_RELEASE=PASS bounded=YES forceTicks=YES");
             helper.succeed();
         });
     }
