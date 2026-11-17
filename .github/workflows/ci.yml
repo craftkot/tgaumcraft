@@ -565,7 +565,7 @@ jobs:
           if-no-files-found: error
 
   alchemy-native-gametest:
-    if: github.ref_name == 'fix/alchemy-native-existing-ci-job-2026-11-17' || github.head_ref == 'fix/alchemy-native-existing-ci-job-2026-11-17'
+    if: contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17"]'), github.ref_name) || contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17"]'), github.head_ref)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
