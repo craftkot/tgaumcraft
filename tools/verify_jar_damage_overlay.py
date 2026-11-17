@@ -6,8 +6,12 @@ import subprocess
 import sys
 from pathlib import Path
 
-FUZZ = "8%"
-MIN_CHANGED_PIXELS = 40
+# The vanilla translucent jar's crack atlas is intentionally low-contrast.
+# Compare at 6% and subtract a same-duration no-hit frame pair to reject scene
+# drift, animation and capture noise instead of demanding opaque-block contrast.
+FUZZ = "6%"
+MIN_HIT_PIXELS = 300
+MIN_OVER_BASELINE_PIXELS = 200
 
 
 def changed_pixels(before: Path, after: Path) -> int:
@@ -26,37 +30,52 @@ def changed_pixels(before: Path, after: Path) -> int:
     return int(first)
 
 
-def verify(before: Path, after: Path) -> int:
-    pixels = changed_pixels(before, after)
-    if pixels < MIN_CHANGED_PIXELS:
+def verify(
+    no_hit_before: Path,
+    no_hit_after: Path,
+    hit_before: Path,
+    hit_after: Path,
+) -> int:
+    baseline = changed_pixels(no_hit_before, no_hit_after)
+    hit = changed_pixels(hit_before, hit_after)
+    excess = hit - baseline
+    if hit < MIN_HIT_PIXELS or excess < MIN_OVER_BASELINE_PIXELS:
         raise SystemExit(
             "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES "
-            f"high_contrast_pixels={pixels} min={MIN_CHANGED_PIXELS} fuzz={FUZZ}"
+            f"hit_pixels={hit} baseline_pixels={baseline} excess={excess} "
+            f"min_hit={MIN_HIT_PIXELS} min_excess={MIN_OVER_BASELINE_PIXELS} fuzz={FUZZ}"
         )
     print(
         "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS "
-        f"high_contrast_pixels={pixels} min={MIN_CHANGED_PIXELS} fuzz={FUZZ}"
+        f"hit_pixels={hit} baseline_pixels={baseline} excess={excess} "
+        f"min_hit={MIN_HIT_PIXELS} min_excess={MIN_OVER_BASELINE_PIXELS} fuzz={FUZZ}"
     )
-    return pixels
+    return hit
 
 
-def diagnose(before: Path, after: Path) -> int:
-    """Report the overlay without making it a prerequisite for the hit-audio test."""
-    pixels = changed_pixels(before, after)
-    state = "OBSERVED" if pixels >= MIN_CHANGED_PIXELS else "NOT_OBSERVED"
+def diagnose(
+    no_hit_before: Path,
+    no_hit_after: Path,
+    hit_before: Path,
+    hit_after: Path,
+) -> tuple[int, int]:
+    baseline = changed_pixels(no_hit_before, no_hit_after)
+    hit = changed_pixels(hit_before, hit_after)
     print(
-        f"JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC={state} "
-        f"high_contrast_pixels={pixels} min={MIN_CHANGED_PIXELS} fuzz={FUZZ}"
+        "JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC "
+        f"hit_pixels={hit} baseline_pixels={baseline} excess={hit - baseline} "
+        f"min_hit={MIN_HIT_PIXELS} min_excess={MIN_OVER_BASELINE_PIXELS} fuzz={FUZZ}"
     )
-    return pixels
+    return hit, baseline
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 4 and sys.argv[1] == "--diagnostic":
-        diagnose(Path(sys.argv[2]), Path(sys.argv[3]))
-    elif len(sys.argv) == 3:
-        verify(Path(sys.argv[1]), Path(sys.argv[2]))
+    if len(sys.argv) == 6 and sys.argv[1] == "--diagnostic":
+        diagnose(*(Path(value) for value in sys.argv[2:]))
+    elif len(sys.argv) == 5:
+        verify(*(Path(value) for value in sys.argv[1:]))
     else:
         raise SystemExit(
-            "usage: verify_jar_damage_overlay.py [--diagnostic] BEFORE.png AFTER.png"
+            "usage: verify_jar_damage_overlay.py "
+            "[--diagnostic] NO_HIT_BEFORE NO_HIT_AFTER HIT_BEFORE HIT_AFTER"
         )
