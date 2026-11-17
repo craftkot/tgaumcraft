@@ -16,6 +16,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -137,6 +139,25 @@ public final class AuraGenerationGameTests {
             }
             assertFluxRiftBoundsMatchGeometry(rift, "position-change");
             System.out.println("TC_GAMETEST_FLUX_RIFT_GEOMETRY_BOUNDS=PASS size=YES seed=YES position=YES");
+
+            double anchoredX = rift.getX();
+            double anchoredY = rift.getY();
+            double anchoredZ = rift.getZ();
+            AABB anchoredBounds = rift.getBoundingBox();
+            rift.move(MoverType.SELF, new Vec3(16.0D, 8.0D, -16.0D));
+            AABB afterMoveBounds = rift.getBoundingBox();
+            if (Double.compare(rift.getX(), anchoredX) != 0
+                    || Double.compare(rift.getY(), anchoredY) != 0
+                    || Double.compare(rift.getZ(), anchoredZ) != 0
+                    || Double.compare(afterMoveBounds.minX, anchoredBounds.minX) != 0
+                    || Double.compare(afterMoveBounds.minY, anchoredBounds.minY) != 0
+                    || Double.compare(afterMoveBounds.minZ, anchoredBounds.minZ) != 0
+                    || Double.compare(afterMoveBounds.maxX, anchoredBounds.maxX) != 0
+                    || Double.compare(afterMoveBounds.maxY, anchoredBounds.maxY) != 0
+                    || Double.compare(afterMoveBounds.maxZ, anchoredBounds.maxZ) != 0) {
+                throw new AssertionError("BETA26 Flux Rift must ignore Entity.move and retain its anchored AABB");
+            }
+            System.out.println("TC_GAMETEST_FLUX_RIFT_IMMOBILE=PASS move=ignored position=stable");
 
             rift.setRiftStability(10.0F);
             int initialStabilityBucket = Math.floorDiv(rift.tickCount, 120);

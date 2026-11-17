@@ -7,8 +7,10 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
@@ -83,6 +85,12 @@ public final class FluxRiftEntity extends Entity {
                 setRiftStability(getRiftStability() - 0.2F);
             }
         }
+    }
+
+    @Override
+    public void move(MoverType type, Vec3 movement) {
+        // BETA26 EntityFluxRift.move(MoverType, double, double, double) is
+        // intentionally empty: a Rift is anchored and cannot be pushed or moved.
     }
 
     @Override
