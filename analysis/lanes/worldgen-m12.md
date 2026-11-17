@@ -524,3 +524,10 @@
 - Добавлен узкий regression в `SilverwoodLegacyLogsTest`: 4 высоты × 16 seed × 2 утверждения = **128 новых assertions**. Проверяются исходные metadata 0 (ось X), 2 (ось Z) для четырёх горизонтальных корней и metadata 1 для четырёх нижних опор на отрицательных координатах. Кодовый коммит: [ed6aa4d](https://github.com/craftkot/tgaumcraft/commit/ed6aa4d5030f78968e146754f33731ac4eca3176).
 - **Доказательства:** тест записан в GitHub, но Java runner, компиляция NeoForge, GameTest и генерация новых чанков **не запускались**. CI на новом SHA пока не подтверждён. Это проверка модели логов, а не подтверждение отображения осей в Minecraft.
 - **Осталось:** реальный отказ `WorldGenLevel.setBlock`, естественная регистрация Feature по согласованию, точный BETA26 RNG/биомы и игровая проверка чанков. Следующий шаг — выполнить runner на точном SHA и разработать нативный GameTest; не повышать 59/100.
+
+## 2026-11-17 — RNG draw-count regression
+
+- Code commit `3f31d52c2ff7ba1c36449fb861d886a303fc20b5`: added 128 assertions to `SilverwoodLegacyLogsTest` (4 heights × 32 seeds), checking that log generation consumes exactly eight `Random.nextInt(3)` calls and leaves the subsequent RNG state unchanged relative to that reference sequence.
+- This is a source-level Java regression only. The new assertions have **not** been executed in this run; NeoForge compile, native GameTest, and fresh-chunk Minecraft worldgen are **not verified** for this commit.
+- Remaining: run exact-SHA Java runner and CI; native `WorldGenLevel.setBlock` failure GameTest; coordinate registry ownership before natural placement; verify original BETA26 RNG/biome parity.
+- No shared registry, Gradle, `main`, other branches, or merges changed. Draft PR #9 remains the integration vehicle.
