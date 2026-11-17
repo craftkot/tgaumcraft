@@ -87,11 +87,14 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("BETA26 pending Flux trigger did not create a Rift above the strict size threshold");
         }
 
-        helper.runAtTickTime(1L, () -> {
-            AABB successArea = new AABB(
-                    chunkX * 16 - 32.0D, level.getMinBuildHeight(), chunkZ * 16 - 32.0D,
-                    chunkX * 16 + 48.0D, level.getMaxBuildHeight(), chunkZ * 16 + 48.0D
-            );
+        AABB successArea = new AABB(
+                chunkX * 16 - 32.0D, level.getMinBuildHeight(), chunkZ * 16 - 32.0D,
+                chunkX * 16 + 48.0D, level.getMaxBuildHeight(), chunkZ * 16 + 48.0D
+        );
+        // ServerLevel.addFreshEntity may be called while the GameTest ticker is
+        // running. Do not assume the entity manager has published the new UUID
+        // into its query index on the very next scheduled callback.
+        awaitFluxRiftRegistration(helper, level, successArea, spawnAttempt, 20, () -> {
             var spawned = level.getEntitiesOfClass(FluxRiftEntity.class, successArea);
             var registered = level.getEntity(spawnAttempt.getUUID());
             boolean directPresent = registered == spawnAttempt;
@@ -105,7 +108,7 @@ public final class AuraGenerationGameTests {
                     || spawnAttempt.getRiftSize() != expectedSize
                     || Math.abs(successful.getFlux(sample) - expectedFlux) > 0.001F) {
                 AABB bounds = spawnAttempt.getBoundingBox();
-                throw new AssertionError("Flux Rift spawn/debit transaction mismatch after entity-manager flush: entities="
+                throw new AssertionError("Flux Rift spawn/debit transaction mismatch after entity-manager registration: entities="
                         + spawned.size() + " directPresent=" + directPresent + " removed=" + spawnAttempt.isRemoved()
                         + " chunkLoaded=" + chunkLoaded + " pos=" + spawnAttempt.position()
                         + " bounds=" + bounds + " intersectsQuery=" + successArea.intersects(bounds)
@@ -1327,6 +1330,40 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES");
     }
 
+
+    private static void awaitFluxRiftRegistration(
+            GameTestHelper helper,
+            ServerLevel level,
+            AABB searchArea,
+            FluxRiftEntity rift,
+            int remainingTicks,
+            Runnable continuation
+    ) {
+        helper.runAfterDelay(1L, () -> {
+            var registered = level.getEntity(rift.getUUID());
+            var matches = level.getEntitiesOfClass(FluxRiftEntity.class, searchArea);
+            if (registered == rift && !rift.isRemoved()
+                    && matches.size() == 1 && matches.get(0) == rift) {
+                continuation.run();
+                return;
+            }
+
+            if (remainingTicks <= 1) {
+                AABB bounds = rift.getBoundingBox();
+                boolean chunkLoaded = level.getChunkSource().getChunkNow(
+                        rift.blockPosition().getX() >> 4,
+                        rift.blockPosition().getZ() >> 4) != null;
+                throw new AssertionError("Flux Rift did not become visible in the entity manager within 20 ticks: entities="
+                        + matches.size() + " directPresent=" + (registered == rift)
+                        + " removed=" + rift.isRemoved() + " entityTicks=" + rift.tickCount
+                        + " chunkLoaded=" + chunkLoaded + " pos=" + rift.position()
+                        + " bounds=" + bounds + " intersectsQuery=" + searchArea.intersects(bounds)
+                        + " uuid=" + rift.getUUID());
+            }
+
+            awaitFluxRiftRegistration(helper, level, searchArea, rift, remainingTicks - 1, continuation);
+        });
+    }
 
     private static void awaitFluxRiftStabilityDecay(
             GameTestHelper helper,
