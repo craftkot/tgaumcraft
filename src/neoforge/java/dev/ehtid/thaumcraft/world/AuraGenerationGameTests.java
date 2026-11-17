@@ -93,7 +93,7 @@ public final class AuraGenerationGameTests {
                     chunkX * 16 + 48.0D, level.getMaxBuildHeight(), chunkZ * 16 + 48.0D
             );
             var spawned = level.getEntitiesOfClass(FluxRiftEntity.class, successArea);
-            Entity registered = level.getEntity(spawnAttempt.getUUID());
+            var registered = level.getEntity(spawnAttempt.getUUID());
             boolean directPresent = registered == spawnAttempt;
             boolean chunkLoaded = level.getChunkSource().getChunkNow(
                     spawnAttempt.blockPosition().getX() >> 4,
