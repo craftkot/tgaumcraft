@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.port.core.AuraGenerationLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftTriggerLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
 import dev.ehtid.thaumcraft.port.core.LegacyModernBiomeCompatibility;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -97,6 +98,27 @@ public final class AuraGenerationGameTests {
                     || !geometry.equals(rift.getGeometry())) {
                 throw new AssertionError("BETA26 seeded Flux Rift polycone geometry mismatch: points=" + geometry.size());
             }
+
+            assertFluxRiftBoundsMatchGeometry(rift, "spawn");
+            int originalSize = rift.getRiftSize();
+            rift.setRiftSize(originalSize + 3);
+            assertFluxRiftBoundsMatchGeometry(rift, "size-change");
+            rift.setRiftSize(originalSize);
+            assertFluxRiftBoundsMatchGeometry(rift, "size-restore");
+            rift.setRiftSeed(1234567);
+            assertFluxRiftBoundsMatchGeometry(rift, "seed-change");
+            rift.setRiftSeed(1234568);
+            assertFluxRiftBoundsMatchGeometry(rift, "seed-change-again");
+            rift.moveTo(
+                    rift.getX() + 7.0D,
+                    rift.getY() + 2.0D,
+                    rift.getZ() - 5.0D,
+                    rift.getYRot(),
+                    rift.getXRot()
+            );
+            assertFluxRiftBoundsMatchGeometry(rift, "position-change");
+            System.out.println("TC_GAMETEST_FLUX_RIFT_GEOMETRY_BOUNDS=PASS size=YES seed=YES position=YES");
+
             rift.discard();
             System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN=PASS size=54 flux=1000_to_945.23 geometry=38");
 
@@ -1252,6 +1274,45 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES");
     }
 
+
+    private static void assertFluxRiftBoundsMatchGeometry(FluxRiftEntity rift, String phase) {
+        var points = rift.getGeometry();
+        if (points.isEmpty()) {
+            throw new AssertionError("Flux Rift geometry is empty during " + phase);
+        }
+
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        double maxZ = Double.NEGATIVE_INFINITY;
+        for (LegacyFluxRiftGeometry.Point point : points) {
+            minX = Math.min(minX, point.x());
+            minY = Math.min(minY, point.y());
+            minZ = Math.min(minZ, point.z());
+            maxX = Math.max(maxX, point.x());
+            maxY = Math.max(maxY, point.y());
+            maxZ = Math.max(maxZ, point.z());
+        }
+
+        AABB actual = rift.getBoundingBox();
+        double[] expected = {
+                rift.getX() + minX, rift.getY() + minY, rift.getZ() + minZ,
+                rift.getX() + maxX, rift.getY() + maxY, rift.getZ() + maxZ
+        };
+        double[] observed = {
+                actual.minX, actual.minY, actual.minZ,
+                actual.maxX, actual.maxY, actual.maxZ
+        };
+        for (int index = 0; index < expected.length; index++) {
+            if (Math.abs(expected[index] - observed[index]) > 1.0E-5D) {
+                throw new AssertionError("Flux Rift entity AABB diverged from seeded geometry during "
+                        + phase + ": expected=" + java.util.Arrays.toString(expected)
+                        + " actual=" + java.util.Arrays.toString(observed));
+            }
+        }
+    }
 
     private static void assertCrystalWorldGenQueueWaitsForCardinalNeighbors(
             ServerLevel level, BlockPos anchor
