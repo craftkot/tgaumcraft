@@ -86,6 +86,20 @@ public final class SilverwoodLegacyLogsTest {
                 check(positiveRolls.nextLong() == negativeRolls.nextLong());
             }
         }
+        // The four horizontal roots and their supporting blocks must retain the
+        // archived log-axis metadata across all legal heights and branch rolls.
+        // A wrong axis silently changes the in-game bark orientation.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed = 0; seed < 16; seed++) {
+                List<String> roots = new ArrayList<>();
+                SilverwoodLegacyLogs.place(-8, 64, -8, height, new Random(seed),
+                        (x, y, z, meta) -> roots.add(x + "," + y + "," + z + ":" + meta));
+                check(roots.contains("-10,64,-8:0") && roots.contains("-6,64,-8:0")
+                        && roots.contains("-8,64,-10:2") && roots.contains("-8,64,-6:2"));
+                check(roots.contains("-10,63,-8:1") && roots.contains("-6,63,-8:1")
+                        && roots.contains("-8,63,-10:1") && roots.contains("-8,63,-6:1"));
+            }
+        }
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
