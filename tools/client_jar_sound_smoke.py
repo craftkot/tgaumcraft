@@ -374,10 +374,11 @@ PY
   sleep 0.4
   wait "$capture_pid" || test "$?" -eq 124
 
-  # The inspected real-client frames show the jar selection outline and attack
-  # animation, but no high-contrast damage overlay. Preserve the pixel measurement
-  # as a diagnostic; it is not the sound oracle. A real hit must still leave the
-  # jar present on the server and match the original BETA26 jar PCM below.
+  # A held survival hit must render vanilla block-damage cracks on the jar face.
+  # Compare only the 220x220 target ROI from the same camera/crosshair before and
+  # during the hit: the static selection outline cancels, leaving the crack overlay.
+  # This is a visual acceptance gate in addition to the server-retained block and
+  # original BETA26 hit PCM checks below.
   jar_hit_roi_x=$((jar_hit_center_x - 110))
   jar_hit_roi_y=$((jar_hit_center_y - 110))
   convert client-smoke/screenshots/100a-jar-hit-aim.png \
@@ -386,7 +387,7 @@ PY
   convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \
     -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
     client-smoke/hit-damage-roi.png
-  python3 tools/verify_jar_damage_overlay.py --diagnostic \
+  python3 tools/verify_jar_damage_overlay.py \
     client-smoke/hit-aim-roi.png \
     client-smoke/hit-damage-roi.png | tee -a client-smoke-status.txt
 

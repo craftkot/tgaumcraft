@@ -72,11 +72,13 @@ assert "JAR_HIT_POINTER_CENTER=" in hit_section, "Hit probe must log its actual 
 assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit_section
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
 assert "JAR_HIT_CAPTURE_AFTER_0_30S=YES" in hit_section
-assert "verify_jar_damage_overlay.py --diagnostic" in hit_section
+assert "verify_jar_damage_overlay.py --diagnostic" not in hit_section
+assert "python3 tools/verify_jar_damage_overlay.py \\" in hit_section
 assert "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
-assert hit_section.index("verify_jar_damage_overlay.py --diagnostic") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS"), (
-    "Hit acceptance must use the server-retained block and original PCM after the non-gating overlay diagnostic"
+assert hit_section.index("verify_jar_damage_overlay.py") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS"), (
+    "Hit acceptance must fail closed on the real ROI crack overlay before checking retained block and original PCM"
 )
+assert "set -Eeuo pipefail" in CLIENT_BOOT, "The overlay verifier pipeline must propagate failures"
 assert "compare -metric AE" not in hit_section
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in OVERLAY
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in OVERLAY

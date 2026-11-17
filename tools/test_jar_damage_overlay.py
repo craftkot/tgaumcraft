@@ -22,28 +22,41 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     for index in range(1668):
         offset = index * 3
         noise[offset:offset + 3] = bytes((45, 45, 45))  # 13/255: capture noise, not a crack
+    below_threshold = bytearray(baseline)
+    for index in range(39):
+        offset = (1000 + index) * 3
+        below_threshold[offset:offset + 3] = bytes((255, 255, 255))
     overlay = bytearray(baseline)
-    for index in range(60):
+    for index in range(40):
         offset = (1000 + index) * 3
         overlay[offset:offset + 3] = bytes((255, 255, 255))  # clear high-contrast overlay pixels
 
     before = root / "before.ppm"
     noisy = root / "noise.ppm"
+    below = root / "below-threshold.ppm"
     cracked = root / "cracks.ppm"
     before.write_bytes(ppm(bytes(baseline)))
     noisy.write_bytes(ppm(bytes(noise)))
+    below.write_bytes(ppm(bytes(below_threshold)))
     cracked.write_bytes(ppm(bytes(overlay)))
 
     assert changed_pixels(before, noisy) == 0, "low-amplitude frame noise must be ignored"
     assert changed_pixels(before, cracked) >= 60, "high-contrast crack pixels must remain visible"
     assert diagnose(before, noisy) == 0, "diagnostic mode must report a missing overlay without failing"
-    assert diagnose(before, cracked) >= 60, "diagnostic mode must report a visible overlay"
+    assert diagnose(before, below) == 39, "diagnostic mode must report the below-threshold count"
+    assert diagnose(before, cracked) == 40, "diagnostic mode must report the threshold-positive overlay"
     try:
         verify(before, noisy)
     except SystemExit as exc:
         assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in str(exc)
     else:
         raise AssertionError("noise-only frame incorrectly passed damage-overlay verification")
-    assert verify(before, cracked) >= 60
+    try:
+        verify(before, below)
+    except SystemExit as exc:
+        assert "high_contrast_pixels=39" in str(exc)
+    else:
+        raise AssertionError("39 crack pixels incorrectly passed the 40-pixel threshold")
+    assert verify(before, cracked) == 40
 
-print("Jar damage overlay detector: low-amplitude noise negative, high-contrast overlay positive: PASS")
+print("Jar damage overlay detector: low-amplitude noise and 39-pixel negative, 40-pixel positive threshold controls: PASS")
