@@ -10,12 +10,14 @@ on:
       - fix/alchemy-template-pr-ci-2026-11-17
       - fix/alchemy-template-namespace-2026-11-17
       - fix/alchemy-real-nbt-fixture-2026-11-17
+      - fix/alchemy-nbt-native-ci-2026-11-17
   pull_request:
     branches:
       - integration/alchemy-core-candidate-2026-11-16
       - fix/alchemy-gametest-fail-closed-2026-11-16
       - validation/alchemy-registered-gametest-2026-11-17
       - fix/alchemy-gametest-template-2026-11-17
+      - fix/alchemy-template-namespace-2026-11-17
   workflow_dispatch:
 
 jobs:
