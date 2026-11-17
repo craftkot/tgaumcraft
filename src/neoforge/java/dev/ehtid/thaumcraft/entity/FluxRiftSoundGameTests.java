@@ -50,66 +50,76 @@ public final class FluxRiftSoundGameTests {
     public static void emitsOriginalAmbientSoundEvery300Ticks(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
+        ConnectedPlayer recipient = createConnectedPlayer(level, pos, "rift-sound-recipient");
         FluxRiftEntity rift = new FluxRiftEntity(FluxRiftRegistration.get(), level);
         rift.setRiftSeed(1234567);
         rift.setRiftSize(5);
         rift.moveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 0.0F, 0.0F);
         if (!level.addFreshEntity(rift)) {
+            disconnect(level, recipient, "Flux Rift sound fixture could not be added");
             throw new AssertionError("Unable to register Flux Rift sound fixture");
         }
 
-        ConnectedPlayer recipient = createConnectedPlayer(level, pos, "rift-sound-recipient");
         AtomicInteger matchingPackets = new AtomicInteger();
         AtomicReference<ClientboundSoundEntityPacket> observed = new AtomicReference<>();
         try {
             installRecorder(recipient, rift, matchingPackets, observed);
             flush(recipient.channel());
-
-            rift.tickCount = 299;
-            rift.playAmbientSoundIfDue(RandomSource.create(1L));
-            flush(recipient.channel());
-            if (matchingPackets.get() != 0) {
-                throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299");
-            }
-
-            long seed = findPositiveVolumeSeed();
-            RandomSource expectedRandom = RandomSource.create(seed);
-            float expectedVolume = (float) (0.15F + expectedRandom.nextGaussian() * 0.066D);
-            float expectedPitch = (float) (0.75D + expectedRandom.nextGaussian() * 0.1D);
-
-            rift.tickCount = 300;
-            rift.playAmbientSoundIfDue(RandomSource.create(seed));
-            flush(recipient.channel());
-
-            ClientboundSoundEntityPacket packet = observed.get();
-            if (matchingPackets.get() != 1 || packet == null) {
-                throw new AssertionError("BETA26 Flux Rift ambience packet missing at tick 300: count="
-                        + matchingPackets.get());
-            }
-            if (packet.getSound().value() != ThaumcraftSounds.EVILPORTAL.get()
-                    || packet.getId() != rift.getId()
-                    || packet.getSource() != SoundSource.NEUTRAL
-                    || Float.compare(packet.getVolume(), expectedVolume) != 0
-                    || Float.compare(packet.getPitch(), expectedPitch) != 0) {
-                throw new AssertionError("BETA26 Flux Rift ambience packet mismatch: source="
-                        + packet.getSource() + " volume=" + packet.getVolume()
-                        + " pitch=" + packet.getPitch());
-            }
-
-            rift.tickCount = 301;
-            rift.playAmbientSoundIfDue(RandomSource.create(seed));
-            flush(recipient.channel());
-            if (matchingPackets.get() != 1) {
-                throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301");
-            }
-
-        } finally {
-            removeRecorder(recipient);
-            disconnect(level, recipient, "Flux Rift ambient sound GameTest finished");
+        } catch (RuntimeException | Error failure) {
+            disconnect(level, recipient, "Flux Rift sound recorder setup failed");
             rift.discard();
+            throw failure;
         }
-        helper.succeed();
-        System.out.println("TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal");
+
+        // Entity.playSound sends an entity-attached packet. Allow ChunkMap to
+        // establish this fake player's tracking subscription before the probe.
+        helper.runAfterDelay(2, () -> {
+            try {
+                rift.tickCount = 299;
+                rift.playAmbientSoundIfDue(RandomSource.create(1L));
+                flush(recipient.channel());
+                if (matchingPackets.get() != 0) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299");
+                }
+
+                long seed = findPositiveVolumeSeed();
+                RandomSource expectedRandom = RandomSource.create(seed);
+                float expectedVolume = (float) (0.15F + expectedRandom.nextGaussian() * 0.066D);
+                float expectedPitch = (float) (0.75D + expectedRandom.nextGaussian() * 0.1D);
+
+                rift.tickCount = 300;
+                rift.playAmbientSoundIfDue(RandomSource.create(seed));
+                flush(recipient.channel());
+
+                ClientboundSoundEntityPacket packet = observed.get();
+                if (matchingPackets.get() != 1 || packet == null) {
+                    throw new AssertionError("BETA26 Flux Rift ambience packet missing at tick 300: count="
+                            + matchingPackets.get());
+                }
+                if (packet.getSound().value() != ThaumcraftSounds.EVILPORTAL.get()
+                        || packet.getId() != rift.getId()
+                        || packet.getSource() != SoundSource.NEUTRAL
+                        || Float.compare(packet.getVolume(), expectedVolume) != 0
+                        || Float.compare(packet.getPitch(), expectedPitch) != 0) {
+                    throw new AssertionError("BETA26 Flux Rift ambience packet mismatch: source="
+                            + packet.getSource() + " volume=" + packet.getVolume()
+                            + " pitch=" + packet.getPitch());
+                }
+
+                rift.tickCount = 301;
+                rift.playAmbientSoundIfDue(RandomSource.create(seed));
+                flush(recipient.channel());
+                if (matchingPackets.get() != 1) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301");
+                }
+            } finally {
+                removeRecorder(recipient);
+                disconnect(level, recipient, "Flux Rift ambient sound GameTest finished");
+                rift.discard();
+            }
+            helper.succeed();
+            System.out.println("TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal");
+        });
     }
 
     private static long findPositiveVolumeSeed() {
@@ -159,7 +169,7 @@ public final class FluxRiftSoundGameTests {
         level.getServer().getPlayerList().placeNewPlayer(connection, player, cookie);
         level.getServer().getConnection().getConnections().add(connection);
 
-        player.gameMode.changeGameModeForPlayer(GameType.SURVIVAL);
+        player.gameMode.changeGameModeForPlayer(GameType.CREATIVE);
         player.setPos(target.getX() + 0.5D, target.getY() + 1.0D, target.getZ() + 0.5D);
         level.getChunkSource().move(player);
         player.connection.chunkSender.sendNextChunks(player);
