@@ -80,25 +80,28 @@ public final class FluxRiftSoundGameTests {
         helper.runAfterDelay(2, () -> {
             try {
                 Vec3 positionBefore299 = rift.position();
+                Vec3 packetPositionBefore299 = quantizeSoundPacketPosition(positionBefore299);
                 rift.tickCount = 299;
                 rift.playAmbientSoundIfDue(RandomSource.create(1L));
                 flush(recipient.channel());
-                if (countPacketsFromRift(observed, rift.getId(), positionBefore299) != 0) {
-                    throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299: expected="
-                            + positionBefore299 + " current=" + rift.position()
-                            + " observed=" + describePackets(observed));
+                if (countPacketsFromRift(observed, rift.getId(), packetPositionBefore299) != 0) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299: entityPosition="
+                            + positionBefore299 + " packetPosition=" + packetPositionBefore299
+                            + " current=" + rift.position() + " observed=" + describePackets(observed));
                 }
 
                 Vec3 soundPosition = rift.position();
+                Vec3 soundPacketPosition = quantizeSoundPacketPosition(soundPosition);
                 rift.tickCount = 300;
                 rift.playAmbientSoundIfDue(RandomSource.create(seed));
                 flush(recipient.channel());
 
-                int packetsAt300 = countPacketsFromRift(observed, rift.getId(), soundPosition);
-                SoundPacketEvidence packet = findPacketFromRift(observed, rift.getId(), soundPosition);
+                int packetsAt300 = countPacketsFromRift(observed, rift.getId(), soundPacketPosition);
+                SoundPacketEvidence packet = findPacketFromRift(observed, rift.getId(), soundPacketPosition);
                 if (packetsAt300 != 1 || packet == null) {
                     throw new AssertionError("BETA26 Flux Rift ambience packet missing/duplicated at tick 300: count="
-                            + packetsAt300 + " expected=" + soundPosition + " current=" + rift.position()
+                            + packetsAt300 + " entityPosition=" + soundPosition
+                            + " packetPosition=" + soundPacketPosition + " current=" + rift.position()
                             + " recipient=" + recipient.player().position()
                             + " entityId=" + rift.getId() + " observed=" + describePackets(observed));
                 }
@@ -113,22 +116,23 @@ public final class FluxRiftSoundGameTests {
                     throw new AssertionError("Flux Rift ambience was attached to the wrong entity");
                 }
                 if (packet.entityId() < 0
-                        && (Math.abs(packet.x() - soundPosition.x) > 0.125D
-                        || Math.abs(packet.y() - soundPosition.y) > 0.125D
-                        || Math.abs(packet.z() - soundPosition.z) > 0.125D)) {
+                        && (Math.abs(packet.x() - soundPacketPosition.x) > 0.125D
+                        || Math.abs(packet.y() - soundPacketPosition.y) > 0.125D
+                        || Math.abs(packet.z() - soundPacketPosition.z) > 0.125D)) {
                     throw new AssertionError("Flux Rift ambience position mismatch: packet=("
-                            + packet.x() + "," + packet.y() + "," + packet.z() + ") expected="
-                            + soundPosition + " current=" + rift.position()
+                            + packet.x() + "," + packet.y() + "," + packet.z() + ") entityPosition="
+                            + soundPosition + " packetPosition=" + soundPacketPosition
+                            + " current=" + rift.position()
                             + " recipient=" + recipient.player().position());
                 }
 
                 rift.tickCount = 301;
                 rift.playAmbientSoundIfDue(RandomSource.create(seed));
                 flush(recipient.channel());
-                if (countPacketsFromRift(observed, rift.getId(), soundPosition) != 1) {
-                    throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301: expected="
-                            + soundPosition + " current=" + rift.position()
-                            + " observed=" + describePackets(observed));
+                if (countPacketsFromRift(observed, rift.getId(), soundPacketPosition) != 1) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301: entityPosition="
+                            + soundPosition + " packetPosition=" + soundPacketPosition
+                            + " current=" + rift.position() + " observed=" + describePackets(observed));
                 }
             } finally {
                 removeRecorder(recipient);
@@ -138,6 +142,16 @@ public final class FluxRiftSoundGameTests {
             helper.succeed();
             System.out.println("TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal");
         });
+    }
+
+    private static Vec3 quantizeSoundPacketPosition(Vec3 entityPosition) {
+        // The server's sound path converts large world coordinates to float before
+        // ClientboundSoundPacket's 1/8-block fixed-point coordinate encoding.
+        return new Vec3(
+                (double) (float) entityPosition.x,
+                (double) (float) entityPosition.y,
+                (double) (float) entityPosition.z
+        );
     }
 
     private static int countPacketsFromRift(
