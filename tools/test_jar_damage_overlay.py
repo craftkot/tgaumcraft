@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keep strict overlay verification and non-gating diagnostic behavior separate."""
+"""Calibrate low-contrast jar cracks against a same-duration no-hit baseline."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -15,56 +15,65 @@ def ppm(rgb: bytes) -> bytes:
     return f"P6\n{WIDTH} {HEIGHT}\n255\n".encode("ascii") + rgb
 
 
+def image_with_changes(count: int, color: tuple[int, int, int]) -> bytes:
+    rgb = bytearray(bytes(BACKGROUND) * PIXELS)
+    for index in range(count):
+        offset = (1000 + index) * 3
+        rgb[offset:offset + 3] = bytes(color)
+    return ppm(bytes(rgb))
+
+
 with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     root = Path(temp)
-    baseline = bytearray(BACKGROUND * PIXELS)
-    noise = bytearray(baseline)
+    unchanged = root / "unchanged.ppm"
+    low_noise = root / "low-noise.ppm"
+    baseline_101 = root / "baseline-101.ppm"
+    hit_299 = root / "hit-299.ppm"
+    hit_300 = root / "hit-300.ppm"
+
+    unchanged.write_bytes(ppm(bytes(BACKGROUND) * PIXELS))
+    noise = bytearray(bytes(BACKGROUND) * PIXELS)
     for index in range(1668):
         offset = index * 3
-        noise[offset:offset + 3] = bytes((45, 45, 45))  # 13/255: capture noise, not a crack
-    before = root / "before.ppm"
-    noisy = root / "noise.ppm"
-    below = root / "below-threshold.ppm"
-    cracked = root / "cracks.ppm"
-    before.write_bytes(ppm(bytes(baseline)))
-    noisy.write_bytes(ppm(bytes(noise)))
+        noise[offset:offset + 3] = bytes((45, 45, 45))
+    low_noise.write_bytes(ppm(bytes(noise)))
 
-    # ImageMagick AE can count one extra pixel on PPM fixtures, depending
-    # on its decoder/version. Calibrate *measured* 39/40-pixel controls,
-    # rather than assuming the number of edited source pixels equals AE.
+    # The ImageMagick AE result is the contract; calibrate exact boundary
+    # fixtures instead of assuming decoder pixel counts.
     controls = {}
-    for source_count in range(36, 43):
-        candidate = bytearray(baseline)
-        for index in range(source_count):
-            offset = (1000 + index) * 3
-            candidate[offset:offset + 3] = bytes((255, 255, 255))
-        candidate_path = root / f"candidate-{source_count}.ppm"
-        candidate_path.write_bytes(ppm(bytes(candidate)))
-        measured = changed_pixels(before, candidate_path)
-        if measured in (39, 40):
-            controls[measured] = candidate_path.read_bytes()
-    assert set(controls) == {39, 40}, "unable to construct ImageMagick AE boundary controls"
-    below.write_bytes(controls[39])
-    cracked.write_bytes(controls[40])
+    for count in range(295, 305):
+        candidate = root / f"candidate-{count}.ppm"
+        candidate.write_bytes(image_with_changes(count, (255, 255, 255)))
+        measured = changed_pixels(unchanged, candidate)
+        if measured in (299, 300):
+            controls[measured] = candidate.read_bytes()
+    assert set(controls) == {299, 300}, "unable to construct 299/300-pixel boundary controls"
+    hit_299.write_bytes(controls[299])
+    hit_300.write_bytes(controls[300])
+    baseline_101.write_bytes(image_with_changes(101, (255, 255, 255)))
 
-    assert changed_pixels(before, noisy) == 0, "low-amplitude frame noise must be ignored"
-    assert changed_pixels(before, below) == 39, "below-threshold control must contain 39 changed pixels"
-    assert changed_pixels(before, cracked) == 40, "positive crack control must contain exactly 40 changed pixels"
-    assert diagnose(before, noisy) == 0, "diagnostic mode must report a missing overlay without failing"
-    assert diagnose(before, below) == 39, "diagnostic mode must report the below-threshold count"
-    assert diagnose(before, cracked) == 40, "diagnostic mode must report the threshold-positive overlay"
-    try:
-        verify(before, noisy)
-    except SystemExit as exc:
-        assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in str(exc)
-    else:
-        raise AssertionError("noise-only frame incorrectly passed damage-overlay verification")
-    try:
-        verify(before, below)
-    except SystemExit as exc:
-        assert "high_contrast_pixels=39" in str(exc)
-    else:
-        raise AssertionError("39 crack pixels incorrectly passed the 40-pixel threshold")
-    assert verify(before, cracked) == 40
+    assert changed_pixels(unchanged, low_noise) == 0, "low-amplitude capture noise must be ignored"
+    assert changed_pixels(unchanged, baseline_101) == 101
+    assert changed_pixels(unchanged, hit_299) == 299
+    assert changed_pixels(unchanged, hit_300) == 300
 
-print("Jar damage overlay detector: low-amplitude noise and 39-pixel negative, 40-pixel positive threshold controls: PASS")
+    # A low-contrast crack frame passes only when it is materially above a
+    # same-duration no-hit control, not merely because the scene changed.
+    assert diagnose(unchanged, low_noise, unchanged, hit_300) == (300, 0)
+    assert verify(unchanged, low_noise, unchanged, hit_300) == 300
+
+    try:
+        verify(unchanged, low_noise, unchanged, hit_299)
+    except SystemExit as exc:
+        assert "hit_pixels=299" in str(exc)
+    else:
+        raise AssertionError("299 changed pixels incorrectly passed the 300-pixel floor")
+
+    try:
+        verify(unchanged, baseline_101, unchanged, hit_300)
+    except SystemExit as exc:
+        assert "excess=199" in str(exc)
+    else:
+        raise AssertionError("a hit only 199 pixels above baseline incorrectly passed")
+
+print("Jar damage overlay detector: low-noise baseline and 299/300 plus 199/200 excess boundaries: PASS")
