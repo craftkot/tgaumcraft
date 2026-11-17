@@ -19,9 +19,10 @@ import java.util.List;
 /**
  * Initial BETA26 Flux Rift entity state.
  *
- * This slice ports the synced seed/size/stability/collapse state and the
- * source-seeded polycone geometry. Rift damage, growth, events and collapse
- * are deliberately separate follow-up work; this entity is not full parity.
+ * This slice ports the synced seed/size/stability/collapse state, source-seeded
+ * polycone geometry, per-tick segment entity damage/item removal and timed
+ * stability decay. Block ray-trace/destruction, growth, weighted events and
+ * collapse behavior remain separate follow-up work; this entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
     private static final EntityDataAccessor<Integer> SEED =
