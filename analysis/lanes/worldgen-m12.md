@@ -423,3 +423,13 @@
 - Previous HEAD 20f40ddaba100fb383196f1fc1ab1db2b35eb556 had GitHub Actions [#3480](https://github.com/craftkot/tgaumcraft/actions/runs/43961811903) SUCCESS and CircleCI verify-connection SUCCESS. These results predate the two code commits. Exact-head CI remains to be checked.
 - Local git checkout still fails DNS resolution of github.com. No exact-checkout Java runner, Python guard, NeoForge compile, native WorldGenLevel GameTest or fresh-chunk smoke executed here. Rejected rollback writes and equal-state foreign changes remain best-effort limitations. Feature remains unregistered; BETA26 biome/RNG parity unresolved.
 - Next: inspect exact-head CI, run source guard and Java runners, add native failure-injection WorldGenLevel coverage, then coordinate registration without touching shared registries. Historical audit 59/100 unchanged; main, other branches and Gradle untouched.
+
+
+## 17.11.2026 — M12: не размещать ствол после отказа кроны
+
+- Перечитаны `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` и этот журнал; проверены 27 видимых веток, открытые PR и сравнение с `main` (до изменений +128/−0).
+- Для предыдущего HEAD `2cbbfcdc0acb927685fa881078df0825495ca357` подтверждены [GitHub Actions #3503 SUCCESS](https://github.com/craftkot/tgaumcraft/actions/runs/43981462952) и CircleCI `verify-connection` SUCCESS; это **не** доказательство Minecraft GameTest.
+- [9f5f242](https://github.com/craftkot/tgaumcraft/commit/9f5f24257a81328b38a911bec026d75e123b6b4b): после отказа записи листвы `SilverwoodLegacyFeature` больше не пытается записывать брёвна, которые пришлось бы немедленно откатывать; уже записанная листва по-прежнему восстанавливается существующим rollback.
+- [5be8d0b](https://github.com/craftkot/tgaumcraft/commit/5be8d0b0afd310123257c86083e90e6863da06f9): добавлена проверка этого порядка в source-level wiring guard.
+- **Статус:** коммиты отправлены; новый source-level guard и Java runner в этом запуске не исполнялись, CI новых SHA ещё не подтверждён, NeoForge GameTest и генерация новых чанков не выполнялись. Код не является доказательством игрового паритета BETA26. Общие регистры, Gradle, `main` и чужие ветки не менялись; Draft PR #9 не слит.
+- **Далее:** проверить CI нового HEAD; добавить исполняемую проверку отказа `setBlock` в настоящем `WorldGenLevel` и согласовать регистрацию Feature в новых чанках.
