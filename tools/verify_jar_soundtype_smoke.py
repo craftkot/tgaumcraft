@@ -2,6 +2,8 @@
 """Require real-client coverage for all original BETA26 jar SoundType hooks."""
 from pathlib import Path
 import re
+import subprocess
+import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SMOKE = (ROOT / "tools/client_jar_sound_smoke.py").read_text(encoding="utf-8")
@@ -64,19 +66,24 @@ for name, (baseline, event, window, first, last, state_marker, pass_marker, acti
 
 assert positions == sorted(positions), "SoundType scenarios must run place -> hit -> step -> fall"
 hit_section = SMOKE.split("# M43 HIT:", 1)[1].split("# Rebuild a five-block row", 1)[0]
-assert hit_section.index("xdotool mousedown 1") < hit_section.index("sleep 0.30") < hit_section.index("JAR_HIT_CAPTURE_AFTER_0_30S=YES") < hit_section.index("100b-jar-hit-damage-overlay.png") < hit_section.index("xdotool mouseup 1"), (
-    "Hit probe must capture the damage overlay after the complete 0.30s hold and before releasing the left button"
+assert hit_section.index("xdotool mousedown 1") < hit_section.index("sleep 0.80") < hit_section.index("JAR_HIT_CAPTURE_AFTER_0_80S=YES") < hit_section.index("100b-jar-hit-damage-overlay.png") < hit_section.index("xdotool mouseup 1"), (
+    "Hit probe must capture the damage overlay after the complete 0.80s fatigue-controlled hold and before releasing the left button"
 )
-assert "100a-jar-hit-aim.png" in hit_section, "Hit probe must preserve a pre-input aim screenshot"
-assert "JAR_HIT_POINTER_CENTER=" in hit_section, "Hit probe must log its actual window-center pointer"
+assert "100-pre-hit-viewport.png" in hit_section, "Hit probe must preserve the viewport frame used for crosshair detection"
+assert "JAR_HIT_CROSSHAIR_DETECTED=YES" in hit_section, "Hit probe must detect the actual rendered crosshair"
+assert "JAR_HIT_CROSSHAIR_CENTER=" in hit_section, "Hit probe must log the screenshot-derived crosshair"
+assert 'python3 tools/client_crosshair_locator.py' in hit_section
 assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit_section
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
-assert "JAR_HIT_CAPTURE_AFTER_0_30S=YES" in hit_section
+assert "send_chat '/effect give @p minecraft:mining_fatigue 30 0 true'" in hit_section
+assert "send_chat '/data get entity @p active_effects'" in hit_section
+assert "minecraft:mining_fatigue" in hit_section
+assert "JAR_HIT_CAPTURE_AFTER_0_80S=YES" in hit_section
 assert "verify_jar_damage_overlay.py --diagnostic" not in hit_section
 assert "python3 tools/verify_jar_damage_overlay.py \\" in hit_section
 assert "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
-assert hit_section.index("verify_jar_damage_overlay.py") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS"), (
-    "Hit acceptance must fail closed on the real ROI crack overlay before checking retained block and original PCM"
+assert hit_section.index("verify_jar_damage_overlay.py") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS") < hit_section.index("send_chat '/effect clear @p minecraft:mining_fatigue'"), (
+    "Hit acceptance must fail closed on the real ROI crack overlay before checking retained block, original PCM and clearing the test-only effect"
 )
 assert "set -Eeuo pipefail" in CLIENT_BOOT, "The overlay verifier pipeline must propagate failures"
 assert "compare -metric AE" not in hit_section
@@ -90,6 +97,8 @@ assert WORKFLOW.count("tools/test_jar_damage_overlay.py") >= 2
 assert "python tools/test_jar_damage_overlay.py" in WORKFLOW
 assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE
+assert "tools/client_crosshair_locator.py" in SMOKE
+assert "JAR_HIT_CROSSHAIR_DETECTED=YES" in SMOKE
 assert "JAR_STEP_STANDING_READY" in SMOKE and "JAR_STEP_MOVED_ON_ROW" in SMOKE
 assert "JAR_FALL_LANDED_ON_JAR" in SMOKE
 assert "JAR_SOUNDTYPE_PLACE_STEP_HIT_FALL=PASS" in SMOKE
@@ -136,4 +145,5 @@ assert "tools/test_key_audio_match.py" in WORKFLOW
 assert "src/neoforge/java/dev/ehtid/thaumcraft/item/JarBraceItem.java" in WORKFLOW
 assert "src/main/resources/assets/thaumcraft/sounds/key.ogg" in WORKFLOW
 
+subprocess.run([sys.executable, str(ROOT / "tools/test_client_crosshair_locator.py")], check=True)
 print("BETA26 jar SoundType + brace KEY client contract: place, hit, step and fall each have real interaction, server-state guard and original-PCM matcher: PASS")
