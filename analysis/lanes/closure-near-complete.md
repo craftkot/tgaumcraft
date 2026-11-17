@@ -1009,3 +1009,12 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 
 - Post-commit review caught one stale positive-fixture assertion in `tools/test_jar_damage_overlay.py`: the fixture had been reduced from 60 to exactly 40 pixels, but its old assertion still required at least 60. Replaced it with exact 39-pixel negative and 40-pixel positive checks. The first PR-triggered CI wave from the preceding commit may fail this test; only the new HEAD is eligible for acceptance.
 - No production files changed. Next: inspect the exact-head `jar SoundType and interaction audio` workflow and require both the threshold test and real-client `JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS` marker.
+
+
+### 2026-11-17 — exact-head jar AE fixture failure isolated and repaired
+
+- Checked main HEAD `a4280834adc5a20b6951098af937d30ca4aeca56`, roadmap, AGENTS, parallel workflow, fixed audit, this lane, open PRs, comparison and latest exact-head Actions. PR #4 started at `c6bcb2757af932a707e8f8588434e0daf40916b6`, Open/Draft, with no merge.
+- Exact-head [Jar run #44092558028](https://github.com/craftkot/tgaumcraft/actions/runs/44092558028), job `134071170249`, failed **before Minecraft** in `tools/test_jar_damage_overlay.py`: the 39 edited source pixels produced ImageMagick `compare -metric AE -fuzz 8%` count 40, failing the strict 39-control assertion. Reproduced the discrepancy in the available local ImageMagick 7 environment. This is a test-fixture measurement assumption, not evidence of a jar-rendering defect.
+- Changed only `tools/test_jar_damage_overlay.py`: construct the 39/40 boundary controls using actual ImageMagick AE measurements across nearby candidate source pixel counts, so the strict verifier is tested against the same metric it gates. No production Java, shared CI/Gradle, or foreign branch modified. Code commit `da9bdd6c7900393779a797e36a2f83c8f321e689`.
+- At the prior exact code SHA all other 18 PR-triggered workflows reported SUCCESS, including full NeoForge, native Aura/Crystal, Salis/Nitor and two-view Scan Rune. The Jar client failed before the gameplay step; no new jar gameplay PASS is claimed. New exact-head CI and full native jar run must be inspected separately.
+- Historical fixed audit stays **59/100**, M16 **4/6**, M08 **5/9**. Remaining acceptance: actual jar crack overlay PASS at exact head and, separately, genuine two-client Salis packet/ticket/disconnect and chunk-boundary/reload validation. No merge.
