@@ -55,6 +55,8 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
         final int[] attemptedLogs = {0};
         // A rejected leaf write must not produce a success-shaped but incomplete tree.
         final boolean[] rejectedLeafWrite = {false};
+        // A rejected trunk write also invalidates this attempt; stop later writes.
+        final boolean[] rejectedLogWrite = {false};
         final Map<BlockPos, BlockState> originalLogs = new HashMap<>();
         final Map<BlockPos, BlockState> writtenLogs = new HashMap<>();
         // Only foliage successfully placed by this invocation may be overwritten by its logs.
@@ -83,7 +85,7 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                 (px, py, pz, meta) -> {
                     // A failed canopy write already invalidates this attempt.
                     // Do not place trunk blocks that would immediately need rollback.
-                    if (rejectedLeafWrite[0]) return;
+                    if (rejectedLeafWrite[0] || rejectedLogWrite[0]) return;
                     Direction.Axis axis = meta == 0 ? Direction.Axis.X
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
@@ -97,10 +99,12 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     if (setLogOverOwnLeaves(level, pos, state, leaves, ownLeaves)) {
                         originalLogs.putIfAbsent(pos, original);
                         writtenLogs.put(pos, state);
+                    } else {
+                        rejectedLogWrite[0] = true;
                     }
                 });
         // Every requested log must succeed; a partial skeleton is not a tree.
-        if (rejectedLeafWrite[0] || attemptedLogs[0] == 0 || writtenLogs.size() != attemptedLogs[0]) {
+        if (rejectedLeafWrite[0] || rejectedLogWrite[0] || attemptedLogs[0] == 0 || writtenLogs.size() != attemptedLogs[0]) {
             // Restore logs first, then the remaining canopy. Both passes avoid
             // overwriting positions changed by another writer since our write.
             SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
