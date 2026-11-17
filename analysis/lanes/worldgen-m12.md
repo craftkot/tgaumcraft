@@ -490,3 +490,12 @@
 - Guard 5e4120ff14e7f4f00e8fcc37853110448e795d08: текстовые проверки нового fail-fast и обновление старого условия rollback. Guard не запускался и не является runtime доказательством.
 - Для guard HEAD CircleCI был pending, GitHub Actions PR run пока отсутствовал. Exact-checkout Java, NeoForge compile, native WorldGenLevel GameTest и генерация новых чанков в этом проходе не выполнялись. Feature не зарегистрирован; BETA26 biome/RNG parity не доказан.
 - Далее: дождаться CI точного HEAD, запустить source guard и Java runners из checkout, сделать нативный GameTest с инъекцией отказа setBlock; регистрацию деревьев согласовать отдельно. Main, чужие ветки, Gradle и общие регистры не изменялись; merge нет. Индекс 59/100 без пересчёта.
+
+
+## 17.11.2026 — M12: negative-coordinate Silverwood log regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Compared main...feature/worldgen-m12 before edit: ahead 146, behind 0; inspected parallel feature branches and open PRs including Draft #9.
+- Verified previous HEAD c7347d8cb3ff8e640f8402c0bf2a950515cd0868: GitHub Actions [#3621](https://github.com/craftkot/tgaumcraft/actions/runs/44039926577) completed SUCCESS. This is CI for the previous SHA, not the new test.
+- Test commit [252f817](https://github.com/craftkot/tgaumcraft/commit/252f8175dc134a3d695ffa380ca2d325b72fa3da) adds 64 deterministic assertions to SilverwoodLegacyLogsTest (4 supported heights x 16 seeds). The same skeleton sequence, including metadata and random branches, must remain identical after coordinate normalization between (8,64,8) and (-24,64,-8). This checks negative-coordinate translation invariance only; it does not prove chunk placement, NeoForge or BETA26 RNG parity.
+- The new Java test has been committed but NOT executed in an exact checkout. Exact-head CI, native WorldGenLevel GameTest, actual new-chunk generation, biome registration and client smoke remain unverified. Silverwood Feature remains unregistered; rollback is best-effort. No shared registries, Gradle, main, other branches or merge modified. Historical audit remains 59/100.
+- Next: verify CI for the new SHA, execute tools/test_silverwood_legacy_logs.sh, then add an actual WorldGenLevel failure-injection GameTest without changing shared registration.
