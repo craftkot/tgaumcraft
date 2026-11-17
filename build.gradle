@@ -46,6 +46,8 @@ neoForge {
 }
 
 sourceSets.main.resources.srcDir 'src/generated/resources'
+// Include native GameTest NBT fixtures from the NeoForge-specific resource tree.
+sourceSets.main.resources.srcDir 'src/neoforge/resources'
 
 var generateModMetadata = tasks.register('generateModMetadata', ProcessResources) {
     var replaceProperties = [
