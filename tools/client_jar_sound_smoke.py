@@ -5,10 +5,14 @@ import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 anchor = "  # The initial world is already creative + peaceful, as established"
-if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
+gradle_anchor = "gradle runClient --no-daemon --console=plain"
+if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1 or source.count(gradle_anchor) != 1:
     raise SystemExit("Client boot/audio hooks changed; refuse blind injection")
 head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null",
-                                           "export ALSOFT_DRIVERS=pulse")
+                                           "export ALSOFT_DRIVERS=pulse").replace(
+    gradle_anchor,
+    "gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain",
+)
 body = r'''
   echo 'JAR_REAL_WORLD=YES' | tee -a client-smoke-status.txt
   mkdir -p client-smoke/screenshots

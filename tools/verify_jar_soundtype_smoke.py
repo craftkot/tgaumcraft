@@ -8,6 +8,14 @@ SMOKE = (ROOT / "tools/client_jar_sound_smoke.py").read_text(encoding="utf-8")
 BLOCK = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java").read_text(encoding="utf-8")
 WORKFLOW = (ROOT / ".github/workflows/closure-jar-sound-client.yml").read_text(encoding="utf-8")
 OVERLAY = (ROOT / "tools/verify_jar_damage_overlay.py").read_text(encoding="utf-8")
+INIT_SCRIPT = (ROOT / "tools/gradle-plugin-portal-fallback.init.gradle").read_text(encoding="utf-8")
+CLIENT_BOOT = (ROOT / "tools/client_smoke.sh").read_text(encoding="utf-8")
+
+assert "gradle.beforeSettings" in INIT_SCRIPT
+assert "settings.pluginManagement.repositories.mavenCentral()" in INIT_SCRIPT
+assert 'gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain' in SMOKE
+assert CLIENT_BOOT.count("gradle runClient --no-daemon --console=plain") == 1
+assert "gradle runClient --no-daemon --console=plain" not in SMOKE.split("gradle --init-script", 1)[1].split("runClient", 1)[0]
 
 for hook in ("Break", "Step", "Place", "Hit", "Fall"):
     pattern = r"@Override\s+public SoundEvent get" + hook + r"Sound\(\)\s*\{\s*return ThaumcraftSounds\.JAR\.get\(\);\s*\}"
