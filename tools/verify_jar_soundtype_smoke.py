@@ -99,6 +99,8 @@ assert "JAR_PLACE_ITEM_READY" in SMOKE and "thaumcraft:jar_normal" in SMOKE
 assert "JAR_HIT_BLOCK_RETAINED" in SMOKE
 assert "tools/client_crosshair_locator.py" in SMOKE
 assert "JAR_HIT_CROSSHAIR_DETECTED=YES" in SMOKE
+assert "JAR_HIT_CAPTURE_AFTER_0_30S" not in SMOKE
+assert "JAR_HIT_POINTER_CENTER=" not in SMOKE
 assert "JAR_STEP_STANDING_READY" in SMOKE and "JAR_STEP_MOVED_ON_ROW" in SMOKE
 assert "JAR_FALL_LANDED_ON_JAR" in SMOKE
 assert "JAR_SOUNDTYPE_PLACE_STEP_HIT_FALL=PASS" in SMOKE
