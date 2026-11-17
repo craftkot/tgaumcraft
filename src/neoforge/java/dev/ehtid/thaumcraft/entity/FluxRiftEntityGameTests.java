@@ -93,8 +93,60 @@ public final class FluxRiftEntityGameTests {
         ServerLevel level = helper.getLevel();
         BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
         ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
-        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
 
+        float growthCost = (float) Math.sqrt(10.0D);
+        aura.putChunk(pos, (short) 100, 10.0F, growthCost);
+        FluxRiftEntity growing = createRift(level, pos, 5);
+        growing.setRiftStability(0.0F);
+        tickAtBETA26GrowthPhase(growing, true);
+        if (growing.getRiftSize() != 6 || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("BETA26 scheduled Flux growth must debit sqrt(2*size) and add one size");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH_CADENCE=PASS size=6 flux=0.0 cost=sqrt(10)");
+        growing.discard();
+
+        float offCycleFlux = growthCost + 1.0F;
+        aura.putChunk(pos, (short) 100, 10.0F, offCycleFlux);
+        FluxRiftEntity offCycle = createRift(level, pos, 5);
+        tickAtBETA26GrowthPhase(offCycle, false);
+        if (offCycle.getRiftSize() != 5 || aura.getFlux(pos) != offCycleFlux) {
+            throw new AssertionError("BETA26 Flux growth must not run outside the entity-specific 600-tick phase");
+        }
+        offCycle.discard();
+
+        float insufficientFlux = growthCost - 0.01F;
+        aura.putChunk(pos, (short) 100, 10.0F, insufficientFlux);
+        FluxRiftEntity insufficient = createRift(level, pos, 5);
+        insufficient.tryGrowFromFlux();
+        if (insufficient.getRiftSize() != 5 || aura.getFlux(pos) != insufficientFlux) {
+            throw new AssertionError("BETA26 Flux growth must not partially debit below the sqrt threshold");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, offCycleFlux);
+        FluxRiftEntity veryStable = createRift(level, pos, 5);
+        veryStable.setRiftStability(50.01F);
+        veryStable.tryGrowFromFlux();
+        if (veryStable.getRiftSize() != 5 || aura.getFlux(pos) != offCycleFlux) {
+            throw new AssertionError("BETA26 VERY_STABLE rifts must not grow from Flux");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, growthCost);
+        FluxRiftEntity stabilityBoundary = createRift(level, pos, 5);
+        stabilityBoundary.setRiftStability(50.0F);
+        stabilityBoundary.tryGrowFromFlux();
+        if (stabilityBoundary.getRiftSize() != 6 || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("BETA26 stability 50.0 is STABLE and must remain eligible for growth");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, 100.0F);
+        FluxRiftEntity sizeCap = createRift(level, pos, 100);
+        sizeCap.tryGrowFromFlux();
+        if (sizeCap.getRiftSize() != 100 || aura.getFlux(pos) != 100.0F) {
+            throw new AssertionError("BETA26 Flux growth must stop at size 100 without debiting aura");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH=PASS cadence=600 exact_cost=sqrt(2*size) stability_boundary=50 very_stable=blocked size_cap=100");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity beforeSave = createRift(level, pos, 5);
         beforeSave.setCollapse(true);
         CompoundTag saved = beforeSave.saveWithoutId(new CompoundTag());
@@ -212,6 +264,16 @@ public final class FluxRiftEntityGameTests {
         rift.setRiftSize(size);
         rift.moveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 0.0F, 0.0F);
         return rift;
+    }
+
+    private static void tickAtBETA26GrowthPhase(FluxRiftEntity rift, boolean due) {
+        ServerLevel level = (ServerLevel) rift.level();
+        if (!level.addFreshEntity(rift)) {
+            throw new AssertionError("Unable to register Flux Rift for scheduled growth tick");
+        }
+        int phase = Math.floorMod(rift.getId(), 600);
+        rift.tickCount = due ? Math.floorMod(phase - 1, 600) : phase;
+        rift.tick();
     }
 
     private static RandomSource findCollapseRandom(boolean addVis, boolean explode) {

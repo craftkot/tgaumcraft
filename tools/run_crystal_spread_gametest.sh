@@ -114,6 +114,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE_PRIMORDIAL_PEARL=PASS chance=10 maxSize=100 stage=4..7 item_entity=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_item_entity=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified void_seed=deferred nearby_effects=deferred' || return 1
+    require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_GROWTH=PASS cadence=600 exact_cost=sqrt(2*size) stability_boundary=50 very_stable=blocked size_cap=100' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_TEST_TICKET_RELEASE=PASS bounded=YES forceTicks=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1

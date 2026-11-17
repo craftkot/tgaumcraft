@@ -111,6 +111,11 @@ public final class FluxRiftEntity extends Entity {
             if (tickCount % 120 == 0) {
                 setRiftStability(getRiftStability() - 0.2F);
             }
+            // BETA26 EntityFluxRift.onUpdate: one growth/event opportunity per
+            // entity-specific 600-tick phase, after collapse and stability decay.
+            if (tickCount % 600 == getId() % 600) {
+                tryGrowFromFlux();
+            }
         }
     }
 
@@ -240,6 +245,41 @@ public final class FluxRiftEntity extends Entity {
                     serverLevel, getX(), getY(), getZ(), pearl));
         }
         discard();
+    }
+
+    /**
+     * BETA26 growth branch from EntityFluxRift.onUpdate. A rift consumes
+     * sqrt(2 * size) Flux and grows by one, unless already at size 100 or
+     * classified VERY_STABLE (rift stability strictly greater than 50).
+     */
+    void tryGrowFromFlux() {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        int currentSize = getRiftSize();
+        if (currentSize >= 100 || getRiftStability() > 50.0F) {
+            return;
+        }
+
+        BlockPos pos = blockPosition();
+        float requiredFlux = (float) Math.sqrt(currentSize * 2.0D);
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(serverLevel);
+        if (aura.drainFlux(pos, requiredFlux, true) < requiredFlux) {
+            return;
+        }
+
+        float drained = aura.drainFlux(pos, requiredFlux, false);
+        if (Float.compare(drained, requiredFlux) != 0) {
+            // Preserve the all-or-nothing growth transaction if the aura
+            // changed between the simulation and committed debit.
+            if (drained > 0.0F) {
+                aura.polluteFlux(pos, drained);
+            }
+            return;
+        }
+
+        setRiftSize(currentSize + 1);
     }
 
     @Override
