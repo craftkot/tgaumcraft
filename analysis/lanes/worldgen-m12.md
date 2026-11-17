@@ -443,3 +443,12 @@
 - Guard commit 40b484aecf0c724bf54defb0e8c82a4581dbaa53 checks the zero-log condition and updates stale leaf-write marker in source-level wiring guard. The guard was edited but NOT executed; source-level string assertions cannot prove runtime behavior.
 - Exact-head CI, NeoForge compilation, native WorldGenLevel GameTest, rejected setBlock gameplay and new-chunk generation remain unverified. Feature remains unregistered; BETA26 biome/RNG parity unresolved. No shared registries, Gradle, main, other branches or merges. Historical audit 59/100 unchanged.
 - Next: execute exact source-level guard and Java21 runners, inspect new-head CI; implement native WorldGenLevel failure-injection test and coordinate natural feature registration.
+
+
+## 17.11.2026 — M12: exact-head CI verification and native-test readiness
+
+- Re-read `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` and this lane; checked feature branches, 26 open PRs, and `main...feature/worldgen-m12` (ahead 134, behind 0). Draft PR #9 remains open and unmerged.
+- Confirmed the previously unverified HEAD `3674cd121c812f21a0d264ac8da6ef64032c7563` has GitHub Actions [#3538 SUCCESS](https://github.com/craftkot/tgaumcraft/actions/runs/43996952271). This reports a completed CI workflow, **not** execution of the standalone Silverwood Java tests or native GameTest.
+- Inspected `SilverwoodLegacyFeature.java` and its source-level guard. It remains an isolated, unregistered Feature with canopy-first writes and best-effort rollback; a native `WorldGenLevel` failure-injection harness is still missing. No speculative GameTest or production change was committed in this pass.
+- Local exact checkout remains unavailable: `git ls-remote` fails with `Could not resolve host: github.com`. No local Java 21 runner, NeoForge compile, real Minecraft GameTest or fresh-chunk smoke was executed. BETA26 RNG/biome parity and shared registration coordination remain unresolved. Historical audit remains 59/100.
+- Next: build a native NeoForge GameTest fixture that calls the Feature with a controlled `WorldGenLevel` write failure, execute it in a real NeoForge test server, then coordinate placed-feature/biome registration separately. No edits to main, other branches, registries or Gradle; no merge.
