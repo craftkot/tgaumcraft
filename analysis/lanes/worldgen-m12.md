@@ -531,3 +531,12 @@
 - This is a source-level Java regression only. The new assertions have **not** been executed in this run; NeoForge compile, native GameTest, and fresh-chunk Minecraft worldgen are **not verified** for this commit.
 - Remaining: run exact-SHA Java runner and CI; native `WorldGenLevel.setBlock` failure GameTest; coordinate registry ownership before natural placement; verify original BETA26 RNG/biome parity.
 - No shared registry, Gradle, `main`, other branches, or merges changed. Draft PR #9 remains the integration vehicle.
+
+
+## 17.11.2026 — M12: verified CI and native GameTest integration blocker
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked main...feature/worldgen-m12 (+155/-0), six feature branches and 33 open PRs including Draft #9. Changes remain restricted to this lane.
+- Current pre-entry HEAD: 6c1073bab8af006fd0c14622d135d8c1a88e2604. GitHub Actions [run #3761](https://github.com/craftkot/tgaumcraft/actions/runs/44128231398) completed SUCCESS for that SHA. This is CI status only: no evidence that the standalone SilverwoodLegacyLogsTest or native GameTest ran.
+- Re-read SilverwoodLegacyFeature and SilverwoodLegacyLogs/Test, plus trunk/canopy rollback tests. Feature is still an isolated, unregistered consumer. Its RandomSource-to-java.util.Random seed bridge is explicitly non-parity. Rollback remains best-effort and cannot identify foreign equal-state writes. Existing pure-core tests already cover rejection/continuation and per-position rollback; further duplicate assertions are not a substitute for native gameplay evidence.
+- Exact Git checkout again failed with 'Could not resolve host: github.com'; Java 21 is available, but exact-byte runners and native NeoForge GameTest were not executed. No new production/test code was added in this pass. No worldgen fresh-chunk test, original BETA26 RNG/biome parity or natural registration verified.
+- Next: add an isolated, native GameTest fixture for controlled WorldGenLevel.setBlock rejection, with explicit registration/test execution evidence; coordinate shared registration separately. Keep PR #9 Draft and unmerged. Main, other branches, shared registries and Gradle untouched. Historical audit remains 59/100.
