@@ -74,7 +74,7 @@ public final class AuraGenerationGameTests {
             template = "crystal_spread_empty",
             templateNamespace = ThaumcraftPort.MOD_ID,
             timeoutTicks = 180,
-            required = false
+            required = true
     )
     public static void essentiaMirrorUsesBETA26FaceBounds(GameTestHelper helper) {
         EssentiaMirrorBlock mirror = ThaumcraftBlocks.MIRROR_ESSENTIA.get();
