@@ -3,6 +3,44 @@
 from pathlib import Path
 import sys
 source = Path("tools/client_smoke.sh").read_text()
+
+# The shared client driver is used by other open workstreams, so keep this
+# M16-specific correction inside the generated Salis smoke only.
+bed_placement_old = """  send_chat '/item replace entity @p hotbar.0 with minecraft:red_bed 1'
+  xdotool key --clearmodifiers 1
+  xdotool click 3
+  sleep 2
+  capture 08i-firststeps-real-bed-placed"""
+bed_placement_new = """  send_chat '/item replace entity @p hotbar.0 with minecraft:red_bed 1'
+  # The player stands at z=5.5 and the support block is at z=6. Aim at its
+  # TOP face (center z=6.5): from eye y≈151.62 to y=150 requires ~58°.
+  # The old 45° ray was too shallow at this one-block approach distance.
+  send_chat '/tp @p 2.5 150 5.5 0 58'
+  xdotool key --clearmodifiers 1
+  xdotool click 3
+  sleep 2
+  # Require the actual two-block vanilla bed state before testing sleep.
+  # This catches a missed placement instead of treating a click as success.
+  send_chat '/execute if block 2 150 6 minecraft:red_bed[facing=south,part=foot] if block 2 150 7 minecraft:red_bed[facing=south,part=head] run say FIRSTSTEPS_REAL_BED_PLACED_OK'
+  grep -Fq 'FIRSTSTEPS_REAL_BED_PLACED_OK' client-smoke/client.log
+  capture 08i-firststeps-real-bed-placed"""
+if source.count(bed_placement_old) != 1:
+    raise SystemExit("FIRSTSTEPS bed placement fixture changed; refuse unsafe rewrite")
+source = source.replace(bed_placement_old, bed_placement_new)
+bed_sleep_old = """  # CircleCI #32 confirmed the bed was physically placed, but the old
+  # 45-degree downward look intersected the STONE below its foot, not the
+  # bed collision. The (2.5,150,5.5) eye is ~1.62m above its feet: at
+  # ~2.5m distance a 22-degree look targets the bed mattress, not the
+  # platform. Reorient AFTER placing, with the camera aimed at the bed.
+  send_chat '/tp @p 2.5 150 5.5 0 22'"""
+bed_sleep_new = """  # The bed foot is at z=6 and its center is 1 block from the player at z=5.5.
+  # Eye y≈151.62 to the bed collision center y≈150.28 gives ~53° downward.
+  # The previous 22° angle was based on a false 2.5m distance and passed above it.
+  send_chat '/tp @p 2.5 150 5.5 0 53'"""
+if source.count(bed_sleep_old) != 1:
+    raise SystemExit("FIRSTSTEPS bed sleep fixture changed; refuse unsafe rewrite")
+source = source.replace(bed_sleep_old, bed_sleep_new)
+
 anchor = "  capture 08k-firststeps-real-bookshelf-before-salis\n"
 end = "  # A /give or /item replace does not invoke ItemEntityPickupEvent.Post"
 if source.count(anchor) != 1 or source.count(end) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:

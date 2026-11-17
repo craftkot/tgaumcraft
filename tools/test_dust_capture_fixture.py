@@ -56,6 +56,18 @@ assert "MIN_CORRELATION = 0.20" in matcher_source
 assert "MIN_MARGIN = 0.08" in matcher_source
 assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
 
+
+# FIRSTSTEPS bed setup is a real interaction: require a placed foot/head pair
+# before the player attempts sleep, and aim using the actual one-block geometry.
+place_aim = unique("send_chat '/tp @p 2.5 150 5.5 0 58'")
+place_state = unique("send_chat '/execute if block 2 150 6 minecraft:red_bed[facing=south,part=foot] if block 2 150 7 minecraft:red_bed[facing=south,part=head] run say FIRSTSTEPS_REAL_BED_PLACED_OK'")
+place_ack = unique("grep -Fq 'FIRSTSTEPS_REAL_BED_PLACED_OK' client-smoke/client.log")
+sleep_aim = unique("send_chat '/tp @p 2.5 150 5.5 0 53'")
+wake_gate = unique("  assert_smoke_event WAKE_UNLOCK")
+assert place_aim < place_state < place_ack < sleep_aim < wake_gate
+assert "send_chat '/tp @p 2.5 150 5.5 0 22'" not in generated
+assert "FIRSTSTEPS_REAL_BED_PLACED_OK" in generated
+
 # The first post-world command must be acknowledged by the integrated server.
 # Re-activate the actual window for every send_chat call, not just at title screen.
 assert generated.count('xdotool windowactivate --sync "$WIN"') == 2
