@@ -76,6 +76,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     }
                 },
                 (px, py, pz, meta) -> {
+                    // A failed canopy write already invalidates this attempt.
+                    // Do not place trunk blocks that would immediately need rollback.
+                    if (rejectedLeafWrite[0]) return;
                     Direction.Axis axis = meta == 0 ? Direction.Axis.X
                             : meta == 2 ? Direction.Axis.Z : Direction.Axis.Y;
                     BlockState state = log.hasProperty(RotatedPillarBlock.AXIS)
