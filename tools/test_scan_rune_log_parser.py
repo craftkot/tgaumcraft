@@ -22,13 +22,18 @@ assert rendered[0][10] == "0.51"
 assert rendered[0][11] == "0.51"
 visible = visible_rune_render_samples(rendered)
 assert len(visible) == 1
+assert visible[0][0] == 2
 assert visible[0][2] == 0.24956688
+negative_size = rendered[0][:2] + ("-0.24956688",) + rendered[0][3:]
+negative_visible = visible_rune_render_samples([negative_size])
+assert len(negative_visible) == 1
+assert negative_visible[0][2] == -0.24956688
 dim = rendered[0][:1] + ("0.1",) + rendered[0][2:]
 zero_size = rendered[0][:2] + ("0.0",) + rendered[0][3:]
-assert visible_rune_render_samples([rendered[0], dim, zero_size]) == visible
+assert visible_rune_render_samples([rendered[0], negative_size, dim, zero_size]) == visible + negative_visible
 assert expired[0] == ("2", "45", "45", "0.0")
 assert parse_scan_rune_log("TC_SMOKE_SCAN_RUNE_CREATED=YES face=x lifetime=45") == ([], [], [])
-print("SCAN_RUNE_LOG_PARSER=PASS assertions=15")
+print("SCAN_RUNE_LOG_PARSER=PASS assertions=17")
 
 # The real-client fixture must clear generated terrain from both sight lines.
 # Otherwise the particle log can be internally consistent while proving a scan
