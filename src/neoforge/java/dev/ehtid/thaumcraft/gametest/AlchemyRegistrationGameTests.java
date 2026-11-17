@@ -14,7 +14,7 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 public final class AlchemyRegistrationGameTests {
     private AlchemyRegistrationGameTests() {}
 
-    @GameTest(template = "empty")
+    @GameTest(template = "minecraft:empty")
     public static void mirrorCoreCanary(GameTestHelper helper) {
         var left = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:overworld", 0, 64, 0);
         var right = new LegacyEssentiaMirrorLogic.Endpoint("minecraft:overworld", 10, 64, 0);
