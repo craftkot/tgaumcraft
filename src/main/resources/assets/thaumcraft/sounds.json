@@ -41,6 +41,15 @@
       "thaumcraft:jar4"
     ]
   },
+  "evilportal": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "thaumcraft:evilportal",
+        "stream": false
+      }
+    ]
+  },
   "dust": {
     "category": "block",
     "sounds": [

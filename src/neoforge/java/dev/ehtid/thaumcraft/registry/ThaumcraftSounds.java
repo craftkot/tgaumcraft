@@ -50,6 +50,11 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "dust")));
 
+    // BETA26 SoundsTC.evilportal: periodic Flux Rift ambience.
+    public static final Supplier<SoundEvent> EVILPORTAL = SOUND_EVENTS.register("evilportal",
+            () -> SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "evilportal")));
+
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }

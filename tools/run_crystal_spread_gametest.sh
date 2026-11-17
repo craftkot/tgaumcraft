@@ -118,6 +118,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE_WEAKNESS=PASS very_unstable=3000 unstable=3000 stable=none edge=none' || return 1
     # Keep the required prefix limited to implemented behavior; trailing diagnostics may evolve.
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified' || return 1
+    require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_GROWTH=PASS cadence=600 exact_cost=sqrt(2*size) stability_boundary=50 very_stable=blocked size_cap=100' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_WEIGHTED_EVENTS=PASS trigger=strict stability_plus_size weights=50,10,20,20,1 collapse=YES unsupported=NOOP' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2' || return 1
@@ -139,6 +140,7 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_GENERATION_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_SPAWN_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_COLLAPSE_SKIPPED_PHASE=read' || return 1
+    require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_CHUNK_QUEUE_SKIPPED_PHASE=read' || return 1
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS no_force_load=YES deferred=1 resumed=1 crystal_placed=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1

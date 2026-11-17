@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.entity;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -123,7 +124,22 @@ public final class FluxRiftEntity extends Entity {
                 tryGrowFromFlux();
                 tryExecuteInstabilityEvent();
             }
+            // BETA26 EntityFluxRift.onUpdate: the living Rift emits evilportal every 300 ticks.
+            playAmbientSoundIfDue(random);
         }
+    }
+
+    /**
+     * BETA26 EntityFluxRift.onUpdate plays evilportal when ticksExisted is divisible by 300.
+     * Entity.playSound preserves the original Entity sound category (NEUTRAL in BETA26).
+     */
+    void playAmbientSoundIfDue(RandomSource sourceRandom) {
+        if (tickCount % 300 != 0 || isRemoved()) {
+            return;
+        }
+        float volume = (float) (0.15D + sourceRandom.nextGaussian() * 0.066D);
+        float pitch = (float) (0.75D + sourceRandom.nextGaussian() * 0.1D);
+        playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch);
     }
 
     @Override
