@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -10,8 +11,14 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -20,8 +27,8 @@ import java.util.List;
  * Initial BETA26 Flux Rift entity state.
  *
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
- * polycone geometry, per-tick segment entity damage/item removal and timed
- * stability decay. Block ray-trace/destruction, growth, weighted events and
+ * polycone geometry, per-tick segment block destruction/entity damage/item removal,
+ * and timed stability decay. Growth, weighted events and
  * collapse behavior remain separate follow-up work; this entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -83,7 +90,7 @@ public final class FluxRiftEntity extends Entity {
             if (getRiftSeed() == 0) {
                 setRiftSeed(level().getRandom().nextInt());
             }
-            applySegmentEntityEffects();
+            applySegmentEffects();
             // BETA26 EntityFluxRift.onUpdate applies this on ticksExisted % 120 == 0.
             if (tickCount % 120 == 0) {
                 setRiftStability(getRiftStability() - 0.2F);
@@ -98,23 +105,50 @@ public final class FluxRiftEntity extends Entity {
     }
 
     /**
-     * Applies the BETA26 per-tick entity effect at one randomly selected
-     * adjacent pair of seeded polycone points. The source EntityUtils query is
-     * an axis-aligned cube with a 0.5-block half-extent, not a sphere.
+     * Applies the BETA26 per-tick effects to one randomly selected adjacent
+     * polycone segment. The original ray trace ignores fluids and only removes
+     * collidable blocks whose hardness is non-negative.
      */
-    private void applySegmentEntityEffects() {
+    private void applySegmentEffects() {
         List<LegacyFluxRiftGeometry.Point> points = getGeometry();
         if (points.size() < 2) {
             return;
         }
 
         int pointIndex = level().getRandom().nextInt(points.size() - 1);
-        LegacyFluxRiftGeometry.Point point = points.get(pointIndex);
-        double x = getX() + point.x();
-        double y = getY() + point.y();
-        double z = getZ() + point.z();
-        AABB query = new AABB(x, y, z, x, y, z).inflate(0.5D);
+        applySegmentEffectsAt(pointIndex);
+    }
 
+    /**
+     * Executes the production effects for one explicit segment. Package access
+     * lets the same-package Native GameTest exercise a deterministic ray without
+     * replacing the world's random source used by normal ticks.
+     */
+    void applySegmentEffectsAt(int pointIndex) {
+        List<LegacyFluxRiftGeometry.Point> points = getGeometry();
+        if (pointIndex < 0 || pointIndex >= points.size() - 1) {
+            return;
+        }
+
+        LegacyFluxRiftGeometry.Point point = points.get(pointIndex);
+        LegacyFluxRiftGeometry.Point nextPoint = points.get(pointIndex + 1);
+        Vec3 start = new Vec3(getX() + point.x(), getY() + point.y(), getZ() + point.z());
+        Vec3 end = new Vec3(getX() + nextPoint.x(), getY() + nextPoint.y(), getZ() + nextPoint.z());
+
+        // BETA26 rayTraceBlocks(start, end, false): do not stop on fluids.
+        BlockHitResult blockHit = level().clip(new ClipContext(
+                start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (blockHit.getType() == HitResult.Type.BLOCK) {
+            BlockPos blockPos = blockHit.getBlockPos();
+            BlockState state = level().getBlockState(blockPos);
+            if (!state.isAir() && state.getDestroySpeed(level(), blockPos) >= 0.0F) {
+                level().levelEvent(2001, blockPos, Block.getId(state));
+                level().setBlock(blockPos, Blocks.AIR.defaultBlockState(), 3);
+            }
+        }
+
+        // EntityUtils.getEntitiesInRange uses this same segment start and a 0.5 AABB.
+        AABB query = new AABB(start.x, start.y, start.z, start.x, start.y, start.z).inflate(0.5D);
         for (Entity target : level().getEntitiesOfClass(Entity.class, query)) {
             if (target == this || !target.isAlive()) {
                 continue;
