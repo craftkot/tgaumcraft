@@ -1003,3 +1003,9 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Changed files: `tools/client_jar_sound_smoke.py`, `tools/verify_jar_soundtype_smoke.py`, `tools/test_jar_damage_overlay.py`, and this lane journal. No production Java, global Gradle, registry, workflow or localization files changed. Path-overlap check across all other open PRs #1–#3 and #5–#31 found no collision for these three tool/test paths.
 - This commit makes the **next** exact-head real-client run the acceptance proof. The previous run is evidence that the strict threshold should pass, but it did not execute the strict call in the gameplay sequence; do not backdate the new gate. No score is awarded: fixed audit remains 59/100, M16 4/6, M08 5/9. PR #4 stays Draft/Open/Unmerged.
 - Next: require the new Jar real-client run to pass `JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS` from the actual ROI, alongside retained block and original PCM. Then continue native two-client Salis recipient isolation; do not infer it from single-client lifecycle logs.
+
+
+### 2026-11-17 — jar crack-overlay threshold fixture correction
+
+- Post-commit review caught one stale positive-fixture assertion in `tools/test_jar_damage_overlay.py`: the fixture had been reduced from 60 to exactly 40 pixels, but its old assertion still required at least 60. Replaced it with exact 39-pixel negative and 40-pixel positive checks. The first PR-triggered CI wave from the preceding commit may fail this test; only the new HEAD is eligible for acceptance.
+- No production files changed. Next: inspect the exact-head `jar SoundType and interaction audio` workflow and require both the threshold test and real-client `JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS` marker.

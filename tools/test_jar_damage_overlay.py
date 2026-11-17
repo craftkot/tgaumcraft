@@ -41,7 +41,8 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     cracked.write_bytes(ppm(bytes(overlay)))
 
     assert changed_pixels(before, noisy) == 0, "low-amplitude frame noise must be ignored"
-    assert changed_pixels(before, cracked) >= 60, "high-contrast crack pixels must remain visible"
+    assert changed_pixels(before, below) == 39, "below-threshold control must contain 39 changed pixels"
+    assert changed_pixels(before, cracked) == 40, "positive crack control must contain exactly 40 changed pixels"
     assert diagnose(before, noisy) == 0, "diagnostic mode must report a missing overlay without failing"
     assert diagnose(before, below) == 39, "diagnostic mode must report the below-threshold count"
     assert diagnose(before, cracked) == 40, "diagnostic mode must report the threshold-positive overlay"
