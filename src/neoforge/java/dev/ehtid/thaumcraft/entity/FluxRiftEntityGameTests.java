@@ -100,7 +100,13 @@ public final class FluxRiftEntityGameTests {
         growing.setRiftStability(0.0F);
         tickAtBETA26GrowthPhase(growing, true);
         if (growing.getRiftSize() != 6 || aura.getFlux(pos) != 0.0F) {
-            throw new AssertionError("BETA26 scheduled Flux growth must debit sqrt(2*size) and add one size");
+            throw new AssertionError("BETA26 scheduled Flux growth mismatch"
+                    + " size=" + growing.getRiftSize()
+                    + " flux=" + aura.getFlux(pos)
+                    + " tickCount=" + growing.tickCount
+                    + " entityId=" + growing.getId()
+                    + " phase=" + Math.floorMod(growing.getId(), 600)
+                    + " stability=" + growing.getRiftStability());
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH_CADENCE=PASS size=6 flux=0.0 cost=sqrt(10)");
         growing.discard();
@@ -272,7 +278,10 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("Unable to register Flux Rift for scheduled growth tick");
         }
         int phase = Math.floorMod(rift.getId(), 600);
-        rift.tickCount = due ? Math.floorMod(phase - 1, 600) : phase;
+        // ServerLevel.commonTick increments tickCount before Entity.tick().
+        // This focused test invokes tick() directly, so set the post-commonTick
+        // value instead of expecting super.tick() to increment it.
+        rift.tickCount = due ? phase : Math.floorMod(phase + 1, 600);
         rift.tick();
     }
 
