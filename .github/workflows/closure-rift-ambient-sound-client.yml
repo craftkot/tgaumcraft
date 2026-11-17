@@ -72,6 +72,8 @@ jobs:
           pactl info >/dev/null
           pactl load-module module-null-sink sink_name=tc_rift_sink rate=48000 channels=2
           pactl set-default-sink tc_rift_sink
+          test "$(pactl get-default-sink)" = "tc_rift_sink"
+          export PULSE_SINK=tc_rift_sink
           bash client-rift-generated.sh
       - name: Upload actual client PCM, screenshots and logs
         if: always()

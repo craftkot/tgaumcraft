@@ -89,7 +89,36 @@ if source.count(old_send) != 1:
 source = source.replace(old_send, new_send)
 if source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("OpenAL driver fixture changed; refuse unverified audio routing")
-source = source.replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
+audio_driver_setup = """export ALSOFT_DRIVERS=pulse
+export ALSOFT_LOGLEVEL=3
+export ALSOFT_LOGFILE="$PWD/client-smoke/openal.log"
+printf '%s\\n' '[general]' 'drivers=pulse' > "$HOME/.alsoftrc"
+echo "RIFT_AUDIO_ENV=ALSOFT_DRIVERS=$ALSOFT_DRIVERS PULSE_SERVER=$PULSE_SERVER PULSE_SINK=$PULSE_SINK XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR" | tee -a client-smoke-status.txt
+"""
+source = source.replace("export ALSOFT_DRIVERS=null", audio_driver_setup)
+if source.count("export ALSOFT_DRIVERS=pulse") != 1 or "export ALSOFT_DRIVERS=null" in source:
+    raise SystemExit("Generated client did not select PulseAudio exclusively")
+if source.count("CLIENT_PID=$!") != 1:
+    raise SystemExit("Minecraft launch anchor changed; refuse OpenAL readiness check")
+openal_ready_check = """CLIENT_PID=$!
+for i in $(seq 1 240); do
+  if grep -Fq 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null; then break; fi
+  sleep 0.25
+done
+openal_device_line="$(grep -F 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null | tail -n 1 || true)"
+if [ -z "$openal_device_line" ]; then
+  echo 'RIFT_OPENAL_DEVICE=FAIL no-device-log' | tee -a client-smoke-status.txt
+  cat client-smoke/openal.log >&2 || true
+  exit 1
+fi
+if [[ "$openal_device_line" == *"Null Output"* ]] || [[ "$openal_device_line" != *"PulseAudio"* ]]; then
+  echo "RIFT_OPENAL_DEVICE=FAIL $openal_device_line" | tee -a client-smoke-status.txt
+  cat client-smoke/openal.log >&2 || true
+  exit 1
+fi
+echo "RIFT_OPENAL_DEVICE=PASS $openal_device_line" | tee -a client-smoke-status.txt
+"""
+source = source.replace("CLIENT_PID=$!", openal_ready_check)
 
 suffix_marker = "\nelse\n  echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED'"
 if full_source.count(suffix_marker) != 1:
@@ -136,6 +165,14 @@ probe = r'''
   # negative Gaussian volume sample without altering production randomness.
   sleep 46
   wait "$rift_capture_pid" || test "$?" -eq 124
+  sink_id="$(pactl list short sinks | awk '$2 == "tc_rift_sink" { print $1; exit }')"
+  if [ -z "$sink_id" ] || ! pactl list short sink-inputs | awk -v sink="$sink_id" '$2 == sink { found=1 } END { exit !found }'; then
+    echo "RIFT_PULSE_SINK_INPUT=FAIL sink_id=$sink_id" | tee -a client-smoke-status.txt
+    pactl list short sink-inputs >&2 || true
+    cat client-smoke/openal.log >&2 || true
+    exit 1
+  fi
+  echo "RIFT_PULSE_SINK_INPUT=PASS sink_id=$sink_id" | tee -a client-smoke-status.txt
   python3 tools/match_rift_audio_pcm.py \
     client-smoke/rift-baseline.pcm client-smoke/rift-event.pcm \
     src/main/resources/assets/thaumcraft/sounds/evilportal.ogg \
