@@ -29,6 +29,39 @@ public final class SilverwoodLegacyTreeTest {
                 assertions += 2;
             }
         }
+        // Simulate a rejected canopy write without changing legacy RNG traversal.
+        // This is a pure-core callback test, NOT a WorldGenLevel.setBlock GameTest.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed : new long[]{0L, 1L, 99L, 20261117L}) {
+                Random baseline = new Random(seed);
+                SilverwoodLegacyTree.place(8, 70, 8, height, baseline,
+                        (x, y, z) -> true, (x, y, z) -> {},
+                        (x, y, z, meta) -> {});
+                Random rejected = new Random(seed);
+                int[] attemptedLeaves = {0};
+                int[] acceptedLeaves = {0};
+                int[] attemptedLogs = {0};
+                boolean[] failed = {false};
+                SilverwoodLegacyTree.place(8, 70, 8, height, rejected,
+                        (x, y, z) -> true,
+                        (x, y, z) -> {
+                            if (failed[0]) return;
+                            attemptedLeaves[0]++;
+                            if (attemptedLeaves[0] == 3) failed[0] = true;
+                            else acceptedLeaves[0]++;
+                        },
+                        (x, y, z, meta) -> {
+                            if (!failed[0]) attemptedLogs[0]++;
+                        });
+                check(failed[0], "failure injection not reached");
+                check(attemptedLeaves[0] == 3, "extra leaf writes after rejection");
+                check(acceptedLeaves[0] == 2, "wrong accepted leaf count");
+                check(attemptedLogs[0] == 0, "trunk writes after rejected canopy");
+                check(baseline.nextLong() == rejected.nextLong(),
+                        "rejected canopy changed legacy RNG continuation");
+                assertions += 5;
+            }
+        }
         Random invalid = new Random(7);
         int[] writes = {0};
         try {
