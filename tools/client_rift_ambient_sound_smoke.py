@@ -2,7 +2,8 @@
 """Generate a focused real Minecraft Flux Rift ambient-sound smoke."""
 from pathlib import Path
 
-source = Path("tools/client_smoke.sh").read_text()
+full_source = Path("tools/client_smoke.sh").read_text()
+source = full_source
 marker = "  # Focused alchemy-only regression: actual item + coal enters a real"
 if source.count(marker) != 1:
     raise SystemExit("Shared client smoke anchor changed; refuse unsafe generation")
@@ -86,9 +87,13 @@ if source.count("export ALSOFT_DRIVERS=null") != 1:
 source = source.replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
 
 suffix_marker = "\nelse\n  echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED'"
-if source.count(suffix_marker) != 1:
+if full_source.count(suffix_marker) != 1:
     raise SystemExit("Shared integrated-world fallback anchor changed")
-suffix = source[source.index(suffix_marker):]
+suffix = full_source[full_source.index(suffix_marker):]
+suffix = suffix.replace(
+    "echo 'PASS: real Minecraft client world, overhead crucible PNGs captured'",
+    "echo 'PASS: real Minecraft client Flux Rift ambient sound captured'",
+)
 suffix = suffix.replace(
     "echo 'PASS: real Minecraft client world, overhead crucible PNGs captured'",
     "echo 'PASS: real Minecraft client Flux Rift ambient sound captured'",

@@ -1183,3 +1183,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Precision correction before acceptance: BETA26 uses a `0.15f` literal promoted to double by the Gaussian expression (exact value `0.15000000596046448`), not a `0.15d` literal. Production, GameTest expected values, and source verifier now preserve that float-to-double promotion exactly.
 
 - Acceptance hygiene: the native GameTest marker is emitted only after `helper.succeed()` and its fake player/recorder/Rift are cleaned up. The generated client smoke now labels its final result as Flux Rift audio rather than inheriting the shared crucible-smoke label.
+
+
+### 2026-11-17 — exact-head CI blocker correction
+
+- Native NeoForge compilation exposed two test-only symbols: `Packet` belongs to `net.minecraft.network.protocol`, and the Rift EntityType helper must be imported from `dev.ehtid.thaumcraft.registry.FluxRiftRegistration`. Both now match the already compiling `FluxRiftEntityGameTests` source.
+- The real-client workflow's original-asset verifier passed, but its generated driver failed because the fallback suffix was searched in the prefix after truncation. The generator now retains the full shared script for suffix extraction and replaces the inherited crucible success label with the Rift-audio result.
+- These are actual CI failures, not accepted checks. New exact-head build, GameTest and client runs are required before the feature can be considered complete.
