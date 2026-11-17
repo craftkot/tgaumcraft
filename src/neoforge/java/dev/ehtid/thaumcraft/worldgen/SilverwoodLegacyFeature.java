@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import net.minecraft.util.RandomSource;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,7 +23,8 @@ import net.minecraft.world.level.levelgen.feature.configurations.NoneFeatureConf
 /**
  * Isolated, unregistered NeoForge consumer for the M12 Silverwood write phases.
  * Block states are injected; the shared Thaumcraft registries are not modified.
- * The RandomSource-to-Random seed bridge is NOT exact legacy RNG parity.
+ * Uses the feature's RandomSource directly for legacy nextInt calls.
+ * This preserves the caller's draw stream, but does NOT prove BETA26 RNG parity.
  */
 public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfiguration> {
     private final BlockState log;
@@ -38,8 +40,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
     public boolean place(FeaturePlaceContext<NoneFeatureConfiguration> context) {
         WorldGenLevel level = context.level();
         BlockPos origin = context.origin();
-        // Explicit compatibility seam: modern RandomSource is not java.util.Random.
-        Random random = new Random(context.random().nextLong());
+        // Do not consume an extra nextLong() to reseed a second generator.
+        // The archived canopy/log phases only call nextInt(bound).
+        Random random = new FeatureRandomAdapter(context.random());
         int height = 7 + random.nextInt(4);
         int x = origin.getX(), y = origin.getY(), z = origin.getZ();
         if (!SilverwoodPlacementPreflight.mayPlace(
@@ -114,6 +117,30 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
             return false;
         }
         return true;
+    }
+
+    /**
+     * Bridges the core algorithm's java.util.Random signature without reseeding.
+     * Only nextInt(bound) is supported by the archived Silverwood phases; fail
+     * closed if a future change starts requesting other random operations.
+     */
+    private static final class FeatureRandomAdapter extends Random {
+        private final RandomSource source;
+
+        FeatureRandomAdapter(RandomSource source) {
+            super(0L);
+            this.source = java.util.Objects.requireNonNull(source, "source");
+        }
+
+        @Override
+        public int nextInt(int bound) {
+            return source.nextInt(bound);
+        }
+
+        @Override
+        protected int next(int bits) {
+            throw new UnsupportedOperationException("Silverwood RNG adapter supports nextInt(bound) only");
+        }
     }
 
     /** Logs are emitted after canopy; permit replacing this tree's own leaf state. */
