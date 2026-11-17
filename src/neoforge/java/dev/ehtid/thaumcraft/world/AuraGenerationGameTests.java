@@ -1291,7 +1291,11 @@ public final class AuraGenerationGameTests {
             int elapsedIntervals = Math.floorDiv(rift.tickCount, 120) - initialTickBucket;
             if (elapsedIntervals == 0) {
                 if (remainingTicks <= 1) {
-                    throw new AssertionError("Flux Rift did not reach its next 120-tick stability interval");
+                    throw new AssertionError("Flux Rift did not reach its next 120-tick stability interval: entityTicks="
+                            + rift.tickCount + " initialBucket=" + initialTickBucket
+                            + " remaining=" + remainingTicks + " removed=" + rift.isRemoved()
+                            + " chunkLoaded=" + rift.level().hasChunkAt(rift.blockPosition())
+                            + " stability=" + rift.getRiftStability());
                 }
                 awaitFluxRiftStabilityDecay(
                         helper, rift, initialTickBucket, initialStability, remainingTicks - 1);
