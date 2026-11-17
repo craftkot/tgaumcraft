@@ -64,6 +64,10 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
         SilverwoodLegacyTree.place(x, y, z, height, random,
                 (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))),
                 (px, py, pz) -> {
+                    // Keep the legacy RNG traversal, but stop mutating the world
+                    // after the first rejected canopy write. Rollback below still
+                    // restores foliage successfully written before the rejection.
+                    if (rejectedLeafWrite[0]) return;
                     BlockPos pos = new BlockPos(px, py, pz);
                     BlockState before = level.getBlockState(pos);
                     if (canReplace(before)) {
