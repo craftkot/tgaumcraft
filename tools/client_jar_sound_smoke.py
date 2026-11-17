@@ -338,10 +338,8 @@ PY
   python3 tools/match_jar_audio_pcm.py client-smoke/place-baseline.pcm client-smoke/place-event-window.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/place-source-match.txt
   echo 'JAR_PLACE_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
 
-  # M43 HIT: SoundType hit audio belongs to the continuing block-break loop;
-  # a 0.12s tap can end before that tick-driven loop emits anything. Hold for
-  # about six client ticks (0.30s), still below the 0.3-hardness jar's bare-hand
-  # break time. The authoritative server block check below rejects any break.
+  # M43 HIT: SoundType hit audio belongs to the continuing block-break loop.
+  # Mining Fatigue I creates a longer non-breaking window for a real crack frame.
   send_chat '/item replace entity @p hotbar.0 with minecraft:air'
   # Slow only this survival test with vanilla Mining Fatigue I so the client
   # can render several crack stages without destroying the 0.3-hardness jar.
@@ -385,7 +383,7 @@ PY
   sleep 0.6
   xdotool mousedown 1
   # Hold long enough for several real client ticks under Mining Fatigue I.
-  # The 0.8s wall-clock window stays below the 0.3-hardness jar's break time.
+  # The 0.8s wall-clock window stays below its fatigue-adjusted break time.
   sleep 0.80
   echo 'JAR_HIT_CAPTURE_AFTER_0_80S=YES' | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100b-jar-hit-damage-overlay.png
