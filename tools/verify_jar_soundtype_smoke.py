@@ -66,7 +66,14 @@ for name, (baseline, event, window, first, last, state_marker, pass_marker, acti
 
 assert positions == sorted(positions), "SoundType scenarios must run place -> hit -> step -> fall"
 hit_section = SMOKE.split("# M43 HIT:", 1)[1].split("# Rebuild a five-block row", 1)[0]
-assert hit_section.index("xdotool mousedown 1") < hit_section.index("sleep 0.80") < hit_section.index("JAR_HIT_CAPTURE_AFTER_0_80S=YES") < hit_section.index("100b-jar-hit-damage-overlay.png") < hit_section.index("xdotool mouseup 1"), (
+press_pos = hit_section.index("xdotool mousedown 1")
+# The same section has an earlier 0.80s no-hit control delay. Search for the
+# fatigue-controlled hold only after the actual left-button press.
+hold_pos = hit_section.index("sleep 0.80", press_pos)
+capture_marker_pos = hit_section.index("JAR_HIT_CAPTURE_AFTER_0_80S=YES")
+damage_frame_pos = hit_section.index("100b-jar-hit-damage-overlay.png")
+release_pos = hit_section.index("xdotool mouseup 1")
+assert press_pos < hold_pos < capture_marker_pos < damage_frame_pos < release_pos, (
     "Hit probe must capture the damage overlay after the complete 0.80s fatigue-controlled hold and before releasing the left button"
 )
 assert "100-pre-hit-viewport.png" in hit_section, "Hit probe must preserve the viewport frame used for crosshair detection"
