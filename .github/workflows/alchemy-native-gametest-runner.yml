@@ -7,11 +7,13 @@ on:
       - fix/alchemy-gametest-ci-trigger-2026-11-16
       - fix/alchemy-canary-gametest-trigger-2026-11-17
       - fix/alchemy-gametest-template-2026-11-17
+      - fix/alchemy-template-pr-ci-2026-11-17
   pull_request:
     branches:
       - integration/alchemy-core-candidate-2026-11-16
       - fix/alchemy-gametest-fail-closed-2026-11-16
       - validation/alchemy-registered-gametest-2026-11-17
+      - fix/alchemy-gametest-template-2026-11-17
   workflow_dispatch:
 
 jobs:
