@@ -1,6 +1,8 @@
 package dev.ehtid.thaumcraft.world;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
+import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.port.core.AuraGenerationLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftTriggerLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyModernBiomeCompatibility;
@@ -20,6 +22,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.PalettedContainer;
@@ -172,6 +175,7 @@ public final class AuraGenerationGameTests {
         assertFluxNeighborRedistribution(level, center);
         assertVisFluxConversion(level, center);
         assertFluxRiftTriggerQueue(level, center);
+        assertFluxRiftSpawnAndDebit(level, center);
 
         CompoundTag serialized = aura.save(new CompoundTag(), level.registryAccess());
         ThaumcraftAuraSavedData restored = ThaumcraftAuraSavedData.load(serialized, level.registryAccess());
@@ -1149,6 +1153,88 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("Pure BETA26 Flux-rift trigger probability diverged");
         }
         System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES");
+    }
+
+
+    private static void assertFluxRiftSpawnAndDebit(ServerLevel level, BlockPos anchor) {
+        int chunkX = (anchor.getX() >> 4) + 512;
+        int chunkZ = (anchor.getZ() >> 4) + 512;
+        level.getChunk(chunkX, chunkZ);
+        BlockPos sample = new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
+
+        ThaumcraftAuraSavedData successful = new ThaumcraftAuraSavedData();
+        successful.putChunk(sample, (short) 100, 0.0F, 1000.0F);
+        successful.processAuraChunks(level, 2, bound -> 0, () -> 0.0D);
+        if (!FluxRiftSpawnEvents.consumePendingTrigger(level, successful)) {
+            throw new AssertionError("BETA26 pending Flux trigger did not create a Rift above the strict size threshold");
+        }
+        if (successful.takePendingRiftTrigger() != null) {
+            throw new AssertionError("Flux Rift consumer did not clear the transient trigger");
+        }
+
+        AABB successArea = new AABB(
+                chunkX * 16 - 32.0D, level.getMinBuildHeight(), chunkZ * 16 - 32.0D,
+                chunkX * 16 + 48.0D, level.getMaxBuildHeight(), chunkZ * 16 + 48.0D
+        );
+        var spawned = level.getEntitiesOfClass(FluxRiftEntity.class, successArea);
+        int expectedSize = (int) Math.sqrt(3000.0D);
+        float expectedFlux = 1000.0F - (float) Math.sqrt(3000.0D);
+        if (spawned.size() != 1
+                || spawned.get(0).getRiftSize() != expectedSize
+                || Math.abs(successful.getFlux(sample) - expectedFlux) > 0.001F) {
+            throw new AssertionError("Flux Rift spawn/debit transaction mismatch: entities=" + spawned.size()
+                    + " size=" + (spawned.isEmpty() ? -1 : spawned.get(0).getRiftSize())
+                    + " flux=" + successful.getFlux(sample) + " expected=" + expectedFlux);
+        }
+
+        FluxRiftEntity rift = spawned.get(0);
+        int expectedPoints = ((int) Math.ceil(expectedSize / 3.0F)) * 2 + 2;
+        var geometry = rift.getGeometry();
+        if (geometry.size() != expectedPoints
+                || geometry.get(0).width() != 0.0F
+                || geometry.get(geometry.size() - 1).width() != 0.0F
+                || !geometry.equals(rift.getGeometry())) {
+            throw new AssertionError("BETA26 seeded Flux Rift polycone geometry mismatch: points=" + geometry.size());
+        }
+        rift.discard();
+        System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN=PASS size=54 flux=1000_to_945.23 geometry=38");
+
+        int lowChunkX = chunkX + 64;
+        level.getChunk(lowChunkX, chunkZ);
+        BlockPos lowSample = new BlockPos(lowChunkX * 16 + 8, 0, chunkZ * 16 + 8);
+        float exactBoundaryFlux = 25.0F / 3.0F;
+        ThaumcraftAuraSavedData threshold = new ThaumcraftAuraSavedData();
+        threshold.putChunk(lowSample, (short) 1, 0.0F, exactBoundaryFlux);
+        threshold.processAuraChunks(level, 2, bound -> 0, () -> 0.0D);
+        if (FluxRiftSpawnEvents.consumePendingTrigger(level, threshold)
+                || Math.abs(threshold.getFlux(lowSample) - exactBoundaryFlux) > 0.00001F) {
+            throw new AssertionError("Flux Rift must reject size == 5 without consuming Flux");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_THRESHOLD=PASS exact_size=5 no_spawn=YES no_debit=YES");
+
+        int nearChunkX = chunkX + 128;
+        level.getChunk(nearChunkX, chunkZ);
+        BlockPos nearSample = new BlockPos(nearChunkX * 16 + 8, 0, chunkZ * 16 + 8);
+        ThaumcraftAuraSavedData nearby = new ThaumcraftAuraSavedData();
+        nearby.putChunk(nearSample, (short) 100, 0.0F, 1000.0F);
+        int centerX = nearChunkX * 16 + 8;
+        int centerZ = chunkZ * 16 + 8;
+        BlockPos surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, centerX, centerZ);
+        FluxRiftEntity blocker = new FluxRiftEntity(FluxRiftRegistration.get(), level);
+        blocker.setRiftSeed(1);
+        blocker.setRiftSize(10);
+        blocker.moveTo(centerX + 0.5D, surface.getY() + 0.5D, centerZ + 0.5D, 0.0F, 0.0F);
+        if (!level.addFreshEntity(blocker)) {
+            throw new AssertionError("Unable to place the nearby Rift guard fixture");
+        }
+        boolean duplicateSpawned = FluxRiftSpawnEvents.trySpawnRift(
+                level, nearby, new BlockPos(nearChunkX * 16, 0, chunkZ * 16));
+        if (duplicateSpawned || Math.abs(nearby.getFlux(nearSample) - 1000.0F) > 0.001F) {
+            throw new AssertionError("Nearby Rift guard did not reject spawn before Flux debit");
+        }
+        blocker.discard();
+        System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
     }
 
     private static void assertCrystalWorldGenQueueWaitsForCardinalNeighbors(
