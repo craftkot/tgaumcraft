@@ -6,6 +6,8 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.Level;
@@ -80,6 +82,7 @@ public final class FluxRiftEntity extends Entity {
             if (getRiftSeed() == 0) {
                 setRiftSeed(level().getRandom().nextInt());
             }
+            applySegmentEntityEffects();
             // BETA26 EntityFluxRift.onUpdate applies this on ticksExisted % 120 == 0.
             if (tickCount % 120 == 0) {
                 setRiftStability(getRiftStability() - 0.2F);
@@ -91,6 +94,43 @@ public final class FluxRiftEntity extends Entity {
     public void move(MoverType type, Vec3 movement) {
         // BETA26 EntityFluxRift.move(MoverType, double, double, double) is
         // intentionally empty: a Rift is anchored and cannot be pushed or moved.
+    }
+
+    /**
+     * Applies the BETA26 per-tick entity effect at one randomly selected
+     * adjacent pair of seeded polycone points. The source EntityUtils query is
+     * an axis-aligned cube with a 0.5-block half-extent, not a sphere.
+     */
+    private void applySegmentEntityEffects() {
+        List<LegacyFluxRiftGeometry.Point> points = getGeometry();
+        if (points.size() < 2) {
+            return;
+        }
+
+        int pointIndex = level().getRandom().nextInt(points.size() - 1);
+        LegacyFluxRiftGeometry.Point point = points.get(pointIndex);
+        double x = getX() + point.x();
+        double y = getY() + point.y();
+        double z = getZ() + point.z();
+        AABB query = new AABB(x, y, z, x, y, z).inflate(0.5D);
+
+        for (Entity target : level().getEntitiesOfClass(Entity.class, query)) {
+            if (target == this || !target.isAlive()) {
+                continue;
+            }
+            if (target instanceof Player player && player.isCreative()) {
+                continue;
+            }
+
+            try {
+                target.hurt(level().damageSources().outOfWorld(), 2.0F);
+                if (target instanceof ItemEntity) {
+                    target.discard();
+                }
+            } catch (Exception ignored) {
+                // BETA26 isolates failures per target and continues the tick.
+            }
+        }
     }
 
     @Override

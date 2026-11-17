@@ -17,6 +17,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DimensionDataStorage;
@@ -36,6 +41,8 @@ import net.neoforged.neoforge.common.IOUtilities;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -173,6 +180,7 @@ public final class AuraGenerationGameTests {
                 throw new AssertionError("BETA26 Flux Rift must ignore Entity.move and retain its anchored AABB");
             }
             System.out.println("TC_GAMETEST_FLUX_RIFT_IMMOBILE=PASS move=ignored position=stable");
+            assertFluxRiftSegmentEntityEffects(level, rift);
 
             rift.setRiftStability(10.0F);
             int initialStabilityBucket = Math.floorDiv(rift.tickCount, 120);
@@ -220,6 +228,68 @@ public final class AuraGenerationGameTests {
                 awaitFluxRiftStabilityDecay(helper, level, riftChunk, rift, initialStabilityBucket, 10.0F, 130);
             });
         });
+    }
+
+    private static void assertFluxRiftSegmentEntityEffects(ServerLevel level, FluxRiftEntity rift) {
+        List<Pig> pigs = new ArrayList<>();
+        List<ItemEntity> itemEntities = new ArrayList<>();
+        List<LegacyFluxRiftGeometry.Point> points = rift.getGeometry();
+        if (points.size() < 2) {
+            throw new AssertionError("Flux Rift fixture has no adjacent geometry points");
+        }
+
+        // The production tick chooses any point except the final endpoint.
+        // Place one living target and one item at every eligible point so the
+        // random choice is deterministic in outcome without replacing RNG.
+        for (int index = 0; index < points.size() - 1; index++) {
+            LegacyFluxRiftGeometry.Point point = points.get(index);
+            double x = rift.getX() + point.x();
+            double y = rift.getY() + point.y();
+            double z = rift.getZ() + point.z();
+
+            Pig pig = EntityType.PIG.create(level);
+            if (pig == null) {
+                throw new AssertionError("Unable to create Flux Rift living-target fixture");
+            }
+            pig.setNoAi(true);
+            pig.setNoGravity(true);
+            pig.setPos(x, y - 0.45D, z);
+            if (!level.addFreshEntity(pig)) {
+                throw new AssertionError("Unable to register Flux Rift living-target fixture");
+            }
+            pigs.add(pig);
+
+            ItemEntity item = new ItemEntity(level, x, y, z, new ItemStack(Items.DIAMOND));
+            item.setNoGravity(true);
+            if (!level.addFreshEntity(item)) {
+                throw new AssertionError("Unable to register Flux Rift item-target fixture");
+            }
+            itemEntities.add(item);
+        }
+
+        // Exercise the actual production Entity.tick path and its random
+        // segment selection rather than a test-only helper.
+        rift.tick();
+
+        int damagedPigs = 0;
+        for (Pig pig : pigs) {
+            if (pig.getHealth() < pig.getMaxHealth()) {
+                damagedPigs++;
+            }
+            pig.discard();
+        }
+        int removedItems = 0;
+        for (ItemEntity item : itemEntities) {
+            if (item.isRemoved()) {
+                removedItems++;
+            }
+            item.discard();
+        }
+        if (damagedPigs == 0 || removedItems == 0) {
+            throw new AssertionError("BETA26 Flux Rift segment must damage living entities and delete item entities: damagedPigs="
+                    + damagedPigs + " removedItems=" + removedItems);
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_SEGMENT_ENTITY_EFFECTS=PASS damaged=YES items=REMOVED");
     }
 
     @SuppressWarnings("deprecation")
