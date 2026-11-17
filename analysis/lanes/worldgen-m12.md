@@ -480,3 +480,13 @@
 - Source guard commit `651fb1db7a9d6eb554e0d6bd2a79e3f6d7180705` adds a textual check for the short-circuit. Guard and Java tests were NOT executed. Exact checkout is still blocked by `Could not resolve host: github.com` in this environment.
 - Current-head CI, NeoForge compilation, native WorldGenLevel/GameTest, new-chunk generation and BETA26 biome/RNG parity remain unverified. Silverwood Feature is unregistered. No shared registries, Gradle, main, other branches or merge touched. Historical audit stays 59/100.
 - Next: check current-head CI, run exact Java runners and source guard in an accessible checkout, then implement a real WorldGenLevel failure-injection GameTest and coordinate registration separately.
+
+
+## 17.11.2026 — M12: fail-fast после отказа записи ствола
+
+- Повторно прочитаны main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md и этот lane; проверены параллельные feature-ветки, 28 открытых PR, сравнение с main (+143/−0 до изменений). Draft PR #9 остаётся открытым.
+- Предыдущий HEAD bc05b1685229bcd935ba1f15e7ac1e992287beb4: GitHub Actions run 44032322023 SUCCESS, CircleCI verify-connection success. Это не доказательство запуска отдельных Java runner или GameTest.
+- Production 1ccc80831bb2c5442b04b4d1d7b44fe22d71402a: первая неудачная запись брёвна теперь помечает rejectedLogWrite и прекращает последующие записи ствола; при отказе остаётся rollback ранее записанных блоков. До этого генератор продолжал писать последующие брёвна несмотря на уже неизбежный откат.
+- Guard 5e4120ff14e7f4f00e8fcc37853110448e795d08: текстовые проверки нового fail-fast и обновление старого условия rollback. Guard не запускался и не является runtime доказательством.
+- Для guard HEAD CircleCI был pending, GitHub Actions PR run пока отсутствовал. Exact-checkout Java, NeoForge compile, native WorldGenLevel GameTest и генерация новых чанков в этом проходе не выполнялись. Feature не зарегистрирован; BETA26 biome/RNG parity не доказан.
+- Далее: дождаться CI точного HEAD, запустить source guard и Java runners из checkout, сделать нативный GameTest с инъекцией отказа setBlock; регистрацию деревьев согласовать отдельно. Main, чужие ветки, Gradle и общие регистры не изменялись; merge нет. Индекс 59/100 без пересчёта.
