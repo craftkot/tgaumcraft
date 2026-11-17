@@ -98,10 +98,7 @@ echo "RIFT_AUDIO_ENV=ALSOFT_DRIVERS=$ALSOFT_DRIVERS PULSE_SERVER=$PULSE_SERVER P
 source = source.replace("export ALSOFT_DRIVERS=null", audio_driver_setup)
 if source.count("export ALSOFT_DRIVERS=pulse") != 1 or "export ALSOFT_DRIVERS=null" in source:
     raise SystemExit("Generated client did not select PulseAudio exclusively")
-if source.count("CLIENT_PID=$!") != 1:
-    raise SystemExit("Minecraft launch anchor changed; refuse OpenAL readiness check")
-openal_ready_check = """CLIENT_PID=$!
-for i in $(seq 1 240); do
+openal_ready_check = """for i in $(seq 1 240); do
   if grep -Fq 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null; then break; fi
   sleep 0.25
 done
@@ -118,7 +115,21 @@ if [[ "$openal_device_line" == *"Null Output"* ]] || [[ "$openal_device_line" !=
 fi
 echo "RIFT_OPENAL_DEVICE=PASS $openal_device_line" | tee -a client-smoke-status.txt
 """
-source = source.replace("CLIENT_PID=$!", openal_ready_check)
+window_ready_anchor = """if [ -z "$WIN" ]; then
+  echo 'CLIENT_WINDOW=NO' | tee -a client-smoke-status.txt
+  tail -100 client-smoke/client.log
+  exit 1
+fi
+xdotool windowactivate --sync "$WIN" || true"""
+if source.count(window_ready_anchor) != 1:
+    raise SystemExit("Minecraft window-ready anchor changed; refuse OpenAL readiness placement")
+source = source.replace(
+    window_ready_anchor,
+    window_ready_anchor.replace(
+        'fi\nxdotool windowactivate --sync "$WIN" || true',
+        'fi\n' + openal_ready_check + '\nxdotool windowactivate --sync "$WIN" || true'
+    )
+)
 
 suffix_marker = "\nelse\n  echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED'"
 if full_source.count(suffix_marker) != 1:

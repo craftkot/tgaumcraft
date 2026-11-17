@@ -26,6 +26,7 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -78,23 +79,28 @@ public final class FluxRiftSoundGameTests {
         // position. Accept either modern position or entity packet encoding.
         helper.runAfterDelay(2, () -> {
             try {
+                Vec3 positionBefore299 = rift.position();
                 rift.tickCount = 299;
                 rift.playAmbientSoundIfDue(RandomSource.create(1L));
                 flush(recipient.channel());
-                if (countPacketsFromRift(observed, rift) != 0) {
-                    throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299: "
-                            + describePackets(observed));
+                if (countPacketsFromRift(observed, rift.getId(), positionBefore299) != 0) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not play at tick 299: expected="
+                            + positionBefore299 + " current=" + rift.position()
+                            + " observed=" + describePackets(observed));
                 }
 
+                Vec3 soundPosition = rift.position();
                 rift.tickCount = 300;
                 rift.playAmbientSoundIfDue(RandomSource.create(seed));
                 flush(recipient.channel());
 
-                int packetsAt300 = countPacketsFromRift(observed, rift);
-                SoundPacketEvidence packet = findPacketFromRift(observed, rift);
+                int packetsAt300 = countPacketsFromRift(observed, rift.getId(), soundPosition);
+                SoundPacketEvidence packet = findPacketFromRift(observed, rift.getId(), soundPosition);
                 if (packetsAt300 != 1 || packet == null) {
                     throw new AssertionError("BETA26 Flux Rift ambience packet missing/duplicated at tick 300: count="
-                            + packetsAt300 + " observed=" + describePackets(observed));
+                            + packetsAt300 + " expected=" + soundPosition + " current=" + rift.position()
+                            + " recipient=" + recipient.player().position()
+                            + " entityId=" + rift.getId() + " observed=" + describePackets(observed));
                 }
                 if (packet.source() != SoundSource.NEUTRAL
                         || Float.compare(packet.volume(), expectedVolume) != 0
@@ -107,18 +113,22 @@ public final class FluxRiftSoundGameTests {
                     throw new AssertionError("Flux Rift ambience was attached to the wrong entity");
                 }
                 if (packet.entityId() < 0
-                        && (Math.abs(packet.x() - rift.getX()) > 0.125D
-                        || Math.abs(packet.y() - rift.getY()) > 0.125D
-                        || Math.abs(packet.z() - rift.getZ()) > 0.125D)) {
-                    throw new AssertionError("Flux Rift ambience position packet did not originate at the Rift");
+                        && (Math.abs(packet.x() - soundPosition.x) > 0.125D
+                        || Math.abs(packet.y() - soundPosition.y) > 0.125D
+                        || Math.abs(packet.z() - soundPosition.z) > 0.125D)) {
+                    throw new AssertionError("Flux Rift ambience position mismatch: packet=("
+                            + packet.x() + "," + packet.y() + "," + packet.z() + ") expected="
+                            + soundPosition + " current=" + rift.position()
+                            + " recipient=" + recipient.player().position());
                 }
 
                 rift.tickCount = 301;
                 rift.playAmbientSoundIfDue(RandomSource.create(seed));
                 flush(recipient.channel());
-                if (countPacketsFromRift(observed, rift) != 1) {
-                    throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301: "
-                            + describePackets(observed));
+                if (countPacketsFromRift(observed, rift.getId(), soundPosition) != 1) {
+                    throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301: expected="
+                            + soundPosition + " current=" + rift.position()
+                            + " observed=" + describePackets(observed));
                 }
             } finally {
                 removeRecorder(recipient);
@@ -132,34 +142,40 @@ public final class FluxRiftSoundGameTests {
 
     private static int countPacketsFromRift(
             ConcurrentLinkedQueue<SoundPacketEvidence> packets,
-            FluxRiftEntity rift
+            int riftEntityId,
+            Vec3 expectedPosition
     ) {
         int count = 0;
         for (SoundPacketEvidence packet : packets) {
-            if (isFromRift(packet, rift)) count++;
+            if (isFromRift(packet, riftEntityId, expectedPosition)) count++;
         }
         return count;
     }
 
     private static SoundPacketEvidence findPacketFromRift(
             ConcurrentLinkedQueue<SoundPacketEvidence> packets,
-            FluxRiftEntity rift
+            int riftEntityId,
+            Vec3 expectedPosition
     ) {
         for (SoundPacketEvidence packet : packets) {
-            if (isFromRift(packet, rift)) return packet;
+            if (isFromRift(packet, riftEntityId, expectedPosition)) return packet;
         }
         return null;
     }
 
-    private static boolean isFromRift(SoundPacketEvidence packet, FluxRiftEntity rift) {
-        if (packet.entityId() >= 0) return packet.entityId() == rift.getId();
+    private static boolean isFromRift(
+            SoundPacketEvidence packet,
+            int riftEntityId,
+            Vec3 expectedPosition
+    ) {
+        if (packet.entityId() >= 0) return packet.entityId() == riftEntityId;
         if (!Double.isFinite(packet.x()) || !Double.isFinite(packet.y()) || !Double.isFinite(packet.z())) {
             return false;
         }
-        // ClientboundSoundPacket quantizes each absolute coordinate to 1/8 block.
-        return Math.abs(packet.x() - rift.getX()) <= 1.0D / 8.0D
-                && Math.abs(packet.y() - rift.getY()) <= 1.0D / 8.0D
-                && Math.abs(packet.z() - rift.getZ()) <= 1.0D / 8.0D;
+        // ClientboundSoundPacket stores fixed coordinates at 8 units per block.
+        return Math.abs(packet.x() - expectedPosition.x) <= 1.0D / 8.0D
+                && Math.abs(packet.y() - expectedPosition.y) <= 1.0D / 8.0D
+                && Math.abs(packet.z() - expectedPosition.z) <= 1.0D / 8.0D;
     }
 
     private static String describePackets(ConcurrentLinkedQueue<SoundPacketEvidence> packets) {
