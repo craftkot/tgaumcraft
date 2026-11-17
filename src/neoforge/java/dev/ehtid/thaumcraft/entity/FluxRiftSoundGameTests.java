@@ -102,13 +102,13 @@ public final class FluxRiftSoundGameTests {
                 throw new AssertionError("BETA26 Flux Rift ambience must not repeat at tick 301");
             }
 
-            System.out.println("TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal"
-                    + " volume=" + expectedVolume + " pitch=" + expectedPitch);
         } finally {
             removeRecorder(recipient);
             disconnect(level, recipient, "Flux Rift ambient sound GameTest finished");
+            rift.discard();
         }
         helper.succeed();
+        System.out.println("TC_GAMETEST_FLUX_RIFT_AMBIENT_SOUND=PASS cadence=300 source=NEUTRAL event=evilportal");
     }
 
     private static long findPositiveVolumeSeed() {

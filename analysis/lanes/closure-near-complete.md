@@ -1181,3 +1181,5 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Exact-head CI is pending; no M16/M08 score change is claimed.
 
 - Precision correction before acceptance: BETA26 uses a `0.15f` literal promoted to double by the Gaussian expression (exact value `0.15000000596046448`), not a `0.15d` literal. Production, GameTest expected values, and source verifier now preserve that float-to-double promotion exactly.
+
+- Acceptance hygiene: the native GameTest marker is emitted only after `helper.succeed()` and its fake player/recorder/Rift are cleaned up. The generated client smoke now labels its final result as Flux Rift audio rather than inheriting the shared crucible-smoke label.

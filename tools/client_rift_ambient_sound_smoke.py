@@ -89,6 +89,10 @@ suffix_marker = "\nelse\n  echo 'INTEGRATED_WORLD_START_LOG=NOT_CONFIRMED'"
 if source.count(suffix_marker) != 1:
     raise SystemExit("Shared integrated-world fallback anchor changed")
 suffix = source[source.index(suffix_marker):]
+suffix = suffix.replace(
+    "echo 'PASS: real Minecraft client world, overhead crucible PNGs captured'",
+    "echo 'PASS: real Minecraft client Flux Rift ambient sound captured'",
+)
 
 probe = r'''
   pactl list short sinks | grep -Fq 'tc_rift_sink'
