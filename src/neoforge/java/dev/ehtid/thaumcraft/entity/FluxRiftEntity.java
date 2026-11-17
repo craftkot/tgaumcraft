@@ -74,8 +74,14 @@ public final class FluxRiftEntity extends Entity {
             refreshDimensions();
         }
         super.tick();
-        if (!level().isClientSide && getRiftSeed() == 0) {
-            setRiftSeed(level().getRandom().nextInt());
+        if (!level().isClientSide) {
+            if (getRiftSeed() == 0) {
+                setRiftSeed(level().getRandom().nextInt());
+            }
+            // BETA26 EntityFluxRift.onUpdate applies this on ticksExisted % 120 == 0.
+            if (tickCount % 120 == 0) {
+                setRiftStability(getRiftStability() - 0.2F);
+            }
         }
     }
 
