@@ -508,3 +508,12 @@
 - Прочитаны `SilverwoodLegacyFeature`, `SilverwoodTrunkRollback`, `SilverwoodCanopyRollback` и trunk rollback regression. Отказ `WorldGenLevel.setBlock` по-прежнему не воспроизведён в настоящем NeoForge GameTest; естественная регистрация Feature отсутствует. Дополнительную неподтверждённую правку игровой логики не делали.
 - В этом проходе исходный Java-код и тесты не изменены, exact-checkout Java runners, NeoForge build и Minecraft fresh-chunk smoke не запускались. BETA26 RNG/biome parity и атомарность rollback не доказаны; исторический аудит 59/100 неизменен.
 - Следующий безопасный шаг: реализовать и запустить нативный GameTest с контролируемым отказом `setBlock` на настоящем `WorldGenLevel`; отдельно согласовать регистрацию placed feature и biome modifiers. Main, чужие ветки, общие регистры и Gradle не изменены.
+
+
+## 17.11.2026 — M12: negative-coordinate RNG continuation regression
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (+149/-0 before change); reviewed 30 open PRs, including existing Draft PR #9 and parallel alchemy/integration branches.
+- Previous HEAD 8b200251c4285afbb676f1b7cf45dcdb798b8e55: GitHub Actions run 44065697042 completed SUCCESS. This does not prove standalone Java runner or native GameTest.
+- Test commit c53df961baa9e249a78e75ecbeff35d80b2134ee adds 128 RNG continuation comparisons (4 supported heights x 32 seeds) for translated Silverwood log generation, verifying that nextLong() matches after placing at positive vs negative coordinates. This is a pure Java regression, not an original BETA26 equivalence proof.
+- Test NOT executed on exact checkout: git ls-remote still fails DNS resolving github.com. New-head CI, NeoForge compilation, real WorldGenLevel setBlock failure injection, fresh-chunk generation and gameplay remain unverified. Feature is not registered for natural generation. No main, other branches, shared registries, Gradle or merge touched. Historical audit remains 59/100.
+- Next: run tools/test_silverwood_legacy_logs.sh on exact checkout and inspect CI for new SHA; prioritize native WorldGenLevel GameTest and coordinate registry integration separately.
