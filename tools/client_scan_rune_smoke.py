@@ -7,7 +7,7 @@ expiry, and framebuffer change. No shared client_smoke.sh modifications.
 """
 from pathlib import Path
 
-from scan_rune_log_parser import parse_scan_rune_log
+from scan_rune_log_parser import parse_scan_rune_log, visible_rune_render_samples
 import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
@@ -243,18 +243,13 @@ import math
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path.cwd() / "tools"))
-from scan_rune_log_parser import parse_scan_rune_log
+from scan_rune_log_parser import parse_scan_rune_log, visible_rune_render_samples
 
 log = Path("client-smoke/client.log").read_text(errors="replace")
 created, rendered, expired = parse_scan_rune_log(log)
 if len(created) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
-visible_rendered = []
-for row in rendered:
-    face, alpha, size, yaw, lx, ly, lz, wx, wy, wz, front, quad = row
-    values = tuple(float(v) for v in (alpha,size,yaw,lx,ly,lz,wx,wy,wz,front,quad))
-    if values[0] >= 0.25 and values[1] >= 0.25:
-        visible_rendered.append((int(face), *values))
+visible_rendered = visible_rune_render_samples(rendered)
 if len(visible_rendered) < 40:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_NONZERO_ALPHA_RENDER_MISSING count={len(visible_rendered)}")
 if len(expired) < 80:
