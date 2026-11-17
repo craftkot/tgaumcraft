@@ -34,6 +34,8 @@ checks = {
                           and "SilverwoodCanopyRollback.restore(originalLeaves, leaves," in source,
     "rollback delegates conditional restore": "level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2)" in source,
     "setBlock success propagated": "if (canReplace(before)) {" in source and "if (level.setBlock(pos, leaves, 2)) {" in source,
+    "rejected canopy prevents subsequent trunk writes": "if (rejectedLeafWrite[0]) return;" in source
+                          and source.index("if (rejectedLeafWrite[0]) return;") < source.index("attemptedLogs[0]++;"),
     "rejected leaf writes fail placement and trigger rollback": "rejectedLeafWrite[0] = true;" in source
                           and "if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0])" in source,
     "failed preflight returns false": "return false;" in source,
