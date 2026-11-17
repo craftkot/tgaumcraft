@@ -208,7 +208,7 @@ public final class AuraGenerationGameTests {
                 throw new AssertionError("Unable to place the nearby Rift guard fixture");
             }
 
-            helper.runAtTickTime(2L, () -> {
+            helper.runAfterDelay(1L, () -> {
                 boolean duplicateSpawned = FluxRiftSpawnEvents.trySpawnRift(
                         level, nearby, new BlockPos(nearChunkX * 16, 0, chunkZ * 16));
                 if (duplicateSpawned || Math.abs(nearby.getFlux(nearSample) - 1000.0F) > 0.001F) {
