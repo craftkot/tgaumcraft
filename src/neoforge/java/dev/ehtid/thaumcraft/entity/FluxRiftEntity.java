@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -185,11 +186,11 @@ public final class FluxRiftEntity extends Entity {
      * Executes one BETA26 collapse tick using the entity-owned random stream.
      * The terminal reward/debuff/warp sequence is still a separate porting task.
      *
-     * @return true when the one-in-ten explosion branch executed
+     * @return the created explosion, or null when the one-in-ten roll did not fire
      */
-    boolean tickCollapse(RandomSource sourceRandom) {
+    Explosion tickCollapse(RandomSource sourceRandom) {
         if (!(level() instanceof ServerLevel serverLevel) || !getCollapse()) {
-            return false;
+            return null;
         }
 
         setRiftSize(getRiftSize() - 1);
@@ -201,11 +202,11 @@ public final class FluxRiftEntity extends Entity {
             aura.polluteFlux(blockPosition(), 1.0F);
         }
 
-        boolean exploded = sourceRandom.nextInt(10) == 0;
-        if (exploded) {
+        Explosion explosion = null;
+        if (sourceRandom.nextInt(10) == 0) {
             // BETA26 createExplosion(..., false) disables smoking/block damage;
             // entity damage remains enabled.
-            level().explode(
+            explosion = level().explode(
                     this,
                     getX() + sourceRandom.nextGaussian() * 2.0D,
                     getY() + sourceRandom.nextGaussian() * 2.0D,
@@ -221,7 +222,7 @@ public final class FluxRiftEntity extends Entity {
             // warp/taint/weakness. Those systems are not ported yet.
             discard();
         }
-        return exploded;
+        return explosion;
     }
 
     @Override
