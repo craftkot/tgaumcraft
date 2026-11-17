@@ -369,7 +369,10 @@ PY
 
   xdotool key --clearmodifiers t
   sleep 0.2
-  xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"
+  # Keep XTest input at the window-geometry center: the previous successful
+  # real-client hit used this coordinate. The screenshot-derived crosshair is
+  # for the damage ROI only; it is not an X11 input-coordinate transform.
+  xdotool mousemove --sync "$jar_hit_window_center_x" "$jar_hit_window_center_y"
   xdotool type --clearmodifiers --delay 24 '/tp @p 250.5 150 250.5 0 35'
   xdotool key --clearmodifiers Return
   sleep 4
@@ -381,6 +384,19 @@ PY
   timeout --signal=TERM 5s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/hit-event.pcm &
   capture_pid=$!
   sleep 0.6
+  # The previous failed capture had no first-person arm swing, indicating the
+  # XTest press was not delivered. Re-activate/focus the real client immediately
+  # before the held input; fail closed if another X11 window owns activation.
+  xdotool windowactivate --sync "$WIN"
+  xdotool windowfocus --sync "$WIN"
+  jar_hit_active_window="$(xdotool getactivewindow)"
+  jar_hit_focused_window="$(xdotool getwindowfocus)"
+  echo "JAR_HIT_WINDOW_FOCUS active=$jar_hit_active_window focus=$jar_hit_focused_window target=$WIN" | tee -a client-smoke-status.txt
+  if [[ "$jar_hit_active_window" != "$WIN" ]]; then
+    echo 'JAR_HIT_FOCUS_NOT_ON_MINECRAFT=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'JAR_HIT_FOCUS_CONFIRMED=YES' | tee -a client-smoke-status.txt
   xdotool mousedown 1
   # Hold long enough for several real client ticks under Mining Fatigue I.
   # The 0.8s wall-clock window stays below its fatigue-adjusted break time.
