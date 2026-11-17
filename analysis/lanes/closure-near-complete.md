@@ -1128,3 +1128,11 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Changed paths are only the new GameTest class, the closure-owned GameTest runner, and this lane. Open-PR path audit (#1–#3, #5–#33): no exact overlap for these paths. PR #3/#7 still touch SalisMundusItem.java; it was deliberately not modified. No registry, Gradle, shared CI, main, or foreign branch changes.
 - No score change: 59/100, M16 4/6, M08 5/9. The GameTest/CI result for the new SHA is pending; no server or two-client acceptance is claimed yet.
 - Next: require exact-head Aura/Crystal GameTests to pass with TC_GAMETEST_SALIS_PACKET_RECIPIENT=PASS in both phases and All 13 required tests passed, plus Full Port CI. Then decide whether a second independently launched client is still required for the remaining M16 acceptance; do not count this EmbeddedChannel test as that real-client proof.
+
+
+### 2026-11-17 — correct GameTest API package after exact-head compile failure
+
+- Exact-head Aura/Crystal run [#44151833761](https://github.com/craftkot/tgaumcraft/actions/runs/44151833761) failed at `:compileJava` before any GameTest executed. The compiler reported four `cannot find symbol` errors because the new class imported `GameTest` and `GameTestHelper` from `net.neoforged.neoforge.gametest`; the repository's working GameTest classes correctly import both from `net.minecraft.gametest.framework`.
+- Corrected only those two imports in SalisMundusPacketRoutingGameTests.java. The NeoForge-specific `GameTestHolder` and `PrefixGameTestTemplate` imports remain unchanged. No production behavior or test assertions were weakened.
+- The runner's `All 13 required tests passed` and new recipient marker contract remain unchanged. The failed run proves compilation was blocked; it does not prove any recipient assertion passed.
+- Next: require a fresh exact-head NeoForge compile and native Aura/Crystal GameTest run. If the test then fails at runtime, use the actual connection/packet trace to fix the fixture; do not replace it with a JVM-only mock.
