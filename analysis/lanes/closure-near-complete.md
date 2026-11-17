@@ -1074,12 +1074,19 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Next: inspect exact-head native GameTest marker and full NeoForge build; if both pass, continue with the next BETA26 collapse omission only when its required item/effect foundations exist.
 
 
-### 2026-11-17 — Workbench GUI smoke clicked outside the Minecraft window
+### 2026-11-17 — Workbench GUI smoke clicked at the wrong X-root center
 
-- Downloaded and inspected exact real-client artifact [14336284258](https://github.com/craftkot/tgaumcraft/actions/runs/44101621542/artifacts/14336284258) for failed matrix job workbench-gui (en_us, eng, 3). The root screenshot is 1280×800, while the Minecraft GLFW window is 1024×768 at root offset (1,20). The runner used xdotool getdisplaygeometry and clicked the root center (640,400), which is outside the game window. Its WORKBENCH_INTERACTION_POINTER=PASS only proved the pointer reached the wrong root-center coordinate; the screenshot shows no menu and the server never emitted TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES.
+- Downloaded and inspected exact real-client artifact [14336284258](https://github.com/craftkot/tgaumcraft/actions/runs/44101621542/artifacts/14336284258) for failed matrix job workbench-gui (en_us, eng, 3). The root screenshot is 1280×800, while the Minecraft GLFW window is 1024×768 at root offset (1,20). The runner used xdotool getdisplaygeometry and clicked the root center (640,400), which is still inside the game window but 127px right of its geometry center. Its WORKBENCH_INTERACTION_POINTER=PASS only proved the pointer reached the wrong root-center coordinate; the screenshot shows no menu and the server never emitted TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES.
 - The earlier Jar real-client evidence established the correct XTest input point as the actual window geometry center (513,404); the screenshot-derived crosshair (510,382) remains a separate framebuffer ROI coordinate. Updated the Workbench runner to derive XTest input from xdotool getwindowgeometry --shell "$WIN" and fail if the pointer is outside that window.
 - Added an authoritative integrated-server fixture check: after placing the Workbench, execute if block must emit TC_WORKBENCH_FIXTURE_BLOCK_READY in run/logs/latest.log before the click is attempted. This separates fixture/placement failure from input/interaction failure.
 - Updated the regression contract for the two coordinate spaces and the server-side fixture marker. No production Java, shared client_smoke.sh, Gradle, global workflow, registry, or foreign branch changed.
 - Path overlap checked against the current open PR inventory #1–#3 and #5–#32: neither tools/client_workbench_gui_smoke.py nor tools/test_client_workbench_world.py is changed by another open PR. PR #4 itself remains the only owner of these paths.
 - Local verification will run the full Workbench world/generator contract test. The exact-head RU/EN scale-2/3 real-client matrix must then pass; the previous EN scale-3 run is a genuine harness FAIL, not a gameplay PASS. Fixed audit remains 59/100, M16 4/6, M08 5/9; no points awarded.
 - Next: inspect all four exact-head GUI artifacts and require server BlockEntity/menu markers, client screen/render markers, localized label OCR and pixel crop checks before accepting this M16 slice.
+
+
+### Correction — root center is inside the client, not outside it
+
+- A local arithmetic assertion exposed an inaccurate phrase in the preceding diagnosis: (640,400) is inside the Minecraft window bounds (1..1024, 20..788), but it is 127px to the right and 4px above the actual window-geometry center (513,404). The defect is a wrong input coordinate, not a click outside the window.
+- Corrected the smoke comment, regression assertion and preceding journal wording. The fail-closed bounds check remains useful for genuinely out-of-window input.
+- Local coordinate regression: PASS for both root-center and window-center calculations. This is not a Minecraft-client PASS; exact-head Workbench jobs remain queued.

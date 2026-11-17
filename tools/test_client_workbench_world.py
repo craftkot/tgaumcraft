@@ -486,8 +486,9 @@ expect("WORKBENCH_SERVER_MARKER_SEEN=$marker" in generator
 
 expect((1 + 1024 // 2, 20 + 768 // 2) == (513, 404)
        and (1280 // 2, 800 // 2) == (640, 400)
-       and (640, 400) != (513, 404),
-       "the observed 1280x800 X root / 1024x768 window fixture must keep distinct coordinate spaces")
+       and 1 <= 640 < 1 + 1024 and 20 <= 400 < 20 + 768
+       and (640, 400) != (513, 404) and 640 - 513 == 127,
+       "the root center is inside the window but must not replace the distinct window-center input coordinate")
 
 expect("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in workbench_block_source
        and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO" in workbench_block_source

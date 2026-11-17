@@ -350,9 +350,10 @@ body = r'''
   sleep 2
   echo 'WORKBENCH_OPEN_ATTEMPT=EMPTY_HAND_HOTBAR_1' | tee -a client-smoke-status.txt
   capture 08c1-workbench-empty-hand-before-open
-  # The X root can be larger than the GLFW window. The previous 1280x800
-  # root-center (640,400) was outside the 1024x768 Minecraft window at (1,20).
-  # Use the already-proven XTest input point at the actual window geometry center.
+  # The X root can be larger than the GLFW window. Its center (640,400) is
+  # still inside this 1024x768 client at (1,20), but 127px right of its geometry
+  # center (513,404), so it misses the game's center target. Use the proven XTest
+  # input point at the actual window geometry center instead.
   workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$workbench_geometry"
   if (( WIDTH <= 0 || HEIGHT <= 0 )); then
