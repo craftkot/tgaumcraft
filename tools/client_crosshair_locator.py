@@ -48,11 +48,22 @@ def locate_crosshair_rgb(
         raise ValueError(
             f"bright-pixel bounds are not a crosshair: {bounds_width}x{bounds_height}"
         )
-    if max(row_counts.values()) < 12 or max(column_counts.values()) < 12:
-        raise ValueError("crosshair lacks both horizontal and vertical strokes")
-
     center_x = round(sum(xs) / len(xs))
     center_y = round(sum(ys) / len(ys))
+    if row_counts.get(center_y, 0) < 12 or column_counts.get(center_x, 0) < 12:
+        raise ValueError("crosshair lacks intersecting horizontal and vertical strokes")
+
+    def bright_at(x: int, y: int) -> bool:
+        offset = (y * width + x) * 3
+        red, green, blue = rgb[offset : offset + 3]
+        return red >= 180 and green >= 180 and blue >= 100
+
+    # A bright square or GUI icon can satisfy the bounding box and row/column
+    # counts. The four corners must remain dark, as they do for the vanilla plus.
+    corners = ((min(xs), min(ys)), (max(xs), min(ys)),
+               (min(xs), max(ys)), (max(xs), max(ys)))
+    if any(bright_at(x, y) for x, y in corners):
+        raise ValueError("bright-pixel bounds are filled, not a crosshair")
     if abs(center_x - near_x) > radius or abs(center_y - near_y) > radius:
         raise ValueError("detected crosshair is outside the expected viewport center")
     return center_x, center_y
