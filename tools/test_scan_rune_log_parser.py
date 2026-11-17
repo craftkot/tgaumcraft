@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Regression tests for the actual ScanRuneParticle client-log format."""
-from scan_rune_log_parser import parse_scan_rune_log
+from scan_rune_log_parser import parse_scan_rune_log, visible_rune_render_samples
 from pathlib import Path
 import subprocess
 import sys
 
 log = """[Render thread/INFO]: TC_SMOKE_SCAN_RUNE_CREATED=YES face=3 lifetime=45 x=0.5 y=151.75 z=4.5 localX=0.12024379 localY=-0.012681067 localZ=-0.51
-[Render thread/INFO]: TC_SMOKE_SCAN_RUNE_RENDERED=YES face=2 alpha=0.33333334 size=0.33565626 cameraYaw=-180.0 lookX=-1.7484555E-7 lookY=0.0 lookZ=-1.0 worldX=0.54189284 worldY=151.74066 worldZ=5.01 frontDot=0.51 quadFacingDot=0.51
+[Render thread/INFO]: TC_SMOKE_SCAN_RUNE_RENDERED=YES face=2 alpha=0.33333334 size=0.24956688 cameraYaw=-180.0 lookX=-1.7484555E-7 lookY=0.0 lookZ=-1.0 worldX=0.54189284 worldY=151.74066 worldZ=5.01 frontDot=0.51 quadFacingDot=0.51
 [Render thread/INFO]: TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=2 age=45 lifetime=45 drift=0.0
 """
 
@@ -20,9 +20,15 @@ assert rendered[0][3] == "-180.0"
 assert rendered[0][4] == "-1.7484555E-7"
 assert rendered[0][10] == "0.51"
 assert rendered[0][11] == "0.51"
+visible = visible_rune_render_samples(rendered)
+assert len(visible) == 1
+assert visible[0][2] == 0.24956688
+dim = rendered[0][:1] + ("0.1",) + rendered[0][2:]
+zero_size = rendered[0][:2] + ("0.0",) + rendered[0][3:]
+assert visible_rune_render_samples([rendered[0], dim, zero_size]) == visible
 assert expired[0] == ("2", "45", "45", "0.0")
 assert parse_scan_rune_log("TC_SMOKE_SCAN_RUNE_CREATED=YES face=x lifetime=45") == ([], [], [])
-print("SCAN_RUNE_LOG_PARSER=PASS assertions=11")
+print("SCAN_RUNE_LOG_PARSER=PASS assertions=15")
 
 # The real-client fixture must clear generated terrain from both sight lines.
 # Otherwise the particle log can be internally consistent while proving a scan
@@ -42,9 +48,11 @@ fixture_checks = [
     "send_chat '/execute if block 0 151 7 minecraft:air run say RUNE_OPPOSITE_VIEW_CLEAR'" in generated,
     "grep -Fq 'RUNE_OPPOSITE_VIEW_CLEAR' client-smoke/client.log" in generated,
     "abs(z-4.5)>0.0001" in generated,
+    "visible_rendered = visible_rune_render_samples(rendered)" in generated,
+    "values[1] >= 0.25" not in generated,
 ]
 assert all(fixture_checks), f"scan-rune fixture checks failed: {fixture_checks}"
-print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=8")
+print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=10")
 # The isolated runner must not inherit the shared smoke's unverified chat sender.
 shared_smoke = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 shared_sender = """  send_chat() {
