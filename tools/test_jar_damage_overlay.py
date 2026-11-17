@@ -22,23 +22,30 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     for index in range(1668):
         offset = index * 3
         noise[offset:offset + 3] = bytes((45, 45, 45))  # 13/255: capture noise, not a crack
-    below_threshold = bytearray(baseline)
-    for index in range(39):
-        offset = (1000 + index) * 3
-        below_threshold[offset:offset + 3] = bytes((255, 255, 255))
-    overlay = bytearray(baseline)
-    for index in range(40):
-        offset = (1000 + index) * 3
-        overlay[offset:offset + 3] = bytes((255, 255, 255))  # clear high-contrast overlay pixels
-
     before = root / "before.ppm"
     noisy = root / "noise.ppm"
     below = root / "below-threshold.ppm"
     cracked = root / "cracks.ppm"
     before.write_bytes(ppm(bytes(baseline)))
     noisy.write_bytes(ppm(bytes(noise)))
-    below.write_bytes(ppm(bytes(below_threshold)))
-    cracked.write_bytes(ppm(bytes(overlay)))
+
+    # ImageMagick AE can count one extra pixel on PPM fixtures, depending
+    # on its decoder/version. Calibrate *measured* 39/40-pixel controls,
+    # rather than assuming the number of edited source pixels equals AE.
+    controls = {}
+    for source_count in range(36, 43):
+        candidate = bytearray(baseline)
+        for index in range(source_count):
+            offset = (1000 + index) * 3
+            candidate[offset:offset + 3] = bytes((255, 255, 255))
+        candidate_path = root / f"candidate-{source_count}.ppm"
+        candidate_path.write_bytes(ppm(bytes(candidate)))
+        measured = changed_pixels(before, candidate_path)
+        if measured in (39, 40):
+            controls[measured] = candidate_path.read_bytes()
+    assert set(controls) == {39, 40}, "unable to construct ImageMagick AE boundary controls"
+    below.write_bytes(controls[39])
+    cracked.write_bytes(controls[40])
 
     assert changed_pixels(before, noisy) == 0, "low-amplitude frame noise must be ignored"
     assert changed_pixels(before, below) == 39, "below-threshold control must contain 39 changed pixels"
