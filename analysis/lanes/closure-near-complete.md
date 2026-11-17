@@ -979,3 +979,8 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - The corrected scan-rune filter is now committed through [4c78422](https://github.com/craftkot/tgaumcraft/commit/4c78422521870f127f7dd93d6aab9279dbe32b71); its dedicated exact-head workflow result remains unavailable through the exposed run-list action. CircleCI `verify-connection` is SUCCESS on that code SHA, but this is not a scan-rune test pass.
 - Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded and no category closed.
 - Next: obtain the exact-head scan-rune client result (two views, positive/negative scale filter regression, both framebuffer diffs, lifetime/expiry). Then inspect the remaining crystal-outline result and the queued workbench GUI matrix. Keep the Salis two-client packet-delivery test separate; do not infer it from the single-client queue lifecycle.
+
+### 2026-11-17 — M16 queue snapshot after Jar/Salis completion
+
+- Last poll: crystal outline [#44079118413](https://github.com/craftkot/tgaumcraft/actions/runs/44079118413) remains in progress; workbench GUI [#44079118655](https://github.com/craftkot/tgaumcraft/actions/runs/44079118655) has both RU jobs in progress and both EN jobs queued; the exact-head Jar replacement [#44079118220](https://github.com/craftkot/tgaumcraft/actions/runs/44079118220) remains queued. The earlier Jar run #44078850598 is already a completed real-client SUCCESS and is not being withheld.
+- CircleCI `verify-connection` is SUCCESS on code SHA `4c78422521870f127f7dd93d6aab9279dbe32b71`; the latest journal-only commit may still show its own pending status. This does not substitute for the pending scan-rune client workflow.
