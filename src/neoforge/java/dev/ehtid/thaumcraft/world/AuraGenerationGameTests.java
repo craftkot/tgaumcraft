@@ -98,7 +98,7 @@ public final class AuraGenerationGameTests {
         for (int i = 0; i < directions.length; i++) {
             var state = mirror.defaultBlockState().setValue(EssentiaMirrorBlock.FACING, directions[i]);
             AABB outline = mirror.getShape(state, helper.getLevel(), pos, CollisionContext.empty()).bounds();
-            AABB collision = mirror.getCollisionShape(state, helper.getLevel(), pos, CollisionContext.empty()).bounds();
+            AABB collision = state.getCollisionShape(helper.getLevel(), pos, CollisionContext.empty()).bounds();
             assertMirrorBounds("outline " + directions[i], outline, expected[i]);
             assertMirrorBounds("collision " + directions[i], collision, expected[i]);
         }
