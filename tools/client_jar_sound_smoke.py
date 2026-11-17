@@ -343,20 +343,39 @@ PY
   # about six client ticks (0.30s), still below the 0.3-hardness jar's bare-hand
   # break time. The authoritative server block check below rejects any break.
   send_chat '/item replace entity @p hotbar.0 with minecraft:air'
-  # Open chat to release the captured pointer, move it to the actual Minecraft
-  # window center, then submit the teleport. Closing chat re-grabs the pointer
-  # at the crosshair; moving it after chat closes can rotate the camera instead.
+  # Slow only this survival test with vanilla Mining Fatigue I so the client
+  # can render several crack stages without destroying the 0.3-hardness jar.
+  # Verify the effect from the real player NBT; it is not a production change.
+  send_chat '/effect give @p minecraft:mining_fatigue 30 0 true'
+  send_chat '/data get entity @p active_effects'
+  if ! grep -Fq 'minecraft:mining_fatigue' client-smoke/client.log; then
+    echo 'JAR_HIT_FATIGUE_EFFECT_MISSING=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+
+  # The X11 window geometry center is NOT necessarily the Minecraft viewport
+  # crosshair center (the failed artifact was offset by 22 px vertically).
+  # Detect the actual crosshair in a real frame before opening chat, then move
+  # the pointer to that pixel while chat is open. Never guess from window bounds.
   hit_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$hit_geometry"
-  jar_hit_center_x=$((X + WIDTH / 2))
-  jar_hit_center_y=$((Y + HEIGHT / 2))
+  jar_hit_window_center_x=$((X + WIDTH / 2))
+  jar_hit_window_center_y=$((Y + HEIGHT / 2))
+  import -display :99 -window root -silent client-smoke/screenshots/100-pre-hit-viewport.png
+  jar_hit_crosshair_coordinates="$(python3 tools/client_crosshair_locator.py \
+    client-smoke/screenshots/100-pre-hit-viewport.png \
+    "$jar_hit_window_center_x" "$jar_hit_window_center_y")"
+  read -r jar_hit_center_x jar_hit_center_y <<< "$jar_hit_crosshair_coordinates"
+  echo "JAR_HIT_CROSSHAIR_DETECTED=YES x=$jar_hit_center_x y=$jar_hit_center_y window_center=$jar_hit_window_center_x,$jar_hit_window_center_y" \
+    | tee -a client-smoke-status.txt
+
   xdotool key --clearmodifiers t
   sleep 0.2
   xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"
   xdotool type --clearmodifiers --delay 24 '/tp @p 250.5 150 250.5 0 35'
   xdotool key --clearmodifiers Return
   sleep 4
-  echo "JAR_HIT_POINTER_CENTER=$jar_hit_center_x,$jar_hit_center_y" | tee -a client-smoke-status.txt
+  echo "JAR_HIT_CROSSHAIR_CENTER=$jar_hit_center_x,$jar_hit_center_y" | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100a-jar-hit-aim.png
   send_chat '/stopsound @p'
   sleep 0.25
@@ -365,10 +384,10 @@ PY
   capture_pid=$!
   sleep 0.6
   xdotool mousedown 1
-  # Capture after the full 0.30s hold; the earlier 0.18s screenshot sampled
-  # before the six-tick window described above had elapsed.
-  sleep 0.30
-  echo 'JAR_HIT_CAPTURE_AFTER_0_30S=YES' | tee -a client-smoke-status.txt
+  # Hold long enough for several real client ticks under Mining Fatigue I.
+  # The 0.8s wall-clock window stays below the 0.3-hardness jar's break time.
+  sleep 0.80
+  echo 'JAR_HIT_CAPTURE_AFTER_0_80S=YES' | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100b-jar-hit-damage-overlay.png
   xdotool mouseup 1
   sleep 0.4
@@ -399,6 +418,7 @@ PY
   fi
   python3 tools/match_jar_audio_pcm.py client-smoke/hit-baseline.pcm client-smoke/hit-event-window.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/hit-source-match.txt
   echo 'JAR_HIT_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
+  send_chat '/effect clear @p minecraft:mining_fatigue'
   # Rebuild a five-block row. Its collision tops overlap the player's bounding
   # box across the 0.375 gaps; movement must traverse several jar block positions
   # while the server confirms the player's feet stay at the 0.75-block jar top.
