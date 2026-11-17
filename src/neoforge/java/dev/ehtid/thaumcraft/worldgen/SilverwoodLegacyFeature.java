@@ -95,7 +95,7 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     }
                 });
         // Every requested log must succeed; a partial skeleton is not a tree.
-        if (rejectedLeafWrite[0] || writtenLogs.size() != attemptedLogs[0]) {
+        if (rejectedLeafWrite[0] || attemptedLogs[0] == 0 || writtenLogs.size() != attemptedLogs[0]) {
             // Restore logs first, then the remaining canopy. Both passes avoid
             // overwriting positions changed by another writer since our write.
             SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
