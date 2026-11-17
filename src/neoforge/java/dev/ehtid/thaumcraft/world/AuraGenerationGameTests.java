@@ -51,7 +51,7 @@ public final class AuraGenerationGameTests {
     @GameTest(
             template = "crystal_spread_empty",
             templateNamespace = ThaumcraftPort.MOD_ID,
-            timeoutTicks = 100
+            timeoutTicks = 180
     )
     public static void spawnsBETA26FluxRiftFromPendingTrigger(GameTestHelper helper) {
         if (isColdRestartReadPhase()) {
@@ -119,7 +119,8 @@ public final class AuraGenerationGameTests {
             assertFluxRiftBoundsMatchGeometry(rift, "position-change");
             System.out.println("TC_GAMETEST_FLUX_RIFT_GEOMETRY_BOUNDS=PASS size=YES seed=YES position=YES");
 
-            rift.discard();
+            rift.setRiftStability(10.0F);
+            int initialStabilityBucket = Math.floorDiv(rift.tickCount, 120);
             System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN=PASS size=54 flux=1000_to_945.23 geometry=38");
 
             int lowChunkX = chunkX + 64;
@@ -161,7 +162,7 @@ public final class AuraGenerationGameTests {
                 blocker.discard();
                 System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
                 System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
-                helper.succeed();
+                awaitFluxRiftStabilityDecay(helper, rift, initialStabilityBucket, 10.0F, 130);
             });
         });
     }
@@ -1274,6 +1275,41 @@ public final class AuraGenerationGameTests {
         System.out.println("TC_GAMETEST_AURA_RIFT_TRIGGER=PASS threshold=75.0 chance=0.016 position=chunk_origin transient=YES loaded_only=YES unloaded_skipped=YES");
     }
 
+
+    private static void awaitFluxRiftStabilityDecay(
+            GameTestHelper helper,
+            FluxRiftEntity rift,
+            int initialTickBucket,
+            float initialStability,
+            int remainingTicks
+    ) {
+        helper.runAfterDelay(1, () -> {
+            if (rift.isRemoved()) {
+                throw new AssertionError("Flux Rift disappeared before its first stability-decay interval");
+            }
+
+            int elapsedIntervals = Math.floorDiv(rift.tickCount, 120) - initialTickBucket;
+            if (elapsedIntervals == 0) {
+                if (remainingTicks <= 1) {
+                    throw new AssertionError("Flux Rift did not reach its next 120-tick stability interval");
+                }
+                awaitFluxRiftStabilityDecay(
+                        helper, rift, initialTickBucket, initialStability, remainingTicks - 1);
+                return;
+            }
+
+            float expected = initialStability - 0.2F;
+            float actual = rift.getRiftStability();
+            if (elapsedIntervals != 1 || Math.abs(actual - expected) > 1.0E-4F) {
+                throw new AssertionError("BETA26 Flux Rift stability interval mismatch: intervals="
+                        + elapsedIntervals + " expected=" + expected + " actual=" + actual);
+            }
+
+            System.out.println("TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2");
+            rift.discard();
+            helper.succeed();
+        });
+    }
 
     private static void assertFluxRiftBoundsMatchGeometry(FluxRiftEntity rift, String phase) {
         var points = rift.getGeometry();
