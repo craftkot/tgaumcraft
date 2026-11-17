@@ -470,3 +470,13 @@
 - Commit [e69eebf](https://github.com/craftkot/tgaumcraft/commit/e69eebfef7bb1798d6b694dbfb048e5d3d06244f) adds 80 pure-core callback assertions across 4 heights and 4 seeds: inject rejection at the third leaf callback, suppress later canopy/trunk writes, and verify that legacy RNG continuation matches an unrestricted traversal. This checks the callback policy used by the Feature; it does NOT exercise WorldGenLevel.setBlock or prove rollback.
 - Direct git checkout remains blocked by github.com DNS; exact Java 21 runner not executed in this pass. New-head CI, NeoForge build, registered GameTest and fresh-chunk worldgen remain unverified. Silverwood is still unregistered; BETA26 biome/frequency and RNG bridge parity unresolved.
 - Next: run exact test_silverwood_legacy_tree.sh and source wiring guard from a verified checkout, then implement native WorldGenLevel failure-injection GameTest without touching shared registries/Gradle. No merge; main, other branches and shared registries unchanged. Historical audit 59/100 unchanged.
+
+
+## 17.11.2026 — M12: stop post-failure canopy world reads
+
+- Fresh-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md` and own lane. Compared `main...feature/worldgen-m12`: ahead 140, behind 0 before edits; reviewed 28 open PRs including Draft #9 and parallel integration branches.
+- Verified previous HEAD `c6d9349a166acbfe7e641b6c515cde1cd37de7d9`: GitHub Actions [run 44025499314](https://github.com/craftkot/tgaumcraft/actions/runs/44025499314) completed SUCCESS; CircleCI `verify-connection` success. Neither status proves standalone Silverwood runner or native GameTest.
+- Production commit `d714ca77bb70dfd57e496c2427ff56aec9dded21`: canopy replacement predicate now short-circuits after the first rejected `WorldGenLevel.setBlock` write, avoiding subsequent `getBlockState` calls. The legacy canopy still evaluates `random.nextInt(8)` for every candidate, preserving the RNG traversal. This narrows post-failure world interaction; it does not make rollback atomic.
+- Source guard commit `651fb1db7a9d6eb554e0d6bd2a79e3f6d7180705` adds a textual check for the short-circuit. Guard and Java tests were NOT executed. Exact checkout is still blocked by `Could not resolve host: github.com` in this environment.
+- Current-head CI, NeoForge compilation, native WorldGenLevel/GameTest, new-chunk generation and BETA26 biome/RNG parity remain unverified. Silverwood Feature is unregistered. No shared registries, Gradle, main, other branches or merge touched. Historical audit stays 59/100.
+- Next: check current-head CI, run exact Java runners and source guard in an accessible checkout, then implement a real WorldGenLevel failure-injection GameTest and coordinate registration separately.
