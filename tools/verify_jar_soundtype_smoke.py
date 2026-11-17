@@ -94,7 +94,8 @@ assert "minecraft:mining_fatigue" in hit_section
 assert "JAR_HIT_CAPTURE_AFTER_0_80S=YES" in hit_section
 assert "verify_jar_damage_overlay.py --diagnostic" not in hit_section
 assert "python3 tools/verify_jar_damage_overlay.py \\" in hit_section
-assert "hit-aim-roi.png" in hit_section and "hit-damage-roi.png" in hit_section
+assert "hit-nohit-before-roi.png" in hit_section and "hit-nohit-after-roi.png" in hit_section
+assert "hit-before-roi.png" in hit_section and "hit-after-roi.png" in hit_section
 assert hit_section.index("verify_jar_damage_overlay.py") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS") < hit_section.index("send_chat '/effect clear @p minecraft:mining_fatigue'"), (
     "Hit acceptance must fail closed on the real ROI crack overlay before checking retained block, original PCM and clearing the test-only effect"
 )
@@ -103,8 +104,9 @@ assert "compare -metric AE" not in hit_section
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in OVERLAY
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in OVERLAY
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC=" in OVERLAY
-assert "NOT_OBSERVED" in OVERLAY and "OBSERVED" in OVERLAY
-assert 'FUZZ = "8%"' in OVERLAY and "MIN_CHANGED_PIXELS = 40" in OVERLAY
+assert "no_hit_before: Path" in OVERLAY and "no_hit_after: Path" in OVERLAY
+assert "MIN_HIT_PIXELS = 300" in OVERLAY and "MIN_OVER_BASELINE_PIXELS = 200" in OVERLAY
+assert 'FUZZ = "6%"' in OVERLAY and "MIN_HIT_PIXELS = 300" in OVERLAY and "MIN_OVER_BASELINE_PIXELS = 200" in OVERLAY
 assert "tools/verify_jar_damage_overlay.py" in WORKFLOW
 assert WORKFLOW.count("tools/test_jar_damage_overlay.py") >= 2
 assert "python tools/test_jar_damage_overlay.py" in WORKFLOW
