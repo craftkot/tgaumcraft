@@ -954,3 +954,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - The new exact-head scan-rune workflow has not yet produced a retrievable result through the available run-list action; CircleCI `verify-connection` is pending on the code head. **No PASS is claimed for the corrected real-client smoke yet.** The previous run remains a genuine FAIL and is not retroactively reclassified.
 - Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded and no category closed.
 - Next: inspect the exact-head M16 scan-rune workflow and require parser/orientation checks, two camera views, both framebuffer diffs, and expiry before accepting the rune visual case. Separately, continue waiting for the still-running Jar real-client retry [#44078850598](https://github.com/craftkot/tgaumcraft/actions/runs/44078850598); do not infer its result from the static verifier or queued replacement run.
+
+### 2026-11-17 — scan-rune filter follow-up status
+
+- The code SHA [d7cdda4](https://github.com/craftkot/tgaumcraft/commit/d7cdda4c664ade5a8497582f0166836e87d2b06c) now reports CircleCI `verify-connection` **SUCCESS**. This is only the repository connection/status check, not the Python regression or Minecraft client.
+- An isolated Python reproduction of the new filter passed: the exact BETA26-valid `size=0.24956688` sample is retained; alpha 0.1 and size 0 are rejected. This is a focused reproduction, **not** a run of `tools/test_scan_rune_log_parser.py`.
+- The dedicated exact-head scan-rune client workflow result is still not retrievable from the available GitHub run-list action. No real-client PASS is claimed. The older Jar client run [#44078850598](https://github.com/craftkot/tgaumcraft/actions/runs/44078850598) remained in progress; its replacement [#44079118220](https://github.com/craftkot/tgaumcraft/actions/runs/44079118220) remained queued at the last poll.
+- Next: obtain the exact-head scan-rune workflow result and actual screenshots/logs. Do not award M16 credit until the full two-view client script reaches both framebuffer-difference markers and expiry.
