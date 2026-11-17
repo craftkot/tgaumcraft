@@ -2,12 +2,15 @@ package dev.ehtid.thaumcraft.world;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
+import dev.ehtid.thaumcraft.block.EssentiaMirrorBlock;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlocks;
 import dev.ehtid.thaumcraft.port.core.AuraGenerationLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftTriggerLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
 import dev.ehtid.thaumcraft.port.core.LegacyModernBiomeCompatibility;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
@@ -31,6 +34,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -60,6 +64,61 @@ public final class AuraGenerationGameTests {
             TicketType.create("thaumcraft_flux_rift_gametest", Comparator.comparingLong(ChunkPos::toLong), 200);
 
     private AuraGenerationGameTests() {}
+
+    /**
+     * BETA26 BlockMirror is a 2/16-thick face-mounted plate, not a full cube.
+     * Keep outline and collision bounds identical for all six mounting faces.
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 180,
+            required = false
+    )
+    public static void essentiaMirrorUsesBETA26FaceBounds(GameTestHelper helper) {
+        EssentiaMirrorBlock mirror = ThaumcraftBlocks.MIRROR_ESSENTIA.get();
+        if (mirror.defaultBlockState().getValue(EssentiaMirrorBlock.FACING) != Direction.UP) {
+            throw new AssertionError("BETA26 mirror default facing must be UP");
+        }
+
+        Direction[] directions = {
+                Direction.DOWN, Direction.UP, Direction.NORTH,
+                Direction.SOUTH, Direction.WEST, Direction.EAST
+        };
+        double[][] expected = {
+                {0.0D, 0.875D, 0.0D, 1.0D, 1.0D, 1.0D},
+                {0.0D, 0.0D, 0.0D, 1.0D, 0.125D, 1.0D},
+                {0.0D, 0.0D, 0.875D, 1.0D, 1.0D, 1.0D},
+                {0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 0.125D},
+                {0.875D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D},
+                {0.0D, 0.0D, 0.0D, 0.125D, 1.0D, 1.0D}
+        };
+        BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
+        for (int i = 0; i < directions.length; i++) {
+            var state = mirror.defaultBlockState().setValue(EssentiaMirrorBlock.FACING, directions[i]);
+            AABB outline = mirror.getShape(state, helper.getLevel(), pos, CollisionContext.empty()).bounds();
+            AABB collision = mirror.getCollisionShape(state, helper.getLevel(), pos, CollisionContext.empty()).bounds();
+            assertMirrorBounds("outline " + directions[i], outline, expected[i]);
+            assertMirrorBounds("collision " + directions[i], collision, expected[i]);
+        }
+
+        System.out.println("TC_GAMETEST_MIRROR_FACE_BOUNDS=PASS facings=6 thickness=2/16 collision=YES");
+        helper.succeed();
+    }
+
+    private static void assertMirrorBounds(String label, AABB actual, double[] expected) {
+        double[] values = {
+                actual.minX, actual.minY, actual.minZ,
+                actual.maxX, actual.maxY, actual.maxZ
+        };
+        for (int i = 0; i < values.length; i++) {
+            if (Math.abs(values[i] - expected[i]) > 1.0E-6D) {
+                throw new AssertionError("BETA26 mirror " + label + " mismatch at bound " + i
+                        + ": expected=" + expected[i] + " actual=" + values[i]);
+            }
+        }
+    }
 
     @PrefixGameTestTemplate(false)
     @GameTest(
