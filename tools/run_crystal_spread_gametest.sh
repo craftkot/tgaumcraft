@@ -109,6 +109,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_GEOMETRY_BOUNDS=PASS size=YES seed=YES position=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2' || return 1
+    require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_TEST_TICKET_RELEASE=PASS bounded=YES forceTicks=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
     require_marker "$file" 'All 9 required tests passed' || return 1
     require_marker "$file" 'Stopping server' || return 1
