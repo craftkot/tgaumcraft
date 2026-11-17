@@ -75,6 +75,17 @@ public final class SilverwoodLegacyLogsTest {
                 check(positive.equals(negative));
             }
         }
+        // A translated placement must leave the caller's RNG at the same state.
+        // This matters when multiple features share a chunk-generation stream.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed = 0; seed < 32; seed++) {
+                Random positiveRolls = new Random(seed);
+                Random negativeRolls = new Random(seed);
+                SilverwoodLegacyLogs.place(8, 64, 8, height, positiveRolls, (x, y, z, meta) -> {});
+                SilverwoodLegacyLogs.place(-24, 64, -8, height, negativeRolls, (x, y, z, meta) -> {});
+                check(positiveRolls.nextLong() == negativeRolls.nextLong());
+            }
+        }
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
