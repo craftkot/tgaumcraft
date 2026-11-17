@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -35,8 +36,9 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth, weighted events, void-seed drops, and nearby collapse effects remain
- * separate follow-up work; this entity is not full parity.
+ * Flux-driven growth and the BETA26 weighted collapse event are implemented; weighted
+ * wisp, taint-seed, infection and focus events, void-seed drops, and nearby collapse effects
+ * remain separate follow-up work. This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
     private static final EntityDataAccessor<Integer> SEED =
@@ -115,6 +117,7 @@ public final class FluxRiftEntity extends Entity {
             // entity-specific 600-tick phase, after collapse and stability decay.
             if (tickCount % 600 == getId() % 600) {
                 tryGrowFromFlux();
+                tryExecuteInstabilityEvent();
             }
         }
     }
@@ -187,6 +190,37 @@ public final class FluxRiftEntity extends Entity {
                 // BETA26 isolates failures per target and continues the tick.
             }
         }
+    }
+
+    /**
+     * BETA26 rolls instability events on the same entity-specific 600-tick phase
+     * as Flux growth. Keep the negative-stability guard outside nextInt so a
+     * stable Rift does not consume an otherwise-unused entity RNG value.
+     */
+    private void tryExecuteInstabilityEvent() {
+        float stability = getRiftStability();
+        if (stability < 0.0F) {
+            int triggerRoll = random.nextInt(1000);
+            if (LegacyFluxRiftEventLogic.shouldAttemptEvent(stability, getRiftSize(), triggerRoll)) {
+                // BETA26 RandomItemChooser uses Math.random(), not the entity RNG.
+                executeWeightedEvent(Math.random());
+            }
+        }
+    }
+
+    /**
+     * Resolves the original five weighted entries. Only event 4 (begin collapse)
+     * has its required ported foundation; events 0-3 intentionally remain no-ops
+     * until their Wisp, Taint Seed, potion and focus systems exist.
+     *
+     * @return the BETA26 event id selected by the original weight table
+     */
+    int executeWeightedEvent(double weightedRoll) {
+        int event = LegacyFluxRiftEventLogic.selectWeightedEvent(weightedRoll);
+        if (event == 4) {
+            setCollapse(true);
+        }
+        return event;
     }
 
     /**

@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
@@ -151,6 +152,43 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("BETA26 Flux growth must stop at size 100 without debiting aura");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH=PASS cadence=600 exact_cost=sqrt(2*size) stability_boundary=50 very_stable=blocked size_cap=100");
+
+        // Pinned BETA26 EntityFluxRift.onUpdate / executeRiftEvent:
+        // negative stability gates a 0..999 roll against abs(stability)+size.
+        if (!LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 14)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 15)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(0.0F, 5, 0)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, -1)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 1000)) {
+            throw new AssertionError("BETA26 Rift instability event trigger boundary mismatch");
+        }
+
+        // Original RandomItemChooser weights are 50,10,20,20,1 (total 101).
+        if (LegacyFluxRiftEventLogic.selectWeightedEvent(0.0D) != 0
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.51D) != 1
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.61D) != 2
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.81D) != 3
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.995D) != 4) {
+            throw new AssertionError("BETA26 Rift weighted event distribution mismatch");
+        }
+
+        FluxRiftEntity unsupportedEvent = createRift(level, pos, 5);
+        unsupportedEvent.setRiftStability(-10.0F);
+        if (unsupportedEvent.executeWeightedEvent(0.99D) != 3
+                || unsupportedEvent.getCollapse()
+                || unsupportedEvent.getRiftStability() != -10.0F) {
+            throw new AssertionError("Unported BETA26 focus event must not be substituted with another effect");
+        }
+
+        FluxRiftEntity weightedCollapse = createRift(level, pos, 5);
+        weightedCollapse.setRiftStability(-10.0F);
+        if (weightedCollapse.executeWeightedEvent(0.995D) != 4
+                || !weightedCollapse.getCollapse()
+                || weightedCollapse.getMaxSize() != 5
+                || weightedCollapse.getRiftStability() != -10.0F) {
+            throw new AssertionError("BETA26 weighted event 4 must start collapse without stability cost");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_WEIGHTED_EVENTS=PASS trigger=strict stability_plus_size weights=50,10,20,20,1 collapse=YES unsupported=NOOP");
 
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity beforeSave = createRift(level, pos, 5);
