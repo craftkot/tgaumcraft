@@ -563,3 +563,39 @@ jobs:
           name: thaumcraft-port-jars
           path: build/libs/*.jar
           if-no-files-found: error
+
+  alchemy-native-gametest:
+    if: github.ref_name == 'fix/alchemy-native-existing-ci-job-2026-11-17' || github.head_ref == 'fix/alchemy-native-existing-ci-job-2026-11-17'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Run native NeoForge GameTests on checked-out candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Candidate SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          gradle --init-script tools/alchemy-gametest.gradle runAlchemyGameTest --no-daemon --console=plain 2>&1 | tee alchemy-native-gametest.log
+      - name: Require nonzero native GameTest pass count
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s alchemy-native-gametest.log
+          if grep -Eiq 'No test functions were given!|Failed to start the minecraft server|Exception in thread|[[:space:]]BUILD FAILED' alchemy-native-gametest.log; then
+            exit 1
+          fi
+          grep -Eiq '([1-9][0-9]* tests? passed|All [1-9][0-9]* tests? passed|[1-9][0-9]* tests? succeeded)' alchemy-native-gametest.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: alchemy-native-gametest-log
+          path: alchemy-native-gametest.log
+          if-no-files-found: warn
