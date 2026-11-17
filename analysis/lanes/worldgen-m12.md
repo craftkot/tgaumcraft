@@ -462,3 +462,11 @@
 - Source-level guard commit [3dca9d9](https://github.com/craftkot/tgaumcraft/commit/3dca9d9317f8c012e3c7b0ada599d6e7814df9e9) checks the early-return ordering. This is only a textual guard, **not** a native rejection-injection test.
 - New-head CI, exact Java runners, full NeoForge compilation, native `WorldGenLevel` GameTest and fresh-chunk generation have **not** been executed or verified in this pass. Feature remains unregistered; BETA26 biome/RNG parity unresolved. No main, other branches, shared registries, Gradle or merges; historical audit remains 59/100.
 - Next: inspect exact-head CI, run source guard and Java21 runners; implement native GameTest with injected failed `setBlock` and coordinate feature registration separately.
+
+## 17.11.2026 — M12: canopy rejection RNG regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked visible parallel branches and open PRs. Before edit main...feature/worldgen-m12 was ahead 138, behind 0.
+- Previous HEAD 755b11b23ea04062e030cd7c6c81f1ae6c2c5433: GitHub Actions [run 44018843470](https://github.com/craftkot/tgaumcraft/actions/runs/44018843470) reported completed SUCCESS. This is not evidence of the standalone test or Minecraft GameTest.
+- Commit [e69eebf](https://github.com/craftkot/tgaumcraft/commit/e69eebfef7bb1798d6b694dbfb048e5d3d06244f) adds 80 pure-core callback assertions across 4 heights and 4 seeds: inject rejection at the third leaf callback, suppress later canopy/trunk writes, and verify that legacy RNG continuation matches an unrestricted traversal. This checks the callback policy used by the Feature; it does NOT exercise WorldGenLevel.setBlock or prove rollback.
+- Direct git checkout remains blocked by github.com DNS; exact Java 21 runner not executed in this pass. New-head CI, NeoForge build, registered GameTest and fresh-chunk worldgen remain unverified. Silverwood is still unregistered; BETA26 biome/frequency and RNG bridge parity unresolved.
+- Next: run exact test_silverwood_legacy_tree.sh and source wiring guard from a verified checkout, then implement native WorldGenLevel failure-injection GameTest without touching shared registries/Gradle. No merge; main, other branches and shared registries unchanged. Historical audit 59/100 unchanged.
