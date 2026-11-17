@@ -11,6 +11,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -100,7 +101,7 @@ public final class FluxRiftEntityGameTests {
         if (!restored.getCollapse() || restored.getMaxSize() != 5 || restored.getRiftSize() != 5) {
             throw new AssertionError("BETA26 collapse state/maxSize did not survive entity save/load");
         }
-        if (restored.tickCollapse(findCollapseRandom(true, false))
+        if (restored.tickCollapse(findCollapseRandom(true, false)) != null
                 || restored.getRiftSize() != 4
                 || restored.getMaxSize() != 5
                 || aura.getVis(pos) != 11.0F
@@ -112,7 +113,7 @@ public final class FluxRiftEntityGameTests {
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity fluxRift = createRift(level, pos, 5);
         fluxRift.setCollapse(true);
-        if (fluxRift.tickCollapse(findCollapseRandom(false, false))
+        if (fluxRift.tickCollapse(findCollapseRandom(false, false)) != null
                 || fluxRift.getRiftSize() != 4
                 || aura.getVis(pos) != 10.0F
                 || aura.getFlux(pos) != 3.0F) {
@@ -124,10 +125,6 @@ public final class FluxRiftEntityGameTests {
         FluxRiftEntity explodingRift = createRift(level, pos, 5);
         explodingRift.setCollapse(true);
         ExplosionFixture fixture = findExplosionFixture(explodingRift);
-        BlockPos blastBlock = BlockPos.containing(fixture.x(), fixture.y(), fixture.z());
-        if (!level.setBlock(blastBlock, Blocks.GLASS.defaultBlockState(), 3)) {
-            throw new AssertionError("Unable to place no-smoking explosion fixture block");
-        }
         Pig pig = EntityType.PIG.create(level);
         if (pig == null) {
             throw new AssertionError("Unable to create explosion damage target");
@@ -138,23 +135,24 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("Unable to add explosion damage target");
         }
         float healthBefore = pig.getHealth();
-        boolean exploded = explodingRift.tickCollapse(RandomSource.create(fixture.seed()));
-        if (!exploded
-                || pig.getHealth() >= healthBefore
-                || !level.getBlockState(blastBlock).is(Blocks.GLASS)) {
-            throw new AssertionError("BETA26 createExplosion(..., false) must damage entities without block destruction");
+        Explosion explosion = explodingRift.tickCollapse(RandomSource.create(fixture.seed()));
+        if (explosion == null
+                || explosion.getBlockInteraction() != Explosion.BlockInteraction.KEEP
+                || !explosion.getToBlow().isEmpty()
+                || pig.getHealth() >= healthBefore) {
+            throw new AssertionError("BETA26 createExplosion(..., false) must damage entities while keeping blocks");
         }
         float expectedVis = fixture.addVis() ? 11.0F : 10.0F;
         float expectedFlux = fixture.addVis() ? 2.0F : 3.0F;
         if (aura.getVis(pos) != expectedVis || aura.getFlux(pos) != expectedFlux) {
             throw new AssertionError("BETA26 explosion tick changed the wrong aura channel");
         }
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_EXPLOSION=PASS pig_damaged=YES glass_retained=YES");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_EXPLOSION=PASS pig_damaged=YES block_interaction=KEEP affected_blocks=0");
 
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity terminal = createRift(level, pos, 2);
         terminal.setCollapse(true);
-        if (terminal.tickCollapse(findCollapseRandom(true, false))
+        if (terminal.tickCollapse(findCollapseRandom(true, false)) != null
                 || terminal.getRiftSize() != 1
                 || terminal.getMaxSize() != 2
                 || !terminal.isRemoved()) {
