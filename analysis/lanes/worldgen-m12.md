@@ -452,3 +452,13 @@
 - Inspected `SilverwoodLegacyFeature.java` and its source-level guard. It remains an isolated, unregistered Feature with canopy-first writes and best-effort rollback; a native `WorldGenLevel` failure-injection harness is still missing. No speculative GameTest or production change was committed in this pass.
 - Local exact checkout remains unavailable: `git ls-remote` fails with `Could not resolve host: github.com`. No local Java 21 runner, NeoForge compile, real Minecraft GameTest or fresh-chunk smoke was executed. BETA26 RNG/biome parity and shared registration coordination remain unresolved. Historical audit remains 59/100.
 - Next: build a native NeoForge GameTest fixture that calls the Feature with a controlled `WorldGenLevel` write failure, execute it in a real NeoForge test server, then coordinate placed-feature/biome registration separately. No edits to main, other branches, registries or Gradle; no merge.
+
+
+## 17.11.2026 — M12: stop additional canopy writes after rejected setBlock
+
+- Fresh-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, this lane, open PRs and parallel branches. Before edits `main...feature/worldgen-m12` was ahead 135, behind 0. Draft PR #9 remains open and unmerged.
+- Verified previous HEAD `6b52a16c17ea1a8460ba9fcc061427e5deb79ff2`: GitHub Actions run [44004532470](https://github.com/craftkot/tgaumcraft/actions/runs/44004532470) completed SUCCESS. This is not a native GameTest.
+- Production commit [e8c1810](https://github.com/craftkot/tgaumcraft/commit/e8c18107138aebbba751d9bc37c5fd830e3a331b) stops *subsequent* Silverwood leaf writes after the first rejected `WorldGenLevel.setBlock`, while the legacy canopy RNG traversal still proceeds. Previously it kept attempting foliage writes even though the final result was already doomed to rollback. Earlier successful foliage still enters the existing best-effort rollback.
+- Source-level guard commit [3dca9d9](https://github.com/craftkot/tgaumcraft/commit/3dca9d9317f8c012e3c7b0ada599d6e7814df9e9) checks the early-return ordering. This is only a textual guard, **not** a native rejection-injection test.
+- New-head CI, exact Java runners, full NeoForge compilation, native `WorldGenLevel` GameTest and fresh-chunk generation have **not** been executed or verified in this pass. Feature remains unregistered; BETA26 biome/RNG parity unresolved. No main, other branches, shared registries, Gradle or merges; historical audit remains 59/100.
+- Next: inspect exact-head CI, run source guard and Java21 runners; implement native GameTest with injected failed `setBlock` and coordinate feature registration separately.
