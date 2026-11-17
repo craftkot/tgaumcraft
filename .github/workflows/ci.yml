@@ -565,7 +565,7 @@ jobs:
           if-no-files-found: error
 
   alchemy-native-gametest:
-    if: contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17"]'), github.ref_name) || contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17"]'), github.head_ref)
+    if: contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17","fix/alchemy-gametest-pass-parser-2026-11-17"]'), github.ref_name) || contains(fromJSON('["fix/alchemy-native-existing-ci-job-2026-11-17","fix/alchemy-gametest-resource-path-2026-11-17","fix/alchemy-gametest-pass-parser-2026-11-17"]'), github.head_ref)
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
@@ -592,7 +592,7 @@ jobs:
           if grep -Eiq 'No test functions were given!|Failed to start the minecraft server|Exception in thread|[[:space:]]BUILD FAILED' alchemy-native-gametest.log; then
             exit 1
           fi
-          grep -Eiq '([1-9][0-9]* tests? passed|All [1-9][0-9]* tests? passed|[1-9][0-9]* tests? succeeded)' alchemy-native-gametest.log
+          grep -Eiq 'All [1-9][0-9]* (required )?tests? passed|[1-9][0-9]* tests? (passed|succeeded)' alchemy-native-gametest.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
