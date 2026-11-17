@@ -9,6 +9,7 @@ on:
       - fix/alchemy-gametest-template-2026-11-17
       - fix/alchemy-template-pr-ci-2026-11-17
       - fix/alchemy-template-namespace-2026-11-17
+      - fix/alchemy-real-nbt-fixture-2026-11-17
   pull_request:
     branches:
       - integration/alchemy-core-candidate-2026-11-16
