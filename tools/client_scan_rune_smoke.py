@@ -249,6 +249,7 @@ log = Path("client-smoke/client.log").read_text(errors="replace")
 created, rendered, expired = parse_scan_rune_log(log)
 if len(created) < 80:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_SPAWN_MISSING count={len(created)}")
+# Keep every non-zero Gaussian scale: BETA26 does not clamp particleScale.
 visible_rendered = visible_rune_render_samples(rendered)
 if len(visible_rendered) < 40:
     raise SystemExit(f"RUNE_ACTUAL_CLIENT_NONZERO_ALPHA_RENDER_MISSING count={len(visible_rendered)}")
