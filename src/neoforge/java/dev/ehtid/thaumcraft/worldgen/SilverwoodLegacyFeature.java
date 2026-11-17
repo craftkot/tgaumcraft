@@ -62,7 +62,8 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
         // Preserve original states so a canopy-only failed attempt can be undone.
         final Map<BlockPos, BlockState> originalLeaves = new HashMap<>();
         SilverwoodLegacyTree.place(x, y, z, height, random,
-                (px, py, pz) -> canReplace(level.getBlockState(new BlockPos(px, py, pz))),
+                (px, py, pz) -> !rejectedLeafWrite[0]
+                        && canReplace(level.getBlockState(new BlockPos(px, py, pz))),
                 (px, py, pz) -> {
                     // Keep the legacy RNG traversal, but stop mutating the world
                     // after the first rejected canopy write. Rollback below still
