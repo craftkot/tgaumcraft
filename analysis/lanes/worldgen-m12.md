@@ -499,3 +499,12 @@
 - Test commit [252f817](https://github.com/craftkot/tgaumcraft/commit/252f8175dc134a3d695ffa380ca2d325b72fa3da) adds 64 deterministic assertions to SilverwoodLegacyLogsTest (4 supported heights x 16 seeds). The same skeleton sequence, including metadata and random branches, must remain identical after coordinate normalization between (8,64,8) and (-24,64,-8). This checks negative-coordinate translation invariance only; it does not prove chunk placement, NeoForge or BETA26 RNG parity.
 - The new Java test has been committed but NOT executed in an exact checkout. Exact-head CI, native WorldGenLevel GameTest, actual new-chunk generation, biome registration and client smoke remain unverified. Silverwood Feature remains unregistered; rollback is best-effort. No shared registries, Gradle, main, other branches or merge modified. Historical audit remains 59/100.
 - Next: verify CI for the new SHA, execute tools/test_silverwood_legacy_logs.sh, then add an actual WorldGenLevel failure-injection GameTest without changing shared registration.
+
+
+## 17.11.2026 — M12: CI подтверждение negative-coordinate regression
+
+- Повторно прочитаны `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` и этот журнал. Проверены параллельные feature-ветки, открытые PR и сравнение с `main` (до обновления: ahead 148, behind 0); Draft PR #9 остаётся открытым, без merge.
+- Для HEAD `c71a0bd56443b0c03fcd5b857d18f38fb22c8eef` получен GitHub Actions [run #3649 SUCCESS](https://github.com/craftkot/tgaumcraft/actions/runs/44057596853) и CircleCI `verify-connection` SUCCESS. Это доказательства статусов CI на конкретном SHA, **не** подтверждение исполнения `tools/test_silverwood_legacy_logs.sh` или нативного GameTest.
+- Прочитаны `SilverwoodLegacyFeature`, `SilverwoodTrunkRollback`, `SilverwoodCanopyRollback` и trunk rollback regression. Отказ `WorldGenLevel.setBlock` по-прежнему не воспроизведён в настоящем NeoForge GameTest; естественная регистрация Feature отсутствует. Дополнительную неподтверждённую правку игровой логики не делали.
+- В этом проходе исходный Java-код и тесты не изменены, exact-checkout Java runners, NeoForge build и Minecraft fresh-chunk smoke не запускались. BETA26 RNG/biome parity и атомарность rollback не доказаны; исторический аудит 59/100 неизменен.
+- Следующий безопасный шаг: реализовать и запустить нативный GameTest с контролируемым отказом `setBlock` на настоящем `WorldGenLevel`; отдельно согласовать регистрацию placed feature и biome modifiers. Main, чужие ветки, общие регистры и Gradle не изменены.
