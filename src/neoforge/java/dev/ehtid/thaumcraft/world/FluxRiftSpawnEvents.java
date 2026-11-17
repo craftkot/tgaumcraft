@@ -44,7 +44,7 @@ public final class FluxRiftSpawnEvents {
 
         int x = trigger.getX() + level.getRandom().nextInt(16);
         int z = trigger.getZ() + level.getRandom().nextInt(16);
-        BlockPos spawnPos = level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
+        BlockPos spawnPos = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(x, 0, z));
 
         if (!level.dimensionType().hasSkyLight()) {
             spawnPos = new BlockPos(x, 10, z);

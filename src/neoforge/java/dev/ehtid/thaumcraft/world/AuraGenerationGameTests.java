@@ -1219,7 +1219,7 @@ public final class AuraGenerationGameTests {
         nearby.putChunk(nearSample, (short) 100, 0.0F, 1000.0F);
         int centerX = nearChunkX * 16 + 8;
         int centerZ = chunkZ * 16 + 8;
-        BlockPos surface = level.getHeight(Heightmap.Types.MOTION_BLOCKING, centerX, centerZ);
+        BlockPos surface = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, new BlockPos(centerX, 0, centerZ));
         FluxRiftEntity blocker = new FluxRiftEntity(FluxRiftRegistration.get(), level);
         blocker.setRiftSeed(1);
         blocker.setRiftSize(10);

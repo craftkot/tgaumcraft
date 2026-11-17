@@ -62,14 +62,14 @@ public final class FluxRiftEntity extends Entity {
         setRiftSize(tag.getInt("RiftSize"));
         setRiftSeed(tag.getInt("RiftSeed"));
         setRiftStability(tag.getFloat("Stability"));
-        setCollapse(tag.getBoolean("collapse"));
+        entityData.set(COLLAPSE, tag.getBoolean("collapse"));
     }
 
     @Override
     public void tick() {
         super.tick();
         if (!level().isClientSide && getRiftSeed() == 0) {
-            setRiftSeed(random.nextInt());
+            setRiftSeed(level().getRandom().nextInt());
         }
     }
 

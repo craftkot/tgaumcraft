@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -92,7 +93,11 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
     }
 
     @Override
-    protected AABB getBoundingBoxForCulling(FluxRiftEntity entity) {
+    public boolean shouldRender(FluxRiftEntity entity, Frustum frustum, double x, double y, double z) {
+        return super.shouldRender(entity, frustum, x, y, z) || frustum.isVisible(geometryBounds(entity));
+    }
+
+    private static AABB geometryBounds(FluxRiftEntity entity) {
         List<LegacyFluxRiftGeometry.Point> points = entity.getGeometry();
         if (points.isEmpty()) return entity.getBoundingBox().inflate(2.0D);
         double minX = Double.POSITIVE_INFINITY, minY = Double.POSITIVE_INFINITY, minZ = Double.POSITIVE_INFINITY;
