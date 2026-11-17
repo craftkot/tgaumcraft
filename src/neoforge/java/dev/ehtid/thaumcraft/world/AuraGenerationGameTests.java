@@ -82,7 +82,8 @@ public final class AuraGenerationGameTests {
         ThaumcraftAuraSavedData successful = new ThaumcraftAuraSavedData();
         successful.putChunk(sample, (short) 100, 0.0F, 1000.0F);
         successful.processAuraChunks(level, 2, bound -> 0, () -> 0.0D);
-        if (!FluxRiftSpawnEvents.consumePendingTrigger(level, successful)) {
+        FluxRiftEntity spawnAttempt = FluxRiftSpawnEvents.consumePendingTriggerEntity(level, successful);
+        if (spawnAttempt == null) {
             throw new AssertionError("BETA26 pending Flux trigger did not create a Rift above the strict size threshold");
         }
 
@@ -92,16 +93,27 @@ public final class AuraGenerationGameTests {
                     chunkX * 16 + 48.0D, level.getMaxBuildHeight(), chunkZ * 16 + 48.0D
             );
             var spawned = level.getEntitiesOfClass(FluxRiftEntity.class, successArea);
+            Entity registered = level.getEntity(spawnAttempt.getUUID());
+            boolean directPresent = registered == spawnAttempt;
+            boolean chunkLoaded = level.getChunkSource().getChunkNow(
+                    spawnAttempt.blockPosition().getX() >> 4,
+                    spawnAttempt.blockPosition().getZ() >> 4) != null;
             int expectedSize = (int) Math.sqrt(3000.0D);
             float expectedFlux = 1000.0F - (float) Math.sqrt(3000.0D);
-            if (spawned.size() != 1
-                    || spawned.get(0).getRiftSize() != expectedSize
+            if (!directPresent || spawnAttempt.isRemoved() || spawned.size() != 1
+                    || spawned.get(0) != spawnAttempt
+                    || spawnAttempt.getRiftSize() != expectedSize
                     || Math.abs(successful.getFlux(sample) - expectedFlux) > 0.001F) {
+                AABB bounds = spawnAttempt.getBoundingBox();
                 throw new AssertionError("Flux Rift spawn/debit transaction mismatch after entity-manager flush: entities="
-                        + spawned.size() + " flux=" + successful.getFlux(sample) + " expected=" + expectedFlux);
+                        + spawned.size() + " directPresent=" + directPresent + " removed=" + spawnAttempt.isRemoved()
+                        + " chunkLoaded=" + chunkLoaded + " pos=" + spawnAttempt.position()
+                        + " bounds=" + bounds + " intersectsQuery=" + successArea.intersects(bounds)
+                        + " uuid=" + spawnAttempt.getUUID()
+                        + " flux=" + successful.getFlux(sample) + " expected=" + expectedFlux);
             }
 
-            FluxRiftEntity rift = spawned.get(0);
+            FluxRiftEntity rift = spawnAttempt;
             int expectedPoints = ((int) Math.ceil(expectedSize / 3.0F)) * 2 + 2;
             var geometry = rift.getGeometry();
             if (geometry.size() != expectedPoints

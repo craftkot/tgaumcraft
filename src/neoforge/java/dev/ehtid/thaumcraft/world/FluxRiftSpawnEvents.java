@@ -31,16 +31,26 @@ public final class FluxRiftSpawnEvents {
 
     /** Returns true only when a pending trigger produced and paid for a Rift. */
     public static boolean consumePendingTrigger(ServerLevel level, ThaumcraftAuraSavedData aura) {
+        return consumePendingTriggerEntity(level, aura) != null;
+    }
+
+    /** Returns the actual spawned instance for server-side acceptance diagnostics. */
+    static FluxRiftEntity consumePendingTriggerEntity(ServerLevel level, ThaumcraftAuraSavedData aura) {
         BlockPos trigger = aura.takePendingRiftTrigger();
-        return trigger != null && trySpawnRift(level, aura, trigger);
+        return trigger == null ? null : trySpawnRiftEntity(level, aura, trigger);
+    }
+
+    /** Package-visible boolean facade retained for the nearby-rift regression. */
+    static boolean trySpawnRift(ServerLevel level, ThaumcraftAuraSavedData aura, BlockPos trigger) {
+        return trySpawnRiftEntity(level, aura, trigger) != null;
     }
 
     /** Package-visible for the native GameTest; this is the production spawn transaction. */
-    static boolean trySpawnRift(ServerLevel level, ThaumcraftAuraSavedData aura, BlockPos trigger) {
+    static FluxRiftEntity trySpawnRiftEntity(ServerLevel level, ThaumcraftAuraSavedData aura, BlockPos trigger) {
         int triggerChunkX = trigger.getX() >> 4;
         int triggerChunkZ = trigger.getZ() >> 4;
         // Never force-load a trigger chunk after its transient request has aged.
-        if (level.getChunkSource().getChunkNow(triggerChunkX, triggerChunkZ) == null) return false;
+        if (level.getChunkSource().getChunkNow(triggerChunkX, triggerChunkZ) == null) return null;
 
         int x = trigger.getX() + level.getRandom().nextInt(16);
         int z = trigger.getZ() + level.getRandom().nextInt(16);
@@ -50,22 +60,22 @@ public final class FluxRiftSpawnEvents {
             spawnPos = new BlockPos(x, 10, z);
             while (!level.isEmptyBlock(spawnPos)) {
                 int nextY = spawnPos.getY() + level.getRandom().nextInt(5) + 1;
-                if (nextY > level.getMaxBuildHeight() - 5) return false;
+                if (nextY > level.getMaxBuildHeight() - 5) return null;
                 spawnPos = new BlockPos(x, nextY, z);
             }
         }
 
-        if (spawnPos.getY() >= level.getMaxBuildHeight() - 4) return false;
+        if (spawnPos.getY() >= level.getMaxBuildHeight() - 4) return null;
         if (!level.getEntitiesOfClass(FluxRiftEntity.class, new AABB(spawnPos).inflate(32.0D)).isEmpty()) {
-            return false;
+            return null;
         }
 
         float flux = aura.getFlux(spawnPos);
         double size = Math.sqrt(flux * 3.0F);
-        if (!(size > 5.0D)) return false;
+        if (!(size > 5.0D)) return null;
 
         float cost = (float) size;
-        if (aura.drainFlux(spawnPos, cost, true) < cost) return false;
+        if (aura.drainFlux(spawnPos, cost, true) < cost) return null;
 
         FluxRiftEntity rift = new FluxRiftEntity(FluxRiftRegistration.get(), level);
         rift.setRiftSeed(level.getRandom().nextInt());
@@ -77,7 +87,7 @@ public final class FluxRiftSpawnEvents {
                 0.0F
         );
         // BETA26 only debits Flux after the entity has been accepted by the world.
-        if (!level.addFreshEntity(rift)) return false;
+        if (!level.addFreshEntity(rift)) return null;
 
         rift.setRiftSize((int) size);
         float drained = aura.drainFlux(spawnPos, cost, false);
@@ -86,11 +96,11 @@ public final class FluxRiftSpawnEvents {
             // back both sides if one of them changed the aura before the debit.
             if (drained > 0.0F) aura.polluteFlux(spawnPos, drained);
             rift.discard();
-            return false;
+            return null;
         }
 
         // The BETA26 f_toomuchflux research reward is intentionally deferred
         // until the M07 research API is integrated; do not fake an unlock here.
-        return true;
+        return rift;
     }
 }
