@@ -1,8 +1,11 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -28,8 +31,9 @@ import java.util.List;
  *
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
- * and timed stability decay. Growth, weighted events and
- * collapse behavior remain separate follow-up work; this entity is not full parity.
+ * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
+ * Flux-driven growth, weighted events, and collapse rewards/nearby effects remain
+ * separate follow-up work; this entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
     private static final EntityDataAccessor<Integer> SEED =
@@ -91,6 +95,15 @@ public final class FluxRiftEntity extends Entity {
                 setRiftSeed(level().getRandom().nextInt());
             }
             applySegmentEffects();
+            if (getGeometry().size() < 3 && !getCollapse()) {
+                setCollapse(true);
+            }
+            if (getCollapse()) {
+                tickCollapse(random);
+                if (isRemoved()) {
+                    return;
+                }
+            }
             // BETA26 EntityFluxRift.onUpdate applies this on ticksExisted % 120 == 0.
             if (tickCount % 120 == 0) {
                 setRiftStability(getRiftStability() - 0.2F);
@@ -166,6 +179,49 @@ public final class FluxRiftEntity extends Entity {
                 // BETA26 isolates failures per target and continues the tick.
             }
         }
+    }
+
+    /**
+     * Executes one BETA26 collapse tick using the entity-owned random stream.
+     * The terminal reward/debuff/warp sequence is still a separate porting task.
+     *
+     * @return true when the one-in-ten explosion branch executed
+     */
+    boolean tickCollapse(RandomSource sourceRandom) {
+        if (!(level() instanceof ServerLevel serverLevel) || !getCollapse()) {
+            return false;
+        }
+
+        setRiftSize(getRiftSize() - 1);
+
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(serverLevel);
+        if (sourceRandom.nextBoolean()) {
+            aura.addVis(blockPosition(), 1.0F);
+        } else {
+            aura.polluteFlux(blockPosition(), 1.0F);
+        }
+
+        boolean exploded = sourceRandom.nextInt(10) == 0;
+        if (exploded) {
+            // BETA26 createExplosion(..., false) disables smoking/block damage;
+            // entity damage remains enabled.
+            level().explode(
+                    this,
+                    getX() + sourceRandom.nextGaussian() * 2.0D,
+                    getY() + sourceRandom.nextGaussian() * 2.0D,
+                    getZ() + sourceRandom.nextGaussian() * 2.0D,
+                    sourceRandom.nextFloat() / 2.0F,
+                    false,
+                    Level.ExplosionInteraction.NONE
+            );
+        }
+
+        if (getRiftSize() <= 1) {
+            // BETA26 completeCollapse also drops items and applies nearby
+            // warp/taint/weakness. Those systems are not ported yet.
+            discard();
+        }
+        return exploded;
     }
 
     @Override
