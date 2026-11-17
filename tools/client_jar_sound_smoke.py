@@ -351,10 +351,9 @@ PY
     exit 1
   fi
 
-  # The X11 window geometry center is NOT necessarily the Minecraft viewport
-  # crosshair center (the failed artifact was offset by 22 px vertically).
-  # Detect the actual crosshair in a real frame before opening chat, then move
-  # the pointer to that pixel while chat is open. Never guess from window bounds.
+  # The X11 geometry center and rendered crosshair differ by 22 px in this
+  # capture. Detect the crosshair for the damage ROI only; retain the previously
+  # successful XTest input coordinate (window center) as a separate value.
   hit_geometry="$(xdotool getwindowgeometry --shell "$WIN")"
   eval "$hit_geometry"
   jar_hit_window_center_x=$((X + WIDTH / 2))
