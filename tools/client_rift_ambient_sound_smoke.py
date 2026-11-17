@@ -99,7 +99,9 @@ source = source.replace("export ALSOFT_DRIVERS=null", audio_driver_setup)
 if source.count("export ALSOFT_DRIVERS=pulse") != 1 or "export ALSOFT_DRIVERS=null" in source:
     raise SystemExit("Generated client did not select PulseAudio exclusively")
 openal_ready_check = """for i in $(seq 1 240); do
-  if grep -Fq 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null; then break; fi
+  if grep -Fq 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null \\
+      && grep -Fq '[ALSOFT] (II) Initialized backend "pulse"' client-smoke/openal.log 2>/dev/null \\
+      && grep -Fq '[ALSOFT] (II) Connecting to "tc_rift_sink"' client-smoke/openal.log 2>/dev/null; then break; fi
   sleep 0.25
 done
 openal_device_line="$(grep -F 'OpenAL initialized on device' client-smoke/client.log 2>/dev/null | tail -n 1 || true)"
@@ -108,12 +110,17 @@ if [ -z "$openal_device_line" ]; then
   cat client-smoke/openal.log >&2 || true
   exit 1
 fi
-if [[ "$openal_device_line" == *"Null Output"* ]] || [[ "$openal_device_line" != *"PulseAudio"* ]]; then
-  echo "RIFT_OPENAL_DEVICE=FAIL $openal_device_line" | tee -a client-smoke-status.txt
+if ! grep -Fq '[ALSOFT] (II) Initialized backend "pulse"' client-smoke/openal.log 2>/dev/null; then
+  echo "RIFT_OPENAL_DEVICE=FAIL PulseAudio backend not initialized: $openal_device_line" | tee -a client-smoke-status.txt
   cat client-smoke/openal.log >&2 || true
   exit 1
 fi
-echo "RIFT_OPENAL_DEVICE=PASS $openal_device_line" | tee -a client-smoke-status.txt
+if ! grep -Fq '[ALSOFT] (II) Connecting to "tc_rift_sink"' client-smoke/openal.log 2>/dev/null; then
+  echo "RIFT_OPENAL_DEVICE=FAIL PulseAudio did not connect to tc_rift_sink: $openal_device_line" | tee -a client-smoke-status.txt
+  cat client-smoke/openal.log >&2 || true
+  exit 1
+fi
+echo "RIFT_OPENAL_DEVICE=PASS backend=pulse sink=tc_rift_sink client_device=$openal_device_line" | tee -a client-smoke-status.txt
 """
 window_ready_anchor = """if [ -z "$WIN" ]; then
   echo 'CLIENT_WINDOW=NO' | tee -a client-smoke-status.txt
