@@ -103,7 +103,7 @@ assert "set -Eeuo pipefail" in CLIENT_BOOT, "The overlay verifier pipeline must 
 assert "compare -metric AE" not in hit_section
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY=PASS" in OVERLAY
 assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_MISSING=YES" in OVERLAY
-assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC=" in OVERLAY
+assert "JAR_HIT_CLIENT_DAMAGE_OVERLAY_DIAGNOSTIC " in OVERLAY
 assert "no_hit_before: Path" in OVERLAY and "no_hit_after: Path" in OVERLAY
 assert "MIN_HIT_PIXELS = 300" in OVERLAY and "MIN_OVER_BASELINE_PIXELS = 200" in OVERLAY
 assert 'FUZZ = "6%"' in OVERLAY and "MIN_HIT_PIXELS = 300" in OVERLAY and "MIN_OVER_BASELINE_PIXELS = 200" in OVERLAY
