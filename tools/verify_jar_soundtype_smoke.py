@@ -73,7 +73,13 @@ assert "100-pre-hit-viewport.png" in hit_section, "Hit probe must preserve the v
 assert "JAR_HIT_CROSSHAIR_DETECTED=YES" in hit_section, "Hit probe must detect the actual rendered crosshair"
 assert "JAR_HIT_CROSSHAIR_CENTER=" in hit_section, "Hit probe must log the screenshot-derived crosshair"
 assert 'python3 tools/client_crosshair_locator.py' in hit_section
-assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' in hit_section
+assert 'xdotool mousemove --sync "$jar_hit_window_center_x" "$jar_hit_window_center_y"' in hit_section
+assert 'xdotool mousemove --sync "$jar_hit_center_x" "$jar_hit_center_y"' not in hit_section
+assert "JAR_HIT_FOCUS_CONFIRMED=YES" in hit_section
+assert 'xdotool windowactivate --sync "$WIN"' in hit_section
+assert 'xdotool windowfocus --sync "$WIN"' in hit_section
+assert 'jar_hit_active_window="$(xdotool getactivewindow)"' in hit_section
+assert hit_section.index("windowactivate --sync") < hit_section.index("JAR_HIT_FOCUS_CONFIRMED=YES") < hit_section.index("xdotool mousedown 1")
 assert hit_section.index("xdotool key --clearmodifiers t") < hit_section.index("xdotool mousemove --sync") < hit_section.index("xdotool key --clearmodifiers Return") < hit_section.index("100a-jar-hit-aim.png")
 assert "send_chat '/effect give @p minecraft:mining_fatigue 30 0 true'" in hit_section
 assert "send_chat '/data get entity @p active_effects'" in hit_section
