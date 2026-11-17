@@ -100,6 +100,19 @@ public final class SilverwoodLegacyLogsTest {
                         && roots.contains("-8,63,-10:1") && roots.contains("-8,63,-6:1"));
             }
         }
+        // The archived skeleton uses exactly eight nextInt(3) branch rolls:
+        // four lower diagonal branches and four upper diagonal branches.
+        // An extra roll would shift every later feature sharing this RNG.
+        for (int height = 7; height <= 10; height++) {
+            for (long seed = 0; seed < 32; seed++) {
+                Random actual = new Random(seed);
+                Random expected = new Random(seed);
+                SilverwoodLegacyLogs.place(8, 64, 8, height, actual,
+                        (x, y, z, meta) -> {});
+                for (int roll = 0; roll < 8; roll++) expected.nextInt(3);
+                check(actual.nextLong() == expected.nextLong());
+            }
+        }
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
