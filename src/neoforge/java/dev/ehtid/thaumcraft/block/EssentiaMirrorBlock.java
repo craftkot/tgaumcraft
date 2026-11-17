@@ -35,11 +35,17 @@ import net.minecraft.server.level.ServerLevel;
 public final class EssentiaMirrorBlock extends BaseEntityBlock {
     public static final MapCodec<EssentiaMirrorBlock> CODEC = simpleCodec(EssentiaMirrorBlock::new);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
-    private static final VoxelShape SHAPE = box(0,0,0,16,16,16);
+    // BETA26 BlockMirror.getBoundingBox: a 2/16-thick plate mounted against its support face.
+    private static final VoxelShape DOWN_SHAPE = box(0,14,0,16,16,16);
+    private static final VoxelShape UP_SHAPE = box(0,0,0,16,2,16);
+    private static final VoxelShape NORTH_SHAPE = box(0,0,14,16,16,16);
+    private static final VoxelShape SOUTH_SHAPE = box(0,0,0,16,16,2);
+    private static final VoxelShape WEST_SHAPE = box(14,0,0,16,16,16);
+    private static final VoxelShape EAST_SHAPE = box(0,0,0,2,16,16);
 
     public EssentiaMirrorBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        registerDefaultState(stateDefinition.any().setValue(FACING,Direction.NORTH));
+        registerDefaultState(stateDefinition.any().setValue(FACING,Direction.UP));
     }
 
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
@@ -51,7 +57,14 @@ public final class EssentiaMirrorBlock extends BaseEntityBlock {
     }
     @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public VoxelShape getShape(BlockState state, BlockGetter getter,BlockPos pos,CollisionContext context) {
-        return SHAPE;
+        return switch (state.getValue(FACING)) {
+            case DOWN -> DOWN_SHAPE;
+            case UP -> UP_SHAPE;
+            case NORTH -> NORTH_SHAPE;
+            case SOUTH -> SOUTH_SHAPE;
+            case WEST -> WEST_SHAPE;
+            case EAST -> EAST_SHAPE;
+        };
     }
     @Override public BlockEntity newBlockEntity(BlockPos pos,BlockState state) {
         return new EssentiaMirrorBlockEntity(pos,state);
