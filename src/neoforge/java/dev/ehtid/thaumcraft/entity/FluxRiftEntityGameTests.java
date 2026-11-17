@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -292,14 +293,71 @@ public final class FluxRiftEntityGameTests {
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_item_entity=YES");
 
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity veryUnstableRift = createRift(level, pos, 2);
+        veryUnstableRift.setRiftStability(-25.0F);
+        veryUnstableRift.setCollapse(true);
+        Pig veryUnstableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        Pig veryUnstableEdge = spawnPig(level,
+                pos.getX() + 0.5D, pos.getY() + 6.15D, pos.getZ() + 0.5D);
+        veryUnstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var veryUnstableWeakness = veryUnstableNear.getEffect(MobEffects.WEAKNESS);
+        if (veryUnstableWeakness == null
+                || veryUnstableWeakness.getDuration() != 3000
+                || veryUnstableEdge.getEffect(MobEffects.WEAKNESS) != null) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE collapse must apply distance-scaled Weakness only when integer duration is positive");
+        }
+        veryUnstableNear.discard();
+        veryUnstableEdge.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity unstableRift = createRift(level, pos, 2);
+        unstableRift.setRiftStability(-24.99F);
+        unstableRift.setCollapse(true);
+        Pig unstableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        unstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var unstableWeakness = unstableNear.getEffect(MobEffects.WEAKNESS);
+        if (unstableWeakness == null || unstableWeakness.getDuration() != 3000) {
+            throw new AssertionError("BETA26 UNSTABLE collapse must apply distance-scaled Weakness");
+        }
+        unstableNear.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity stableRift = createRift(level, pos, 2);
+        stableRift.setRiftStability(0.0F);
+        stableRift.setCollapse(true);
+        Pig stableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        stableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        if (stableNear.getEffect(MobEffects.WEAKNESS) != null) {
+            throw new AssertionError("BETA26 STABLE collapse must not apply Weakness");
+        }
+        stableNear.discard();
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WEAKNESS=PASS very_unstable=3000 unstable=3000 stable=none edge=none");
+
         FluxRiftEntity automatic = createRift(level, pos, 0);
         automatic.tick();
         if (!automatic.getCollapse() || !automatic.isRemoved() || automatic.getMaxSize() != 0) {
             throw new AssertionError("BETA26 Rift with fewer than three geometry points must enter collapse");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified void_seed=deferred nearby_effects=deferred");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified void_seed=deferred flux_taint_warp=deferred");
         helper.succeed();
+    }
+
+    private static Pig spawnPig(ServerLevel level, double x, double y, double z) {
+        Pig pig = EntityType.PIG.create(level);
+        if (pig == null) {
+            throw new AssertionError("Unable to create Flux Rift collapse effect target");
+        }
+        pig.setNoAi(true);
+        pig.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(pig)) {
+            throw new AssertionError("Unable to add Flux Rift collapse effect target");
+        }
+        return pig;
     }
 
     private static FluxRiftEntity createRift(ServerLevel level, BlockPos pos, int size) {

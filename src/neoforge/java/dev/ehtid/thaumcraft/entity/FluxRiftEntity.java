@@ -7,6 +7,9 @@ import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.util.RandomSource;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -36,9 +39,10 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth and the BETA26 weighted collapse event are implemented; weighted
- * wisp, taint-seed, infection and focus events, void-seed drops, and nearby collapse effects
- * remain separate follow-up work. This entity is not full parity.
+ * Flux-driven growth and the BETA26 weighted collapse event are implemented. The vanilla
+ * Weakness portion of collapse completion is also ported; Wisp, taint-seed, infection and
+ * focus events, void-seed drops, Flux Taint and player warp remain separate follow-up work.
+ * This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
     private static final EntityDataAccessor<Integer> SEED =
@@ -278,7 +282,31 @@ public final class FluxRiftEntity extends Entity {
             serverLevel.addFreshEntity(new ItemEntity(
                     serverLevel, getX(), getY(), getZ(), pearl));
         }
+        applyCollapseWeakness(serverLevel);
         discard();
+    }
+
+    /**
+     * BETA26 completeCollapse applies Weakness to every nearby living target for both
+     * UNSTABLE and VERY_UNSTABLE rifts. The source queries an axis-aligned 32-block box,
+     * then derives the effect duration from squared Euclidean distance (not radius 32).
+     * The very-unstable Flux Taint effect and player warp are separate, still-unported effects.
+     */
+    private void applyCollapseWeakness(ServerLevel serverLevel) {
+        if (getRiftStability() >= 0.0F) {
+            return;
+        }
+
+        AABB bounds = new AABB(
+                getX() - 32.0D, getY() - 32.0D, getZ() - 32.0D,
+                getX() + 32.0D, getY() + 32.0D, getZ() + 32.0D
+        );
+        for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class, bounds)) {
+            int weight = (int) ((1.0D - target.distanceToSqr(this) / 32.0D) * 300.0D);
+            if (weight > 0) {
+                target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, weight * 20, 0));
+            }
+        }
     }
 
     /**
