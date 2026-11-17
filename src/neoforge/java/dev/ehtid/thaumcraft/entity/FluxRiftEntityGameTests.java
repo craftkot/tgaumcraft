@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,13 +12,14 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
- * Native server acceptance for the BETA26 Flux Rift segment block ray trace.
+ * Native server acceptance for BETA26 Flux Rift segment effects and collapse.
  */
 @GameTestHolder(ThaumcraftPort.MOD_ID)
 public final class FluxRiftEntityGameTests {
@@ -152,7 +154,7 @@ public final class FluxRiftEntityGameTests {
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity terminal = createRift(level, pos, 2);
         terminal.setCollapse(true);
-        if (terminal.tickCollapse(findCollapseRandom(true, false)) != null
+        if (terminal.tickCollapse(findTerminalCollapseRandom(true, 1, false)) != null
                 || terminal.getRiftSize() != 1
                 || terminal.getMaxSize() != 2
                 || !terminal.isRemoved()) {
@@ -160,13 +162,47 @@ public final class FluxRiftEntityGameTests {
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_TERMINAL=PASS size=1 removed=YES maxSize=2");
 
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity rewarded = createRift(level, pos, 100);
+        rewarded.setCollapse(true);
+        rewarded.setRiftSize(2);
+        if (rewarded.getMaxSize() != 100
+                || rewarded.tickCollapse(findTerminalCollapseRandom(true, 10, true)) != null
+                || !rewarded.isRemoved()
+                || rewarded.getMaxSize() != 100) {
+            throw new AssertionError("BETA26 pearl reward must use the pre-collapse maxSize");
+        }
+        var pearlDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        if (pearlDrops.size() != 1) {
+            throw new AssertionError("BETA26 10% collapse reward must spawn exactly one primordial pearl");
+        }
+        var pearl = pearlDrops.get(0).getItem();
+        if (!pearl.is(ThaumcraftItems.PRIMORDIAL_PEARL.get())
+                || pearl.getCount() != 1
+                || pearl.getDamageValue() < 4
+                || pearl.getDamageValue() > 7) {
+            throw new AssertionError("BETA26 collapse pearl must preserve metadata stage 4..7");
+        }
+        pearlDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_PRIMORDIAL_PEARL=PASS chance=10 maxSize=100 stage=4..7 item_entity=YES");
+
+        FluxRiftEntity noPearl = createRift(level, pos, 100);
+        noPearl.setCollapse(true);
+        noPearl.setRiftSize(2);
+        if (noPearl.tickCollapse(findTerminalCollapseRandom(false, 10, false)) != null
+                || !noPearl.isRemoved()
+                || !level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos)).isEmpty()) {
+            throw new AssertionError("BETA26 collapse must not drop a pearl when the maxSize chance roll fails");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_item_entity=YES");
+
         FluxRiftEntity automatic = createRift(level, pos, 0);
         automatic.tick();
         if (!automatic.getCollapse() || !automatic.isRemoved() || automatic.getMaxSize() != 0) {
             throw new AssertionError("BETA26 Rift with fewer than three geometry points must enter collapse");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES rewards=deferred");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified void_seed=deferred nearby_effects=deferred");
         helper.succeed();
     }
 
@@ -186,6 +222,26 @@ public final class FluxRiftEntityGameTests {
             }
         }
         throw new AssertionError("Unable to find deterministic BETA26 collapse RNG fixture");
+    }
+
+    private static RandomSource findTerminalCollapseRandom(boolean addVis, int pearlChance, boolean dropPearl) {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource probe = RandomSource.create(seed);
+            if (probe.nextBoolean() != addVis || probe.nextInt(10) == 0) {
+                continue;
+            }
+            if ((probe.nextInt(100) < pearlChance) == dropPearl) {
+                return RandomSource.create(seed);
+            }
+        }
+        throw new AssertionError("Unable to find deterministic terminal-collapse pearl RNG fixture");
+    }
+
+    private static net.minecraft.world.phys.AABB itemBounds(BlockPos pos) {
+        return new net.minecraft.world.phys.AABB(
+                pos.getX() - 4.0D, pos.getY() - 4.0D, pos.getZ() - 4.0D,
+                pos.getX() + 5.0D, pos.getY() + 5.0D, pos.getZ() + 5.0D
+        );
     }
 
     private static ExplosionFixture findExplosionFixture(FluxRiftEntity rift) {

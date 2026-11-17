@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -11,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MoverType;
@@ -33,7 +35,7 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth, weighted events, and collapse rewards/nearby effects remain
+ * Flux-driven growth, weighted events, void-seed drops, and nearby collapse effects remain
  * separate follow-up work; this entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -184,7 +186,7 @@ public final class FluxRiftEntity extends Entity {
 
     /**
      * Executes one BETA26 collapse tick using the entity-owned random stream.
-     * The terminal reward/debuff/warp sequence is still a separate porting task.
+     * Void-seed drops and nearby taint/weakness/warp effects remain separate porting tasks.
      *
      * @return the created explosion, or null when the one-in-ten roll did not fire
      */
@@ -218,11 +220,26 @@ public final class FluxRiftEntity extends Entity {
         }
 
         if (getRiftSize() <= 1) {
-            // BETA26 completeCollapse also drops items and applies nearby
-            // warp/taint/weakness. Those systems are not ported yet.
-            discard();
+            completeCollapse(serverLevel, sourceRandom);
         }
         return explosion;
+    }
+
+    /**
+     * BETA26 completeCollapse's primordial-pearl branch. The original void-seed
+     * item is not registered in this port yet, so its guaranteed qq drops and
+     * the nearby visual/status effects remain separate work.
+     */
+    private void completeCollapse(ServerLevel serverLevel, RandomSource sourceRandom) {
+        int rewardChance = (int) Math.sqrt(maxSize);
+        if (sourceRandom.nextInt(100) < rewardChance) {
+            ItemStack pearl = new ItemStack(ThaumcraftItems.PRIMORDIAL_PEARL.get());
+            // BETA26 metadata 4..7 is represented by the modern Damage component.
+            pearl.setDamageValue(4 + sourceRandom.nextInt(4));
+            serverLevel.addFreshEntity(new ItemEntity(
+                    serverLevel, getX(), getY(), getZ(), pearl));
+        }
+        discard();
     }
 
     @Override
