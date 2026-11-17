@@ -137,7 +137,7 @@ public final class FluxRiftEntity extends Entity {
         if (tickCount % 300 != 0 || isRemoved()) {
             return;
         }
-        float volume = (float) (0.15D + sourceRandom.nextGaussian() * 0.066D);
+        float volume = (float) (0.15F + sourceRandom.nextGaussian() * 0.066D);
         float pitch = (float) (0.75D + sourceRandom.nextGaussian() * 0.1D);
         playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch);
     }

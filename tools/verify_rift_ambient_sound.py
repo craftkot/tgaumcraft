@@ -27,6 +27,7 @@ assert "playAmbientSoundIfDue(random);" in rift
 method = rift.split("void playAmbientSoundIfDue(RandomSource sourceRandom)", 1)[1].split("@Override", 1)[0]
 for fragment in (
     "tickCount % 300 != 0",
+    "0.15F + sourceRandom.nextGaussian() * 0.066D",
     "sourceRandom.nextGaussian() * 0.066D",
     "sourceRandom.nextGaussian() * 0.1D",
     "playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch)",

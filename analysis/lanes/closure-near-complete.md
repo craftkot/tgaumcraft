@@ -1179,3 +1179,5 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Added a non-required native GameTest with a fail-closed runner marker: it observes the real `ClientboundSoundEntityPacket`, checks no packet at ticks 299/301, exactly one at 300, original event/entity id, NEUTRAL source, and exact Gaussian volume/pitch for a deterministic seed.
 - Added a separate real-client PCM smoke workflow. It launches the actual integrated Minecraft client, summons a live Flux Rift, records PulseAudio PCM around three 300-tick opportunities, and matches the captured waveform against the original OGG; it does not substitute a synthetic sound or server-only assertion.
 - Exact-head CI is pending; no M16/M08 score change is claimed.
+
+- Precision correction before acceptance: BETA26 uses a `0.15f` literal promoted to double by the Gaussian expression (exact value `0.15000000596046448`), not a `0.15d` literal. Production, GameTest expected values, and source verifier now preserve that float-to-double promotion exactly.

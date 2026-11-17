@@ -73,7 +73,7 @@ public final class FluxRiftSoundGameTests {
 
             long seed = findPositiveVolumeSeed();
             RandomSource expectedRandom = RandomSource.create(seed);
-            float expectedVolume = (float) (0.15D + expectedRandom.nextGaussian() * 0.066D);
+            float expectedVolume = (float) (0.15F + expectedRandom.nextGaussian() * 0.066D);
             float expectedPitch = (float) (0.75D + expectedRandom.nextGaussian() * 0.1D);
 
             rift.tickCount = 300;
@@ -114,7 +114,7 @@ public final class FluxRiftSoundGameTests {
     private static long findPositiveVolumeSeed() {
         for (long seed = 0; seed < 100_000L; seed++) {
             RandomSource probe = RandomSource.create(seed);
-            float volume = (float) (0.15D + probe.nextGaussian() * 0.066D);
+            float volume = (float) (0.15F + probe.nextGaussian() * 0.066D);
             float pitch = (float) (0.75D + probe.nextGaussian() * 0.1D);
             if (volume > 0.05F && volume < 0.35F && pitch > 0.2F && pitch < 1.3F) {
                 return seed;
