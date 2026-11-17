@@ -176,8 +176,7 @@ public final class SalisMundusPacketRoutingGameTests {
         if (!channel.isActive()) {
             throw new AssertionError("Salis recipient connection is not active: " + name);
         }
-        Runnable install = () -> channel.pipeline().addBefore(
-                "packet_handler",
+        Runnable install = () -> channel.pipeline().addLast(
                 name,
                 new ChannelOutboundHandlerAdapter() {
                     @Override

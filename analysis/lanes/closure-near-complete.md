@@ -1136,3 +1136,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Corrected only those two imports in SalisMundusPacketRoutingGameTests.java. The NeoForge-specific `GameTestHolder` and `PrefixGameTestTemplate` imports remain unchanged. No production behavior or test assertions were weakened.
 - The runner's `All 13 required tests passed` and new recipient marker contract remain unchanged. The failed run proves compilation was blocked; it does not prove any recipient assertion passed.
 - Next: require a fresh exact-head NeoForge compile and native Aura/Crystal GameTest run. If the test then fails at runtime, use the actual connection/packet trace to fix the fixture; do not replace it with a JVM-only mock.
+
+### 2026-11-17 — EmbeddedChannel recorder pipeline correction
+
+- The corrected-import commit compiled and the native GameTest server launched. [Aura/Crystal run #44152184939](https://github.com/craftkot/tgaumcraft/actions/runs/44152184939) failed in the new test before any packet assertion: the actual GameTest failure message was `routessalisparticlesonlytotheselectedplayer failed ... packet_handler`. The embedded test connection does not expose the vanilla real-network pipeline handler name used by the one-client probe.
+- Changed only the test recorder installation from `addBefore("packet_handler", ...)` to `addLast(name, ...)`. Netty outbound writes traverse from the tail toward the head, so a tail recorder observes writes and forwards them to the connection without depending on an implementation-specific pipeline name. The broadcast and two recipient assertions remain strict.
+- This is a fixture-only correction. No production Salis behavior changed; the preceding run did not pass the new test and is not counted as recipient evidence.
+- Next: exact-head rerun must show the broadcast positive control (both independent channels), actor-targeted send (actor +1, bystander +0), reverse-targeted control (actor unchanged, bystander +1), the 13/13 required-test summary in both cold-restart phases, and Full Port CI success.
