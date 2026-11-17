@@ -8,6 +8,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
 import java.util.List;
 
@@ -67,10 +68,50 @@ public final class FluxRiftEntity extends Entity {
 
     @Override
     public void tick() {
+        // SynchedEntityData updates arrive without calling the public setters.
+        // Rebuild the geometry bounds on the first tick that observes them.
+        if (getRiftSeed() != cachedSeed || getRiftSize() != cachedSize) {
+            refreshDimensions();
+        }
         super.tick();
         if (!level().isClientSide && getRiftSeed() == 0) {
             setRiftSeed(level().getRandom().nextInt());
         }
+    }
+
+    @Override
+    protected AABB makeBoundingBox() {
+        // Entity's constructor can dispatch here before subclass field initializers.
+        if (geometry == null) {
+            return super.makeBoundingBox();
+        }
+
+        List<LegacyFluxRiftGeometry.Point> points = getGeometry();
+        if (points.isEmpty()) {
+            return super.makeBoundingBox();
+        }
+
+        double minX = Double.POSITIVE_INFINITY;
+        double minY = Double.POSITIVE_INFINITY;
+        double minZ = Double.POSITIVE_INFINITY;
+        double maxX = Double.NEGATIVE_INFINITY;
+        double maxY = Double.NEGATIVE_INFINITY;
+        double maxZ = Double.NEGATIVE_INFINITY;
+        for (LegacyFluxRiftGeometry.Point point : points) {
+            minX = Math.min(minX, point.x());
+            minY = Math.min(minY, point.y());
+            minZ = Math.min(minZ, point.z());
+            maxX = Math.max(maxX, point.x());
+            maxY = Math.max(maxY, point.y());
+            maxZ = Math.max(maxZ, point.z());
+        }
+
+        // BETA26 EntityFluxRift.setSize builds the entity AABB from the same
+        // seeded polycone points, not from the fixed 2x2 EntityType dimensions.
+        return new AABB(
+                getX() + minX, getY() + minY, getZ() + minZ,
+                getX() + maxX, getY() + maxY, getZ() + maxZ
+        );
     }
 
     public int getRiftSeed() {
@@ -79,6 +120,8 @@ public final class FluxRiftEntity extends Entity {
 
     public void setRiftSeed(int seed) {
         entityData.set(SEED, seed);
+        cachedSeed = Integer.MIN_VALUE;
+        refreshDimensions();
     }
 
     public int getRiftSize() {
