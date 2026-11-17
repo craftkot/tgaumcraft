@@ -41,6 +41,13 @@ server_process_running() {
     [[ -n "$state" && "$state" != Z* ]]
 }
 
+required_test_pass_summary_seen() {
+    local file="$1"
+    # NeoForge's summary reports the actual number of required tests. Keep the
+    # gate fail-closed for zero/missing summaries without freezing that count.
+    grep -Eq 'All [1-9][0-9]* required tests passed' "$file"
+}
+
 verify_write_phase() {
     local file="$1"
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_SPREAD_CASE=seagrass result=SPREAD vis=90.0' || return 1
@@ -124,7 +131,7 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_STABILITY_DECAY=PASS interval=120 delta=-0.2' || return 1
     require_marker "$file" 'TC_GAMETEST_FLUX_RIFT_TEST_TICKET_RELEASE=PASS bounded=YES forceTicks=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_WRITE pid=' || return 1
-    require_marker "$file" 'All 13 required tests passed' || return 1
+    required_test_pass_summary_seen "$file" || { echo "Missing positive-count required GameTest pass summary in $file" >&2; return 1; }
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=write' || return 1
@@ -145,7 +152,7 @@ verify_read_phase() {
     require_marker "$file" 'TC_GAMETEST_CRYSTAL_WORLDGEN_BORDER_SUPPORT=PASS no_force_load=YES deferred=1 resumed=1 crystal_placed=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_RESTORED pid=' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS existing_record_preserved=YES gaussian=0 local_target_pending=NO' || return 1
-    require_marker "$file" 'All 13 required tests passed' || return 1
+    required_test_pass_summary_seen "$file" || { echo "Missing positive-count required GameTest pass summary in $file" >&2; return 1; }
     require_marker "$file" 'Stopping server' || return 1
     require_marker "$file" 'Saving worlds' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_COLD_RESTART_PROCESS_EXITED=YES phase=read' || return 1
@@ -166,7 +173,7 @@ run_phase() {
 
     local shutdown_seen=0
     while kill -0 "$timeout_pid" 2>/dev/null; do
-        if grep -Fq 'All 13 required tests passed' "$phase_log" \
+        if required_test_pass_summary_seen "$phase_log" \
                 && grep -Fq 'Saving worlds' "$phase_log"; then
             shutdown_seen=1
             # The aura file was explicitly flushed by the GameTest before it
@@ -184,7 +191,7 @@ run_phase() {
     local gradle_status=$?
     set -e
 
-    if grep -Fq 'All 13 required tests passed' "$phase_log" \
+    if required_test_pass_summary_seen "$phase_log" \
             && grep -Fq 'Saving worlds' "$phase_log"; then
         shutdown_seen=1
     fi
