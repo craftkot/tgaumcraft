@@ -433,3 +433,13 @@
 - [5be8d0b](https://github.com/craftkot/tgaumcraft/commit/5be8d0b0afd310123257c86083e90e6863da06f9): добавлена проверка этого порядка в source-level wiring guard.
 - **Статус:** коммиты отправлены; новый source-level guard и Java runner в этом запуске не исполнялись, CI новых SHA ещё не подтверждён, NeoForge GameTest и генерация новых чанков не выполнялись. Код не является доказательством игрового паритета BETA26. Общие регистры, Gradle, `main` и чужие ветки не менялись; Draft PR #9 не слит.
 - **Далее:** проверить CI нового HEAD; добавить исполняемую проверку отказа `setBlock` в настоящем `WorldGenLevel` и согласовать регистрацию Feature в новых чанках.
+
+
+## 17.11.2026 — M12: reject empty Silverwood trunk
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; checked open PRs and parallel branches. Before edits main...feature/worldgen-m12 was ahead 131, behind 0. Draft PR #9 remains unmerged.
+- Previous HEAD b13adfb3ea155cd51169aedb4e14085abc5b881c: GitHub Actions run #3517 (https://github.com/craftkot/tgaumcraft/actions/runs/43988928478) completed SUCCESS. This does not prove exact Java runners or gameplay.
+- Production commit 302af3ba5f1e24baec4a3ec7d162e55b05e28041 rejects a zero-attempt trunk rather than returning successful placement when no logs were requested; failure uses existing canopy rollback. This is a defensive success-condition fix, not a new registered worldgen feature.
+- Guard commit 40b484aecf0c724bf54defb0e8c82a4581dbaa53 checks the zero-log condition and updates stale leaf-write marker in source-level wiring guard. The guard was edited but NOT executed; source-level string assertions cannot prove runtime behavior.
+- Exact-head CI, NeoForge compilation, native WorldGenLevel GameTest, rejected setBlock gameplay and new-chunk generation remain unverified. Feature remains unregistered; BETA26 biome/RNG parity unresolved. No shared registries, Gradle, main, other branches or merges. Historical audit 59/100 unchanged.
+- Next: execute exact source-level guard and Java21 runners, inspect new-head CI; implement native WorldGenLevel failure-injection test and coordinate natural feature registration.
