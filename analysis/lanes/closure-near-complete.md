@@ -742,3 +742,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - [Full Port CI #44015529461](https://github.com/craftkot/tgaumcraft/actions/runs/44015529461) **SUCCESS** on the same SHA: Core parity, NeoForge build, dedicated-server smoke and JAR upload all passed.
 - These results validate the bounded entity-manager wait, but they are on intermediate SHA `b98efc1`, before the follow-up scheduling correction. Final code SHA `3a0c7e70f7c43fd78075c3b6d015a8577d3c9d72` changes the nearby-guard callback from absolute `runAtTickTime(2)` to relative `runAfterDelay(1)` so it remains scheduled correctly even if the registration wait consumes multiple ticks. Exact-final-head Aura/Crystal GameTests [#44015594070](https://github.com/craftkot/tgaumcraft/actions/runs/44015594070) were still **QUEUED**; Full Port CI [#44015594059](https://github.com/craftkot/tgaumcraft/actions/runs/44015594059) was **IN PROGRESS** at the last poll (Core parity passed; NeoForge build running).
 - Therefore the spawn/decay slice has a successful intermediate native proof, but the final code HEAD is not yet fully accepted. Fixed audit remains **59/100**, M08 **5/9**; no points awarded.
+
+
+### Exact-final-code CI update — SHA 3a0c7e7
+
+- [Full Port CI #44015594059](https://github.com/craftkot/tgaumcraft/actions/runs/44015594059) **SUCCESS** on exact final code SHA `3a0c7e70f7c43fd78075c3b6d015a8577d3c9d72`: Core parity, NeoForge build, dedicated-server smoke and JAR upload all passed. CircleCI `verify-connection` also reports **SUCCESS** on the same SHA.
+- Exact-final-code Native Aura/Crystal GameTests [#44015594070](https://github.com/craftkot/tgaumcraft/actions/runs/44015594070) remain **QUEUED** at the last poll. The intermediate SHA `b98efc1` passed the full native write/cold-restart test, but that does not validate the final relative scheduling correction in `3a0c7e7`.
+- No production changes were made in this iteration. Keep M08 acceptance pending until the exact-final-code GameTest logs confirm all Rift markers and both cold-restart phases.
