@@ -377,6 +377,10 @@ PY
   sleep 4
   echo "JAR_HIT_CROSSHAIR_CENTER=$jar_hit_center_x,$jar_hit_center_y" | tee -a client-smoke-status.txt
   import -display :99 -window root -silent client-smoke/screenshots/100a-jar-hit-aim.png
+  # Capture a same-duration no-hit control from the identical camera position.
+  # This measures scene/capture drift independently of the crack overlay.
+  sleep 0.80
+  import -display :99 -window root -silent client-smoke/screenshots/100a-jar-hit-nohit-control.png
   send_chat '/stopsound @p'
   sleep 0.25
   timeout --signal=TERM 2s parec --device=tc_jar_sink.monitor --format=s16le --rate=48000 --channels=2 --raw > client-smoke/hit-baseline.pcm || test "$?" -eq 124
@@ -396,6 +400,7 @@ PY
     exit 1
   fi
   echo 'JAR_HIT_FOCUS_CONFIRMED=YES' | tee -a client-smoke-status.txt
+  import -display :99 -window root -silent client-smoke/screenshots/100c-jar-hit-before.png
   xdotool mousedown 1
   # Hold long enough for several real client ticks under Mining Fatigue I.
   # The 0.8s wall-clock window stays below its fatigue-adjusted break time.
@@ -415,13 +420,21 @@ PY
   jar_hit_roi_y=$((jar_hit_center_y - 110))
   convert client-smoke/screenshots/100a-jar-hit-aim.png \
     -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
-    client-smoke/hit-aim-roi.png
+    client-smoke/hit-nohit-before-roi.png
+  convert client-smoke/screenshots/100a-jar-hit-nohit-control.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
+    client-smoke/hit-nohit-after-roi.png
+  convert client-smoke/screenshots/100c-jar-hit-before.png \
+    -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
+    client-smoke/hit-before-roi.png
   convert client-smoke/screenshots/100b-jar-hit-damage-overlay.png \
     -crop "220x220+$jar_hit_roi_x+$jar_hit_roi_y" +repage \
-    client-smoke/hit-damage-roi.png
+    client-smoke/hit-after-roi.png
   python3 tools/verify_jar_damage_overlay.py \
-    client-smoke/hit-aim-roi.png \
-    client-smoke/hit-damage-roi.png | tee -a client-smoke-status.txt
+    client-smoke/hit-nohit-before-roi.png \
+    client-smoke/hit-nohit-after-roi.png \
+    client-smoke/hit-before-roi.png \
+    client-smoke/hit-after-roi.png | tee -a client-smoke-status.txt
 
   crop_pcm_frames client-smoke/hit-event.pcm client-smoke/hit-event-window.pcm 26400 120000
   send_chat '/execute if block 250 150 252 thaumcraft:jar_normal run say JAR_HIT_BLOCK_RETAINED'
