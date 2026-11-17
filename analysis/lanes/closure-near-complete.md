@@ -1192,3 +1192,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - These are actual CI failures, not accepted checks. New exact-head build, GameTest and client runs are required before the feature can be considered complete.
 
 - The first Native GameTest runtime showed the fake player was connected but had not yet entered ChunkMap's entity-tracking set, so `Entity.playSound` correctly emitted no entity-attached packet. The test now joins the player before adding the Rift and waits two server ticks for tracking before asserting the 299/300/301 cadence; the fixture player is creative to avoid incidental Rift segment damage.
+
+
+### 2026-11-17 — positional sound packet and shared PulseAudio runtime correction
+
+- BETA26 `Entity.playSound` calls positional `World.playSound`; the Native GameTest now records both `ClientboundSoundPacket` and `ClientboundSoundEntityPacket`, then validates event, source, exact Gaussian volume/pitch, and either the Rift entity id or quantized Rift position. This removes the false assumption that the event must be entity-attached.
+- The real-client capture failure was traced to `tools/client_smoke.sh` resetting `XDG_RUNTIME_DIR` to `/tmp/thaumcraft-client-runtime` after PulseAudio had started in `/tmp/thaumcraft-rift-client-runtime`. The generated Rift driver now preserves the caller's runtime path, and the workflow explicitly exports the matching PulseAudio socket.
+- These are corrective changes after actual failures; the exact-head Native GameTest and real-client PCM capture still need to pass.

@@ -13,13 +13,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.Packet;
 import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
 import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket;
 import net.minecraft.network.protocol.game.ClientboundSoundEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -61,9 +62,9 @@ public final class FluxRiftSoundGameTests {
         }
 
         AtomicInteger matchingPackets = new AtomicInteger();
-        AtomicReference<ClientboundSoundEntityPacket> observed = new AtomicReference<>();
+        AtomicReference<SoundPacketEvidence> observed = new AtomicReference<>();
         try {
-            installRecorder(recipient, rift, matchingPackets, observed);
+            installRecorder(recipient, matchingPackets, observed);
             flush(recipient.channel());
         } catch (RuntimeException | Error failure) {
             disconnect(level, recipient, "Flux Rift sound recorder setup failed");
@@ -71,8 +72,8 @@ public final class FluxRiftSoundGameTests {
             throw failure;
         }
 
-        // Entity.playSound sends an entity-attached packet. Allow ChunkMap to
-        // establish this fake player's tracking subscription before the probe.
+        // BETA26 Entity.playSound routes through World.playSound at the entity
+        // position. Accept either modern position or entity packet encoding.
         helper.runAfterDelay(2, () -> {
             try {
                 rift.tickCount = 299;
@@ -91,19 +92,26 @@ public final class FluxRiftSoundGameTests {
                 rift.playAmbientSoundIfDue(RandomSource.create(seed));
                 flush(recipient.channel());
 
-                ClientboundSoundEntityPacket packet = observed.get();
+                SoundPacketEvidence packet = observed.get();
                 if (matchingPackets.get() != 1 || packet == null) {
                     throw new AssertionError("BETA26 Flux Rift ambience packet missing at tick 300: count="
                             + matchingPackets.get());
                 }
-                if (packet.getSound().value() != ThaumcraftSounds.EVILPORTAL.get()
-                        || packet.getId() != rift.getId()
-                        || packet.getSource() != SoundSource.NEUTRAL
-                        || Float.compare(packet.getVolume(), expectedVolume) != 0
-                        || Float.compare(packet.getPitch(), expectedPitch) != 0) {
+                if (packet.source() != SoundSource.NEUTRAL
+                        || Float.compare(packet.volume(), expectedVolume) != 0
+                        || Float.compare(packet.pitch(), expectedPitch) != 0) {
                     throw new AssertionError("BETA26 Flux Rift ambience packet mismatch: source="
-                            + packet.getSource() + " volume=" + packet.getVolume()
-                            + " pitch=" + packet.getPitch());
+                            + packet.source() + " volume=" + packet.volume()
+                            + " pitch=" + packet.pitch());
+                }
+                if (packet.entityId() >= 0 && packet.entityId() != rift.getId()) {
+                    throw new AssertionError("Flux Rift ambience was attached to the wrong entity");
+                }
+                if (packet.entityId() < 0
+                        && (Math.abs(packet.x() - rift.getX()) > 0.125D
+                        || Math.abs(packet.y() - rift.getY()) > 0.125D
+                        || Math.abs(packet.z() - rift.getZ()) > 0.125D)) {
+                    throw new AssertionError("Flux Rift ambience position packet did not originate at the Rift");
                 }
 
                 rift.tickCount = 301;
@@ -179,9 +187,8 @@ public final class FluxRiftSoundGameTests {
 
     private static void installRecorder(
             ConnectedPlayer recipient,
-            FluxRiftEntity rift,
             AtomicInteger count,
-            AtomicReference<ClientboundSoundEntityPacket> observed
+            AtomicReference<SoundPacketEvidence> observed
     ) {
         EmbeddedChannel channel = recipient.channel();
         if (!channel.isActive()) {
@@ -191,11 +198,20 @@ public final class FluxRiftSoundGameTests {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
                     throws Exception {
-                if (message instanceof ClientboundSoundEntityPacket packet
-                        && packet.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()
-                        && packet.getId() == rift.getId()) {
+                if (message instanceof ClientboundSoundPacket packet
+                        && packet.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()) {
                     count.incrementAndGet();
-                    observed.set(packet);
+                    observed.set(new SoundPacketEvidence(
+                            packet.getSource(), packet.getVolume(), packet.getPitch(), -1,
+                            packet.getX(), packet.getY(), packet.getZ()
+                    ));
+                } else if (message instanceof ClientboundSoundEntityPacket packet
+                        && packet.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()) {
+                    count.incrementAndGet();
+                    observed.set(new SoundPacketEvidence(
+                            packet.getSource(), packet.getVolume(), packet.getPitch(), packet.getId(),
+                            Double.NaN, Double.NaN, Double.NaN
+                    ));
                 }
                 context.write(message, promise);
             }
@@ -237,6 +253,16 @@ public final class FluxRiftSoundGameTests {
             recipient.channel().finishAndReleaseAll();
         }
     }
+
+    private record SoundPacketEvidence(
+            SoundSource source,
+            float volume,
+            float pitch,
+            int entityId,
+            double x,
+            double y,
+            double z
+    ) {}
 
     private record ConnectedPlayer(
             ServerPlayer player,

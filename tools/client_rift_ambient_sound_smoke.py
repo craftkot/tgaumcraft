@@ -8,6 +8,11 @@ marker = "  # Focused alchemy-only regression: actual item + coal enters a real"
 if source.count(marker) != 1:
     raise SystemExit("Shared client smoke anchor changed; refuse unsafe generation")
 source = source.split(marker, 1)[0]
+old_xdg = "export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime"
+new_xdg = 'export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/thaumcraft-client-runtime}"'
+if source.count(old_xdg) != 1:
+    raise SystemExit("Shared XDG runtime fixture changed; refuse unsafe PulseAudio socket rewrite")
+source = source.replace(old_xdg, new_xdg)
 
 old_options = "printf 'guiScale:2\\n' > run/options.txt"
 new_options = "printf 'guiScale:2\\nsoundCategory_music:0.0\\nsoundCategory_ambient:0.0\\nsoundCategory_blocks:1.0\\nsoundCategory_neutral:1.0\\n' > run/options.txt"
