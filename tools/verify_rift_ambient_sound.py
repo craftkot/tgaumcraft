@@ -111,11 +111,14 @@ platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
 rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
-assert driver.count(high_teleport) == 1 and driver.count(platform_fill) == 1, (
-    "the fast setup commands must be unique"
+# The generator includes quoted command literals in its own static guard.
+# Count only executable Bash template lines, not those Python guard literals.
+runtime_template = driver.split("high_teleport_command =", 1)[0]
+assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
+    "the fast setup commands must be unique in the runtime template"
 )
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
-assert driver.count(source_teleport) == 1, "the supported source teleport must be unique"
+assert runtime_template.count(source_teleport) == 1, "the supported source teleport must be unique in the runtime template"
 assert driver.index(high_teleport) < driver.index(platform_fill) < driver.index(platform_marker) < driver.index(source_teleport) < driver.index(listener_marker) < driver.index(rift_summon), (
     "load the target chunk high, place and verify support, then teleport and validate the listener before summoning"
 )
