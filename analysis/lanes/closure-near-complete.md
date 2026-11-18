@@ -1416,3 +1416,11 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - New verifier commit: [`428e21a75147`](https://github.com/craftkot/tgaumcraft/commit/428e21a75147591fa54f3f580f7f8c4ab689bfb8).
 - Local string/postcondition checks passed during authoring; a real Minecraft client run on the resulting exact HEAD is still required. No score awarded: fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**.
 - Next: inspect the new exact-head Flux Rift client run. If the measured game-time delta is at least 300 and the natural PCM still fails while the entity remains alive, add server-side tick/packet instrumentation to distinguish the entity cadence branch from sound packet delivery; do not change production behavior without that evidence.
+
+
+### 2026-11-18 — correct Bash printf escaping in the raw probe block
+
+- Post-commit review found that the new helper lives inside Python's raw triple-quoted Bash probe. Its `printf` format therefore needs one literal backslash before `n`; the first version retained two and would have appended the characters `\\n` to the numeric game-time value, breaking the arithmetic check.
+- Corrected only the `query_game_time` output format to `printf '%s\\n'`. No thresholds, wait duration, production Java, assets, workflows or other paths changed.
+- Corrective commit: [`12a3d81179de`](https://github.com/craftkot/tgaumcraft/commit/12a3d81179de3d1f5724272f7f9b123e53a64e64).
+- The real-client workflow on the corrected exact HEAD is still required. Previous real-client run #44219577202 remains a genuine natural-PCM FAIL; the positive-control portion passed. Fixed audit remains 59/100, M16 4/6, M08 5/9.
