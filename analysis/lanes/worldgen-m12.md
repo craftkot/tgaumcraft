@@ -627,3 +627,10 @@
 - Importantly, the workflow job does **not** list `tools/test_silverwood_rollback_failure_injection.sh` or the standalone 20-assertion test. Therefore those 20 assertions have **not** been demonstrated to execute, despite green CI. No native `WorldGenLevel.setBlock` failure GameTest or new-chunk generation was executed.
 - Reviewed production `SilverwoodTrunkRollback` and `SilverwoodCanopyRollback` against the failure-injection regression; no evidence-backed new code change was justified in this pass. No source/test code added; this entry records new exact-SHA evidence and the missing test-execution gate.
 - Next: execute the standalone Java 21 runner on an exact checkout, then coordinate native GameTest infrastructure before introducing `WorldGenLevel.setBlock` injection and natural biome placement. No shared Gradle/registry, main, other branch, or merge changes. Draft PR #9 remains open; historical 59/100 unchanged.
+
+## 18.11.2026 — M12 Silverwood partial rollback rejection
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 before edit (+171/-0), inspected feature branch names and current rollback source.
+- Test commit [ade5529](https://github.com/craftkot/tgaumcraft/commit/ade55294da32ad1013ebf78b0b9e2b34b2d22139) adds six deterministic assertions: one failed trunk/canopy restore does not stop later successful restores, rejected blocks remain unchanged, and successful later blocks regain original states.
+- Java 21 is installed locally, but direct Git checkout failed with DNS "Could not resolve host: github.com". Exact checkout runner and new SHA CI have NOT been executed/confirmed. This remains a loader-neutral simulation, not native WorldGenLevel.setBlock GameTest or proof of new-chunk worldgen.
+- Next: run tools/test_silverwood_rollback_failure_injection.sh on exact checkout (expected 26 assertions), confirm NeoForge CI, then coordinate native GameTest and real biome/chunk placement. No shared registries, Gradle, main or other lanes modified; no merge. 59/100 unchanged.
