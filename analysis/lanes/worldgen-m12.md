@@ -643,3 +643,11 @@
 - Examined actual Actions job steps: `tools/test_silverwood_rollback_failure_injection.sh` is not an explicit step. Thus the 26 failure-injection assertions have **not** been proven to run by this CI result. Local exact checkout still fails DNS (`Could not resolve host: github.com`); no Java runner execution is claimed.
 - Source inspection confirms this regression calls loader-neutral rollback helpers, not `SilverwoodLegacyFeature.place` or a real `WorldGenLevel.setBlock`. No native NeoForge GameTest, BETA26 biome/RNG parity, natural placement registration, or fresh-chunk worldgen pass. Historical 59/100 unchanged.
 - Next: execute the exact Java 21 runner on a valid checkout; coordinate a native controlled setBlock failure GameTest and then the Silverwood placed-feature registration without touching shared registries/Gradle independently. Draft PR #9 stays unmerged.
+
+## 18.11.2026 — M12 Silverwood canopy rollback journal validation
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; inspected open PRs (#9 remains present) and compared main...feature/worldgen-m12 (ahead 174, behind 0 before changes). Direct git ls-remote still fails DNS resolution.
+- Production commit ce4df9b2c8610837af08c913c423eb650ee6a0a2 validates all canopy rollback journal entries (non-null position and original state) before any block restoration. This prevents a corrupt journal from restoring a valid prefix before failing on a null original.
+- Regression commit 7b1a53d4c8b5edd4ef32fd2903b1edd5448bc96f adds four assertions: corrupt journal rejection, zero attempted writes, unchanged valid prefix and unchanged invalid suffix. Existing runner tools/test_silverwood_rollback_failure_injection.sh compiles the production helpers and regression test; its exact checkout execution remains **unverified** due to DNS.
+- No shared registries, Gradle, main, other lanes, or merge modified. These are loader-neutral checks, NOT native NeoForge GameTests or evidence of new-chunk generation. CI for new HEAD pending; 59/100 unchanged.
+- Next: confirm exact Java 21 runner and CI; native WorldGenLevel.setBlock failure injection and new-chunk Silverwood biome/placement tests still required.
