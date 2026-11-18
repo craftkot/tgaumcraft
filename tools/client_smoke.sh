@@ -113,6 +113,16 @@ activate_firststeps_advance() {
   echo 'FIRSTSTEPS_BOOK_ADVANCE_INPUT=TAB_ENTER' | tee -a client-smoke-status.txt
 }
 
+assert_log_literal() {
+  local marker=$1
+  if ! grep -Fq "$marker" client-smoke/client.log; then
+    echo "VANILLA_COMMAND_ASSERTION_MISSING=$marker" | tee -a client-smoke-status.txt
+    tail -80 client-smoke/client.log >&2
+    exit 1
+  fi
+  echo "VANILLA_COMMAND_ASSERTION_CONFIRMED=$marker" | tee -a client-smoke-status.txt
+}
+
 assert_smoke_event_count() {
   local key=$1 minimum=$2 actual
   actual="$(grep -Fc "TC_SMOKE_${key}=YES" client-smoke/client.log || true)"
@@ -311,7 +321,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     # These conditions are independent of the custom smoke markers and
     # guarantee both physical source debit and actual recipient credit.
     send_chat '/execute unless data block 248 149 247 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
+    assert_log_literal MIRROR_SOURCE_CHANGED_FROM_12
     send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
+    assert_log_literal MIRROR_RECEIVER_GAINED_REAL_ESSENTIA
     capture 53-mirror-transport-vanilla-world-nbt
     echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
     # A real /setblock destroy must use Block#getDrops and onRemove.
@@ -325,6 +337,7 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 54-mirror-partner-unlinked-after-destruction
     # Query for the actual linked drop, not a synthetic /give item.
     send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_LINKED_ITEM_COMPONENT_FOUND'
+    assert_log_literal MIRROR_LINKED_ITEM_COMPONENT_FOUND
     capture 55-linked-mirror-loot-custom-data
     if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
       echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
@@ -356,7 +369,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/data get block 376 149 344'
     capture 58-reverse-sink-after-credit
     send_chat '/execute unless data block 344 149 344 {Amount:12s} run say MIRROR_REVERSE_SOURCE_DECREASED'
+    assert_log_literal MIRROR_REVERSE_SOURCE_DECREASED
     send_chat '/execute unless data block 376 149 344 {Amount:0s} run say MIRROR_REVERSE_SINK_INCREASED'
+    assert_log_literal MIRROR_REVERSE_SINK_INCREASED
     capture 59-reverse-vanilla-nbt-assert
     echo 'MIRROR_REVERSE_SOURCE_AND_SINK_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
 
