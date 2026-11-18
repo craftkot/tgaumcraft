@@ -257,8 +257,8 @@ expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
        and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" not in generator
        and "grep -Fq 'thaumcraft:arcane_workbench'" not in generator,
        "Workbench smoke must not mistake vanilla chat HUD output for log evidence")
-expect("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
-       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
+expect("wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
        and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
        and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator,
        "Workbench must require independent real server and client menu lifecycle evidence")
@@ -268,7 +268,7 @@ expect(generator.index("send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft
        < generator.index("send_chat '/tp @p ~ ~ ~ 0 35'")
        < generator.index("capture 08c-workbench-before-open")
        < generator.index("xdotool click 3")
-       < generator.index("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
+       < generator.index("wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
        "Workbench fixture, screenshot, click and lifecycle gates must stay ordered")
 expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
        and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
