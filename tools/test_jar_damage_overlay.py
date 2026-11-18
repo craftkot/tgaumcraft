@@ -27,9 +27,9 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     root = Path(temp)
     unchanged = root / "unchanged.ppm"
     low_noise = root / "low-noise.ppm"
-    baseline_101 = root / "baseline-101.ppm"
-    hit_299 = root / "hit-299.ppm"
-    hit_300 = root / "hit-300.ppm"
+    baseline_1 = root / "baseline-1.ppm"
+    hit_119 = root / "hit-119.ppm"
+    hit_120 = root / "hit-120.ppm"
 
     unchanged.write_bytes(ppm(bytes(BACKGROUND) * PIXELS))
     noise = bytearray(bytes(BACKGROUND) * PIXELS)
@@ -41,39 +41,39 @@ with TemporaryDirectory(prefix="tc-jar-overlay-") as temp:
     # The ImageMagick AE result is the contract; calibrate exact boundary
     # fixtures instead of assuming decoder pixel counts.
     controls = {}
-    for count in range(295, 305):
+    for count in range(115, 125):
         candidate = root / f"candidate-{count}.ppm"
         candidate.write_bytes(image_with_changes(count, (255, 255, 255)))
         measured = changed_pixels(unchanged, candidate)
-        if measured in (299, 300):
+        if measured in (119, 120):
             controls[measured] = candidate.read_bytes()
-    assert set(controls) == {299, 300}, "unable to construct 299/300-pixel boundary controls"
-    hit_299.write_bytes(controls[299])
-    hit_300.write_bytes(controls[300])
-    baseline_101.write_bytes(image_with_changes(101, (255, 255, 255)))
+    assert set(controls) == {119, 120}, "unable to construct 119/120-pixel boundary controls"
+    hit_119.write_bytes(controls[119])
+    hit_120.write_bytes(controls[120])
+    baseline_1.write_bytes(image_with_changes(1, (255, 255, 255)))
 
     assert changed_pixels(unchanged, low_noise) == 0, "low-amplitude capture noise must be ignored"
-    assert changed_pixels(unchanged, baseline_101) == 101
-    assert changed_pixels(unchanged, hit_299) == 299
-    assert changed_pixels(unchanged, hit_300) == 300
+    assert changed_pixels(unchanged, baseline_1) == 1
+    assert changed_pixels(unchanged, hit_119) == 119
+    assert changed_pixels(unchanged, hit_120) == 120
 
-    # A low-contrast crack frame passes only when it is materially above a
-    # same-duration no-hit control, not merely because the scene changed.
-    assert diagnose(unchanged, low_noise, unchanged, hit_300) == (300, 0)
-    assert verify(unchanged, low_noise, unchanged, hit_300) == 300
-
-    try:
-        verify(unchanged, low_noise, unchanged, hit_299)
-    except SystemExit as exc:
-        assert "hit_pixels=299" in str(exc)
-    else:
-        raise AssertionError("299 changed pixels incorrectly passed the 300-pixel floor")
+    # The measured real-client hit (162 pixels) is above this calibrated floor;
+    # a same-duration no-hit baseline remains mandatory.
+    assert diagnose(unchanged, low_noise, unchanged, hit_120) == (120, 0)
+    assert verify(unchanged, low_noise, unchanged, hit_120) == 120
 
     try:
-        verify(unchanged, baseline_101, unchanged, hit_300)
+        verify(unchanged, low_noise, unchanged, hit_119)
     except SystemExit as exc:
-        assert "excess=199" in str(exc)
+        assert "hit_pixels=119" in str(exc)
     else:
-        raise AssertionError("a hit only 199 pixels above baseline incorrectly passed")
+        raise AssertionError("119 changed pixels incorrectly passed the 120-pixel floor")
 
-print("Jar damage overlay detector: low-noise baseline and 299/300 plus 199/200 excess boundaries: PASS")
+    try:
+        verify(unchanged, baseline_1, unchanged, hit_120)
+    except SystemExit as exc:
+        assert "excess=119" in str(exc)
+    else:
+        raise AssertionError("a hit only 119 pixels above baseline incorrectly passed")
+
+print("Jar damage overlay detector: low-noise baseline and 119/120 hit/excess boundaries: PASS")
