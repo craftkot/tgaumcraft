@@ -601,3 +601,11 @@
 - Commit [84632d8](https://github.com/craftkot/tgaumcraft/commit/84632d85321480622eee35c00113661bbcd98654) extends the existing loader-neutral SilverwoodRollbackFailureInjectionTest with 8 assertions: foreign trunk/canopy replacements must survive rollback, and rejected rollback writes must not be counted as successful. Expected total now 16 assertions (8 existing + 8 new), **not an executed PASS**.
 - Exact checkout Java runner unavailable because local git DNS resolution fails. No native WorldGenLevel.setBlock GameTest or fresh-chunk generation executed. CI for this commit not yet verified; test only covers core rollback helpers, not NeoForge world writes.
 - Next: verify exact SHA Java 21/core and NeoForge CI; coordinate native GameTest registration and run actual setBlock rejection, then register natural Silverwood placement with biome/chunk checks. Draft PR #9 remains unmerged. No main/other branches/shared registries/Gradle touched; historical 59/100 unchanged.
+
+
+## 2026-11-18 — M12: exact Java 21 runner for rollback failure regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Compared main...feature/worldgen-m12 (+166/-0 before edit); reviewed open PRs and overlapping GameTest infrastructure.
+- Added exact-checkout standalone Java 21 runner `tools/test_silverwood_rollback_failure_injection.sh` in [22f9003](https://github.com/craftkot/tgaumcraft/commit/22f900301aab76150534900aacc949920c410fd8). It compiles both production rollback helpers and the existing 16-assertion failure-injection regression, then invokes its main method; no shared Gradle/CI/registries changed.
+- Before this change the branch's prior SHA `1055d6519145a2f09d7193258e9f2563c657122f` had CircleCI verify-connection SUCCESS. The new runner has **not** been executed on exact checkout and new-SHA CI is pending. This is not a native NeoForge GameTest or a fresh-chunk worldgen pass.
+- Next: execute the exact runner and NeoForge CI; coordinate a real `WorldGenLevel.setBlock` failure-injection GameTest, then register natural Silverwood placement with biome/chunk evidence. Draft PR #9 stays unmerged, historical 59/100 unchanged.
