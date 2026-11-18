@@ -57,6 +57,40 @@ public final class SilverwoodRollbackFailureInjectionTest {
                 world::get, (pos, state) -> true) == 0, "idempotent trunk cleanup");
         check(SilverwoodCanopyRollback.restore(leavesBefore, "LEAVES",
                 world::get, (pos, state) -> true) == 0, "idempotent canopy cleanup");
+        // A foreign edit after placement must survive best-effort cleanup.
+        Map<Integer, String> foreignWorld = new LinkedHashMap<>();
+        foreignWorld.put(10, "LOG_Y");
+        foreignWorld.put(11, "LEAVES");
+        Map<Integer, String> foreignOriginals = Map.of(10, "AIR");
+        Map<Integer, String> foreignWritten = Map.of(10, "LOG_Y");
+        Map<Integer, String> foreignLeaves = Map.of(11, "FLOWER");
+        foreignWorld.put(10, "STONE"); // another writer replaced the log
+        foreignWorld.put(11, "DIRT");  // another writer replaced the leaves
+        check(SilverwoodTrunkRollback.restore(foreignOriginals, foreignWritten,
+                foreignWorld::get, (pos, state) -> {
+                    foreignWorld.put(pos, state);
+                    return true;
+                }) == 0, "do not erase foreign trunk replacement");
+        check(SilverwoodCanopyRollback.restore(foreignLeaves, "LEAVES",
+                foreignWorld::get, (pos, state) -> {
+                    foreignWorld.put(pos, state);
+                    return true;
+                }) == 0, "do not erase foreign canopy replacement");
+        check("STONE".equals(foreignWorld.get(10)), "preserve foreign trunk state");
+        check("DIRT".equals(foreignWorld.get(11)), "preserve foreign canopy state");
+
+        // Even a matching state cannot be counted as restored when setBlock rejects.
+        Map<Integer, String> rejectedWorld = new LinkedHashMap<>();
+        rejectedWorld.put(20, "LOG_X");
+        rejectedWorld.put(21, "LEAVES");
+        check(SilverwoodTrunkRollback.restore(Map.of(20, "AIR"), Map.of(20, "LOG_X"),
+                rejectedWorld::get, (pos, state) -> false) == 0,
+                "rejected trunk rollback is not counted");
+        check(SilverwoodCanopyRollback.restore(Map.of(21, "FLOWER"), "LEAVES",
+                rejectedWorld::get, (pos, state) -> false) == 0,
+                "rejected canopy rollback is not counted");
+        check("LOG_X".equals(rejectedWorld.get(20)), "rejected trunk remains unchanged");
+        check("LEAVES".equals(rejectedWorld.get(21)), "rejected canopy remains unchanged");
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
