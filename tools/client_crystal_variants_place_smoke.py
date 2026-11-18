@@ -14,7 +14,7 @@ if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Client boot/audio hooks changed; refuse blind injection")
 head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null",
                                            "export ALSOFT_DRIVERS=pulse")
-xvfb_fixed_wait = "sleep 3\\nxdpyinfo -display :99 > client-smoke/display.txt"
+xvfb_fixed_wait = "sleep 3\nxdpyinfo -display :99 > client-smoke/display.txt"
 if source.count(xvfb_fixed_wait) != 1:
     raise SystemExit("Xvfb startup block changed; refuse blind readiness injection")
 xvfb_bounded_wait = r"""xvfb_ready=0

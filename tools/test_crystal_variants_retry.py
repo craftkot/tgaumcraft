@@ -25,7 +25,7 @@ xvfb_checks = [
     "CRYSTAL_XVFB_READY=YES" in xvfb_block,
     "CRYSTAL_XVFB_EXITED=FAIL" in xvfb_block,
     "CRYSTAL_XVFB_TIMEOUT=FAIL" in xvfb_block,
-    "sleep 3\\nxdpyinfo -display :99" not in script,
+    "sleep 3\nxdpyinfo -display :99" not in script,
 ]
 assert all(xvfb_checks), f"bounded Xvfb readiness fixture failed: {xvfb_checks}"
 header = "  for variant in aer ignis terra ordo perditio vitium; do"
