@@ -39,15 +39,27 @@ for fragment in (
     "rift-positive-control.pcm",
     "/playsound thaumcraft:evilportal neutral @p ~ ~ ~ 1 1",
     "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
+    "query_game_time() {",
+    "/time query gametime",
+    "RIFT_GAME_TIME_QUERY=PASS",
+    "RIFT_GAME_TICK_WINDOW=PASS",
     "TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT",
-    "RIFT_AMBIENT_ENTITY_AFTER_46S=PASS",
+    "RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS",
+    "RIFT_PCM_CAPTURE_STOP=PASS",
 ):
     assert fragment in driver, fragment
 assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"), (
     "the original-sound positive control must be captured separately before the natural Rift window"
 )
-assert driver.index("sleep 46") < driver.index("TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT"), (
-    "the post-wait entity-alive check must occur after the full ambient cadence window"
+assert "sleep 46" not in driver, "ambient acceptance must not rely on wall-clock sleep"
+assert "current_game_time - start_game_time >= 300" in driver, (
+    "the natural sound window must wait for at least 300 server game ticks"
+)
+assert "timeout --signal=TERM 420s" in driver, (
+    "the PCM capture must cover slow integrated-server tick windows"
+)
+assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index("TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT"), (
+    "the post-window entity-alive check must follow the measured game-tick cadence"
 )
 
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, 300-tick Gaussian sound wiring: PASS")
