@@ -114,6 +114,39 @@ public final class SilverwoodRollbackFailureInjectionTest {
         check(corruptWrites[0] == 0, "invalid journal must not write any blocks");
         check("LOG_X".equals(corruptWorld.get(30)), "valid prefix remains untouched");
         check("LOG_Y".equals(corruptWorld.get(31)), "invalid suffix remains untouched");
+        // One rejected rollback write must not prevent cleanup of other positions.
+        Map<Integer, String> partialWorld = new LinkedHashMap<>();
+        partialWorld.put(40, "LOG_X");
+        partialWorld.put(41, "LOG_Y");
+        Map<Integer, String> partialOriginals = new LinkedHashMap<>();
+        partialOriginals.put(40, "AIR");
+        partialOriginals.put(41, "FLOWER");
+        Map<Integer, String> partialWritten = new LinkedHashMap<>();
+        partialWritten.put(40, "LOG_X");
+        partialWritten.put(41, "LOG_Y");
+        check(SilverwoodTrunkRollback.restore(partialOriginals, partialWritten,
+                partialWorld::get, (pos, state) -> {
+                    if (pos == 40) return false;
+                    partialWorld.put(pos, state);
+                    return true;
+                }) == 1, "continue trunk cleanup after rejected restore");
+        check("LOG_X".equals(partialWorld.get(40)), "rejected trunk stays in place");
+        check("FLOWER".equals(partialWorld.get(41)), "later trunk is restored");
+
+        Map<Integer, String> partialCanopy = new LinkedHashMap<>();
+        partialCanopy.put(50, "LEAVES");
+        partialCanopy.put(51, "LEAVES");
+        Map<Integer, String> canopyOriginals = new LinkedHashMap<>();
+        canopyOriginals.put(50, "AIR");
+        canopyOriginals.put(51, "FLOWER");
+        check(SilverwoodCanopyRollback.restore(canopyOriginals, "LEAVES",
+                partialCanopy::get, (pos, state) -> {
+                    if (pos == 50) return false;
+                    partialCanopy.put(pos, state);
+                    return true;
+                }) == 1, "continue canopy cleanup after rejected restore");
+        check("LEAVES".equals(partialCanopy.get(50)), "rejected leaf stays in place");
+        check("FLOWER".equals(partialCanopy.get(51)), "later leaf is restored");
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
