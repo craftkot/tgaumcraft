@@ -427,12 +427,15 @@ expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
 expect("workbench_block_log_offset" not in generator
        and "WORKBENCH_SERVER_POSITION_GATE" not in generator,
        "Workbench smoke still scrapes /data get block feedback from client.log")
-expect("wait_for_workbench_marker" in generator
-       and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in generator
-       and "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES" in generator
-       and "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in generator
-       and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in generator,
-       "Workbench smoke does not require the real server-to-client menu lifecycle")
+expect("wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" not in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" not in generator
+       and 'grep -Fq "$marker" run/logs/latest.log' in generator
+       and 'grep -Fq "$marker" client-smoke/client.log' in generator,
+       "Workbench smoke must route server lifecycle markers to latest.log and client screen markers to client.log")
 type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
