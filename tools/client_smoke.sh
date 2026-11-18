@@ -119,7 +119,7 @@ assert_log_literal() {
   # A marker left by an earlier probe must never satisfy this assertion.
   for attempt in $(seq 1 20); do
     if [ "$(wc -c < client-smoke/client.log)" -ge "$offset" ] &&
-       tail -c "+$((offset + 1))" client-smoke/client.log | grep -Fq "$marker"; then
+       tail -c "+$((offset + 1))" client-smoke/client.log | grep -F "$marker" > /dev/null; then
       echo "VANILLA_COMMAND_ASSERTION_CONFIRMED=$marker after_poll=$attempt" | tee -a client-smoke-status.txt
       return 0
     fi
