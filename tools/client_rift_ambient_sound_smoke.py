@@ -196,9 +196,15 @@ probe = r'''
   # recorder is reaped on every fail-fast exit before the normal stop point.
   trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
   sleep 0.25
-  send_chat '/tp @p 2.5 150 11.5 0 0'
+  # The event is a variable-range SoundEvent: volume scales its hearing radius.
+  # Keep the listener at the source so Gaussian low-volume rolls cannot exclude it.
+  rift_x=3.5
+  rift_y=150
+  rift_z=12.5
+  send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"
+  echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
   capture rift-ambient-before
-  send_chat '/summon thaumcraft:flux_rift 3.5 150 12.5 {RiftSeed:1234567,RiftSize:5,Stability:0.0f}'
+  send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"
   send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'
   rift_spawned=0
   for _ in $(seq 1 40); do
