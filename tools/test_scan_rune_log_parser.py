@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Regression tests for the actual ScanRuneParticle client-log format."""
-from scan_rune_log_parser import parse_scan_rune_log, visible_rune_render_samples
+from scan_rune_log_parser import parse_scan_rune_log, parse_scan_rune_entity_targets, visible_rune_render_samples
 from pathlib import Path
 import subprocess
 import sys
@@ -33,7 +33,12 @@ zero_size = rendered[0][:2] + ("0.0",) + rendered[0][3:]
 assert visible_rune_render_samples([rendered[0], negative_size, dim, zero_size]) == visible + negative_visible
 assert expired[0] == ("2", "45", "45", "0.0")
 assert parse_scan_rune_log("TC_SMOKE_SCAN_RUNE_CREATED=YES face=x lifetime=45") == ([], [], [])
+entity_log = "[Render thread/INFO]: TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=minecraft:cow height=1.4 units=21 x=0.5 y=151.0 eyeHeight=1.3 z=4.5"
+entity_targets = parse_scan_rune_entity_targets(entity_log)
+assert entity_targets == [("minecraft:cow", "1.4", "21", "0.5", "151.0", "1.3", "4.5")]
+assert parse_scan_rune_entity_targets("TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type= height=bad") == []
 print("SCAN_RUNE_LOG_PARSER=PASS assertions=17")
+print("SCAN_RUNE_ENTITY_TARGET_PARSER=PASS assertions=2")
 
 # The real-client fixture must clear generated terrain from both sight lines.
 # Otherwise the particle log can be internally consistent while proving a scan
@@ -58,6 +63,19 @@ fixture_checks = [
 ]
 assert all(fixture_checks), f"scan-rune fixture checks failed: {fixture_checks}"
 print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=10")
+# The real-client acceptance must exercise BETA26's entity branch as well as blocks.
+fx_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java").read_text(encoding="utf-8")
+entity_fixture_checks = [
+    "send_chat '/summon minecraft:cow" in generated,
+    "send_chat '/summon minecraft:enderman" in generated,
+    "RUNE_ENTITY_SHORT=PASS" in generated,
+    "RUNE_ENTITY_TALL=PASS" in generated,
+    "parse_scan_rune_entity_targets(log)" in generated,
+    "LegacyScanRuneDuration.entityUnits(height)" in fx_source,
+    "TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=" in fx_source,
+]
+assert all(entity_fixture_checks), f"entity scan-rune fixture checks failed: {entity_fixture_checks}"
+print("SCAN_RUNE_ENTITY_SMOKE_FIXTURE=PASS assertions=7")
 # The isolated runner must not inherit the shared smoke's unverified chat sender.
 shared_smoke = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 shared_sender = """  send_chat() {
