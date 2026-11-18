@@ -434,7 +434,9 @@ expect('openWorkbench(level, pos, player, "empty_hand");' in empty_hand_body,
        "empty-hand interaction no longer shares the Workbench menu-opening path")
 
 # Vanilla chat feedback is a HUD event, not a dependable client.log response.
-# Require real server BlockEntity/menu results and client screen/render markers.
+# All four Java lifecycle markers use System.out in the integrated JVM, so they
+# belong to client.log. Only the vanilla /say fixture acknowledgement is a
+# Log4j server-log marker and belongs to run/logs/latest.log.
 expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
        and "workbench_command_log_offset" not in generator
        and "WORKBENCH_COMMAND_RESPONSE_GATE" not in generator,
@@ -442,15 +444,15 @@ expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
 expect("workbench_block_log_offset" not in generator
        and "WORKBENCH_SERVER_POSITION_GATE" not in generator,
        "Workbench smoke still scrapes /data get block feedback from client.log")
-expect("wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
-       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
+expect("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
        and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
        and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator
-       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" not in generator
-       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" not in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" not in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" not in generator
        and 'grep -Fq "$marker" run/logs/latest.log' in generator
        and 'grep -Fq "$marker" client-smoke/client.log' in generator,
-       "Workbench smoke must route server lifecycle markers to latest.log and client screen markers to client.log")
+       "Workbench smoke must route Java lifecycle markers to integrated client.log and the vanilla server-log acknowledgement to latest.log")
 type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
 return_index = replacement_body.index('xdotool key --clearmodifiers Return')
 chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
