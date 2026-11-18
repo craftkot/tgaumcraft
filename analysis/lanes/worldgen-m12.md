@@ -609,3 +609,12 @@
 - Added exact-checkout standalone Java 21 runner `tools/test_silverwood_rollback_failure_injection.sh` in [22f9003](https://github.com/craftkot/tgaumcraft/commit/22f900301aab76150534900aacc949920c410fd8). It compiles both production rollback helpers and the existing 16-assertion failure-injection regression, then invokes its main method; no shared Gradle/CI/registries changed.
 - Before this change the branch's prior SHA `1055d6519145a2f09d7193258e9f2563c657122f` had CircleCI verify-connection SUCCESS. The new runner has **not** been executed on exact checkout and new-SHA CI is pending. This is not a native NeoForge GameTest or a fresh-chunk worldgen pass.
 - Next: execute the exact runner and NeoForge CI; coordinate a real `WorldGenLevel.setBlock` failure-injection GameTest, then register natural Silverwood placement with biome/chunk evidence. Draft PR #9 stays unmerged, historical 59/100 unchanged.
+
+
+## 2026-11-18 — M12: fail-fast corrupt trunk journal regression
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; inspected six feature branches and open PRs (#9 draft; #26–#36 overlapping GameTest/CI). Before changes main...feature/worldgen-m12 was +168/-0, HEAD 5784acd3b6fe254723d1ffb1d8442ca7e482d1f8.
+- Regression commit [d4fc69a](https://github.com/craftkot/tgaumcraft/commit/d4fc69aaed56b9c2fd7cbf785f95435b9c8e604b) adds four deterministic assertions to SilverwoodRollbackFailureInjectionTest: a corrupt trunk journal with an original missing for its second write must throw before any rollback write and leave both blocks unchanged. Existing runner tools/test_silverwood_rollback_failure_injection.sh covers the same class; expected count 20 assertions (not a verified PASS).
+- Previous exact SHA 5784acd: CircleCI verify-connection SUCCESS; GitHub Actions run [44260485341](https://github.com/craftkot/tgaumcraft/actions/runs/44260485341) completed SUCCESS. These are previous-head results, not proof of execution of the four new assertions.
+- Direct git ls-remote still fails DNS (Could not resolve host: github.com); exact checkout runner, new-head NeoForge CI, native WorldGenLevel.setBlock GameTest and fresh-chunk worldgen have not been executed here.
+- Next: run Java 21 runner on exact checkout and verify new-head CI; coordinate native GameTest registration before testing real rejected world writes, then coordinate Silverwood natural placed-feature/biome injection. No main/other branches/shared registries/Gradle/merge changes; audit 59/100 unchanged.
