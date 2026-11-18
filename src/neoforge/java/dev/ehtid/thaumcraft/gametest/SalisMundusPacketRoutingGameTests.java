@@ -83,8 +83,8 @@ public final class SalisMundusPacketRoutingGameTests {
                         + " bystander=" + bystanderPackets.get());
             }
 
-            // The production queue's player-targeted send must increment only
-            // the selected actor's actual outbound Connection pipeline.
+            // The production queue's immediate player-targeted send must reach
+            // only the selected actor's actual outbound Connection pipeline.
             SalisSparkleTrailQueue.emitOrQueue(
                     level, actor.player(), SalisSparkleParticleRegistration.TYPE,
                     origin, Vec3.ZERO, 0
@@ -114,13 +114,74 @@ public final class SalisMundusPacketRoutingGameTests {
             System.out.println(
                     "TC_GAMETEST_SALIS_PACKET_RECIPIENT=PASS connections=2 broadcast=2 actor_only=YES"
             );
-        } finally {
-            removeRecorder(actor, ACTOR_HANDLER);
-            removeRecorder(bystander, BYSTANDER_HANDLER);
-            disconnect(level, actor, "Salis actor packet-routing GameTest finished");
-            disconnect(level, bystander, "Salis bystander packet-routing GameTest finished");
+
+            // The delayed path is distinct from the immediate send above. It
+            // must stay silent before its due tick and still target only the actor.
+            SalisSparkleTrailQueue.emitOrQueue(
+                    level, actor.player(), SalisSparkleParticleRegistration.TYPE,
+                    origin, Vec3.ZERO, 3
+            );
+            flush(actor.channel());
+            flush(bystander.channel());
+            if (actorPackets.get() != 2 || bystanderPackets.get() != 2) {
+                throw new AssertionError("Delayed Salis particle emitted before its due tick"
+                        + " actor=" + actorPackets.get()
+                        + " bystander=" + bystanderPackets.get());
+            }
+        } catch (RuntimeException | AssertionError failure) {
+            cleanupRecipients(level, actor, bystander);
+            throw failure;
         }
-        helper.succeed();
+
+        // One tick is still before dueTick(now, 3); three more ticks put the
+        // assertion safely after the server's delayed queue drain.
+        helper.runAfterDelay(1, () -> {
+            try {
+                flush(actor.channel());
+                flush(bystander.channel());
+                if (actorPackets.get() != 2 || bystanderPackets.get() != 2) {
+                    throw new AssertionError("Delayed Salis particle arrived before its scheduled tick"
+                            + " actor=" + actorPackets.get()
+                            + " bystander=" + bystanderPackets.get());
+                }
+                helper.runAfterDelay(3, () -> {
+                    try {
+                        flush(actor.channel());
+                        flush(bystander.channel());
+                        if (actorPackets.get() != 3 || bystanderPackets.get() != 2) {
+                            throw new AssertionError("Delayed Salis packet leaked to the bystander or was lost"
+                                    + " actor=" + actorPackets.get()
+                                    + " bystander=" + bystanderPackets.get());
+                        }
+                        System.out.println(
+                                "TC_GAMETEST_SALIS_DELAYED_PACKET_RECIPIENT=PASS connections=2 actor_only=YES delay=3"
+                        );
+                    } finally {
+                        cleanupRecipients(level, actor, bystander);
+                    }
+                    helper.succeed();
+                });
+            } catch (RuntimeException | AssertionError failure) {
+                cleanupRecipients(level, actor, bystander);
+                throw failure;
+            }
+        });
+    }
+
+    private static void cleanupRecipients(ServerLevel level, ConnectedPlayer actor, ConnectedPlayer bystander) {
+        try {
+            removeRecorder(actor, ACTOR_HANDLER);
+        } finally {
+            try {
+                removeRecorder(bystander, BYSTANDER_HANDLER);
+            } finally {
+                try {
+                    disconnect(level, actor, "Salis actor packet-routing GameTest finished");
+                } finally {
+                    disconnect(level, bystander, "Salis bystander packet-routing GameTest finished");
+                }
+            }
+        }
     }
 
     private static ConnectedPlayer createConnectedPlayer(ServerLevel level, BlockPos target, String name) {
