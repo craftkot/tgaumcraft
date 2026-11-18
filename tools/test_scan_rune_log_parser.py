@@ -73,15 +73,17 @@ entity_fixture_checks = [
     "RUNE_ENTITY_{label.upper()}=PASS" in generated,
     "RUNE_ENTITY_HEIGHT_SCALING=PASS" in generated,
     'sys.path.insert(0, str(Path.cwd() / "tools"))' in entity_parser_block,
-    "sleep 7" in entity_tall_wait,
-    "sleep 4" not in entity_tall_wait,
-    "int(2.7 * 15) = 40 units, 120 ticks = 6 seconds at 20 TPS" in generated,
+    "tall_expiry_deadline=$((SECONDS + 12))" in entity_tall_wait,
+    "tall_expired_now >= tall_expired_before + 10" in entity_tall_wait,
+    "RUNE_TALL_EXPIRY_TIMEOUT=FAIL" in entity_tall_wait,
+    "sleep 0.5" in entity_tall_wait,
+    "120 ticks (6 s at 20 TPS)" in entity_tall_wait,
     "parse_scan_rune_entity_targets(log)" in generated,
     "LegacyScanRuneDuration.entityUnits(height)" in fx_source,
     "TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=" in fx_source,
 ]
 assert all(entity_fixture_checks), f"entity scan-rune fixture checks failed: {entity_fixture_checks}"
-print("SCAN_RUNE_ENTITY_SMOKE_FIXTURE=PASS assertions=11")
+print("SCAN_RUNE_ENTITY_SMOKE_FIXTURE=PASS assertions=13")
 # The isolated runner must not inherit the shared smoke's unverified chat sender.
 shared_smoke = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 shared_sender = """  send_chat() {
