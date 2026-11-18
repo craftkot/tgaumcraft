@@ -20,6 +20,12 @@ public final class SilverwoodCanopyRollback {
         Objects.requireNonNull(writtenLeaves, "writtenLeaves");
         Objects.requireNonNull(currentState, "currentState");
         Objects.requireNonNull(setState, "setState");
+        // Validate the full journal before any world mutation. A null original
+        // is not a valid BlockState and must not cause a partial rollback.
+        for (Map.Entry<P, S> entry : originals.entrySet()) {
+            Objects.requireNonNull(entry.getKey(), "canopy position");
+            Objects.requireNonNull(entry.getValue(), "original canopy state");
+        }
         int restored = 0;
         for (Map.Entry<P, S> entry : originals.entrySet()) {
             if (writtenLeaves.equals(currentState.apply(entry.getKey()))
