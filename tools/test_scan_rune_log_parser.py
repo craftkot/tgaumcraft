@@ -68,8 +68,8 @@ fx_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneF
 entity_fixture_checks = [
     "send_chat '/summon minecraft:cow" in generated,
     "send_chat '/summon minecraft:enderman" in generated,
-    "RUNE_ENTITY_SHORT=PASS" in generated,
-    "RUNE_ENTITY_TALL=PASS" in generated,
+    "RUNE_ENTITY_{label.upper()}=PASS" in generated,
+    "RUNE_ENTITY_HEIGHT_SCALING=PASS" in generated,
     "parse_scan_rune_entity_targets(log)" in generated,
     "LegacyScanRuneDuration.entityUnits(height)" in fx_source,
     "TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=" in fx_source,
