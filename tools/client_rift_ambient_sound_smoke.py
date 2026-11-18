@@ -156,6 +156,18 @@ probe = r'''
   timeout --signal=TERM 3s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-baseline.pcm || test "$?" -eq 124
+  timeout --signal=TERM 6s parec --device=tc_rift_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/rift-positive-control.pcm &
+  rift_control_pid=$!
+  sleep 0.25
+  send_chat '/playsound thaumcraft:evilportal neutral @p ~ ~ ~ 1 1'
+  wait "$rift_control_pid" || test "$?" -eq 124
+  python3 tools/match_rift_audio_pcm.py \
+    client-smoke/rift-baseline.pcm client-smoke/rift-positive-control.pcm \
+    src/main/resources/assets/thaumcraft/sounds/evilportal.ogg \
+    | tee client-smoke/rift-positive-control-match.txt
+  echo 'RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS' | tee -a client-smoke-status.txt
   timeout --signal=TERM 68s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-event.pcm &
@@ -182,6 +194,13 @@ probe = r'''
   # Three BETA26 300-tick opportunities make the PCM gate robust to a rare
   # negative Gaussian volume sample without altering production randomness.
   sleep 46
+  send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT'
+  if ! grep -Fq 'TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT' run/logs/latest.log; then
+    echo 'RIFT_AMBIENT_ENTITY_AFTER_46S=FAIL' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2
+    exit 1
+  fi
+  echo 'RIFT_AMBIENT_ENTITY_AFTER_46S=PASS' | tee -a client-smoke-status.txt
   wait "$rift_capture_pid" || test "$?" -eq 124
   sink_id="$(pactl list short sinks | awk '$2 == "tc_rift_sink" { print $1; exit }')"
   if [ -z "$sink_id" ] || ! pactl list short sink-inputs | awk -v sink="$sink_id" '$2 == sink { found=1 } END { exit !found }'; then

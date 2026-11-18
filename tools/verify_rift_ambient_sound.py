@@ -34,4 +34,20 @@ for fragment in (
 ):
     assert fragment in method, fragment
 
+driver = Path("tools/client_rift_ambient_sound_smoke.py").read_text()
+for fragment in (
+    "rift-positive-control.pcm",
+    "/playsound thaumcraft:evilportal neutral @p ~ ~ ~ 1 1",
+    "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
+    "TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT",
+    "RIFT_AMBIENT_ENTITY_AFTER_46S=PASS",
+):
+    assert fragment in driver, fragment
+assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"), (
+    "the original-sound positive control must be captured separately before the natural Rift window"
+)
+assert driver.index("sleep 46") < driver.index("TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT"), (
+    "the post-wait entity-alive check must occur after the full ambient cadence window"
+)
+
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, 300-tick Gaussian sound wiring: PASS")
