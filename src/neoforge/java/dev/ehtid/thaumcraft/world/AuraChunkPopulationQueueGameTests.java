@@ -70,6 +70,11 @@ public final class AuraChunkPopulationQueueGameTests {
                 || !ThaumcraftAuraChunkPopulationQueue.isPending(level, target)) {
             throw new AssertionError("Loading the four neighbors did not make the queued center ready");
         }
+        if (!ThaumcraftAuraChunkPopulationQueue.PENDING.isPrioritized(level, target)) {
+            throw new AssertionError("A newly ready aura center was not promoted ahead of the pending world-load backlog");
+        }
+        System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_PRIORITY=PASS pending="
+                + ThaumcraftAuraChunkPopulationQueue.PENDING.size());
 
         awaitPopulation(helper, level, target, center, 40);
     }
@@ -120,7 +125,10 @@ public final class AuraChunkPopulationQueueGameTests {
             }
             if (remainingTicks <= 1) {
                 throw new AssertionError("Chunk-load aura queue did not initialize the center after neighbors loaded"
-                        + " pending=" + ThaumcraftAuraChunkPopulationQueue.isPending(level, target));
+                        + " pending=" + ThaumcraftAuraChunkPopulationQueue.isPending(level, target)
+                        + " prioritized=" + ThaumcraftAuraChunkPopulationQueue.PENDING.isPrioritized(level, target)
+                        + " pendingEntries=" + ThaumcraftAuraChunkPopulationQueue.PENDING.size()
+                        + " loadedChunks=" + level.getChunkSource().getLoadedChunksCount());
             }
             awaitPopulation(helper, level, target, center, remainingTicks - 1);
         });
