@@ -60,3 +60,32 @@ def visible_rune_render_samples(rendered: list[tuple[str, ...]]) -> list[tuple[i
         if alpha >= 0.25 and size != 0.0:
             visible.append((face, *values))
     return visible
+
+_SPARKLE_CREATED = re.compile(
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES id=(\\d+) firstFrame=(\\d+) "
+    r"lifetime=(\\d+) delay=(\\d+) alphaKeys=(\\d+) red=(\\d+) green=(\\d+) "
+    r"blue=(\\d+) scale=(" + _NUMBER + r") moonPhase=(\\d+) windRoll=(\\d+) "
+    r"windX=(" + _NUMBER + r") windZ=(" + _NUMBER + r")"
+)
+_SPARKLE_RENDERED = re.compile(
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_RENDERED=YES id=(\\d+) age=(\\d+) frame=(\\d+) "
+    r"alpha=(" + _NUMBER + r") scale=(" + _NUMBER + r")"
+)
+_SPARKLE_EXPIRED = re.compile(
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_EXPIRED=YES id=(\\d+) age=(\\d+) lifetime=(\\d+)"
+)
+_SPARKLE_BLEND = re.compile(
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_ADDITIVE_BLEND_BEGIN=YES src=(\\d+) dst=(\\d+)"
+)
+
+
+def parse_thaumometer_sparkle_log(log: str) -> tuple[
+    list[tuple[str, ...]], list[tuple[str, ...]], list[tuple[str, ...]], list[tuple[str, ...]]
+]:
+    """Return actual particle construction, render, expiry and additive-blend markers."""
+    return (
+        [match.groups() for match in _SPARKLE_CREATED.finditer(log)],
+        [match.groups() for match in _SPARKLE_RENDERED.finditer(log)],
+        [match.groups() for match in _SPARKLE_EXPIRED.finditer(log)],
+        [match.groups() for match in _SPARKLE_BLEND.finditer(log)],
+    )

@@ -2,7 +2,6 @@ package dev.ehtid.thaumcraft.scanning;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
@@ -11,15 +10,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import org.joml.Vector3f;
+import dev.ehtid.thaumcraft.port.core.LegacyThaumometerSparkleRules;
+import dev.ehtid.thaumcraft.registry.ThaumometerSparkleParticleRegistration;
 
 /**
  * BETA26 ItemThaumometer idle highlight path.
  *
  * Target cadence, entity/block priority, wild 16-block ray, AABB face sampling,
  * spawn count and RGB ranges are bytecode-exact. The legacy FXGeneric animated
- * sparkle sprite is temporarily projected with Minecraft's dust sprite; no scan
- * or knowledge semantics depend on that rendering substitution.
+ * sparkle sprite is emitted through a dedicated client particle using the original
+ * FXGeneric atlas frames, randomized alpha, delay, scale and drift.
  */
 public final class ThaumometerIdleHighlight {
     private ThaumometerIdleHighlight() {}
@@ -60,15 +60,20 @@ public final class ThaumometerIdleHighlight {
                 double oz = Mth.clamp(baseZ + random.nextGaussian() * box.getZsize(),
                         box.minZ - centerZ, box.maxZ - centerZ);
 
-                float red = (16 + random.nextInt(17)) / 255.0F;
-                float green = (132 + random.nextInt(34)) / 255.0F;
-                float blue = (223 + random.nextInt(17)) / 255.0F;
-                float scale = 0.4F + (float) random.nextGaussian() * 0.1F;
+                int red = LegacyThaumometerSparkleRules.channel(16, 32, random.nextInt(17));
+                int green = LegacyThaumometerSparkleRules.channel(132, 165, random.nextInt(34));
+                int blue = LegacyThaumometerSparkleRules.channel(223, 239, random.nextInt(17));
+                float scale = LegacyThaumometerSparkleRules.initialScale(random.nextGaussian());
+                int delay = LegacyThaumometerSparkleRules.delay(random.nextInt(10));
+                boolean firstSequence = random.nextFloat() < 0.2F;
 
-                level.addParticle(
-                        new DustParticleOptions(new Vector3f(red, green, blue), scale),
+                // Preserve BETA26 call order: caller-sampled RGB/scale/delay and
+                // frame choice precede FXGeneric's Particle superclass.
+                level.addParticle(ThaumometerSparkleParticleRegistration.TYPE,
                         centerX + ox, centerY + oy, centerZ + oz,
-                        0.0D, 0.0D, 0.0D);
+                        LegacyThaumometerSparkleRules.encodeColorVariant(red, green, blue, firstSequence),
+                        LegacyThaumometerSparkleRules.encodeScale(scale),
+                        LegacyThaumometerSparkleRules.encodeDelay(delay));
             }
         }
     }

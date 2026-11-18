@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """Regression tests for the actual ScanRuneParticle client-log format."""
-from scan_rune_log_parser import parse_scan_rune_log, parse_scan_rune_entity_targets, visible_rune_render_samples
+from scan_rune_log_parser import (
+    parse_scan_rune_log,
+    parse_scan_rune_entity_targets,
+    parse_thaumometer_sparkle_log,
+    visible_rune_render_samples,
+)
 from pathlib import Path
 import subprocess
 import sys
@@ -39,6 +44,49 @@ assert entity_targets == [("minecraft:cow", "1.4", "21", "0.5", "151.0", "1.3", 
 assert parse_scan_rune_entity_targets("TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type= height=bad") == []
 print("SCAN_RUNE_LOG_PARSER=PASS assertions=17")
 print("SCAN_RUNE_ENTITY_TARGET_PARSER=PASS assertions=2")
+
+sparkle_log = """TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES id=1 firstFrame=320 lifetime=18 delay=9 alphaKeys=7 red=16 green=165 blue=239 scale=0.4 moonPhase=4 windRoll=9 windX=-0.000032 windZ=-0.000038
+TC_SMOKE_THAUMOMETER_SPARKLE_RENDERED=YES id=1 age=1 frame=321 alpha=0.2 scale=0.42
+TC_SMOKE_THAUMOMETER_SPARKLE_EXPIRED=YES id=1 age=18 lifetime=18
+TC_SMOKE_THAUMOMETER_SPARKLE_ADDITIVE_BLEND_BEGIN=YES src=770 dst=1
+"""
+sparkle_created, sparkle_rendered, sparkle_expired, sparkle_blend = parse_thaumometer_sparkle_log(sparkle_log)
+assert sparkle_created == [("1", "320", "18", "9", "7", "16", "165", "239", "0.4", "4", "9", "-0.000032", "-0.000038")]
+assert sparkle_rendered == [("1", "1", "321", "0.2", "0.42")]
+assert sparkle_expired == [("1", "18", "18")]
+assert sparkle_blend == [("770", "1")]
+assert parse_thaumometer_sparkle_log("TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES id=x") == ([], [], [], [])
+print("THAUMOMETER_SPARKLE_LOG_PARSER=PASS assertions=5")
+
+sparkle_test = subprocess.run(
+    ["bash", "tools/test_thaumometer_sparkle.sh"],
+    check=True, capture_output=True, text=True
+)
+assert "BETA26 Thaumometer FXGeneric sparkle: OK" in sparkle_test.stdout
+print(sparkle_test.stdout.strip())
+
+idle_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/scanning/ThaumometerIdleHighlight.java").read_text(encoding="utf-8")
+particle_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerSparkleParticle.java").read_text(encoding="utf-8")
+registration_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumometerSparkleParticleRegistration.java").read_text(encoding="utf-8")
+client_provider_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerSparkleParticleClientEvents.java").read_text(encoding="utf-8")
+particle_json = Path("src/main/resources/assets/thaumcraft/particles/thaumometer_sparkle.json").read_text(encoding="utf-8")
+source_checks = [
+    "DustParticleOptions" not in idle_source,
+    "ThaumometerSparkleParticleRegistration.TYPE" in idle_source,
+    "LegacyThaumometerSparkleRules.encodeColorVariant" in idle_source,
+    "LegacyThaumometerSparkleRules.encodeScale" in idle_source,
+    "LegacyThaumometerSparkleRules.encodeDelay" in idle_source,
+    "RenderSystem.blendFunc(770, 1)" in particle_source,
+    "LegacyThaumometerSparkleRules.FRAME_COUNT" in particle_source,
+    "LegacyThaumometerSparkleRules.alphaAt" in particle_source,
+    "LegacyThaumometerSparkleRules.wind" in particle_source,
+    "THAUMOMETER_SPARKLE_ADDITIVE_BLEND_BEGIN" in particle_source,
+    "Registries.PARTICLE_TYPE" in registration_source,
+    "event.registerSpriteSet(type, ThaumometerSparkleParticle.Provider::new)" in client_provider_source,
+    '"thaumcraft:particles"' in particle_json,
+]
+assert all(source_checks), f"Thaumometer sparkle source wiring failed: {source_checks}"
+print(f"THAUMOMETER_SPARKLE_SOURCE_WIRING=PASS assertions={len(source_checks)}")
 
 # The real-client fixture must clear generated terrain from both sight lines.
 # Otherwise the particle log can be internally consistent while proving a scan

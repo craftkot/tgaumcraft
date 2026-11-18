@@ -429,6 +429,7 @@ sys.path.insert(0, str(Path.cwd() / "tools"))
 from scan_rune_log_parser import (
     parse_scan_rune_entity_targets,
     parse_scan_rune_log,
+    parse_thaumometer_sparkle_log,
     visible_rune_render_samples,
 )
 
@@ -498,6 +499,60 @@ tall_life, tall_height = verify_entity(
 if tall_height <= short_height or tall_life <= short_life:
     raise SystemExit(f"RUNE_ENTITY_HEIGHT_SCALING_WRONG short={short_height}/{short_life} tall={tall_height}/{tall_life}")
 print(f"RUNE_ENTITY_HEIGHT_SCALING=PASS short={short_height:.3f}/{short_life} tall={tall_height:.3f}/{tall_life}")
+
+sparkle_created, sparkle_rendered, sparkle_expired, sparkle_blend = parse_thaumometer_sparkle_log(log)
+if not sparkle_created:
+    raise SystemExit("THAUMOMETER_IDLE_SPARKLE_CREATED_MISSING")
+if not sparkle_rendered:
+    raise SystemExit("THAUMOMETER_IDLE_SPARKLE_RENDER_CALLBACK_MISSING")
+if not sparkle_expired:
+    raise SystemExit("THAUMOMETER_IDLE_SPARKLE_EXPIRY_MISSING")
+if not sparkle_blend:
+    raise SystemExit("THAUMOMETER_IDLE_SPARKLE_ADDITIVE_BLEND_MISSING")
+
+created_by_id = {}
+for row in sparkle_created:
+    particle_id, first_frame_s, life_s, delay_s, alpha_keys_s, red_s, green_s, blue_s, scale_s, moon_s, wind_roll_s, wind_x_s, wind_z_s = row
+    first_frame, life, delay, alpha_keys = map(int, (first_frame_s, life_s, delay_s, alpha_keys_s))
+    red, green, blue, moon, wind_roll = map(int, (red_s, green_s, blue_s, moon_s, wind_roll_s))
+    scale, wind_x, wind_z = map(float, (scale_s, wind_x_s, wind_z_s))
+    if first_frame not in (320, 512) or not 16 <= life <= 19:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_SOURCE_FRAME_OR_LIFETIME_WRONG {row}")
+    if not 0 <= delay <= 9 or not 6 <= alpha_keys <= 6 + life // 3 - 1:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_DELAY_OR_ALPHA_KEYS_WRONG {row}")
+    if not 16 <= red <= 32 or not 132 <= green <= 165 or not 223 <= blue <= 239:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_RGB_WRONG {row}")
+    if not math.isfinite(scale) or not 0 <= wind_roll <= 9:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_SCALE_OR_WIND_ROLL_WRONG {row}")
+    angle = moon * (40 + wind_roll) / 180.0 * math.pi
+    if abs(wind_x - math.cos(angle) * 0.00005) > 1.0e-9 or abs(wind_z + math.sin(angle) * 0.00005) > 1.0e-9:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_WIND_WRONG {row}")
+    created_by_id[int(particle_id)] = (first_frame, life)
+
+rendered_ids = set()
+for particle_id_s, age_s, frame_s, alpha_s, scale_s in sparkle_rendered:
+    particle_id, age, frame = map(int, (particle_id_s, age_s, frame_s))
+    alpha, scale = float(alpha_s), float(scale_s)
+    if particle_id not in created_by_id:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_RENDER_WITHOUT_CREATE id={particle_id}")
+    first_frame, life = created_by_id[particle_id]
+    if frame != first_frame + age % 16 or not 0.05 <= alpha <= 1.0001 or not math.isfinite(scale):
+        raise SystemExit(f"THAUMOMETER_SPARKLE_RENDER_STATE_WRONG id={particle_id}")
+    rendered_ids.add(particle_id)
+
+expired_ids = set()
+for particle_id_s, age_s, life_s in sparkle_expired:
+    particle_id, age, life = map(int, (particle_id_s, age_s, life_s))
+    if particle_id not in created_by_id or life != created_by_id[particle_id][1] or age != life:
+        raise SystemExit(f"THAUMOMETER_SPARKLE_EXPIRY_WRONG id={particle_id}")
+    expired_ids.add(particle_id)
+
+if not (set(created_by_id) & rendered_ids & expired_ids):
+    raise SystemExit("THAUMOMETER_SPARKLE_NO_SINGLE_PARTICLE_CREATED_RENDERED_EXPIRED")
+if any(tuple(map(int, row)) != (770, 1) for row in sparkle_blend):
+    raise SystemExit(f"THAUMOMETER_SPARKLE_BLEND_WRONG {sparkle_blend}")
+print(f"THAUMOMETER_IDLE_SPARKLE=PASS created={len(sparkle_created)} rendered={len(sparkle_rendered)} expired={len(sparkle_expired)}")
+print("THAUMOMETER_IDLE_SPARKLE_ADDITIVE_BLEND=PASS src=770 dst=1")
 PY
   if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' \
     client-smoke/client.log; then
