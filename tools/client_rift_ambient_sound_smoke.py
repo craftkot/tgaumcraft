@@ -192,6 +192,9 @@ probe = r'''
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-event.pcm &
   rift_capture_pid=$!
+  # Preserve the shared client cleanup while guaranteeing the bounded PulseAudio
+  # recorder is reaped on every fail-fast exit before the normal stop point.
+  trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
   sleep 0.25
   send_chat '/tp @p 2.5 150 11.5 0 0'
   capture rift-ambient-before
@@ -239,6 +242,7 @@ probe = r'''
     echo "RIFT_PCM_CAPTURE_STOP=FAIL exit=$capture_status" | tee -a client-smoke-status.txt
     exit 1
   fi
+  rift_capture_pid=''
   echo 'RIFT_PCM_CAPTURE_STOP=PASS' | tee -a client-smoke-status.txt
   sink_id="$(pactl list short sinks | awk '$2 == "tc_rift_sink" { print $1; exit }')"
   if [ -z "$sink_id" ] || ! pactl list short sink-inputs | awk -v sink="$sink_id" '$2 == sink { found=1 } END { exit !found }'; then
