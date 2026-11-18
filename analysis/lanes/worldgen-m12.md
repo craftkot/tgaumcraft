@@ -660,3 +660,12 @@
 - Regression commit [994a9d3](https://github.com/craftkot/tgaumcraft/commit/994a9d33b908a8b963c443b3188155e42cdf2f9c) adds four checks for null original/written states and zero attempted writes; expected total 34 assertions, not an executed PASS.
 - Java 21 available, but exact git checkout remains blocked by DNS (Could not resolve host: github.com); exact runner, native NeoForge GameTest and fresh-chunk worldgen not executed. CI for new commits not yet verified. No shared registries, Gradle, main, other branches or merge modified. Historical 59/100 unchanged.
 - Next: run exact Java 21 rollback runner in checkout/CI, then coordinate native WorldGenLevel.setBlock rejection GameTest and actual Silverwood biome/chunk placement.
+
+
+## 2026-11-18 — M12 exact-head CI verification; native placement still blocked
+
+- Re-read main:AGENTS.md, main:ROADMAP_RU.md, main:analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked six feature branches, open PRs and main...feature/worldgen-m12 (+180/-0 before entry). Draft PR #9 remains unmerged.
+- Verified exact previous HEAD e83ac342933f96ecb46b05f10f56019896e2c4fc: GitHub Actions run 44325647612 (Thaumcraft Port CI #4029) completed SUCCESS. Its verify job passed Java 21 setup, Core parity, NeoForge build, and Dedicated server smoke. CircleCI ci/circleci: verify-connection also SUCCESS (workflow ec1da968-f236-4f53-882e-babceee38c54).
+- Inspected actual workflow steps: tools/test_silverwood_rollback_failure_injection.sh is not an explicit step; 34 rollback assertions are still NOT proven to execute. The runner and the two production rollback helpers plus regression source were re-read from this branch. No new production/test change justified from source review.
+- Local git ls-remote still fails DNS (Could not resolve host: github.com), despite local Java 21 availability. No exact-checkout standalone runner, native WorldGenLevel.setBlock GameTest, or fresh-chunk Silverwood generation executed here. Existing tests are loader-neutral and do not prove native placement.
+- Next: execute exact runner in a working checkout, coordinate native GameTest and feature/biome registration with owners before modifying shared registries, then verify new chunks and original BETA26 biome/RNG rules. No main/other branches/Gradle/shared registries/merge touched; audit 59/100 unchanged.
