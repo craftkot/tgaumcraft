@@ -201,7 +201,11 @@ probe = r'''
   rift_x=3.5
   rift_y=150
   rift_z=12.5
+  # The player fell ~82 blocks during the 300-tick window in native run #44242730923.
+  # Keep the listener at the source throughout the sound cadence, not just at teleport.
+  send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"
   send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"
+  echo "RIFT_LISTENER_PLATFORM=PASS y=149" | tee -a client-smoke-status.txt
   echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
   capture rift-ambient-before
   send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"
@@ -255,6 +259,14 @@ probe = r'''
     echo "$server_due_line" >&2
     exit 1
   fi
+  # Fail closed if the listener wandered/fell out of the BETA26 volume-dependent range.
+  server_distance_sqr="${server_due_line#* nearestPlayerDistanceSqr=}"
+  server_distance_sqr="${server_distance_sqr%% *}"
+  if ! python3 -c 'import sys; d=float(sys.argv[1]); sys.exit(0 if 0 <= d <= 1.0 else 1)' "$server_distance_sqr"; then
+    echo "RIFT_LISTENER_AT_EVENT=FAIL distanceSqr=$server_distance_sqr" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RIFT_LISTENER_AT_EVENT=PASS distanceSqr=$server_distance_sqr" | tee -a client-smoke-status.txt
   echo "RIFT_SERVER_AMBIENT_DUE=PASS $server_due_line" | tee -a client-smoke-status.txt
   if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_CALL=YES' "$probe_log"; then
     echo 'RIFT_SERVER_SOUND_CALL=NOT_CONFIRMED' | tee -a client-smoke-status.txt
