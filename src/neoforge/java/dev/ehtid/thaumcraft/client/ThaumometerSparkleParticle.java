@@ -55,6 +55,7 @@ public final class ThaumometerSparkleParticle extends TextureSheetParticle {
     private final float[] scaleFrames;
     private final double windX;
     private final double windZ;
+    private final double slowDown;
     private final long spawnGameTime;
     private final int smokeId;
     private int delayRemaining;

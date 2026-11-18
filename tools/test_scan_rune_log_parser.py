@@ -132,6 +132,16 @@ entity_fixture_checks = [
 ]
 assert all(entity_fixture_checks), f"entity scan-rune fixture checks failed: {entity_fixture_checks}"
 print("SCAN_RUNE_ENTITY_SMOKE_FIXTURE=PASS assertions=13")
+sparkle_fixture_checks = [
+    "parse_thaumometer_sparkle_log(log)" in generated,
+    "THAUMOMETER_IDLE_SPARKLE=PASS" in generated,
+    "THAUMOMETER_IDLE_SPARKLE_ADDITIVE_BLEND=PASS" in generated,
+    "TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES" in particle_source,
+    "TC_SMOKE_THAUMOMETER_SPARKLE_RENDERED=YES" in particle_source,
+    "TC_SMOKE_THAUMOMETER_SPARKLE_EXPIRED=YES" in particle_source,
+]
+assert all(sparkle_fixture_checks), f"Thaumometer sparkle client fixture failed: {sparkle_fixture_checks}"
+print(f"THAUMOMETER_SPARKLE_CLIENT_FIXTURE=PASS assertions={len(sparkle_fixture_checks)}")
 # The isolated runner must not inherit the shared smoke's unverified chat sender.
 shared_smoke = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 shared_sender = """  send_chat() {

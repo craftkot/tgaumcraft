@@ -62,20 +62,20 @@ def visible_rune_render_samples(rendered: list[tuple[str, ...]]) -> list[tuple[i
     return visible
 
 _SPARKLE_CREATED = re.compile(
-    r"TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES id=(\\d+) firstFrame=(\\d+) "
-    r"lifetime=(\\d+) delay=(\\d+) alphaKeys=(\\d+) red=(\\d+) green=(\\d+) "
-    r"blue=(\\d+) scale=(" + _NUMBER + r") moonPhase=(\\d+) windRoll=(\\d+) "
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_CREATED=YES id=(\d+) firstFrame=(\d+) "
+    r"lifetime=(\d+) delay=(\d+) alphaKeys=(\d+) red=(\d+) green=(\d+) "
+    r"blue=(\d+) scale=(" + _NUMBER + r") moonPhase=(\d+) windRoll=(\d+) "
     r"windX=(" + _NUMBER + r") windZ=(" + _NUMBER + r")"
 )
 _SPARKLE_RENDERED = re.compile(
-    r"TC_SMOKE_THAUMOMETER_SPARKLE_RENDERED=YES id=(\\d+) age=(\\d+) frame=(\\d+) "
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_RENDERED=YES id=(\d+) age=(\d+) frame=(\d+) "
     r"alpha=(" + _NUMBER + r") scale=(" + _NUMBER + r")"
 )
 _SPARKLE_EXPIRED = re.compile(
-    r"TC_SMOKE_THAUMOMETER_SPARKLE_EXPIRED=YES id=(\\d+) age=(\\d+) lifetime=(\\d+)"
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_EXPIRED=YES id=(\d+) age=(\d+) lifetime=(\d+)"
 )
 _SPARKLE_BLEND = re.compile(
-    r"TC_SMOKE_THAUMOMETER_SPARKLE_ADDITIVE_BLEND_BEGIN=YES src=(\\d+) dst=(\\d+)"
+    r"TC_SMOKE_THAUMOMETER_SPARKLE_ADDITIVE_BLEND_BEGIN=YES src=(\d+) dst=(\d+)"
 )
 
 
