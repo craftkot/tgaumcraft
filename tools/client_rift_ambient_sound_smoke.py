@@ -201,11 +201,23 @@ probe = r'''
   rift_x=3.5
   rift_y=150
   rift_z=12.5
-  # The player fell ~82 blocks during the 300-tick window in native run #44242730923.
-  # Keep the listener at the source throughout the sound cadence, not just at teleport.
-  send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"
+  # Teleport before filling: /fill rejects an unloaded target chunk. The old order
+  # emitted "That position is not loaded", so the player later fell out of sound range.
   send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"
+  send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"
+  send_chat '/execute if block 3 149 12 minecraft:barrier run say TC_RIFT_PLATFORM_PRESENT'
+  if ! grep -Fq 'TC_RIFT_PLATFORM_PRESENT' run/logs/latest.log; then
+    echo 'RIFT_LISTENER_PLATFORM=FAIL barrier block was not placed after teleport' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
   echo "RIFT_LISTENER_PLATFORM=PASS y=149" | tee -a client-smoke-status.txt
+  send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_AT_SOURCE'
+  if ! grep -Fq 'TC_RIFT_LISTENER_AT_SOURCE' run/logs/latest.log; then
+    echo 'RIFT_LISTENER_AT_SOURCE=FAIL player is not at the Rift source after teleport/platform setup' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
   echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
   capture rift-ambient-before
   send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"
@@ -245,6 +257,13 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS' | tee -a client-smoke-status.txt
+  send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_STILL_AT_SOURCE'
+  if ! grep -Fq 'TC_RIFT_LISTENER_STILL_AT_SOURCE' run/logs/latest.log; then
+    echo 'RIFT_LISTENER_STILL_AT_SOURCE=FAIL player left the sound source during the 300-tick cadence' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_LISTENER_STILL_AT_SOURCE=PASS' | tee -a client-smoke-status.txt
   probe_log=client-smoke/client.log
   if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' "$probe_log"; then
     echo 'RIFT_SERVER_AMBIENT_DUE=NOT_OBSERVED' | tee -a client-smoke-status.txt
@@ -316,4 +335,17 @@ probe = r'''
   fi
   echo 'RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS' | tee -a client-smoke-status.txt
 '''
+teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
+fill_command = 'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"'
+if probe.count(teleport_command) != 1 or probe.count(fill_command) != 1:
+    raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
+if probe.index(teleport_command) >= probe.index(fill_command):
+    raise SystemExit("Rift listener must teleport before filling an unloaded chunk")
+for required_marker in (
+    "TC_RIFT_PLATFORM_PRESENT",
+    "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_LISTENER_STILL_AT_SOURCE",
+):
+    if probe.count(required_marker) < 2:
+        raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)
 print(source + probe + suffix)
