@@ -593,3 +593,11 @@
 - Added loader-neutral deterministic failure-injection regression `SilverwoodRollbackFailureInjectionTest` in commit [e34101b](https://github.com/craftkot/tgaumcraft/commit/e34101b57860d81ec6f2aeab504e5f2b26507917). Simulates canopy writes, one accepted trunk write, a rejected subsequent trunk write, two-phase restoration, original flower recovery, and idempotence (8 assertions).
 - This regression invokes the actual core rollback helpers but does NOT invoke `SilverwoodLegacyFeature.place` or a real `WorldGenLevel.setBlock`; it is not native NeoForge GameTest evidence. Exact-checkout test execution and new-head CI are not claimed.
 - Next: run exact Java 21 regression and NeoForge CI, then implement native controlled setBlock rejection with the parallel GameTest lane; coordinate feature registration and new-chunk biome/worldgen smoke. Draft PR #9 stays unmerged, historical 59/100 unchanged.
+
+
+## 2026-11-18 — M12: rollback foreign-write and rejected-restore regressions
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; inspected six feature branches, open PRs including Draft #9 and parallel GameTest #26–#35. Before change main...feature/worldgen-m12 was +164/-0.
+- Commit [84632d8](https://github.com/craftkot/tgaumcraft/commit/84632d85321480622eee35c00113661bbcd98654) extends the existing loader-neutral SilverwoodRollbackFailureInjectionTest with 8 assertions: foreign trunk/canopy replacements must survive rollback, and rejected rollback writes must not be counted as successful. Expected total now 16 assertions (8 existing + 8 new), **not an executed PASS**.
+- Exact checkout Java runner unavailable because local git DNS resolution fails. No native WorldGenLevel.setBlock GameTest or fresh-chunk generation executed. CI for this commit not yet verified; test only covers core rollback helpers, not NeoForge world writes.
+- Next: verify exact SHA Java 21/core and NeoForge CI; coordinate native GameTest registration and run actual setBlock rejection, then register natural Silverwood placement with biome/chunk checks. Draft PR #9 remains unmerged. No main/other branches/shared registries/Gradle touched; historical 59/100 unchanged.
