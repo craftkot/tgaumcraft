@@ -21,10 +21,13 @@ public final class SilverwoodTrunkRollback {
         Objects.requireNonNull(setState, "setState");
         // Validate the entire write journal before changing any world block.
         // A corrupt journal must not leave a partially rolled-back tree.
-        for (P pos : written.keySet()) {
+        for (Map.Entry<P, S> entry : written.entrySet()) {
+            P pos = Objects.requireNonNull(entry.getKey(), "trunk position");
+            Objects.requireNonNull(entry.getValue(), "written trunk state");
             if (!originals.containsKey(pos)) {
                 throw new IllegalArgumentException("Missing original state for trunk write");
             }
+            Objects.requireNonNull(originals.get(pos), "original trunk state");
         }
         int restored = 0;
         for (Map.Entry<P, S> entry : written.entrySet()) {
