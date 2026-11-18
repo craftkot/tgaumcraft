@@ -60,9 +60,14 @@ for fragment in (
     "rift_z=12.5",
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"',
+    "TC_RIFT_PLATFORM_PRESENT",
+    "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_LISTENER_STILL_AT_SOURCE",
     "RIFT_LISTENER_AT_SOURCE=PASS",
+    'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
     'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"',
     "RIFT_LISTENER_PLATFORM=PASS",
+    "RIFT_LISTENER_STILL_AT_SOURCE=PASS",
     "nearestPlayerDistanceSqr=",
     "RIFT_LISTENER_AT_EVENT=PASS",
     "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
@@ -95,10 +100,20 @@ assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"
     "the original-sound positive control must be captured separately before the natural Rift window"
 )
 
-assert driver.index('send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"') < driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'), "the support platform must exist before teleport"
+assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
+    'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"'
+), "the player must teleport first so the support chunk is loaded before /fill"
+assert driver.index('send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"') < driver.index(
+    "TC_RIFT_PLATFORM_PRESENT"
+), "the smoke must verify the platform block after filling it"
 assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 ), "the listener must be moved to the Rift source before the entity is summoned"
+assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index(
+    "TC_RIFT_LISTENER_STILL_AT_SOURCE"
+) < driver.index("TC_SMOKE_RIFT_AMBIENT_DUE=YES"), (
+    "the listener position must be revalidated after the measured game-tick cadence"
+)
 assert "send_chat '/tp @p 2.5 150 11.5 0 0'" not in driver, (
     "the old 1.4-block offset can exceed a low-volume variable sound's audible radius"
 )
