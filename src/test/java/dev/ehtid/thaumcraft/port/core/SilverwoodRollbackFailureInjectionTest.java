@@ -147,6 +147,29 @@ public final class SilverwoodRollbackFailureInjectionTest {
                 }) == 1, "continue canopy cleanup after rejected restore");
         check("LEAVES".equals(partialCanopy.get(50)), "rejected leaf stays in place");
         check("FLOWER".equals(partialCanopy.get(51)), "later leaf is restored");
+        // A corrupt canopy journal must fail before restoring its valid prefix.
+        Map<Integer, String> corruptCanopyWorld = new LinkedHashMap<>();
+        corruptCanopyWorld.put(60, "LEAVES");
+        corruptCanopyWorld.put(61, "LEAVES");
+        Map<Integer, String> corruptCanopyOriginals = new LinkedHashMap<>();
+        corruptCanopyOriginals.put(60, "FLOWER");
+        corruptCanopyOriginals.put(61, null);
+        int[] canopyWrites = {0};
+        boolean canopyRejected = false;
+        try {
+            SilverwoodCanopyRollback.restore(corruptCanopyOriginals, "LEAVES",
+                    corruptCanopyWorld::get, (pos, state) -> {
+                        canopyWrites[0]++;
+                        corruptCanopyWorld.put(pos, state);
+                        return true;
+                    });
+        } catch (NullPointerException expected) {
+            canopyRejected = true;
+        }
+        check(canopyRejected, "null canopy original rejects journal");
+        check(canopyWrites[0] == 0, "corrupt canopy journal performs no writes");
+        check("LEAVES".equals(corruptCanopyWorld.get(60)), "valid canopy prefix untouched");
+        check("LEAVES".equals(corruptCanopyWorld.get(61)), "invalid canopy suffix untouched");
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
