@@ -64,7 +64,9 @@ assert "FACE_OFFSET = 0.51D" in layout and "SPREAD = 0.6D" in layout
 assert "SalisSparkleFaceDelayRules.delayTicks(" in fx
 assert "SalisSparkleTrailQueue.emitOrQueue(" in fx
 assert "SalisSparkleTrailQueue.emitFaceOrQueue(" in fx
-assert "level.random.nextInt(5)" in fx
+assert "RandomSource cosmeticRandom = RandomSource.create();" in fx
+assert "level.random" not in fx and "level.getRandom()" not in fx, "cosmetic Salis particles must not consume server world RNG"
+assert "cosmeticRandom.nextInt(5)" in fx and fx.count("cosmeticRandom.nextInt(5)") == 2
 
 assert "ParticleOptions" in queue
 assert "DustParticleOptions" not in queue
