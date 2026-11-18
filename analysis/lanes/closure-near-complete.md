@@ -1895,3 +1895,13 @@ Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No points are awarded:
 PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED. It is still a large integration candidate (224 changed files); the known `SalisMundusItem.java` hunk overlap with PR #3 remains unresolved. No merge was performed or requested.
 
 Next action: poll the six in-progress exact-head client jobs, download and inspect their artifacts (especially the EN Workbench cells and natural Flux Rift PCM), then fix only a demonstrated failure. Do not change the fixed audit until the M16 acceptance criteria are met.
+
+
+### 2026-11-19 00:15 CET — BETA26 jar interaction SoundType real-client acceptance
+
+- Exact-head [jar real-client run #44416947913](https://github.com/craftkot/tgaumcraft/actions/runs/44416947913) completed **SUCCESS** on code SHA `e28400286ee15bab4b282dd3e7c3de1b3a213901`. Downloaded and inspected evidence artifact [#14480188661](https://github.com/craftkot/tgaumcraft/actions/runs/44416947913/artifacts/14480188661).
+- Actual Minecraft client evidence: jar block break; label placed on the wrong face and preserved; blank jar emptying and server-side reset; brace-key interaction and item consumption; jar placement; hit crosshair, crack overlay and retained block; standing/step and fall interactions.
+- Original BETA26 audio matching passed: jar hit `jar1.ogg` correlation **0.5272** / baseline **0.0000**; jar step `jar2.ogg` **1.0000**; placement `jar3.ogg` **0.9979**; empty jar `jar3.ogg` **0.8200**; brace key **0.9987**. The source-matched page control is isolated from jar event attribution. Final marker: `JAR_SOUNDTYPE_PLACE_STEP_HIT_FALL=PASS`.
+- This accepts the tested jar interaction/SoundType cases only; it is not a complete inventory of every jar/label aspect or all BETA26 audio assets. No M16 point awarded.
+
+At the latest poll, the exact-head Workbench English cells, label tint/art, crystal placement audio, crystal outline and Flux Rift ambience client jobs were still in progress; their outcomes remain unknown. The two Russian Workbench cells, crystal-break audio, scan sound, page sound, scan-rune particles, connected-tube rendering/particles, Salis/Nitor and this jar interaction job are recorded as exact-head passes above. Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. Next: poll only the still-running exact-head client jobs, inspect artifacts on completion, and fix a demonstrated defect rather than expanding the rubric.
