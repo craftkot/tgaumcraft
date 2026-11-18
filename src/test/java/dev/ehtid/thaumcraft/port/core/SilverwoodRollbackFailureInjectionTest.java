@@ -91,6 +91,29 @@ public final class SilverwoodRollbackFailureInjectionTest {
                 "rejected canopy rollback is not counted");
         check("LOG_X".equals(rejectedWorld.get(20)), "rejected trunk remains unchanged");
         check("LEAVES".equals(rejectedWorld.get(21)), "rejected canopy remains unchanged");
+        // Corrupt trunk journals must fail before touching even the first valid block.
+        Map<Integer, String> corruptWorld = new LinkedHashMap<>();
+        corruptWorld.put(30, "LOG_X");
+        corruptWorld.put(31, "LOG_Y");
+        Map<Integer, String> corruptWritten = new LinkedHashMap<>();
+        corruptWritten.put(30, "LOG_X");
+        corruptWritten.put(31, "LOG_Y");
+        int[] corruptWrites = {0};
+        boolean corruptRejected = false;
+        try {
+            SilverwoodTrunkRollback.restore(Map.of(30, "AIR"), corruptWritten,
+                    corruptWorld::get, (pos, state) -> {
+                        corruptWrites[0]++;
+                        corruptWorld.put(pos, state);
+                        return true;
+                    });
+        } catch (IllegalArgumentException expected) {
+            corruptRejected = true;
+        }
+        check(corruptRejected, "missing trunk original must reject journal");
+        check(corruptWrites[0] == 0, "invalid journal must not write any blocks");
+        check("LOG_X".equals(corruptWorld.get(30)), "valid prefix remains untouched");
+        check("LOG_Y".equals(corruptWorld.get(31)), "invalid suffix remains untouched");
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
