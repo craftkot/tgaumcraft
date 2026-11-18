@@ -152,6 +152,26 @@ suffix = suffix.replace(
 )
 
 probe = r'''
+  query_game_time() {
+    local before_count after_count value
+    before_count="$(grep -Ec 'The time is [0-9]+' run/logs/latest.log || true)"
+    send_chat '/time query gametime'
+    after_count="$(grep -Ec 'The time is [0-9]+' run/logs/latest.log || true)"
+    if [ "$after_count" -le "$before_count" ]; then
+      echo 'RIFT_GAME_TIME_QUERY=FAIL no fresh server response' >> client-smoke-status.txt
+      tail -100 run/logs/latest.log >&2 || true
+      return 1
+    fi
+    value="$(grep -Eo 'The time is [0-9]+' run/logs/latest.log | tail -n 1 | grep -Eo '[0-9]+$' || true)"
+    if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+      echo 'RIFT_GAME_TIME_QUERY=FAIL response was not numeric' >> client-smoke-status.txt
+      tail -100 run/logs/latest.log >&2 || true
+      return 1
+    fi
+    echo "RIFT_GAME_TIME_QUERY=PASS value=$value" >> client-smoke-status.txt
+    printf '%s\\n' "$value"
+  }
+
   pactl list short sinks | grep -Fq 'tc_rift_sink'
   timeout --signal=TERM 3s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
@@ -168,7 +188,7 @@ probe = r'''
     src/main/resources/assets/thaumcraft/sounds/evilportal.ogg \
     | tee client-smoke/rift-positive-control-match.txt
   echo 'RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS' | tee -a client-smoke-status.txt
-  timeout --signal=TERM 68s parec --device=tc_rift_sink.monitor \
+  timeout --signal=TERM 420s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-event.pcm &
   rift_capture_pid=$!
@@ -191,17 +211,35 @@ probe = r'''
     exit 1
   fi
   capture rift-ambient-entity-present
-  # Three BETA26 300-tick opportunities make the PCM gate robust to a rare
-  # negative Gaussian volume sample without altering production randomness.
-  sleep 46
-  send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT'
-  if ! grep -Fq 'TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT' run/logs/latest.log; then
-    echo 'RIFT_AMBIENT_ENTITY_AFTER_46S=FAIL' | tee -a client-smoke-status.txt
+  # Measure one full BETA26 300-tick cadence in server game time, not wall time.
+  start_game_time="$(query_game_time)" || exit 1
+  current_game_time="$start_game_time"
+  for _ in $(seq 1 60); do
+    if (( current_game_time - start_game_time >= 300 )); then break; fi
+    current_game_time="$(query_game_time)" || exit 1
+  done
+  game_tick_delta=$((current_game_time - start_game_time))
+  if (( game_tick_delta < 300 )); then
+    echo "RIFT_GAME_TICK_WINDOW=FAIL start=$start_game_time end=$current_game_time delta=$game_tick_delta required=300" | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2
     exit 1
   fi
-  echo 'RIFT_AMBIENT_ENTITY_AFTER_46S=PASS' | tee -a client-smoke-status.txt
-  wait "$rift_capture_pid" || test "$?" -eq 124
+  echo "RIFT_GAME_TICK_WINDOW=PASS start=$start_game_time end=$current_game_time delta=$game_tick_delta" | tee -a client-smoke-status.txt
+  send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT'
+  if ! grep -Fq 'TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT' run/logs/latest.log; then
+    echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=FAIL' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2
+    exit 1
+  fi
+  echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS' | tee -a client-smoke-status.txt
+  kill -TERM "$rift_capture_pid" 2>/dev/null || true
+  capture_status=0
+  wait "$rift_capture_pid" || capture_status=$?
+  if [ "$capture_status" -ne 143 ]; then
+    echo "RIFT_PCM_CAPTURE_STOP=FAIL exit=$capture_status" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'RIFT_PCM_CAPTURE_STOP=PASS' | tee -a client-smoke-status.txt
   sink_id="$(pactl list short sinks | awk '$2 == "tc_rift_sink" { print $1; exit }')"
   if [ -z "$sink_id" ] || ! pactl list short sink-inputs | awk -v sink="$sink_id" '$2 == sink { found=1 } END { exit !found }'; then
     echo "RIFT_PULSE_SINK_INPUT=FAIL sink_id=$sink_id" | tee -a client-smoke-status.txt
