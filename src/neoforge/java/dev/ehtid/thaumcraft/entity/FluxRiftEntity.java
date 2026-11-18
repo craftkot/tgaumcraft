@@ -159,6 +159,7 @@ public final class FluxRiftEntity extends Entity {
                     .min().orElse(Double.POSITIVE_INFINITY);
             System.out.println("TC_SMOKE_RIFT_AMBIENT_DUE=YES entityId=" + getId()
                     + " tickCount=" + tickCount + " gameTime=" + level().getGameTime()
+                    + " pos=" + getX() + "," + getY() + "," + getZ()
                     + " volume=" + volume + " pitch=" + pitch + " silent=" + isSilent()
                     + " eligiblePlayers=" + eligiblePlayers
                     + " nearestPlayerDistanceSqr=" + nearestPlayerDistanceSqr);

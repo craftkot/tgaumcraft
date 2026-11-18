@@ -262,12 +262,21 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_SERVER_SOUND_CALL=PASS' | tee -a client-smoke-status.txt
-  if ! grep -Fq 'TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES' "$probe_log"; then
-    echo 'RIFT_CLIENT_SOUND_EVENT=NOT_RECEIVED' | tee -a client-smoke-status.txt
+  server_pos="${server_due_line#* pos=}"
+  server_pos="${server_pos%% *}"
+  server_pitch="${server_due_line#* pitch=}"
+  server_pitch="${server_pitch%% *}"
+  client_event_line="$(grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' "$probe_log" \
+    | grep -F "pos=$server_pos" \
+    | grep -F "volume=$server_volume" \
+    | grep -F "pitch=$server_pitch" | head -n 1 || true)"
+  if [ -z "$client_event_line" ]; then
+    echo "RIFT_CLIENT_SOUND_EVENT=NOT_RECEIVED pos=$server_pos volume=$server_volume pitch=$server_pitch" | tee -a client-smoke-status.txt
+    grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' "$probe_log" >&2 || true
     tail -120 "$probe_log" >&2 || true
     exit 1
   fi
-  echo 'RIFT_CLIENT_SOUND_EVENT=PASS' | tee -a client-smoke-status.txt
+  echo "RIFT_CLIENT_SOUND_EVENT=PASS $client_event_line" | tee -a client-smoke-status.txt
   kill -TERM "$rift_capture_pid" 2>/dev/null || true
   capture_status=0
   wait "$rift_capture_pid" || capture_status=$?

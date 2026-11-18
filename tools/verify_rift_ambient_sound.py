@@ -43,8 +43,11 @@ client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftCl
 for fragment in (
     "PlayLevelSoundEvent.AtEntity",
     "event.getEntity() instanceof FluxRiftEntity",
+    "PlayLevelSoundEvent.AtPosition",
+    "event.getPosition().x",
     "event.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()",
-    "TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_ENTITY_EVENT=YES",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_POSITION_EVENT=YES",
 ):
     assert fragment in client_events, fragment
 
@@ -69,7 +72,13 @@ for fragment in (
     "RIFT_SERVER_AMBIENT_DUE=PASS",
     "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
     "RIFT_SERVER_SOUND_CALL=PASS",
-    "TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_ENTITY_EVENT=YES",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_POSITION_EVENT=YES",
+    'server_pos="${server_due_line#* pos=}"',
+    'server_pitch="${server_due_line#* pitch=}"',
+    'grep -F "pos=$server_pos"',
+    'grep -F "volume=$server_volume"',
+    'grep -F "pitch=$server_pitch"',
     "RIFT_CLIENT_SOUND_EVENT=PASS",
     "probe_log=client-smoke/client.log",
     'server_volume="${server_due_line#* volume=}"',

@@ -1487,3 +1487,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Self-review found that the new verifier grouped `TC_SMOKE_RIFT_TICK=YES` with fragments extracted only from `playAmbientSoundIfDue`, although that marker correctly lives in `tick()`. This would have made the static preflight fail before the Minecraft client started.
 - Moved that assertion to the whole `FluxRiftEntity.java` source while keeping the due/call assertions scoped to `playAmbientSoundIfDue`. No production behavior changed.
 - Exact-head run on the prior diagnostic SHA `d9b7159` is not acceptance evidence for this corrected verifier. Wait for the next exact-head real-client and full-port runs.
+
+
+### 2026-11-18 — client sound-event probe covers both NeoForge event variants
+
+- API/source review found that a Rift's inherited `Entity.playSound` forwards through the Level coordinate-based sound path; NeoForge exposes both `PlayLevelSoundEvent.AtEntity` and `PlayLevelSoundEvent.AtPosition`. Listening only to the former could falsely report that the client never received the sound if the normal path fires the latter ([NeoForge 1.21.1 event API](https://aldak.netlify.app/javadoc/1.21.1-21.1.x/net/neoforged/neoforge/event/playlevelsoundevent)).
+- Added the position-event listener alongside the entity-event listener. Both record original/new volume and pitch, source, cancellation state and position. The server due marker now records the source position; the driver accepts client receipt only when position, original Gaussian volume and pitch match the server event, so the explicit `/playsound` positive control (volume/pitch 1/1) cannot satisfy the natural-event gate.
+- This is still diagnostic-only. No sound behavior or BETA26 parameters changed. Exact-head checks on the preceding SHA are superseded; new workflow runs on this commit are required.
