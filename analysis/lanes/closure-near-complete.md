@@ -1774,3 +1774,11 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Added the missing source teleport immediately after the verified platform marker and before the listener-position assertion. Updated the generator's own static guard and the Python verifier to require exactly one high teleport, one fast fill, one supported source teleport, and the order high teleport → fill → platform marker → source teleport → listener marker → Rift summon.
 - No production Java or shared workflow/Gradle/registry/resource files changed. The existing verifier and generated Bash syntax step remain the first gates before launching Minecraft.
 - Score remains 59/100; M16 4/6 and M08 5/9. Next: inspect the exact-head run; only after the preflight passes should the real client be credited with any listener or sound evidence.
+
+
+### Flux Rift verifier follow-up — remove the obsolete slow-fill expectation (2026-11-18)
+
+- Exact-head push run [#44368138376](https://github.com/craftkot/tgaumcraft/actions/runs/44368138376) on 8bb5e71 failed before Minecraft launch at tools/verify_rift_ambient_sound.py line 104. The verifier still required the obsolete normal send_chat fill command, while the driver correctly used send_chat_fast for the loaded-chunk setup.
+- The PR-triggered run [#44368148402](https://github.com/craftkot/tgaumcraft/actions/runs/44368148402) was still running at the last poll; no result is assumed from it.
+- Replaced the stale required fragment with the actual fast-fill command. No production Java, workflow, Gradle, resource, registry or localization changed. This is a static verifier correction only; no Minecraft client was launched by the failed push run.
+- Next: inspect the new exact-head preflight. Do not accept Flux Rift until the real listener marker, 300 server game ticks, matching client sound event and original PCM all pass.

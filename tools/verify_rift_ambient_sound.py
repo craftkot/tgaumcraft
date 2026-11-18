@@ -71,7 +71,7 @@ for fragment in (
     "TC_RIFT_LISTENER_STILL_AT_SOURCE",
     "RIFT_LISTENER_AT_SOURCE=PASS",
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
-    'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"',
+    'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
     "RIFT_LISTENER_PLATFORM=PASS",
     "RIFT_LISTENER_STILL_AT_SOURCE=PASS",
     "nearestPlayerDistanceSqr=",
