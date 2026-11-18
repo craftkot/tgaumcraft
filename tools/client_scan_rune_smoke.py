@@ -397,7 +397,9 @@ PY
   xdotool click 3
   sleep 0.5
   rune_capture 84-tall-entity-during
-  sleep 4
+  # Iron Golem: int(2.7 * 15) = 40 units, 120 ticks = 6 seconds at 20 TPS.
+  # Keep a one-second margin so the expiry assertion observes all ten particles.
+  sleep 7
   rune_capture 85-tall-entity-after
   xdotool key --clearmodifiers F1
 
@@ -407,7 +409,9 @@ PY
   TALL_RENDERED_BEFORE="$tall_rendered_before" TALL_EXPIRED_BEFORE="$tall_expired_before" \
   python3 - <<'PY' | tee -a client-smoke-status.txt
 import os
+import sys
 from pathlib import Path
+sys.path.insert(0, str(Path.cwd() / "tools"))
 from scan_rune_log_parser import (
     parse_scan_rune_entity_targets,
     parse_scan_rune_log,
