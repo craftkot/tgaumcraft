@@ -156,7 +156,7 @@ probe = r'''
   timeout --signal=TERM 3s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-baseline.pcm || test "$?" -eq 124
-  timeout --signal=TERM 6s parec --device=tc_rift_sink.monitor \
+  timeout --signal=TERM 30s parec --device=tc_rift_sink.monitor \
     --format=s16le --rate=48000 --channels=2 --raw \
     > client-smoke/rift-positive-control.pcm &
   rift_control_pid=$!
