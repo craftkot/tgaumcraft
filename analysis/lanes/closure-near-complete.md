@@ -1480,3 +1480,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Before accepting the new diagnostic run, source review found two harness issues in the first probe commit: Java `System.out` markers are captured by the Gradle `client-smoke/client.log`, not guaranteed to be written to Log4j's `run/logs/latest.log`; and the initial sed extraction had an over-escaped basic-regex group.
 - Corrected all server/client probe lookups to use the actual Gradle process log and replaced the fragile sed expression with Bash parameter expansion. The verifier now asserts the log source and exact volume extraction.
 - The first probe commit's newly queued workflows are not evidence for this correction. Exact-head real-client and full CI runs on the corrected SHA are required.
+
+
+### 2026-11-18 — verifier scope correction before accepting the diagnostic run
+
+- Self-review found that the new verifier grouped `TC_SMOKE_RIFT_TICK=YES` with fragments extracted only from `playAmbientSoundIfDue`, although that marker correctly lives in `tick()`. This would have made the static preflight fail before the Minecraft client started.
+- Moved that assertion to the whole `FluxRiftEntity.java` source while keeping the due/call assertions scoped to `playAmbientSoundIfDue`. No production behavior changed.
+- Exact-head run on the prior diagnostic SHA `d9b7159` is not acceptance evidence for this corrected verifier. Wait for the next exact-head real-client and full-port runs.

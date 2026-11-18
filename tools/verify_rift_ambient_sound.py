@@ -32,12 +32,12 @@ for fragment in (
     "sourceRandom.nextGaussian() * 0.1D",
     "playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch)",
     "smokeProbeEnabled()",
-    "TC_SMOKE_RIFT_TICK=YES",
     "TC_SMOKE_RIFT_AMBIENT_DUE=YES",
     "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
     "eligiblePlayers=",
 ):
     assert fragment in method, fragment
+assert "TC_SMOKE_RIFT_TICK=YES" in rift, "entity-age probe must be present in tick()"
 
 client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientGameEvents.java").read_text()
 for fragment in (
