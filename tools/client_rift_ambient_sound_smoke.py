@@ -169,7 +169,7 @@ probe = r'''
       return 1
     fi
     echo "RIFT_GAME_TIME_QUERY=PASS value=$value" >> client-smoke-status.txt
-    printf '%s\\n' "$value"
+    printf '%s\n' "$value"
   }
 
   pactl list short sinks | grep -Fq 'tc_rift_sink'
