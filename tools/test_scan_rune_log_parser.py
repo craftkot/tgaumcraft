@@ -114,6 +114,8 @@ print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=10")
 # The real-client acceptance must exercise BETA26's entity branch as well as blocks.
 fx_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java").read_text(encoding="utf-8")
 entity_parser_block = generated.rsplit("python3 - <<'PY'", 1)[1]
+entity_parser_imports = entity_parser_block.split("from scan_rune_log_parser", 1)[0]
+assert "import math" in entity_parser_imports.splitlines(), "entity/sparkle parser heredoc must import math in its own process"
 entity_tall_wait = generated.split("rune_capture 84-tall-entity-during", 1)[1].split("rune_capture 85-tall-entity-after", 1)[0]
 entity_fixture_checks = [
     "send_chat '/summon minecraft:cow" in generated,

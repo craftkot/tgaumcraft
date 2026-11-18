@@ -422,6 +422,7 @@ PY
   TALL_TARGET_BEFORE="$tall_target_before" TALL_CREATED_BEFORE="$tall_created_before" \
   TALL_RENDERED_BEFORE="$tall_rendered_before" TALL_EXPIRED_BEFORE="$tall_expired_before" \
   python3 - <<'PY' | tee -a client-smoke-status.txt
+import math
 import os
 import sys
 from pathlib import Path
