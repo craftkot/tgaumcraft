@@ -67,7 +67,7 @@ print("SCAN_RUNE_SMOKE_FIXTURE=PASS assertions=10")
 fx_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumometerRuneFx.java").read_text(encoding="utf-8")
 entity_fixture_checks = [
     "send_chat '/summon minecraft:cow" in generated,
-    "send_chat '/summon minecraft:enderman" in generated,
+    "send_chat '/summon minecraft:iron_golem" in generated,
     "RUNE_ENTITY_{label.upper()}=PASS" in generated,
     "RUNE_ENTITY_HEIGHT_SCALING=PASS" in generated,
     "parse_scan_rune_entity_targets(log)" in generated,
