@@ -31,8 +31,22 @@ for fragment in (
     "sourceRandom.nextGaussian() * 0.066D",
     "sourceRandom.nextGaussian() * 0.1D",
     "playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch)",
+    "smokeProbeEnabled()",
+    "TC_SMOKE_RIFT_TICK=YES",
+    "TC_SMOKE_RIFT_AMBIENT_DUE=YES",
+    "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
+    "eligiblePlayers=",
 ):
     assert fragment in method, fragment
+
+client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientGameEvents.java").read_text()
+for fragment in (
+    "PlayLevelSoundEvent.AtEntity",
+    "event.getEntity() instanceof FluxRiftEntity",
+    "event.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES",
+):
+    assert fragment in client_events, fragment
 
 driver = Path("tools/client_rift_ambient_sound_smoke.py").read_text()
 for fragment in (
@@ -51,6 +65,12 @@ for fragment in (
     "RIFT_GAME_TICK_WINDOW=PASS",
     "TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT",
     "RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS",
+    "TC_SMOKE_RIFT_AMBIENT_DUE=YES",
+    "RIFT_SERVER_AMBIENT_DUE=PASS",
+    "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
+    "RIFT_SERVER_SOUND_CALL=PASS",
+    "TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES",
+    "RIFT_CLIENT_SOUND_EVENT=PASS",
     "RIFT_PCM_CAPTURE_STOP=PASS",
     "trap 'if [ -n \"${rift_capture_pid:-}\" ]",
     "rift_capture_pid=''",

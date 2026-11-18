@@ -100,6 +100,12 @@ public final class FluxRiftEntity extends Entity {
             refreshDimensions();
         }
         super.tick();
+        if (!level().isClientSide && smokeProbeEnabled()
+                && (tickCount == 1 || tickCount % 100 == 0)) {
+            System.out.println("TC_SMOKE_RIFT_TICK=YES entityId=" + getId()
+                    + " tickCount=" + tickCount + " gameTime=" + level().getGameTime()
+                    + " removed=" + isRemoved() + " position=" + position());
+        }
         if (!level().isClientSide) {
             if (getRiftSeed() == 0) {
                 setRiftSeed(level().getRandom().nextInt());
@@ -133,13 +139,35 @@ public final class FluxRiftEntity extends Entity {
      * BETA26 EntityFluxRift.onUpdate plays evilportal when ticksExisted is divisible by 300.
      * Entity.playSound preserves the original Entity sound category (NEUTRAL in BETA26).
      */
+    private static boolean smokeProbeEnabled() {
+        return "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    }
+
     void playAmbientSoundIfDue(RandomSource sourceRandom) {
         if (tickCount % 300 != 0 || isRemoved()) {
             return;
         }
         float volume = (float) (0.15F + sourceRandom.nextGaussian() * 0.066D);
         float pitch = (float) (0.75D + sourceRandom.nextGaussian() * 0.1D);
+        if (smokeProbeEnabled()) {
+            double audibleRadius = Math.max(0.0D, (double) volume * 16.0D);
+            long eligiblePlayers = volume <= 0.0F ? 0L : level().players().stream()
+                    .filter(player -> player.distanceToSqr(this) <= audibleRadius * audibleRadius)
+                    .count();
+            double nearestPlayerDistanceSqr = level().players().stream()
+                    .mapToDouble(player -> player.distanceToSqr(this))
+                    .min().orElse(Double.POSITIVE_INFINITY);
+            System.out.println("TC_SMOKE_RIFT_AMBIENT_DUE=YES entityId=" + getId()
+                    + " tickCount=" + tickCount + " gameTime=" + level().getGameTime()
+                    + " volume=" + volume + " pitch=" + pitch + " silent=" + isSilent()
+                    + " eligiblePlayers=" + eligiblePlayers
+                    + " nearestPlayerDistanceSqr=" + nearestPlayerDistanceSqr);
+        }
         playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch);
+        if (smokeProbeEnabled()) {
+            System.out.println("TC_SMOKE_RIFT_AMBIENT_CALL=YES entityId=" + getId()
+                    + " tickCount=" + tickCount);
+        }
     }
 
     @Override

@@ -241,6 +241,31 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS' | tee -a client-smoke-status.txt
+  if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' run/logs/latest.log; then
+    echo 'RIFT_SERVER_AMBIENT_DUE=NOT_OBSERVED' | tee -a client-smoke-status.txt
+    tail -120 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  server_due_line="$(grep -F 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' run/logs/latest.log | tail -n 1)"
+  server_volume="$(sed -n 's/.* volume=\\([^ ]*\\).*/\\1/p' <<< "$server_due_line")"
+  if [ -z "$server_volume" ] || ! awk -v volume="$server_volume" 'BEGIN { exit !(volume > 0.0) }'; then
+    echo "RIFT_SERVER_AMBIENT_VOLUME_NONPOSITIVE=$server_volume" | tee -a client-smoke-status.txt
+    echo "$server_due_line" >&2
+    exit 1
+  fi
+  echo "RIFT_SERVER_AMBIENT_DUE=PASS $server_due_line" | tee -a client-smoke-status.txt
+  if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_CALL=YES' run/logs/latest.log; then
+    echo 'RIFT_SERVER_SOUND_CALL=NOT_CONFIRMED' | tee -a client-smoke-status.txt
+    tail -120 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_SERVER_SOUND_CALL=PASS' | tee -a client-smoke-status.txt
+  if ! grep -Fq 'TC_SMOKE_RIFT_SOUND_CLIENT_EVENT=YES' client-smoke/client.log; then
+    echo 'RIFT_CLIENT_SOUND_EVENT=NOT_RECEIVED' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_CLIENT_SOUND_EVENT=PASS' | tee -a client-smoke-status.txt
   kill -TERM "$rift_capture_pid" 2>/dev/null || true
   capture_status=0
   wait "$rift_capture_pid" || capture_status=$?
