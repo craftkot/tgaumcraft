@@ -618,3 +618,12 @@
 - Previous exact SHA 5784acd: CircleCI verify-connection SUCCESS; GitHub Actions run [44260485341](https://github.com/craftkot/tgaumcraft/actions/runs/44260485341) completed SUCCESS. These are previous-head results, not proof of execution of the four new assertions.
 - Direct git ls-remote still fails DNS (Could not resolve host: github.com); exact checkout runner, new-head NeoForge CI, native WorldGenLevel.setBlock GameTest and fresh-chunk worldgen have not been executed here.
 - Next: run Java 21 runner on exact checkout and verify new-head CI; coordinate native GameTest registration before testing real rejected world writes, then coordinate Silverwood natural placed-feature/biome injection. No main/other branches/shared registries/Gradle/merge changes; audit 59/100 unchanged.
+
+
+## 2026-11-18 — M12 exact-SHA CI verification for rollback journal regression
+
+- Re-read `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` and this lane; compared `main...feature/worldgen-m12` (+170/-0 before this entry) and reviewed active feature branches and open PRs, including Draft #9 and overlapping GameTest #26–#36.
+- Verified exact HEAD `a7572320f485681adfd479cc862bd25597175b9f`: GitHub Actions [run #3937](https://github.com/craftkot/tgaumcraft/actions/runs/44268792534) SUCCESS. Inspected `verify` job 134679864675: Java 21 setup, `Core parity test`, `NeoForge build`, and `Dedicated server smoke test` all SUCCESS. This confirms build/server CI on the commit containing the corrupt-journal regression.
+- Importantly, the workflow job does **not** list `tools/test_silverwood_rollback_failure_injection.sh` or the standalone 20-assertion test. Therefore those 20 assertions have **not** been demonstrated to execute, despite green CI. No native `WorldGenLevel.setBlock` failure GameTest or new-chunk generation was executed.
+- Reviewed production `SilverwoodTrunkRollback` and `SilverwoodCanopyRollback` against the failure-injection regression; no evidence-backed new code change was justified in this pass. No source/test code added; this entry records new exact-SHA evidence and the missing test-execution gate.
+- Next: execute the standalone Java 21 runner on an exact checkout, then coordinate native GameTest infrastructure before introducing `WorldGenLevel.setBlock` injection and natural biome placement. No shared Gradle/registry, main, other branch, or merge changes. Draft PR #9 remains open; historical 59/100 unchanged.
