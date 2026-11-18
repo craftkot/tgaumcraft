@@ -7,4 +7,11 @@ javac --release 21 -d "$tmp" \
   src/main/java/dev/ehtid/thaumcraft/port/core/SilverwoodTrunkRollback.java \
   src/main/java/dev/ehtid/thaumcraft/port/core/SilverwoodCanopyRollback.java \
   src/test/java/dev/ehtid/thaumcraft/port/core/SilverwoodRollbackFailureInjectionTest.java
-java -cp "$tmp" dev.ehtid.thaumcraft.port.core.SilverwoodRollbackFailureInjectionTest
+# Fail closed if the regression silently loses assertions or never reaches its summary.
+output="$(java -cp "$tmp" dev.ehtid.thaumcraft.port.core.SilverwoodRollbackFailureInjectionTest)"
+printf '%s\n' "$output"
+expected='M12 Silverwood rollback failure injection: OK (34 assertions)'
+if [[ "$output" != "$expected" ]]; then
+  printf 'Unexpected Silverwood rollback regression summary (expected 34 assertions)\n' >&2
+  exit 1
+fi
