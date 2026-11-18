@@ -17,6 +17,17 @@ generator = subprocess.run(
 )
 script = generator.stdout
 subprocess.run(["bash", "-n"], input=script, text=True, check=True)
+xvfb_block = script.split("xvfb_ready=0", 1)[1].split("openbox", 1)[0]
+xvfb_checks = [
+    "for i in $(seq 1 30)" in xvfb_block,
+    "xdpyinfo -display :99 > client-smoke/display.txt 2>&1" in xvfb_block,
+    'kill -0 "$XVFB_PID"' in xvfb_block,
+    "CRYSTAL_XVFB_READY=YES" in xvfb_block,
+    "CRYSTAL_XVFB_EXITED=FAIL" in xvfb_block,
+    "CRYSTAL_XVFB_TIMEOUT=FAIL" in xvfb_block,
+    "sleep 3\\nxdpyinfo -display :99" not in script,
+]
+assert all(xvfb_checks), f"bounded Xvfb readiness fixture failed: {xvfb_checks}"
 header = "  for variant in aer ignis terra ordo perditio vitium; do"
 tail = "  if grep -Eiq 'Unknown sound event"
 assert script.count(header) == 1 and script.count(tail) == 1

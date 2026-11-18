@@ -14,6 +14,31 @@ if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
     raise SystemExit("Client boot/audio hooks changed; refuse blind injection")
 head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null",
                                            "export ALSOFT_DRIVERS=pulse")
+xvfb_fixed_wait = "sleep 3\\nxdpyinfo -display :99 > client-smoke/display.txt"
+if source.count(xvfb_fixed_wait) != 1:
+    raise SystemExit("Xvfb startup block changed; refuse blind readiness injection")
+xvfb_bounded_wait = r"""xvfb_ready=0
+for i in $(seq 1 30); do
+  if xdpyinfo -display :99 > client-smoke/display.txt 2>&1; then
+    xvfb_ready=1
+    echo "CRYSTAL_XVFB_READY=YES attempts=$i" | tee -a client-smoke-status.txt
+    break
+  fi
+  if ! kill -0 "$XVFB_PID" 2>/dev/null; then
+    echo "CRYSTAL_XVFB_EXITED=FAIL attempts=$i" | tee -a client-smoke-status.txt
+    cat client-smoke/xvfb.log
+    cat client-smoke/display.txt
+    exit 1
+  fi
+  sleep 0.5
+done
+if [ "$xvfb_ready" -ne 1 ]; then
+  echo "CRYSTAL_XVFB_TIMEOUT=FAIL attempts=30" | tee -a client-smoke-status.txt
+  cat client-smoke/xvfb.log
+  cat client-smoke/display.txt
+  exit 1
+fi"""
+head = head.replace(xvfb_fixed_wait, xvfb_bounded_wait)
 body = r'''
   echo 'CRYSTAL_SIX_VARIANTS_REAL_WORLD=YES' | tee -a client-smoke-status.txt
   send_chat '/gamemode creative'
