@@ -347,6 +347,8 @@ PY
   fi
   echo "RUNE_OPPOSITE_REAL_FRAMEBUFFER_DIFFERENCE=PASS pixels=$opposite_diff" \
     | tee -a client-smoke-status.txt
+  # The target marker is emitted only when findPointedEntity wins; a block
+  # fallback must fail this test rather than masquerade as an entity scan.
   # BETA26 ItemThaumometer.drawFX also targets entities. Its original
   # target.posX - 0.5 / target.posZ - 0.5 is shifted back by
   # FXDispatcher.blockRunes(+0.5 on every axis), so the final particle anchor
