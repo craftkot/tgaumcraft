@@ -46,6 +46,8 @@ for fragment in (
     "TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT",
     "RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS",
     "RIFT_PCM_CAPTURE_STOP=PASS",
+    "trap 'if [ -n \"${rift_capture_pid:-}\" ]",
+    "rift_capture_pid=''",
 ):
     assert fragment in driver, fragment
 assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"), (
