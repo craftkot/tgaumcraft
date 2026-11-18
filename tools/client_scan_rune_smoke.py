@@ -397,9 +397,23 @@ PY
   xdotool click 3
   sleep 0.5
   rune_capture 84-tall-entity-during
-  # Iron Golem: int(2.7 * 15) = 40 units, 120 ticks = 6 seconds at 20 TPS.
-  # Keep a one-second margin so the expiry assertion observes all ten particles.
-  sleep 7
+  # Iron Golem: BETA26 duration is 3 * int(2.7 * 15) = 120 ticks (6 s at 20 TPS).
+  # Poll the real client log for all ten expiry callbacks, with a bounded 12 s timeout.
+  tall_expiry_deadline=$((SECONDS + 12))
+  while (( SECONDS < tall_expiry_deadline )); do
+    tall_expired_now="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_EXPIRED=YES' client-smoke/client.log || true)"
+    if (( tall_expired_now >= tall_expired_before + 10 )); then
+      break
+    fi
+    sleep 0.5
+  done
+  tall_expired_after="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_EXPIRED=YES' client-smoke/client.log || true)"
+  tall_expired_delta=$((tall_expired_after - tall_expired_before))
+  echo "RUNE_TALL_EXPIRY_OBSERVED=$tall_expired_delta" | tee -a client-smoke-status.txt
+  if (( tall_expired_delta < 10 )); then
+    echo "RUNE_TALL_EXPIRY_TIMEOUT=FAIL expected=10 observed=$tall_expired_delta" | tee -a client-smoke-status.txt
+    exit 1
+  fi
   rune_capture 85-tall-entity-after
   xdotool key --clearmodifiers F1
 
