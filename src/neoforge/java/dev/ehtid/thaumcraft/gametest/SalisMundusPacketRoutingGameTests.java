@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.gametest;
 
 import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.item.SalisMundusSparkles;
 import dev.ehtid.thaumcraft.item.SalisSparkleTrailQueue;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
 import io.netty.channel.ChannelHandlerContext;
@@ -22,7 +23,10 @@ import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -166,6 +170,49 @@ public final class SalisMundusPacketRoutingGameTests {
                 throw failure;
             }
         });
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 80,
+            required = true
+    )
+    public static void salisCosmeticProjectionDoesNotAdvanceWorldRandom(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos target = helper.absolutePos(new BlockPos(8, 2, 8));
+        level.setBlock(target, Blocks.BOOKSHELF.defaultBlockState(), 3);
+        ConnectedPlayer actor = createConnectedPlayer(level, target, "salis-rng-actor");
+
+        // Compare the next value from the same ServerLevel RNG object after
+        // resetting it to an identical seed. This avoids assuming which
+        // RandomSource implementation the world uses in this Minecraft build.
+        long seed = 0x5A115B26L;
+        RandomSource worldRandom = level.getRandom();
+        worldRandom.setSeed(seed);
+        long expectedNext = worldRandom.nextLong();
+        worldRandom.setSeed(seed);
+
+        try {
+            // BETA26 ItemMagicDust#doSparkles is called only on world.isRemote.
+            // Its cosmetic samples must therefore not consume this server RNG.
+            SalisMundusSparkles.sendToActor(
+                    level, actor.player(), target, InteractionHand.MAIN_HAND
+            );
+            long actualNext = worldRandom.nextLong();
+            if (actualNext != expectedNext) {
+                throw new AssertionError("Salis cosmetic projection advanced ServerLevel RNG"
+                        + " expectedNext=" + expectedNext
+                        + " actualNext=" + actualNext);
+            }
+            System.out.println(
+                    "TC_GAMETEST_SALIS_COSMETIC_RNG_ISOLATION=PASS server_rng_draws=0"
+            );
+        } finally {
+            disconnect(level, actor, "Salis cosmetic RNG GameTest finished");
+        }
+        helper.succeed();
     }
 
     private static void cleanupRecipients(ServerLevel level, ConnectedPlayer actor, ConnectedPlayer bystander) {
