@@ -337,8 +337,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     # unless the conserved total equals the original 12 Aer units.
     send_chat '/scoreboard objectives add tc_mirror_balance dummy'
     send_chat '/scoreboard players set expected tc_mirror_balance 12'
+    # Reset each result before querying; verify both NBT reads independently.
+    # A stale scoreboard value from a prior command cannot satisfy these gates.
+    send_chat '/scoreboard players set source tc_mirror_balance -999'
+    send_chat '/scoreboard players set sink tc_mirror_balance -999'
     send_chat '/execute store result score source tc_mirror_balance run data get block 248 149 247 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance matches 0.. run say MIRROR_FORWARD_SOURCE_READ_FRESH'
+    assert_log_literal MIRROR_FORWARD_SOURCE_READ_FRESH "$mirror_assert_offset"
     send_chat '/execute store result score sink tc_mirror_balance run data get block 280 149 248 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score sink tc_mirror_balance matches 0.. run say MIRROR_FORWARD_SINK_READ_FRESH'
+    assert_log_literal MIRROR_FORWARD_SINK_READ_FRESH "$mirror_assert_offset"
     send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
     mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_EXACT_TOTAL_12_CONFIRMED'
@@ -394,8 +404,18 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute unless data block 376 149 344 {Amount:0s} run say MIRROR_REVERSE_SINK_INCREASED'
     assert_log_literal MIRROR_REVERSE_SINK_INCREASED "$mirror_assert_offset"
+    # Reset each result before querying; verify both NBT reads independently.
+    # A stale scoreboard value from a prior command cannot satisfy these gates.
+    send_chat '/scoreboard players set source tc_mirror_balance -999'
+    send_chat '/scoreboard players set sink tc_mirror_balance -999'
     send_chat '/execute store result score source tc_mirror_balance run data get block 344 149 344 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance matches 0.. run say MIRROR_REVERSE_SOURCE_READ_FRESH'
+    assert_log_literal MIRROR_REVERSE_SOURCE_READ_FRESH "$mirror_assert_offset"
     send_chat '/execute store result score sink tc_mirror_balance run data get block 376 149 344 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score sink tc_mirror_balance matches 0.. run say MIRROR_REVERSE_SINK_READ_FRESH'
+    assert_log_literal MIRROR_REVERSE_SINK_READ_FRESH "$mirror_assert_offset"
     send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
     mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED'
