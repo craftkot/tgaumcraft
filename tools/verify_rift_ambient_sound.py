@@ -61,6 +61,10 @@ for fragment in (
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"',
     "RIFT_LISTENER_AT_SOURCE=PASS",
+    'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"',
+    "RIFT_LISTENER_PLATFORM=PASS",
+    "nearestPlayerDistanceSqr=",
+    "RIFT_LISTENER_AT_EVENT=PASS",
     "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
     "query_game_time() {",
     "/time query gametime",
@@ -91,6 +95,7 @@ assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"
     "the original-sound positive control must be captured separately before the natural Rift window"
 )
 
+assert driver.index('send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"') < driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'), "the support platform must exist before teleport"
 assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 ), "the listener must be moved to the Rift source before the entity is summoned"
