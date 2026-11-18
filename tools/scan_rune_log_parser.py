@@ -25,7 +25,7 @@ _EXPIRED = re.compile(
 
 _ENTITY_TARGET = re.compile(
     r"TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=([^ ]+) height=(" + _NUMBER + r") "
-    r"units=(\\d+) x=(" + _NUMBER + r") y=(" + _NUMBER + r") "
+    r"units=(\d+) x=(" + _NUMBER + r") y=(" + _NUMBER + r") "
     r"eyeHeight=(" + _NUMBER + r") z=(" + _NUMBER + r")"
 )
 
