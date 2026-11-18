@@ -324,6 +324,15 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     assert_log_literal MIRROR_SOURCE_CHANGED_FROM_12
     send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
     assert_log_literal MIRROR_RECEIVER_GAINED_REAL_ESSENTIA
+    # Read actual BlockEntity NBT into vanilla scoreboard values and fail closed
+    # unless the conserved total equals the original 12 Aer units.
+    send_chat '/scoreboard objectives add tc_mirror_balance dummy'
+    send_chat '/scoreboard players set expected tc_mirror_balance 12'
+    send_chat '/execute store result score source tc_mirror_balance run data get block 248 149 247 Amount 1'
+    send_chat '/execute store result score sink tc_mirror_balance run data get block 280 149 248 Amount 1'
+    send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
+    send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_EXACT_TOTAL_12_CONFIRMED'
+    assert_log_literal MIRROR_EXACT_TOTAL_12_CONFIRMED
     capture 53-mirror-transport-vanilla-world-nbt
     echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
     # A real /setblock destroy must use Block#getDrops and onRemove.
@@ -372,6 +381,11 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     assert_log_literal MIRROR_REVERSE_SOURCE_DECREASED
     send_chat '/execute unless data block 376 149 344 {Amount:0s} run say MIRROR_REVERSE_SINK_INCREASED'
     assert_log_literal MIRROR_REVERSE_SINK_INCREASED
+    send_chat '/execute store result score source tc_mirror_balance run data get block 344 149 344 Amount 1'
+    send_chat '/execute store result score sink tc_mirror_balance run data get block 376 149 344 Amount 1'
+    send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
+    send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED'
+    assert_log_literal MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED
     capture 59-reverse-vanilla-nbt-assert
     echo 'MIRROR_REVERSE_SOURCE_AND_SINK_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
 
