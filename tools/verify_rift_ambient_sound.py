@@ -114,11 +114,10 @@ rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 assert driver.count(high_teleport) == 1 and driver.count(platform_fill) == 1, (
     "the fast setup commands must be unique"
 )
-assert driver.index(high_teleport) < driver.index(platform_fill) < driver.index(platform_marker) < driver.index(source_teleport), (
-    "load the target chunk high, place and verify support, then teleport to the sound source"
-)
-assert driver.index(source_teleport) < driver.index(rift_summon), (
-    "the listener must be moved onto the verified platform before the entity is summoned"
+listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
+assert driver.count(source_teleport) == 1, "the supported source teleport must be unique"
+assert driver.index(high_teleport) < driver.index(platform_fill) < driver.index(platform_marker) < driver.index(source_teleport) < driver.index(listener_marker) < driver.index(rift_summon), (
+    "load the target chunk high, place and verify support, then teleport and validate the listener before summoning"
 )
 assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index(
     "TC_RIFT_LISTENER_STILL_AT_SOURCE"
