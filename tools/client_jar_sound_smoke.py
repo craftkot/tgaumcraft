@@ -442,6 +442,7 @@ PY
     echo 'JAR_HIT_BROKE_OR_MISSED_BLOCK=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
+  echo 'JAR_HIT_BLOCK_RETAINED=PASS' | tee -a client-smoke-status.txt
   python3 tools/match_jar_audio_pcm.py client-smoke/hit-baseline.pcm client-smoke/hit-event-window.pcm src/main/resources/assets/thaumcraft/sounds | tee client-smoke/hit-source-match.txt
   echo 'JAR_HIT_ORIGINAL_PCM=PASS' | tee -a client-smoke-status.txt
   send_chat '/effect clear @p minecraft:mining_fatigue'

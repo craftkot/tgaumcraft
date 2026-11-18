@@ -96,6 +96,8 @@ assert "verify_jar_damage_overlay.py --diagnostic" not in hit_section
 assert "python3 tools/verify_jar_damage_overlay.py \\" in hit_section
 assert "hit-nohit-before-roi.png" in hit_section and "hit-nohit-after-roi.png" in hit_section
 assert "hit-before-roi.png" in hit_section and "hit-after-roi.png" in hit_section
+assert "echo 'JAR_HIT_BLOCK_RETAINED=PASS' | tee -a client-smoke-status.txt" in hit_section
+assert hit_section.index("if ! grep -Fq 'JAR_HIT_BLOCK_RETAINED'") < hit_section.index("JAR_HIT_BLOCK_RETAINED=PASS") < hit_section.index("match_jar_audio_pcm.py")
 assert hit_section.index("verify_jar_damage_overlay.py") < hit_section.index("JAR_HIT_BLOCK_RETAINED") < hit_section.index("match_jar_audio_pcm.py") < hit_section.index("JAR_HIT_ORIGINAL_PCM=PASS") < hit_section.index("send_chat '/effect clear @p minecraft:mining_fatigue'"), (
     "Hit acceptance must fail closed on the real ROI crack overlay before checking retained block, original PCM and clearing the test-only effect"
 )
