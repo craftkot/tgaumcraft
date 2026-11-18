@@ -103,6 +103,7 @@ public final class VoxelShape {
     "net/minecraft/util/RandomSource.java": r"""
 package net.minecraft.util;
 public final class RandomSource {
+    public static RandomSource create(){return new RandomSource();}
     public double nextGaussian(){return 0.0D;}
     public int nextInt(int bound){return 0;}
 }
