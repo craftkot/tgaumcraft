@@ -23,6 +23,13 @@ _EXPIRED = re.compile(
 )
 
 
+_ENTITY_TARGET = re.compile(
+    r"TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type=([^ ]+) height=(" + _NUMBER + r") "
+    r"units=(\\d+) x=(" + _NUMBER + r") y=(" + _NUMBER + r") "
+    r"eyeHeight=(" + _NUMBER + r") z=(" + _NUMBER + r")"
+)
+
+
 def parse_scan_rune_log(log: str) -> tuple[list[tuple[str, ...]], list[tuple[str, ...]], list[tuple[str, ...]]]:
     """Return (created, rendered, expired) marker fields in emitted order."""
     return (
@@ -30,6 +37,11 @@ def parse_scan_rune_log(log: str) -> tuple[list[tuple[str, ...]], list[tuple[str
         [match.groups() for match in _RENDERED.finditer(log)],
         [match.groups() for match in _EXPIRED.finditer(log)],
     )
+
+def parse_scan_rune_entity_targets(log: str) -> list[tuple[str, ...]]:
+    """Return real entity targets selected by the client Thaumometer use path."""
+    return [match.groups() for match in _ENTITY_TARGET.finditer(log)]
+
 
 def visible_rune_render_samples(rendered: list[tuple[str, ...]]) -> list[tuple[int | float, ...]]:
     """Keep rendered runes with visible alpha and any non-zero source scale.
