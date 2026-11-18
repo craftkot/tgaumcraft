@@ -651,3 +651,12 @@
 - Regression commit 7b1a53d4c8b5edd4ef32fd2903b1edd5448bc96f adds four assertions: corrupt journal rejection, zero attempted writes, unchanged valid prefix and unchanged invalid suffix. Existing runner tools/test_silverwood_rollback_failure_injection.sh compiles the production helpers and regression test; its exact checkout execution remains **unverified** due to DNS.
 - No shared registries, Gradle, main, other lanes, or merge modified. These are loader-neutral checks, NOT native NeoForge GameTests or evidence of new-chunk generation. CI for new HEAD pending; 59/100 unchanged.
 - Next: confirm exact Java 21 runner and CI; native WorldGenLevel.setBlock failure injection and new-chunk Silverwood biome/placement tests still required.
+
+
+## 2026-11-18 — M12: fail-closed null trunk rollback states
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (+177/-0 before edits), reviewed open PRs including Draft #9 and overlapping native GameTest infrastructure.
+- Production commit [2c216b0](https://github.com/craftkot/tgaumcraft/commit/2c216b0624628a09c18356b19d13ae9dc1860331) validates non-null trunk journal positions, written states and original states before any rollback mutation; missing originals continue to raise IllegalArgumentException.
+- Regression commit [994a9d3](https://github.com/craftkot/tgaumcraft/commit/994a9d33b908a8b963c443b3188155e42cdf2f9c) adds four checks for null original/written states and zero attempted writes; expected total 34 assertions, not an executed PASS.
+- Java 21 available, but exact git checkout remains blocked by DNS (Could not resolve host: github.com); exact runner, native NeoForge GameTest and fresh-chunk worldgen not executed. CI for new commits not yet verified. No shared registries, Gradle, main, other branches or merge modified. Historical 59/100 unchanged.
+- Next: run exact Java 21 rollback runner in checkout/CI, then coordinate native WorldGenLevel.setBlock rejection GameTest and actual Silverwood biome/chunk placement.
