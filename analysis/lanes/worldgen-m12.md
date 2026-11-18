@@ -634,3 +634,12 @@
 - Test commit [ade5529](https://github.com/craftkot/tgaumcraft/commit/ade55294da32ad1013ebf78b0b9e2b34b2d22139) adds six deterministic assertions: one failed trunk/canopy restore does not stop later successful restores, rejected blocks remain unchanged, and successful later blocks regain original states.
 - Java 21 is installed locally, but direct Git checkout failed with DNS "Could not resolve host: github.com". Exact checkout runner and new SHA CI have NOT been executed/confirmed. This remains a loader-neutral simulation, not native WorldGenLevel.setBlock GameTest or proof of new-chunk worldgen.
 - Next: run tools/test_silverwood_rollback_failure_injection.sh on exact checkout (expected 26 assertions), confirm NeoForge CI, then coordinate native GameTest and real biome/chunk placement. No shared registries, Gradle, main or other lanes modified; no merge. 59/100 unchanged.
+
+
+## 2026-11-18 — M12 exact-head CI evidence and test coverage gap
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (+173/-0) and reviewed open PRs including M12 Draft #9 and GameTest #26–#35. Six feature branches found; no changes outside own lane.
+- Verified exact pre-entry HEAD `4898c0388cb5765db27fb0680a486885664bc1c7`: GitHub Actions [run #3954](https://github.com/craftkot/tgaumcraft/actions/runs/44287663240) completed SUCCESS, including Java 21 setup, Core parity, NeoForge build, and dedicated server smoke. CircleCI `ci/circleci: verify-connection` reported SUCCESS for the same SHA (workflow ff9107f6-2ef1-47ea-b4c5-a71f9c08555a).
+- Examined actual Actions job steps: `tools/test_silverwood_rollback_failure_injection.sh` is not an explicit step. Thus the 26 failure-injection assertions have **not** been proven to run by this CI result. Local exact checkout still fails DNS (`Could not resolve host: github.com`); no Java runner execution is claimed.
+- Source inspection confirms this regression calls loader-neutral rollback helpers, not `SilverwoodLegacyFeature.place` or a real `WorldGenLevel.setBlock`. No native NeoForge GameTest, BETA26 biome/RNG parity, natural placement registration, or fresh-chunk worldgen pass. Historical 59/100 unchanged.
+- Next: execute the exact Java 21 runner on a valid checkout; coordinate a native controlled setBlock failure GameTest and then the Silverwood placed-feature registration without touching shared registries/Gradle independently. Draft PR #9 stays unmerged.
