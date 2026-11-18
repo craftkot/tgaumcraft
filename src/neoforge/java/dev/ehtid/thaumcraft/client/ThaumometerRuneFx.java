@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyScanRuneDuration;
 import dev.ehtid.thaumcraft.scanning.ThaumometerTargeting;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -14,6 +15,8 @@ import net.minecraft.world.phys.HitResult;
 
 /** Exact ItemThaumometer.drawFX spawn count, targeting priority, colors and anchor positions. */
 public final class ThaumometerRuneFx {
+    private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+
     private ThaumometerRuneFx() {}
 
     public static void draw(Level level, Player player) {
@@ -22,12 +25,21 @@ public final class ThaumometerRuneFx {
 
         Entity entity = ThaumometerTargeting.findPointedEntity(client, player);
         if (entity != null) {
+            float height = entity.getBbHeight();
+            int durationUnits = LegacyScanRuneDuration.entityUnits(height);
+            if (SMOKE_PROBE) {
+                System.out.println("TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES type="
+                        + BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())
+                        + " height=" + height + " units=" + durationUnits
+                        + " x=" + entity.getX() + " y=" + entity.getY()
+                        + " eyeHeight=" + entity.getEyeHeight() + " z=" + entity.getZ());
+            }
             for (int i = 0; i < 10; i++) {
                 spawn(client,
                         entity.getX(),
                         entity.getY() + entity.getEyeHeight() / 2.0F + 0.5D,
                         entity.getZ(),
-                        random, LegacyScanRuneDuration.entityUnits(entity.getBbHeight()));
+                        random, durationUnits);
             }
             return;
         }
