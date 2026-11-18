@@ -381,8 +381,8 @@ body = r'''
   xdotool click 3
   sleep 4
   capture 08d-workbench-gui-open
-  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'
-  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'
+  wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'
+  wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'
   wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'
   wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'
 
