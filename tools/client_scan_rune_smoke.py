@@ -379,9 +379,9 @@ PY
   xdotool key --clearmodifiers F1
 
   send_chat '/kill @e[type=minecraft:cow,tag=tc_rune_short]'
-  send_chat '/kill @e[type=minecraft:enderman,tag=tc_rune_tall]'
-  send_chat '/summon minecraft:enderman 0.5 151 4.5 {NoAI:1b,PersistenceRequired:1b,Tags:["tc_rune_tall"]}'
-  send_chat '/execute if entity @e[type=minecraft:enderman,tag=tc_rune_tall] run say RUNE_TALL_ENTITY_READY'
+  send_chat '/kill @e[type=minecraft:iron_golem,tag=tc_rune_tall]'
+  send_chat '/summon minecraft:iron_golem 0.5 151 4.5 {NoAI:1b,PersistenceRequired:1b,Tags:["tc_rune_tall"]}'
+  send_chat '/execute if entity @e[type=minecraft:iron_golem,tag=tc_rune_tall] run say RUNE_TALL_ENTITY_READY'
   if ! grep -Fq 'RUNE_TALL_ENTITY_READY' client-smoke/client.log; then
     echo 'RUNE_TALL_ENTITY_NOT_CONFIRMED=YES' | tee -a client-smoke-status.txt
     exit 1
@@ -471,7 +471,7 @@ short_life, short_height = verify_entity(
     count("SHORT_EXPIRED_BEFORE"), count("TALL_EXPIRED_BEFORE"),
 )
 tall_life, tall_height = verify_entity(
-    "tall", "minecraft:enderman",
+    "tall", "minecraft:iron_golem",
     count("TALL_TARGET_BEFORE"), len(targets),
     count("TALL_CREATED_BEFORE"), len(created),
     count("TALL_RENDERED_BEFORE"), len(rendered),
