@@ -1424,3 +1424,11 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Corrected only the `query_game_time` output format to `printf '%s\\n'`. No thresholds, wait duration, production Java, assets, workflows or other paths changed.
 - Corrective commit: [`12a3d81179de`](https://github.com/craftkot/tgaumcraft/commit/12a3d81179de3d1f5724272f7f9b123e53a64e64).
 - The real-client workflow on the corrected exact HEAD is still required. Previous real-client run #44219577202 remains a genuine natural-PCM FAIL; the positive-control portion passed. Fixed audit remains 59/100, M16 4/6, M08 5/9.
+
+
+### 2026-11-18 — guarantee Rift PCM capture cleanup on fail-fast paths
+
+- Reviewing the shared client runner showed its EXIT trap only cleans the Minecraft client, window manager and Xvfb; it does not know about the Rift-specific background `timeout/parec` process. A failed game-time query or a short tick window could therefore leave the audio capture alive until its 420-second timeout.
+- Added a Rift-local EXIT trap that first terminates/reaps the capture process and then calls the existing shared `cleanup` function. After the normal explicit stop is validated (expected `timeout` status 143), the PID variable is cleared so the EXIT trap does not stop it twice. The verifier now requires both cleanup clauses.
+- Commits: driver [`9cb8a49dee08`](https://github.com/craftkot/tgaumcraft/commit/9cb8a49dee08fd04f39a2ed51279acf9efae798f); verifier [`6c4e452513fc`](https://github.com/craftkot/tgaumcraft/commit/6c4e452513fcf7aba8e642b5397dedffd89e9ad5).
+- The synthetic Bash game-time parser harness passed with a 300-tick delta. This is not a Minecraft-client result; the new exact-head client workflow is still the acceptance gate. Score unchanged at 59/100 (M16 4/6, M08 5/9).
