@@ -347,6 +347,138 @@ PY
   fi
   echo "RUNE_OPPOSITE_REAL_FRAMEBUFFER_DIFFERENCE=PASS pixels=$opposite_diff" \
     | tee -a client-smoke-status.txt
+  # BETA26 ItemThaumometer.drawFX also targets entities. Its original
+  # target.posX - 0.5 / target.posZ - 0.5 is shifted back by
+  # FXDispatcher.blockRunes(+0.5 on every axis), so the final particle anchor
+  # is entity X/Z and entity Y + eyeHeight/2 + 0.5. Verify both short and tall
+  # real entities, not only the already-covered block branch.
+  send_chat '/setblock 0 151 4 minecraft:air'
+  send_chat '/setblock 0 150 4 minecraft:stone'
+  send_chat '/kill @e[type=minecraft:cow,tag=tc_rune_short]'
+  send_chat '/summon minecraft:cow 0.5 151 4.5 {NoAI:1b,PersistenceRequired:1b,Tags:["tc_rune_short"]}'
+  send_chat '/execute if entity @e[type=minecraft:cow,tag=tc_rune_short] run say RUNE_SHORT_ENTITY_READY'
+  if ! grep -Fq 'RUNE_SHORT_ENTITY_READY' client-smoke/client.log; then
+    echo 'RUNE_SHORT_ENTITY_NOT_CONFIRMED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/tp @p 0.5 150 0.5 0 0'
+  xdotool key --clearmodifiers F1
+  sleep 1
+  rune_capture 80-short-entity-before
+  short_target_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES' client-smoke/client.log || true)"
+  short_created_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_CREATED=YES' client-smoke/client.log || true)"
+  short_rendered_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_RENDERED=YES' client-smoke/client.log || true)"
+  short_expired_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_EXPIRED=YES' client-smoke/client.log || true)"
+  xdotool click 3
+  sleep 0.5
+  rune_capture 81-short-entity-during
+  sleep 3
+  rune_capture 82-short-entity-after
+  xdotool key --clearmodifiers F1
+
+  send_chat '/kill @e[type=minecraft:cow,tag=tc_rune_short]'
+  send_chat '/kill @e[type=minecraft:enderman,tag=tc_rune_tall]'
+  send_chat '/summon minecraft:enderman 0.5 151 4.5 {NoAI:1b,PersistenceRequired:1b,Tags:["tc_rune_tall"]}'
+  send_chat '/execute if entity @e[type=minecraft:enderman,tag=tc_rune_tall] run say RUNE_TALL_ENTITY_READY'
+  if ! grep -Fq 'RUNE_TALL_ENTITY_READY' client-smoke/client.log; then
+    echo 'RUNE_TALL_ENTITY_NOT_CONFIRMED=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/tp @p 0.5 150 0.5 0 -12'
+  tall_target_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_ENTITY_TARGET=YES' client-smoke/client.log || true)"
+  tall_created_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_CREATED=YES' client-smoke/client.log || true)"
+  tall_rendered_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_RENDERED=YES' client-smoke/client.log || true)"
+  tall_expired_before="$(grep -Fc 'TC_SMOKE_SCAN_RUNE_EXPIRED=YES' client-smoke/client.log || true)"
+  xdotool key --clearmodifiers F1
+  sleep 1
+  rune_capture 83-tall-entity-before
+  xdotool click 3
+  sleep 0.5
+  rune_capture 84-tall-entity-during
+  sleep 4
+  rune_capture 85-tall-entity-after
+  xdotool key --clearmodifiers F1
+
+  SHORT_TARGET_BEFORE="$short_target_before" SHORT_CREATED_BEFORE="$short_created_before" \
+  SHORT_RENDERED_BEFORE="$short_rendered_before" SHORT_EXPIRED_BEFORE="$short_expired_before" \
+  TALL_TARGET_BEFORE="$tall_target_before" TALL_CREATED_BEFORE="$tall_created_before" \
+  TALL_RENDERED_BEFORE="$tall_rendered_before" TALL_EXPIRED_BEFORE="$tall_expired_before" \
+  python3 - <<'PY' | tee -a client-smoke-status.txt
+import os
+from pathlib import Path
+from scan_rune_log_parser import (
+    parse_scan_rune_entity_targets,
+    parse_scan_rune_log,
+    visible_rune_render_samples,
+)
+
+log = Path("client-smoke/client.log").read_text(errors="replace")
+targets = parse_scan_rune_entity_targets(log)
+created, rendered, expired = parse_scan_rune_log(log)
+
+def count(name):
+    return int(os.environ[name])
+
+def verify_entity(label, expected_type, target_start, target_end,
+                  created_start, created_end, rendered_start, rendered_end,
+                  expired_start, expired_end):
+    target_rows = targets[target_start:target_end]
+    if len(target_rows) != 1:
+        raise SystemExit(f"RUNE_ENTITY_TARGET_COUNT_WRONG {label} count={len(target_rows)}")
+    entity_type, height_s, units_s, x_s, y_s, eye_s, z_s = target_rows[0]
+    height, units = float(height_s), int(units_s)
+    x, y, eye, z = map(float, (x_s, y_s, eye_s, z_s))
+    if entity_type != expected_type:
+        raise SystemExit(f"RUNE_ENTITY_TARGET_WRONG {label} type={entity_type}")
+    if units != int(height * 15.0):
+        raise SystemExit(f"RUNE_ENTITY_DURATION_UNITS_WRONG {label} height={height} units={units}")
+    lifetime = 3 * units
+    expected_y = y + eye / 2.0 + 0.5
+
+    made = created[created_start:created_end]
+    drawn = rendered[rendered_start:rendered_end]
+    died = expired[expired_start:expired_end]
+    if len(made) != 10:
+        raise SystemExit(f"RUNE_ENTITY_PARTICLE_COUNT_WRONG {label} created={len(made)}")
+    for face, life_s, px_s, py_s, pz_s, ox_s, oy_s, oz_s in made:
+        if int(life_s) != lifetime:
+            raise SystemExit(f"RUNE_ENTITY_PARTICLE_LIFETIME_WRONG {label} got={life_s} expected={lifetime}")
+        px, py, pz = map(float, (px_s, py_s, pz_s))
+        if abs(px - x) > 0.0001 or abs(py - expected_y) > 0.0001 or abs(pz - z) > 0.0001:
+            raise SystemExit(f"RUNE_ENTITY_ANCHOR_WRONG {label} got={px},{py},{pz} expected={x},{expected_y},{z}")
+        ox, oy, oz = map(float, (ox_s, oy_s, oz_s))
+        if not 0.0 <= ox < 0.2 or not -0.3 <= oy < 0.3 or abs(oz + 0.51) > 0.0001:
+            raise SystemExit(f"RUNE_ENTITY_LOCAL_OFFSET_WRONG {label}")
+    visible = visible_rune_render_samples(drawn)
+    if not visible:
+        raise SystemExit(f"RUNE_ENTITY_RENDER_CALLBACK_MISSING {label}")
+    if len(died) != 10:
+        raise SystemExit(f"RUNE_ENTITY_EXPIRY_COUNT_WRONG {label} expired={len(died)}")
+    if any(int(age) != lifetime or int(life) != lifetime for _, age, life, _ in died):
+        raise SystemExit(f"RUNE_ENTITY_EXPIRY_TICK_WRONG {label} lifetime={lifetime}")
+    if any(float(drift) > 0.0001 for _, _, _, drift in died):
+        raise SystemExit(f"RUNE_ENTITY_DRIFT_WRONG {label}")
+    print(f"RUNE_ENTITY_{label.upper()}=PASS type={entity_type} height={height:.3f} units={units} lifetime={lifetime} created=10 rendered={len(visible)} expired=10")
+    return lifetime, height
+
+short_life, short_height = verify_entity(
+    "short", "minecraft:cow",
+    count("SHORT_TARGET_BEFORE"), count("TALL_TARGET_BEFORE"),
+    count("SHORT_CREATED_BEFORE"), count("TALL_CREATED_BEFORE"),
+    count("SHORT_RENDERED_BEFORE"), count("TALL_RENDERED_BEFORE"),
+    count("SHORT_EXPIRED_BEFORE"), count("TALL_EXPIRED_BEFORE"),
+)
+tall_life, tall_height = verify_entity(
+    "tall", "minecraft:enderman",
+    count("TALL_TARGET_BEFORE"), len(targets),
+    count("TALL_CREATED_BEFORE"), len(created),
+    count("TALL_RENDERED_BEFORE"), len(rendered),
+    count("TALL_EXPIRED_BEFORE"), len(expired),
+)
+if tall_height <= short_height or tall_life <= short_life:
+    raise SystemExit(f"RUNE_ENTITY_HEIGHT_SCALING_WRONG short={short_height}/{short_life} tall={tall_height}/{tall_life}")
+print(f"RUNE_ENTITY_HEIGHT_SCALING=PASS short={short_height:.3f}/{short_life} tall={tall_height:.3f}/{tall_life}")
+PY
   if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' \
     client-smoke/client.log; then
     echo 'RUNE_CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
