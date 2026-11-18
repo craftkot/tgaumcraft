@@ -1715,3 +1715,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - Only src/neoforge/java/dev/ehtid/thaumcraft/gametest/SalisMundusPacketRoutingGameTests.java changed in the code commit. No production Java, shared registries, Gradle, CI workflows, global localization, foreign branches or main files changed. The residual sound-packet pitch/seed draws in SalisMundusItem.java remain untouched because PR #3 and #7 both own that path.
 - Fixed rubric remains 59/100, M16 4/6, M08 5/9. No points awarded: this is a runtime regression test for an already-fixed cosmetic side effect, not a new Thaumcraft gameplay feature.
 - Next: confirm exact-head Full Port CI [#44344174025](https://github.com/craftkot/tgaumcraft/actions/runs/44344174025) and [#44344188688](https://github.com/craftkot/tgaumcraft/actions/runs/44344188688) finish successfully. Then continue the documented M16 gap: two separate native Minecraft client processes observing actor-only Salis delivery across a chunk boundary/unload/reload. Do not replace this with the existing two-EmbeddedChannel GameTest. Leave SalisMundusItem.java alone until PR #3/#7 overlap is resolved.
+
+
+### Exact-head Full Port CI completion — 2026-11-18
+
+- Push run [#44344174025](https://github.com/craftkot/tgaumcraft/actions/runs/44344174025) on code SHA 24eae2a9ab3d1afbecf6dc0c332e0420502c730f is now **SUCCESS**. The exact run completed Core parity (10,046 assertions), all BETA26 source/resource gates, NeoForge 21.1.250 build, dedicated-server startup and JAR upload. The earlier missing server.properties diagnostic was non-fatal; the server reached its normal Done marker.
+- PR-triggered duplicate [#44344188688](https://github.com/craftkot/tgaumcraft/actions/runs/44344188688) was still IN_PROGRESS at the last poll; it is not needed to establish that the push run passed, but record its final conclusion on the next run.
+- The new Salis runtime RNG GameTest already passed in both write/read phases (15/15 required tests) on the same code SHA. Fixed rubric remains 59/100; no score change.
