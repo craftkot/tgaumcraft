@@ -585,3 +585,11 @@
 - The job does **not** contain a standalone `SilverwoodLegacyLogsTest`, native Silverwood GameTest, injected `WorldGenLevel.setBlock` failure test, or fresh-chunk worldgen verification. A successful build/server smoke does not establish RNG parity, successful tree placement, or gameplay correctness.
 - Direct Git checkout still fails DNS (`Could not resolve host: github.com`). No local exact-checkout Java runner or Minecraft test executed, and no new production Java code added. Avoided another unexecuted test fixture or edits to shared native GameTest registration/Gradle while parallel PRs own that infrastructure.
 - Next: implement and execute a native controlled `setBlock` rejection GameTest once its registration is coordinated; then register Silverwood placement and verify new chunks and source-era biome/RNG rules. Historical 59/100 unchanged; no main/other branch/merge changes.
+
+
+## 2026-11-18 — M12: isolated rejected-trunk rollback regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (+162/-0 before change), reviewed open PRs and competing GameTest infrastructure. No shared registry/Gradle changes.
+- Added loader-neutral deterministic failure-injection regression `SilverwoodRollbackFailureInjectionTest` in commit [e34101b](https://github.com/craftkot/tgaumcraft/commit/e34101b57860d81ec6f2aeab504e5f2b26507917). Simulates canopy writes, one accepted trunk write, a rejected subsequent trunk write, two-phase restoration, original flower recovery, and idempotence (8 assertions).
+- This regression invokes the actual core rollback helpers but does NOT invoke `SilverwoodLegacyFeature.place` or a real `WorldGenLevel.setBlock`; it is not native NeoForge GameTest evidence. Exact-checkout test execution and new-head CI are not claimed.
+- Next: run exact Java 21 regression and NeoForge CI, then implement native controlled setBlock rejection with the parallel GameTest lane; coordinate feature registration and new-chunk biome/worldgen smoke. Draft PR #9 stays unmerged, historical 59/100 unchanged.
