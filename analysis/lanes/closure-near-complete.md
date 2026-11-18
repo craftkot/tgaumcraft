@@ -1473,3 +1473,10 @@ Next action: inspect the new exact-HEAD Aura/Crystal GameTests and Full Port CI 
 - No sound behavior, volume/pitch, category, asset, cadence, registry, Gradle or shared workflow logic was changed. This is a diagnostic iteration only; it earns no audit points. Historical score remains **59/100**, M16 **4/6**, M08 **5/9**.
 - Changed paths: `src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftEntity.java`, `src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientGameEvents.java`, `tools/client_rift_ambient_sound_smoke.py`, `tools/verify_rift_ambient_sound.py`, and this journal.
 - Next: run the exact-head real-client smoke and inspect whether the Rift entity reaches tick 300, emits with positive volume, fires the server sound event, and reaches the client sound-event hook. Only then decide whether the defect is entity ticking, server sound delivery, or client audio playback. No merge.
+
+
+### 2026-11-18 — diagnostic driver self-review correction
+
+- Before accepting the new diagnostic run, source review found two harness issues in the first probe commit: Java `System.out` markers are captured by the Gradle `client-smoke/client.log`, not guaranteed to be written to Log4j's `run/logs/latest.log`; and the initial sed extraction had an over-escaped basic-regex group.
+- Corrected all server/client probe lookups to use the actual Gradle process log and replaced the fragile sed expression with Bash parameter expansion. The verifier now asserts the log source and exact volume extraction.
+- The first probe commit's newly queued workflows are not evidence for this correction. Exact-head real-client and full CI runs on the corrected SHA are required.
