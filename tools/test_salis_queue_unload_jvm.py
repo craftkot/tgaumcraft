@@ -10,6 +10,18 @@ import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java"
+SPARKLES = ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisMundusSparkles.java"
+sparkles_source = SPARKLES.read_text(encoding="utf-8")
+if "RandomSource cosmeticRandom = RandomSource.create();" not in sparkles_source:
+    raise SystemExit("SALIS_COSMETIC_RNG_ISOLATION=FAIL missing detached cosmetic RNG")
+if "level.random" in sparkles_source or "level.getRandom()" in sparkles_source:
+    raise SystemExit("SALIS_COSMETIC_RNG_ISOLATION=FAIL cosmetic particles consume ServerLevel RNG")
+if sparkles_source.count("cosmeticRandom.nextGaussian()") != 6:
+    raise SystemExit("SALIS_COSMETIC_RNG_ISOLATION=FAIL unexpected Gaussian sample count")
+if sparkles_source.count("cosmeticRandom.nextInt(5)") != 2:
+    raise SystemExit("SALIS_COSMETIC_RNG_ISOLATION=FAIL unexpected delay sample count")
+print("SALIS_COSMETIC_RNG_ISOLATION=PASS")
+
 STUBS = {
 "dev/ehtid/thaumcraft/ThaumcraftPort.java": "package dev.ehtid.thaumcraft; public class ThaumcraftPort { public static final String MOD_ID=\"thaumcraft\"; }",
 "dev/ehtid/thaumcraft/port/core/visual/SalisSparkleDelayRules.java": "package dev.ehtid.thaumcraft.port.core.visual; public class SalisSparkleDelayRules { public static long dueTick(long t,int d){return t+d;} }",

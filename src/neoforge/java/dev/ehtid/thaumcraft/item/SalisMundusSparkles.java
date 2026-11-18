@@ -4,6 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -33,6 +34,10 @@ public final class SalisMundusSparkles {
         if (!level.hasChunkAt(pos)) {
             return;
         }
+        // BETA26 ItemMagicDust#doSparkles runs only on world.isRemote. Its
+        // random cosmetic samples must not advance the authoritative server
+        // world's RNG after moving particle construction to the server.
+        RandomSource cosmeticRandom = RandomSource.create();
         Vec3 forward = player.getLookAngle();
         // BETA26 ItemMagicDust uses EntityUtils.posToHand: chest height,
         // yaw-based hand side and a 0.3 look-vector offset. The previous
@@ -72,9 +77,9 @@ public final class SalisMundusSparkles {
             // for a random 0..4 tick delay. Preserve the 50 independent
             // velocities/colors without changing the actor-only recipient.
             Vec3 velocity = new Vec3(
-                    travel.x / 6.0D + level.random.nextGaussian() * 0.05D,
-                    travel.y / 6.0D + level.random.nextGaussian() * 0.05D + (floaty ? 0.05D : 0.15D),
-                    travel.z / 6.0D + level.random.nextGaussian() * 0.05D);
+                    travel.x / 6.0D + cosmeticRandom.nextGaussian() * 0.05D,
+                    travel.y / 6.0D + cosmeticRandom.nextGaussian() * 0.05D + (floaty ? 0.05D : 0.15D),
+                    travel.z / 6.0D + cosmeticRandom.nextGaussian() * 0.05D);
             // SimpleParticleType has no custom payload. Preserve X/Y velocity and
             // reserve +1000 on Z for the BETA26 floaty flag; the client provider
             // removes the sentinel before applying actual motion.
@@ -82,7 +87,7 @@ public final class SalisMundusSparkles {
                     velocity.z + (floaty ? 1000.0D : 0.0D));
             SalisSparkleTrailQueue.emitOrQueue(level, player,
                     SalisSparkleParticleRegistration.TYPE, start, encodedVelocity,
-                    level.random.nextInt(5));
+                    cosmeticRandom.nextInt(5));
         }
 
         // BETA26 FXDispatcher.drawBlockSparkles: only EXPOSED block faces
@@ -112,11 +117,11 @@ public final class SalisMundusSparkles {
             // shape. The old midpoint-of-shape formula moved asymmetric FX.
             for (int i = 0; i < perFace; i++) {
                 double x = SalisSparkleFaceLayout.coordinate(bounds.minX, bounds.maxX,
-                        face.getStepX(), face.getStepX() == 0 ? level.random.nextGaussian() : 0.0D);
+                        face.getStepX(), face.getStepX() == 0 ? cosmeticRandom.nextGaussian() : 0.0D);
                 double y = SalisSparkleFaceLayout.coordinate(bounds.minY, bounds.maxY,
-                        face.getStepY(), face.getStepY() == 0 ? level.random.nextGaussian() : 0.0D);
+                        face.getStepY(), face.getStepY() == 0 ? cosmeticRandom.nextGaussian() : 0.0D);
                 double z = SalisSparkleFaceLayout.coordinate(bounds.minZ, bounds.maxZ,
-                        face.getStepZ(), face.getStepZ() == 0 ? level.random.nextGaussian() : 0.0D);
+                        face.getStepZ(), face.getStepZ() == 0 ? cosmeticRandom.nextGaussian() : 0.0D);
                 Vec3 spawn = new Vec3(pos.getX() + x, pos.getY() + y, pos.getZ() + z);
                 // FXDispatcher.drawBlockSparkles delegates to drawSimpleSparkle:
                 // scale/color/animation are sampled by the client sprite provider.
@@ -124,7 +129,7 @@ public final class SalisMundusSparkles {
                 // applies the source face velocity (0, 0.0025, 0).
                 // Original delay: (int)(rand.nextInt(5) + distance*16).
                 int delayTicks = SalisSparkleFaceDelayRules.delayTicks(
-                        level.random.nextInt(5), spawn.distanceTo(faceStart));
+                        cosmeticRandom.nextInt(5), spawn.distanceTo(faceStart));
                 SalisSparkleTrailQueue.emitFaceOrQueue(level, player,
                         SalisSparkleParticleRegistration.TYPE, spawn,
                         new Vec3(FACE_PARTICLE_SENTINEL, 0.0025D, 0.0D), delayTicks);
