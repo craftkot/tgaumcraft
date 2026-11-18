@@ -83,6 +83,19 @@ new_send = """  activate_minecraft_client() {
     xdotool type --clearmodifiers --delay 24 "$1"
     xdotool key --clearmodifiers Return
     sleep 4
+  }
+
+  # Use this only for the two ordered setup commands: the player starts high
+  # in the newly loaded target chunk, so a short chat round-trip cannot make
+  # it fall below the platform before the barrier is placed.
+  send_chat_fast() {
+    activate_minecraft_client
+    ensure_minecraft_command_channel
+    xdotool key --clearmodifiers t
+    sleep 0.1
+    xdotool type --clearmodifiers --delay 5 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 0.25
   }"""
 if source.count(old_send) != 1:
     raise SystemExit("Shared chat helper changed; refuse unverified command-driver replacement")
@@ -203,8 +216,11 @@ probe = r'''
   rift_z=12.5
   # Teleport before filling: /fill rejects an unloaded target chunk. The old order
   # emitted "That position is not loaded", so the player later fell out of sound range.
-  send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"
-  send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"
+  # Load the target chunk while the player is safely above the future platform.
+  # The normal send_chat delay is four seconds; using it here would let the
+  # player fall below Y=149 before the barrier exists.
+  send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"
+  send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"
   send_chat '/execute if block 3 149 12 minecraft:barrier run say TC_RIFT_PLATFORM_PRESENT'
   if ! grep -Fq 'TC_RIFT_PLATFORM_PRESENT' run/logs/latest.log; then
     echo 'RIFT_LISTENER_PLATFORM=FAIL barrier block was not placed after teleport' | tee -a client-smoke-status.txt
@@ -214,7 +230,8 @@ probe = r'''
   echo "RIFT_LISTENER_PLATFORM=PASS y=149" | tee -a client-smoke-status.txt
   send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_AT_SOURCE'
   if ! grep -Fq 'TC_RIFT_LISTENER_AT_SOURCE' run/logs/latest.log; then
-    echo 'RIFT_LISTENER_AT_SOURCE=FAIL player is not at the Rift source after teleport/platform setup' | tee -a client-smoke-status.txt
+    send_chat '/data get entity @p Pos'
+    echo 'RIFT_LISTENER_AT_SOURCE=FAIL player is not at the Rift source after supported teleport' | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2 || true
     exit 1
   fi

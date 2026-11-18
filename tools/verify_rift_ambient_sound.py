@@ -58,8 +58,14 @@ for fragment in (
     "rift_x=3.5",
     "rift_y=150",
     "rift_z=12.5",
+    'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"',
+    'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"',
+    "send_chat_fast() {",
+    "sleep 0.1",
+    'xdotool type --clearmodifiers --delay 5 "$1"',
+    "sleep 0.25",
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
     "TC_RIFT_LISTENER_STILL_AT_SOURCE",
@@ -100,15 +106,20 @@ assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"
     "the original-sound positive control must be captured separately before the natural Rift window"
 )
 
-assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
-    'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"'
-), "the player must teleport first so the support chunk is loaded before /fill"
-assert driver.index('send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"') < driver.index(
-    "TC_RIFT_PLATFORM_PRESENT"
-), "the smoke must verify the platform block after filling it"
-assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
-    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
-), "the listener must be moved to the Rift source before the entity is summoned"
+high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
+platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
+platform_marker = "TC_RIFT_PLATFORM_PRESENT"
+source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
+rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
+assert driver.count(high_teleport) == 1 and driver.count(platform_fill) == 1, (
+    "the fast setup commands must be unique"
+)
+assert driver.index(high_teleport) < driver.index(platform_fill) < driver.index(platform_marker) < driver.index(source_teleport), (
+    "load the target chunk high, place and verify support, then teleport to the sound source"
+)
+assert driver.index(source_teleport) < driver.index(rift_summon), (
+    "the listener must be moved onto the verified platform before the entity is summoned"
+)
 assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index(
     "TC_RIFT_LISTENER_STILL_AT_SOURCE"
 ) < driver.index("TC_SMOKE_RIFT_AMBIENT_DUE=YES"), (
