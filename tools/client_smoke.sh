@@ -114,13 +114,19 @@ activate_firststeps_advance() {
 }
 
 assert_log_literal() {
-  local marker=$1
-  if ! grep -Fq "$marker" client-smoke/client.log; then
-    echo "VANILLA_COMMAND_ASSERTION_MISSING=$marker" | tee -a client-smoke-status.txt
-    tail -80 client-smoke/client.log >&2
-    exit 1
-  fi
-  echo "VANILLA_COMMAND_ASSERTION_CONFIRMED=$marker" | tee -a client-smoke-status.txt
+  local marker=$1 attempt
+  # The client chat command is asynchronous: allow the integrated server
+  # bounded time to emit its vanilla success marker before failing closed.
+  for attempt in $(seq 1 20); do
+    if grep -Fq "$marker" client-smoke/client.log; then
+      echo "VANILLA_COMMAND_ASSERTION_CONFIRMED=$marker after_poll=$attempt" | tee -a client-smoke-status.txt
+      return 0
+    fi
+    sleep 1
+  done
+  echo "VANILLA_COMMAND_ASSERTION_TIMEOUT=$marker waited_seconds=20" | tee -a client-smoke-status.txt
+  tail -80 client-smoke/client.log >&2
+  exit 1
 }
 
 assert_smoke_event_count() {
