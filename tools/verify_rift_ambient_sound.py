@@ -38,6 +38,12 @@ driver = Path("tools/client_rift_ambient_sound_smoke.py").read_text()
 for fragment in (
     "rift-positive-control.pcm",
     "/playsound thaumcraft:evilportal neutral @p ~ ~ ~ 1 1",
+    "rift_x=3.5",
+    "rift_y=150",
+    "rift_z=12.5",
+    'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
+    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"',
+    "RIFT_LISTENER_AT_SOURCE=PASS",
     "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
     "query_game_time() {",
     "/time query gametime",
@@ -52,6 +58,13 @@ for fragment in (
     assert fragment in driver, fragment
 assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"), (
     "the original-sound positive control must be captured separately before the natural Rift window"
+)
+
+assert driver.index('send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"') < driver.index(
+    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
+), "the listener must be moved to the Rift source before the entity is summoned"
+assert "send_chat '/tp @p 2.5 150 11.5 0 0'" not in driver, (
+    "the old 1.4-block offset can exceed a low-volume variable sound's audible radius"
 )
 assert "sleep 46" not in driver, "ambient acceptance must not rely on wall-clock sleep"
 assert "current_game_time - start_game_time >= 300" in driver, (
