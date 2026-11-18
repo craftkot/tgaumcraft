@@ -170,6 +170,26 @@ public final class SilverwoodRollbackFailureInjectionTest {
         check(canopyWrites[0] == 0, "corrupt canopy journal performs no writes");
         check("LEAVES".equals(corruptCanopyWorld.get(60)), "valid canopy prefix untouched");
         check("LEAVES".equals(corruptCanopyWorld.get(61)), "invalid canopy suffix untouched");
+        // Null original and written states must fail before touching the world.
+        for (boolean nullOriginal : new boolean[] {true, false}) {
+            Map<Integer, String> invalidOriginals = new LinkedHashMap<>();
+            Map<Integer, String> invalidWritten = new LinkedHashMap<>();
+            invalidOriginals.put(70, nullOriginal ? null : "AIR");
+            invalidWritten.put(70, nullOriginal ? "LOG_X" : null);
+            int[] attemptedWrites = {0};
+            boolean rejected = false;
+            try {
+                SilverwoodTrunkRollback.restore(invalidOriginals, invalidWritten,
+                        pos -> "LOG_X", (pos, state) -> {
+                            attemptedWrites[0]++;
+                            return true;
+                        });
+            } catch (NullPointerException expected) {
+                rejected = true;
+            }
+            check(rejected, "null trunk journal state rejected");
+            check(attemptedWrites[0] == 0, "null trunk journal makes no writes");
+        }
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
