@@ -25,7 +25,9 @@ assert "level.sendParticles(color" not in queue
 assert "SalisSparkleDelayRules.dueTick(" in queue
 assert "SALIS_TRAIL_DELAY_QUEUE_DRAINED" in queue
 assert "SalisSparkleTrailQueue.emitOrQueue(" in fx
-assert "level.random.nextInt(5)" in fx
+assert "RandomSource cosmeticRandom = RandomSource.create();" in fx
+assert "cosmeticRandom.nextInt(5)" in fx and fx.count("cosmeticRandom.nextInt(5)") == 2
+assert "level.random" not in fx and "level.getRandom()" not in fx
 assert "TRAIL_COUNT = 50" in fx
 
 harness = r'''
