@@ -5,10 +5,14 @@ import sys
 
 source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
 anchor = "  # The initial world is already creative + peaceful, as established"
-if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1:
+options_anchor = "printf 'guiScale:2\\n' > run/options.txt"
+if source.count(anchor) != 1 or source.count("export ALSOFT_DRIVERS=null") != 1 or source.count(options_anchor) != 1:
     raise SystemExit("Client boot/audio hooks changed; refuse blind injection")
-head = source.split(anchor, 1)[0].replace("export ALSOFT_DRIVERS=null",
-                                           "export ALSOFT_DRIVERS=pulse")
+head = source.split(anchor, 1)[0]
+head = head.replace(options_anchor, "printf 'guiScale:2\\nsoundCategory_master:1.0\\nsoundCategory_music:0.0\\nsoundCategory_record:0.0\\nsoundCategory_weather:0.0\\nsoundCategory_block:1.0\\nsoundCategory_hostile:0.0\\nsoundCategory_neutral:0.0\\nsoundCategory_player:0.0\\nsoundCategory_ambient:0.0\\nsoundCategory_voice:0.0\\n' > run/options.txt")
+head = head.replace("export ALSOFT_DRIVERS=null", "export ALSOFT_DRIVERS=pulse")
+if "soundCategory_block:1.0" not in head or "soundCategory_music:0.0" not in head:
+    raise SystemExit("Crystal smoke must isolate the BLOCK sound category")
 body = r'''
   echo 'CRYSTAL_REAL_WORLD=YES' | tee -a client-smoke-status.txt
   send_chat '/time set noon'
