@@ -269,10 +269,10 @@ body = r'''
   echo 'WORKBENCH_WORLD_SAFE_STATE=PEACEFUL' | tee -a client-smoke-status.txt
 
 
-  # The next gates use the actual block interaction and menu lifecycle.
-  # Vanilla /say and /data get feedback is rendered in the chat HUD and is
-  # not a reliable client.log signal; never treat an absent log line as a
-  # failed command or as proof that the GUI did not open.
+  # The /say fixture acknowledgement below is a Log4j server-log marker.
+  # ArcaneWorkbenchBlock.smokeMarker uses System.out in this integrated
+  # runClient JVM; client_smoke.sh redirects that process stream to
+  # client-smoke/client.log, including server-origin smokeMarker output.
   wait_for_workbench_marker() {
     local marker="$1"
     for attempt in {1..12}; do
@@ -381,8 +381,8 @@ body = r'''
   xdotool click 3
   sleep 4
   capture 08d-workbench-gui-open
-  wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'
-  wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'
+  wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'
   wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'
   wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'
 

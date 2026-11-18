@@ -257,11 +257,26 @@ expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
        and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" not in generator
        and "grep -Fq 'thaumcraft:arcane_workbench'" not in generator,
        "Workbench smoke must not mistake vanilla chat HUD output for log evidence")
-expect("wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
-       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
-       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
-       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator,
-       "Workbench must require independent real server and client menu lifecycle evidence")
+for marker in (
+    "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES",
+    "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES",
+    "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES",
+    "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES",
+):
+    expect(f"wait_for_workbench_marker '{marker}'" in generator
+           and f"wait_for_workbench_server_marker '{marker}'" not in generator,
+           f"integrated-server/client System.out marker {marker} must be read from client.log")
+expect("wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'" in generator,
+       "vanilla /say fixture acknowledgement must remain on the Log4j latest.log stream")
+expect("export THAUMCRAFT_SMOKE=1" in shared_smoke
+       and 'gradle runClient --no-daemon --console=plain > client-smoke/client.log 2>&1 &' in shared_smoke,
+       "Workbench marker stream must match the opt-in runClient process stdout")
+workbench_block = (Path(__file__).resolve().parents[1]
+                   / "src/neoforge/java/dev/ehtid/thaumcraft/block/ArcaneWorkbenchBlock.java")
+block_source = workbench_block.read_text(encoding="utf-8")
+expect('if ("1".equals(System.getenv("THAUMCRAFT_SMOKE")))' in block_source
+       and "System.out.println(message);" in block_source,
+       "Workbench smoke markers must remain opt-in System.out output")
 expect(generator.index("send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'")
        < generator.index("send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'")
        < generator.index("send_chat '/execute at @p run data get block ~ ~ ~2 Items'")
