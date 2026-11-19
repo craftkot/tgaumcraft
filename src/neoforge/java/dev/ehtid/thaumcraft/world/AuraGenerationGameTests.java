@@ -120,6 +120,63 @@ public final class AuraGenerationGameTests {
         }
     }
 
+    /**
+     * BETA26 EntityUtils.getEntitiesInRange(BlockPos, ..., 32) centers its
+     * query on block center. The former AABB(BlockPos).inflate(32) falsely
+     * included a half-block shell outside that source query.
+     */
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 80,
+            required = true
+    )
+    public static void usesBETA26CenteredAabbForNearbyRiftGuard(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos sample = helper.absolutePos(new BlockPos(8, 2, 8));
+        AABB exact = FluxRiftSpawnEvents.nearbyRiftBounds(sample);
+        AABB former = new AABB(sample).inflate(32.0D);
+
+        double centerX = sample.getX() + 0.5D;
+        double centerY = sample.getY() + 0.5D;
+        double centerZ = sample.getZ() + 0.5D;
+        FluxRiftEntity edge = new FluxRiftEntity(FluxRiftRegistration.get(), level);
+        edge.setRiftSeed(1);
+        edge.setRiftSize(10);
+        edge.moveTo(centerX, centerY, centerZ, 0.0F, 0.0F);
+
+        AABB base = edge.getBoundingBox();
+        double minYOffset = base.minY - centerY;
+        double outsideY = exact.maxY + 0.1D - minYOffset;
+        edge.moveTo(centerX, outsideY, centerZ, 0.0F, 0.0F);
+        AABB edgeBounds = edge.getBoundingBox();
+
+        if (!(edgeBounds.minY > exact.maxY && edgeBounds.minY < former.maxY)
+                || !former.intersects(edgeBounds)
+                || exact.intersects(edgeBounds)) {
+            throw new AssertionError("Boundary fixture must be inside the old shifted AABB but outside BETA26 bounds"
+                    + " exact=" + exact + " former=" + former + " entity=" + edgeBounds);
+        }
+        if (!level.addFreshEntity(edge)) {
+            throw new AssertionError("Unable to add boundary Flux Rift fixture");
+        }
+
+        helper.runAfterDelay(1L, () -> {
+            try {
+                if (FluxRiftSpawnEvents.hasNearbyRift(level, sample)) {
+                    throw new AssertionError("A Rift in the former half-block shell must not block BETA26 spawn");
+                }
+                System.out.println(
+                        "TC_GAMETEST_FLUX_RIFT_NEARBY_AABB=PASS centered=YES half_block_false_positive=REJECTED"
+                );
+            } finally {
+                edge.discard();
+            }
+            helper.succeed();
+        });
+    }
+
     @PrefixGameTestTemplate(false)
     @GameTest(
             template = "crystal_spread_empty",
