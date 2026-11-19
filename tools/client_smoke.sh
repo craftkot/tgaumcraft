@@ -314,6 +314,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/setblock 280 150 248 thaumcraft:mirror_essentia[facing=down]'
     send_chat '/setblock 280 149 248 thaumcraft:jar_normal'
     send_chat '/data merge block 248 149 247 {Aspect:"aer",Amount:12s}'
+    # Match the reverse scenario: initialize a typed, Aer-filtered empty
+    # recipient explicitly instead of depending on /setblock NBT defaults.
+    # A pre-existing nonzero sink would invalidate the 12-Aer conservation test.
+    send_chat '/data merge block 280 149 248 {AspectFilter:"aer",Amount:0s}'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 248 149 247 {Amount:12s} run say MIRROR_FORWARD_INITIAL_SOURCE_12'
+    assert_log_literal MIRROR_FORWARD_INITIAL_SOURCE_12 "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 280 149 248 {Amount:0s} run say MIRROR_FORWARD_INITIAL_SINK_0'
+    assert_log_literal MIRROR_FORWARD_INITIAL_SINK_0 "$mirror_assert_offset"
     send_chat '/data merge block 248 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:248}'
     send_chat '/data merge block 280 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}'
     send_chat '/tp @p 280.5 152.5 242.5 0 30'
