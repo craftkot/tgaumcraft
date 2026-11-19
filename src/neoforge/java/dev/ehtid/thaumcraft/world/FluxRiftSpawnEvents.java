@@ -66,9 +66,7 @@ public final class FluxRiftSpawnEvents {
         }
 
         if (spawnPos.getY() >= level.getMaxBuildHeight() - 4) return null;
-        if (!level.getEntitiesOfClass(FluxRiftEntity.class, new AABB(spawnPos).inflate(32.0D)).isEmpty()) {
-            return null;
-        }
+        if (hasNearbyRift(level, spawnPos)) return null;
 
         float flux = aura.getFlux(spawnPos);
         double size = Math.sqrt(flux * 3.0F);
@@ -102,5 +100,24 @@ public final class FluxRiftSpawnEvents {
         // The BETA26 f_toomuchflux research reward is intentionally deferred
         // until the M07 research API is integrated; do not fake an unlock here.
         return rift;
+    }
+
+    /**
+     * BETA26 EntityUtils.getEntitiesInRange(World, BlockPos, ..., 32) grows
+     * an AABB around the block center. AABB(BlockPos).inflate(32) is half a
+     * block wider on every face and can suppress a valid Rift spawn.
+     */
+    static AABB nearbyRiftBounds(BlockPos pos) {
+        double x = pos.getX() + 0.5D;
+        double y = pos.getY() + 0.5D;
+        double z = pos.getZ() + 0.5D;
+        return new AABB(
+                x - 32.0D, y - 32.0D, z - 32.0D,
+                x + 32.0D, y + 32.0D, z + 32.0D
+        );
+    }
+
+    static boolean hasNearbyRift(ServerLevel level, BlockPos pos) {
+        return !level.getEntitiesOfClass(FluxRiftEntity.class, nearbyRiftBounds(pos)).isEmpty();
     }
 }
