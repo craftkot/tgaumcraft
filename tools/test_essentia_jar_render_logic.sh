@@ -14,3 +14,5 @@ javac --release 21 -encoding UTF-8 -d "$TMP" \
   src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarRenderLogicTest.java
 
 java -ea -cp "$TMP" dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarRenderLogicTest
+
+python3 tools/assert_client_jar_liquid_smoke.py --self-test
