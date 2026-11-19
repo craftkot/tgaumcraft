@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Static contract for the independent two-client Salis acceptance harness."""
 from pathlib import Path
+import importlib.util
+import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 SERVER = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisTwoClientServerProbe.java").read_text()
@@ -50,7 +52,11 @@ for required in (
 for required in (
     '["gradle", "runServer", "--no-daemon", "--console=plain"]',
     '["gradle", "runClient", "--no-daemon", "--console=plain"]',
-    '"forgeclient" in joined',
+    "def expand_java_argfiles(",
+    "def is_client_process(",
+    "is_client_process(expanded_args)",
+    "RUNCLIENT_JAVA_PROCESS_CANDIDATE",
+    "RUNCLIENT_TEMPLATE_GRADLE_EXITED",
     "offline_uuid(username)",
     '"--quickPlayMultiplayer"',
     '":99"',
@@ -89,6 +95,35 @@ for required in (
 ):
     if required not in WORKFLOW:
         raise SystemExit(f"SALIS_TWO_CLIENT_WORKFLOW=FAIL missing {required!r}")
+
+spec = importlib.util.spec_from_file_location(
+    "salis_two_client_driver", ROOT / "tools/client_salis_two_client_smoke.py"
+)
+if spec is None or spec.loader is None:
+    raise SystemExit("SALIS_TWO_CLIENT_ARGFILE_TEST=FAIL cannot import driver")
+driver = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(driver)
+
+with tempfile.TemporaryDirectory() as temporary:
+    cwd = Path(temporary)
+    nested = cwd / "client args.txt"
+    nested.write_text(
+        "--launchTarget forgeclientdev --version 21.1.250 --gameDir .",
+        encoding="utf-8",
+    )
+    outer = cwd / "gradle args.txt"
+    outer.write_text(f'-Xmx2G @"{nested}"', encoding="utf-8")
+    expanded = driver.expand_java_argfiles(["/usr/bin/java", f"@{outer}"], cwd)
+    if not driver.is_client_process(expanded):
+        raise SystemExit("SALIS_TWO_CLIENT_ARGFILE_TEST=FAIL client launch target not expanded")
+    if not driver.has_option(expanded, "--gameDir"):
+        raise SystemExit("SALIS_TWO_CLIENT_ARGFILE_TEST=FAIL gameDir not expanded")
+    if driver.is_client_process(
+        ["/usr/bin/java", "--launchTarget", "forgeserverdev", "--gameDir", "."]
+    ):
+        raise SystemExit("SALIS_TWO_CLIENT_ARGFILE_TEST=FAIL server target matched as client")
+
+print("SALIS_TWO_CLIENT_ARGFILE_EXPANSION=PASS")
 
 print("SALIS_TWO_CLIENT_SERVER_FIXTURE=PASS")
 print("SALIS_TWO_CLIENT_INBOUND_PACKET_PROBE=PASS")

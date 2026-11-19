@@ -11,6 +11,7 @@ import hashlib
 import os
 from pathlib import Path
 import signal
+import shlex
 import subprocess
 import sys
 import time
@@ -87,10 +88,69 @@ def offline_uuid(username: str) -> str:
     return str(uuid.UUID(bytes=bytes(digest)))
 
 
-def find_client_process(timeout: int, gradle_log: Path) -> tuple[int, list[str]]:
+def expand_java_argfiles(args: list[str], cwd: Path, depth: int = 0) -> list[str]:
+    """Expand Gradle's temporary Java @argfiles before cloning a runClient JVM."""
+    if depth > 8:
+        raise RuntimeError("JAVA_ARGFILE_NESTING_LIMIT")
+    expanded: list[str] = []
+    for arg in args:
+        if not arg.startswith("@") or arg.startswith("@@") or len(arg) == 1:
+            expanded.append(arg)
+            continue
+        path = Path(arg[1:])
+        if not path.is_absolute():
+            path = cwd / path
+        try:
+            content = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            # Keep the reference visible in diagnostics; do not invent arguments.
+            expanded.append(arg)
+            continue
+        try:
+            nested = shlex.split(content, comments=True, posix=True)
+        except ValueError as exc:
+            raise RuntimeError(f"JAVA_ARGFILE_PARSE_FAILED path={path}: {exc}") from exc
+        expanded.extend(expand_java_argfiles(nested, cwd, depth + 1))
+    return expanded
+
+
+def is_client_process(args: list[str]) -> bool:
+    """Match the actual ModLauncher target, not an arbitrary classpath substring."""
+    for index, arg in enumerate(args):
+        if arg == "--launchTarget" and index + 1 < len(args):
+            if args[index + 1].lower().startswith("forgeclient"):
+                return True
+        if arg.startswith("--launchTarget="):
+            if arg.split("=", 1)[1].lower().startswith("forgeclient"):
+                return True
+    return "net.minecraft.client.main.Main" in args
+
+
+def _java_process_summary(pid: int, exe: str, raw_args: list[str],
+                          expanded_args: list[str]) -> str:
+    selected: list[str] = []
+    for index, arg in enumerate(expanded_args):
+        if arg in ("--launchTarget", "--gameDir", "--username", "--quickPlayMultiplayer"):
+            selected.extend(expanded_args[index:index + 2])
+        elif arg.startswith("--launchTarget="):
+            selected.append(arg)
+        elif arg == "cpw.mods.bootstraplauncher.BootstrapLauncher":
+            selected.append(arg)
+    argfiles = [arg for arg in raw_args if arg.startswith("@")]
+    return (f"pid={pid} exe={exe} argfiles={argfiles!r} "
+            f"client={is_client_process(expanded_args)} "
+            f"gameDir={has_option(expanded_args, '--gameDir')} "
+            f"flags={selected!r}")
+
+
+def find_client_process(timeout: int, gradle_log: Path,
+                        gradle_process: subprocess.Popen | None = None) -> tuple[int, list[str]]:
     deadline = time.monotonic() + timeout
+    seen: dict[int, str] = {}
+    last_candidates: list[str] = []
     while time.monotonic() < deadline:
         matches: list[tuple[int, list[str]]] = []
+        candidates: list[str] = []
         for entry in os.listdir("/proc"):
             if not entry.isdigit():
                 continue
@@ -98,22 +158,46 @@ def find_client_process(timeout: int, gradle_log: Path) -> tuple[int, list[str]]
             try:
                 raw = Path(f"/proc/{pid}/cmdline").read_bytes()
                 args = [part.decode("utf-8", "replace") for part in raw.split(b"\0") if part]
-                exe = os.readlink(f"/proc/{pid}/exe").lower()
+                exe = os.readlink(f"/proc/{pid}/exe")
+                process_cwd = Path(f"/proc/{pid}/cwd").resolve()
             except (OSError, ProcessLookupError):
                 continue
-            joined = " ".join(args)
-            is_java = "java" in exe
-            is_client = "forgeclient" in joined or "net.minecraft.client.main.Main" in joined
-            if is_java and is_client and has_option(args, "--gameDir"):
-                matches.append((pid, args))
+            executable_name = Path(exe).name.lower()
+            argv_name = Path(args[0]).name.lower() if args else ""
+            if not (executable_name.startswith("java") or argv_name.startswith("java")):
+                continue
+            try:
+                expanded_args = expand_java_argfiles(args, process_cwd)
+            except RuntimeError as exc:
+                candidates.append(f"pid={pid} exe={exe} argfile_error={exc}")
+                continue
+            summary = _java_process_summary(pid, exe, args, expanded_args)
+            candidates.append(summary)
+            if seen.get(pid) != summary:
+                print(f"RUNCLIENT_JAVA_PROCESS_CANDIDATE {summary}", flush=True)
+                seen[pid] = summary
+            if is_client_process(expanded_args) and has_option(expanded_args, "--gameDir"):
+                matches.append((pid, expanded_args))
+        last_candidates = candidates
         if matches:
-            return sorted(matches, key=lambda item: item[0])[-1]
+            pid, args = sorted(matches, key=lambda item: item[0])[-1]
+            print(f"RUNCLIENT_TEMPLATE_PROCESS_FOUND pid={pid}", flush=True)
+            return pid, args
+        if gradle_process is not None and gradle_process.poll() is not None:
+            raise RuntimeError(
+                "RUNCLIENT_TEMPLATE_GRADLE_EXITED "
+                f"returncode={gradle_process.returncode}\n"
+                "java_processes_seen:\n" + "\n".join(last_candidates) + "\n"
+                + read_text(gradle_log)[-12000:]
+            )
         time.sleep(1)
+    gradle_exit = gradle_process.poll() if gradle_process is not None else "not-observed"
     raise RuntimeError(
         "RUNCLIENT_TEMPLATE_PROCESS_NOT_FOUND\n"
+        f"template_gradle_exit={gradle_exit}\n"
+        "java_processes_seen:\n" + "\n".join(last_candidates) + "\n"
         + read_text(gradle_log)[-12000:]
     )
-
 
 def client_args(template: list[str], username: str, game_dir: Path) -> list[str]:
     args = list(template)
@@ -292,7 +376,7 @@ def main() -> int:
             cwd=ROOT, env=template_env, stdout=template_log, stderr=subprocess.STDOUT,
         )
         processes.append(template_gradle)
-        template_pid, template_args = find_client_process(360, OUT / "runclient-template.log")
+        template_pid, template_args = find_client_process(360, OUT / "runclient-template.log", template_gradle)
         print("RUNCLIENT_TEMPLATE_MAIN=FOUND", flush=True)
         print(f"RUNCLIENT_TEMPLATE_ARGS={len(template_args)}", flush=True)
         os.kill(template_pid, signal.SIGTERM)
