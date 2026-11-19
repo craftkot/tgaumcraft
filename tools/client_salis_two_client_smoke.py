@@ -103,12 +103,8 @@ def find_client_process(timeout: int, gradle_log: Path) -> tuple[int, list[str]]
                 continue
             joined = " ".join(args)
             is_java = "java" in exe
-            is_client = (
-                "forgeclient" in joined
-                or "net.minecraft.client.main.Main" in joined
-                or "net.neoforged.devlaunch.Main" in joined
-            )
-            if is_java and is_client and has_option(args, "--gameDir") and has_option(args, "--assetsDir"):
+            is_client = "forgeclient" in joined or "net.minecraft.client.main.Main" in joined
+            if is_java and is_client and has_option(args, "--gameDir"):
                 matches.append((pid, args))
         if matches:
             return sorted(matches, key=lambda item: item[0])[-1]
