@@ -2094,3 +2094,23 @@ Full Port CI [#44471454060](https://github.com/craftkot/tgaumcraft/actions/runs/
 - JAR artifact [#14503749508](https://github.com/craftkot/tgaumcraft/actions/runs/44471454060/artifacts/14503749508).
 
 Workbench real-client matrix [#44471453847](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847) на момент этой записи **ещё выполняется**: EN/scale 3 и RU/scale 3 завершили генерацию smoke и находятся на шаге запуска настоящего клиента; EN/scale 2 и RU/scale 2 ещё устанавливают графические/OCR зависимости. Артефактов матрицы пока нет. Это не PASS GUI; CircleCI verify-connection также ещё pending.
+
+
+### 2026-11-19 — Workbench real-client EN/RU scale 3: PASS
+
+На exact code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a` завершились успешно два независимых настоящих client job из matrix:
+- EN / scale 3 — job `135381669599`, artifact [#14504911369](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847/artifacts/14504911369);
+- RU / scale 3 — job `135381669855`, artifact [#14503719157](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847/artifacts/14503719157).
+
+В обоих логах подтверждены:
+- `TC_WORKBENCH_SERVER_RAY_TARGET=PASS`;
+- `TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES`;
+- `TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES`;
+- `TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES`;
+- `TC_SMOKE_WORKBENCH_GUI_RENDERED=YES`;
+- `WORKBENCH_GUI_RENDER=PASS`;
+- `WORKBENCH_GUI_REAL_CLIENT_{en_us|ru_ru}_3=PASS`.
+
+Перед реальным клиентом прошли world gate (103 assertions), OCR (24 positive/negative assertions), GUI render guard (21) и crystal-mask DataSlot wiring (7). Оба архива скачаны и осмотрены: фактический экран содержит локализованный заголовок, 20-vis стоимость, доступный Vis (303 EN / 263 RU в этих тестовых мирах), шесть аспектных колец и инвентарь; это не один серверный маркер без изображения.
+
+Scale 2 EN/RU на момент записи ещё находятся на шаге установки графических/OCR зависимостей; матрица целиком пока не завершена. Оценка остаётся **59/100**: два из четырёх режимов — значимое доказательство FIRSTSTEPS Workbench GUI, но не закрытие всех оставшихся оригинальных случаев/звуков/цепочек категории.
