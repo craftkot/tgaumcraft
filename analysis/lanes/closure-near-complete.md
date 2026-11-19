@@ -2236,3 +2236,10 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - The exact-head rerun after these changes is required. Until both JVMs actually start and the server/packet/chunk assertions pass, two-client Salis acceptance remains unproven.
 - Separate M08 note: the prior native GameTest [#44505188050](https://github.com/craftkot/tgaumcraft/actions/runs/44505188050) failed at `AuraGenerationGameTests.java:339` after the preceding AABB edge test passed. The current fixture adds a blocker and waits one tick, whereas the same file already has a bounded entity-registration poll for the spawned Rift. The exact-head rerun [#44510879796](https://github.com/craftkot/tgaumcraft/actions/runs/44510879796) must be checked before deciding whether this is the same entity-manager visibility race; no speculative production change was made.
 - Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No score awarded. Next: inspect the Flite preflight and exact-head two-client run, then handle the M08 GameTest result separately.
+
+
+### 2026-11-19 — static guard syntax corrected before acceptance
+
+- Immediate source inspection caught that the newly added static workflow guard used JavaScript-style backticks in a Python tuple. This would be a Python syntax error; no successful Python/CI test is claimed for that intermediate commit.
+- Corrected the guard to a normal Python single-quoted string and retained the exact workflow check for `ctypes.CDLL("libflite.so")`. The final post-correction commit must pass `py_compile` and `tools/test_salis_two_client_probe.py` before the Flite/runtime fix can be accepted.
+- The earlier queued two-client run [#44512271114](https://github.com/craftkot/tgaumcraft/actions/runs/44512271114) is on the intermediate invalid-guard commit and is superseded; only the exact-head rerun after this correction is relevant.
