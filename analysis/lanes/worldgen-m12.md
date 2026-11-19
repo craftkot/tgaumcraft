@@ -699,3 +699,11 @@
 - The production helpers already validate these positions; this change locks that contract against regressions. This is not a native NeoForge GameTest. Java 21 is installed, but exact repository checkout remains blocked by DNS (Could not resolve host: github.com); neither new runner nor original 37-assertion runner has a confirmed execution PASS. CI for new HEAD is pending. Earlier a0b847b workflow 44453097244 was SUCCESS, not proof of these tests.
 - No changes to main, other branches, Gradle, shared registries or common CI; no merge. Historical 59/100 unchanged.
 - Next: run both Java 21 runners on exact HEAD, verify new-head CI, then coordinate native WorldGenLevel.setBlock failure injection and biome/placed-feature registration followed by fresh-chunk testing.
+
+## 19.11.2026 — M12 Silverwood rollback: null original state regression
+
+- Fresh-read `main:AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md` and this lane. Compared `main...feature/worldgen-m12` (before edits: ahead 190, behind 0), reviewed feature branches and open PR search.
+- [75ae5ee](https://github.com/craftkot/tgaumcraft/commit/75ae5eeeb72b33dd4d72cea01462fd849239da21): two additional deterministic cases require trunk/canopy rollback to reject a null **original block state** in the second journal entry before any world read or write. This exercises existing production preflight; production code unchanged.
+- [dad739d](https://github.com/craftkot/tgaumcraft/commit/dad739d2c9dd7aa5f00d205822ac0cf2e0459dda): runner expected output updated from 2 to 4 cases.
+- **Not executed:** exact Java 21 runner, full NeoForge build, native GameTest and real new-chunk Silverwood worldgen. Local git checkout is blocked by DNS (`Could not resolve host: github.com`). No PASS is claimed from source inspection. CI for new HEAD must be checked separately.
+- Next: execute `bash tools/test_silverwood_rollback_null_position.sh` and failure-injection runner from exact checkout; then validate native `WorldGenLevel.setBlock` failure and biome/chunk placement. Historical 59/100 unchanged; no merge.
