@@ -41,7 +41,7 @@ public final class SalisTwoClientServerProbe {
     private static final String OBSERVER_NAME = "TC_SalisObserver";
     private static final BlockPos TARGET = new BlockPos(0, 100, 0);
     private static final BlockPos CONTROL = new BlockPos(20, 100, 20);
-    private static final long LOGIN_TIMEOUT_TICKS = 1200L;
+    private static final long LOGIN_TIMEOUT_TICKS = 3600L;
     private static final long ACTION_TIMEOUT_TICKS = 600L;
     private static final long CLIENT_SETTLE_TICKS = 40L;
 
