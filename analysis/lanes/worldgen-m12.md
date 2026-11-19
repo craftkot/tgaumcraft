@@ -707,3 +707,10 @@
 - [dad739d](https://github.com/craftkot/tgaumcraft/commit/dad739d2c9dd7aa5f00d205822ac0cf2e0459dda): runner expected output updated from 2 to 4 cases.
 - **Not executed:** exact Java 21 runner, full NeoForge build, native GameTest and real new-chunk Silverwood worldgen. Local git checkout is blocked by DNS (`Could not resolve host: github.com`). No PASS is claimed from source inspection. CI for new HEAD must be checked separately.
 - Next: execute `bash tools/test_silverwood_rollback_null_position.sh` and failure-injection runner from exact checkout; then validate native `WorldGenLevel.setBlock` failure and biome/chunk placement. Historical 59/100 unchanged; no merge.
+
+## 2026-11-19 — M12 exact-head CI check (acb2d73)
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 193, behind 0), checked six feature branches and open PRs including M12 Draft #9.
+- Verified commit acb2d73b499bd94a28aaec45a7b4f85c3a462905: GitHub Actions [run #4244](https://github.com/craftkot/tgaumcraft/actions/runs/44516306071) completed SUCCESS. Its verify job passed Java 21 setup, core parity, NeoForge build, dedicated server smoke, and artifact upload.
+- Inspected the actual job steps: neither tools/test_silverwood_rollback_null_position.sh nor tools/test_silverwood_rollback_failure_injection.sh was executed as an explicit step. Thus the four null-position cases and 37 failure-injection assertions still have no demonstrated PASS. Local git ls-remote fails DNS (Could not resolve host: github.com); Java 21 is available, but an exact checkout is not.
+- No native WorldGenLevel.setBlock rejection GameTest or natural new-chunk Silverwood biome generation evidence. No production/test change justified by this CI-only inspection. Next: run both exact Java runners, then coordinate native feature registration/GameTest with owners before touching shared registries or Gradle. No main/other branches/merge changes; 59/100 unchanged.
