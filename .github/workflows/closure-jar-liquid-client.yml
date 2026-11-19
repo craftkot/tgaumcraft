@@ -11,6 +11,7 @@ on:
       - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png'
       - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png.mcmeta'
       - 'tools/test_essentia_jar_render_logic.sh'
+      - 'tools/test_client_jar_liquid_probe.py'
       - 'tools/verify_essentia_jar_liquid_source.py'
       - 'tools/client_jar_liquid_smoke.py'
       - 'tools/assert_client_jar_liquid_smoke.py'

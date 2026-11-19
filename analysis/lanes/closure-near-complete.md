@@ -2442,3 +2442,10 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 
 
 - Exact-head trigger after the static-test correction: the Git-data ref update alone did not produce PR workflow runs for `254d3ad`; this lane-only Contents API commit emits the normal PR synchronize event. It changes no Java, smoke logic, tests, resources or shared infrastructure. The corrected source-contract test must be judged only from the new exact-head run, not the earlier failed run.
+
+
+#### Isolated jar-liquid workflow path filter — 2026-11-19
+
+- The corrected source-contract test is invoked by `tools/test_essentia_jar_render_logic.sh`, but its own path was not listed in the isolated workflow's `pull_request.paths` filter. Added `tools/test_client_jar_liquid_probe.py` to that same M16-only workflow so future edits to the probe test cannot silently skip its CI. This is not a shared/global workflow change; the file is owned by PR #4 and no other open PR changes it.
+- Open PR changed-file comparison was repeated for the new Java probe, Python test and workflow path across all 48 other open PRs; no overlap was found. PR #4 is the only owner.
+- The first probe-contract failure was a test expectation bug (the generated shell emits the stage marker via a variable); the assertion is corrected in `254d3adb630c90255c242e6c4b8b550b96a06722`. The previous native job never launched Minecraft because the core contract stopped first. Next exact-head run must establish the corrected static test and Java compilation before any client result is interpreted.
