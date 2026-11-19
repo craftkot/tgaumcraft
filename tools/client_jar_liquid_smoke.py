@@ -69,6 +69,6 @@ body = r'''
   capture 97-jar-liquid-filled
   python3 tools/assert_client_jar_liquid_smoke.py \
     client-smoke/client.log client-smoke/screenshots/97-jar-liquid-filled.png
-  echo 'JAR_LIQUID_REAL_CLIENT_RENDERER_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt
+  echo 'JAR_LIQUID_REAL_CLIENT_RENDERER_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt client-smoke/client.log
 '''
 sys.stdout.write(head + body + tail)
