@@ -26,6 +26,8 @@ ACTOR_NAME = "TC_SalisActor"
 OBSERVER_NAME = "TC_SalisObserver"
 ACTOR_DIR = ROOT / "run" / "salis-two-client-actor"
 OBSERVER_DIR = ROOT / "run" / "salis-two-client-observer"
+ACTOR_PROCESS_LOG = OUT / "actor-process.log"
+OBSERVER_PROCESS_LOG = OUT / "observer-process.log"
 
 PROBE_PROPERTIES = (
     "-Dthaumcraft.salisChunkUnloadScenario=true "
@@ -395,8 +397,8 @@ def main() -> int:
             game_dir.mkdir(parents=True, exist_ok=True)
             (game_dir / "options.txt").write_text("guiScale:2\n", encoding="utf-8")
 
-        actor_log_file = (OUT / "actor-process.log").open("w", encoding="utf-8")
-        observer_log_file = (OUT / "observer-process.log").open("w", encoding="utf-8")
+        actor_log_file = ACTOR_PROCESS_LOG.open("w", encoding="utf-8")
+        observer_log_file = OBSERVER_PROCESS_LOG.open("w", encoding="utf-8")
         files.extend([actor_log_file, observer_log_file])
 
         actor = subprocess.Popen(
@@ -431,8 +433,10 @@ def main() -> int:
                    detail=lambda: (read_text(SERVER_GRADLE_LOG)[-12000:]
                                    + "\n" + read_text(SERVER_GAME_LOG)[-12000:]))
 
-        actor_game_log = ACTOR_DIR / "logs" / "latest.log"
-        observer_game_log = OBSERVER_DIR / "logs" / "latest.log"
+        # Client stdout/stderr (including Log4j markers) is redirected to these files.
+        # The cloned runClient --gameDir does not make latest.log the process output stream.
+        actor_client_log = ACTOR_PROCESS_LOG
+        observer_client_log = OBSERVER_PROCESS_LOG
         wait_until(
             lambda: "TC_SMOKE_SALIS_TWO_CLIENT_FIXTURE_READY=YES" in
                     (read_text(SERVER_GRADLE_LOG) + read_text(SERVER_GAME_LOG)),
@@ -440,7 +444,7 @@ def main() -> int:
             detail=lambda: (read_text(SERVER_GRADLE_LOG)[-12000:]
                             + "\n" + read_text(SERVER_GAME_LOG)[-12000:]),
         )
-        for path, label in ((actor_game_log, "ACTOR"), (observer_game_log, "OBSERVER")):
+        for path, label in ((actor_client_log, "ACTOR"), (observer_client_log, "OBSERVER")):
             wait_until(
                 lambda p=path: "TC_SMOKE_SALIS_CLIENT_PACKET_PROBE_INSTALLED=YES" in read_text(p),
                 120, f"{label}_PACKET_PROBE_INSTALLED",
@@ -469,12 +473,12 @@ def main() -> int:
         wait_until(lambda: "TC_SMOKE_BOOKSHELF_TRANSFORMED=YES" in server_text(),
                    180, "REAL_BOOKSHELF_TRANSFORM",
                    detail=lambda: server_text()[-12000:])
-        wait_until(lambda: "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES" in read_text(actor_game_log),
+        wait_until(lambda: "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES" in read_text(actor_client_log),
                    30, "ACTOR_TARGET_SOUND_PACKET",
-                   detail=lambda: read_text(actor_game_log)[-8000:])
-        wait_until(lambda: "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES" in read_text(actor_game_log),
+                   detail=lambda: read_text(actor_client_log)[-8000:])
+        wait_until(lambda: "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES" in read_text(actor_client_log),
                    30, "ACTOR_TARGET_PARTICLE_PACKET",
-                   detail=lambda: read_text(actor_game_log)[-8000:])
+                   detail=lambda: read_text(actor_client_log)[-8000:])
         capture(actor_env, "actor-after-salis.png")
         capture(observer_env, "observer-after-salis.png")
 
@@ -506,16 +510,16 @@ def main() -> int:
         if any(position < 0 for position in positions) or positions != sorted(positions):
             raise RuntimeError(f"SALIS_NATIVE_LIFECYCLE_ORDER=FAIL positions={positions}")
 
-        actor_control_particles = marker_count(actor_game_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_PARTICLE=YES")
-        actor_control_sounds = marker_count(actor_game_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_SOUND=YES")
-        observer_control_particles = marker_count(observer_game_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_PARTICLE=YES")
-        observer_control_sounds = marker_count(observer_game_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_SOUND=YES")
-        actor_target_particles = marker_count(actor_game_log, "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES")
-        observer_target_particles = marker_count(observer_game_log, "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES")
-        actor_target_sounds = marker_count(actor_game_log, "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES")
-        observer_target_sounds = marker_count(observer_game_log, "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES")
-        actor_chunk_particles = marker_count(actor_game_log, "TC_SMOKE_SALIS_CLIENT_CHUNK_PARTICLE=YES")
-        observer_chunk_particles = marker_count(observer_game_log, "TC_SMOKE_SALIS_CLIENT_CHUNK_PARTICLE=YES")
+        actor_control_particles = marker_count(actor_client_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_PARTICLE=YES")
+        actor_control_sounds = marker_count(actor_client_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_SOUND=YES")
+        observer_control_particles = marker_count(observer_client_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_PARTICLE=YES")
+        observer_control_sounds = marker_count(observer_client_log, "TC_SMOKE_SALIS_CLIENT_CONTROL_SOUND=YES")
+        actor_target_particles = marker_count(actor_client_log, "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES")
+        observer_target_particles = marker_count(observer_client_log, "TC_SMOKE_SALIS_CLIENT_TARGET_PARTICLE=YES")
+        actor_target_sounds = marker_count(actor_client_log, "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES")
+        observer_target_sounds = marker_count(observer_client_log, "TC_SMOKE_SALIS_CLIENT_TARGET_SOUND=YES")
+        actor_chunk_particles = marker_count(actor_client_log, "TC_SMOKE_SALIS_CLIENT_CHUNK_PARTICLE=YES")
+        observer_chunk_particles = marker_count(observer_client_log, "TC_SMOKE_SALIS_CLIENT_CHUNK_PARTICLE=YES")
 
         if (actor_control_particles, actor_control_sounds,
             observer_control_particles, observer_control_sounds) != (1, 1, 1, 1):
