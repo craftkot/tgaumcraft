@@ -38,8 +38,9 @@ if any(position < 0 for position in positions) or positions != sorted(positions)
 
 for marker in (
     "JAR_LIQUID_CLIENT_BLOCK_ENTITIES_NOT_READY=YES",
-    "JAR_LIQUID_STAGE_PRESENT=TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED",
-    "JAR_LIQUID_STAGE_ABSENT=TC_SMOKE_JAR_LIQUID_RENDER_ENTRY",
+    "for stage in TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED TC_SMOKE_JAR_LIQUID_RENDER_ENTRY TC_SMOKE_JAR_LIQUID_RENDERED",
+    'echo "JAR_LIQUID_STAGE_PRESENT=$stage"',
+    'echo "JAR_LIQUID_STAGE_ABSENT=$stage"',
 ):
     if marker not in script:
         raise SystemExit(f"generated smoke is missing diagnostic marker: {marker}")
