@@ -3,7 +3,7 @@ name: Alchemy native GameTest runner probe
 on:
   push:
     branches:
-      - fix/alchemy-native-runner-trigger-2026-11-19-b
+      - fix/alchemy-required-gametest-summary-2026-11-19
   pull_request:
     branches:
       - fix/alchemy-gametest-pass-parser-2026-11-17
@@ -40,7 +40,7 @@ jobs:
             echo 'GameTest server failed or had zero registered tests' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
-          if ! grep -Eiq '([1-9][0-9]* tests? passed|All [1-9][0-9]* tests? passed|[1-9][0-9]* tests? succeeded)' alchemy-native-gametest.log; then
+          if ! grep -Eiq '(All [1-9][0-9]* required tests passed|[1-9][0-9]* tests? passed|[1-9][0-9]* tests? succeeded)' alchemy-native-gametest.log; then
             echo 'No independently verifiable nonzero GameTest pass count' >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
