@@ -34,7 +34,10 @@ body = r'''
   send_chat '/time set noon'
   send_chat '/weather clear'
   send_chat '/forceload add 250 250'
-  send_chat '/fill 248 149 250 252 149 252 minecraft:stone'
+  # Keep the camera player on the same platform as the jars during the 90-second render poll.
+  # The previous z=250..252 floor left the player at z=248.5 unsupported; gravity moved
+  # the camera 14 blocks below the fixture, so no jar renderer could be dispatched.
+  send_chat '/fill 248 149 248 252 149 252 minecraft:stone'
   send_chat '/fill 248 150 250 252 153 252 minecraft:air'
   send_chat '/setblock 249 150 251 thaumcraft:jar_normal{Aspect:"aer",Amount:125s}'
   send_chat '/setblock 250 150 251 thaumcraft:jar_normal{Aspect:"ignis",Amount:250s}'
