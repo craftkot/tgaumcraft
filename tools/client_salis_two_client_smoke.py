@@ -117,14 +117,14 @@ def find_client_process(timeout: int, gradle_log: Path) -> tuple[int, list[str]]
 
 def client_args(template: list[str], username: str, game_dir: Path) -> list[str]:
     args = list(template)
-    for option in ("--quickPlayPath", "--quickPlayMultiplayer",
-                   "--quickPlaySingleplayer", "--quickPlayRealms"):
+    for option in ("--quickPlayPath", "--quickPlaySingleplayer", "--quickPlayRealms"):
         remove_option(args, option)
     set_option(args, "--username", username)
     set_option(args, "--uuid", offline_uuid(username))
     set_option(args, "--gameDir", str(game_dir.resolve()))
-    set_option(args, "--server", "127.0.0.1")
-    set_option(args, "--port", "25565")
+    remove_option(args, "--server")
+    remove_option(args, "--port")
+    set_option(args, "--quickPlayMultiplayer", "127.0.0.1:25565")
     set_option(args, "--width", "1024")
     set_option(args, "--height", "768")
     if not has_option(args, "--username") or not has_option(args, "--gameDir"):
