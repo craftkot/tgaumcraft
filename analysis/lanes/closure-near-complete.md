@@ -2114,3 +2114,8 @@ Workbench real-client matrix [#44471453847](https://github.com/craftkot/tgaumcra
 Перед реальным клиентом прошли world gate (103 assertions), OCR (24 positive/negative assertions), GUI render guard (21) и crystal-mask DataSlot wiring (7). Оба архива скачаны и осмотрены: фактический экран содержит локализованный заголовок, 20-vis стоимость, доступный Vis (303 EN / 263 RU в этих тестовых мирах), шесть аспектных колец и инвентарь; это не один серверный маркер без изображения.
 
 Scale 2 EN/RU на момент записи ещё находятся на шаге установки графических/OCR зависимостей; матрица целиком пока не завершена. Оценка остаётся **59/100**: два из четырёх режимов — значимое доказательство FIRSTSTEPS Workbench GUI, но не закрытие всех оставшихся оригинальных случаев/звуков/цепочек категории.
+
+
+### Follow-up CI status — 2026-11-19
+
+CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a` теперь **SUCCESS**. В Workbench matrix EN/scale 3 и RU/scale 3 — SUCCESS; EN/scale 2 перешёл к запуску настоящего клиента; RU/scale 2 ещё устанавливает клиентские зависимости. Общий Workbench run `#44471453847` остаётся `in_progress`, артефакты scale 2 ещё не опубликованы. Оценка не меняется.
