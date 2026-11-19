@@ -96,6 +96,13 @@ for required in (
     if required not in WORKFLOW:
         raise SystemExit(f"SALIS_TWO_CLIENT_WORKFLOW=FAIL missing {required!r}")
 
+if "LOGIN_TIMEOUT_TICKS = 3600L" not in SERVER:
+    raise SystemExit("SALIS_TWO_CLIENT_SERVER_FIXTURE=FAIL login deadline below real-client startup budget")
+if 'SERVER_DIR = ROOT / "run"' not in SMOKE:
+    raise SystemExit("SALIS_TWO_CLIENT_REAL_CLIENT_DRIVER=FAIL wrong ModDev server run directory")
+if "DEDICATED_SERVER_PROPERTIES=PASS game_dir=run" not in SMOKE:
+    raise SystemExit("SALIS_TWO_CLIENT_REAL_CLIENT_DRIVER=FAIL missing server.properties load assertion")
+
 spec = importlib.util.spec_from_file_location(
     "salis_two_client_driver", ROOT / "tools/client_salis_two_client_smoke.py"
 )
