@@ -2078,3 +2078,19 @@ At the latest poll, the exact-head Workbench English cells, label tint/art, crys
 - На момент записи реальные GUI-результаты ещё не получены. Не засчитывать Workbench как прошедший.
 
 Оценка остаётся **59/100**. Не изменялись Java-механика, глобальные регистры, Gradle или общие CI-файлы. Следующий шаг — получить четыре client artifacts, подтвердить `SERVER_RAY_TARGET`, `openMenu`, построение экрана и OCR; если ray-gate не проходит, сначала пересчитать координаты по серверному положению/повороту, не менять производственный код без доказательства.
+
+
+### 2026-11-19 — exact-head CI update after Workbench aim-gate patch
+
+Full Port CI [#44471454060](https://github.com/craftkot/tgaumcraft/actions/runs/44471454060) завершился **SUCCESS** на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a`:
+- Core parity: 10,046 assertions;
+- Crystal Farmer: 159;
+- Crystal growth: 186;
+- Crystal outline: 111;
+- Essentia jar: 51;
+- essentia source-order: 15,062;
+- NeoForge `jar`: `BUILD SUCCESSFUL`;
+- dedicated server достиг `Done (7.768s)`;
+- JAR artifact [#14503749508](https://github.com/craftkot/tgaumcraft/actions/runs/44471454060/artifacts/14503749508).
+
+Workbench real-client matrix [#44471453847](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847) на момент этой записи **ещё выполняется**: EN/scale 3 и RU/scale 3 завершили генерацию smoke и находятся на шаге запуска настоящего клиента; EN/scale 2 и RU/scale 2 ещё устанавливают графические/OCR зависимости. Артефактов матрицы пока нет. Это не PASS GUI; CircleCI verify-connection также ещё pending.
