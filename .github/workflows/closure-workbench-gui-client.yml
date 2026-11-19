@@ -2,6 +2,24 @@ name: M16 real Arcane Workbench GUI RU/EN client
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/closure-near-complete
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayout.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/WorkbenchVisPanelLayoutTest.java'
+      - 'tools/test_readable_text_layout.sh'
+      - 'tools/client_workbench_gui_smoke.py'
+      - 'tools/client_smoke.sh'
+      - 'tools/assert_client_workbench_world.py'
+      - 'tools/assert_client_workbench_difficulty.py'
+      - 'tools/test_client_workbench_world.py'
+      - 'tools/assert_client_workbench_gui_ocr.py'
+      - 'tools/test_client_workbench_gui_ocr.py'
+      - 'tools/assert_client_workbench_gui_render.py'
+      - 'tools/test_client_workbench_gui_render.py'
+      - '.github/workflows/closure-workbench-gui-client.yml'
   pull_request:
     branches:
       - main
