@@ -61,49 +61,47 @@ for fragment in (
     'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"',
     'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
-    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"',
+    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z',
     "send_chat_fast() {",
     "sleep 0.1",
     'xdotool type --clearmodifiers --delay 5 "$1"',
     "sleep 0.25",
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
-    "TC_RIFT_LISTENER_STILL_AT_SOURCE",
     "RIFT_LISTENER_AT_SOURCE=PASS",
-    'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
-    'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
-    "RIFT_LISTENER_PLATFORM=PASS",
-    "RIFT_LISTENER_STILL_AT_SOURCE=PASS",
-    "nearestPlayerDistanceSqr=",
-    "RIFT_LISTENER_AT_EVENT=PASS",
-    "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
-    "query_game_time() {",
-    "/time query gametime",
+    "spawn_game_time=",
     "RIFT_GAME_TIME_QUERY=PASS",
+    "event_log_offset=",
+    "parec --device=tc_rift_sink.monitor",
+    "rift_capture_pid=$!",
     "RIFT_GAME_TICK_WINDOW=PASS",
-    "TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT",
-    "RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS",
-    "TC_SMOKE_RIFT_AMBIENT_DUE=YES",
+    "server_tick_count -ne 300",
+    "RIFT_LISTENER_AT_EVENT=PASS",
     "RIFT_SERVER_AMBIENT_DUE=PASS",
-    "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
     "RIFT_SERVER_SOUND_CALL=PASS",
-    "grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_'",
-    'server_pos="${server_due_line#* pos=}"',
-    'server_pitch="${server_due_line#* pitch=}"',
-    'grep -F "pos=$server_pos"',
-    'grep -F "volume=$server_volume"',
-    'grep -F "pitch=$server_pitch"',
     "RIFT_CLIENT_SOUND_EVENT=PASS",
-    "probe_log=client-smoke/client.log",
-    'server_volume="${server_due_line#* volume=}"',
-    'server_volume="${server_volume%% *}"',
+    "send_chat '/tick freeze'",
+    "sleep 34",
+    "RIFT_TICK_FREEZE=PASS",
+    "RIFT_SINGLE_EVENT_CAPTURE_WINDOW=PASS",
+    "client_event_signatures",
     "RIFT_PCM_CAPTURE_STOP=PASS",
-    "trap 'if [ -n \"${rift_capture_pid:-}\" ]",
-    "rift_capture_pid=''",
+    'trap \'if [ -n "${rift_capture_pid:-}" ]',
+    'kill -TERM "$rift_capture_pid"',
+    'wait "$rift_capture_pid"',
+    "RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS",
+    "nearestPlayerDistanceSqr=",
+    "RIFT_OPENAL_DEVICE=PASS",
 ):
     assert fragment in driver, fragment
-assert driver.index("rift-positive-control.pcm") < driver.index("rift-event.pcm"), (
-    "the original-sound positive control must be captured separately before the natural Rift window"
+
+assert "timeout --signal=TERM 3s parec" in driver, "quiet baseline capture must remain bounded"
+assert "timeout --signal=TERM 30s parec" in driver, "positive-control capture must remain bounded"
+assert "timeout --signal=TERM 420s parec" not in driver, (
+    "natural PCM capture must own the direct parec PID, not a timeout wrapper with an orphanable child"
+)
+assert "current_game_time - start_game_time >= 300" not in driver, (
+    "do not wait through multiple 300-tick ambient events"
 )
 
 high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
@@ -111,34 +109,35 @@ platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
 rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
-# The generator includes quoted command literals in its own static guard.
-# Count only executable Bash template lines, not those Python guard literals.
 runtime_template = driver.split("high_teleport_command =", 1)[0]
 assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
     "the fast setup commands must be unique in the runtime template"
 )
-listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
-assert runtime_template.count(source_teleport) == 1, "the supported source teleport must be unique in the runtime template"
-assert driver.index(high_teleport) < driver.index(platform_fill) < driver.index(platform_marker) < driver.index(source_teleport) < driver.index(listener_marker) < driver.index(rift_summon), (
-    "load the target chunk high, place and verify support, then teleport and validate the listener before summoning"
+assert runtime_template.count(source_teleport) == 1, (
+    "the supported source teleport must be unique in the runtime template"
 )
-assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index(
-    "TC_RIFT_LISTENER_STILL_AT_SOURCE"
-) < driver.index("TC_SMOKE_RIFT_AMBIENT_DUE=YES"), (
-    "the listener position must be revalidated after the measured game-tick cadence"
+assert (
+    runtime_template.index(high_teleport)
+    < runtime_template.index(platform_fill)
+    < runtime_template.index(platform_marker)
+    < runtime_template.index(source_teleport)
+    < runtime_template.index("RIFT_LISTENER_AT_SOURCE=PASS")
+    < runtime_template.index("spawn_game_time=")
+    < runtime_template.index("> client-smoke/rift-event.pcm")
+    < runtime_template.index(rift_summon)
+), (
+    "load the target chunk, place support, validate the listener, then start a fresh PCM capture before summoning"
 )
-assert "send_chat '/tp @p 2.5 150 11.5 0 0'" not in driver, (
-    "the old 1.4-block offset can exceed a low-volume variable sound's audible radius"
+assert (
+    runtime_template.index("RIFT_CLIENT_SOUND_EVENT=PASS")
+    < runtime_template.index("send_chat '/tick freeze'")
+    < runtime_template.index("sleep 34")
+    < runtime_template.rindex('kill -TERM "$rift_capture_pid"')
+), (
+    "freeze after the first received sound and keep the direct recorder alive for the full source clip"
 )
-assert "sleep 46" not in driver, "ambient acceptance must not rely on wall-clock sleep"
-assert "current_game_time - start_game_time >= 300" in driver, (
-    "the natural sound window must wait for at least 300 server game ticks"
-)
-assert "timeout --signal=TERM 420s" in driver, (
-    "the PCM capture must cover slow integrated-server tick windows"
-)
-assert driver.index("RIFT_GAME_TICK_WINDOW=PASS") < driver.index("TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT"), (
-    "the post-window entity-alive check must follow the measured game-tick cadence"
+assert "TC_RIFT_LISTENER_STILL_AT_SOURCE" not in driver, (
+    "the old multi-cadence listener probe must not reintroduce a second ambient event"
 )
 
-print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, 300-tick Gaussian sound wiring: PASS")
+print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, first 300-tick sound and isolated PCM capture: PASS")
