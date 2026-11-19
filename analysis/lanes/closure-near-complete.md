@@ -2350,3 +2350,12 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - [Full Port CI #44564032757](https://github.com/craftkot/tgaumcraft/actions/runs/44564032757) is now **SUCCESS**. The earlier NeoForge build step and the dedicated-server smoke step both completed successfully. This is build/server evidence, not client GUI evidence.
 - [Workbench GUI matrix #44564032611](https://github.com/craftkot/tgaumcraft/actions/runs/44564032611) remains IN_PROGRESS: RU/scale-3 is still in the real-client step; EN/RU at scales 2/3 are queued. [Aura/Crystal GameTests #44564032868](https://github.com/craftkot/tgaumcraft/actions/runs/44564032868) remains QUEUED.
 - CircleCI `verify-connection` on code commit `217f218c` is SUCCESS. No new production behavior or score change. The next run must first collect the Workbench matrix and Aura/Crystal outcomes.
+
+
+### 2026-11-19 — exact-head Workbench fixture native matrix verified
+
+- Re-read current main roadmap, AGENTS, parallel workflow, fixed audit, this lane, PR #4, open PRs, latest commits and branch comparison. `main` is `a4280834adc5a20b6951098af937d30ca4aeca56`; closure branch is 0 behind main. PR #4 remains OPEN/DRAFT and must not be merged.
+- Collected the previously pending exact-head real-client [Workbench GUI matrix #44564032611](https://github.com/craftkot/tgaumcraft/actions/runs/44564032611): **4/4 completed SUCCESS** (RU/EN, GUI scale 2/3), including the previously failing RU/scale-3 fixture. This confirms the deterministic fixture regression is resolved at the native-client workflow level; it is not a newly authored production Java fix.
+- The matching [Aura/Crystal GameTests #44564032868](https://github.com/craftkot/tgaumcraft/actions/runs/44564032868) completed **SUCCESS**; [Full Port CI #44564032757](https://github.com/craftkot/tgaumcraft/actions/runs/44564032757) completed **SUCCESS**. These establish separate native GameTest and build/server checks.
+- This iteration changes only this lane journal; no production Java, asset, registry, shared CI/Gradle, localization or foreign branch file. No local Gradle/client/server run. No new gameplay or original BETA26 renderer parity claim. Historical rubric remains **59/100**, M16 **4/6**, M08 **5/9**.
+- Next: inspect pinned BETA26 `TileJarRenderer.renderLiquid` against the current jar block-entity/render registration, identify a concrete isolated missing dynamic-liquid behavior, and implement only with native client evidence. Do not overlap PR #3 or merge PR #4.
