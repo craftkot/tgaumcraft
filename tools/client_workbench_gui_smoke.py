@@ -331,8 +331,15 @@ body = r'''
   send_chat '/execute at @p run item replace block ~ ~ ~2 container.7 with minecraft:gold_ingot 1'
   send_chat '/execute at @p run data get block ~ ~ ~2 Items'
 
-  # Aim at the near face of that same block; pitch 35° intersects its center.
-  send_chat '/tp @p ~ ~ ~ 0 35'
+  # The source-model fixture can push the player sideways. Do not guess yaw/pitch:
+  # place a no-collision marker inside the exact +2 menu target and face it.
+  send_chat '/execute at @p run summon minecraft:marker ~ ~0.5 ~2 {Tags:["tc_workbench_target"]}'
+  send_chat '/execute if entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_READY'
+  wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_READY'
+  send_chat '/tp @p ~ ~ ~ facing entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] feet'
+  send_chat '/kill @e[type=minecraft:marker,tag=tc_workbench_target]'
+  send_chat '/execute unless entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_CLEANED'
+  wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_CLEANED'
   # F3 records the real block targeted by the player's crosshair. The
   # server-side interaction marker below is the authoritative BlockEntity
   # and openMenu check, so no /data command response is scraped from client.log.
