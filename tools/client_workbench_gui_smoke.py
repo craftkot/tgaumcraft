@@ -331,15 +331,14 @@ body = r'''
   send_chat '/execute at @p run item replace block ~ ~ ~2 container.7 with minecraft:gold_ingot 1'
   send_chat '/execute at @p run data get block ~ ~ ~2 Items'
 
-  # The source-model fixture can push the player sideways. Do not guess yaw/pitch:
-  # place a no-collision marker inside the exact +2 menu target and face it.
-  send_chat '/execute at @p run summon minecraft:marker ~ ~0.5 ~2 {Tags:["tc_workbench_target"]}'
-  send_chat '/execute if entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_READY'
-  wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_READY'
-  send_chat '/tp @p ~ ~ ~ facing entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] feet'
-  send_chat '/kill @e[type=minecraft:marker,tag=tc_workbench_target]'
-  send_chat '/execute unless entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_CLEANED'
-  wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_CLEANED'
+  # The menu block is two blocks ahead at the player's feet level. Aim at its
+  # center from the eye position: eye height 1.62, block center 0.50,
+  # horizontal distance 2.00, so atan((1.62 - 0.50) / 2.00) rounds to 29 degrees.
+  # Verify the synchronized server look vector intersects the real block before
+  # sending mouse input; this replaces the unreliable facing-entity marker aim.
+  send_chat '/tp @p ~ ~ ~ 0 29'
+  send_chat '/execute as @p at @s anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench run say TC_WORKBENCH_SERVER_RAY_TARGET=PASS'
+  wait_for_workbench_server_marker 'TC_WORKBENCH_SERVER_RAY_TARGET=PASS'
   # F3 records the real block targeted by the player's crosshair. The
   # server-side interaction marker below is the authoritative BlockEntity
   # and openMenu check, so no /data command response is scraped from client.log.
