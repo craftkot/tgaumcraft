@@ -2058,3 +2058,23 @@ At the latest poll, the exact-head Workbench English cells, label tint/art, crys
 - Checked changed paths against every other open PR #1–#3 and #5–#42: no overlap for .github/workflows/closure-workbench-gui-client.yml, tools/client_workbench_gui_smoke.py, or tools/test_client_workbench_world.py. PR #4 remains OPEN/DRAFT/UNMERGED, with 1307 commits ahead / 0 behind main and 225 changed paths. No merge or foreign-branch write.
 - Fixed audit remains 59/100, M16 4/6, M08 5/9. No score increase: a workflow trigger and a queued matrix are not gameplay acceptance.
 - Next: inspect all four Workbench matrix job results and screenshots on the exact tested code head; if any fail, diagnose the screenshot/server marker rather than changing production GUI without evidence. Then continue the remaining M16 original-resource/special-renderer audit and the separate two-process Salis client boundary/ticket/reload test.
+
+
+## 2026-11-19 — M16 Workbench smoke: исправлена неверная геометрия прицеливания
+
+На предыдущем exact-head запуске Workbench matrix `#44466572937` все четыре конфигурации дошли до настоящего клиента, но завершились на отсутствии `TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES`. Это не доказывало дефект `ArcaneWorkbenchBlock`: клиентский скриншот был снят, но меню не открылось.
+
+Артефакт `#14502738894` (EN / scale 2) скачан и осмотрен. `08d-workbench-gui-open.png` показывает мир, а не GUI; F3 на `08c-workbench-before-open.png` фиксирует yaw 0 / pitch -14 и отсутствие Targeted Block. Следовательно, предыдущий способ `tp ... facing entity marker feet` не навёл реальный серверный look vector на рабочий блок. Это ошибка smoke-драйвера, не установленная ошибка игрового блока.
+
+Исправлены:
+- `tools/client_workbench_gui_smoke.py`: после установки блока на относительной позиции +2 игроку задаётся рассчитанный pitch 29° (`atan((1.62 - 0.50) / 2.00))); до правого клика сервер обязан подтвердить, что луч из глаз игрока на расстоянии 2 блока пересекает именно `thaumcraft:arcane_workbench` (`TC_WORKBENCH_SERVER_RAY_TARGET=PASS`). Временный marker entity больше не используется.
+- `tools/test_client_workbench_world.py`: добавлена проверка расчёта угла, точной команды, серверного ray-gate и порядка до снимка/клика; старый marker flow удалён.
+
+Коммит: `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a`.
+
+Новая проверка exact HEAD:
+- Workbench push run [#44471453847](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847): 4 конфигурации запущены; генерация smoke уже прошла для EN/scale 3 и RU/scale 3, оба клиента выполняют этап открытия GUI; EN/scale 2 и RU/scale 2 ещё устанавливают графические/OCR зависимости.
+- Full Port CI [#44471454060](https://github.com/craftkot/tgaumcraft/actions/runs/44471454060): Core parity и source/resource guards прошли; NeoForge build и dedicated-server smoke ещё выполняются.
+- На момент записи реальные GUI-результаты ещё не получены. Не засчитывать Workbench как прошедший.
+
+Оценка остаётся **59/100**. Не изменялись Java-механика, глобальные регистры, Gradle или общие CI-файлы. Следующий шаг — получить четыре client artifacts, подтвердить `SERVER_RAY_TARGET`, `openMenu`, построение экрана и OCR; если ray-gate не проходит, сначала пересчитать координаты по серверному положению/повороту, не менять производственный код без доказательства.
