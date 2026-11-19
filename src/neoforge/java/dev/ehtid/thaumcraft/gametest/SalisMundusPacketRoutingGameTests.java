@@ -4,6 +4,9 @@ import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.SalisMundusSparkles;
 import dev.ehtid.thaumcraft.item.SalisSparkleTrailQueue;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -12,22 +15,29 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
 import net.minecraft.network.protocol.common.ServerboundKeepAlivePacket;
 import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -46,6 +56,8 @@ import org.jetbrains.annotations.Nullable;
 public final class SalisMundusPacketRoutingGameTests {
     private static final String ACTOR_HANDLER = "thaumcraft_salis_actor_packet_probe";
     private static final String BYSTANDER_HANDLER = "thaumcraft_salis_bystander_packet_probe";
+    private static final String ACTOR_SOUND_HANDLER = "thaumcraft_salis_actor_sound_probe";
+    private static final String BYSTANDER_SOUND_HANDLER = "thaumcraft_salis_bystander_sound_probe";
 
     private SalisMundusPacketRoutingGameTests() {}
 
@@ -170,6 +182,94 @@ public final class SalisMundusPacketRoutingGameTests {
                 throw failure;
             }
         });
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 80,
+            required = true
+    )
+    public static void routesSalisDustSoundOnlyToTheSelectedPlayer(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos target = helper.absolutePos(new BlockPos(8, 2, 8));
+        level.setBlock(target, Blocks.BOOKSHELF.defaultBlockState(), 3);
+
+        ConnectedPlayer actor = createConnectedPlayer(level, target, "salis-sound-actor");
+        ConnectedPlayer bystander = createConnectedPlayer(level, target, "salis-sound-bystander");
+        AtomicInteger actorSounds = new AtomicInteger();
+        AtomicInteger bystanderSounds = new AtomicInteger();
+
+        try {
+            installSoundRecorder(actor, ACTOR_SOUND_HANDLER, actorSounds);
+            installSoundRecorder(bystander, BYSTANDER_SOUND_HANDLER, bystanderSounds);
+            flush(actor.channel());
+            flush(bystander.channel());
+
+            // Positive control: the same server-side sound broadcast must reach
+            // both independent player connections before actor-only use is tested.
+            level.playSound(null, target, ThaumcraftSounds.DUST.get(),
+                    SoundSource.PLAYERS, 0.33F, 1.0F);
+            flush(actor.channel());
+            flush(bystander.channel());
+            if (actorSounds.get() != 1 || bystanderSounds.get() != 1) {
+                throw new AssertionError("Salis sound recorders failed broadcast positive control"
+                        + " actor=" + actorSounds.get()
+                        + " bystander=" + bystanderSounds.get());
+            }
+
+            // Exercise the production ItemMagicDust path, not a hand-built
+            // actor packet: only a player who earned the dream marker may use
+            // Salis Mundus on the original bookshelf target.
+            actor.player().getData(ThaumcraftPlayerAttachments.PLAYER_DATA)
+                    .knowledge().addResearch("!gotdream");
+            ItemStack dust = new ItemStack(ThaumcraftItems.SALIS_MUNDUS.get(), 2);
+            actor.player().setItemInHand(InteractionHand.MAIN_HAND, dust);
+            BlockHitResult validHit = new BlockHitResult(
+                    Vec3.atCenterOf(target), Direction.UP, target, false);
+            InteractionResult validResult = ThaumcraftItems.SALIS_MUNDUS.get().onItemUseFirst(
+                    dust, new UseOnContext(actor.player(), InteractionHand.MAIN_HAND, validHit));
+            flush(actor.channel());
+            flush(bystander.channel());
+
+            if (validResult != InteractionResult.SUCCESS || dust.getCount() != 1) {
+                throw new AssertionError("Valid BETA26 Salis bookshelf use did not consume exactly one dust"
+                        + " result=" + validResult + " remaining=" + dust.getCount());
+            }
+            if (actorSounds.get() != 2 || bystanderSounds.get() != 1) {
+                throw new AssertionError("Salis dust sound was not actor-only"
+                        + " actor=" + actorSounds.get()
+                        + " bystander=" + bystanderSounds.get());
+            }
+
+            // An invalid target must neither consume dust nor emit the sound.
+            BlockPos invalid = target.above();
+            level.setBlock(invalid, Blocks.STONE.defaultBlockState(), 3);
+            BlockHitResult invalidHit = new BlockHitResult(
+                    Vec3.atCenterOf(invalid), Direction.UP, invalid, false);
+            InteractionResult invalidResult = ThaumcraftItems.SALIS_MUNDUS.get().onItemUseFirst(
+                    dust, new UseOnContext(actor.player(), InteractionHand.MAIN_HAND, invalidHit));
+            flush(actor.channel());
+            flush(bystander.channel());
+            if (invalidResult != InteractionResult.PASS || dust.getCount() != 1
+                    || actorSounds.get() != 2 || bystanderSounds.get() != 1) {
+                throw new AssertionError("Invalid Salis target consumed dust or emitted a sound"
+                        + " result=" + invalidResult
+                        + " remaining=" + dust.getCount()
+                        + " actor=" + actorSounds.get()
+                        + " bystander=" + bystanderSounds.get());
+            }
+
+            System.out.println(
+                    "TC_GAMETEST_SALIS_DUST_SOUND_RECIPIENT=PASS connections=2 broadcast=2 actor_only=YES invalid_target_silent=YES"
+            );
+        } finally {
+            removeRecorder(actor, ACTOR_SOUND_HANDLER);
+            removeRecorder(bystander, BYSTANDER_SOUND_HANDLER);
+            cleanupRecipients(level, actor, bystander);
+        }
+        helper.succeed();
     }
 
     @PrefixGameTestTemplate(false)
@@ -309,6 +409,38 @@ public final class SalisMundusPacketRoutingGameTests {
         }
         if (channel.pipeline().get(name) == null) {
             throw new AssertionError("Salis packet recorder was not installed: " + name);
+        }
+    }
+
+    private static void installSoundRecorder(
+            ConnectedPlayer recipient,
+            String name,
+            AtomicInteger counter
+    ) {
+        EmbeddedChannel channel = recipient.channel();
+        if (!channel.isActive()) {
+            throw new AssertionError("Salis sound recipient connection is not active: " + name);
+        }
+        Runnable install = () -> channel.pipeline().addLast(
+                name,
+                new ChannelOutboundHandlerAdapter() {
+                    @Override
+                    public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
+                            throws Exception {
+                        if (message instanceof ClientboundSoundPacket) {
+                            counter.incrementAndGet();
+                        }
+                        context.write(message, promise);
+                    }
+                }
+        );
+        if (channel.eventLoop().inEventLoop()) {
+            install.run();
+        } else {
+            channel.eventLoop().submit(install).syncUninterruptibly();
+        }
+        if (channel.pipeline().get(name) == null) {
+            throw new AssertionError("Salis sound recorder was not installed: " + name);
         }
     }
 
