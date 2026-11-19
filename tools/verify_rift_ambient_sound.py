@@ -75,7 +75,7 @@ for fragment in (
     "parec --device=tc_rift_sink.monitor",
     "rift_capture_pid=$!",
     "RIFT_GAME_TICK_WINDOW=PASS",
-    "server_tick_count -ne 300",
+    "if [ \"$server_tick_count\" -ne 300 ]; then",
     "RIFT_LISTENER_AT_EVENT=PASS",
     "RIFT_SERVER_AMBIENT_DUE=PASS",
     "RIFT_SERVER_SOUND_CALL=PASS",
