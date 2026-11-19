@@ -1,0 +1,117 @@
+name: M16 BETA26 animated essentia jar liquid renderer
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarRenderLogic.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarRenderLogicTest.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarLiquidRenderer.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarRendererEvents.java'
+      - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png'
+      - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png.mcmeta'
+      - 'tools/test_essentia_jar_render_logic.sh'
+      - 'tools/verify_essentia_jar_liquid_source.py'
+      - 'tools/client_jar_liquid_smoke.py'
+      - 'tools/assert_client_jar_liquid_smoke.py'
+      - '.github/workflows/closure-jar-liquid-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core-render-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify BETA26 liquid geometry and aspect colors
+        run: bash tools/test_essentia_jar_render_logic.sh
+      - name: Verify byte-identical BETA26 animated texture and metadata
+        run: python3 tools/verify_essentia_jar_liquid_source.py
+
+  real-client-liquid:
+    needs: core-render-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real client display tools
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          selected=""
+          for mirror in \
+            "https://mirrors.edge.kernel.org/ubuntu/" \
+            "https://mirror.math.princeton.edu/pub/ubuntu/" \
+            "https://ubuntu.osuosl.org/ubuntu/" \
+            "https://archive.ubuntu.com/ubuntu/"; do
+            host="$(printf '%s' "$mirror" | sed -E 's|^https?://([^/]+)/.*|\1|')"
+            if ! timeout 8s getent ahostsv4 "$host" >/dev/null; then
+              echo "APT_MIRROR_DNS_FAILED=$host"
+              continue
+            fi
+            if ! curl --fail --silent --show-error --location --connect-timeout 8 --max-time 15 "$mirror/dists/noble/InRelease" -o /tmp/ubuntu-InRelease; then
+              echo "APT_MIRROR_HTTP_FAILED=$host"
+              continue
+            fi
+            if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+              sudo sed -i -E "s|^URIs:.*|URIs: $mirror|" /etc/apt/sources.list.d/ubuntu.sources
+            fi
+            if sudo timeout 90s apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=0 -o Acquire::http::Timeout=12 -o Acquire::https::Timeout=12 -o APT::Update::Error-Mode=any update -qq; then
+              selected="$mirror"
+              echo "APT_MIRROR_SELECTED=$selected"
+              break
+            fi
+            echo "APT_MIRROR_UPDATE_FAILED=$host"
+          done
+          if [ -z "$selected" ]; then
+            echo "APT_MIRROR_SELECTION_FAILED=YES"
+            exit 1
+          fi
+          sudo timeout 360s env DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::ForceIPv4=true -o Acquire::Retries=0 -o Acquire::http::Timeout=12 -o Acquire::https::Timeout=12 -o APT::Update::Error-Mode=any install --no-install-recommends -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick
+          for command in Xvfb xdpyinfo xdotool openbox glxinfo import identify convert; do
+            command -v "$command" >/dev/null || { echo "CLIENT_TOOL_MISSING=$command"; exit 1; }
+          done
+      - name: Generate and syntax-check actual Minecraft smoke
+        run: |
+          python3 tools/client_jar_liquid_smoke.py > client-jar-liquid-generated.sh
+          bash -n client-jar-liquid-generated.sh
+      - name: Launch Minecraft and capture BETA26 jar liquid
+        run: bash client-jar-liquid-generated.sh
+      - name: Recheck authoritative real-client markers
+        if: always()
+        run: |
+          if [ -f client-smoke/client.log ] && [ -f client-smoke/screenshots/97-jar-liquid-filled.png ]; then
+            python3 tools/assert_client_jar_liquid_smoke.py client-smoke/client.log client-smoke/screenshots/97-jar-liquid-filled.png
+          else
+            echo "JAR_LIQUID_CLIENT_EVIDENCE_INCOMPLETE=YES"
+            exit 1
+          fi
+      - name: Upload real-client evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-beta26-animated-jar-liquid-client
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/
