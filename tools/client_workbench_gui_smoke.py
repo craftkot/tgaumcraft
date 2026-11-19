@@ -301,44 +301,35 @@ body = r'''
     exit 1
   }
 
-  # Earlier world-model capture uses the spawn fixture, but shared smoke probes
-  # may move the player before this interaction. Rebuild the real menu target
-  # at the current player position, two blocks ahead on the already-filled
-  # spawn-chunk floor. The inventory, F3 target and right-click now share one
-  # coordinate instead of accidentally addressing the stale spawn fixture.
-  # The source-model fixture at +1 is still directly in front of this target.
-  # Remove it after its screenshots; otherwise the ray hits the old empty bench.
-  # The player's eye column can still contain a fern from the random spawn. F3
-  # on the previous real-client run targeted minecraft:grass_fern at the player
-  # position instead of the bench two blocks ahead. Clear only the player column
-  # above the floor before creating and aiming at the real workbench.
-  send_chat '/execute at @p run fill ~ ~ ~ ~ ~2 ~ minecraft:air'
-  # The +1 column is the line-of-sight blocker, not just the block at the player's feet.
-  # Spawn terrain may leave grass at eye height; clear y=0..2 before aiming at +2.
-  send_chat '/execute at @p run fill ~ ~ ~1 ~ ~2 ~1 minecraft:air'
-  sleep 1
-  send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
+  # Pin the interaction fixture to a deterministic, already-loaded chunk.
+  # Relative spawn coordinates drifted between chat commands; the old yaw=0
+  # ray therefore missed the block even though the fixture existed. Move into
+  # chunk (0,0), create a small floor/clear volume, then return to its center.
+  send_chat '/tp @p 0.5 120 0.5 0 0'
+  send_chat '/fill -2 119 -1 2 119 4 minecraft:stone'
+  send_chat '/fill -2 120 -1 2 123 4 minecraft:air'
+  send_chat '/tp @p 0.5 120 0.5 0 0'
+  send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'
   sleep 2
-  # Prove the target block exists in the integrated server before interpreting a
-  # missing interaction marker as a client/input problem.
-  send_chat '/execute at @p if block ~ ~ ~2 thaumcraft:arcane_workbench run say TC_WORKBENCH_FIXTURE_BLOCK_READY'
+  # Prove the exact absolute fixture before interpreting a missing interaction
+  # marker as a client/input problem.
+  send_chat '/execute if block 0 120 2 thaumcraft:arcane_workbench run say TC_WORKBENCH_FIXTURE_BLOCK_READY'
   wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'
   # Authentic BETA26 Thaumometer preview: four gold ingots around one glass pane.
   # This exposes the synced 20-vis preview and all six requirement icons without
   # granting research or crafting the result.
-  send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~2 container.3 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~2 container.4 with minecraft:glass_pane 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~2 container.5 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run item replace block ~ ~ ~2 container.7 with minecraft:gold_ingot 1'
-  send_chat '/execute at @p run data get block ~ ~ ~2 Items'
+  send_chat '/item replace block 0 120 2 container.1 with minecraft:gold_ingot 1'
+  send_chat '/item replace block 0 120 2 container.3 with minecraft:gold_ingot 1'
+  send_chat '/item replace block 0 120 2 container.4 with minecraft:glass_pane 1'
+  send_chat '/item replace block 0 120 2 container.5 with minecraft:gold_ingot 1'
+  send_chat '/item replace block 0 120 2 container.7 with minecraft:gold_ingot 1'
+  send_chat '/data get block 0 120 2 Items'
 
-  # The menu block is two blocks ahead at the player's feet level. Aim at its
-  # center from the eye position: eye height 1.62, block center 0.50,
-  # horizontal distance 2.00, so atan((1.62 - 0.50) / 2.00) rounds to 29 degrees.
-  # Verify the synchronized server look vector intersects the real block before
-  # sending mouse input; this replaces the unreliable facing-entity marker aim.
-  send_chat '/tp @p ~ ~ ~ 0 29'
+  # Player feet are (0.5,120,0.5); eye height is 1.62. At yaw 0 and
+  # pitch 29 degrees, the point two blocks along the eye ray is inside the
+  # workbench at (0,120,2). The server-side ray marker proves the target before
+  # mouse input; no player-spawn fractional coordinates are involved.
+  send_chat '/tp @p 0.5 120 0.5 0 29'
   send_chat '/execute as @p at @s anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench run say TC_WORKBENCH_SERVER_RAY_TARGET=PASS'
   wait_for_workbench_server_marker 'TC_WORKBENCH_SERVER_RAY_TARGET=PASS'
   # F3 records the real block targeted by the player's crosshair. The
