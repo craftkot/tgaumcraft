@@ -9,4 +9,4 @@ javac --release 21 -d "$tmp" \
   src/test/java/dev/ehtid/thaumcraft/port/core/SilverwoodRollbackNullPositionTest.java
 output="$(java -cp "$tmp" dev.ehtid.thaumcraft.port.core.SilverwoodRollbackNullPositionTest)"
 printf '%s\n' "$output"
-[[ "$output" == 'M12 Silverwood null-position rollback: OK (2 cases)' ]]
+[[ "$output" == 'M12 Silverwood null-position rollback: OK (4 cases)' ]]
