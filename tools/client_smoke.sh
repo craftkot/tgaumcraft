@@ -403,6 +403,15 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/setblock 376 150 344 thaumcraft:mirror_essentia[facing=north]'
     send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
     send_chat '/data merge block 376 149 344 {AspectFilter:"aer",Amount:0s}'
+    # Verify the reverse fixture starts with exactly 12 Aer in the source
+    # and zero in the sink. Without this gate, an invalid fixture could
+    # accidentally satisfy the later conservation assertion.
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 344 149 344 {Aspect:"aer",Amount:12s} run say MIRROR_REVERSE_INITIAL_SOURCE_12'
+    assert_log_literal MIRROR_REVERSE_INITIAL_SOURCE_12 "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 376 149 344 {AspectFilter:"aer",Amount:0s} run say MIRROR_REVERSE_INITIAL_SINK_0'
+    assert_log_literal MIRROR_REVERSE_INITIAL_SINK_0 "$mirror_assert_offset"
     send_chat '/data merge block 344 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:376,linkY:150,linkZ:344}'
     send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:344,linkY:150,linkZ:344}'
     send_chat '/tp @p 376.5 152.5 338.5 0 30'
