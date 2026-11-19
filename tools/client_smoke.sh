@@ -113,6 +113,23 @@ activate_firststeps_advance() {
   echo 'FIRSTSTEPS_BOOK_ADVANCE_INPUT=TAB_ENTER' | tee -a client-smoke-status.txt
 }
 
+assert_log_literal() {
+  local marker=$1 offset=$2 attempt
+  # Only accept log output written AFTER the corresponding command was sent.
+  # A marker left by an earlier probe must never satisfy this assertion.
+  for attempt in $(seq 1 20); do
+    if [ "$(wc -c < client-smoke/client.log)" -ge "$offset" ] &&
+       tail -c "+$((offset + 1))" client-smoke/client.log | grep -F "$marker" > /dev/null; then
+      echo "VANILLA_COMMAND_ASSERTION_CONFIRMED=$marker after_poll=$attempt" | tee -a client-smoke-status.txt
+      return 0
+    fi
+    sleep 1
+  done
+  echo "VANILLA_COMMAND_ASSERTION_TIMEOUT=$marker waited_seconds=20" | tee -a client-smoke-status.txt
+  tail -80 client-smoke/client.log >&2
+  exit 1
+}
+
 assert_smoke_event_count() {
   local key=$1 minimum=$2 actual
   actual="$(grep -Fc "TC_SMOKE_${key}=YES" client-smoke/client.log || true)"
@@ -297,6 +314,16 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/setblock 280 150 248 thaumcraft:mirror_essentia[facing=down]'
     send_chat '/setblock 280 149 248 thaumcraft:jar_normal'
     send_chat '/data merge block 248 149 247 {Aspect:"aer",Amount:12s}'
+    # Match the reverse scenario: initialize a typed, Aer-filtered empty
+    # recipient explicitly instead of depending on /setblock NBT defaults.
+    # A pre-existing nonzero sink would invalidate the 12-Aer conservation test.
+    send_chat '/data merge block 280 149 248 {AspectFilter:"aer",Amount:0s}'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 248 149 247 {Amount:12s} run say MIRROR_FORWARD_INITIAL_SOURCE_12'
+    assert_log_literal MIRROR_FORWARD_INITIAL_SOURCE_12 "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 280 149 248 {Amount:0s} run say MIRROR_FORWARD_INITIAL_SINK_0'
+    assert_log_literal MIRROR_FORWARD_INITIAL_SINK_0 "$mirror_assert_offset"
     send_chat '/data merge block 248 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:280,linkY:150,linkZ:248}'
     send_chat '/data merge block 280 150 248 {linked:1b,linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}'
     send_chat '/tp @p 280.5 152.5 242.5 0 30'
@@ -310,8 +337,38 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 52-mirror-receiver-jar-after-credit
     # These conditions are independent of the custom smoke markers and
     # guarantee both physical source debit and actual recipient credit.
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute unless data block 248 149 247 {Amount:12s} run say MIRROR_SOURCE_CHANGED_FROM_12'
+    assert_log_literal MIRROR_SOURCE_CHANGED_FROM_12 "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute unless data block 280 149 248 {Amount:0s} run say MIRROR_RECEIVER_GAINED_REAL_ESSENTIA'
+    assert_log_literal MIRROR_RECEIVER_GAINED_REAL_ESSENTIA "$mirror_assert_offset"
+    # Read actual BlockEntity NBT into vanilla scoreboard values and fail closed
+    # unless the conserved total equals the original 12 Aer units.
+    send_chat '/scoreboard objectives add tc_mirror_balance dummy'
+    send_chat '/scoreboard players set expected tc_mirror_balance 12'
+    # Reset each result before querying; verify both NBT reads independently.
+    # A stale scoreboard value from a prior command cannot satisfy these gates.
+    send_chat '/scoreboard players set source tc_mirror_balance -999'
+    send_chat '/scoreboard players set sink tc_mirror_balance -999'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 248 149 247 Amount run say MIRROR_FORWARD_SOURCE_AMOUNT_EXISTS'
+    assert_log_literal MIRROR_FORWARD_SOURCE_AMOUNT_EXISTS "$mirror_assert_offset"
+    send_chat '/execute store result score source tc_mirror_balance run data get block 248 149 247 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance matches 0.. run say MIRROR_FORWARD_SOURCE_READ_FRESH'
+    assert_log_literal MIRROR_FORWARD_SOURCE_READ_FRESH "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 280 149 248 Amount run say MIRROR_FORWARD_SINK_AMOUNT_EXISTS'
+    assert_log_literal MIRROR_FORWARD_SINK_AMOUNT_EXISTS "$mirror_assert_offset"
+    send_chat '/execute store result score sink tc_mirror_balance run data get block 280 149 248 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score sink tc_mirror_balance matches 0.. run say MIRROR_FORWARD_SINK_READ_FRESH'
+    assert_log_literal MIRROR_FORWARD_SINK_READ_FRESH "$mirror_assert_offset"
+    send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_EXACT_TOTAL_12_CONFIRMED'
+    assert_log_literal MIRROR_EXACT_TOTAL_12_CONFIRMED "$mirror_assert_offset"
     capture 53-mirror-transport-vanilla-world-nbt
     echo 'MIRROR_SOURCE_AND_RECEIVER_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
     # A real /setblock destroy must use Block#getDrops and onRemove.
@@ -324,7 +381,9 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/data get block 248 150 248'
     capture 54-mirror-partner-unlinked-after-destruction
     # Query for the actual linked drop, not a synthetic /give item.
-    send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_LINKED_ITEM_COMPONENT_FOUND'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_DROP_OK'
+    assert_log_literal MIRROR_DROP_OK "$mirror_assert_offset"
     capture 55-linked-mirror-loot-custom-data
     if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
       echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
@@ -344,6 +403,15 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     send_chat '/setblock 376 150 344 thaumcraft:mirror_essentia[facing=north]'
     send_chat '/data merge block 344 149 344 {Aspect:"aer",Amount:12s}'
     send_chat '/data merge block 376 149 344 {AspectFilter:"aer",Amount:0s}'
+    # Verify the reverse fixture starts with exactly 12 Aer in the source
+    # and zero in the sink. Without this gate, an invalid fixture could
+    # accidentally satisfy the later conservation assertion.
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 344 149 344 {Aspect:"aer",Amount:12s} run say MIRROR_REVERSE_INITIAL_SOURCE_12'
+    assert_log_literal MIRROR_REVERSE_INITIAL_SOURCE_12 "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 376 149 344 {AspectFilter:"aer",Amount:0s} run say MIRROR_REVERSE_INITIAL_SINK_0'
+    assert_log_literal MIRROR_REVERSE_INITIAL_SINK_0 "$mirror_assert_offset"
     send_chat '/data merge block 344 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:376,linkY:150,linkZ:344}'
     send_chat '/data merge block 376 150 344 {linked:1b,linkDim:"minecraft:overworld",linkX:344,linkY:150,linkZ:344}'
     send_chat '/tp @p 376.5 152.5 338.5 0 30'
@@ -355,8 +423,34 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 57-reverse-source-after-debit
     send_chat '/data get block 376 149 344'
     capture 58-reverse-sink-after-credit
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute unless data block 344 149 344 {Amount:12s} run say MIRROR_REVERSE_SOURCE_DECREASED'
+    assert_log_literal MIRROR_REVERSE_SOURCE_DECREASED "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
     send_chat '/execute unless data block 376 149 344 {Amount:0s} run say MIRROR_REVERSE_SINK_INCREASED'
+    assert_log_literal MIRROR_REVERSE_SINK_INCREASED "$mirror_assert_offset"
+    # Reset each result before querying; verify both NBT reads independently.
+    # A stale scoreboard value from a prior command cannot satisfy these gates.
+    send_chat '/scoreboard players set source tc_mirror_balance -999'
+    send_chat '/scoreboard players set sink tc_mirror_balance -999'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 344 149 344 Amount run say MIRROR_REVERSE_SOURCE_AMOUNT_EXISTS'
+    assert_log_literal MIRROR_REVERSE_SOURCE_AMOUNT_EXISTS "$mirror_assert_offset"
+    send_chat '/execute store result score source tc_mirror_balance run data get block 344 149 344 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance matches 0.. run say MIRROR_REVERSE_SOURCE_READ_FRESH'
+    assert_log_literal MIRROR_REVERSE_SOURCE_READ_FRESH "$mirror_assert_offset"
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if data block 376 149 344 Amount run say MIRROR_REVERSE_SINK_AMOUNT_EXISTS'
+    assert_log_literal MIRROR_REVERSE_SINK_AMOUNT_EXISTS "$mirror_assert_offset"
+    send_chat '/execute store result score sink tc_mirror_balance run data get block 376 149 344 Amount 1'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score sink tc_mirror_balance matches 0.. run say MIRROR_REVERSE_SINK_READ_FRESH'
+    assert_log_literal MIRROR_REVERSE_SINK_READ_FRESH "$mirror_assert_offset"
+    send_chat '/scoreboard players operation source tc_mirror_balance += sink tc_mirror_balance'
+    mirror_assert_offset=$(wc -c < client-smoke/client.log)
+    send_chat '/execute if score source tc_mirror_balance = expected tc_mirror_balance run say MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED'
+    assert_log_literal MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED "$mirror_assert_offset"
     capture 59-reverse-vanilla-nbt-assert
     echo 'MIRROR_REVERSE_SOURCE_AND_SINK_WORLD_PROBED=YES' | tee -a client-smoke-status.txt
 
