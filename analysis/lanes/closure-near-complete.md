@@ -2344,3 +2344,9 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - [Workbench GUI matrix #44564032611](https://github.com/craftkot/tgaumcraft/actions/runs/44564032611): Python regression and generated-shell step PASS. The first real-client cell (RU, GUI scale 3) is still IN_PROGRESS; EN/RU scale-2/3 remaining cells are QUEUED. No GUI/OCR acceptance is claimed yet.
 - [Aura/Crystal GameTests #44564032868](https://github.com/craftkot/tgaumcraft/actions/runs/44564032868) remains QUEUED. CircleCI `verify-connection` on `217f218c` is SUCCESS.
 - The only current code changes are the two Workbench smoke/test files; no production behavior has changed. Score remains **59/100**, M16 **4/6**, M08 **5/9**. Next run must poll these exact workflows before selecting another task.
+
+#### Final CI poll — 2026-11-19 16:21 UTC
+
+- [Full Port CI #44564032757](https://github.com/craftkot/tgaumcraft/actions/runs/44564032757) is now **SUCCESS**. The earlier NeoForge build step and the dedicated-server smoke step both completed successfully. This is build/server evidence, not client GUI evidence.
+- [Workbench GUI matrix #44564032611](https://github.com/craftkot/tgaumcraft/actions/runs/44564032611) remains IN_PROGRESS: RU/scale-3 is still in the real-client step; EN/RU at scales 2/3 are queued. [Aura/Crystal GameTests #44564032868](https://github.com/craftkot/tgaumcraft/actions/runs/44564032868) remains QUEUED.
+- CircleCI `verify-connection` on code commit `217f218c` is SUCCESS. No new production behavior or score change. The next run must first collect the Workbench matrix and Aura/Crystal outcomes.
