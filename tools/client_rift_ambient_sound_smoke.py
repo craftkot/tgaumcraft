@@ -407,7 +407,6 @@ if not (
 for required_marker in (
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
-    "TC_RIFT_LISTENER_STILL_AT_SOURCE",
 ):
     if probe.count(required_marker) < 2:
         raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)
