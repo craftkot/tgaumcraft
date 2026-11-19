@@ -2119,3 +2119,11 @@ Scale 2 EN/RU на момент записи ещё находятся на ша
 ### Follow-up CI status — 2026-11-19
 
 CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a` теперь **SUCCESS**. В Workbench matrix EN/scale 3 и RU/scale 3 — SUCCESS; EN/scale 2 перешёл к запуску настоящего клиента; RU/scale 2 ещё устанавливает клиентские зависимости. Общий Workbench run `#44471453847` остаётся `in_progress`, артефакты scale 2 ещё не опубликованы. Оценка не меняется.
+
+
+### 2026-11-19 — Workbench exact-code-head four-cell native matrix confirmed
+
+- Re-read main rules/roadmap/audit, own lane, open PRs and branch comparison. Main remains `a4280834adc5a20b6951098af937d30ca4aeca56`. On exact code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae6d3a`, Workbench real-client run [#44471453847](https://github.com/craftkot/tgaumcraft/actions/runs/44471453847) has now completed all four jobs SUCCESS: EN scale 2 (job 135381669147), RU scale 2 (135381669494), EN scale 3 (135381669599), RU scale 3 (135381669855).
+- Inspected fresh EN/2 and RU/2 job logs directly. Both record `TC_WORKBENCH_SERVER_RAY_TARGET=PASS`, `TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES`, `TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES`, `TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES`, `TC_SMOKE_WORKBENCH_GUI_RENDERED=YES`, `WORKBENCH_GUI_RENDER=PASS`, and their locale/scale-specific `WORKBENCH_GUI_REAL_CLIENT_...=PASS`. Earlier journal already records EN/3 and RU/3 with real GUI screenshots. All four run artifacts exist: EN/2 #14504732749, RU/2 #14505761144, EN/3 #14504911369, RU/3 #14503719157.
+- Full NeoForge CI [#44471454060](https://github.com/craftkot/tgaumcraft/actions/runs/44471454060) SUCCESS on the same code SHA, including JAR and dedicated server. This closes the **specific Workbench ray/GUI matrix blocker**, not the entire M16 or a full survival gameplay acceptance. No new production Java defect established and no production Java edited in this iteration.
+- Remaining highest-priority M16 acceptance: two independent real clients, Salis Mundus at chunk boundaries, unload/reload, real chunk-ticket state, and independently recorded network deliveries. No such test was run here. Historical score unchanged: 59/100, M16 4/6, M08 5/9. PR #4 stays draft/unmerged. Next: implement/run the isolated native Salis two-client evidence probe, without another JVM-only mock.
