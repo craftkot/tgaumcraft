@@ -16,6 +16,14 @@ generated = subprocess.run(
     text=True,
 )
 script = generated.stdout
+floor = "send_chat '/fill 248 149 248 252 149 252 minecraft:stone'"
+old_floor = "send_chat '/fill 248 149 250 252 149 252 minecraft:stone'"
+camera_teleport = "send_chat '/tp @p 250.5 150 248.5 0 16'"
+if floor not in script or old_floor in script:
+    raise SystemExit("jar-liquid fixture platform must cover the camera stand at z=248")
+if script.index(floor) > script.index(camera_teleport):
+    raise SystemExit("jar-liquid camera must be placed only after its support platform exists")
+
 syntax = subprocess.run(
     ["bash", "-n"],
     input=script,
