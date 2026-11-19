@@ -233,7 +233,13 @@ interaction_body = generator.split("body = r'''", 1)[1].split("'''", 1)[0]
 local_clear_front = "send_chat '/execute at @p run setblock ~ ~ ~1 minecraft:air'"
 local_fixture = "send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'"
 local_inventory = "send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'"
-local_aim = "send_chat '/tp @p ~ ~ ~ 0 35'"
+local_aim_marker = "send_chat '/execute at @p run summon minecraft:marker ~ ~0.5 ~2 {Tags:[\"tc_workbench_target\"]}'"
+local_aim_ready = "send_chat '/execute if entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_READY'"
+local_aim_ready_wait = "wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_READY'"
+local_aim_face = "send_chat '/tp @p ~ ~ ~ facing entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] feet'"
+local_aim_cleanup = "send_chat '/kill @e[type=minecraft:marker,tag=tc_workbench_target]'"
+local_aim_cleaned = "send_chat '/execute unless entity @e[type=minecraft:marker,tag=tc_workbench_target,limit=1] run say TC_WORKBENCH_AIM_MARKER_CLEANED'"
+local_aim_cleaned_wait = "wait_for_workbench_server_marker 'TC_WORKBENCH_AIM_MARKER_CLEANED'"
 model_capture = "capture 08b-source-arcane-workbench-item-model"
 expect(model_capture in generator and generator.index(model_capture) < generator.index(local_clear_front),
        "source Workbench model screenshots must be captured before clearing the front fixture")
@@ -241,8 +247,15 @@ expect(local_clear_front in interaction_body
        and interaction_body.index(local_clear_front) < interaction_body.index(local_fixture)
        and interaction_body.index(local_fixture) < interaction_body.index(local_inventory)
        and interaction_body.index(local_inventory) < interaction_body.index("capture 08c-workbench-before-open")
-       and local_aim in interaction_body
-       and interaction_body.index(local_aim) < interaction_body.index("capture 08c-workbench-before-open"),
+       and all(marker in interaction_body for marker in (
+           local_aim_marker, local_aim_ready, local_aim_ready_wait,
+           local_aim_face, local_aim_cleanup, local_aim_cleaned, local_aim_cleaned_wait,
+       ))
+       and interaction_body.index(local_aim_marker) < interaction_body.index(local_aim_ready)
+       < interaction_body.index(local_aim_ready_wait) < interaction_body.index(local_aim_face)
+       < interaction_body.index(local_aim_cleanup) < interaction_body.index(local_aim_cleaned)
+       < interaction_body.index(local_aim_cleaned_wait)
+       < interaction_body.index("capture 08c-workbench-before-open"),
        "Workbench smoke must clear the occluding +1 fixture before populating/aiming at the +2 menu target")
 expect("send_chat '/forceload add 0 0'" not in fixture_replacement
        and "send_chat '/fill 0 148 0 4 148 6 minecraft:stone'" not in fixture_replacement
@@ -280,11 +293,15 @@ expect('if ("1".equals(System.getenv("THAUMCRAFT_SMOKE")))' in block_source
 expect(generator.index("send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'")
        < generator.index("send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'")
        < generator.index("send_chat '/execute at @p run data get block ~ ~ ~2 Items'")
-       < generator.index("send_chat '/tp @p ~ ~ ~ 0 35'")
+       < generator.index(local_aim_marker) < generator.index(local_aim_face)
        < generator.index("capture 08c-workbench-before-open")
        < generator.index("xdotool click 3")
        < generator.index("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
-       "Workbench fixture, screenshot, click and lifecycle gates must stay ordered")
+       "Workbench fixture, marker-derived aim, screenshot, click and lifecycle gates must stay ordered")
+expect("send_chat '/tp @p ~ ~ ~ 0 35'" not in generator
+       and "TC_WORKBENCH_AIM_MARKER_READY" in generator
+       and "TC_WORKBENCH_AIM_MARKER_CLEANED" in generator,
+       "Workbench smoke must reject stale hard-coded camera angles and clean its temporary aim marker")
 expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
        and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
        "Workbench position gate still depends on obsolete fixed world coordinates")
