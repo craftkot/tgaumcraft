@@ -382,8 +382,8 @@ if grep -Eiq 'Starting integrated minecraft server|Preparing start region|Prepar
     capture 54-mirror-partner-unlinked-after-destruction
     # Query for the actual linked drop, not a synthetic /give item.
     mirror_assert_offset=$(wc -c < client-smoke/client.log)
-    send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_LINKED_ITEM_COMPONENT_FOUND'
-    assert_log_literal MIRROR_LINKED_ITEM_COMPONENT_FOUND "$mirror_assert_offset"
+    send_chat '/execute if entity @e[type=minecraft:item,x=280,y=150,z=248,distance=..4,nbt={Item:{id:"thaumcraft:mirror_essentia",components:{"minecraft:custom_data":{linkDim:"minecraft:overworld",linkX:248,linkY:150,linkZ:248}}}}] run say MIRROR_DROP_OK'
+    assert_log_literal MIRROR_DROP_OK "$mirror_assert_offset"
     capture 55-linked-mirror-loot-custom-data
     if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
       echo MIRROR_CLIENT_CRASH=YES | tee -a client-smoke-status.txt
