@@ -2373,3 +2373,5 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - Acceptance boundary: this is the first animated-liquid renderer slice only. Jar label/brace/extension and other jar variants/brain renderer remain separate; no M16 point is awarded yet.
 - Smoke-generator correction before CI: the final acceptance marker is appended to both `client-smoke-status.txt` and `client-smoke/client.log`, matching the independent log parser; no gameplay code changed by this correction.
 - CI trigger note: the Git-data ref update did not create a GitHub Actions run at the first exact-head poll (CircleCI status remained pending). A journal-only Contents API commit is used to emit a normal PR synchronize event; no renderer or gameplay source is changed by that trigger.
+
+- Follow-up source-level correction: re-read all six BETA26 `RenderCubes.renderFace*` UV mappings. Side-face V coordinates are derived from Y (`V(16 - renderMaxY*16)` to `V(16 - renderMinY*16)`), not from Z; top-face winding/UV order and opposite-side U orientation were aligned with the original face methods. Added pure regression checks for side V bounds at half/full capacity.

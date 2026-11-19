@@ -24,6 +24,15 @@ public final class LegacyEssentiaJarRenderLogic {
         return LIQUID_BASE_Y + liquidHeight(amount);
     }
 
+    /** BETA26 side-face V coordinates are measured down from the top of the frame. */
+    public static float sideVBottom(int amount) {
+        return 1.0F - liquidTopY(amount);
+    }
+
+    public static float sideVTop() {
+        return 1.0F - LIQUID_BASE_Y;
+    }
+
     /** Original Color(0) fallback for absent or unknown aspect data. */
     public static int aspectColor(AspectRegistry registry, String aspectTag) {
         if (registry == null || aspectTag == null) return 0;

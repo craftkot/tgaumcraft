@@ -74,6 +74,10 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
         float u1 = lerp(sprite.getU0(), sprite.getU1(), 0.75F);
         float v0 = lerp(sprite.getV0(), sprite.getV1(), 0.25F);
         float v1 = lerp(sprite.getV0(), sprite.getV1(), 0.75F);
+        float sideVBottom = lerp(sprite.getV0(), sprite.getV1(),
+                LegacyEssentiaJarRenderLogic.sideVBottom(amount));
+        float sideVTop = lerp(sprite.getV0(), sprite.getV1(),
+                LegacyEssentiaJarRenderLogic.sideVTop());
 
         // BETA26 RenderCubes emits all six faces for the 0.25..0.75 inner volume.
         quad(out, poseStack, light, packedOverlay, red, green, blue, 0, -1, 0,
@@ -82,30 +86,30 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
                 maxX, minY, minZ, u1, v0,
                 maxX, minY, maxZ, u1, v1);
         quad(out, poseStack, light, packedOverlay, red, green, blue, 0, 1, 0,
-                minX, maxY, minZ, u0, v0,
-                minX, maxY, maxZ, u0, v1,
                 maxX, maxY, maxZ, u1, v1,
-                maxX, maxY, minZ, u1, v0);
-        quad(out, poseStack, light, packedOverlay, red, green, blue, 0, 0, -1,
-                minX, minY, minZ, u0, v1,
-                minX, maxY, minZ, u0, v0,
                 maxX, maxY, minZ, u1, v0,
-                maxX, minY, minZ, u1, v1);
-        quad(out, poseStack, light, packedOverlay, red, green, blue, 0, 0, 1,
-                maxX, minY, maxZ, u1, v1,
-                maxX, maxY, maxZ, u1, v0,
-                minX, maxY, maxZ, u0, v0,
-                minX, minY, maxZ, u0, v1);
-        quad(out, poseStack, light, packedOverlay, red, green, blue, -1, 0, 0,
-                minX, minY, maxZ, u1, v1,
-                minX, maxY, maxZ, u1, v0,
                 minX, maxY, minZ, u0, v0,
-                minX, minY, minZ, u0, v1);
+                minX, maxY, maxZ, u0, v1);
+        quad(out, poseStack, light, packedOverlay, red, green, blue, 0, 0, -1,
+                minX, maxY, minZ, u1, sideVBottom,
+                maxX, maxY, minZ, u0, sideVBottom,
+                maxX, minY, minZ, u0, sideVTop,
+                minX, minY, minZ, u1, sideVTop);
+        quad(out, poseStack, light, packedOverlay, red, green, blue, 0, 0, 1,
+                minX, maxY, maxZ, u0, sideVBottom,
+                minX, minY, maxZ, u0, sideVTop,
+                maxX, minY, maxZ, u1, sideVTop,
+                maxX, maxY, maxZ, u1, sideVBottom);
+        quad(out, poseStack, light, packedOverlay, red, green, blue, -1, 0, 0,
+                minX, minY, maxZ, u1, sideVBottom,
+                minX, maxY, maxZ, u1, sideVTop,
+                minX, maxY, minZ, u0, sideVTop,
+                minX, minY, minZ, u0, sideVBottom);
         quad(out, poseStack, light, packedOverlay, red, green, blue, 1, 0, 0,
-                maxX, minY, minZ, u0, v1,
-                maxX, maxY, minZ, u0, v0,
-                maxX, maxY, maxZ, u1, v0,
-                maxX, minY, maxZ, u1, v1);
+                maxX, minY, minZ, u1, sideVBottom,
+                maxX, maxY, minZ, u1, sideVTop,
+                maxX, maxY, maxZ, u0, sideVTop,
+                maxX, minY, maxZ, u0, sideVBottom);
 
         if (SMOKE_PROBE) {
             String key = pos.asLong() + ":" + amount + ":" + state.aspect();

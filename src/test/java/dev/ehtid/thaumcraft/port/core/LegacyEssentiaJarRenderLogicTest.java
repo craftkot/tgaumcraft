@@ -23,6 +23,9 @@ public final class LegacyEssentiaJarRenderLogicTest {
         near(0.065F, LegacyEssentiaJarRenderLogic.liquidTopY(1));
         near(0.375F, LegacyEssentiaJarRenderLogic.liquidTopY(125));
         near(0.6875F, LegacyEssentiaJarRenderLogic.liquidTopY(250));
+        near(0.625F, LegacyEssentiaJarRenderLogic.sideVBottom(125));
+        near(0.3125F, LegacyEssentiaJarRenderLogic.sideVBottom(250));
+        near(0.9375F, LegacyEssentiaJarRenderLogic.sideVTop());
 
         near(0.25F, LegacyEssentiaJarRenderLogic.LIQUID_MIN_X);
         near(0.75F, LegacyEssentiaJarRenderLogic.LIQUID_MAX_X);
