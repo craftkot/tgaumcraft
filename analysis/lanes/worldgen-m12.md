@@ -676,3 +676,10 @@
 - Commit 6a5f62f07d3797c0a350b5cf31e0aee6d1badd1a updates only tools/test_silverwood_rollback_failure_injection.sh: captures Java regression output and fails unless the exact 34-assertion success summary is emitted. This guards against a silently shortened test, skipped execution, or misleading output. The Java regression itself was not changed.
 - This is runner source change, NOT an executed Java 21 PASS; no native NeoForge GameTest or fresh-chunk worldgen verification. No new CI result yet for this SHA. Natural Silverwood biome registration and real WorldGenLevel.setBlock rejection remain blocked on coordinated native wiring. Historical audit stays 59/100.
 - Next: execute the standalone runner on exact SHA and inspect its output; verify NeoForge build/server CI, then coordinate native setBlock GameTest and biome/chunk registration. Draft PR #9 remains unmerged; main, other branches, shared registries, Gradle and common CI untouched.
+
+## 2026-11-19 — M12 unavailable world-state rollback regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; compared main...feature/worldgen-m12 (+183/-0 before edits), reviewed open PRs and overlapping GameTest work.
+- Commit 104450403e6720be0b648ccc1bb8376083421396 adds three loader-neutral assertions: null current-state reads (unavailable/unloaded positions) must skip both trunk and canopy rollback and must not invoke any world writes. No production behavior changed.
+- Commit ae65af7431969d8e5479417326c40f54ba4d23b5 updates the exact-summary Java runner from 34 to 37 assertions. These are source-level regression additions, NOT executed PASS evidence. Exact-head Java runner, NeoForge CI and native GameTests remain unverified for these commits.
+- Still required: execute tools/test_silverwood_rollback_failure_injection.sh on exact SHA, verify NeoForge build/server CI, coordinate native WorldGenLevel.setBlock GameTest and Silverwood placed-feature/biome registration, then validate new chunks. No main/other branches/shared registry/Gradle/merge changes. Draft PR #9 remains the M12 integration route; historical 59/100 unchanged.
