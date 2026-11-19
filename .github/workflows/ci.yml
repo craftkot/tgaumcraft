@@ -18,6 +18,12 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Validate client smoke shell syntax
+        shell: bash
+        run: |
+          bash -n tools/client_smoke.sh
+          bash -n tools/minecraft_gui_coordinates.sh
+
       - name: Core parity test
         shell: bash
         run: |
