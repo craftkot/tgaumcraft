@@ -20,7 +20,7 @@ width, height = struct.unpack(">II", data[16:24])
 git_blob_sha1 = hashlib.sha1(b"blob " + str(len(data)).encode("ascii") + b"\0" + data).hexdigest()
 if git_blob_sha1 != SOURCE_BLOB_SHA1:
     raise SystemExit(f"animatedglow source blob mismatch: {git_blob_sha1}")
-if (width, height) != (16, 496):
+if (width, height) != (16, 320):
     raise SystemExit(f"animatedglow dimensions changed: {(width, height)}")
 
 metadata = json.loads(META.read_text(encoding="utf-8"))
