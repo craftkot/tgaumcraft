@@ -2011,3 +2011,25 @@ At the latest poll, the exact-head Workbench English cells, label tint/art, crys
 - Read failed job logs `135312012156` and `135312007191`: both reached Gradle `runClient` and failed in classpath resolution: `Could not find com.google.code.gson:gson:2.10.1`, queried via `https://plugins.gradle.org/m2/...`. Both failed before Minecraft startup, so neither establishes a gameplay/rune/GUI regression. HTTP status was not shown in these attempts; do not assert HTTP 429 for them.
 - GitHub accepted **failed-jobs-only rerun** requests for both workflows (`success=true`). Outcomes pending. No Gradle, shared CI, Java or test-driver changes justified. Existing native Salis actor-only packet/sound GameTests remain distinct from a true two-process client proof.
 - Only this journal was updated. Local Gradle, Minecraft client/server, chunk-boundary unload/reload, actual chunk ticket inspection and two independently rendered clients were **not** executed. Fixed audit **59/100**, M16 **4/6**, M08 **5/9**. Next inspect both retries, then prioritize a native Salis chunk-boundary/ticket/reload and independently delivered packet scenario.
+
+
+## 2026-11-19 — M08 starvation adjacency no longer joins an in-flight neighbor chunk
+
+- Fresh-read main `a4280834adc5a20b6951098af937d30ca4aeca56`, current roadmap, AGENTS, parallel workflow, fixed audit and this lane. Working branch before this iteration: `38a2a514a57a7e022fb0186b2bd4ca28d8be96a6`; current code commit: [`0118156a3a3c94730bf02135bc9495b4a8bfc27e`](https://github.com/craftkot/tgaumcraft/commit/0118156a3a3c94730bf02135bc9495b4a8bfc27e).
+- Found a specific inconsistency in `CrystalClusterBlock.randomTick`: the size-zero starvation branch used `hasChunkAt(neighbor)` followed by `getBlockState(neighbor)`. This class already documents that `hasChunkAt` may be true while a neighbor chunk is still in its loading pipeline, and that `getBlockState` can join the pending chunk future. The same hazard had already been removed from the support/outline and spread-destination paths, but remained in this adjacency path.
+- Replaced the starvation lookup with the existing non-joining `loadedDestination` helper (`getChunkSource().getChunkNow`). A not-yet-ready neighbor is treated as unknown for this tick; a fully loaded same-variant neighbor still triggers the original BETA26 size-zero removal. No chunk ticket or force-load is requested.
+- Added `tools/test_crystal_starvation_neighbor_lookup.py`, a source regression guard that rejects reintroduction of `hasChunkAt`/direct `getBlockState` in this branch and requires the `getChunkNow` adapter. The Aura/Crystal runner executes it before launching the native server tests.
+- Changed files:
+  - `src/neoforge/java/dev/ehtid/thaumcraft/block/CrystalClusterBlock.java`
+  - `tools/run_crystal_spread_gametest.sh`
+  - `tools/test_crystal_starvation_neighbor_lookup.py`
+- No overlap with changed paths in the other 40 open PRs (#1–#3, #5–#41). PR #4's existing `SalisMundusItem.java` overlap with PR #3 is unchanged; this iteration did not touch that file, shared registries, Gradle, workflow YAML, or another branch.
+- Native Aura/Crystal GameTests [#44456713307](https://github.com/craftkot/tgaumcraft/actions/runs/44456713307) **SUCCESS** on the exact code SHA. Job log proves:
+  - `TC_CRYSTAL_STARVATION_LOOKUP_GUARD=PASS lookup=getChunkNow no_join=YES`
+  - `TC_GAMETEST_CRYSTAL_STARVATION_UNLOADED_NEIGHBOR=PASS no_force_load=YES`
+  - `TC_GAMETEST_CRYSTAL_STARVATION_ZERO_TOUCHING_SAME=PASS`
+  - all **16 required GameTests passed** in both write and cold-restart read phases; both server JVMs exited and both Gradle phases reported BUILD SUCCESSFUL.
+- Full Port CI [#44456707288](https://github.com/craftkot/tgaumcraft/actions/runs/44456707288) **SUCCESS** on the exact code SHA: Core parity **10,046 assertions**, NeoForge build **BUILD SUCCESSFUL**, dedicated server reached `Done (8.792s)`, JAR uploaded as artifact [#14497817430](https://github.com/craftkot/tgaumcraft/actions/runs/44456707288/artifacts/14497817430). The log contains a missing-`server.properties` startup diagnostic, but the server created/defaulted configuration and reached the explicit ready marker; no server crash was reported. CircleCI `verify-connection` is SUCCESS, not a substitute for the above.
+- PR-triggered duplicate Aura/GameTest and Full Port jobs are still finishing; M16 PR workflows at the latest poll: **3 SUCCESS, 15 IN PROGRESS, 2 QUEUED, 0 FAILURE**. No claim is made that this M08 fix completes M16's client/resource acceptance.
+- Fixed rubric remains **59/100**, M08 **5/9**, M16 **4/6**. No point awarded: this closes one chunk-loading safety edge case, not the whole aura/world or visual/resource category. PR #4 remains OPEN/DRAFT/UNMERGED; no merge performed.
+- Next: resume M16's remaining original-resource/special-renderer audit and the true two-process Salis client boundary/ticket/reload scenario. Do not treat the prior actor-only EmbeddedChannel GameTest as proof of two rendered clients.
