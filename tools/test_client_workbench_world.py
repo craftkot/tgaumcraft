@@ -226,37 +226,42 @@ expect("send_chat '/tp @p ~ ~ ~ 0 28'" not in fixture_replacement
        and "send_chat '/execute at @p run setblock ~ ~ ~1 thaumcraft:arcane_workbench'" in fixture_replacement,
        "Workbench fixture is not built relative to the logged-in player inside spawn chunks")
 expect("~ ~-1 ~4" not in generator
-       and all(f"send_chat '/execute at @p run item replace block ~ ~ ~2 container.{slot} with " in generator
+       and all(f"send_chat '/item replace block 0 120 2 container.{slot} with " in generator
                for slot in (1, 3, 4, 5, 7))
-       and "send_chat '/execute at @p run data get block ~ ~ ~2 Items'" in generator,
-       "Workbench block and all five inventory slots must share the final local target block")
+       and "send_chat '/data get block 0 120 2 Items'" in generator,
+       "Workbench block and all five inventory slots must share the fixed target block")
 interaction_body = generator.split("body = r'''", 1)[1].split("'''", 1)[0]
-local_clear_front = "send_chat '/execute at @p run fill ~ ~ ~1 ~ ~2 ~1 minecraft:air'"
-local_fixture = "send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'"
-local_inventory = "send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'"
-local_aim_rotation = "send_chat '/tp @p ~ ~ ~ 0 29'"
+local_player_anchor = "send_chat '/tp @p 0.5 120 0.5 0 0'"
+local_floor = "send_chat '/fill -2 119 -1 2 119 4 minecraft:stone'"
+local_clear = "send_chat '/fill -2 120 -1 2 123 4 minecraft:air'"
+local_fixture = "send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'"
+local_fixture_ack = "send_chat '/execute if block 0 120 2 thaumcraft:arcane_workbench run say TC_WORKBENCH_FIXTURE_BLOCK_READY'"
+local_inventory = "send_chat '/item replace block 0 120 2 container.1 with minecraft:gold_ingot 1'"
+local_aim_rotation = "send_chat '/tp @p 0.5 120 0.5 0 29'"
 local_aim_ray = "send_chat '/execute as @p at @s anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench run say TC_WORKBENCH_SERVER_RAY_TARGET=PASS'"
 local_aim_ray_wait = "wait_for_workbench_server_marker 'TC_WORKBENCH_SERVER_RAY_TARGET=PASS'"
 model_capture = "capture 08b-source-arcane-workbench-item-model"
-expect(model_capture in generator and generator.index(model_capture) < generator.index(local_clear_front),
-       "source Workbench model screenshots must be captured before clearing the front fixture")
-expect(local_clear_front in interaction_body
-       and "fill ~ ~ ~1 ~ ~2 ~1 minecraft:air" in generator
-       and interaction_body.index(local_clear_front) < interaction_body.index(local_fixture)
-       and interaction_body.index(local_fixture) < interaction_body.index(local_inventory)
-       and interaction_body.index(local_inventory) < interaction_body.index("capture 08c-workbench-before-open")
-       and all(marker in interaction_body for marker in (
-           local_aim_rotation, local_aim_ray, local_aim_ray_wait,
-       ))
-       and interaction_body.index(local_aim_rotation) < interaction_body.index(local_aim_ray)
+expect(model_capture in generator and generator.index(model_capture) < generator.index(local_player_anchor),
+       "source Workbench model screenshots must be captured before the deterministic interaction fixture")
+expect(interaction_body.count(local_player_anchor) == 2
+       and local_floor in interaction_body and local_clear in interaction_body
+       and local_fixture in interaction_body and local_fixture_ack in interaction_body
+       and interaction_body.index(local_player_anchor) < interaction_body.index(local_floor)
+       < interaction_body.index(local_clear) < interaction_body.rindex(local_player_anchor)
+       < interaction_body.index(local_fixture) < interaction_body.index(local_fixture_ack)
+       < interaction_body.index("wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'")
+       < interaction_body.index(local_inventory)
+       < interaction_body.index("send_chat '/data get block 0 120 2 Items'")
+       < interaction_body.index(local_aim_rotation) < interaction_body.index(local_aim_ray)
        < interaction_body.index(local_aim_ray_wait)
-       < interaction_body.index("capture 08c-workbench-before-open"),
-       "Workbench smoke must clear the occluding +1 fixture before populating/aiming at the +2 menu target")
-expect("send_chat '/forceload add 0 0'" not in fixture_replacement
-       and "send_chat '/fill 0 148 0 4 148 6 minecraft:stone'" not in fixture_replacement
-       and "TC_WORKBENCH_POST_FORCELOAD_CHAT_OK" not in generator
-       and "post_force_load_" not in generator,
-       "Workbench generator still depends on the removed remote-chunk command probe")
+       < interaction_body.index("capture 08c-workbench-before-open")
+       and "send_chat '/tp @p ~ ~ ~ 0 29'" not in generator
+       and "item replace block ~ ~ ~2" not in generator,
+       "Workbench smoke must use one deterministic loaded-chunk fixture and a ray that intersects its block")
+pitch = math.radians(29)
+ray_point = (0.5, 120.0 + 1.62 - 2.0 * math.sin(pitch), 0.5 + 2.0 * math.cos(pitch))
+expect(0.0 <= ray_point[0] < 1.0 and 120.0 <= ray_point[1] < 121.0 and 2.0 <= ray_point[2] < 3.0,
+       f"fixed yaw/pitch ray must intersect the workbench at (0,120,2), got {ray_point}")
 
 # Chat HUD feedback is not a stable client.log signal. The real-client
 # acceptance must instead use independent server/client lifecycle markers.
