@@ -2160,3 +2160,12 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - No registry, Gradle, global CI, SalisMundusItem.java, or foreign branch changed. The new test uses the already registered Flux Rift entity and existing GameTest workflow.
 - Fixed rubric remains 59/100, M08 5/9, M16 4/6. No score awarded: this removes one false-positive spawn suppression and does not close the wider Rift/world parity gaps.
 - Next: inspect the exact-head Aura/Crystal GameTest and Full Port CI, then resume M16's real-client evidence; the remaining major M16 gate is still two separately launched clients for Salis packet/particle delivery at a chunk boundary and through unload/reload, not another EmbeddedChannel simulation.
+
+
+## 2026-11-19 — exact-head native M08 regression and build verified
+
+- Re-read fresh main `a4280834adc5a20b6951098af937d30ca4aeca56`, roadmap, AGENTS, parallel workflow, fixed audit, lane journal, open PR inventory and branch comparison. PR #4 remains draft and unmerged; no foreign branch changed.
+- Verified exact feature head `1f141a8eda012cd8cc634c25c443ad920c1da617` after the BETA26-centered Flux Rift AABB production fix `af40287a9e3eddff898514eefbf62ddbbc697494` and native GameTest addition `1f141a8`.
+- Native Aura/Crystal GameTests [#44486394496](https://github.com/craftkot/tgaumcraft/actions/runs/44486394496): **SUCCESS**; Full Port NeoForge CI [#44486394261](https://github.com/craftkot/tgaumcraft/actions/runs/44486394261): **SUCCESS**. The workflow-run API showed 19/20 completed SUCCESS and Workbench RU/EN [#44486394243](https://github.com/craftkot/tgaumcraft/actions/runs/44486394243) still IN_PROGRESS; do not claim 20/20. This is verification of previously committed native production/test work, not a new gameplay implementation.
+- No additional proven Java defect from these runs. No local Gradle/client/server executed. The two-independent-client Salis boundary/unload/reload/chunk-ticket and separately observed packet-delivery acceptance remains **NOT RUN**. Do not substitute JVM queue coverage for this criterion.
+- Fixed audit unchanged: **59/100**, M08 **5/9**, M16 **4/6**. Next: inspect Workbench completion and implement/run native two-client Salis acceptance without touching shared registries/CI or other feature lanes.
