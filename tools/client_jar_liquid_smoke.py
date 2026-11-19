@@ -49,6 +49,22 @@ body = r'''
   sleep 6
   send_chat '/tp @p 250.5 150 248.5 0 16'
   sleep 6
+  capture 96-jar-liquid-fixture-camera
+
+  client_state_ready=0
+  for _ in $(seq 1 90); do
+    if grep -Fq 'TC_SMOKE_JAR_LIQUID_CLIENT_STATE=READY' client-smoke/client.log; then
+      client_state_ready=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$client_state_ready" -ne 1 ]; then
+    echo 'JAR_LIQUID_CLIENT_BLOCK_ENTITIES_NOT_READY=YES' | tee -a client-smoke-status.txt
+    grep -F 'TC_SMOKE_JAR_LIQUID_CLIENT_STATE=' client-smoke/client.log | tail -8 | tee -a client-smoke-status.txt || true
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
 
   for marker in \
     'TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=249,150,251 amount=125 aspect=aer rgb=FFFF7E topY=0.3750 texture=thaumcraft:block/animatedglow' \
@@ -74,6 +90,7 @@ body = r'''
       else
         echo "JAR_LIQUID_JVM_OPTIONS_LOGGED=NO" | tee -a client-smoke-status.txt
       fi
+      grep -F "TC_SMOKE_JAR_LIQUID_CLIENT_STATE=" client-smoke/client.log | tail -8 | tee -a client-smoke-status.txt || true
       tail -120 client-smoke/client.log >&2
       exit 1
     fi
