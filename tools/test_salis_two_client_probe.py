@@ -75,6 +75,9 @@ if "EmbeddedChannel" in SERVER or "EmbeddedChannel" in CLIENT:
 
 for required in (
     "timeout-minutes: 90",
+    "flite1-dev",
+    `ctypes.CDLL("libflite.so")`,
+    "MINECRAFT_NARRATOR_FLITE=PASS",
     "workflow_dispatch",
     "xvfb",
     "xdotool",
