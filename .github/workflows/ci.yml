@@ -569,3 +569,57 @@ jobs:
           name: thaumcraft-port-jars
           path: build/libs/*.jar
           if-no-files-found: error
+
+  real-mirror-client:
+    # A candidate-only PR job: actually launch Minecraft, never claim a
+    # successful GUI probe from bash -n or server startup alone.
+    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'fix/real-mirror-pr-ci-2026-11-19' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install Minecraft GUI prerequisites
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            xvfb xdotool openbox mesa-utils libgl1-mesa-dri \
+            imagemagick ffmpeg x11-utils
+      - name: Run actual mirror transport in NeoForge client
+        shell: bash
+        env:
+          THAUMCRAFT_MIRROR_SMOKE: '1'
+        run: |
+          set -euo pipefail
+          echo "Candidate SHA: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+          bash -n tools/client_smoke.sh
+          bash tools/client_smoke.sh 2>&1 | tee mirror-client-runner.log
+          grep -Fxq 'PASS: linked essentia mirrors transferred a physically debited jar unit' client-smoke-status.txt
+          grep -Fq 'MIRROR_EXACT_TOTAL_12_CONFIRMED' client-smoke-status.txt
+          grep -Fq 'MIRROR_REVERSE_EXACT_TOTAL_12_CONFIRMED' client-smoke-status.txt
+      - name: Document evidence limits
+        if: always()
+        run: |
+          echo 'GUI mirror smoke is not a native GameTest, reload or concurrency anti-dupe test.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-mirror-client-evidence
+          path: |
+            mirror-client-runner.log
+            client-smoke-status.txt
+            client-smoke/client.log
+            client-smoke/screenshots/
+            client-smoke/renderer.txt
+            client-smoke/xvfb.log
+          if-no-files-found: warn
+          retention-days: 7
