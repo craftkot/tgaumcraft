@@ -691,3 +691,11 @@
 - Re-read exact regression (37 source assertions), runner (exact 37-assertion summary), and both production rollback helpers. No evidence-backed production defect established, so no Java/test change in this pass. Direct local Git checkout still blocked by DNS: Could not resolve host: github.com. Exact runner, real WorldGenLevel.setBlock rejection, natural Silverwood placement, new-chunk smoke and original BETA26 frequency parity remain unverified.
 - Updated existing Draft PR #9 with exact SHA, successful workflow URL and outstanding gates. This journal entry is documentation-only; no gameplay milestone claimed. No main/other branch/shared registry/Gradle/merge changes. Historical audit 59/100 unchanged.
 - Next: run exact Java 21 rollback script with 37 PASS assertions; coordinate native GameTest and natural Silverwood biome/placed-feature registration, then verify fresh chunks.
+
+## 2026-11-19 — M12 null-position rollback journal regression
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 187 / behind 0 before changes), checked six feature branches and open PRs. Draft PR #9 remains the integration route.
+- Commit 3540da2587483de6a18578bf3c9b22633527b941 adds a loader-neutral regression with two corrupt-journal cases (null trunk/canopy position), requiring rejection before any world read or write. Commit a7741d702a16ef4063005b34cc18804de7bcad8c adds a dedicated Java 21 fail-closed runner.
+- The production helpers already validate these positions; this change locks that contract against regressions. This is not a native NeoForge GameTest. Java 21 is installed, but exact repository checkout remains blocked by DNS (Could not resolve host: github.com); neither new runner nor original 37-assertion runner has a confirmed execution PASS. CI for new HEAD is pending. Earlier a0b847b workflow 44453097244 was SUCCESS, not proof of these tests.
+- No changes to main, other branches, Gradle, shared registries or common CI; no merge. Historical 59/100 unchanged.
+- Next: run both Java 21 runners on exact HEAD, verify new-head CI, then coordinate native WorldGenLevel.setBlock failure injection and biome/placed-feature registration followed by fresh-chunk testing.
