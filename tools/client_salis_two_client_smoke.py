@@ -136,6 +136,18 @@ def client_args(template: list[str], username: str, game_dir: Path) -> list[str]
     return args
 
 
+def enable_probe_env(env: dict[str, str]) -> dict[str, str]:
+    env["THAUMCRAFT_SMOKE"] = "1"
+    options = env.get("JAVA_TOOL_OPTIONS", "")
+    current = options.split()
+    for option in PROBE_PROPERTIES.split():
+        if option not in current:
+            options = (options + " " + option).strip()
+            current = options.split()
+    env["JAVA_TOOL_OPTIONS"] = options
+    return env
+
+
 def start_x_server(display: str, log_dir: Path, processes: list[subprocess.Popen]) -> dict[str, str]:
     xvfb_log = (log_dir / f"xvfb-{display[1:]}.log").open("w", encoding="utf-8")
     xvfb = subprocess.Popen(
@@ -248,11 +260,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    base_env = os.environ.copy()
-    base_env["THAUMCRAFT_SMOKE"] = "1"
-    base_env["JAVA_TOOL_OPTIONS"] = (
-        base_env.get("JAVA_TOOL_OPTIONS", "") + " " + PROBE_PROPERTIES
-    ).strip()
+    base_env = enable_probe_env(os.environ.copy())
 
     processes: list[subprocess.Popen] = []
     files = []
@@ -261,8 +269,8 @@ def main() -> int:
     actor = None
     observer = None
     try:
-        actor_env = start_x_server(":99", OUT, processes)
-        observer_env = start_x_server(":100", OUT, processes)
+        actor_env = enable_probe_env(start_x_server(":99", OUT, processes))
+        observer_env = enable_probe_env(start_x_server(":100", OUT, processes))
 
         server_log_file = SERVER_GRADLE_LOG.open("w", encoding="utf-8")
         files.append(server_log_file)
