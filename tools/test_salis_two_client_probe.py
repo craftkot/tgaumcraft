@@ -36,7 +36,7 @@ for required in (
     "packet.getParticle() == SalisSparkleParticleRegistration.TYPE",
     "packet.getSound().value() == ThaumcraftSounds.DUST.get()",
     "context.fireChannelRead(message)",
-    "SALIS_TWO_CLIENT_PACKET_PROBE_INSTALLED",
+    "SALIS_CLIENT_PACKET_PROBE_INSTALLED",
     "SALIS_CLIENT_CONTROL_PARTICLE",
     "SALIS_CLIENT_CONTROL_SOUND",
     "SALIS_CLIENT_TARGET_PARTICLE",
