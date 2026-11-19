@@ -19,7 +19,7 @@ import uuid
 
 ROOT = Path.cwd()
 OUT = ROOT / "client-salis-two-client"
-SERVER_DIR = ROOT / "run" / "server"
+SERVER_DIR = ROOT / "run"
 SERVER_GRADLE_LOG = OUT / "server-gradle.log"
 SERVER_GAME_LOG = SERVER_DIR / "logs" / "latest.log"
 ACTOR_NAME = "TC_SalisActor"
@@ -366,6 +366,10 @@ def main() -> int:
             detail=lambda: (read_text(SERVER_GRADLE_LOG)[-12000:]
                             + "\n" + read_text(SERVER_GAME_LOG)[-12000:]),
         )
+        server_boot = read_text(SERVER_GRADLE_LOG) + "\n" + read_text(SERVER_GAME_LOG)
+        if "Loading properties" not in server_boot or "Failed to load properties from file: server.properties" in server_boot:
+            raise RuntimeError("DEDICATED_SERVER_PROPERTIES_NOT_LOADED")
+        print("DEDICATED_SERVER_PROPERTIES=PASS game_dir=run", flush=True)
 
         template_log = (OUT / "runclient-template.log").open("w", encoding="utf-8")
         files.append(template_log)
