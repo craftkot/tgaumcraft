@@ -190,6 +190,19 @@ public final class SilverwoodRollbackFailureInjectionTest {
             check(rejected, "null trunk journal state rejected");
             check(attemptedWrites[0] == 0, "null trunk journal makes no writes");
         }
+        // An unloaded/missing position (null read) must not trigger a write.
+        int[] unloadedWrites = {0};
+        check(SilverwoodTrunkRollback.restore(Map.of(80, "AIR"), Map.of(80, "LOG_X"),
+                pos -> null, (pos, state) -> {
+                    unloadedWrites[0]++;
+                    return true;
+                }) == 0, "skip trunk rollback when current state is unavailable");
+        check(SilverwoodCanopyRollback.restore(Map.of(81, "FLOWER"), "LEAVES",
+                pos -> null, (pos, state) -> {
+                    unloadedWrites[0]++;
+                    return true;
+                }) == 0, "skip canopy rollback when current state is unavailable");
+        check(unloadedWrites[0] == 0, "unavailable positions never invoke world writes");
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
