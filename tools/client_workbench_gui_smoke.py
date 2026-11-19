@@ -313,7 +313,9 @@ body = r'''
   # position instead of the bench two blocks ahead. Clear only the player column
   # above the floor before creating and aiming at the real workbench.
   send_chat '/execute at @p run fill ~ ~ ~ ~ ~2 ~ minecraft:air'
-  send_chat '/execute at @p run setblock ~ ~ ~1 minecraft:air'
+  # The +1 column is the line-of-sight blocker, not just the block at the player's feet.
+  # Spawn terrain may leave grass at eye height; clear y=0..2 before aiming at +2.
+  send_chat '/execute at @p run fill ~ ~ ~1 ~ ~2 ~1 minecraft:air'
   sleep 1
   send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'
   sleep 2
