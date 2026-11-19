@@ -26,6 +26,7 @@ for required in (
         raise SystemExit(f"SALIS_TWO_CLIENT_SERVER_FIXTURE=FAIL missing {required!r}")
 
 for required in (
+    "import net.neoforged.neoforge.client.event.ClientTickEvent;",
     "ClientTickEvent.Post",
     "Minecraft.getInstance().getConnection()",
     "listener.getConnection()",
@@ -65,6 +66,9 @@ for required in (
 ):
     if required not in SMOKE:
         raise SystemExit(f"SALIS_TWO_CLIENT_REAL_CLIENT_DRIVER=FAIL missing {required!r}")
+
+if "net.neoforged.neoforge.event.tick.ClientTickEvent" in CLIENT:
+    raise SystemExit("SALIS_TWO_CLIENT_CLIENT_PROBE=FAIL ClientTickEvent must use the client.event package")
 
 if "EmbeddedChannel" in SERVER or "EmbeddedChannel" in CLIENT:
     raise SystemExit("SALIS_TWO_CLIENT_REAL_PROCESSES=FAIL a real-client probe must not use EmbeddedChannel")
