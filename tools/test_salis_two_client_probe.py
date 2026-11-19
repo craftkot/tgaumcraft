@@ -64,6 +64,10 @@ for required in (
     "TC_SalisActor",
     "TC_SalisObserver",
     "TC_SMOKE_SALIS_TWO_CLIENT_FIXTURE_READY=YES",
+    'ACTOR_PROCESS_LOG = OUT / "actor-process.log"',
+    'OBSERVER_PROCESS_LOG = OUT / "observer-process.log"',
+    "actor_client_log = ACTOR_PROCESS_LOG",
+    "observer_client_log = OBSERVER_PROCESS_LOG",
     "TC_SMOKE_SALIS_CLIENT_PACKET_PROBE_INSTALLED=YES",
     "SALIS_TWO_CLIENT_ACTOR_ONLY_PARTICLES=PASS",
     "SALIS_TWO_CLIENT_ACTOR_ONLY_SOUND=PASS",
@@ -129,6 +133,9 @@ with tempfile.TemporaryDirectory() as temporary:
         ["/usr/bin/java", "--launchTarget", "forgeserverdev", "--gameDir", "."]
     ):
         raise SystemExit("SALIS_TWO_CLIENT_ARGFILE_TEST=FAIL server target matched as client")
+
+if 'ACTOR_DIR / "logs" / "latest.log"' in SMOKE or 'OBSERVER_DIR / "logs" / "latest.log"' in SMOKE:
+    raise SystemExit("SALIS_TWO_CLIENT_REAL_CLIENT_DRIVER=FAIL client markers must be read from redirected process logs")
 
 print("SALIS_TWO_CLIENT_ARGFILE_EXPANSION=PASS")
 
