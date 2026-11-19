@@ -218,13 +218,15 @@ public final class CrystalClusterBlock extends Block {
                 if(flux) aura.polluteFlux(pos,10); else aura.addVis(pos,10);
             } else {
                 boolean touchingSame=false;
-                for(Direction d:Direction.values()) {
-                    BlockPos neighbor=pos.relative(d);
-                    // A size-zero crystal may be on a chunk edge. Never load an
-                    // adjacent chunk just to answer this same-variant adjacency check.
-                    if(!level.hasChunkAt(neighbor)) continue;
-                    if(level.getBlockState(neighbor).is(this)) {
-                        touchingSame=true;break;
+                for (Direction direction : Direction.values()) {
+                    BlockPos neighbor = pos.relative(direction);
+                    // hasChunkAt can be true while the neighbor is still in the
+                    // chunk-loading pipeline. getBlockState may join that future;
+                    // use only a fully available chunk to avoid a server-thread wait.
+                    BlockState neighborState = loadedDestination(level, neighbor);
+                    if (neighborState != null && neighborState.is(this)) {
+                        touchingSame = true;
+                        break;
                     }
                 }
                 if(LegacyBlockCrystalGrowthRules.removeStarved(s,touchingSame)) {

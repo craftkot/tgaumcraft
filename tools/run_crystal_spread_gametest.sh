@@ -16,6 +16,8 @@ for value in "$timeout_seconds" "$kill_after_seconds"; do
     fi
 done
 
+python3 tools/test_crystal_starvation_neighbor_lookup.py
+
 mkdir -p "$(dirname "$log_file")" "$(dirname "$marker_file")"
 rm -rf "$PWD/run/closure-gametest/world"
 rm -f "$marker_file"
