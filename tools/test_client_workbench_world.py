@@ -290,9 +290,9 @@ block_source = workbench_block.read_text(encoding="utf-8")
 expect('if ("1".equals(System.getenv("THAUMCRAFT_SMOKE")))' in block_source
        and "System.out.println(message);" in block_source,
        "Workbench smoke markers must remain opt-in System.out output")
-expect(generator.index("send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'")
-       < generator.index("send_chat '/execute at @p run item replace block ~ ~ ~2 container.1 with minecraft:gold_ingot 1'")
-       < generator.index("send_chat '/execute at @p run data get block ~ ~ ~2 Items'")
+expect(generator.index("send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'")
+       < generator.index("send_chat '/item replace block 0 120 2 container.1 with minecraft:gold_ingot 1'")
+       < generator.index("send_chat '/data get block 0 120 2 Items'")
        < generator.index(local_aim_rotation) < generator.index(local_aim_ray)
        < generator.index("capture 08c-workbench-before-open")
        < generator.index("xdotool click 3")
@@ -300,7 +300,8 @@ expect(generator.index("send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft
        "Workbench fixture, marker-derived aim, screenshot, click and lifecycle gates must stay ordered")
 expected_workbench_pitch = round(math.degrees(math.atan2(1.62 - 0.50, 2.00)))
 expect(expected_workbench_pitch == 29
-       and "send_chat '/tp @p ~ ~ ~ 0 29'" in generator
+       and "send_chat '/tp @p 0.5 120 0.5 0 29'" in generator
+       and "send_chat '/tp @p ~ ~ ~ 0 29'" not in generator
        and "TC_WORKBENCH_SERVER_RAY_TARGET=PASS" in generator
        and "anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench" in generator
        and "minecraft:marker" not in generator,
@@ -497,11 +498,11 @@ expect("xdotool key --clearmodifiers F3" in before_open
        "Workbench smoke lacks an F3 target-block screenshot before and after interaction setup")
 
 interaction_fixture = generator.split("capture 08c-workbench-before-open", 1)[0]
-player_column_clear = "send_chat '/execute at @p run fill ~ ~ ~ ~ ~2 ~ minecraft:air'"
-workbench_place = "send_chat '/execute at @p run setblock ~ ~ ~2 thaumcraft:arcane_workbench'"
+player_column_clear = "send_chat '/fill -2 120 -1 2 123 4 minecraft:air'"
+workbench_place = "send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'"
 expect(player_column_clear in interaction_fixture and workbench_place in interaction_fixture
        and interaction_fixture.index(player_column_clear) < interaction_fixture.index(workbench_place),
-       "Workbench fixture must clear a spawn fern from the player's eye column before placing the target")
+       "Workbench fixture must clear its deterministic eye-ray volume before placing the target")
 
 interaction_setup = generator.split("capture 08c1-workbench-empty-hand-before-open", 1)[1].split("capture 08d-workbench-gui-open", 1)[0]
 expect('workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"' in interaction_setup
@@ -519,7 +520,7 @@ expect('workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"' in int
 expect("WORKBENCH_SERVER_MARKER_SEEN=$marker" in generator
        and 'grep -Fq "$marker" run/logs/latest.log' in generator
        and "TC_WORKBENCH_FIXTURE_BLOCK_READY" in generator
-       and generator.index("setblock ~ ~ ~2 thaumcraft:arcane_workbench")
+       and generator.index("setblock 0 120 2 thaumcraft:arcane_workbench")
            < generator.index("TC_WORKBENCH_FIXTURE_BLOCK_READY")
            < generator.index("capture 08c-workbench-before-open"),
        "Workbench smoke must prove the server-side target block exists before testing mouse interaction")
