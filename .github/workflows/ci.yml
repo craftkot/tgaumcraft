@@ -573,7 +573,7 @@ jobs:
   real-mirror-client:
     # A candidate-only PR job: actually launch Minecraft, never claim a
     # successful GUI probe from bash -n or server startup alone.
-    if: ${{ github.event_name == 'pull_request' && github.head_ref == 'fix/real-mirror-pr-ci-2026-11-19' }}
+    if: ${{ github.event_name == 'pull_request' && (github.head_ref == 'fix/real-mirror-pr-ci-2026-11-19' || github.head_ref == 'fix/mirror-client-ci-head-guard-2026-11-19') }}
     runs-on: ubuntu-latest
     timeout-minutes: 65
     steps:
