@@ -61,6 +61,19 @@ body = r'''
     done
     if [ "$found" -ne 1 ]; then
       echo "JAR_LIQUID_REQUIRED_RENDER_MARKER_MISSING=$marker" | tee -a client-smoke-status.txt
+      for stage in TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED TC_SMOKE_JAR_LIQUID_RENDER_ENTRY TC_SMOKE_JAR_LIQUID_RENDERED; do
+        if grep -Fq "$stage" client-smoke/client.log; then
+          echo "JAR_LIQUID_STAGE_PRESENT=$stage" | tee -a client-smoke-status.txt
+          grep -F "$stage" client-smoke/client.log | tail -12 | tee -a client-smoke-status.txt
+        else
+          echo "JAR_LIQUID_STAGE_ABSENT=$stage" | tee -a client-smoke-status.txt
+        fi
+      done
+      if grep -Fq "Picked up JAVA_TOOL_OPTIONS" client-smoke/client.log; then
+        echo "JAR_LIQUID_JVM_OPTIONS_LOGGED=YES" | tee -a client-smoke-status.txt
+      else
+        echo "JAR_LIQUID_JVM_OPTIONS_LOGGED=NO" | tee -a client-smoke-status.txt
+      fi
       tail -120 client-smoke/client.log >&2
       exit 1
     fi
