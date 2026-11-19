@@ -201,14 +201,6 @@ probe = r'''
     src/main/resources/assets/thaumcraft/sounds/evilportal.ogg \
     | tee client-smoke/rift-positive-control-match.txt
   echo 'RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS' | tee -a client-smoke-status.txt
-  timeout --signal=TERM 420s parec --device=tc_rift_sink.monitor \
-    --format=s16le --rate=48000 --channels=2 --raw \
-    > client-smoke/rift-event.pcm &
-  rift_capture_pid=$!
-  # Preserve the shared client cleanup while guaranteeing the bounded PulseAudio
-  # recorder is reaped on every fail-fast exit before the normal stop point.
-  trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
-  sleep 0.25
   # The event is a variable-range SoundEvent: volume scales its hearing radius.
   # Keep the listener at the source so Gaussian low-volume rolls cannot exclude it.
   rift_x=3.5
@@ -239,6 +231,17 @@ probe = r'''
   fi
   echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
   capture rift-ambient-before
+  spawn_game_time="$(query_game_time)" || exit 1
+  probe_log=client-smoke/client.log
+  event_log_offset="$(wc -c < "$probe_log")"
+  # Capture only the natural first event. A direct parec PID is required so
+  # SIGTERM reaps the recorder itself rather than orphaning a timeout child.
+  parec --device=tc_rift_sink.monitor \
+    --format=s16le --rate=48000 --channels=2 --raw \
+    > client-smoke/rift-event.pcm &
+  rift_capture_pid=$!
+  trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
+  sleep 0.25
   send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"
   send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'
   rift_spawned=0
@@ -255,71 +258,73 @@ probe = r'''
     exit 1
   fi
   capture rift-ambient-entity-present
-  # Measure one full BETA26 300-tick cadence in server game time, not wall time.
-  start_game_time="$(query_game_time)" || exit 1
-  current_game_time="$start_game_time"
-  for _ in $(seq 1 60); do
-    if (( current_game_time - start_game_time >= 300 )); then break; fi
-    current_game_time="$(query_game_time)" || exit 1
+  # BETA26 uses a 300-tick cadence. Capture only the first due event:
+  # evilportal.ogg is 14.524s and can last up to 32.3s at the matcher's
+  # minimum pitch (0.45), so freeze server ticks while that one clip finishes.
+  rift_due_line=''
+  for _ in $(seq 1 120); do
+    rift_due_line="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' | head -n 1 || true)"
+    if [ -n "$rift_due_line" ]; then break; fi
+    sleep 0.25
   done
-  game_tick_delta=$((current_game_time - start_game_time))
-  if (( game_tick_delta < 300 )); then
-    echo "RIFT_GAME_TICK_WINDOW=FAIL start=$start_game_time end=$current_game_time delta=$game_tick_delta required=300" | tee -a client-smoke-status.txt
-    tail -100 run/logs/latest.log >&2
-    exit 1
-  fi
-  echo "RIFT_GAME_TICK_WINDOW=PASS start=$start_game_time end=$current_game_time delta=$game_tick_delta" | tee -a client-smoke-status.txt
-  send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT'
-  if ! grep -Fq 'TC_RIFT_AMBIENT_ENTITY_STILL_PRESENT' run/logs/latest.log; then
-    echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=FAIL' | tee -a client-smoke-status.txt
-    tail -100 run/logs/latest.log >&2
-    exit 1
-  fi
-  echo 'RIFT_AMBIENT_ENTITY_AFTER_TICK_WINDOW=PASS' | tee -a client-smoke-status.txt
-  send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_STILL_AT_SOURCE'
-  if ! grep -Fq 'TC_RIFT_LISTENER_STILL_AT_SOURCE' run/logs/latest.log; then
-    echo 'RIFT_LISTENER_STILL_AT_SOURCE=FAIL player left the sound source during the 300-tick cadence' | tee -a client-smoke-status.txt
-    tail -100 run/logs/latest.log >&2 || true
-    exit 1
-  fi
-  echo 'RIFT_LISTENER_STILL_AT_SOURCE=PASS' | tee -a client-smoke-status.txt
-  probe_log=client-smoke/client.log
-  if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' "$probe_log"; then
+  if [ -z "$rift_due_line" ]; then
     echo 'RIFT_SERVER_AMBIENT_DUE=NOT_OBSERVED' | tee -a client-smoke-status.txt
     tail -120 "$probe_log" >&2 || true
     exit 1
   fi
-  server_due_line="$(grep -F 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' "$probe_log" | tail -n 1)"
-  server_volume="${server_due_line#* volume=}"
+  server_tick_count="${rift_due_line#* tickCount=}"
+  server_tick_count="${server_tick_count%% *}"
+  server_game_time="${rift_due_line#* gameTime=}"
+  server_game_time="${server_game_time%% *}"
+  if ! [[ "$server_tick_count" =~ ^[0-9]+$ && "$server_game_time" =~ ^[0-9]+$ ]]; then
+    echo "RIFT_SERVER_AMBIENT_DUE=FAIL malformed tick/time: $rift_due_line" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  if [ "$server_tick_count" -ne 300 ]; then
+    echo "RIFT_GAME_TICK_WINDOW=FAIL expected_first_tick=300 actual=$server_tick_count" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  game_tick_delta=$((server_game_time - spawn_game_time))
+  if (( game_tick_delta < 300 )); then
+    echo "RIFT_GAME_TICK_WINDOW=FAIL start=$spawn_game_time end=$server_game_time delta=$game_tick_delta required=300" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RIFT_GAME_TICK_WINDOW=PASS start=$spawn_game_time end=$server_game_time delta=$game_tick_delta entity_tick=$server_tick_count" | tee -a client-smoke-status.txt
+
+  server_volume="${rift_due_line#* volume=}"
   server_volume="${server_volume%% *}"
   if [ -z "$server_volume" ] || ! awk -v volume="$server_volume" 'BEGIN { exit !(volume > 0.0) }'; then
     echo "RIFT_SERVER_AMBIENT_VOLUME_NONPOSITIVE=$server_volume" | tee -a client-smoke-status.txt
-    echo "$server_due_line" >&2
+    echo "$rift_due_line" >&2
     exit 1
   fi
-  # Fail closed if the listener wandered/fell out of the BETA26 volume-dependent range.
-  server_distance_sqr="${server_due_line#* nearestPlayerDistanceSqr=}"
+  server_distance_sqr="${rift_due_line#* nearestPlayerDistanceSqr=}"
   server_distance_sqr="${server_distance_sqr%% *}"
   if ! python3 -c 'import sys; d=float(sys.argv[1]); sys.exit(0 if 0 <= d <= 1.0 else 1)' "$server_distance_sqr"; then
     echo "RIFT_LISTENER_AT_EVENT=FAIL distanceSqr=$server_distance_sqr" | tee -a client-smoke-status.txt
     exit 1
   fi
   echo "RIFT_LISTENER_AT_EVENT=PASS distanceSqr=$server_distance_sqr" | tee -a client-smoke-status.txt
-  echo "RIFT_SERVER_AMBIENT_DUE=PASS $server_due_line" | tee -a client-smoke-status.txt
-  if ! grep -Fq 'TC_SMOKE_RIFT_AMBIENT_CALL=YES' "$probe_log"; then
+  echo "RIFT_SERVER_AMBIENT_DUE=PASS $rift_due_line" | tee -a client-smoke-status.txt
+
+  server_call_line="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_RIFT_AMBIENT_CALL=YES' | grep -F "tickCount=$server_tick_count" | head -n 1 || true)"
+  if [ -z "$server_call_line" ]; then
     echo 'RIFT_SERVER_SOUND_CALL=NOT_CONFIRMED' | tee -a client-smoke-status.txt
     tail -120 "$probe_log" >&2 || true
     exit 1
   fi
-  echo 'RIFT_SERVER_SOUND_CALL=PASS' | tee -a client-smoke-status.txt
-  server_pos="${server_due_line#* pos=}"
+  echo "RIFT_SERVER_SOUND_CALL=PASS $server_call_line" | tee -a client-smoke-status.txt
+
+  server_pos="${rift_due_line#* pos=}"
   server_pos="${server_pos%% *}"
-  server_pitch="${server_due_line#* pitch=}"
+  server_pitch="${rift_due_line#* pitch=}"
   server_pitch="${server_pitch%% *}"
-  client_event_line="$(grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' "$probe_log" \
-    | grep -F "pos=$server_pos" \
-    | grep -F "volume=$server_volume" \
-    | grep -F "pitch=$server_pitch" | head -n 1 || true)"
+  client_event_line=''
+  for _ in $(seq 1 40); do
+    client_event_line="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' | grep -F "pos=$server_pos" | grep -F "volume=$server_volume" | grep -F "pitch=$server_pitch" | head -n 1 || true)"
+    if [ -n "$client_event_line" ]; then break; fi
+    sleep 0.25
+  done
   if [ -z "$client_event_line" ]; then
     echo "RIFT_CLIENT_SOUND_EVENT=NOT_RECEIVED pos=$server_pos volume=$server_volume pitch=$server_pitch" | tee -a client-smoke-status.txt
     grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' "$probe_log" >&2 || true
@@ -327,10 +332,38 @@ probe = r'''
     exit 1
   fi
   echo "RIFT_CLIENT_SOUND_EVENT=PASS $client_event_line" | tee -a client-smoke-status.txt
+
+  # Stop the 300-tick entity cadence after its first sound. Freezing server
+  # ticks does not stop the client sound engine; it prevents the next 300-tick
+  # event from overlapping this long, pitch-shifted source clip.
+  send_chat '/tick freeze'
+  tick_markers_before="$(grep -Fc 'TC_SMOKE_RIFT_TICK=YES' "$probe_log" || true)"
+  due_markers_before="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -Fc 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' || true)"
+  if [ "$due_markers_before" -ne 1 ]; then
+    echo "RIFT_SINGLE_EVENT_CAPTURE=FAIL events_before_freeze=$due_markers_before" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  sleep 34
+  tick_markers_after="$(grep -Fc 'TC_SMOKE_RIFT_TICK=YES' "$probe_log" || true)"
+  due_markers_after="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -Fc 'TC_SMOKE_RIFT_AMBIENT_DUE=YES' || true)"
+  if [ "$tick_markers_after" -ne "$tick_markers_before" ] || [ "$due_markers_after" -ne 1 ]; then
+    echo "RIFT_TICK_FREEZE=FAIL tick_markers=$tick_markers_before->$tick_markers_after due_events=$due_markers_after" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  client_event_signatures="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_RIFT_SOUND_CLIENT_' | sed -nE 's/.* pos=([^ ]+) volume=([^ ]+) pitch=([^ ]+).*/\1 \2 \3/p' | sort -u)"
+  client_event_signature_count="$(printf '%s\n' "$client_event_signatures" | sed '/^$/d' | wc -l)"
+  expected_signature="$server_pos $server_volume $server_pitch"
+  if [ "$client_event_signature_count" -ne 1 ] || [ "$client_event_signatures" != "$expected_signature" ]; then
+    echo "RIFT_SINGLE_EVENT_CAPTURE=FAIL signatures=$client_event_signature_count [$client_event_signatures] expected=[$expected_signature]" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RIFT_TICK_FREEZE=PASS tick_markers=$tick_markers_before due_events=$due_markers_after" | tee -a client-smoke-status.txt
+  echo "RIFT_SINGLE_EVENT_CAPTURE_WINDOW=PASS seconds=34 pitch=$server_pitch" | tee -a client-smoke-status.txt
+
   kill -TERM "$rift_capture_pid" 2>/dev/null || true
   capture_status=0
   wait "$rift_capture_pid" || capture_status=$?
-  if [ "$capture_status" -ne 143 ]; then
+  if [ "$capture_status" -ne 0 ] && [ "$capture_status" -ne 143 ]; then
     echo "RIFT_PCM_CAPTURE_STOP=FAIL exit=$capture_status" | tee -a client-smoke-status.txt
     exit 1
   fi
