@@ -49,7 +49,7 @@ for required in (
 for required in (
     '["gradle", "runServer", "--no-daemon", "--console=plain"]',
     '["gradle", "runClient", "--no-daemon", "--console=plain"]',
-    "forgeclient" in joined,
+    '"forgeclient" in joined',
     "offline_uuid(username)",
     '"--server"',
     '"--port"',
