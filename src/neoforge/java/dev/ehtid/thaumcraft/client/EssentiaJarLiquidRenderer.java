@@ -38,6 +38,11 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
         LegacyEssentiaJarLogic.State state = jar.snapshot();
         int amount = state.amount();
         BlockPos pos = jar.getBlockPos();
+        if (SMOKE_PROBE && REPORTED.add("entered:" + pos.asLong())) {
+            System.out.printf(Locale.ROOT,
+                    "TC_SMOKE_JAR_LIQUID_RENDER_ENTRY=YES pos=%d,%d,%d amount=%d aspect=%s%n",
+                    pos.getX(), pos.getY(), pos.getZ(), amount, state.aspect());
+        }
 
         if (!LegacyEssentiaJarRenderLogic.hasLiquid(amount)) {
             if (SMOKE_PROBE && REPORTED.add("empty:" + pos.asLong())) {
