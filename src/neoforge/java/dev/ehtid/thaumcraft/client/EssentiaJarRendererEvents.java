@@ -14,6 +14,9 @@ public final class EssentiaJarRendererEvents {
 
     @SubscribeEvent
     public static void registerRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        if (Boolean.getBoolean("thaumcraft.jarLiquidSmoke")) {
+            System.out.println("TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED=YES");
+        }
         event.registerBlockEntityRenderer(
                 ThaumcraftBlockEntities.JAR_NORMAL.get(), EssentiaJarLiquidRenderer::new);
     }
