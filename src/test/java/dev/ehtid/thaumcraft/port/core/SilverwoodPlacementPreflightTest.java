@@ -61,6 +61,24 @@ public final class SilverwoodPlacementPreflightTest {
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,10,0,0,-64,320,
                 soil, (x,y,z) -> { blockedReads.incrementAndGet(); return y != 67; }), false);
         check(blockedReads.get() == 4, true);
+        // Negative chunk coordinates must reach the exact soil and trunk positions.
+        AtomicInteger negativeSoilReads = new AtomicInteger();
+        AtomicInteger negativeTrunkReads = new AtomicInteger();
+        check(SilverwoodPlacementPreflight.mayPlace(-8,64,-8,7,-1,-1,-64,320,
+                (x,y,z) -> { negativeSoilReads.incrementAndGet(); return x == -8 && y == 63 && z == -8; },
+                (x,y,z) -> {
+                    int index = negativeTrunkReads.getAndIncrement();
+                    return x == -8 && y == 64 + index && z == -8;
+                }), true);
+        check(negativeSoilReads.get() == 1, true);
+        check(negativeTrunkReads.get() == 7, true);
+
+        // At the upper build limit, the highest trunk block is still in bounds.
+        AtomicInteger topReads = new AtomicInteger();
+        check(SilverwoodPlacementPreflight.mayPlace(8,303,8,10,0,0,-64,320,
+                (x,y,z) -> y == 302,
+                (x,y,z) -> { topReads.incrementAndGet(); return y <= 312; }), true);
+        check(topReads.get() == 10, true);
         System.out.println("M12 SilverwoodPlacementPreflight: OK (" + assertions + " assertions)");
     }
 }
