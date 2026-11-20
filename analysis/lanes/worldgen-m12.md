@@ -750,3 +750,12 @@
 - Test-only commit [47bfafc](https://github.com/craftkot/tgaumcraft/commit/47bfafc437e81c4aa9c2de4ebedb1f7b4da72b47) adds five deterministic assertions to the existing SilverwoodPlacementPreflightTest: exact soil/trunk read coordinates in negative chunk (-1,-1), one soil read, seven trunk reads, and upper-world-bound successful ten-block trunk read count. Production code, registries, Gradle, CI and other branches untouched.
 - GitHub Actions run [#4413](https://github.com/craftkot/tgaumcraft/actions/runs/44688443496) completed SUCCESS for preceding 12f9cce; this is NOT test-only commit CI and does not prove standalone preflight runner PASS. New tests are source-committed but not executed in an exact checkout. Native NeoForge GameTest, fresh-chunk worldgen, biome registration and original BETA26 parity remain unverified.
 - Next: check CI for 47bfafc and run exact Java 21 preflight/rollback runners; coordinate native setBlock failure GameTest and biome registration before worldgen smoke. Draft PR #9 remains draft, no merge; audit remains 59/100.
+
+
+## 2026-11-20 — M12 exact-head CI evidence for negative-chunk regression
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Confirmed feature/worldgen-m12 HEAD 0585cad77b56d0448a52721c006aad9dde5e4e04 and main comparison ahead 202, behind 0; reviewed six feature branches and existing Draft PR #9.
+- Exact-head GitHub Actions [run #4422](https://github.com/craftkot/tgaumcraft/actions/runs/44695998772) reports completed SUCCESS; CircleCI `ci/circleci: verify-connection` reports SUCCESS for the same SHA. This is CI status evidence, NOT standalone preflight/rollback runner PASS or gameplay proof.
+- Direct git checkout attempted again: `Could not resolve host: github.com`. Exact Java 21 runners were not executed in this run. No production or test change was made; no demonstrated defect justified adding further isolated assertions.
+- Still missing: exact-head standalone preflight and rollback runner outputs, native NeoForge WorldGenLevel.setBlock failure-injection GameTest, agreed placed-feature/biome registration, and actual new-chunk Silverwood/Greatwood gameplay smoke. Do not merge Draft PR #9. Historical score 59/100 unchanged; no shared registries, Gradle, main, other branches or merge touched.
+- Next: obtain runnable checkout or CI runner evidence; prioritize native Silverwood Feature integration and biome/chunk verification with coordination rather than expanding abstract guard tests.
