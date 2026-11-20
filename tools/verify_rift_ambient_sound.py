@@ -177,7 +177,8 @@ assert "buffers.getBuffer(RenderType.lightning())" not in renderer, (
 )
 render_types = renderer.split("private static final class RiftRenderTypes", 1)[1]
 for fragment in (
-    "RENDERTYPE_LIGHTNING_SHADER",
+    "new ShaderStateShard(FluxRiftRenderer::getRiftShader)",
+    "new TextureStateShard(END_PORTAL_TEXTURE, false, false)",
     "LIGHTNING_TRANSPARENCY",
     "TRANSLUCENT_TRANSPARENCY",
     "COLOR_WRITE",
@@ -186,10 +187,61 @@ for fragment in (
     "NO_CULL",
     "DefaultVertexFormat.POSITION_COLOR",
     "VertexFormat.Mode.QUADS",
-    "setTextureState(NO_TEXTURE)",
+    "setTextureState(END_PORTAL)",
 ):
     assert fragment in render_types, fragment
+client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftClientEvents.java").read_text()
 for fragment in (
+    "RegisterShadersEvent",
+    "new ShaderInstance(event.getResourceProvider()",
+    "FluxRiftRenderer::setRiftShader",
+):
+    assert fragment in client_events, fragment
+
+shader_root = ROOT / "shaders/core"
+shader_spec = json.loads((shader_root / "flux_rift.json").read_text())
+assert shader_spec["vertex"] == "thaumcraft:flux_rift"
+assert shader_spec["fragment"] == "thaumcraft:flux_rift"
+assert shader_spec["attributes"] == ["Position", "Color"]
+assert shader_spec["samplers"] == [{"name": "Sampler0"}]
+uniforms = {uniform["name"]: uniform for uniform in shader_spec["uniforms"]}
+assert {"ModelViewMat", "ProjMat", "time", "yaw", "pitch"}.issubset(uniforms)
+assert uniforms["time"]["type"] == "int"
+assert uniforms["yaw"]["type"] == uniforms["pitch"]["type"] == "float"
+vertex_shader = (shader_root / "flux_rift.vsh").read_text()
+fragment_shader = (shader_root / "flux_rift.fsh").read_text()
+for fragment in ("#version 150", "ModelViewMat", "ProjMat", "position = viewPosition.xyz"):
+    assert fragment in vertex_shader, fragment
+for fragment in (
+    "uniform sampler2D Sampler0",
+    "uniform int time",
+    "uniform float yaw",
+    "uniform float pitch",
+    "for (int layer = 0; layer < 16; layer++)",
+    "texture(Sampler0, uv)",
+    "0.044, 0.036, 0.063",
+    "fragColor = color * vertexColor;",
+):
+    assert fragment in fragment_shader, fragment
+for fragment in (
+    "TC_SMOKE_RIFT_SHADER_ACTIVE=YES",
+    "shader.safeGetUniform(\"time\").set(time)",
+    "shader.safeGetUniform(\"yaw\").set(yaw)",
+    "shader.safeGetUniform(\"pitch\").set(pitch)",
+):
+    assert fragment in renderer, fragment
+workflow = Path(".github/workflows/closure-rift-ambient-sound-client.yml").read_text()
+for fragment in (
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftRenderer.java",
+    "src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftClientEvents.java",
+    "src/main/resources/assets/thaumcraft/shaders/core/flux_rift.json",
+    "src/main/resources/assets/thaumcraft/shaders/core/flux_rift.vsh",
+    "src/main/resources/assets/thaumcraft/shaders/core/flux_rift.fsh",
+):
+    assert fragment in workflow, fragment
+for fragment in (
+    "RIFT_SHADER=PASS registered=YES sampler=Sampler0",
+    "TC_SMOKE_RIFT_SHADER_ACTIVE=YES",
     "layer=0 blend=ADDITIVE depthWrite=OFF",
     "layer=1 blend=ADDITIVE depthWrite=OFF",
     "layer=2 blend=ADDITIVE depthWrite=OFF",
@@ -198,4 +250,4 @@ for fragment in (
 ):
     assert fragment in driver, fragment
 
-print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, source-aligned render camera and first 300-tick isolated PCM capture: PASS")
+print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal star shader, render-state and real-client audio contracts: PASS")
