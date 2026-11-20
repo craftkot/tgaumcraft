@@ -7,6 +7,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[1]
 SERVER = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisTwoClientServerProbe.java").read_text()
 CLIENT = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/client/SalisTwoClientPacketProbe.java").read_text()
+CHUNK_PROBE = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleChunkUnloadProbe.java").read_text()
+QUEUE = (ROOT / "src/neoforge/java/dev/ehtid/thaumcraft/item/SalisSparkleTrailQueue.java").read_text()
 SMOKE = (ROOT / "tools/client_salis_two_client_smoke.py").read_text()
 WORKFLOW = (ROOT / ".github/workflows/closure-salis-two-client.yml").read_text()
 
@@ -26,6 +28,45 @@ for required in (
 ):
     if required not in SERVER:
         raise SystemExit(f"SALIS_TWO_CLIENT_SERVER_FIXTURE=FAIL missing {required!r}")
+
+for required in (
+    "private static final int DELAY_TICKS = 1200;",
+    "private static final BlockPos ORIGIN = new BlockPos(CHUNK_X * 16 + 15, 100, CHUNK_Z * 16 + 8);",
+    "&& ((ORIGIN.getX() + 1) >> 4) == CHUNK_X + 1",
+    "ChannelOutboundHandlerAdapter",
+    "ClientboundLevelParticlesPacket",
+    "OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet()",
+    "level.setChunkForced(CHUNK_X, CHUNK_Z, true)",
+    "level.setChunkForced(CHUNK_X, CHUNK_Z, false)",
+    "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
+    "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
+    "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
+    "SALIS_NATIVE_CHUNK_UNLOADED",
+    "SALIS_NATIVE_CHUNK_CANCELLED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
+    "SALIS_NATIVE_CHUNK_RELOADED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
+    "SALIS_NATIVE_POST_RELOAD_FRESH_PACKET",
+    "SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED",
+    "SALIS_NATIVE_CHUNK_TICKET_CLEANED",
+    "SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED",
+    "SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED",
+):
+    if required not in CHUNK_PROBE:
+        raise SystemExit(f"SALIS_NATIVE_CHUNK_PROBE=FAIL missing {required!r}")
+
+for required in (
+    "level.getServer().getLevel(level.dimension()) != level",
+    "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(origin))) return;",
+    "if (!level.hasChunkAt(net.minecraft.core.BlockPos.containing(pending.origin())))",
+    "pending.sourceLevel() != level",
+    "player != pending.actor()",
+    "public static void onChunkUnload(ChunkEvent.Unload event)",
+    "pending.actor() != player",
+    "level.sendParticles(player, color, false",
+):
+    if required not in QUEUE:
+        raise SystemExit(f"SALIS_NATIVE_QUEUE_GUARD=FAIL missing {required!r}")
 
 for required in (
     "import net.neoforged.neoforge.client.event.ClientTickEvent;",
@@ -72,6 +113,16 @@ for required in (
     "SALIS_TWO_CLIENT_ACTOR_ONLY_PARTICLES=PASS",
     "SALIS_TWO_CLIENT_ACTOR_ONLY_SOUND=PASS",
     "SALIS_TWO_CLIENT_CHUNK_UNLOAD_RELOAD=PASS",
+    "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
+    "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
+    "SALIS_NATIVE_CHUNK_UNLOADED",
+    "SALIS_NATIVE_CHUNK_CANCELLED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD",
+    "SALIS_NATIVE_CHUNK_RELOADED",
+    "SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD",
+    "SALIS_NATIVE_POST_RELOAD_FRESH_PACKET",
+    "SALIS_NATIVE_CHUNK_TICKET_CLEANED",
+    "SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED",
     "SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED",
 ):
     if required not in SMOKE:
