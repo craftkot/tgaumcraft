@@ -15,9 +15,10 @@ public final class SilverwoodPlacementPreflight {
     }
 
     /**
-     * Checks the entire conservative write envelope, soil below the trunk and
-     * vertical trunk replaceability before any writes. This avoids partial trees
-     * caused by an obstructed trunk or unloaded adjacent chunk.
+     * Checks that the conservative write envelope fits the build-height and
+     * current-chunk bounds, then reads soil and the central trunk column.
+     * This does NOT scan canopy/branch positions or guarantee successful writes:
+     * the caller must handle collisions and setBlock failures transactionally.
      */
     public static boolean mayPlace(
             int x, int y, int z, int height,
