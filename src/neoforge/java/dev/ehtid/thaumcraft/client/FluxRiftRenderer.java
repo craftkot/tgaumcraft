@@ -2,6 +2,12 @@ package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.client.renderer.RenderStateShard.ShaderStateShard;
+import net.minecraft.client.renderer.RenderStateShard.TextureStateShard;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -18,23 +24,50 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * BETA26 seeded polycone with source-matched blend/depth passes: three additive
- * outer layers do not write depth; the final alpha-blended core does. The original
- * end-shader/star compositing and goggles-only depth bypass remain unported, so
- * this renderer does not claim full Flux Rift visual parity.
+ * BETA26 seeded polycone, end-portal starfield shader and four source-matched
+ * blend/depth passes. The original goggles-only first-layer depth bypass remains
+ * unported; this renderer therefore does not claim complete visual parity.
  */
 public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
     private static final int SIDES = 6;
+    private static final ResourceLocation END_PORTAL_TEXTURE =
+            ResourceLocation.withDefaultNamespace("textures/entity/end_portal.png");
     private static final Set<Integer> SMOKE_RECORDED = ConcurrentHashMap.newKeySet();
+    private static volatile ShaderInstance riftShaderInstance;
 
     public FluxRiftRenderer(EntityRendererProvider.Context context) {
         super(context);
         shadowRadius = 0.0F;
     }
+
+    static void setRiftShader(ShaderInstance shader) {
+        riftShaderInstance = Objects.requireNonNull(shader, "Flux Rift shader registration returned null");
+    }
+
+    private static ShaderInstance getRiftShader() {
+        return Objects.requireNonNull(riftShaderInstance, "Flux Rift shader has not been registered");
+    }
+
+    private static ShaderFrame updateShaderUniforms() {
+        ShaderInstance shader = getRiftShader();
+        Minecraft minecraft = Minecraft.getInstance();
+        Entity camera = minecraft.getCameraEntity();
+        Player player = minecraft.player;
+        int time = camera == null ? 0 : camera.tickCount;
+        float yaw = player == null ? 0.0F : (float) Math.toRadians(player.getYRot());
+        float pitch = player == null ? 0.0F : (float) -Math.toRadians(player.getXRot());
+        shader.safeGetUniform("time").set(time);
+        shader.safeGetUniform("yaw").set(yaw);
+        shader.safeGetUniform("pitch").set(pitch);
+        return new ShaderFrame(time, yaw, pitch);
+    }
+
+    private record ShaderFrame(int time, float yaw, float pitch) {}
 
     @Override
     public void render(
@@ -48,8 +81,14 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
         List<LegacyFluxRiftGeometry.Point> points = entity.getGeometry();
         if (points.size() > 2) {
             float stability = Mth.clamp(1.0F - entity.getRiftStability() / 50.0F, 0.0F, 1.5F);
+            ShaderFrame shaderFrame = updateShaderUniforms();
 
             boolean recordRenderPasses = smokeProbeEnabled() && SMOKE_RECORDED.add(entity.getId());
+            if (recordRenderPasses) {
+                System.out.println("TC_SMOKE_RIFT_SHADER_ACTIVE=YES time=" + shaderFrame.time()
+                        + " yaw=" + shaderFrame.yaw() + " pitch=" + shaderFrame.pitch()
+                        + " sampler=Sampler0 texture=" + END_PORTAL_TEXTURE);
+            }
             for (int layer = 0; layer <= 3; layer++) {
                 boolean additive = layer < 3;
                 VertexConsumer vertices = buffers.getBuffer(
@@ -61,7 +100,8 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
                             + " depthWrite=" + (additive ? "OFF" : "ON"));
                 }
                 float layerScale = layer < 3 ? 1.25F + 0.5F * layer : 1.0F;
-                int alpha = layer < 3 ? 96 : 220;
+                // The BETA26 fragment shader emits the starfield's opaque alpha.
+                int alpha = 255;
                 Vector[] centers = new Vector[points.size()];
                 float[] radii = new float[points.size()];
 
@@ -134,7 +174,7 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
 
     @Override
     public ResourceLocation getTextureLocation(FluxRiftEntity entity) {
-        return ResourceLocation.withDefaultNamespace("textures/entity/end_portal.png");
+        return END_PORTAL_TEXTURE;
     }
 
     private static boolean smokeProbeEnabled() {
@@ -146,6 +186,10 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
      * for q=0..2, then SRC_ALPHA/ONE_MINUS_SRC_ALPHA with depth writes on for q=3.
      */
     private static final class RiftRenderTypes extends RenderStateShard {
+        private static final ShaderStateShard RIFT_SHADER =
+                new ShaderStateShard(FluxRiftRenderer::getRiftShader);
+        private static final TextureStateShard END_PORTAL =
+                new TextureStateShard(END_PORTAL_TEXTURE, false, false);
         private static final RenderType ADDITIVE = create(
                 "thaumcraft:flux_rift_additive", true, false, false);
         private static final RenderType ALPHA_CORE = create(
@@ -177,8 +221,8 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
                     false,
                     sortOnUpload,
                     RenderType.CompositeState.builder()
-                            .setShaderState(RENDERTYPE_LIGHTNING_SHADER)
-                            .setTextureState(NO_TEXTURE)
+                            .setShaderState(RIFT_SHADER)
+                            .setTextureState(END_PORTAL)
                             .setTransparencyState(additive
                                     ? LIGHTNING_TRANSPARENCY
                                     : TRANSLUCENT_TRANSPARENCY)
