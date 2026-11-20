@@ -132,6 +132,12 @@ assert "current_game_time - start_game_time >= 300" not in driver, (
     "do not wait through multiple 300-tick ambient events"
 )
 
+post_spawn_camera_probe = "send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'"
+assert probe.count(post_spawn_camera_probe) == 1, "post-spawn camera acknowledgement must use the reliable send_chat path"
+assert "send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'" not in probe, (
+    "do not use the short setup-only chat path for the post-spawn render camera gate"
+)
+
 high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
