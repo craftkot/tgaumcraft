@@ -23,7 +23,10 @@ public final class AlchemyRegistrationGameTests {
                 right, new LegacyEssentiaMirrorLogic.Link(left, true), true);
         if (!linked || LegacyEssentiaMirrorLogic.canTransfer(2, true, true, true)
                 || !LegacyEssentiaMirrorLogic.conservedOneUnit(2, 1, 0, 1)
-                || LegacyEssentiaMirrorLogic.conservedOneUnit(2, 2, 0, 1)) {
+                || LegacyEssentiaMirrorLogic.conservedOneUnit(2, 2, 0, 1)
+                || LegacyEssentiaMirrorLogic.conservedOneUnit(
+                        1, 0, Integer.MAX_VALUE, Integer.MIN_VALUE)
+                || LegacyEssentiaMirrorLogic.conservedOneUnit(1, 0, 0, -1)) {
             throw new AssertionError("Alchemy mirror core invariants failed");
         }
         helper.succeed();
