@@ -108,7 +108,7 @@ high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
-generator_source_teleport = 'source_teleport_command = \'send_chat \\\"/tp @p $rift_x $rift_y $rift_z 0 90\\\"\''
+generator_source_teleport = "source_teleport_command = 'send_chat \"/tp @p $rift_x $rift_y $rift_z 0 90\"'"
 assert driver.count(generator_source_teleport) == 1, "generator self-check must use the same down-facing camera command"
 rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 runtime_template = driver.split("high_teleport_command =", 1)[0]
