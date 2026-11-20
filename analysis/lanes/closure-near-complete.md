@@ -2926,3 +2926,12 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Changed paths: `tools/client_rift_ambient_sound_smoke.py`, `tools/verify_rift_ambient_sound.py`, and this lane journal only. All other open PR changed-file lists #1–#3 and #5–#56 were checked; none contains these paths. PR #4 is the owning PR. No production Java, shader, Gradle, shared CI, registries, localization, `main`, or other feature branch changed.
 - Historical fixed rubric unchanged: **59/100**, M16 **4/6**, M08 **5/9**. No point awarded and no category closed.
 - Next: inspect the new exact-head Flux Rift client run. If the slow command is acknowledged, review the after-spawn screenshot and shader/runtime markers; if not, use the newly retained `/data get entity @p Pos` diagnostic to distinguish command delivery from player displacement. Then address the separate Aura GameTest entity-manager failure in a dedicated M08 iteration.
+
+
+### Exact-head verifier correction — 20.11.2026
+
+- The first rerun after the acknowledged-chat change, [Flux Rift #44800559721](https://github.com/craftkot/tgaumcraft/actions/runs/44800559721), **failed before launching Minecraft** in step `Verify original BETA26 asset and generated client driver`.
+- Actual exception: `NameError: name 'probe' is not defined` at the new assertion. The verifier has no `probe` variable; it builds `runtime_template` later. This is a verifier implementation error introduced in the previous commit, not a game/render failure.
+- Corrected the assertion placement: it now checks the exact slow post-spawn camera command against `runtime_template`, after that variable is defined, and rejects the old fast command there. The actual driver change remains unchanged.
+- The failed run did **not** launch Minecraft and produced no gameplay evidence. A new exact-head run is required. The exact-head Full Port and Aura/Crystal runs from the same commit were still running/queued when this note was written; inspect them independently.
+- Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded; no category closed.
