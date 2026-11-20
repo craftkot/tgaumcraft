@@ -2822,3 +2822,14 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 
 - Final static-contract review corrected the verifier's Python quoting for the embedded generator command: the expected string now matches the driver's literal exactly (without retaining escape backslashes). A tiny Python value check confirmed the expected literal matches the generator line once; exact-head CI remains the authoritative repository test.
+
+
+## 2026-11-20 — Flux Rift verifier stale camera literal
+
+- Fresh repository state: main `a4280834adc5a20b6951098af937d30ca4aeca56`; lane branch before this fix `b1b3a950cb49ca906c7c07ceb87a684f775656be`; PR #4 OPEN/DRAFT/UNMERGED. Re-read main `AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, the fixed 16.10 audit, this lane, open PR list and exact-head workflow evidence.
+- The exact-head Flux Rift client workflow [#44744238816](https://github.com/craftkot/tgaumcraft/actions/runs/44744238816) failed in step 7, **before Minecraft launch**. Job log identifies a Python source-contract assertion for the stale fragment `send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"`. The generated driver and its bottom-level source/runtime uniqueness checks already use pitch `90`; only the verifier's required-fragment tuple still expected pitch `0`. This is a deterministic verifier inconsistency, not a game/render failure. No client artifact was produced for this run.
+- Fixed exactly one stale expected literal in `tools/verify_rift_ambient_sound.py` from pitch 0 to pitch 90. No production Java, renderer, workflow, Gradle, shared smoke harness, registry, localization, or other lane changed.
+- Path-overlap audit: inspected changed-file lists for every other open PR #1–#3 and #5–#56; neither `tools/verify_rift_ambient_sound.py` nor this lane journal overlaps those PRs. PR #4 is the owning PR. Existing unrelated PR #3 overlap in `SalisMundusItem.java` remains an integration blocker; no merge or force-push.
+- Commit: [cf6825e84c0ad7bc6cbbb51644772324f8a0ddda](https://github.com/craftkot/tgaumcraft/commit/cf6825e84c0ad7bc6cbbb51644772324f8a0ddda). A local deterministic replacement check confirmed exactly one stale literal was replaced and no old literal remains; this is not the repository Python verifier or a Minecraft run.
+- Exact-head GitHub Actions verification has been triggered by the changed `tools/*rift*` path and must be inspected. The previous #44744238816 failure remains a failed historical run; it must not be relabeled as a pass. Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**; no point awarded and no category closed.
+- Next: require the new exact-head Rift verifier to pass, then inspect the real-client screenshot and all four render-layer markers. Only after a client reaches the game-launch step can the camera/frustum hypothesis be evaluated.
