@@ -2533,3 +2533,7 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - Исправлен порядок и добавлен второй \`Axis.ZP\` поворот перед масштабированием glyph. Default \`crooked=true\` подтверждён в том же исходнике \`ModConfig.java\`.
 - Клиентский fixture переключён с Aer (rotation 0°) на Terra при x=250/facing=2 (rotation **−2°**), чтобы реальный screenshot проверял crooked transform обеих quad, а не только их наличие.
 - Core/source test теперь требует ровно два применения crooked rotation; реальный лог обязан показать \`crooked=-2\` для фона и glyph.
+
+
+### Test harness self-test correction — 20.11.2026
+- The stricter Terra fixture correctly required \`crooked=-2\`; its synthetic log still contained the previous Aer value \`crooked=0\`. Updated the synthetic fixture and added a source-contract assertion for the non-zero rotation. This is a harness-only correction; production transform remains the BETA26 value.

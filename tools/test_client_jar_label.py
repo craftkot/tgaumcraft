@@ -50,6 +50,7 @@ for token in (
 for token in (
     'AspectFilter:"terra"',
     "JAR_ASPECT_LABEL_FIXTURE_READY",
+    "crooked=-2",
     "100-jar-aspect-label",
     "assert_client_jar_label.py",
 ):

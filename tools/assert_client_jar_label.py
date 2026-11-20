@@ -103,7 +103,7 @@ def self_test() -> None:
         log_path = root / "client.log"
         _write_synthetic_png(image_path)
         log_path.write_text(
-            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=0 "
+            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2 "
             "texture=thaumcraft:textures/models/label.png\n"
             "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra "
             "texture=thaumcraft:textures/aspects/terra.png\n"
