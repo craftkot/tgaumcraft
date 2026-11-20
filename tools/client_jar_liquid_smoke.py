@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a real Minecraft client smoke for the BETA26 animated jar liquid renderer."""
+"""Generate a real Minecraft client smoke for BETA26 jar liquid and lid parts."""
 from pathlib import Path
 import sys
 
@@ -24,7 +24,7 @@ head = head.replace(
 tail = tail_anchor + source.split(tail_anchor, 1)[1]
 tail = tail.replace(
     "PASS: real Minecraft client world, overhead crucible PNGs captured",
-    "PASS: real Minecraft client world, BETA26 jar liquid renderer smoke",
+    "PASS: real Minecraft client world, BETA26 jar liquid and metal parts smoke",
 )
 
 body = r'''
@@ -34,45 +34,37 @@ body = r'''
   send_chat '/time set noon'
   send_chat '/weather clear'
   send_chat '/forceload add 250 250'
-  # Keep the camera player on the same platform as the jars during the 90-second render poll.
-  # The previous z=250..252 floor left the player at z=248.5 unsupported; gravity moved
-  # the camera 14 blocks below the fixture, so no jar renderer could be dispatched.
+  # Keep the camera player on the same platform as the jars during the render poll.
   send_chat '/fill 248 149 248 252 149 252 minecraft:stone'
   send_chat '/fill 248 150 250 252 153 252 minecraft:air'
-  send_chat '/setblock 249 150 251 thaumcraft:jar_normal{Aspect:"aer",Amount:125s}'
-  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{Aspect:"ignis",Amount:250s}'
-  send_chat '/setblock 251 150 251 thaumcraft:jar_normal{Amount:0s}'
+  send_chat '/setblock 249 150 251 thaumcraft:jar_normal{Aspect:"aer",Amount:125s,facing:2b}'
+  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{Aspect:"ignis",Amount:250s,facing:2b}'
+  send_chat '/setblock 251 150 251 thaumcraft:jar_normal{Amount:0s,facing:2b}'
   send_chat '/execute if data block 249 150 251 {Aspect:"aer",Amount:125s} run say JAR_LIQUID_AER_FIXTURE_READY'
   send_chat '/execute if data block 250 150 251 {Aspect:"ignis",Amount:250s} run say JAR_LIQUID_IGNIS_FIXTURE_READY'
   send_chat '/execute if data block 251 150 251 {Amount:0s} run say JAR_LIQUID_EMPTY_FIXTURE_READY'
 
-  # Force the client to unload and reload the already-saved chunk so the
-  # actual block-entity update tag, not merely server-side /data NBT, is tested.
+  # Force a client chunk reload so the actual update tag, not only server NBT, is tested.
   send_chat '/tp @p 1000 150 1000 0 0'
   sleep 6
   send_chat '/tp @p 250.5 150 248.5 0 16'
   sleep 6
   capture 96-jar-liquid-fixture-camera
 
-  client_state_ready=0
-  for _ in $(seq 1 90); do
-    if grep -Fq 'TC_SMOKE_JAR_LIQUID_CLIENT_STATE=READY' client-smoke/client.log; then
-      client_state_ready=1
-      break
+  for marker in     'TC_SMOKE_JAR_METAL_PARTS_LAYER_REGISTERED=YES'     'TC_SMOKE_JAR_LIQUID_CLIENT_STATE=READY'; do
+    found=0
+    for _ in $(seq 1 90); do
+      if grep -Fq "$marker" client-smoke/client.log; then found=1; break; fi
+      sleep 1
+    done
+    if [ "$found" -ne 1 ]; then
+      echo "JAR_LIQUID_REQUIRED_CLIENT_MARKER_MISSING=$marker" | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      exit 1
     fi
-    sleep 1
   done
-  if [ "$client_state_ready" -ne 1 ]; then
-    echo 'JAR_LIQUID_CLIENT_BLOCK_ENTITIES_NOT_READY=YES' | tee -a client-smoke-status.txt
-    grep -F 'TC_SMOKE_JAR_LIQUID_CLIENT_STATE=' client-smoke/client.log | tail -8 | tee -a client-smoke-status.txt || true
-    tail -120 client-smoke/client.log >&2
-    exit 1
-  fi
 
-  for marker in \
-    'TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=249,150,251 amount=125 aspect=aer rgb=FFFF7E topY=0.3750 texture=thaumcraft:block/animatedglow' \
-    'TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=250,150,251 amount=250 aspect=ignis rgb=FF5A01 topY=0.6875 texture=thaumcraft:block/animatedglow' \
-    'TC_SMOKE_JAR_LIQUID_EMPTY_SKIPPED=YES pos=251,150,251 amount=0'; do
+  for marker in     'TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=249,150,251 amount=125 aspect=aer rgb=FFFF7E topY=0.3750 texture=thaumcraft:block/animatedglow'     'TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=250,150,251 amount=250 aspect=ignis rgb=FF5A01 topY=0.6875 texture=thaumcraft:block/animatedglow'     'TC_SMOKE_JAR_LIQUID_EMPTY_SKIPPED=YES pos=251,150,251 amount=0'; do
     found=0
     for _ in $(seq 1 90); do
       if grep -Fq "$marker" client-smoke/client.log; then found=1; break; fi
@@ -88,11 +80,6 @@ body = r'''
           echo "JAR_LIQUID_STAGE_ABSENT=$stage" | tee -a client-smoke-status.txt
         fi
       done
-      if grep -Fq "Picked up JAVA_TOOL_OPTIONS" client-smoke/client.log; then
-        echo "JAR_LIQUID_JVM_OPTIONS_LOGGED=YES" | tee -a client-smoke-status.txt
-      else
-        echo "JAR_LIQUID_JVM_OPTIONS_LOGGED=NO" | tee -a client-smoke-status.txt
-      fi
       grep -F "TC_SMOKE_JAR_LIQUID_CLIENT_STATE=" client-smoke/client.log | tail -8 | tee -a client-smoke-status.txt || true
       tail -120 client-smoke/client.log >&2
       exit 1
@@ -100,8 +87,61 @@ body = r'''
   done
 
   capture 97-jar-liquid-filled
-  python3 tools/assert_client_jar_liquid_smoke.py \
-    client-smoke/client.log client-smoke/screenshots/97-jar-liquid-filled.png
-  echo 'JAR_LIQUID_REAL_CLIENT_RENDERER_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt client-smoke/client.log
+  python3 tools/assert_client_jar_liquid_smoke.py     client-smoke/client.log client-smoke/screenshots/97-jar-liquid-filled.png
+
+  # BETA26 blocked jar: the renderer must add the original gold lid brace even when empty.
+  send_chat '/fill 248 150 250 252 153 252 minecraft:air'
+  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{blocked:1b,facing:2b}'
+  send_chat '/execute if data block 250 150 251 {blocked:1b,facing:2b} run say JAR_BRACE_FIXTURE_READY'
+  send_chat '/tp @p 1000 150 1000 0 0'
+  sleep 3
+  send_chat '/tp @p 250.5 150 248.5 0 16'
+  sleep 4
+  brace_found=0
+  for _ in $(seq 1 45); do
+    if grep -Fq 'TC_SMOKE_JAR_BRACE_RENDERED=YES pos=250,150,251' client-smoke/client.log; then
+      brace_found=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$brace_found" -ne 1 ]; then
+    echo 'JAR_BRACE_RENDER_MARKER_MISSING=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  capture 98-jar-brace
+
+  # BETA26 getConnectableTile(pos, UP): an open DOWN face on the adjacent tube adds the lid extension.
+  # Place the tube first, then the jar, so the real neighbor update opens the tube's DOWN blockstate.
+  send_chat '/fill 248 150 250 252 153 252 minecraft:air'
+  send_chat '/setblock 250 151 251 thaumcraft:tube'
+  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{facing:2b}'
+  send_chat '/execute if block 250 151 251 thaumcraft:tube[down=true] run say JAR_EXTENSION_TUBE_FIXTURE_READY'
+  send_chat '/tp @p 1000 150 1000 0 0'
+  sleep 3
+  send_chat '/tp @p 250.5 150 248.5 0 16'
+  sleep 4
+  extension_found=0
+  for _ in $(seq 1 45); do
+    if grep -Fq 'TC_SMOKE_JAR_LID_EXTENSION_RENDERED=YES pos=250,150,251 above=250,151,251' client-smoke/client.log; then
+      extension_found=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$extension_found" -ne 1 ]; then
+    echo 'JAR_LID_EXTENSION_RENDER_MARKER_MISSING=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  if ! grep -Fq 'JAR_EXTENSION_TUBE_FIXTURE_READY' client-smoke/client.log; then
+    echo 'JAR_EXTENSION_TUBE_NOT_CONNECTED=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  capture 99-jar-lid-extension
+  python3 tools/assert_client_jar_metal_parts.py     client-smoke/client.log     client-smoke/screenshots/98-jar-brace.png     client-smoke/screenshots/99-jar-lid-extension.png
+  echo 'JAR_METAL_PARTS_REAL_CLIENT_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt client-smoke/client.log
 '''
 sys.stdout.write(head + body + tail)

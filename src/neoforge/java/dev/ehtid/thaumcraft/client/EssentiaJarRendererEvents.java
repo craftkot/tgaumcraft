@@ -13,6 +13,15 @@ public final class EssentiaJarRendererEvents {
     private EssentiaJarRendererEvents() {}
 
     @SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        if (Boolean.getBoolean("thaumcraft.jarLiquidSmoke")) {
+            System.out.println("TC_SMOKE_JAR_METAL_PARTS_LAYER_REGISTERED=YES");
+        }
+        event.registerLayerDefinition(
+                EssentiaJarMetalPartsModel.LAYER_LOCATION, EssentiaJarMetalPartsModel::createLayer);
+    }
+
+    @SubscribeEvent
     public static void registerRenderer(EntityRenderersEvent.RegisterRenderers event) {
         if (Boolean.getBoolean("thaumcraft.jarLiquidSmoke")) {
             System.out.println("TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED=YES");

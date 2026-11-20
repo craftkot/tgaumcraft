@@ -1,20 +1,27 @@
-name: M16 BETA26 animated essentia jar liquid renderer
+name: M16 BETA26 essentia jar liquid and metal parts renderers
 
 on:
   pull_request:
     branches: [main]
     paths:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarRenderLogic.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarMetalPartsLogic.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarRenderLogicTest.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarMetalPartsParityTest.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarLiquidRenderer.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarMetalPartsModel.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarRendererEvents.java'
       - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png'
       - 'src/main/resources/assets/thaumcraft/textures/block/animatedglow.png.mcmeta'
+      - 'src/main/resources/assets/thaumcraft/textures/models/jarbrine.png'
       - 'tools/test_essentia_jar_render_logic.sh'
       - 'tools/test_client_jar_liquid_probe.py'
+      - 'tools/test_client_jar_metal_parts.py'
       - 'tools/verify_essentia_jar_liquid_source.py'
+      - 'tools/verify_jar_brine_source_art.py'
       - 'tools/client_jar_liquid_smoke.py'
       - 'tools/assert_client_jar_liquid_smoke.py'
+      - 'tools/assert_client_jar_metal_parts.py'
       - '.github/workflows/closure-jar-liquid-client.yml'
   workflow_dispatch:
 
@@ -31,10 +38,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - name: Verify BETA26 liquid geometry and aspect colors
+      - name: Verify BETA26 liquid and metal-parts geometry
         run: bash tools/test_essentia_jar_render_logic.sh
       - name: Verify byte-identical BETA26 animated texture and metadata
         run: python3 tools/verify_essentia_jar_liquid_source.py
+      - name: Verify byte-identical BETA26 jarbrine model texture
+        run: python3 tools/verify_jar_brine_source_art.py
 
   real-client-liquid:
     needs: core-render-contract
@@ -93,9 +102,9 @@ jobs:
         run: |
           python3 tools/client_jar_liquid_smoke.py > client-jar-liquid-generated.sh
           bash -n client-jar-liquid-generated.sh
-      - name: Launch Minecraft and capture BETA26 jar liquid
+      - name: Launch Minecraft and capture BETA26 jar renderers
         run: bash client-jar-liquid-generated.sh
-      - name: Recheck authoritative real-client markers
+      - name: Recheck authoritative real-client markers and pixels
         if: always()
         run: |
           if [ -f client-smoke/client.log ] && [ -f client-smoke/screenshots/97-jar-liquid-filled.png ]; then
@@ -104,11 +113,17 @@ jobs:
             echo "JAR_LIQUID_CLIENT_EVIDENCE_INCOMPLETE=YES"
             exit 1
           fi
+          if [ -f client-smoke/client.log ] && [ -f client-smoke/screenshots/98-jar-brace.png ] && [ -f client-smoke/screenshots/99-jar-lid-extension.png ]; then
+            python3 tools/assert_client_jar_metal_parts.py client-smoke/client.log client-smoke/screenshots/98-jar-brace.png client-smoke/screenshots/99-jar-lid-extension.png
+          else
+            echo "JAR_METAL_PARTS_CLIENT_EVIDENCE_INCOMPLETE=YES"
+            exit 1
+          fi
       - name: Upload real-client evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: m16-beta26-animated-jar-liquid-client
+          name: m16-beta26-essentia-jar-renderers-client
           retention-days: 14
           if-no-files-found: warn
           path: |

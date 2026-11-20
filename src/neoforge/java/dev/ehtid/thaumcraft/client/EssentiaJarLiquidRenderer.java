@@ -4,8 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.EssentiaTransportPort;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarLogic;
+import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarMetalPartsLogic;
 import dev.ehtid.thaumcraft.port.core.LegacyEssentiaJarRenderLogic;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -15,14 +17,16 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.level.Level;
 
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** BETA26 TileJarRenderer.renderLiquid port; the block model still renders the glass. */
+/** BETA26 TileJarRenderer port: lid parts first, then the animated essentia volume. */
 public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<EssentiaJarBlockEntity> {
     private static final ResourceLocation LIQUID_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "block/animatedglow");
@@ -30,7 +34,12 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
     private static final boolean SMOKE_PROBE = Boolean.getBoolean("thaumcraft.jarLiquidSmoke");
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
 
-    public EssentiaJarLiquidRenderer(BlockEntityRendererProvider.Context context) {}
+    private final EssentiaJarMetalPartsModel metalParts;
+
+    public EssentiaJarLiquidRenderer(BlockEntityRendererProvider.Context context) {
+        metalParts = new EssentiaJarMetalPartsModel(
+                context.bakeLayer(EssentiaJarMetalPartsModel.LAYER_LOCATION));
+    }
 
     @Override
     public void render(EssentiaJarBlockEntity jar, float partialTick, PoseStack poseStack,
@@ -42,6 +51,28 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
             System.out.printf(Locale.ROOT,
                     "TC_SMOKE_JAR_LIQUID_RENDER_ENTRY=YES pos=%d,%d,%d amount=%d aspect=%s%n",
                     pos.getX(), pos.getY(), pos.getZ(), amount, state.aspect());
+        }
+
+        // BETA26 draws these parts for every fillable jar, including empty jars.
+        if (LegacyEssentiaJarMetalPartsLogic.shouldRenderBrace(jar.blocked())) {
+            metalParts.renderLidBrace(poseStack, buffers, packedOverlay);
+            if (SMOKE_PROBE && REPORTED.add("brace:" + pos.asLong())) {
+                System.out.printf(Locale.ROOT,
+                        "TC_SMOKE_JAR_BRACE_RENDERED=YES pos=%d,%d,%d%n",
+                        pos.getX(), pos.getY(), pos.getZ());
+            }
+        }
+
+        BlockPos above = pos.above();
+        boolean connectableAbove = hasConnectableTransportAbove(jar, above);
+        if (LegacyEssentiaJarMetalPartsLogic.shouldRenderLidExtension(connectableAbove)) {
+            metalParts.renderLidExtension(poseStack, buffers, packedOverlay);
+            if (SMOKE_PROBE && REPORTED.add("extension:" + pos.asLong())) {
+                System.out.printf(Locale.ROOT,
+                        "TC_SMOKE_JAR_LID_EXTENSION_RENDERED=YES pos=%d,%d,%d above=%d,%d,%d%n",
+                        pos.getX(), pos.getY(), pos.getZ(),
+                        above.getX(), above.getY(), above.getZ());
+            }
         }
 
         if (!LegacyEssentiaJarRenderLogic.hasLiquid(amount)) {
@@ -125,6 +156,13 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
                         state.aspect() == null ? "none" : state.aspect(), rgb, maxY, LIQUID_TEXTURE);
             }
         }
+    }
+
+    private static boolean hasConnectableTransportAbove(EssentiaJarBlockEntity jar, BlockPos above) {
+        Level level = jar.getLevel();
+        if (level == null || !level.hasChunkAt(above)) return false;
+        return level.getBlockEntity(above) instanceof EssentiaTransportPort port
+                && port.transportConnects(Direction.DOWN);
     }
 
     private static float lerp(float from, float to, float amount) {
