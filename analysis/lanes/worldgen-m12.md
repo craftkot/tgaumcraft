@@ -759,3 +759,10 @@
 - Direct git checkout attempted again: `Could not resolve host: github.com`. Exact Java 21 runners were not executed in this run. No production or test change was made; no demonstrated defect justified adding further isolated assertions.
 - Still missing: exact-head standalone preflight and rollback runner outputs, native NeoForge WorldGenLevel.setBlock failure-injection GameTest, agreed placed-feature/biome registration, and actual new-chunk Silverwood/Greatwood gameplay smoke. Do not merge Draft PR #9. Historical score 59/100 unchanged; no shared registries, Gradle, main, other branches or merge touched.
 - Next: obtain runnable checkout or CI runner evidence; prioritize native Silverwood Feature integration and biome/chunk verification with coordination rather than expanding abstract guard tests.
+
+## 2026-11-20 — M12 preflight contract clarification
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked main HEAD a4280834, own pre-edit HEAD 50ccc714, six feature branches and open PRs. Before edit main...feature/worldgen-m12 ahead 203 / behind 0; Draft PR #9 remains open.
+- Source audit established that SilverwoodPlacementPreflight validates the bounding envelope and scans soil plus the *central trunk column*, not the complete canopy/branch collision set. Corrected misleading Javadoc in [b1ad17f](https://github.com/craftkot/tgaumcraft/commit/b1ad17f0afa7f1cecca42e2f38e33c983a220c7b) without changing executable logic. This is documentation correctness, NOT new worldgen functionality.
+- Exact checkout attempt: `git ls-remote` failed DNS (`Could not resolve host: github.com`). Standalone Java runners, native NeoForge GameTest and fresh-chunk gameplay smoke were not run. CI must be checked for the resulting documentation commits; earlier green workflow cannot prove gameplay behavior.
+- Next: obtain executable checkout or remote runner, execute existing Silverwood preflight and rollback scripts, then add native failure-injection GameTest and coordinate feature/biome registration. No main, other branches, shared registries, Gradle or merge changes. Historical score 59/100 unchanged.
