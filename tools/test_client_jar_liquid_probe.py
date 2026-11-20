@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Source-contract test for the native essentia-jar client-state diagnostic."""
+"""Source-contract test for the native essentia-jar client-state and metal-parts smoke."""
 from pathlib import Path
 import subprocess
 import sys
@@ -39,16 +39,25 @@ ordered = (
     "capture 96-jar-liquid-fixture-camera",
     "TC_SMOKE_JAR_LIQUID_CLIENT_STATE=READY",
     "TC_SMOKE_JAR_LIQUID_RENDERED=YES pos=249,150,251",
+    "capture 97-jar-liquid-filled",
+    "send_chat '/setblock 250 150 251 thaumcraft:jar_normal{blocked:1b,facing:2b}'",
+    "capture 98-jar-brace",
+    "send_chat '/setblock 250 151 251 thaumcraft:tube'",
+    "send_chat '/setblock 250 150 251 thaumcraft:jar_normal{facing:2b}'",
+    "capture 99-jar-lid-extension",
 )
 positions = [script.find(marker) for marker in ordered]
 if any(position < 0 for position in positions) or positions != sorted(positions):
-    raise SystemExit(f"jar-liquid client probe/screenshot order is invalid: {positions}")
+    raise SystemExit(f"jar liquid/metal-parts fixture order is invalid: {positions}")
 
 for marker in (
-    "JAR_LIQUID_CLIENT_BLOCK_ENTITIES_NOT_READY=YES",
+    "JAR_LIQUID_REQUIRED_CLIENT_MARKER_MISSING=$marker",
+    "TC_SMOKE_JAR_METAL_PARTS_LAYER_REGISTERED=YES",
     "for stage in TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED TC_SMOKE_JAR_LIQUID_RENDER_ENTRY TC_SMOKE_JAR_LIQUID_RENDERED",
     'echo "JAR_LIQUID_STAGE_PRESENT=$stage"',
     'echo "JAR_LIQUID_STAGE_ABSENT=$stage"',
+    "JAR_BRACE_FIXTURE_READY",
+    "JAR_EXTENSION_TUBE_FIXTURE_READY",
 ):
     if marker not in script:
         raise SystemExit(f"generated smoke is missing diagnostic marker: {marker}")
@@ -67,4 +76,4 @@ for marker in (
     if marker not in probe:
         raise SystemExit(f"client probe is missing required source contract: {marker}")
 
-print("Jar-liquid client BE probe contract: PASS (real GUI tick, chunk/BE/type/NBT checks, screenshot before renderer gate)")
+print("Jar-liquid client BE probe contract: PASS (real GUI tick, chunk/BE/type/NBT checks, liquid and metal-part screenshots)")
