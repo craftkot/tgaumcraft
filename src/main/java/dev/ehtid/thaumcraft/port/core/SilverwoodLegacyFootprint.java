@@ -26,12 +26,12 @@ public final class SilverwoodLegacyFootprint {
     /**
      * Can every possible Silverwood write stay inside the currently generated chunk?
      * Rejecting a candidate is safer than loading or writing an adjacent chunk.
-     * The 11x11 canopy envelope is intentionally wider than the actual round canopy.
+     * The canopy loops scan +/-5, but distanceSquared < 10 + nextInt(8)\n     * can only write at horizontal offsets within +/-4 (25 >= 17).\n     * The log skeleton reaches only +/-2. This is the exact maximum\n     * horizontal write envelope, not a claim that all positions are written.
      */
     public static boolean withinChunk(int originX, int originZ, int chunkX, int chunkZ) {
         long minX = (long) chunkX * 16;
         long minZ = (long) chunkZ * 16;
-        return (long) originX - 5 >= minX && (long) originX + 5 < minX + 16
-                && (long) originZ - 5 >= minZ && (long) originZ + 5 < minZ + 16;
+        return (long) originX - 4 >= minX && (long) originX + 4 < minX + 16
+                && (long) originZ - 4 >= minZ && (long) originZ + 4 < minZ + 16;
     }
 }
