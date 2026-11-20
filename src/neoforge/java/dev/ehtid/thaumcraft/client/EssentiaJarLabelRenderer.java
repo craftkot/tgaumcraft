@@ -48,7 +48,7 @@ public final class EssentiaJarLabelRenderer {
             poseStack.mulPose(Axis.YP.rotationDegrees(facingRotation));
         }
 
-        // BETA26 draws the paper quad first and applies crooked rotation only to it.
+        // BETA26 applies the same crooked rotation to both the paper quad and the aspect glyph.
         poseStack.pushPose();
         poseStack.translate(0.0D,
                 LegacyEssentiaJarLabelRenderLogic.LABEL_CENTER_Y,
@@ -66,6 +66,7 @@ public final class EssentiaJarLabelRenderer {
             poseStack.translate(0.0D,
                     LegacyEssentiaJarLabelRenderLogic.LABEL_CENTER_Y,
                     LegacyEssentiaJarLabelRenderLogic.ICON_CENTER_Z);
+            poseStack.mulPose(Axis.ZP.rotationDegrees(crookedRotation));
             float scale = LegacyEssentiaJarLabelRenderLogic.ICON_SCALE;
             poseStack.scale(scale, scale, scale);
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0F));
@@ -80,8 +81,8 @@ public final class EssentiaJarLabelRenderer {
                     pos.getX(), pos.getY(), pos.getZ(), aspectFilter, facing, crookedRotation, LABEL_TEXTURE);
             if (aspect != null) {
                 System.out.printf(Locale.ROOT,
-                        "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=%d,%d,%d aspect=%s texture=%s%n",
-                        pos.getX(), pos.getY(), pos.getZ(), aspectFilter,
+                        "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=%d,%d,%d aspect=%s crooked=%d texture=%s%n",
+                        pos.getX(), pos.getY(), pos.getZ(), aspectFilter, crookedRotation,
                         ResourceLocation.fromNamespaceAndPath(
                                 ThaumcraftPort.MOD_ID, "textures/aspects/" + aspect.tag() + ".png"));
             }

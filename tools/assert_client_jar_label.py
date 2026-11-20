@@ -48,8 +48,8 @@ def inspect(image_path: Path) -> tuple[int, int]:
 def verify(log_path: Path, image_path: Path) -> None:
     log = log_path.read_text(encoding="utf-8", errors="replace")
     required = (
-        "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=aer facing=2",
-        "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=aer texture=thaumcraft:textures/aspects/aer.png",
+        "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2",
+        "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 texture=thaumcraft:textures/aspects/terra.png",
         "JAR_ASPECT_LABEL_FIXTURE_READY",
     )
     for marker in required:
@@ -103,10 +103,10 @@ def self_test() -> None:
         log_path = root / "client.log"
         _write_synthetic_png(image_path)
         log_path.write_text(
-            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=aer facing=2 crooked=0 "
+            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=0 "
             "texture=thaumcraft:textures/models/label.png\n"
-            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=aer "
-            "texture=thaumcraft:textures/aspects/aer.png\n"
+            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra "
+            "texture=thaumcraft:textures/aspects/terra.png\n"
             "JAR_ASPECT_LABEL_FIXTURE_READY\n",
             encoding="utf-8",
         )

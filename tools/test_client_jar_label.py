@@ -34,6 +34,8 @@ for token in (
 ):
     if token not in label_renderer:
         raise SystemExit(f"JAR_LABEL_RENDERER_CONTRACT_MISSING={token}")
+if label_renderer.count("Axis.ZP.rotationDegrees(crookedRotation)") != 2:
+    raise SystemExit("JAR_LABEL_CROOKED_ROTATION_MUST_APPLY_TO_PAPER_AND_GLYPH")
 
 for token in (
     "LABEL_CENTER_Y = -0.4F",
@@ -46,7 +48,7 @@ for token in (
         raise SystemExit(f"JAR_LABEL_CORE_CONTRACT_MISSING={token}")
 
 for token in (
-    'AspectFilter:"aer"',
+    'AspectFilter:"terra"',
     "JAR_ASPECT_LABEL_FIXTURE_READY",
     "100-jar-aspect-label",
     "assert_client_jar_label.py",

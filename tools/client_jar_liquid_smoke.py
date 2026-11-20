@@ -144,16 +144,16 @@ body = r'''
   python3 tools/assert_client_jar_metal_parts.py     client-smoke/client.log     client-smoke/screenshots/98-jar-brace.png     client-smoke/screenshots/99-jar-lid-extension.png
   # BETA26 TileJarRenderer draws the filter label and Aspect.getImage() glyph even in an empty jar.
   send_chat '/fill 248 150 250 252 153 252 minecraft:air'
-  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{AspectFilter:"aer",facing:2b}'
-  send_chat '/execute if data block 250 150 251 {AspectFilter:"aer",facing:2b} run say JAR_ASPECT_LABEL_FIXTURE_READY'
+  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{AspectFilter:"terra",facing:2b}'
+  send_chat '/execute if data block 250 150 251 {AspectFilter:"terra",facing:2b} run say JAR_ASPECT_LABEL_FIXTURE_READY'
   send_chat '/tp @p 1000 150 1000 0 0'
   sleep 3
   send_chat '/tp @p 250.5 150 248.5 0 16'
   sleep 4
   label_found=0
   for _ in $(seq 1 45); do
-    if grep -Fq 'TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=aer facing=2' client-smoke/client.log \
-       && grep -Fq 'TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=aer texture=thaumcraft:textures/aspects/aer.png' client-smoke/client.log; then
+    if grep -Fq 'TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2' client-smoke/client.log \
+       && grep -Fq 'TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 texture=thaumcraft:textures/aspects/terra.png' client-smoke/client.log; then
       label_found=1
       break
     fi

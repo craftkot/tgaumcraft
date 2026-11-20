@@ -2515,7 +2515,7 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 ## 20.11.2026 — M16: добавлена динамическая метка фильтра Essentia Jar
 - На точном исходном HEAD \`23b53d005ec64bd6f917f60d90001d57991a38c2\` завершился настоящий клиентский [Jar Liquid + Metal Parts #44650095642](https://github.com/craftkot/tgaumcraft/actions/runs/44650095642): \`SUCCESS\`. Лог подтвердил Aer/Ignis/Empty, пиксели жидкости \`3633/23733\`, скобу \`862\` и расширение \`1410\`; \`JAR_METAL_PARTS_REAL_CLIENT_AND_SCREENSHOT=PASS\`.
 - BETA26 \`TileJarRenderer\` рисует бумажную метку при \`aspectFilter != null\`, затем \`Aspect.getImage()\` через \`textures/aspects/<tag>.png\`. В портированном \`EssentiaJarLiquidRenderer\` этой ветви не было; отсутствовали также отдельная модельная \`textures/models/label.png\` и все 37 базовых aspect-иконок.
-- Добавлен \`EssentiaJarLabelRenderer\`: исходный внешний transform (центр блока, +0.01 Y, X=180), facing yaw 2/3/4/5, crooked rotation только бумажной метки, исходные смещения Y/Z, масштаб glyph 0.021, Y=180, чёрный tint 0.1 и alpha 0.8. Метка вызывается **до** раннего возврата пустой банки.
+- Добавлен \`EssentiaJarLabelRenderer\`: исходный внешний transform (центр блока, +0.01 Y, X=180), facing yaw 2/3/4/5, crooked rotation и бумажной метки, и glyph, исходные смещения Y/Z, масштаб glyph 0.021, Y=180, чёрный tint 0.1 и alpha 0.8. Метка вызывается **до** раннего возврата пустой банки.
 - Восстановлены 37 PNG аспектов и модельная \`label.png\` побайтно из закреплённого BETA26 source commit \`954022bb777b7546281fb36df8522f0ba6b43f81\`; manifest фиксирует исходные Git blob SHA-1. PR #8 затрагивает \`EssentiaJarBlockEntity.java\`, но этот файл не менялся.
 - Добавлены Core-тесты facing/crooked rotation (включая отрицательный Java remainder), проверка 38 исходных PNG, source-contract и настоящий client fixture \`AspectFilter:"aer"\` с screenshot/pixel gate \`100-jar-aspect-label.png\`.
 - Текущий результат новой реализации: **ожидает exact-HEAD CI и Minecraft client**. До реального screenshot PASS M16 остаётся **4/6**, общий индекс **59/100**. Следующее: проверить Core gate, full NeoForge compile и screenshot marker/pixels; при отказе диагностировать фактический render path, не ослабляя pixel threshold.
@@ -2526,3 +2526,10 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - The job then stopped before the source/asset checks because the Ubuntu runner has no Pillow module. This was an environment dependency in the new screenshot self-test, not a rendering or asset failure.
 - Replaced the Pillow dependency with the repository's existing standard-library PNG decoder (\`assert_client_jar_liquid_smoke._decode_png\`); the synthetic image is now emitted with stdlib \`struct/zlib\`. Kept the real screenshot gates strict at 800 paper pixels and 100 dark glyph pixels.
 - The asset identity check and actual Minecraft client stage have not yet run. Next exact-HEAD run must pass Core, verify all 38 pinned PNG hashes/dimensions, compile NeoForge, then capture the real label screenshot.
+
+
+### Повторная сверка точного BETA26 renderer — 20.11.2026
+- В закреплённом исходнике \`TileJarRenderer.java\` (source commit \`954022bb777b7546281fb36df8522f0ba6b43f81\`) обнаружено, что \`ModConfig.CONFIG_GRAPHICS.crooked\` применяется **дважды**: и к бумажной quad, и к aspect glyph. Начальная версия порта поворачивала только фон.
+- Исправлен порядок и добавлен второй \`Axis.ZP\` поворот перед масштабированием glyph. Default \`crooked=true\` подтверждён в том же исходнике \`ModConfig.java\`.
+- Клиентский fixture переключён с Aer (rotation 0°) на Terra при x=250/facing=2 (rotation **−2°**), чтобы реальный screenshot проверял crooked transform обеих quad, а не только их наличие.
+- Core/source test теперь требует ровно два применения crooked rotation; реальный лог обязан показать \`crooked=-2\` для фона и glyph.
