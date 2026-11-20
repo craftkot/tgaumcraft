@@ -101,6 +101,7 @@ def build_body() -> str:
 
   python3 - <<'PY'
 import re
+import sys
 from pathlib import Path
 
 log = Path("client-smoke/client.log").read_text(encoding="utf-8", errors="replace")
