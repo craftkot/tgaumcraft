@@ -137,7 +137,7 @@ assert "current_game_time - start_game_time >= 300" not in driver, (
 
 high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 high_teleport_marker = "TC_RIFT_HIGH_TELEPORT_PRESENT"
-platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
+platform_fill = 'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 visual_teleport = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
@@ -148,7 +148,7 @@ rift_summon = 'send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rift_y $rif
 runtime_template = driver.split("high_teleport_command =", 1)[0]
 post_spawn_camera_probe = "send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'"
 entity_presence_probe = "send_chat_fast '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'"
-high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=300,z=12,distance=..1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
+high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,dx=1,dy=250,dz=1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
 return_marker_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'"
 assert runtime_template.count(post_spawn_camera_probe) == 1, "post-spawn camera marker must use the bounded fast path"
 assert runtime_template.count(entity_presence_probe) == 1 and runtime_template.count(high_teleport_probe) == 1, "fast entity/high-position commands must be explicit and unique"
@@ -163,7 +163,10 @@ assert runtime_template.count(high_teleport) == 1 and runtime_template.count(pla
     "the fast setup commands must be unique in the runtime template"
 )
 assert runtime_template.index(high_teleport) < runtime_template.index(high_teleport_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_HIGH_TELEPORT_PRESENT'") < runtime_template.index(platform_fill), (
-    "the high teleport must be server-confirmed before the barrier fill"
+    "the falling player must be confirmed inside the high X/Z column before the reliable barrier fill"
+)
+assert "distance=..1" not in high_teleport_probe and "dy=250" in high_teleport_probe, (
+    "the high-teleport marker must tolerate falling while still excluding normal spawn"
 )
 assert runtime_template.index(entity_presence_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_AMBIENT_ENTITY_PRESENT'"), (
     "the spawned Rift must be confirmed before the post-spawn camera capture"
