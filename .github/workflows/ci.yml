@@ -565,7 +565,7 @@ jobs:
           if-no-files-found: error
 
   alchemy-native-gametest:
-    if: github.ref_name == 'fix/alchemy-native-ci-gate-2026-11-19' || github.head_ref == 'fix/alchemy-native-ci-gate-2026-11-19'
+    if: github.ref_name == 'fix/alchemy-overflow-native-ci-2026-11-20' || github.head_ref == 'fix/alchemy-overflow-native-ci-2026-11-20'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
