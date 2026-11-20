@@ -158,7 +158,7 @@ assert "send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC
 )
 new_send_block = driver.split('new_send = """', 1)[1].split('"""', 1)[0]
 assert 'sleep 0.5' in new_send_block and 'sleep 0.35' in new_send_block and 'wait_for_server_marker() {' in new_send_block, "generated fast helper must wait for chat and poll server markers"
-assert 'sleep 0.1' not in new_send_block, "generated fast helper must not regress to the prefix-loss race"
+assert not any(line.strip() == 'sleep 0.1' for line in new_send_block.splitlines()), "generated fast helper must not regress to the prefix-loss race"
 assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
     "the fast setup commands must be unique in the runtime template"
 )

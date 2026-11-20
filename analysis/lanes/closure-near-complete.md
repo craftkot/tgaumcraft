@@ -2946,3 +2946,12 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - The captured screenshot shows the real size-30 Rift polycone and the shader-active/four-layer markers. The visual appearance still needs independent comparison with the BETA26 end-portal starfield; a shader marker is not visual acceptance. Positive-control PCM correlation was 0.9964, but the natural event PCM gate was not reached, so no ambient-audio acceptance is claimed.
 - This change increases the chat-open delay to 0.5 s, adds a bounded fresh server-marker poller, explicitly confirms the high teleport, and uses the fast path for summon/entity/camera/return markers so the listener can return to the exact Rift source before tick 300. The fast path remains guarded by exact server-side markers; no production Java/GLSL or shared infrastructure is changed.
 - Exact code/test commit and workflow outcomes will be recorded after the new-head checks complete. Fixed rubric remains 59/100, M16 4/6, M08 5/9; no point awarded and no category closed.
+
+
+### Static verifier false positive — 20.11.2026
+
+- The new PR-triggered run #44810270645 failed in the Python verifier before the Minecraft launch: AssertionError at the negative fast-chat delay check.
+- Root cause: substring matching for 'sleep 0.1' also matched the legitimate 'sleep 0.15' command-channel setup delay in the same helper. The runtime helper itself contains a 0.5 s chat-open delay and 0.35 s submit delay; this was a false-positive assertion, not a second runtime defect.
+- Both the generator self-check and Python verifier now compare complete stripped lines against exactly 'sleep 0.1', avoiding the 0.15 prefix collision.
+- No Minecraft gameplay evidence was produced by #44810270645. The push-triggered run #44810261050 was still in progress when this correction was prepared; inspect it separately.
+- Fixed rubric remains 59/100, M16 4/6, M08 5/9. No point awarded; no category closed.

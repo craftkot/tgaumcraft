@@ -499,7 +499,7 @@ if probe.count("wait_for_server_marker() {") != 1:
     raise SystemExit("Rift fast chat needs one bounded server-marker poller")
 if probe.count("TC_RIFT_HIGH_TELEPORT_PRESENT") != 2 or probe.count("TC_RIFT_AMBIENT_ENTITY_PRESENT") != 2:
     raise SystemExit("Rift high teleport and spawn must be confirmed by fresh server markers")
-if "sleep 0.1" in probe:
+if any(line.strip() == "sleep 0.1" for line in probe.splitlines()):
     raise SystemExit("Generated fast chat must not regress to the 0.1s prefix-loss race")
 if not (
     probe.index(high_teleport_command)
