@@ -142,7 +142,7 @@ body = r'''
   fi
   capture 99-jar-lid-extension
   python3 tools/assert_client_jar_metal_parts.py     client-smoke/client.log     client-smoke/screenshots/98-jar-brace.png     client-smoke/screenshots/99-jar-lid-extension.png
-  # BETA26 TileJarRenderer draws the filter label and glyph in an empty jar; crooked=true rotates both paper and icon quads.
+  # Terra fixture asserts crooked=-2 on both BETA26 paper and aspect-icon quads; both must render in an empty jar.
   send_chat '/fill 248 150 250 252 153 252 minecraft:air'
   send_chat '/setblock 250 150 251 thaumcraft:jar_normal{AspectFilter:"terra",facing:2b}'
   send_chat '/execute if data block 250 150 251 {AspectFilter:"terra",facing:2b} run say JAR_ASPECT_LABEL_FIXTURE_READY'

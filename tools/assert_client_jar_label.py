@@ -57,7 +57,7 @@ def verify(log_path: Path, image_path: Path) -> None:
             raise SystemExit(f"JAR_LABEL_REQUIRED_MARKER_MISSING={marker}")
 
     warm_pixels, dark_pixels = inspect(image_path)
-    print(f"BETA26 jar label paper pixels: {warm_pixels}; Aer glyph dark pixels: {dark_pixels}")
+    print(f"BETA26 jar label paper pixels: {warm_pixels}; Terra glyph dark pixels: {dark_pixels}")
     if warm_pixels < 800:
         raise SystemExit(f"JAR_LABEL_PAPER_PIXEL_GATE_FAILED={warm_pixels}")
     if dark_pixels < 100:
@@ -105,7 +105,7 @@ def self_test() -> None:
         log_path.write_text(
             "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2 "
             "texture=thaumcraft:textures/models/label.png\n"
-            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra "
+            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 "
             "texture=thaumcraft:textures/aspects/terra.png\n"
             "JAR_ASPECT_LABEL_FIXTURE_READY\n",
             encoding="utf-8",

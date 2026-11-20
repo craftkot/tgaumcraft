@@ -69,6 +69,8 @@ for token in (
 
 if "from PIL" in assert_script or "_decode_png" not in assert_script:
     raise SystemExit("JAR_LABEL_PIXEL_GATE_MUST_USE_REPOSITORY_STDLIB_PNG_DECODER")
+if "aspect=terra crooked=-2" not in assert_script:
+    raise SystemExit("JAR_LABEL_ICON_SMOKE_MUST_ASSERT_THE_CROOKED_TRANSFORM")
 
 if len(manifest.get("aspects", [])) != 37:
     raise SystemExit("JAR_LABEL_MANIFEST_MUST_CONTAIN_37_BASE_ASPECTS")

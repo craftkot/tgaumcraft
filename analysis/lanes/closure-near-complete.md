@@ -2541,3 +2541,7 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 
 ### CI trigger alignment — 20.11.2026
 - The jar-specific workflow is path-filtered on the existing smoke generator in \`main\`; the latest self-test-only correction did not independently trigger that workflow. Updated the generator's fixture comment to state the now-tested BETA26 rule (crooked=true rotates both paper and icon), ensuring the next jar workflow evaluates the exact latest head including the stdlib PNG self-test fix.
+
+
+### Terra icon marker self-test correction — 20.11.2026
+- The real-client gate requires the glyph marker to carry \`crooked=-2\`; the synthetic log initially omitted that field even though the production marker included it. Updated the synthetic log and source-contract check. No renderer behavior changed.
