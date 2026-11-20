@@ -2631,3 +2631,44 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - [Exact-head jar workflow #44672628164](https://github.com/craftkot/tgaumcraft/actions/runs/44672628164) **SUCCESS** for both `core-render-contract` and native `real-client-liquid`. The real client log shows `JAR_LABEL_CONFIG_CROOKED=false=WRITTEN`, `JAR_LABEL_CONFIG_EXPECTED_PATH=YES` after exit and effective `crooked = false`; it saves the Terra label screenshot and the strict screenshot gate reports **3001 paper pixels / 956 Terra dark glyph pixels** plus `JAR_ASPECT_LABEL_REAL_CLIENT_AND_SCREENSHOT=PASS`. The driver requires both renderer markers at `crooked=0`; its successful native job establishes the disabled preference path. This complements earlier native crooked=true evidence; it does not prove all BETA26 angles or all M16 content.
 - Same SHA: Full NeoForge Port CI, Aura/Crystal, native two-client Salis and Salis JVM, tube particle, crystal outline and most other M16 workflows **SUCCESS**. Independent Thaumometer scan sound workflow [#44672628368](https://github.com/craftkot/tgaumcraft/actions/runs/44672628368) **FAILURE** during Gradle classpath resolution: `Could not find com.google.code.gson:gson:2.10.1`; this run did not reach its client sound assertion. Do not call the full matrix green or attribute the dependency fetch failure to the jar-label change.
 - This iteration records actual CI evidence only; no production Java, Gradle, CI or smoke logic changed. Local `git ls-remote` remains blocked by `Could not resolve host: github.com`; local Gradle/Minecraft not run. Fixed audit **59/100**, M16 **4/6**, M08 **5/9**. Remaining: native Salis chunk-border/unload/reload/ticket state and independent network-send acceptance; further BETA26 visual comparisons. Next: inspect two-client Salis artifact for exact coverage and add only missing native assertions; independently retry/diagnose scan sound dependency resolution.
+
+
+## 2026-11-20 — Salis actor-only routing and native chunk lifecycle accepted
+
+Fresh baseline re-read before this iteration:
+- `main`: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- `AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, and `analysis/PROGRESS_AUDIT_2026_10_16.md` were read from fresh `main`.
+- The audit remains a historical rubric (59/100 at its recorded baseline); it is not evidence that the present branch has reached a new score.
+- Work continues only on `feature/closure-near-complete`; no other lane or PR branch was changed.
+
+Evidence from the exact pre-test-hardening branch head `1ad9df1666e4ba7dbe6a42b20ec8a41b483dfc3d`:
+- Real two-client Salis workflow `#44677968409` completed SUCCESS: [run](https://github.com/craftkot/tgaumcraft/actions/runs/44677968409), artifact `14602996781`.
+- Both clients were separate authenticated Minecraft/NeoForge processes. Their control packets were each received once. The Salis interaction delivered 250+ matching particle packets to the actor and zero to the observer; the dust sound arrived once at the actor and zero times at the observer.
+- The actor screenshot shows the real sparkle trail/burst around the bookshelf; the observer screenshot shows no Salis effect.
+- Native chunk probe used origin x=8207.5 at the eastern edge of chunk 512, with the adjacent x=8208 position crossing into chunk 513. A real outbound Netty packet positive control was observed. After the fixture ticket was released, the origin chunk unloaded; the delayed packet was cancelled; no outbound packet appeared while unloaded or after reload; a fresh post-reload packet was delivered; the ticket and packet recorder were cleaned; actor disconnect removed its pending effect.
+- Server log ends with `SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_OK`. This is actual outbound-packet and two-client receipt evidence, not just a server-side send-call marker.
+- Thaumometer scan sound workflow `#44677968592` completed SUCCESS: [run](https://github.com/craftkot/tgaumcraft/actions/runs/44677968592), artifact `14603291387`. Real integrated-world capture matched the original `scan.ogg` source: source SHA-256 passed; event clip correlation 0.8064; negative control correlation 0.0800; baseline correlation 0.0037. This is stronger than a mere sound-event registration check.
+- Full Port CI `#44677968432` and Aura/Crystal GameTests `#44677968580` completed SUCCESS on that head.
+- At the last exact-head poll, jar interaction audio, crystal outline picking, and the English workbench GUI scale-2 client remained in progress; the other M16 workflows listed for that head had completed successfully.
+
+Test-contract gap found during review: `tools/test_salis_two_client_probe.py` checked the high-level chunk acceptance marker but did not statically bind the native outbound recorder, chunk-edge fixture, no-replay phases, ticket cleanup, and disconnect cleanup to the probe/queue sources. The runtime smoke already exercised these paths successfully; the missing item was regression protection against silently deleting those assertions.
+
+Change in this iteration:
+- Extended `tools/test_salis_two_client_probe.py` to read `SalisSparkleChunkUnloadProbe.java` and `SalisSparkleTrailQueue.java`.
+- Added source-contract requirements for the chunk-edge origin, outbound Netty packet recorder, positive control, ticket release, unload/reload no-packet windows, fresh post-reload packet, actor-session cancellation, and queue loaded-chunk/session guards.
+- Added requirements that the Python real-client driver explicitly waits for each native lifecycle marker.
+- No production Java behavior was changed because the real-client evidence did not reveal a functional defect; changing it speculatively would be unjustified.
+
+Commit:
+- `902e137a18e75116a6c5c822a38a2eb48520fd8b` — `test(m16): lock Salis native chunk and outbound packet acceptance`.
+- PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN, DRAFT, UNMERGED. Its head is now `902e137a`; base is `a4280834`; compare reports 1415 commits ahead and 0 behind. No merge or force-push.
+- Checked all 50 other open PRs (#1-#3, #5-#51) for the three affected paths (`tools/test_salis_two_client_probe.py`, `SalisSparkleChunkUnloadProbe.java`, this lane journal); no overlaps were found.
+
+Verification limits:
+- The source-contract conditions were checked against the exact fetched branch files after the edit.
+- The Python test was not run in a local checkout because this runtime has no working GitHub network clone. The push triggered fresh PR workflows; on new head `902e137a`, Salis two-client workflow `#44679803193` and Full Port CI `#44679803018` were still IN_PROGRESS at the last poll. Do not claim the new exact-SHA workflow has passed until those jobs complete.
+- The previous exact-head two-client and scan-sound evidence remains valid for the production code; the new commit only hardens the test contract.
+
+Progress:
+- No audit points awarded. Global score remains `59/100`; M16 remains `4/6`.
+- Next action: poll `#44679803193`, `#44679803018`, and the three still-running M16 client gates from the preceding head; investigate any failure. Once those finish, choose the next genuinely missing BETA26 visual/audio/localization behavior, not another duplicate Salis or scan-sound test.
