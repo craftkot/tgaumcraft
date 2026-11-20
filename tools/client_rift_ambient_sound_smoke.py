@@ -265,6 +265,17 @@ probe = r'''
   test -s client-smoke/screenshots/rift-ambient-entity-present.png
   render_probe_log=client-smoke/client.log
   for _ in $(seq 1 40); do
+    if grep -Fq 'TC_SMOKE_RIFT_SHADER_ACTIVE=YES' "$render_probe_log"; then break; fi
+    sleep 0.25
+  done
+  shader_marker_count="$(grep -Fc 'TC_SMOKE_RIFT_SHADER_ACTIVE=YES' "$render_probe_log" || true)"
+  if [ "$shader_marker_count" -ne 1 ]; then
+    echo "RIFT_SHADER=FAIL expected=1 actual=$shader_marker_count" | tee -a client-smoke-status.txt
+    tail -100 "$render_probe_log" >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_SHADER=PASS registered=YES sampler=Sampler0' | tee -a client-smoke-status.txt
+  for _ in $(seq 1 40); do
     if grep -Fq 'TC_SMOKE_RIFT_RENDER_LAYER=PASS' "$render_probe_log"; then break; fi
     sleep 0.25
   done
