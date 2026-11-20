@@ -2519,3 +2519,10 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - Восстановлены 37 PNG аспектов и модельная \`label.png\` побайтно из закреплённого BETA26 source commit \`954022bb777b7546281fb36df8522f0ba6b43f81\`; manifest фиксирует исходные Git blob SHA-1. PR #8 затрагивает \`EssentiaJarBlockEntity.java\`, но этот файл не менялся.
 - Добавлены Core-тесты facing/crooked rotation (включая отрицательный Java remainder), проверка 38 исходных PNG, source-contract и настоящий client fixture \`AspectFilter:"aer"\` с screenshot/pixel gate \`100-jar-aspect-label.png\`.
 - Текущий результат новой реализации: **ожидает exact-HEAD CI и Minecraft client**. До реального screenshot PASS M16 остаётся **4/6**, общий индекс **59/100**. Следующее: проверить Core gate, full NeoForge compile и screenshot marker/pixels; при отказе диагностировать фактический render path, не ослабляя pixel threshold.
+
+
+### CI blocker correction — 20.11.2026
+- [Run #44652967616](https://github.com/craftkot/tgaumcraft/actions/runs/44652967616) reached the Core tests: 530 liquid assertions, 31 metal-part assertions and 20 label-transform assertions passed.
+- The job then stopped before the source/asset checks because the Ubuntu runner has no Pillow module. This was an environment dependency in the new screenshot self-test, not a rendering or asset failure.
+- Replaced the Pillow dependency with the repository's existing standard-library PNG decoder (\`assert_client_jar_liquid_smoke._decode_png\`); the synthetic image is now emitted with stdlib \`struct/zlib\`. Kept the real screenshot gates strict at 800 paper pixels and 100 dark glyph pixels.
+- The asset identity check and actual Minecraft client stage have not yet run. Next exact-HEAD run must pass Core, verify all 38 pinned PNG hashes/dimensions, compile NeoForge, then capture the real label screenshot.

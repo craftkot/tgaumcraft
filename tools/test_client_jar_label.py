@@ -13,6 +13,7 @@ logic = read("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarLabe
 smoke = read("tools/client_jar_liquid_smoke.py")
 workflow = read(".github/workflows/closure-jar-liquid-client.yml")
 manifest = json.loads(read("analysis/assets/beta26_jar_label_manifest.json"))
+assert_script = read("tools/assert_client_jar_label.py")
 
 call = "EssentiaJarLabelRenderer.render(jar, poseStack, buffers, packedOverlay);"
 empty_gate = "if (!LegacyEssentiaJarRenderLogic.hasLiquid(amount))"
@@ -62,6 +63,9 @@ for token in (
 ):
     if token not in workflow:
         raise SystemExit(f"JAR_LABEL_WORKFLOW_PATH_MISSING={token}")
+
+if "from PIL" in assert_script or "_decode_png" not in assert_script:
+    raise SystemExit("JAR_LABEL_PIXEL_GATE_MUST_USE_REPOSITORY_STDLIB_PNG_DECODER")
 
 if len(manifest.get("aspects", [])) != 37:
     raise SystemExit("JAR_LABEL_MANIFEST_MUST_CONTAIN_37_BASE_ASPECTS")
