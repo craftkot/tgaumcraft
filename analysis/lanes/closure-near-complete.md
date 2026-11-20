@@ -2563,3 +2563,12 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 ### 2026-11-20 — BETA26 crooked-label config CI trigger
 
 - The Git-data fast-forward to `a555e5727a56c522bbad959159dc2c14e2b32dc1` created push Full Port CI [#44658387722](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722), but did not yet create the path-filtered PR jar-render workflow at the first poll. A documentation-only Contents API update is used to emit the PR synchronize event; no production code changes are included in this follow-up.
+
+
+### 2026-11-20 — crooked-label config Core gate result
+
+- Exact code commit [`a555e5727a56c522bbad959159dc2c14e2b32dc1`](https://github.com/craftkot/tgaumcraft/commit/a555e5727a56c522bbad959159dc2c14e2b32dc1) passed the isolated jar Core gate in [#44658395215](https://github.com/craftkot/tgaumcraft/actions/runs/44658395215): 530 liquid assertions, 31 metal-part assertions and **23 label assertions** passed; the new client-config source contract and existing source/asset checks also passed. The log reports synthetic PNG parser checks (paper 5504 / glyph 1296); this is **not** the real Minecraft screenshot job.
+- The same workflow's `real-client-liquid` job remains **QUEUED**. Therefore actual client behavior with `graphics.crooked=true` after this code change, and the `false` path, are not yet accepted.
+- Full Port push run [#44658387722](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722) has advanced through NeoForge build to the dedicated-server smoke step, which is still running. PR-event Full Port [#44658395140](https://github.com/craftkot/tgaumcraft/actions/runs/44658395140) is still building. Aura/Crystal GameTests [#44658395178](https://github.com/craftkot/tgaumcraft/actions/runs/44658395178) remain queued.
+- A standalone local `javac --release 21` run of the exact fetched Core logic/test source also passed: `BETA26 jar aspect-label render parity: PASS (23 assertions)`. No local NeoForge build or Minecraft client was run.
+- No score change: **59/100**, M16 **4/6**, M08 **5/9**. Next: finish exact-head NeoForge + dedicated-server validation, then inspect the real-client jar screenshot; add a separate config-off client smoke before claiming the crooked preference is fully accepted.
