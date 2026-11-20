@@ -2694,3 +2694,13 @@ Progress:
 - On same exact head: Port CI, Aura/Crystal, Salis JVM, jar interaction audio, scan sound, crystal placement/break sound, rune, tube texture and several other M16 workflows completed SUCCESS. Jar liquid/label, Salis dust/Nitor, workbench GUI and crystal outline were still IN_PROGRESS when checked; do not report them green yet.
 - No new Java defect established. This iteration only records verified exact-head acceptance evidence; no production Java, shared Gradle/CI, other feature branches or main touched. Local clone unavailable: shell `git ls-remote` still fails `Could not resolve host: github.com`; no local Gradle/Minecraft run. GitHub connector read and CI log retrieval worked.
 - Fixed audit stays **59/100**, M16 **4/6**, M08 **5/9**. Next: poll remaining exact-head workflows and investigate any real failure; then select a genuinely missing BETA26 feature or visual/audio parity criterion, not another redundant Salis JVM assertion. PR #4 remains unmerged.
+
+
+## 2026-11-20 — M16 Salis/Nitor CI infrastructure retry
+
+- Fresh-read main roadmap, AGENTS, parallel workflow, fixed audit, own lane and open PR search; main `a4280834adc5a20b6951098af937d30ca4aeca56`; branch comparison 1420 ahead / 0 behind. PR #4 remains Draft/unmerged.
+- Poll of the previously incomplete exact-head `0c8ff5de1ddeda42e09f1adeef1d5f0938742d8c` workflows: 21 passed, including native two-client Salis, Full Port, Aura/Crystal, jar renderer, Workbench GUI, crystal outline; only Salis/Nitor #44682362954 failed.
+- Read failed job `136108521424` log. `runClient` never started: Gradle configuration failed downloading `com.google.code.gson:gson:2.10.1`, Maven Central HTTP 429 Too Many Requests. This is a dependency-host rate limit, **not** a failed particle/visual gameplay assertion. Evidence: https://github.com/craftkot/tgaumcraft/actions/runs/44682362954 .
+- Requested GitHub Actions **rerun failed jobs** for #44682362954; API returned success. Rerun outcome remains unverified and must be polled. No shared Gradle/CI edits or speculative Java changes.
+- Local `git ls-remote` failed `Could not resolve host: github.com`; local Gradle/client unavailable. No new local tests. No gameplay score increase: global **59/100**, M16 **4/6**, M08 **5/9**.
+- Next: poll retry, inspect native Salis/Nitor result and artifacts if it reaches Minecraft. If retry is rate-limited again, treat as infrastructure blocker rather than changing game code. Independently review remaining BETA26 parity gaps; PR #3 Salis item overlap remains a merge blocker.
