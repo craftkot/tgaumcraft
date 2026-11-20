@@ -41,6 +41,26 @@ public final class SilverwoodLegacyCanopyTest {
             check(actual.nextLong() == reference.nextLong());
             check(!writes.isEmpty());
         }
+        // Check the actual RNG-driven canopy against the +/-4 chunk envelope.
+        int outermost = 0;
+        for (int h = 7; h <= 10; h++) {
+            for (int seed = 0; seed < 32; seed++) {
+                Random rng = new Random(10000L + 101L * h + seed);
+                int[] farthest = {0};
+                SilverwoodLegacyCanopy.place(-8, 64, -8, h, rng,
+                        (x, y, z) -> true,
+                        (x, y, z) -> {
+                            int dx = Math.abs(x + 8);
+                            int dz = Math.abs(z + 8);
+                            check(dx <= 4 && dz <= 4);
+                            check(SilverwoodLegacyFootprint.withinChunk(x, z, -1, -1));
+                            farthest[0] = Math.max(farthest[0], Math.max(dx, dz));
+                        });
+                outermost = Math.max(outermost, farthest[0]);
+            }
+        }
+        check(outermost == 4);
+
         // No replaceability reads does not imply no random draws.
         Random actual = new Random(99);
         Random expected = new Random(99);
