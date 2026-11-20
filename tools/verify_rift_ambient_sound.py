@@ -60,7 +60,7 @@ for fragment in (
     "rift_z=12.5",
     'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"',
     'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
-    'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"',
+    'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"',
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z',
     "send_chat_fast() {",
     "sleep 0.1",
