@@ -246,16 +246,8 @@ probe = r'''
   fi
   echo "RIFT_VISUAL_CAMERA_BEFORE=PASS x=$rift_visual_x yaw=$rift_visual_yaw pitch=$rift_visual_pitch" | tee -a client-smoke-status.txt
   capture rift-ambient-before
-  send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"
-  send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN'
-  sleep 0.5
-  if ! grep -Fq 'TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN' run/logs/latest.log; then
-    send_chat '/data get entity @p Pos'
-    echo 'RIFT_LISTENER_RETURN_TO_SOURCE=FAIL phase=before_spawn' | tee -a client-smoke-status.txt
-    tail -100 run/logs/latest.log >&2 || true
-    exit 1
-  fi
-  echo 'RIFT_LISTENER_RETURN_TO_SOURCE=PASS phase=before_spawn' | tee -a client-smoke-status.txt
+  # Keep the side-on camera through the Rift spawn so the renderer's first
+  # probe cannot be consumed by an edge-on frame at the entity origin.
   spawn_game_time="$(query_game_time)" || exit 1
   probe_log=client-smoke/client.log
   event_log_offset="$(wc -c < "$probe_log")"
@@ -282,9 +274,8 @@ probe = r'''
     tail -100 run/logs/latest.log >&2
     exit 1
   fi
-  # Capture from the same side-on camera as the baseline. Size 30 gives the
-  # source-seeded polycone enough width/length to inspect the end-portal field.
-  send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"
+  # The player is still on the validated side-on camera; record a fresh
+  # server-side position marker without consuming another renderer first-call.
   send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
   sleep 0.5
   if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_AFTER' run/logs/latest.log; then
@@ -496,8 +487,8 @@ if any(probe.count(command) != 1 for command in (
     high_teleport_command, fill_command, source_teleport_command
 )):
     raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
-if probe.count(visual_teleport_command) != 2 or probe.count(source_return_command) != 2:
-    raise SystemExit("Rift visual camera/return commands must each occur exactly twice")
+if probe.count(visual_teleport_command) != 1 or probe.count(source_return_command) != 1:
+    raise SystemExit("Rift visual camera must be set once before spawn and source return once after rendering")
 if not (
     probe.index(high_teleport_command)
     < probe.index(fill_command)
@@ -507,16 +498,13 @@ if not (
     < probe.index(visual_teleport_command)
     < probe.index("TC_RIFT_VISUAL_CAMERA_BEFORE")
     < probe.index("capture rift-ambient-before")
-    < probe.index(source_return_command)
-    < probe.index("TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN")
     < probe.index("spawn_game_time=")
     < probe.index("> client-smoke/rift-event.pcm")
     < probe.index(rift_summon_command)
-    < probe.index(visual_teleport_command, probe.index(rift_summon_command))
     < probe.index("TC_RIFT_VISUAL_CAMERA_AFTER")
     < probe.index("capture rift-ambient-entity-present")
     < probe.index(render_gate_marker)
-    < probe.rindex(source_return_command)
+    < probe.index(source_return_command)
     < probe.index("TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL")
 ):
     raise SystemExit("Rift smoke must compare side-on frames and return to the source before audio acceptance")
@@ -524,7 +512,6 @@ for required_marker in (
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
     "TC_RIFT_VISUAL_CAMERA_BEFORE",
-    "TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN",
     "TC_RIFT_VISUAL_CAMERA_AFTER",
     "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
 ):

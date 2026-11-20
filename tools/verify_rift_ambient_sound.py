@@ -90,7 +90,6 @@ for fragment in (
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
     "TC_RIFT_VISUAL_CAMERA_BEFORE",
-    "TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN",
     "TC_RIFT_VISUAL_CAMERA_AFTER",
     "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
     "RIFT_VISUAL_CAMERA_BEFORE=PASS",
@@ -149,8 +148,8 @@ assert runtime_template.count(high_teleport) == 1 and runtime_template.count(pla
 assert runtime_template.count(source_teleport) == 1, (
     "the initial source-listener teleport must be unique in the runtime template"
 )
-assert runtime_template.count(visual_teleport) == 2 and runtime_template.count(source_return) == 2, (
-    "the visual camera and exact-source return must each be used for baseline and post-spawn captures"
+assert runtime_template.count(visual_teleport) == 1 and runtime_template.count(source_return) == 1, (
+    "set the side-on camera once before spawn and return to the exact source once after rendering"
 )
 assert "RiftSize:$rift_size" in runtime_template and "rift_size=30" in driver
 render_capture = "capture rift-ambient-entity-present"
@@ -167,12 +166,9 @@ assert (
     < runtime_template.index(visual_teleport)
     < runtime_template.index("TC_RIFT_VISUAL_CAMERA_BEFORE")
     < runtime_template.index("capture rift-ambient-before")
-    < runtime_template.index(source_return)
-    < runtime_template.index("TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN")
     < runtime_template.index("spawn_game_time=")
     < runtime_template.index("> client-smoke/rift-event.pcm")
     < runtime_template.index(rift_summon)
-    < runtime_template.index(visual_teleport, runtime_template.index(rift_summon))
     < runtime_template.index("TC_RIFT_VISUAL_CAMERA_AFTER")
     < runtime_template.index(render_capture)
     < runtime_template.index(render_gate)
