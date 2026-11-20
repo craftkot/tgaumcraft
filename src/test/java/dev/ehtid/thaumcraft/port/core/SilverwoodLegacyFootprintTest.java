@@ -25,6 +25,24 @@ public final class SilverwoodLegacyFootprintTest {
         check(SilverwoodLegacyFootprint.withinChunk(-12, -8, -1, -1), false);
         check(SilverwoodLegacyFootprint.withinChunk(-4, -8, -1, -1), false);
         check(SilverwoodLegacyFootprint.withinChunk(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0), false);
+        // Archived 9x9 origin distribution: x/z offsets 4..12 within each chunk.
+        // Conservative +/-5 canopy writes permit only offsets 5..10.
+        // Lock down this known parity loss until cross-chunk placement is coordinated.
+        for (int chunkX : new int[] {-2, -1, 0, 2}) {
+            for (int chunkZ : new int[] {-2, -1, 0, 2}) {
+                int accepted = 0;
+                for (int dx = 4; dx <= 12; dx++) {
+                    for (int dz = 4; dz <= 12; dz++) {
+                        boolean expected = dx >= 5 && dx <= 10 && dz >= 5 && dz <= 10;
+                        boolean actual = SilverwoodLegacyFootprint.withinChunk(
+                                chunkX * 16 + dx, chunkZ * 16 + dz, chunkX, chunkZ);
+                        check(actual, expected);
+                        if (actual) accepted++;
+                    }
+                }
+                check(accepted == 36, true);
+            }
+        }
         System.out.println("M12 SilverwoodLegacyFootprint: OK (" + assertions + " assertions)");
     }
 }
