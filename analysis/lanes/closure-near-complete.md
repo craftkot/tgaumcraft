@@ -2537,3 +2537,7 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 
 ### Test harness self-test correction — 20.11.2026
 - The stricter Terra fixture correctly required \`crooked=-2\`; its synthetic log still contained the previous Aer value \`crooked=0\`. Updated the synthetic fixture and added a source-contract assertion for the non-zero rotation. This is a harness-only correction; production transform remains the BETA26 value.
+
+
+### CI trigger alignment — 20.11.2026
+- The jar-specific workflow is path-filtered on the existing smoke generator in \`main\`; the latest self-test-only correction did not independently trigger that workflow. Updated the generator's fixture comment to state the now-tested BETA26 rule (crooked=true rotates both paper and icon), ensuring the next jar workflow evaluates the exact latest head including the stdlib PNG self-test fix.
