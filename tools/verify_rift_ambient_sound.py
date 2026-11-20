@@ -107,7 +107,7 @@ assert "current_game_time - start_game_time >= 300" not in driver, (
 high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
-source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
+source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 runtime_template = driver.split("high_teleport_command =", 1)[0]
 assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
@@ -115,6 +115,11 @@ assert runtime_template.count(high_teleport) == 1 and runtime_template.count(pla
 )
 assert runtime_template.count(source_teleport) == 1, (
     "the supported source teleport must be unique in the runtime template"
+)
+render_capture = "capture rift-ambient-entity-present"
+render_gate = "'layer=0 blend=ADDITIVE depthWrite=OFF'"
+assert runtime_template.index(render_capture) < runtime_template.index(render_gate), (
+    "capture the actual post-spawn client frame before asserting render markers, including on failure"
 )
 assert (
     runtime_template.index(high_teleport)
@@ -176,4 +181,4 @@ for fragment in (
 ):
     assert fragment in driver, fragment
 
-print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, first 300-tick sound and isolated PCM capture: PASS")
+print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, source-aligned render camera and first 300-tick isolated PCM capture: PASS")
