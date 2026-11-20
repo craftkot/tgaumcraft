@@ -57,6 +57,32 @@ public final class SilverwoodRollbackFailureInjectionTest {
                 world::get, (pos, state) -> true) == 0, "idempotent trunk cleanup");
         check(SilverwoodCanopyRollback.restore(leavesBefore, "LEAVES",
                 world::get, (pos, state) -> true) == 0, "idempotent canopy cleanup");
+        // A rejected canopy write happens before any logs are attempted. The
+        // previously accepted leaves must be removed without touching the
+        // position whose setBlock returned false.
+        Map<Integer, String> failedCanopyWorld = new LinkedHashMap<>();
+        failedCanopyWorld.put(90, "FLOWER");
+        failedCanopyWorld.put(91, "AIR");
+        failedCanopyWorld.put(92, "STONE");
+        Map<Integer, String> failedCanopyOriginals = new LinkedHashMap<>();
+        for (int pos : new int[] {90, 91}) {
+            String before = failedCanopyWorld.get(pos);
+            failedCanopyOriginals.put(pos, before);
+            failedCanopyWorld.put(pos, "LEAVES");
+        }
+        boolean canopyWriteAccepted = false; // injected setBlock(92, LEAVES, 2)
+        check(!canopyWriteAccepted, "injected canopy rejection");
+        check(SilverwoodCanopyRollback.restore(failedCanopyOriginals, "LEAVES",
+                failedCanopyWorld::get, (pos, state) -> {
+                    failedCanopyWorld.put(pos, state);
+                    return true;
+                }) == 2, "restore accepted leaves after canopy rejection");
+        check("FLOWER".equals(failedCanopyWorld.get(90)), "restore flower after canopy failure");
+        check("AIR".equals(failedCanopyWorld.get(91)), "restore air after canopy failure");
+        check("STONE".equals(failedCanopyWorld.get(92)), "rejected canopy position unchanged");
+        check(SilverwoodCanopyRollback.restore(failedCanopyOriginals, "LEAVES",
+                failedCanopyWorld::get, (pos, state) -> true) == 0,
+                "canopy rejection cleanup is idempotent");
         // A foreign edit after placement must survive best-effort cleanup.
         Map<Integer, String> foreignWorld = new LinkedHashMap<>();
         foreignWorld.put(10, "LOG_Y");
