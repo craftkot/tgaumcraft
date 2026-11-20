@@ -47,6 +47,20 @@ public final class SilverwoodPlacementPreflightTest {
                 (x,y,z) -> false,
                 (x,y,z) -> { trunkReads.incrementAndGet(); return true; }), false);
         check(trunkReads.get() == 0, true);
+        // Successful placement reads exactly one soil block and every trunk block.
+        AtomicInteger soilReads = new AtomicInteger();
+        AtomicInteger fullTrunkReads = new AtomicInteger();
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,0,0,-64,320,
+                (x,y,z) -> { soilReads.incrementAndGet(); return true; },
+                (x,y,z) -> { fullTrunkReads.incrementAndGet(); return true; }), true);
+        check(soilReads.get() == 1, true);
+        check(fullTrunkReads.get() == 7, true);
+
+        // First blocked trunk position must short-circuit later world reads.
+        AtomicInteger blockedReads = new AtomicInteger();
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,8,10,0,0,-64,320,
+                soil, (x,y,z) -> { blockedReads.incrementAndGet(); return y != 67; }), false);
+        check(blockedReads.get() == 4, true);
         System.out.println("M12 SilverwoodPlacementPreflight: OK (" + assertions + " assertions)");
     }
 }
