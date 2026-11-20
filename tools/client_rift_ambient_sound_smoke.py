@@ -417,7 +417,7 @@ probe = r'''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 fill_command = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
-source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"'
+source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
 if any(probe.count(command) != 1 for command in (
     high_teleport_command, fill_command, source_teleport_command
