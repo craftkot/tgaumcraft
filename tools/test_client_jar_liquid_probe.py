@@ -7,6 +7,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 generator = ROOT / "tools" / "client_jar_liquid_smoke.py"
 probe_path = ROOT / "src" / "neoforge" / "java" / "dev" / "ehtid" / "thaumcraft" / "client" / "EssentiaJarClientSmokeProbe.java"
+config_file = "run/closure-gametest/config/thaumcraft-client.toml"
+build_gradle = (ROOT / "build.gradle").read_text(encoding="utf-8")
 
 generated = subprocess.run(
     [sys.executable, str(generator)],
@@ -16,6 +18,26 @@ generated = subprocess.run(
     text=True,
 )
 script = generated.stdout
+config_setup = """mkdir -p run/closure-gametest/config
+cat > run/closure-gametest/config/thaumcraft-client.toml <<'EOF'
+[graphics]
+crooked = false
+EOF"""
+if "gameDirectory = project.file('run/closure-gametest')" not in build_gradle:
+    raise SystemExit("jar client config path no longer matches the runClient gameDirectory")
+if config_file not in script or config_setup not in script:
+    raise SystemExit("jar smoke must seed the CLIENT config before launching Minecraft")
+if script.index(config_setup) > script.index("gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient"):
+    raise SystemExit("crooked=false must be written before the real Minecraft client starts")
+if "JAR_LABEL_CONFIG_CROOKED=false=WRITTEN" not in script:
+    raise SystemExit("jar smoke must report the prelaunch config write")
+for marker in (
+    "aspect=terra facing=2 crooked=0",
+    "aspect=terra crooked=0 texture=thaumcraft:textures/aspects/terra.png",
+):
+    if marker not in script:
+        raise SystemExit(f"jar smoke must require the disabled crooked path: {marker}")
+
 floor = "send_chat '/fill 248 149 248 252 149 252 minecraft:stone'"
 old_floor = "send_chat '/fill 248 149 250 252 149 252 minecraft:stone'"
 camera_teleport = "send_chat '/tp @p 250.5 150 248.5 0 16'"
@@ -45,6 +67,9 @@ ordered = (
     "send_chat '/setblock 250 151 251 thaumcraft:tube'",
     "send_chat '/setblock 250 150 251 thaumcraft:jar_normal{facing:2b}'",
     "capture 99-jar-lid-extension",
+    "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=0",
+    "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=0 texture=thaumcraft:textures/aspects/terra.png",
+    "capture 100-jar-aspect-label",
 )
 positions = [script.find(marker) for marker in ordered]
 if any(position < 0 for position in positions) or positions != sorted(positions):

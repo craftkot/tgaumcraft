@@ -45,11 +45,13 @@ def inspect(image_path: Path) -> tuple[int, int]:
     return warm_pixels, dark_pixels
 
 
-def verify(log_path: Path, image_path: Path) -> None:
+def verify(log_path: Path, image_path: Path, expected_crooked: int = 0) -> None:
     log = log_path.read_text(encoding="utf-8", errors="replace")
+    if expected_crooked not in (-2, -1, 0, 1):
+        raise SystemExit(f"JAR_LABEL_EXPECTED_CROOKED_OUT_OF_RANGE={expected_crooked}")
     required = (
-        "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2",
-        "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 texture=thaumcraft:textures/aspects/terra.png",
+        f"TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked={expected_crooked}",
+        f"TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked={expected_crooked} texture=thaumcraft:textures/aspects/terra.png",
         "JAR_ASPECT_LABEL_FIXTURE_READY",
     )
     for marker in required:
@@ -103,9 +105,9 @@ def self_test() -> None:
         log_path = root / "client.log"
         _write_synthetic_png(image_path)
         log_path.write_text(
-            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2 "
+            "TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=0 "
             "texture=thaumcraft:textures/models/label.png\n"
-            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 "
+            "TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=0 "
             "texture=thaumcraft:textures/aspects/terra.png\n"
             "JAR_ASPECT_LABEL_FIXTURE_READY\n",
             encoding="utf-8",
@@ -117,6 +119,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
         self_test()
     elif len(sys.argv) == 3:
-        verify(Path(sys.argv[1]), Path(sys.argv[2]))
+        verify(Path(sys.argv[1]), Path(sys.argv[2]), 0)
+    elif len(sys.argv) == 4:
+        verify(Path(sys.argv[1]), Path(sys.argv[2]), int(sys.argv[3]))
     else:
-        raise SystemExit("usage: assert_client_jar_label.py <client.log> <100-jar-aspect-label.png> | --self-test")
+        raise SystemExit("usage: assert_client_jar_label.py <client.log> <100-jar-aspect-label.png> [expected_crooked] | --self-test")

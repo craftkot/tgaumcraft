@@ -19,7 +19,17 @@ head = head.replace(
 )
 head = head.replace(
     gradle_anchor,
-    "gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain",
+    """mkdir -p run/closure-gametest/config
+cat > run/closure-gametest/config/thaumcraft-client.toml <<'EOF'
+[graphics]
+crooked = false
+EOF
+if ! grep -Fxq 'crooked = false' run/closure-gametest/config/thaumcraft-client.toml; then
+  echo 'JAR_LABEL_CONFIG_WRITE=FAIL' | tee -a client-smoke-status.txt
+  exit 1
+fi
+echo 'JAR_LABEL_CONFIG_CROOKED=false=WRITTEN' | tee -a client-smoke-status.txt
+gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain""",
 )
 tail = tail_anchor + source.split(tail_anchor, 1)[1]
 tail = tail.replace(
@@ -142,7 +152,7 @@ body = r'''
   fi
   capture 99-jar-lid-extension
   python3 tools/assert_client_jar_metal_parts.py     client-smoke/client.log     client-smoke/screenshots/98-jar-brace.png     client-smoke/screenshots/99-jar-lid-extension.png
-  # Terra fixture asserts crooked=-2 on both BETA26 paper and aspect-icon quads; both must render in an empty jar.
+  # Terra fixture asserts crooked=0 on both BETA26 paper and aspect-icon quads; both must render in an empty jar.
   send_chat '/fill 248 150 250 252 153 252 minecraft:air'
   send_chat '/setblock 250 150 251 thaumcraft:jar_normal{AspectFilter:"terra",facing:2b}'
   send_chat '/execute if data block 250 150 251 {AspectFilter:"terra",facing:2b} run say JAR_ASPECT_LABEL_FIXTURE_READY'
@@ -152,8 +162,8 @@ body = r'''
   sleep 4
   label_found=0
   for _ in $(seq 1 45); do
-    if grep -Fq 'TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=-2' client-smoke/client.log \
-       && grep -Fq 'TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=-2 texture=thaumcraft:textures/aspects/terra.png' client-smoke/client.log; then
+    if grep -Fq 'TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=terra facing=2 crooked=0' client-smoke/client.log \
+       && grep -Fq 'TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=terra crooked=0 texture=thaumcraft:textures/aspects/terra.png' client-smoke/client.log; then
       label_found=1
       break
     fi
