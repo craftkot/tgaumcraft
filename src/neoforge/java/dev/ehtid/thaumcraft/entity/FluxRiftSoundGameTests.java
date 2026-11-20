@@ -61,10 +61,18 @@ public final class FluxRiftSoundGameTests {
             throw new AssertionError("Unable to register Flux Rift sound fixture");
         }
 
-        long seed = findPositiveVolumeSeed();
+        long seed = FluxRiftEntity.smokeAmbientSoundSeed();
+        if (seed != FluxRiftEntity.smokeAmbientSoundSeed()) {
+            throw new AssertionError("BETA26 smoke sound seed must be repeatable");
+        }
         RandomSource expectedRandom = RandomSource.create(seed);
         float expectedVolume = (float) (0.15F + expectedRandom.nextGaussian() * 0.066D);
         float expectedPitch = (float) (0.75D + expectedRandom.nextGaussian() * 0.1D);
+        if (!(expectedVolume > 0.05F && expectedVolume < 0.35F
+                && expectedPitch > 0.2F && expectedPitch < 1.3F)) {
+            throw new AssertionError("Deterministic BETA26 smoke sample is not audible: volume="
+                    + expectedVolume + " pitch=" + expectedPitch);
+        }
         ConcurrentLinkedQueue<SoundPacketEvidence> observed = new ConcurrentLinkedQueue<>();
         try {
             installRecorder(recipient, observed);
@@ -204,18 +212,6 @@ public final class FluxRiftSoundGameTests {
             description.append(packet);
         }
         return description.toString();
-    }
-
-    private static long findPositiveVolumeSeed() {
-        for (long seed = 0; seed < 100_000L; seed++) {
-            RandomSource probe = RandomSource.create(seed);
-            float volume = (float) (0.15F + probe.nextGaussian() * 0.066D);
-            float pitch = (float) (0.75D + probe.nextGaussian() * 0.1D);
-            if (volume > 0.05F && volume < 0.35F && pitch > 0.2F && pitch < 1.3F) {
-                return seed;
-            }
-        }
-        throw new AssertionError("Unable to find deterministic BETA26 positive-volume sound seed");
     }
 
     private static ConnectedPlayer createConnectedPlayer(ServerLevel level, BlockPos target, String name) {

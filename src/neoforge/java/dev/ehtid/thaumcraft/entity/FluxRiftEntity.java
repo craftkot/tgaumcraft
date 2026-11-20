@@ -143,13 +143,37 @@ public final class FluxRiftEntity extends Entity {
         return "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     }
 
+    /**
+     * Finds a repeatable audible sample for the real-client smoke without changing
+     * the BETA26 Gaussian formula used during ordinary gameplay.
+     */
+    static long smokeAmbientSoundSeed() {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource candidate = RandomSource.create(seed);
+            float volume = (float) (0.15F + candidate.nextGaussian() * 0.066D);
+            float pitch = (float) (0.75D + candidate.nextGaussian() * 0.1D);
+            if (volume > 0.05F && volume < 0.35F && pitch > 0.2F && pitch < 1.3F) {
+                return seed;
+            }
+        }
+        throw new IllegalStateException("Unable to find deterministic BETA26 positive-volume sound seed");
+    }
+
     void playAmbientSoundIfDue(RandomSource sourceRandom) {
         if (tickCount % 300 != 0 || isRemoved()) {
             return;
         }
-        float volume = (float) (0.15F + sourceRandom.nextGaussian() * 0.066D);
-        float pitch = (float) (0.75D + sourceRandom.nextGaussian() * 0.1D);
-        if (smokeProbeEnabled()) {
+        boolean smoke = smokeProbeEnabled();
+        long smokeSeed = -1L;
+        RandomSource eventRandom = sourceRandom;
+        if (smoke) {
+            smokeSeed = smokeAmbientSoundSeed();
+            eventRandom = RandomSource.create(smokeSeed);
+        }
+        float volume = (float) (0.15F + eventRandom.nextGaussian() * 0.066D);
+        float pitch = (float) (0.75D + eventRandom.nextGaussian() * 0.1D);
+        if (smoke) {
+            System.out.println("TC_SMOKE_RIFT_AMBIENT_RANDOM=DETERMINISTIC seed=" + smokeSeed);
             double audibleRadius = Math.max(0.0D, (double) volume * 16.0D);
             long eligiblePlayers = volume <= 0.0F ? 0L : level().players().stream()
                     .filter(player -> player.distanceToSqr(this) <= audibleRadius * audibleRadius)
@@ -165,7 +189,7 @@ public final class FluxRiftEntity extends Entity {
                     + " nearestPlayerDistanceSqr=" + nearestPlayerDistanceSqr);
         }
         playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch);
-        if (smokeProbeEnabled()) {
+        if (smoke) {
             System.out.println("TC_SMOKE_RIFT_AMBIENT_CALL=YES entityId=" + getId()
                     + " tickCount=" + tickCount);
         }

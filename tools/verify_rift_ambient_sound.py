@@ -27,16 +27,30 @@ assert "playAmbientSoundIfDue(random);" in rift
 method = rift.split("void playAmbientSoundIfDue(RandomSource sourceRandom)", 1)[1].split("@Override", 1)[0]
 for fragment in (
     "tickCount % 300 != 0",
-    "0.15F + sourceRandom.nextGaussian() * 0.066D",
-    "sourceRandom.nextGaussian() * 0.066D",
-    "sourceRandom.nextGaussian() * 0.1D",
+    "boolean smoke = smokeProbeEnabled();",
+    "RandomSource eventRandom = sourceRandom;",
+    "smokeSeed = smokeAmbientSoundSeed();",
+    "eventRandom = RandomSource.create(smokeSeed);",
+    "0.15F + eventRandom.nextGaussian() * 0.066D",
+    "eventRandom.nextGaussian() * 0.1D",
     "playSound(ThaumcraftSounds.EVILPORTAL.get(), volume, pitch)",
-    "smokeProbeEnabled()",
+    "TC_SMOKE_RIFT_AMBIENT_RANDOM=DETERMINISTIC seed=",
     "TC_SMOKE_RIFT_AMBIENT_DUE=YES",
     "TC_SMOKE_RIFT_AMBIENT_CALL=YES",
     "eligiblePlayers=",
 ):
     assert fragment in method, fragment
+seed_method = rift.split("static long smokeAmbientSoundSeed()", 1)[1].split("void playAmbientSoundIfDue", 1)[0]
+for fragment in (
+    "RandomSource.create(seed)",
+    "volume > 0.05F && volume < 0.35F",
+    "pitch > 0.2F && pitch < 1.3F",
+):
+    assert fragment in seed_method, fragment
+
+sound_tests = Path("src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftSoundGameTests.java").read_text()
+assert "FluxRiftEntity.smokeAmbientSoundSeed()" in sound_tests
+assert "findPositiveVolumeSeed()" not in sound_tests
 assert "TC_SMOKE_RIFT_TICK=YES" in rift, "entity-age probe must be present in tick()"
 
 client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientGameEvents.java").read_text()
@@ -75,6 +89,7 @@ for fragment in (
     "parec --device=tc_rift_sink.monitor",
     "rift_capture_pid=$!",
     "RIFT_GAME_TICK_WINDOW=PASS",
+    "RIFT_SERVER_AMBIENT_RANDOM=PASS",
     "if [ \"$server_tick_count\" -ne 300 ]; then",
     "RIFT_LISTENER_AT_EVENT=PASS",
     "RIFT_SERVER_AMBIENT_DUE=PASS",

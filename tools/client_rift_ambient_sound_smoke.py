@@ -299,6 +299,18 @@ probe = r'''
     tail -120 "$probe_log" >&2 || true
     exit 1
   fi
+  random_seed_line="$(tail -c +$((event_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_RIFT_AMBIENT_RANDOM=DETERMINISTIC seed=' | head -n 1 || true)"
+  if [ -z "$random_seed_line" ]; then
+    echo 'RIFT_SERVER_AMBIENT_RANDOM=FAIL deterministic smoke seed marker missing' | tee -a client-smoke-status.txt
+    tail -120 "$probe_log" >&2 || true
+    exit 1
+  fi
+  smoke_seed="${random_seed_line##*seed=}"
+  if ! [[ "$smoke_seed" =~ ^[0-9]+$ ]]; then
+    echo "RIFT_SERVER_AMBIENT_RANDOM=FAIL malformed seed [$smoke_seed]" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "RIFT_SERVER_AMBIENT_RANDOM=PASS seed=$smoke_seed" | tee -a client-smoke-status.txt
   server_tick_count="${rift_due_line#* tickCount=}"
   server_tick_count="${server_tick_count%% *}"
   server_game_time="${rift_due_line#* gameTime=}"
