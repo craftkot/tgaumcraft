@@ -93,6 +93,15 @@ public final class LegacyEssentiaMirrorLogicTest {
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,0,0));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(0,-1,0,1));
         eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(12,11,-1,0));
+        // An int overflow must never turn a fabricated credit into a pass.
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(1,0,
+                Integer.MAX_VALUE,Integer.MIN_VALUE));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(1,0,0,-1));
+        eq(false,LegacyEssentiaMirrorLogic.conservedOneUnit(
+                Integer.MAX_VALUE,Integer.MAX_VALUE-1,
+                Integer.MAX_VALUE,Integer.MIN_VALUE));
+        eq(true,LegacyEssentiaMirrorLogic.conservedOneUnit(
+                Integer.MAX_VALUE,Integer.MAX_VALUE-1,0,1));
         // Aligned with live negative mirror world scenarios: a mismatched
         // filter or full jar never qualifies for a one-unit credit.
         var wrongAspect = new LegacyEssentiaJarLogic.State(null,"ignis",0);
