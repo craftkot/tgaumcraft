@@ -140,4 +140,40 @@ assert "TC_RIFT_LISTENER_STILL_AT_SOURCE" not in driver, (
     "the old multi-cadence listener probe must not reintroduce a second ambient event"
 )
 
+renderer = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftRenderer.java").read_text()
+for fragment in (
+    "for (int layer = 0; layer <= 3; layer++)",
+    "boolean additive = layer < 3",
+    "RiftRenderTypes.additive()",
+    "RiftRenderTypes.alphaCore()",
+    "TC_SMOKE_RIFT_RENDER_LAYER=PASS",
+    "depthWrite=",
+):
+    assert fragment in renderer, fragment
+assert "buffers.getBuffer(RenderType.lightning())" not in renderer, (
+    "the old all-additive four-layer pass must not return"
+)
+render_types = renderer.split("private static final class RiftRenderTypes", 1)[1]
+for fragment in (
+    "RENDERTYPE_LIGHTNING_SHADER",
+    "LIGHTNING_TRANSPARENCY",
+    "TRANSLUCENT_TRANSPARENCY",
+    "COLOR_WRITE",
+    "COLOR_DEPTH_WRITE",
+    "LEQUAL_DEPTH_TEST",
+    "NO_CULL",
+    "DefaultVertexFormat.POSITION_COLOR",
+    "VertexFormat.Mode.QUADS",
+    "setTextureState(NO_TEXTURE)",
+):
+    assert fragment in render_types, fragment
+for fragment in (
+    "layer=0 blend=ADDITIVE depthWrite=OFF",
+    "layer=1 blend=ADDITIVE depthWrite=OFF",
+    "layer=2 blend=ADDITIVE depthWrite=OFF",
+    "layer=3 blend=ALPHA depthWrite=ON",
+    "RIFT_RENDER_LAYER_SELECTION=PASS additive=3 alpha=1 depth_write=outer_off_core_on",
+):
+    assert fragment in driver, fragment
+
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, registry, first 300-tick sound and isolated PCM capture: PASS")
