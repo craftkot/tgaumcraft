@@ -53,7 +53,7 @@ public final class SilverwoodLegacyCanopyTest {
                             int dx = Math.abs(x + 8);
                             int dz = Math.abs(z + 8);
                             check(dx <= 4 && dz <= 4);
-                            check(SilverwoodLegacyFootprint.withinChunk(x, z, -1, -1));
+                            check(x >= -16 && x <= -1 && z >= -16 && z <= -1);
                             farthest[0] = Math.max(farthest[0], Math.max(dx, dz));
                         });
                 outermost = Math.max(outermost, farthest[0]);
