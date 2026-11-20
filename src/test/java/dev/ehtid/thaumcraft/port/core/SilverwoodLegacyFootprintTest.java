@@ -19,7 +19,9 @@ public final class SilverwoodLegacyFootprintTest {
         check(SilverwoodLegacyFootprint.withinBuildHeight(1, 7, 0, 0), false);
         check(SilverwoodLegacyFootprint.withinBuildHeight(Integer.MAX_VALUE, 10, -64, 320), false);
         check(SilverwoodLegacyFootprint.withinChunk(8, 8, 0, 0), true);
-        check(SilverwoodLegacyFootprint.withinChunk(4, 8, 0, 0), true);\n        check(SilverwoodLegacyFootprint.withinChunk(3, 8, 0, 0), false);\n        check(SilverwoodLegacyFootprint.withinChunk(11, 8, 0, 0), true);
+        check(SilverwoodLegacyFootprint.withinChunk(4, 8, 0, 0), true);
+        check(SilverwoodLegacyFootprint.withinChunk(3, 8, 0, 0), false);
+        check(SilverwoodLegacyFootprint.withinChunk(11, 8, 0, 0), true);
         check(SilverwoodLegacyFootprint.withinChunk(12, 8, 0, 0), false);
         check(SilverwoodLegacyFootprint.withinChunk(-8, -8, -1, -1), true);
         check(SilverwoodLegacyFootprint.withinChunk(-12, -8, -1, -1), true);
