@@ -36,8 +36,9 @@ public final class EssentiaJarLabelRenderer {
         BlockPos pos = jar.getBlockPos();
         int facing = jar.facing();
         int facingRotation = LegacyEssentiaJarLabelRenderLogic.facingRotationDegrees(facing);
+        boolean crookedLabels = ThaumcraftClientConfig.CROOKED_JAR_LABELS.get();
         int crookedRotation = LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees(
-                aspectFilter, pos.getX(), facing);
+                crookedLabels, aspectFilter, pos.getX(), facing);
         AspectData aspect = ASPECTS.get(aspectFilter);
 
         // TileJarRenderer's outer transform: block center, +0.01 Y, then X=180.

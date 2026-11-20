@@ -40,4 +40,12 @@ public final class LegacyEssentiaJarLabelRenderLogic {
         if (aspectTag == null) throw new IllegalArgumentException("aspectTag");
         return (aspectTag.hashCode() + blockX + facing) % 4 - 2;
     }
+
+    /**
+     * BETA26 only applies the crooked transform when CONFIG_GRAPHICS.crooked is enabled.
+     * Disabled labels stay aligned without changing the source-era signed remainder rule.
+     */
+    public static int crookedRotationDegrees(boolean enabled, String aspectTag, int blockX, int facing) {
+        return enabled ? crookedRotationDegrees(aspectTag, blockX, facing) : 0;
+    }
 }

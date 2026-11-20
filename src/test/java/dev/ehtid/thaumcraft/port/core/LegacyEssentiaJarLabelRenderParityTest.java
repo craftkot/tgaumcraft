@@ -17,6 +17,12 @@ public final class LegacyEssentiaJarLabelRenderParityTest {
         equal(0, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees("aer", 250, 2), "Aer straight");
         equal(0, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees("ignis", 250, 2), "Ignis straight");
         equal(-2, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees("terra", 250, 2), "Terra crooked");
+        equal(-2, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees(true, "terra", 250, 2),
+                "crooked labels enabled");
+        equal(0, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees(false, "terra", 250, 2),
+                "crooked labels disabled");
+        equal(0, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees(false, "praemunio", 250, 2),
+                "disabled labels bypass negative signed remainder");
         equal(-4, LegacyEssentiaJarLabelRenderLogic.crookedRotationDegrees("praemunio", 250, 2),
                 "negative Java remainder is preserved");
 

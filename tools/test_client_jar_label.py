@@ -10,6 +10,8 @@ def read(path):
 renderer = read("src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarLiquidRenderer.java")
 label_renderer = read("src/neoforge/java/dev/ehtid/thaumcraft/client/EssentiaJarLabelRenderer.java")
 logic = read("src/main/java/dev/ehtid/thaumcraft/port/core/LegacyEssentiaJarLabelRenderLogic.java")
+client_config = read("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClientConfig.java")
+client_entrypoint = read("src/neoforge/java/dev/ehtid/thaumcraft/client/ThaumcraftClient.java")
 smoke = read("tools/client_jar_liquid_smoke.py")
 workflow = read(".github/workflows/closure-jar-liquid-client.yml")
 manifest = json.loads(read("analysis/assets/beta26_jar_label_manifest.json"))
@@ -36,6 +38,19 @@ for token in (
         raise SystemExit(f"JAR_LABEL_RENDERER_CONTRACT_MISSING={token}")
 if label_renderer.count("Axis.ZP.rotationDegrees(crookedRotation)") != 2:
     raise SystemExit("JAR_LABEL_CROOKED_ROTATION_MUST_APPLY_TO_PAPER_AND_GLYPH")
+
+if "ThaumcraftClientConfig.CROOKED_JAR_LABELS.get()" not in label_renderer:
+    raise SystemExit("JAR_LABEL_CROOKED_CONFIG_NOT_READ_BY_RENDERER")
+if 'crookedRotationDegrees(boolean enabled, String aspectTag' not in logic:
+    raise SystemExit("JAR_LABEL_CROOKED_CONFIG_CORE_GATE_MISSING")
+for token in ('builder.push("graphics")', '.define("crooked", true)', 'builder.pop()'):
+    if token not in client_config:
+        raise SystemExit(f"JAR_LABEL_CLIENT_CONFIG_DEFAULT_MISSING={token}")
+for token in ('@Mod(value = ThaumcraftPort.MOD_ID, dist = Dist.CLIENT)',
+              'ModConfig.Type.CLIENT',
+              'container.registerConfig(ModConfig.Type.CLIENT, ThaumcraftClientConfig.SPEC)'):
+    if token not in client_entrypoint:
+        raise SystemExit(f"JAR_LABEL_CLIENT_CONFIG_REGISTRATION_MISSING={token}")
 
 for token in (
     "LABEL_CENTER_Y = -0.4F",
