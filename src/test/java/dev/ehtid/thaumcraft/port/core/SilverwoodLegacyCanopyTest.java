@@ -61,6 +61,35 @@ public final class SilverwoodLegacyCanopyTest {
         }
         check(outermost == 4);
 
+        // Every footprint-approved legacy center must keep actual canopy writes
+        // inside its owning chunk, including negative and mixed-sign chunks.
+        int accepted = 0;
+        for (int chunkX : new int[]{-2, -1, 0, 1}) {
+            for (int chunkZ : new int[]{-2, 0, 1}) {
+                int localAccepted = 0;
+                for (int localX = 4; localX <= 12; localX++) {
+                    for (int localZ = 4; localZ <= 12; localZ++) {
+                        int originX = chunkX * 16 + localX;
+                        int originZ = chunkZ * 16 + localZ;
+                        if (!SilverwoodLegacyFootprint.withinChunk(originX, originZ, chunkX, chunkZ))
+                            continue;
+                        localAccepted++;
+                        for (int h = 7; h <= 10; h++) {
+                            final int cx = chunkX, cz = chunkZ;
+                            SilverwoodLegacyCanopy.place(originX, 64, originZ, h,
+                                    new Random(90000L + 31L * localX + 17L * localZ + h),
+                                    (x, y, z) -> true,
+                                    (x, y, z) -> check(Math.floorDiv(x, 16) == cx
+                                            && Math.floorDiv(z, 16) == cz));
+                        }
+                    }
+                }
+                check(localAccepted == 64);
+                accepted += localAccepted;
+            }
+        }
+        check(accepted == 12 * 64);
+
         // No replaceability reads does not imply no random draws.
         Random actual = new Random(99);
         Random expected = new Random(99);
