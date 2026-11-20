@@ -2819,3 +2819,6 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 - Post-edit source audit caught one remaining pitch-0 literal in the generator's own `source_teleport_command` self-check. The runtime command had already changed to pitch 90, but the generator would have rejected its own probe before launching Minecraft. Corrected that literal and added a verifier assertion that the generator's self-check and runtime command stay aligned.
 - This is a test-harness correction only; no production renderer/entity code changed. The earlier queued run [#44743518904](https://github.com/craftkot/tgaumcraft/actions/runs/44743518904) was created before this final self-check correction and must not be used as evidence for the final commit. Await the subsequent exact-head workflow run.
+
+
+- Final static-contract review corrected the verifier's Python quoting for the embedded generator command: the expected string now matches the driver's literal exactly (without retaining escape backslashes). A tiny Python value check confirmed the expected literal matches the generator line once; exact-head CI remains the authoritative repository test.
