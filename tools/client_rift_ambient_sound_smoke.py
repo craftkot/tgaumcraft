@@ -495,8 +495,9 @@ if any(probe.count(command) != 1 for command in (
     raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
 if probe.count(visual_teleport_command) != 1 or probe.count(source_return_command) != 1:
     raise SystemExit("Rift visual camera must be set once before spawn and source return once after rendering")
-if probe.count("wait_for_server_marker() {") != 1:
-    raise SystemExit("Rift fast chat needs one bounded server-marker poller")
+generated_script = source + probe + suffix
+if generated_script.count("wait_for_server_marker() {") != 1:
+    raise SystemExit("Generated Rift smoke must contain exactly one bounded server-marker poller")
 if probe.count("TC_RIFT_HIGH_TELEPORT_PRESENT") != 2 or probe.count("TC_RIFT_AMBIENT_ENTITY_PRESENT") != 2:
     raise SystemExit("Rift high teleport and spawn must be confirmed by fresh server markers")
 if any(line.strip() == "sleep 0.1" for line in probe.splitlines()):
@@ -533,4 +534,4 @@ for required_marker in (
 ):
     if probe.count(required_marker) < 2:
         raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)
-print(source + probe + suffix)
+print(generated_script)
