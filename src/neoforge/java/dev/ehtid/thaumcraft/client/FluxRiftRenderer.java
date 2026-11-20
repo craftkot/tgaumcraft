@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -10,19 +11,25 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import org.joml.Matrix4f;
 
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * First visible Rift mesh: BETA26's seeded polycone path and radii, rendered
- * with vanilla additive lightning geometry. The original end-shader/star
- * compositing is not yet ported and is not claimed as visual parity.
+ * BETA26 seeded polycone with source-matched blend/depth passes: three additive
+ * outer layers do not write depth; the final alpha-blended core does. The original
+ * end-shader/star compositing and goggles-only depth bypass remain unported, so
+ * this renderer does not claim full Flux Rift visual parity.
  */
 public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
     private static final int SIDES = 6;
+    private static final Set<Integer> SMOKE_RECORDED = ConcurrentHashMap.newKeySet();
 
     public FluxRiftRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -40,10 +47,19 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
     ) {
         List<LegacyFluxRiftGeometry.Point> points = entity.getGeometry();
         if (points.size() > 2) {
-            VertexConsumer vertices = buffers.getBuffer(RenderType.lightning());
             float stability = Mth.clamp(1.0F - entity.getRiftStability() / 50.0F, 0.0F, 1.5F);
 
+            boolean recordRenderPasses = smokeProbeEnabled() && SMOKE_RECORDED.add(entity.getId());
             for (int layer = 0; layer <= 3; layer++) {
+                boolean additive = layer < 3;
+                VertexConsumer vertices = buffers.getBuffer(
+                        additive ? RiftRenderTypes.additive() : RiftRenderTypes.alphaCore());
+                if (recordRenderPasses) {
+                    System.out.println("TC_SMOKE_RIFT_RENDER_LAYER=PASS entityId=" + entity.getId()
+                            + " layer=" + layer
+                            + " blend=" + (additive ? "ADDITIVE" : "ALPHA")
+                            + " depthWrite=" + (additive ? "OFF" : "ON"));
+                }
                 float layerScale = layer < 3 ? 1.25F + 0.5F * layer : 1.0F;
                 int alpha = layer < 3 ? 96 : 220;
                 Vector[] centers = new Vector[points.size()];
@@ -119,6 +135,62 @@ public final class FluxRiftRenderer extends EntityRenderer<FluxRiftEntity> {
     @Override
     public ResourceLocation getTextureLocation(FluxRiftEntity entity) {
         return ResourceLocation.withDefaultNamespace("textures/entity/end_portal.png");
+    }
+
+    private static boolean smokeProbeEnabled() {
+        return "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    }
+
+    /**
+     * BETA26 RenderFluxRift.doRender uses SRC_ALPHA/ONE with depth writes off
+     * for q=0..2, then SRC_ALPHA/ONE_MINUS_SRC_ALPHA with depth writes on for q=3.
+     */
+    private static final class RiftRenderTypes extends RenderStateShard {
+        private static final RenderType ADDITIVE = create(
+                "thaumcraft:flux_rift_additive", true, false, false);
+        private static final RenderType ALPHA_CORE = create(
+                "thaumcraft:flux_rift_alpha_core", false, true, true);
+
+        private RiftRenderTypes() {
+            super("thaumcraft_flux_rift_render_types", () -> {}, () -> {});
+        }
+
+        private static RenderType additive() {
+            return ADDITIVE;
+        }
+
+        private static RenderType alphaCore() {
+            return ALPHA_CORE;
+        }
+
+        private static RenderType create(
+                String name,
+                boolean additive,
+                boolean depthWrite,
+                boolean sortOnUpload
+        ) {
+            return RenderType.create(
+                    name,
+                    DefaultVertexFormat.POSITION_COLOR,
+                    VertexFormat.Mode.QUADS,
+                    256,
+                    false,
+                    sortOnUpload,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(RENDERTYPE_LIGHTNING_SHADER)
+                            .setTextureState(NO_TEXTURE)
+                            .setTransparencyState(additive
+                                    ? LIGHTNING_TRANSPARENCY
+                                    : TRANSLUCENT_TRANSPARENCY)
+                            .setDepthTestState(LEQUAL_DEPTH_TEST)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(depthWrite ? COLOR_DEPTH_WRITE : COLOR_WRITE)
+                            .setLightmapState(NO_LIGHTMAP)
+                            .setOverlayState(NO_OVERLAY)
+                            .setOutputState(MAIN_TARGET)
+                            .createCompositeState(false)
+            );
+        }
     }
 
     private static Vector ring(Vector center, Vector side, Vector up, float radius, double angle) {
