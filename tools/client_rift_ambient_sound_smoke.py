@@ -221,7 +221,10 @@ probe = r'''
   fi
   echo "RIFT_LISTENER_PLATFORM=PASS y=149" | tee -a client-smoke-status.txt
   # Only teleport to the measured sound position after the support block exists.
-  send_chat "/tp @p $rift_x $rift_y $rift_z 0 0"
+  # The size-5 polycone is centered at the player's feet. Pitch 0 leaves it
+  # below the horizontal view frustum; aim straight down so the real client
+  # actually submits the four render passes while remaining at the sound source.
+  send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"
   send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_AT_SOURCE'
   if ! grep -Fq 'TC_RIFT_LISTENER_AT_SOURCE' run/logs/latest.log; then
     send_chat '/data get entity @p Pos'
@@ -257,6 +260,9 @@ probe = r'''
     tail -100 run/logs/latest.log >&2
     exit 1
   fi
+  # Preserve the post-spawn frame even when the render marker gate fails.
+  capture rift-ambient-entity-present
+  test -s client-smoke/screenshots/rift-ambient-entity-present.png
   render_probe_log=client-smoke/client.log
   for _ in $(seq 1 40); do
     if grep -Fq 'TC_SMOKE_RIFT_RENDER_LAYER=PASS' "$render_probe_log"; then break; fi
@@ -278,8 +284,6 @@ probe = r'''
     echo "RIFT_RENDER_LAYER=FAIL expected=4 actual=$render_marker_count" | tee -a client-smoke-status.txt
     exit 1
   fi
-  capture rift-ambient-entity-present
-  test -s client-smoke/screenshots/rift-ambient-entity-present.png
   echo 'RIFT_RENDER_LAYER_SELECTION=PASS additive=3 alpha=1 depth_write=outer_off_core_on' | tee -a client-smoke-status.txt
   # BETA26 uses a 300-tick cadence. Capture only the first due event:
   # evilportal.ogg is 14.524s and can last up to 32.3s at the matcher's
