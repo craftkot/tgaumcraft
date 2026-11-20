@@ -30,6 +30,23 @@ public final class SilverwoodPlacementPreflightTest {
         check(SilverwoodPlacementPreflight.mayPlace(4,64,8,7,0,0,-64,320,
                 (x,y,z) -> {reads.incrementAndGet();return true;},air), false);
         check(reads.get() == 0, true);
+        // Invalid geometry must fail before any world predicate is invoked.
+        AtomicInteger invalidReads = new AtomicInteger();
+        SilverwoodPlacementPreflight.BlockPredicate counted = (x,y,z) -> {
+            invalidReads.incrementAndGet();
+            return true;
+        };
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,8,6,0,0,-64,320,counted,counted), false);
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,1,0,-64,320,counted,counted), false);
+        check(SilverwoodPlacementPreflight.mayPlace(8,315,8,10,0,0,-64,320,counted,counted), false);
+        check(invalidReads.get() == 0, true);
+
+        // Soil rejection must not trigger a single trunk read.
+        AtomicInteger trunkReads = new AtomicInteger();
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,0,0,-64,320,
+                (x,y,z) -> false,
+                (x,y,z) -> { trunkReads.incrementAndGet(); return true; }), false);
+        check(trunkReads.get() == 0, true);
         System.out.println("M12 SilverwoodPlacementPreflight: OK (" + assertions + " assertions)");
     }
 }
