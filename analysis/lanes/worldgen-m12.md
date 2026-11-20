@@ -735,3 +735,11 @@
 - [4bbecb8](https://github.com/craftkot/tgaumcraft/commit/4bbecb8a5aa99fbc85a9fa97aad61917970c7139) extends the actual SilverwoodPlacementPreflightTest with six assertions: invalid height, wrong chunk and build-height overflow reject before **any** soil/trunk world read; failed soil check never reads the trunk column. No production behavior or shared registration changed.
 - **Not a confirmed PASS:** GitHub-connected source update succeeded, but the execution host still reports `Could not resolve host: github.com` for git checkout. Java 21 exists; the exact-head standalone preflight runner, two rollback runners, NeoForge build, native GameTest and fresh-chunk worldgen have not been executed in this pass. CI for this new HEAD must be checked; earlier green CI does not cover the new commit.
 - Next: run `bash tools/test_silverwood_placement_preflight.sh`, both rollback runners on exact HEAD, verify CI; then coordinate native setBlock rejection GameTest and feature/biome registration. Do not merge Draft PR #9 before gameplay proof. No changes to main, other branches, shared registries or Gradle. Historical 59/100 unchanged.
+
+
+## 20.11.2026 — M12 Silverwood preflight read-count regression
+
+- Fresh-read main:AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked branch HEAD e8c58cb, parallel branches, open PRs and Draft PR #9. Before changes main...feature/worldgen-m12: ahead 198, behind 0.
+- Test-only commit [a9cfcef](https://github.com/craftkot/tgaumcraft/commit/a9cfcef1bc8af428552e9f1002b87f6f8747e9a4): five assertions in SilverwoodPlacementPreflightTest for exactly one soil read, exactly seven trunk reads on success and early termination after the fourth trunk read when the fourth position is blocked. No production code or shared registry changes.
+- GitHub Actions runs #44681711799 and #44681705942 succeeded on prior SHA e8c58cb; they do **not** validate the new test commit. Direct git checkout remains blocked by DNS (Could not resolve host: github.com), so new assertions have **no local PASS**. No native NeoForge GameTest or fresh-chunk worldgen proof. Score stays 59/100.
+- Next: run tools/test_silverwood_placement_preflight.sh on exact branch checkout, inspect CI for a9cfcef, then implement native failure-injection coverage without touching shared registries; biome registration requires coordination.
