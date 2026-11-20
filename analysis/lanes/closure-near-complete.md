@@ -2704,3 +2704,12 @@ Progress:
 - Requested GitHub Actions **rerun failed jobs** for #44682362954; API returned success. Rerun outcome remains unverified and must be polled. No shared Gradle/CI edits or speculative Java changes.
 - Local `git ls-remote` failed `Could not resolve host: github.com`; local Gradle/client unavailable. No new local tests. No gameplay score increase: global **59/100**, M16 **4/6**, M08 **5/9**.
 - Next: poll retry, inspect native Salis/Nitor result and artifacts if it reaches Minecraft. If retry is rate-limited again, treat as infrastructure blocker rather than changing game code. Independently review remaining BETA26 parity gaps; PR #3 Salis item overlap remains a merge blocker.
+
+
+## 2026-11-20 — повторный Salis/Nitor после Maven Central 429: нативный PASS
+
+- Fresh-read `main` (`a4280834adc5a20b6951098af937d30ca4aeca56`), `ROADMAP_RU.md`, `AGENTS.md`, parallel workflow, fixed audit, own lane, open PR search, recent commits and branch compare (1421 ahead / 0 behind). PR #4 remains open; do not merge; PR #3 has known Salis item overlap.
+- Previous failure [Actions #44682362954](https://github.com/craftkot/tgaumcraft/actions/runs/44682362954) was Maven Central HTTP 429 during Gradle resolution. The requested rerun now has latest job `136138857008`, conclusion **success**, completed 2026-11-20 07:09 UTC. This removes the transient infrastructure blocker without modifying Gradle.
+- Read actual successful job log: `SALIS_NATIVE_OUTBOUND_PACKET_CAPTURE=PASS positive_control=1 post_reload=1 no_replay=0`, `SALIS_NATIVE_CHUNK_TICKET_CLEANED=PASS`, `SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED=PASS`, `SALIS_NATIVE_ACTOR_DISCONNECT_ORDER=PASS queued=1 removed=1`, `NITOR_REAL_CLIENT_PARTICLES=PASS` frames 264..271, and `SALIS_VISIBLE_SPARKLES=PASS` with late warm pixels 0. Artifact `14609332230` saved by the workflow. These markers prove the exercised native fixture and visuals, not full BETA26 sprite parity.
+- No new production Java defect demonstrated; no speculative Java or shared CI/Gradle change. This journal-only evidence update does not claim new functional code. No local Gradle/server/client run in this iteration. Prior full NeoForge, Aura/Crystal and two-client Salis successes remain separate earlier-head evidence.
+- Fixed score **59/100**, M16 **4/6**, M08 **5/9**. Next: inspect remaining BETA26 visual/audio discrepancies and verify a distinct missing gameplay criterion before changing code; reconcile PR #3 overlap before any eventual merge.
