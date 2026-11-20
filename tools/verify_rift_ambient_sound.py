@@ -81,14 +81,16 @@ for fragment in (
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"',
     'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"',
     'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"',
-    'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z',
+    'send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z',
     "RiftSize:$rift_size",
     "send_chat_fast() {",
     "sleep 0.1",
     'xdotool type --clearmodifiers --delay 5 "$1"',
     "sleep 0.25",
     "TC_RIFT_PLATFORM_PRESENT",
+    "TC_RIFT_HIGH_TELEPORT_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_AMBIENT_ENTITY_PRESENT",
     "TC_RIFT_VISUAL_CAMERA_BEFORE",
     "TC_RIFT_VISUAL_CAMERA_AFTER",
     "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
@@ -134,6 +136,7 @@ assert "current_game_time - start_game_time >= 300" not in driver, (
 
 
 high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
+high_teleport_marker = "TC_RIFT_HIGH_TELEPORT_PRESENT"
 platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
@@ -141,15 +144,35 @@ visual_teleport = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_v
 source_return = 'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"'
 generator_source_teleport = "source_teleport_command = 'send_chat \"/tp @p $rift_x $rift_y $rift_z 0 90\"'"
 assert driver.count(generator_source_teleport) == 1, "generator self-check must use the same source-listener command"
-rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
+rift_summon = 'send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 runtime_template = driver.split("high_teleport_command =", 1)[0]
-post_spawn_camera_probe = "send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'"
-assert runtime_template.count(post_spawn_camera_probe) == 1, "post-spawn camera acknowledgement must use the reliable send_chat path"
-assert "send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'" not in runtime_template, (
-    "do not use the short setup-only chat path for the post-spawn render camera gate"
+post_spawn_camera_probe = "send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'"
+entity_presence_probe = "send_chat_fast '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'"
+high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=300,z=12,distance=..1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
+return_marker_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'"
+assert runtime_template.count(post_spawn_camera_probe) == 1, "post-spawn camera marker must use the bounded fast path"
+assert runtime_template.count(entity_presence_probe) == 1 and runtime_template.count(high_teleport_probe) == 1, "fast entity/high-position commands must be explicit and unique"
+assert runtime_template.count(return_marker_probe) == 1, "source-return marker must be explicit and unique"
+assert "send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'" not in runtime_template, (
+    "the post-spawn camera marker must leave time for the tick-300 source return"
 )
+new_send_block = driver.split('new_send = """', 1)[1].split('"""', 1)[0]
+assert 'sleep 0.5' in new_send_block and 'sleep 0.35' in new_send_block and 'wait_for_server_marker() {' in new_send_block, "generated fast helper must wait for chat and poll server markers"
+assert 'sleep 0.1' not in new_send_block, "generated fast helper must not regress to the prefix-loss race"
 assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
     "the fast setup commands must be unique in the runtime template"
+)
+assert runtime_template.index(high_teleport) < runtime_template.index(high_teleport_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_HIGH_TELEPORT_PRESENT'") < runtime_template.index(platform_fill), (
+    "the high teleport must be server-confirmed before the barrier fill"
+)
+assert runtime_template.index(entity_presence_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_AMBIENT_ENTITY_PRESENT'"), (
+    "the spawned Rift must be confirmed before the post-spawn camera capture"
+)
+assert runtime_template.index(post_spawn_camera_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_VISUAL_CAMERA_AFTER'"), (
+    "the post-spawn camera must be confirmed before the render screenshot"
+)
+assert runtime_template.index(source_return) < runtime_template.index(return_marker_probe) < runtime_template.index("wait_for_server_marker 'TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'"), (
+    "the listener must be confirmed at the Rift source before tick-300 audio acceptance"
 )
 assert runtime_template.count(source_teleport) == 1, (
     "the initial source-listener teleport must be unique in the runtime template"
@@ -165,6 +188,7 @@ assert runtime_template.index(render_capture) < runtime_template.index(render_ga
 )
 assert (
     runtime_template.index(high_teleport)
+    < runtime_template.index(high_teleport_marker)
     < runtime_template.index(platform_fill)
     < runtime_template.index(platform_marker)
     < runtime_template.index(source_teleport)
@@ -175,6 +199,7 @@ assert (
     < runtime_template.index("spawn_game_time=")
     < runtime_template.index("> client-smoke/rift-event.pcm")
     < runtime_template.index(rift_summon)
+    < runtime_template.index(entity_presence_probe)
     < runtime_template.index("TC_RIFT_VISUAL_CAMERA_AFTER")
     < runtime_template.index(render_capture)
     < runtime_template.index(render_gate)

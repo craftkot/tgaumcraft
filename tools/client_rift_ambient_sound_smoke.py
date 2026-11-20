@@ -85,17 +85,29 @@ new_send = """  activate_minecraft_client() {
     sleep 4
   }
 
-  # Use this only for the two ordered setup commands: the player starts high
-  # in the newly loaded target chunk, so a short chat round-trip cannot make
-  # it fall below the platform before the barrier is placed.
+  # Fast chat is used only when each command is followed by a fresh server marker.
+  # A 0.1s open delay dropped leading "/t" characters on the real client.
   send_chat_fast() {
     activate_minecraft_client
     ensure_minecraft_command_channel
     xdotool key --clearmodifiers t
-    sleep 0.1
+    sleep 0.5
     xdotool type --clearmodifiers --delay 5 "$1"
     xdotool key --clearmodifiers Return
-    sleep 0.25
+    sleep 0.35
+  }
+
+  wait_for_server_marker() {
+    local marker="$1"
+    for _ in $(seq 1 40); do
+      if grep -Fq "$marker" run/logs/latest.log; then
+        return 0
+      fi
+      sleep 0.25
+    done
+    echo "RIFT_SERVER_MARKER=FAIL missing=$marker" | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    return 1
   }"""
 if source.count(old_send) != 1:
     raise SystemExit("Shared chat helper changed; refuse unverified command-driver replacement")
@@ -216,6 +228,11 @@ probe = r'''
   # The normal send_chat delay is four seconds; using it here would let the
   # player fall below Y=149 before the barrier exists.
   send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"
+  send_chat_fast '/execute if entity @p[x=3,y=300,z=12,distance=..1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'
+  if ! wait_for_server_marker 'TC_RIFT_HIGH_TELEPORT_PRESENT'; then
+    echo 'RIFT_HIGH_TELEPORT=FAIL player did not reach the safe high position' | tee -a client-smoke-status.txt
+    exit 1
+  fi
   send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"
   send_chat '/execute if block 3 149 12 minecraft:barrier run say TC_RIFT_PLATFORM_PRESENT'
   if ! grep -Fq 'TC_RIFT_PLATFORM_PRESENT' run/logs/latest.log; then
@@ -237,14 +254,14 @@ probe = r'''
   echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
   send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"
   send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_BEFORE'
-  sleep 0.5
-  if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_BEFORE' run/logs/latest.log; then
+  if ! wait_for_server_marker 'TC_RIFT_VISUAL_CAMERA_BEFORE'; then
     send_chat '/data get entity @p Pos'
     echo 'RIFT_VISUAL_CAMERA_BEFORE=FAIL player did not reach the side-on view' | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2 || true
     exit 1
   fi
   echo "RIFT_VISUAL_CAMERA_BEFORE=PASS x=$rift_visual_x yaw=$rift_visual_yaw pitch=$rift_visual_pitch" | tee -a client-smoke-status.txt
+  sleep 0.5
   capture rift-ambient-before
   # Keep the side-on camera through the Rift spawn so the renderer's first
   # probe cannot be consumed by an edge-on frame at the entity origin.
@@ -259,26 +276,16 @@ probe = r'''
   rift_capture_pid=$!
   trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
   sleep 0.25
-  send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:$rift_size,Stability:0.0f}"
-  send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'
-  rift_spawned=0
-  for _ in $(seq 1 40); do
-    if grep -Fq 'TC_RIFT_AMBIENT_ENTITY_PRESENT' run/logs/latest.log; then
-      rift_spawned=1
-      break
-    fi
-    sleep 0.25
-  done
-  if [ "$rift_spawned" -ne 1 ]; then
+  send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:$rift_size,Stability:0.0f}"
+  send_chat_fast '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'
+  if ! wait_for_server_marker 'TC_RIFT_AMBIENT_ENTITY_PRESENT'; then
     echo 'RIFT_AMBIENT_ENTITY_PRESENT=FAIL' | tee -a client-smoke-status.txt
-    tail -100 run/logs/latest.log >&2
     exit 1
   fi
   # The player is still on the validated side-on camera; record a fresh
   # server-side position marker without consuming another renderer first-call.
-  send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
-  sleep 0.5
-  if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_AFTER' run/logs/latest.log; then
+  send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
+  if ! wait_for_server_marker 'TC_RIFT_VISUAL_CAMERA_AFTER'; then
     send_chat '/data get entity @p Pos'
     echo 'RIFT_VISUAL_CAMERA_AFTER=FAIL post-spawn camera position command was not acknowledged' | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2 || true
@@ -325,8 +332,7 @@ probe = r'''
   # Return to the exact source before the natural tick-300 audio event.
   send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"
   send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'
-  sleep 0.5
-  if ! grep -Fq 'TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL' run/logs/latest.log; then
+  if ! wait_for_server_marker 'TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'; then
     send_chat '/data get entity @p Pos'
     echo 'RIFT_LISTENER_RETURN_TO_SOURCE=FAIL phase=after_visual' | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2 || true
@@ -480,7 +486,7 @@ platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 visual_teleport_command = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
 source_return_command = 'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"'
-rift_summon_command = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
+rift_summon_command = 'send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 render_gate_marker = "layer=0 blend=ADDITIVE depthWrite=OFF"
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
 if any(probe.count(command) != 1 for command in (
@@ -489,8 +495,15 @@ if any(probe.count(command) != 1 for command in (
     raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
 if probe.count(visual_teleport_command) != 1 or probe.count(source_return_command) != 1:
     raise SystemExit("Rift visual camera must be set once before spawn and source return once after rendering")
+if probe.count("wait_for_server_marker() {") != 1:
+    raise SystemExit("Rift fast chat needs one bounded server-marker poller")
+if probe.count("TC_RIFT_HIGH_TELEPORT_PRESENT") != 2 or probe.count("TC_RIFT_AMBIENT_ENTITY_PRESENT") != 2:
+    raise SystemExit("Rift high teleport and spawn must be confirmed by fresh server markers")
+if "sleep 0.1" in probe:
+    raise SystemExit("Generated fast chat must not regress to the 0.1s prefix-loss race")
 if not (
     probe.index(high_teleport_command)
+    < probe.index("TC_RIFT_HIGH_TELEPORT_PRESENT")
     < probe.index(fill_command)
     < probe.index(platform_marker)
     < probe.index(source_teleport_command)
@@ -501,6 +514,7 @@ if not (
     < probe.index("spawn_game_time=")
     < probe.index("> client-smoke/rift-event.pcm")
     < probe.index(rift_summon_command)
+    < probe.index("TC_RIFT_AMBIENT_ENTITY_PRESENT")
     < probe.index("TC_RIFT_VISUAL_CAMERA_AFTER")
     < probe.index("capture rift-ambient-entity-present")
     < probe.index(render_gate_marker)
@@ -510,7 +524,9 @@ if not (
     raise SystemExit("Rift smoke must compare side-on frames and return to the source before audio acceptance")
 for required_marker in (
     "TC_RIFT_PLATFORM_PRESENT",
+    "TC_RIFT_HIGH_TELEPORT_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_AMBIENT_ENTITY_PRESENT",
     "TC_RIFT_VISUAL_CAMERA_BEFORE",
     "TC_RIFT_VISUAL_CAMERA_AFTER",
     "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
