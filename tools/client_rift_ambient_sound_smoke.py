@@ -257,7 +257,30 @@ probe = r'''
     tail -100 run/logs/latest.log >&2
     exit 1
   fi
+  render_probe_log=client-smoke/client.log
+  for _ in $(seq 1 40); do
+    if grep -Fq 'TC_SMOKE_RIFT_RENDER_LAYER=PASS' "$render_probe_log"; then break; fi
+    sleep 0.25
+  done
+  for expected in \
+    'layer=0 blend=ADDITIVE depthWrite=OFF' \
+    'layer=1 blend=ADDITIVE depthWrite=OFF' \
+    'layer=2 blend=ADDITIVE depthWrite=OFF' \
+    'layer=3 blend=ALPHA depthWrite=ON'; do
+    if ! grep -Fq "$expected" "$render_probe_log"; then
+      echo "RIFT_RENDER_LAYER=FAIL missing=$expected" | tee -a client-smoke-status.txt
+      tail -100 "$render_probe_log" >&2 || true
+      exit 1
+    fi
+  done
+  render_marker_count="$(grep -Fc 'TC_SMOKE_RIFT_RENDER_LAYER=PASS' "$render_probe_log" || true)"
+  if [ "$render_marker_count" -ne 4 ]; then
+    echo "RIFT_RENDER_LAYER=FAIL expected=4 actual=$render_marker_count" | tee -a client-smoke-status.txt
+    exit 1
+  fi
   capture rift-ambient-entity-present
+  test -s client-smoke/screenshots/rift-ambient-entity-present.png
+  echo 'RIFT_RENDER_LAYER_SELECTION=PASS additive=3 alpha=1 depth_write=outer_off_core_on' | tee -a client-smoke-status.txt
   # BETA26 uses a 300-tick cadence. Capture only the first due event:
   # evilportal.ogg is 14.524s and can last up to 32.3s at the matcher's
   # minimum pitch (0.45), so freeze server ticks while that one clip finishes.
