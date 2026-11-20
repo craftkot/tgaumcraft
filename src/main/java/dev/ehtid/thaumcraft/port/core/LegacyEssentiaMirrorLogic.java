@@ -148,8 +148,9 @@ public final class LegacyEssentiaMirrorLogic {
     public static boolean conservedOneUnit(int sourceBefore, int sourceAfter,
                                            int sinkBefore, int sinkAfter) {
         return sourceBefore > 0 && sinkBefore >= 0
-                && sourceAfter == sourceBefore - 1
-                && sinkAfter == sinkBefore + 1;
+                && sourceAfter >= 0 && sinkAfter >= 0
+                && (long) sourceAfter == (long) sourceBefore - 1L
+                && (long) sinkAfter == (long) sinkBefore + 1L;
     }
 
     /** Source TileMirrorEssentia: decaying retry backoff 40,60,...600. */
