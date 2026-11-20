@@ -222,18 +222,20 @@ probe = r'''
   rift_visual_yaw=90
   rift_visual_pitch=39
   rift_size=30
-  # Teleport before filling: /fill rejects an unloaded target chunk. The old order
-  # emitted "That position is not loaded", so the player later fell out of sound range.
-  # Load the target chunk while the player is safely above the future platform.
-  # The normal send_chat delay is four seconds; using it here would let the
-  # player fall below Y=149 before the barrier exists.
+  # Teleport before filling: /fill rejects an unloaded target chunk.
+  # The player is already falling when the marker command reaches the server;
+  # an exact one-block distance selector can therefore miss a successful tp.
+  # This X/Z column plus Y=150..400 proves the player reached the high platform
+  # area while still excluding the normal world spawn.
   send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"
-  send_chat_fast '/execute if entity @p[x=3,y=300,z=12,distance=..1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'
+  send_chat_fast '/execute if entity @p[x=3,y=150,z=12,dx=1,dy=250,dz=1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'
   if ! wait_for_server_marker 'TC_RIFT_HIGH_TELEPORT_PRESENT'; then
     echo 'RIFT_HIGH_TELEPORT=FAIL player did not reach the safe high position' | tee -a client-smoke-status.txt
     exit 1
   fi
-  send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"
+  # send_chat submits after one second; its four-second delay is post-submit,
+  # so the barrier is placed long before the player can fall through Y=149.
+  send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"
   send_chat '/execute if block 3 149 12 minecraft:barrier run say TC_RIFT_PLATFORM_PRESENT'
   if ! grep -Fq 'TC_RIFT_PLATFORM_PRESENT' run/logs/latest.log; then
     echo 'RIFT_LISTENER_PLATFORM=FAIL barrier block was not placed after teleport' | tee -a client-smoke-status.txt
@@ -481,7 +483,8 @@ probe = r'''
   echo 'RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS' | tee -a client-smoke-status.txt
 '''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
-fill_command = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
+high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,dx=1,dy=250,dz=1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
+fill_command = 'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 visual_teleport_command = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
@@ -490,7 +493,7 @@ rift_summon_command = 'send_chat_fast "/summon thaumcraft:flux_rift $rift_x $rif
 render_gate_marker = "layer=0 blend=ADDITIVE depthWrite=OFF"
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
 if any(probe.count(command) != 1 for command in (
-    high_teleport_command, fill_command, source_teleport_command
+    high_teleport_command, high_teleport_probe, fill_command, source_teleport_command
 )):
     raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
 if probe.count(visual_teleport_command) != 1 or probe.count(source_return_command) != 1:
@@ -504,7 +507,8 @@ if any(line.strip() == "sleep 0.1" for line in probe.splitlines()):
     raise SystemExit("Generated fast chat must not regress to the 0.1s prefix-loss race")
 if not (
     probe.index(high_teleport_command)
-    < probe.index("TC_RIFT_HIGH_TELEPORT_PRESENT")
+    < probe.index(high_teleport_probe)
+    < probe.index("wait_for_server_marker 'TC_RIFT_HIGH_TELEPORT_PRESENT'")
     < probe.index(fill_command)
     < probe.index(platform_marker)
     < probe.index(source_teleport_command)
