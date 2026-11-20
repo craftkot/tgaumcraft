@@ -113,32 +113,25 @@ samples = [
     (int(tick), float(partial), float(angle))
     for tick, partial, angle in pattern.findall(log)
 ]
-if len(samples) < 2:
-    raise SystemExit(f"PEDESTAL_RENDER_MARKERS_MISSING={len(samples)}")
-for tick, partial, angle in samples:
-    expected = (tick + partial) % 360.0
-    delta = abs((angle - expected + 180.0) % 360.0 - 180.0)
-    if not (0.0 <= partial < 1.0) or delta > 0.02:
-        raise SystemExit(
-            f"PEDESTAL_RENDER_ANGLE_MISMATCH=tick:{tick}:partial:{partial}:"
-            f"actual:{angle}:expected:{expected}"
-        )
-if samples[-1][0] - samples[0][0] < 10:
-    raise SystemExit(
-        f"PEDESTAL_CAMERA_TICKS_DID_NOT_ADVANCE={samples[0][0]}:{samples[-1][0]}"
-    )
-angle_delta = (samples[-1][2] - samples[0][2]) % 360.0
-if angle_delta < 8.0 or angle_delta > 120.0:
-    raise SystemExit(f"PEDESTAL_ROTATION_ANGLE_DID_NOT_ADVANCE={angle_delta}")
+sys.path.insert(0, "tools")
+from pedestal_rotation_evidence import validate_samples
+
+try:
+    metrics = validate_samples(samples)
+except ValueError as exc:
+    raise SystemExit(f"PEDESTAL_RENDER_MARKERS=FAIL:{exc}")
 print(
     f"PEDESTAL_RENDER_MARKERS=PASS count={len(samples)} "
-    f"first={samples[0]} last={samples[-1]} delta={angle_delta:.3f}"
+    f"camera_ticks={metrics['first_tick']}..{metrics['last_tick']} "
+    f"tick_span={metrics['tick_span']} "
+    f"last_step_degrees={metrics['last_step_degrees']:.3f}"
 )
 with Path("client-smoke-status.txt").open("a", encoding="utf-8") as status:
     status.write(
         f"PEDESTAL_RENDER_MARKERS=PASS count={len(samples)} "
-        f"camera_ticks={samples[0][0]}..{samples[-1][0]} "
-        f"angle_delta={angle_delta:.3f}\n"
+        f"camera_ticks={metrics['first_tick']}..{metrics['last_tick']} "
+        f"tick_span={metrics['tick_span']} "
+        f"last_step_degrees={metrics['last_step_degrees']:.3f}\\n"
     )
 PY
 
