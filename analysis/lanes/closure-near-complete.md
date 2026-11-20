@@ -2722,3 +2722,30 @@ Progress:
 - This is an exact-head CI completion audit, **not a new functional fix** and not proof of untested BETA26 parity. Earlier native Salis chunk boundary, unload/reload, ticket cleanup and independent outbound packet observations remain the applicable gameplay evidence. No new Java defect was demonstrated; avoid speculative production edits.
 - No Java/NeoForge, shared CI/Gradle, registry, localization, or other feature branch changes. Local Gradle/server/client not run; GitHub connector provided CI status, not a local build. No new tests authored in this documentation-only iteration.
 - Fixed audit **59/100**, M16 **4/6**, M08 **5/9**. Remaining M16 criterion: systematic original BETA26 asset/renderer/FX parity beyond the specific jar, crystal, Salis and sound fixtures; select a concrete discrepancy with original-source proof before changing production code. PR #4 remains unmerged.
+
+## 2026-11-20 — M16: pedestal display rotation uses the wrong clock
+
+### BETA26 comparison
+Pinned source reference: `TheDarkTower314/Thaumcraft-6-Source-Code` commit `954022bb777b7546281fb36df8522f0ba6b43f81`, `TilePedestalRenderer.java`.
+The original renderer computes `ticksExisted + partialTicks` from the render-view entity. The NeoForge port previously used `Level.getGameTime()`; those clocks diverge for a client joining an already-running multiplayer world, so the displayed item can begin at a different rotation.
+
+### Change
+- Added `LegacyPedestalRotationAngle` as a small core parity helper.
+- Changed `PedestalItemRenderer` to use `Minecraft.getInstance().getCameraEntity().tickCount` plus partial tick, with a null-camera fallback.
+- Added five angle boundary cases and a source contract to `CoreParityTest`; the contract rejects a return to `getGameTime()`.
+- No registries, Gradle files, global localization, or workflow definitions changed.
+
+### Exact-head M16 gate before this change
+On `ad79fc28a3ec667964efb0493149acb664229987`, all 23 returned PR workflow runs completed successfully after retrying two jobs that had initially failed during external Gson dependency resolution. The retry reached the real client:
+- Workbench RU/EN GUI: four locale/scale matrix cells passed (the last RU scale-2 cell was still running when first inspected; it later completed successfully).
+- Six crystal placement variants: real-client original PCM match passed for aer, ignis, terra, ordo, perditio, vitium.
+- Crystal break: real-client block break and original PCM match passed.
+- Crystal outline: real-client block-picking smoke passed.
+- Full Port and Aura/Crystal GameTests passed.
+The two initial failures were transient dependency-resolution failures, not gameplay failures; both retries completed successfully.
+
+### Acceptance state
+This corrects a concrete BETA26 client-rendering discrepancy. Core formula/source-contract and the new full-port CI run must pass on the new commit before this change is accepted. A dedicated pedestal screenshot smoke is still desirable; it is not claimed by the source-contract test. M16 remains 4/6 and is not closed. Overall index remains 59/100.
+
+### Next action
+Verify the new commit's Core parity and Full Port result. Then add/execute a real-client pedestal display smoke if the existing client harness can host it without modifying shared Gradle or global workflow configuration. Continue M16 only on independently owned visual/audio gaps; do not enter research, alchemy, or infusion feature branches.
