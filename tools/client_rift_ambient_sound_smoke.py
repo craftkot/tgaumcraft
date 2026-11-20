@@ -201,11 +201,15 @@ probe = r'''
     src/main/resources/assets/thaumcraft/sounds/evilportal.ogg \
     | tee client-smoke/rift-positive-control-match.txt
   echo 'RIFT_EVILPORTAL_POSITIVE_CONTROL=PASS' | tee -a client-smoke-status.txt
-  # The event is a variable-range SoundEvent: volume scales its hearing radius.
-  # Keep the listener at the source so Gaussian low-volume rolls cannot exclude it.
+  # Keep the sound listener at the source. The visual probe uses a valid size-30
+  # BETA26 Rift and a side-on camera two blocks east, then returns here for audio.
   rift_x=3.5
   rift_y=150
   rift_z=12.5
+  rift_visual_x=5.5
+  rift_visual_yaw=90
+  rift_visual_pitch=39
+  rift_size=30
   # Teleport before filling: /fill rejects an unloaded target chunk. The old order
   # emitted "That position is not loaded", so the player later fell out of sound range.
   # Load the target chunk while the player is safely above the future platform.
@@ -220,10 +224,8 @@ probe = r'''
     exit 1
   fi
   echo "RIFT_LISTENER_PLATFORM=PASS y=149" | tee -a client-smoke-status.txt
-  # Only teleport to the measured sound position after the support block exists.
-  # The size-5 polycone is centered at the player's feet. Pitch 0 leaves it
-  # below the horizontal view frustum; aim straight down so the real client
-  # actually submits the four render passes while remaining at the sound source.
+  # Establish the exact audio-listener position first. The visual probe below
+  # temporarily moves to a side-on camera; it returns here before the 300-tick sound.
   send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"
   send_chat '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_AT_SOURCE'
   if ! grep -Fq 'TC_RIFT_LISTENER_AT_SOURCE' run/logs/latest.log; then
@@ -233,7 +235,27 @@ probe = r'''
     exit 1
   fi
   echo "RIFT_LISTENER_AT_SOURCE=PASS x=$rift_x y=$rift_y z=$rift_z" | tee -a client-smoke-status.txt
+  send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"
+  send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_BEFORE'
+  sleep 0.5
+  if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_BEFORE' run/logs/latest.log; then
+    send_chat '/data get entity @p Pos'
+    echo 'RIFT_VISUAL_CAMERA_BEFORE=FAIL player did not reach the side-on view' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo "RIFT_VISUAL_CAMERA_BEFORE=PASS x=$rift_visual_x yaw=$rift_visual_yaw pitch=$rift_visual_pitch" | tee -a client-smoke-status.txt
   capture rift-ambient-before
+  send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"
+  send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN'
+  sleep 0.5
+  if ! grep -Fq 'TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN' run/logs/latest.log; then
+    send_chat '/data get entity @p Pos'
+    echo 'RIFT_LISTENER_RETURN_TO_SOURCE=FAIL phase=before_spawn' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_LISTENER_RETURN_TO_SOURCE=PASS phase=before_spawn' | tee -a client-smoke-status.txt
   spawn_game_time="$(query_game_time)" || exit 1
   probe_log=client-smoke/client.log
   event_log_offset="$(wc -c < "$probe_log")"
@@ -245,7 +267,7 @@ probe = r'''
   rift_capture_pid=$!
   trap 'if [ -n "${rift_capture_pid:-}" ] && kill -0 "$rift_capture_pid" 2>/dev/null; then kill -TERM "$rift_capture_pid" 2>/dev/null || true; wait "$rift_capture_pid" 2>/dev/null || true; fi; cleanup' EXIT
   sleep 0.25
-  send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:5,Stability:0.0f}"
+  send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z {RiftSeed:1234567,RiftSize:$rift_size,Stability:0.0f}"
   send_chat '/execute if entity @e[type=thaumcraft:flux_rift,limit=1] run say TC_RIFT_AMBIENT_ENTITY_PRESENT'
   rift_spawned=0
   for _ in $(seq 1 40); do
@@ -260,6 +282,19 @@ probe = r'''
     tail -100 run/logs/latest.log >&2
     exit 1
   fi
+  # Capture from the same side-on camera as the baseline. Size 30 gives the
+  # source-seeded polycone enough width/length to inspect the end-portal field.
+  send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"
+  send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
+  sleep 0.5
+  if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_AFTER' run/logs/latest.log; then
+    send_chat '/data get entity @p Pos'
+    echo 'RIFT_VISUAL_CAMERA_AFTER=FAIL player did not reach the side-on view' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo "RIFT_VISUAL_CAMERA_AFTER=PASS x=$rift_visual_x yaw=$rift_visual_yaw pitch=$rift_visual_pitch" | tee -a client-smoke-status.txt
+  sleep 0.5
   # Preserve the post-spawn frame even when the render marker gate fails.
   capture rift-ambient-entity-present
   test -s client-smoke/screenshots/rift-ambient-entity-present.png
@@ -296,6 +331,17 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_RENDER_LAYER_SELECTION=PASS additive=3 alpha=1 depth_write=outer_off_core_on' | tee -a client-smoke-status.txt
+  # Return to the exact source before the natural tick-300 audio event.
+  send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"
+  send_chat_fast '/execute if entity @p[x=3,y=150,z=12,distance=..1] run say TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL'
+  sleep 0.5
+  if ! grep -Fq 'TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL' run/logs/latest.log; then
+    send_chat '/data get entity @p Pos'
+    echo 'RIFT_LISTENER_RETURN_TO_SOURCE=FAIL phase=after_visual' | tee -a client-smoke-status.txt
+    tail -100 run/logs/latest.log >&2 || true
+    exit 1
+  fi
+  echo 'RIFT_LISTENER_RETURN_TO_SOURCE=PASS phase=after_visual' | tee -a client-smoke-status.txt
   # BETA26 uses a 300-tick cadence. Capture only the first due event:
   # evilportal.ogg is 14.524s and can last up to 32.3s at the matcher's
   # minimum pitch (0.45), so freeze server ticks while that one clip finishes.
@@ -441,22 +487,44 @@ high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 fill_command = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
+visual_teleport_command = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
+source_return_command = 'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"'
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
 if any(probe.count(command) != 1 for command in (
     high_teleport_command, fill_command, source_teleport_command
 )):
     raise SystemExit("Rift listener setup commands are not unique; refuse generated smoke")
+if probe.count(visual_teleport_command) != 2 or probe.count(source_return_command) != 2:
+    raise SystemExit("Rift visual camera/return commands must each occur exactly twice")
 if not (
     probe.index(high_teleport_command)
     < probe.index(fill_command)
     < probe.index(platform_marker)
     < probe.index(source_teleport_command)
     < probe.index(listener_marker)
+    < probe.index(visual_teleport_command)
+    < probe.index("TC_RIFT_VISUAL_CAMERA_BEFORE")
+    < probe.index("capture rift-ambient-before")
+    < probe.index(source_return_command)
+    < probe.index("TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN")
+    < probe.index("spawn_game_time=")
+    < probe.index("> client-smoke/rift-event.pcm")
+    < probe.index(rift_summon)
+    < probe.index(visual_teleport_command, probe.index(rift_summon))
+    < probe.index("TC_RIFT_VISUAL_CAMERA_AFTER")
+    < probe.index("capture rift-ambient-entity-present")
+    < probe.index(render_gate)
+    < probe.rindex(source_return_command)
+    < probe.index("TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL")
 ):
-    raise SystemExit("Rift listener must load the chunk, place support, then teleport to the source")
+    raise SystemExit("Rift smoke must compare side-on frames and return to the source before audio acceptance")
 for required_marker in (
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_VISUAL_CAMERA_BEFORE",
+    "TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN",
+    "TC_RIFT_VISUAL_CAMERA_AFTER",
+    "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
 ):
     if probe.count(required_marker) < 2:
         raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)

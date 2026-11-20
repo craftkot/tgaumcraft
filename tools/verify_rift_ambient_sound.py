@@ -72,16 +72,30 @@ for fragment in (
     "rift_x=3.5",
     "rift_y=150",
     "rift_z=12.5",
+    "rift_visual_x=5.5",
+    "rift_visual_yaw=90",
+    "rift_visual_pitch=39",
+    "rift_size=30",
     'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"',
     'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"',
+    'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"',
+    'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"',
     'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z',
+    "RiftSize:$rift_size",
     "send_chat_fast() {",
     "sleep 0.1",
     'xdotool type --clearmodifiers --delay 5 "$1"',
     "sleep 0.25",
     "TC_RIFT_PLATFORM_PRESENT",
     "TC_RIFT_LISTENER_AT_SOURCE",
+    "TC_RIFT_VISUAL_CAMERA_BEFORE",
+    "TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN",
+    "TC_RIFT_VISUAL_CAMERA_AFTER",
+    "TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL",
+    "RIFT_VISUAL_CAMERA_BEFORE=PASS",
+    "RIFT_VISUAL_CAMERA_AFTER=PASS",
+    "RIFT_LISTENER_RETURN_TO_SOURCE=PASS",
     "RIFT_LISTENER_AT_SOURCE=PASS",
     "spawn_game_time=",
     "RIFT_GAME_TIME_QUERY=PASS",
@@ -123,20 +137,26 @@ high_teleport = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 platform_fill = 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"'
 platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
+visual_teleport = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
+source_return = 'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"'
 generator_source_teleport = "source_teleport_command = 'send_chat \"/tp @p $rift_x $rift_y $rift_z 0 90\"'"
-assert driver.count(generator_source_teleport) == 1, "generator self-check must use the same down-facing camera command"
+assert driver.count(generator_source_teleport) == 1, "generator self-check must use the same source-listener command"
 rift_summon = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
 runtime_template = driver.split("high_teleport_command =", 1)[0]
 assert runtime_template.count(high_teleport) == 1 and runtime_template.count(platform_fill) == 1, (
     "the fast setup commands must be unique in the runtime template"
 )
 assert runtime_template.count(source_teleport) == 1, (
-    "the supported source teleport must be unique in the runtime template"
+    "the initial source-listener teleport must be unique in the runtime template"
 )
+assert runtime_template.count(visual_teleport) == 2 and runtime_template.count(source_return) == 2, (
+    "the visual camera and exact-source return must each be used for baseline and post-spawn captures"
+)
+assert "RiftSize:$rift_size" in runtime_template and "rift_size=30" in driver
 render_capture = "capture rift-ambient-entity-present"
 render_gate = "'layer=0 blend=ADDITIVE depthWrite=OFF'"
 assert runtime_template.index(render_capture) < runtime_template.index(render_gate), (
-    "capture the actual post-spawn client frame before asserting render markers, including on failure"
+    "capture the actual post-spawn side-on client frame before asserting render markers"
 )
 assert (
     runtime_template.index(high_teleport)
@@ -144,11 +164,23 @@ assert (
     < runtime_template.index(platform_marker)
     < runtime_template.index(source_teleport)
     < runtime_template.index("RIFT_LISTENER_AT_SOURCE=PASS")
+    < runtime_template.index(visual_teleport)
+    < runtime_template.index("TC_RIFT_VISUAL_CAMERA_BEFORE")
+    < runtime_template.index("capture rift-ambient-before")
+    < runtime_template.index(source_return)
+    < runtime_template.index("TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN")
     < runtime_template.index("spawn_game_time=")
     < runtime_template.index("> client-smoke/rift-event.pcm")
     < runtime_template.index(rift_summon)
+    < runtime_template.index(visual_teleport, runtime_template.index(rift_summon))
+    < runtime_template.index("TC_RIFT_VISUAL_CAMERA_AFTER")
+    < runtime_template.index(render_capture)
+    < runtime_template.index(render_gate)
+    < runtime_template.rindex(source_return)
+    < runtime_template.index("TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL")
+    < runtime_template.index("RIFT_SERVER_AMBIENT_DUE=PASS")
 ), (
-    "load the target chunk, place support, validate the listener, then start a fresh PCM capture before summoning"
+    "capture before/after from the same side view, then return to the exact source before accepting tick-300 audio"
 )
 assert (
     runtime_template.index("RIFT_CLIENT_SOUND_EVENT=PASS")
