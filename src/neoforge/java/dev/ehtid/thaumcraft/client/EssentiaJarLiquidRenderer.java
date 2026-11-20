@@ -75,6 +75,8 @@ public final class EssentiaJarLiquidRenderer implements BlockEntityRenderer<Esse
             }
         }
 
+        EssentiaJarLabelRenderer.render(jar, poseStack, buffers, packedOverlay);
+
         if (!LegacyEssentiaJarRenderLogic.hasLiquid(amount)) {
             if (SMOKE_PROBE && REPORTED.add("empty:" + pos.asLong())) {
                 System.out.printf(Locale.ROOT,

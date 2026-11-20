@@ -24,7 +24,7 @@ head = head.replace(
 tail = tail_anchor + source.split(tail_anchor, 1)[1]
 tail = tail.replace(
     "PASS: real Minecraft client world, overhead crucible PNGs captured",
-    "PASS: real Minecraft client world, BETA26 jar liquid and metal parts smoke",
+    "PASS: real Minecraft client world, BETA26 jar liquid, metal parts and aspect label smoke",
 )
 
 body = r'''
@@ -142,6 +142,34 @@ body = r'''
   fi
   capture 99-jar-lid-extension
   python3 tools/assert_client_jar_metal_parts.py     client-smoke/client.log     client-smoke/screenshots/98-jar-brace.png     client-smoke/screenshots/99-jar-lid-extension.png
+  # BETA26 TileJarRenderer draws the filter label and Aspect.getImage() glyph even in an empty jar.
+  send_chat '/fill 248 150 250 252 153 252 minecraft:air'
+  send_chat '/setblock 250 150 251 thaumcraft:jar_normal{AspectFilter:"aer",facing:2b}'
+  send_chat '/execute if data block 250 150 251 {AspectFilter:"aer",facing:2b} run say JAR_ASPECT_LABEL_FIXTURE_READY'
+  send_chat '/tp @p 1000 150 1000 0 0'
+  sleep 3
+  send_chat '/tp @p 250.5 150 248.5 0 16'
+  sleep 4
+  label_found=0
+  for _ in $(seq 1 45); do
+    if grep -Fq 'TC_SMOKE_JAR_LABEL_RENDERED=YES pos=250,150,251 aspect=aer facing=2' client-smoke/client.log \
+       && grep -Fq 'TC_SMOKE_JAR_LABEL_ICON_RENDERED=YES pos=250,150,251 aspect=aer texture=thaumcraft:textures/aspects/aer.png' client-smoke/client.log; then
+      label_found=1
+      break
+    fi
+    sleep 1
+  done
+  if [ "$label_found" -ne 1 ]; then
+    echo 'JAR_ASPECT_LABEL_RENDER_MARKER_MISSING=YES' | tee -a client-smoke-status.txt
+    grep -F 'TC_SMOKE_JAR_LABEL_' client-smoke/client.log | tail -20 | tee -a client-smoke-status.txt || true
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  capture 100-jar-aspect-label
+  python3 tools/assert_client_jar_label.py \
+    client-smoke/client.log client-smoke/screenshots/100-jar-aspect-label.png
+  echo 'JAR_ASPECT_LABEL_REAL_CLIENT_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt client-smoke/client.log
+
   echo 'JAR_METAL_PARTS_REAL_CLIENT_AND_SCREENSHOT=PASS' | tee -a client-smoke-status.txt client-smoke/client.log
 '''
 sys.stdout.write(head + body + tail)
