@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import dev.ehtid.thaumcraft.blockentity.PedestalBlockEntity;
+import dev.ehtid.thaumcraft.port.core.visual.LegacyPedestalRotationAngle;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -12,7 +13,8 @@ import net.minecraft.world.item.ItemStack;
 
 /**
  * BETA26 TilePedestalRenderer: one displayed stack with count=1,
- * centered at x/z=.5 y=.75, scale 1.25 and rotation 1 deg per client tick.
+ * centered at x/z=.5 y=.75, scale 1.25 and rotation from the render-view
+ * entity's tick count (the 1.21 equivalent of ticksExisted).
  */
 public final class PedestalItemRenderer implements BlockEntityRenderer<PedestalBlockEntity> {
     public PedestalItemRenderer(BlockEntityRendererProvider.Context context) {}
@@ -25,8 +27,9 @@ public final class PedestalItemRenderer implements BlockEntityRenderer<PedestalB
         pose.pushPose();
         pose.translate(0.5, 0.75, 0.5);
         pose.scale(1.25F, 1.25F, 1.25F);
-        float age = pedestal.getLevel() == null ? 0F
-                : (pedestal.getLevel().getGameTime() + partialTick) % 360F;
+        var camera = Minecraft.getInstance().getCameraEntity();
+        float age = camera == null ? 0F
+                : LegacyPedestalRotationAngle.degrees(camera.tickCount, partialTick);
         pose.mulPose(Axis.YP.rotationDegrees(age));
         Minecraft.getInstance().getItemRenderer().renderStatic(
                 displayed, ItemDisplayContext.GROUND, light, overlay, pose,
