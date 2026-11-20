@@ -6,6 +6,11 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftEntity.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftSoundGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftRenderer.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftClientEvents.java'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.json'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.vsh'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.fsh'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/evilportal.ogg'
@@ -16,6 +21,11 @@ on:
     paths:
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftEntity.java'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/FluxRiftSoundGameTests.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftRenderer.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/FluxRiftClientEvents.java'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.json'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.vsh'
+      - 'src/main/resources/assets/thaumcraft/shaders/core/flux_rift.fsh'
       - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
       - 'src/main/resources/assets/thaumcraft/sounds.json'
       - 'src/main/resources/assets/thaumcraft/sounds/evilportal.ogg'
