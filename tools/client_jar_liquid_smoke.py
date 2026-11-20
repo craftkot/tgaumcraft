@@ -29,6 +29,9 @@ if ! grep -Fxq 'crooked = false' run/closure-gametest/config/thaumcraft-client.t
   exit 1
 fi
 echo 'JAR_LABEL_CONFIG_CROOKED=false=WRITTEN' | tee -a client-smoke-status.txt
+# Preserve the effective config after Minecraft exits, including failed smoke runs.
+# The file may be corrected/replaced by NeoForge or created in a different game dir.
+trap 'echo JAR_LABEL_CONFIG_POSTRUN_BEGIN; find run -name thaumcraft-client.toml -type f -print -exec cat {} + 2>/dev/null || true; echo JAR_LABEL_CONFIG_POSTRUN_END' EXIT
 gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain""",
 )
 tail = tail_anchor + source.split(tail_anchor, 1)[1]
