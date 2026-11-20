@@ -2813,3 +2813,9 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Path audit: current feature/alchemy, feature/research, feature/infusion and feature/golems diffs do not overlap these paths. The current alchemy CI follow-up branch `fix/alchemy-native-gametest-unconditional-2026-11-20` also has no overlap. PR #3's pre-existing overlap with PR #4 in `SalisMundusItem.java` remains an integration blocker; no merge or force-push.
 - The new camera/screenshot correction is pending exact-head static verification and a new real-client run. Keep the fixed rubric at **59/100**, M16 **4/6**, M08 **5/9**; do not award a point or close either category.
 - Next: inspect the new Flux Rift run's screenshot and all four render markers. If the camera correction still produces no render call, investigate entity frustum/bounds using the retained screenshot/log before changing production renderer code.
+
+
+## 2026-11-20 — generator self-check aligned with the corrected Rift camera
+
+- Post-edit source audit caught one remaining pitch-0 literal in the generator's own `source_teleport_command` self-check. The runtime command had already changed to pitch 90, but the generator would have rejected its own probe before launching Minecraft. Corrected that literal and added a verifier assertion that the generator's self-check and runtime command stay aligned.
+- This is a test-harness correction only; no production renderer/entity code changed. The earlier queued run [#44743518904](https://github.com/craftkot/tgaumcraft/actions/runs/44743518904) was created before this final self-check correction and must not be used as evidence for the final commit. Await the subsequent exact-head workflow run.
