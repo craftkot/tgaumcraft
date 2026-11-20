@@ -2901,3 +2901,8 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Baseline exact-head checks on `c3517a`: Full Port [#44787813476](https://github.com/craftkot/tgaumcraft/actions/runs/44787813476) **SUCCESS** (10,054 Core assertions, NeoForge build, dedicated server `Done (7.439s)`); Aura/Crystal [#44787813398](https://github.com/craftkot/tgaumcraft/actions/runs/44787813398) **SUCCESS** (17 required GameTests in both write/read server phases, including Vis/Flux neighbor transfer, conversion, Rift trigger/growth/collapse and disk cold restart). These are pre-change baseline results, not tests of the new smoke fixture.
 - Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**. No point awarded and no category closed.
 - Next: require the exact-new-HEAD verifier, real-client side-view screenshots, four render markers, source-return distance and original PCM gate. If the side-on image still lacks the animated starfield, inspect mesh/UV sampling against the pinned BETA26 render rather than changing the production shader speculatively.
+
+
+## 2026-11-20 — generated smoke self-check reviewed before CI
+
+- Before starting the new client run, reviewed the generated-driver self-check independently of the source verifier. Two identifiers had been referenced from the verifier's namespace instead of declared in the driver: the summon command and first render-layer marker. Added explicit local string anchors and retained the strict before/after camera ordering checks. This is a generator correctness fix; no test result is claimed until the new exact-HEAD workflow completes.

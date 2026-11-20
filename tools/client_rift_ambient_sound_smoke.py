@@ -489,6 +489,8 @@ platform_marker = "TC_RIFT_PLATFORM_PRESENT"
 source_teleport_command = 'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"'
 visual_teleport_command = 'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"'
 source_return_command = 'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"'
+rift_summon_command = 'send_chat "/summon thaumcraft:flux_rift $rift_x $rift_y $rift_z'
+render_gate_marker = "layer=0 blend=ADDITIVE depthWrite=OFF"
 listener_marker = "TC_RIFT_LISTENER_AT_SOURCE"
 if any(probe.count(command) != 1 for command in (
     high_teleport_command, fill_command, source_teleport_command
@@ -509,11 +511,11 @@ if not (
     < probe.index("TC_RIFT_LISTENER_RETURNED_BEFORE_SPAWN")
     < probe.index("spawn_game_time=")
     < probe.index("> client-smoke/rift-event.pcm")
-    < probe.index(rift_summon)
-    < probe.index(visual_teleport_command, probe.index(rift_summon))
+    < probe.index(rift_summon_command)
+    < probe.index(visual_teleport_command, probe.index(rift_summon_command))
     < probe.index("TC_RIFT_VISUAL_CAMERA_AFTER")
     < probe.index("capture rift-ambient-entity-present")
-    < probe.index(render_gate)
+    < probe.index(render_gate_marker)
     < probe.rindex(source_return_command)
     < probe.index("TC_RIFT_LISTENER_RETURNED_AFTER_VISUAL")
 ):
