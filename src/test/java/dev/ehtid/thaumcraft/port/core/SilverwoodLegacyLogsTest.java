@@ -113,6 +113,34 @@ public final class SilverwoodLegacyLogsTest {
                 check(actual.nextLong() == expected.nextLong());
             }
         }
+        // A footprint-approved Silverwood center must also keep the complete
+        // RNG-driven trunk, roots and branches in its owning signed chunk.
+        // Canopy has a separate exhaustive test; this covers the log phase.
+        int checkedCenters = 0;
+        for (int chunkX : new int[]{-2, -1, 0, 1}) {
+            for (int chunkZ : new int[]{-2, 0, 1}) {
+                int localCenters = 0;
+                for (int localX = 4; localX <= 12; localX++) {
+                    for (int localZ = 4; localZ <= 12; localZ++) {
+                        int originX = chunkX * 16 + localX;
+                        int originZ = chunkZ * 16 + localZ;
+                        if (!SilverwoodLegacyFootprint.withinChunk(originX, originZ, chunkX, chunkZ))
+                            continue;
+                        localCenters++;
+                        for (int height = 7; height <= 10; height++) {
+                            final int expectedChunkX = chunkX, expectedChunkZ = chunkZ;
+                            SilverwoodLegacyLogs.place(originX, 64, originZ, height,
+                                    new Random(71000L + localX * 37L + localZ * 19L + height),
+                                    (x, y, z, meta) -> check(Math.floorDiv(x, 16) == expectedChunkX
+                                            && Math.floorDiv(z, 16) == expectedChunkZ));
+                        }
+                    }
+                }
+                check(localCenters == 64);
+                checkedCenters += localCenters;
+            }
+        }
+        check(checkedCenters == 12 * 64);
         System.out.println("M12 SilverwoodLegacyLogs: OK (" + assertions + " assertions)");
     }
 }
