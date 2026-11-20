@@ -2562,7 +2562,7 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 
 ### 2026-11-20 — BETA26 crooked-label config CI trigger
 
-- The Git-data fast-forward to `a555e5727a56c522bbad959159dc2c14e2b32dc1` created push Full Port CI [#44658387722](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722), but did not yet create the path-filtered PR jar-render workflow at the first poll. A documentation-only Contents API update is used to emit the PR synchronize event; no production code changes are included in this follow-up.
+- The first poll immediately after the Git-data fast-forward saw only push Full Port CI; the path-filtered PR workflows appeared shortly afterward for code SHA `a555e5727a56c522bbad959159dc2c14e2b32dc1` at 02:06:18Z. They were created **before** the documentation-only Contents API commit `1cffba9` at 02:06:37Z, so that doc commit is not credited with triggering PR synchronization.
 
 
 ### 2026-11-20 — crooked-label config Core gate result
@@ -2572,3 +2572,11 @@ CircleCI `verify-connection` на code SHA `c628d6d5d8626fc32fcd2af9e130cc4433ae
 - Full Port push run [#44658387722](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722) has advanced through NeoForge build to the dedicated-server smoke step, which is still running. PR-event Full Port [#44658395140](https://github.com/craftkot/tgaumcraft/actions/runs/44658395140) is still building. Aura/Crystal GameTests [#44658395178](https://github.com/craftkot/tgaumcraft/actions/runs/44658395178) remain queued.
 - A standalone local `javac --release 21` run of the exact fetched Core logic/test source also passed: `BETA26 jar aspect-label render parity: PASS (23 assertions)`. No local NeoForge build or Minecraft client was run.
 - No score change: **59/100**, M16 **4/6**, M08 **5/9**. Next: finish exact-head NeoForge + dedicated-server validation, then inspect the real-client jar screenshot; add a separate config-off client smoke before claiming the crooked preference is fully accepted.
+
+
+### 2026-11-20 — crooked-label config Full Port result
+
+- Exact code SHA [`a555e5727a56c522bbad959159dc2c14e2b32dc1`](https://github.com/craftkot/tgaumcraft/commit/a555e5727a56c522bbad959159dc2c14e2b32dc1) passed push Full Port CI [#44658387722](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722): `BUILD SUCCESSFUL` in 1m13s, then the dedicated server reached `Done (10.173s)`; JAR artifact [14593983354](https://github.com/craftkot/tgaumcraft/actions/runs/44658387722/artifacts/14593983354) uploaded. The log contains a non-fatal `NoSuchFileException: server.properties` while loading optional server properties, but the server started and the workflow's crash gate passed.
+- Exact-head jar Core render contract [#44658395215](https://github.com/craftkot/tgaumcraft/actions/runs/44658395215) **SUCCESS**: 530 liquid, 31 metal-parts and 23 label assertions; client-config source contract and byte-identical assets passed. Its `real-client-liquid` job remains **QUEUED**; no post-change Minecraft screenshot is accepted yet.
+- PR-event Full Port [#44658395140](https://github.com/craftkot/tgaumcraft/actions/runs/44658395140) is still in progress at NeoForge build; Aura/Crystal GameTests [#44658395178](https://github.com/craftkot/tgaumcraft/actions/runs/44658395178) remain queued.
+- Fixed score remains **59/100**, M16 **4/6**, M08 **5/9**. Next: finish the PR-event build and actual jar client screenshot, then add a separate `graphics.crooked=false` client fixture; no score is awarded from compile/server/Core alone.
