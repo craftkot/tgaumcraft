@@ -2,12 +2,13 @@
 """Source-contract test for the native essentia-jar client-state and metal-parts smoke."""
 from pathlib import Path
 import subprocess
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 generator = ROOT / "tools" / "client_jar_liquid_smoke.py"
 probe_path = ROOT / "src" / "neoforge" / "java" / "dev" / "ehtid" / "thaumcraft" / "client" / "EssentiaJarClientSmokeProbe.java"
-config_file = "run/closure-gametest/config/thaumcraft-client.toml"
+config_file = "run/config/thaumcraft-client.toml"
 build_gradle = (ROOT / "build.gradle").read_text(encoding="utf-8")
 
 generated = subprocess.run(
@@ -18,19 +19,29 @@ generated = subprocess.run(
     text=True,
 )
 script = generated.stdout
-config_setup = """mkdir -p run/closure-gametest/config
-cat > run/closure-gametest/config/thaumcraft-client.toml <<'EOF'
+config_setup = """# ModDevGradle's client() run defaults to the project run/ directory.
+# run/closure-gametest is configured only for the separate gameTestServer run.
+mkdir -p run/config
+cat > run/config/thaumcraft-client.toml <<'EOF'
 [graphics]
 crooked = false
 EOF"""
-if "gameDirectory = project.file('run/closure-gametest')" not in build_gradle:
-    raise SystemExit("jar client config path no longer matches the runClient gameDirectory")
+client_run = re.search(r"(?m)^[ \t]*client[ \t]*\{[ \t]*client\(\)([^}]*)\}", build_gradle)
+if client_run is None or "gameDirectory" in client_run.group(1):
+    raise SystemExit("runClient no longer uses the documented default project/run game directory; update the config fixture path")
+game_test_server = re.search(r"(?ms)^[ \t]*gameTestServer[ \t]*\{(.*?)^[ \t]*\}", build_gradle)
+if game_test_server is None or "gameDirectory = project.file('run/closure-gametest')" not in game_test_server.group(1):
+    raise SystemExit("expected custom run/closure-gametest directory belongs only to gameTestServer")
 if config_file not in script or config_setup not in script:
     raise SystemExit("jar smoke must seed the CLIENT config before launching Minecraft")
 if script.index(config_setup) > script.index("gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient"):
     raise SystemExit("crooked=false must be written before the real Minecraft client starts")
 if "JAR_LABEL_CONFIG_CROOKED=false=WRITTEN" not in script:
     raise SystemExit("jar smoke must report the prelaunch config write")
+if "run/closure-gametest/config" in script:
+    raise SystemExit("client config must not be written into the separate GameTest server directory")
+if "JAR_LABEL_CONFIG_EXPECTED_PATH=YES" not in script:
+    raise SystemExit("jar smoke must report the expected runClient config path after exit")
 for marker in (
     "aspect=terra facing=2 crooked=0",
     "aspect=terra crooked=0 texture=thaumcraft:textures/aspects/terra.png",

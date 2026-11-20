@@ -19,19 +19,21 @@ head = head.replace(
 )
 head = head.replace(
     gradle_anchor,
-    """mkdir -p run/closure-gametest/config
-cat > run/closure-gametest/config/thaumcraft-client.toml <<'EOF'
+    """# ModDevGradle's client() run defaults to the project run/ directory.
+# run/closure-gametest is configured only for the separate gameTestServer run.
+mkdir -p run/config
+cat > run/config/thaumcraft-client.toml <<'EOF'
 [graphics]
 crooked = false
 EOF
-if ! grep -Fxq 'crooked = false' run/closure-gametest/config/thaumcraft-client.toml; then
+if ! grep -Fxq 'crooked = false' run/config/thaumcraft-client.toml; then
   echo 'JAR_LABEL_CONFIG_WRITE=FAIL' | tee -a client-smoke-status.txt
   exit 1
 fi
 echo 'JAR_LABEL_CONFIG_CROOKED=false=WRITTEN' | tee -a client-smoke-status.txt
 # Preserve the effective config after Minecraft exits, including failed smoke runs.
 # The file may be corrected/replaced by NeoForge or created in a different game dir.
-trap 'echo JAR_LABEL_CONFIG_POSTRUN_BEGIN; find run -name thaumcraft-client.toml -type f -print -exec cat {} + 2>/dev/null || true; echo JAR_LABEL_CONFIG_POSTRUN_END' EXIT
+trap 'echo JAR_LABEL_CONFIG_POSTRUN_BEGIN; if [ -f run/config/thaumcraft-client.toml ]; then echo JAR_LABEL_CONFIG_EXPECTED_PATH=YES; else echo JAR_LABEL_CONFIG_EXPECTED_PATH=NO; fi; find run -name thaumcraft-client.toml -type f -print -exec cat {} + 2>/dev/null || true; echo JAR_LABEL_CONFIG_POSTRUN_END' EXIT
 gradle --init-script tools/gradle-plugin-portal-fallback.init.gradle runClient --no-daemon --console=plain""",
 )
 tail = tail_anchor + source.split(tail_anchor, 1)[1]
