@@ -15,8 +15,8 @@ public final class SilverwoodPlacementPreflightTest {
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,0,0,-64,320,soil,air), true);
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,10,0,0,-64,320,soil,air), true);
         check(SilverwoodPlacementPreflight.mayPlace(8,65,8,7,0,0,-64,320,soil,air), false);
-        check(SilverwoodPlacementPreflight.mayPlace(4,64,8,7,0,0,-64,320,soil,air), false);
-        check(SilverwoodPlacementPreflight.mayPlace(8,64,12,7,0,0,-64,320,soil,air), false);
+        check(SilverwoodPlacementPreflight.mayPlace(4,64,8,7,0,0,-64,320,soil,air), true);
+        check(SilverwoodPlacementPreflight.mayPlace(8,64,12,7,0,0,-64,320,soil,air), false);\n        check(SilverwoodPlacementPreflight.mayPlace(11,64,11,7,0,0,-64,320,soil,air), true);
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,11,0,0,-64,320,soil,air), false);
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,0,0,-64,320,null,air), false);
         check(SilverwoodPlacementPreflight.mayPlace(8,64,8,7,0,0,-64,320,soil,null), false);
