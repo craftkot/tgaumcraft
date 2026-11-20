@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.port.core;
 
 import java.util.List;
 import java.util.Map;
+import dev.ehtid.thaumcraft.port.core.visual.LegacyPedestalRotationAngle;
 import java.util.Random;
 import java.io.IOException;
 import java.nio.file.Files;
