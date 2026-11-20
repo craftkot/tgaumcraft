@@ -276,11 +276,11 @@ probe = r'''
   fi
   # The player is still on the validated side-on camera; record a fresh
   # server-side position marker without consuming another renderer first-call.
-  send_chat_fast '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
+  send_chat '/execute if entity @p[x=5,y=150,z=12,distance=..1] run say TC_RIFT_VISUAL_CAMERA_AFTER'
   sleep 0.5
   if ! grep -Fq 'TC_RIFT_VISUAL_CAMERA_AFTER' run/logs/latest.log; then
     send_chat '/data get entity @p Pos'
-    echo 'RIFT_VISUAL_CAMERA_AFTER=FAIL player did not reach the side-on view' | tee -a client-smoke-status.txt
+    echo 'RIFT_VISUAL_CAMERA_AFTER=FAIL post-spawn camera position command was not acknowledged' | tee -a client-smoke-status.txt
     tail -100 run/logs/latest.log >&2 || true
     exit 1
   fi
