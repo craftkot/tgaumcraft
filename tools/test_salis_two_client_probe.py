@@ -37,7 +37,9 @@ for required in (
     "ClientboundLevelParticlesPacket",
     "OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet()",
     "level.setChunkForced(CHUNK_X, CHUNK_Z, true)",
-    "level.setChunkForced(CHUNK_X, CHUNK_Z, false)",
+    "private static boolean releaseFixtureTicket()",
+    "targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)",
+    "fixtureTicketHeld = false;",
     "SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE",
     "SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL",
     "SALIS_NATIVE_CHUNK_TICKETS_RELEASED",
@@ -54,6 +56,9 @@ for required in (
 ):
     if required not in CHUNK_PROBE:
         raise SystemExit(f"SALIS_NATIVE_CHUNK_PROBE=FAIL missing {required!r}")
+
+if CHUNK_PROBE.count("require(releaseFixtureTicket(),") != 2:
+    raise SystemExit("SALIS_NATIVE_CHUNK_PROBE=FAIL both unload and final-cleanup phases must release the fixture ticket through the shared helper")
 
 for required in (
     "level.getServer().getLevel(level.dimension()) != level",
