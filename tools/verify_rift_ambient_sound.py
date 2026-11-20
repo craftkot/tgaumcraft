@@ -77,7 +77,7 @@ for fragment in (
     "rift_visual_pitch=39",
     "rift_size=30",
     'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"',
-    'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"',
+    'send_chat "/fill 1 149 10 5 149 14 minecraft:barrier"',
     'send_chat "/tp @p $rift_x $rift_y $rift_z 0 90"',
     'send_chat_fast "/tp @p $rift_visual_x $rift_y $rift_z $rift_visual_yaw $rift_visual_pitch"',
     'send_chat_fast "/tp @p $rift_x $rift_y $rift_z 0 89"',
@@ -125,6 +125,9 @@ for fragment in (
 ):
     assert fragment in driver, fragment
 
+assert 'send_chat_fast "/fill 1 149 10 5 149 14 minecraft:barrier"' not in driver, (
+    "the fall-sensitive barrier placement must use the reliable chat path"
+)
 assert "timeout --signal=TERM 3s parec" in driver, "quiet baseline capture must remain bounded"
 assert "timeout --signal=TERM 30s parec" in driver, "positive-control capture must remain bounded"
 assert "timeout --signal=TERM 420s parec" not in driver, (
