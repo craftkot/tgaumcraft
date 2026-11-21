@@ -332,13 +332,24 @@ public final class AuraGenerationGameTests {
                 throw new AssertionError("Unable to place the nearby Rift guard fixture");
             }
 
-            helper.runAfterDelay(1L, () -> {
+            // addFreshEntity can return before the entity manager publishes the
+            // Rift into spatial queries. Wait for the blocker to become query-visible
+            // before testing the production nearby guard; a fixed one-tick delay was flaky.
+            AABB blockerSearchArea = FluxRiftSpawnEvents.nearbyRiftBounds(
+                    new BlockPos(centerX, surface.getY(), centerZ));
+            awaitFluxRiftRegistration(helper, level, blockerSearchArea, blocker, 20, () -> {
+                BlockPos expectedSpawnCenter = new BlockPos(centerX, surface.getY(), centerZ);
+                if (!FluxRiftSpawnEvents.hasNearbyRift(level, expectedSpawnCenter)) {
+                    throw new AssertionError("Nearby Rift fixture was not visible to the production spatial query");
+                }
+
                 boolean duplicateSpawned = FluxRiftSpawnEvents.trySpawnRift(
                         level, nearby, new BlockPos(nearChunkX * 16, 0, chunkZ * 16));
                 if (duplicateSpawned || Math.abs(nearby.getFlux(nearSample) - 1000.0F) > 0.001F) {
                     throw new AssertionError("Nearby Rift guard did not reject spawn before Flux debit");
                 }
                 blocker.discard();
+                System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCKER_REGISTERED=PASS query_visible=YES");
                 System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
                 System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
                 awaitFluxRiftStabilityDecay(helper, level, riftChunk, rift, initialStabilityBucket, 10.0F, 130);
