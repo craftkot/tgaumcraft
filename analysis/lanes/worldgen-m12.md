@@ -859,3 +859,11 @@
 - Previous HEAD 1100ef7b passed GitHub Actions runs 44862381988 and 44862377180; these generic green runs do not establish standalone Java Silverwood, native NeoForge GameTest, or fresh-chunk worldgen PASS.
 - Commit d542b87ddb65109657c3a1db3530e0d596651273 adds eight deterministic assertions to SilverwoodLegacyFootprintTest covering signed int chunk extremes, wrong owning chunks and vertical footprint overflow. This is test-only work; it does not change natural placement, worldgen registrations, or legacy frequency. Expected total footprint assertions increased by 8; exact checkout runner has not been executed.
 - Still unresolved: 17/81 archived candidate origins rejected by conservative chunk footprint; no natural placed-feature/biome registration, no native setBlock rejection GameTest, no fresh-chunk gameplay proof. Next: run tools/test_silverwood_legacy_footprint.sh on exact HEAD, inspect its CI, then coordinate biome hook. Historical audit remains 59/100; no merge.
+
+
+## 2026-11-21 — M12 failed canopy world-read regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane. Compared main...feature/worldgen-m12 (ahead 231 / behind 0 before edit, main a4280834) and inspected active PR/branch inventory, including existing Draft PR #9. No shared registry, Gradle, main, or foreign branch changes.
+- Test commit 03aab1e8ae3276195d035f1ceecbdfb219f9481a adds four assertions per Silverwood height (7..10): a thrown canopy replaceability/world-read error must propagate, stop further reads, prevent leaf writes and prevent entry into log writes. This exercises the existing integrated tree phase, not a native NeoForge WorldGenLevel failure.
+- Added 16 deterministic test assertions to SilverwoodLegacyTreeTest; expected count becomes 122 (previous 106). Exact checkout Java runner, NeoForge GameTest, full build and new-chunk gameplay were not run in this iteration; CI on the new SHA remains to be checked. No PASS is claimed.
+- Outstanding: 17/81 original Silverwood candidate origins excluded by same-chunk preflight; no natural placed-feature/biome registration; no gameplay proof. Next: run tools/test_silverwood_legacy_tree.sh on exact checkout, check exact-SHA CI, then coordinate natural feature registration and native setBlock/read-failure GameTest. Historical 59/100 unchanged.
