@@ -100,8 +100,8 @@ verify_write_phase() {
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_MISSING=PASS' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_DRAIN_ACCEPTED=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SET_VIS_CLAMP=PASS existing=32766.0 migration=32766.0' || return 1
+    require_marker "$file" 'TC_GAMETEST_AURA_WORLD_TIME_GATE=PASS frozen=0 advanced=1 reverse=1' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_SERVER_TICK_GATE=PASS ticks=0,20,40 interval=20' || return 1
-    require_marker "$file" 'TC_GAMETEST_AURA_FROZEN_DAYTIME=PASS same_day_time=YES server_tick_cadence=20 vis=0.25_to_0.50' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_VIS_NEIGHBOR=PASS lowest=2.0 transfer=1.0 conserved=YES threshold=0.75 ceiling=115 unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES' || return 1
     require_marker "$file" 'TC_GAMETEST_AURA_FLUX_NEIGHBOR=PASS lowest=1.0 transfer=1.0 conserved=YES sourceThreshold=10 ratio=1.75 no_phase_ceiling=YES unloaded=skipped loaded_source_unloaded_target=skipped no_force_load=YES' || return 1

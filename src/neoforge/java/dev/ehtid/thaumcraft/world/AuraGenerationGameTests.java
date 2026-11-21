@@ -856,16 +856,23 @@ public final class AuraGenerationGameTests {
             throw new AssertionError("Moon phase 8 must wrap to BETA26 phase 0");
         }
 
-        // BETA26 AuraThread cadence follows server ticks, not world time:
-        // frozen daylight cycles must not suppress aura processing.
+        // BETA26 AuraThread only processes aura when world time changes;
+        // the 20-server-tick gate is the modern scheduler approximation.
+        if (ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(0L, 0L)
+                || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(0L, 1L)
+                || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(1L, 1L)
+                || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTime(1L, 0L)) {
+            throw new AssertionError("Aura recovery must follow BETA26 lastWorldTime gating");
+        }
         if (!ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(0L)
                 || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(1L)
                 || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(19L)
                 || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(20L)
                 || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(21L)
                 || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(40L)) {
-            throw new AssertionError("Aura recovery must follow the 20-server-tick cadence independently of daylight");
+            throw new AssertionError("Aura scheduler must retain its one-second server-tick throttle");
         }
+        System.out.println("TC_GAMETEST_AURA_WORLD_TIME_GATE=PASS frozen=0 advanced=1 reverse=1");
         System.out.println("TC_GAMETEST_AURA_SERVER_TICK_GATE=PASS ticks=0,20,40 interval=20");
         System.out.println("TC_GAMETEST_AURA_MOON_PHASE_REGEN=PASS phases=8 loaded=1 unloaded=0");
     }
@@ -1877,51 +1884,6 @@ public final class AuraGenerationGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_COLD_RESTART_QUEUE_SKIP=PASS "
                 + "existing_record_preserved=YES gaussian=0 local_target_pending=NO");
-    }
-
-    @PrefixGameTestTemplate(false)
-    @GameTest(
-            template = "crystal_spread_empty",
-            templateNamespace = ThaumcraftPort.MOD_ID,
-            timeoutTicks = 80,
-            required = true
-    )
-    public static void auraSimulationAdvancesWhenDayTimeIsUnchanged(GameTestHelper helper) {
-        ServerLevel level = helper.getLevel();
-        BlockPos sample = helper.absolutePos(new BlockPos(8, 2, 8));
-        if (level.getChunkSource().getChunkNow(sample.getX() >> 4, sample.getZ() >> 4) == null) {
-            throw new AssertionError("Aura frozen-time fixture chunk must already be loaded");
-        }
-
-        long frozenDayTime = level.getDayTime();
-        ThaumcraftAuraSavedData aura = new ThaumcraftAuraSavedData();
-        aura.putChunk(sample, (short) 100, 0.0F, 0.0F);
-
-        if (!ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(20L)
-                || !ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(40L)
-                || ThaumcraftAuraWorldEvents.shouldProcessAuraWorldTick(21L)) {
-            throw new AssertionError("Aura simulation cadence must use the 20-server-tick clock");
-        }
-
-        int firstChanges = aura.processAuraChunks(level, 0, bound -> 0, () -> 0.0D);
-        float firstVis = aura.getVis(sample);
-        int secondChanges = aura.processAuraChunks(level, 0, bound -> 0, () -> 0.0D);
-        float secondVis = aura.getVis(sample);
-
-        if (level.getDayTime() != frozenDayTime
-                || firstChanges != 1
-                || secondChanges != 1
-                || Math.abs(firstVis - 0.25F) > 0.000001F
-                || Math.abs(secondVis - 0.50F) > 0.000001F) {
-            throw new AssertionError("Aura processing stopped or drifted while world day-time was unchanged"
-                    + " dayTime=" + frozenDayTime
-                    + " firstChanges=" + firstChanges + " firstVis=" + firstVis
-                    + " secondChanges=" + secondChanges + " secondVis=" + secondVis);
-        }
-
-        System.out.println("TC_GAMETEST_AURA_FROZEN_DAYTIME=PASS same_day_time=YES"
-                + " server_tick_cadence=20 vis=0.25_to_0.50");
-        helper.succeed();
     }
 
     private static boolean isColdRestartReadPhase() {

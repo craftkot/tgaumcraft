@@ -7,6 +7,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.function.DoubleSupplier;
 
 /**
@@ -23,6 +25,7 @@ import java.util.function.DoubleSupplier;
 public final class ThaumcraftAuraWorldEvents {
     private ThaumcraftAuraWorldEvents() {}
     private static final int SAMPLE_SPACING = 16;
+    private static final Map<ServerLevel, Long> LAST_AURA_WORLD_TIMES = new WeakHashMap<>();
 
     public static void onServerTick(ServerTickEvent.Post event) {
         if (!shouldProcessAuraWorldTick(event.getServer().getTickCount())) return;
@@ -39,16 +42,22 @@ public final class ThaumcraftAuraWorldEvents {
             }
         }
 
-        // BETA26 AuraThread runs approximately once per second. This cadence is
-        // based on server ticks, so doDaylightCycle=false must not stop Vis/Flux
-        // redistribution, recovery/conversion, or pending-rift evaluation.
+        // BETA26 AuraThread wakes approximately once per second, but it only
+        // processes chunks when world.getWorldTime() changes. A frozen daylight
+        // cycle therefore intentionally pauses Vis/Flux simulation. The server
+        // tick gate above is only the 1.21 event-loop approximation of its timer.
         // Process persisted records only in dimensions with loaded chunks;
         // getIfPresent avoids manufacturing empty SavedData in untouched dimensions.
         for (ServerLevel level : event.getServer().getAllLevels()) {
             if (level.getChunkSource().getLoadedChunksCount() == 0) continue;
             ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.getIfPresent(level);
             if (aura != null) {
-                processAuraChunks(level, aura, level.getMoonPhase());
+                long worldTime = level.getDayTime();
+                Long previousWorldTime = LAST_AURA_WORLD_TIMES.put(level, worldTime);
+                long lastWorldTime = previousWorldTime == null ? 0L : previousWorldTime;
+                if (shouldProcessAuraWorldTime(lastWorldTime, worldTime)) {
+                    processAuraChunks(level, aura, level.getMoonPhase());
+                }
             }
         }
     }
@@ -62,7 +71,12 @@ public final class ThaumcraftAuraWorldEvents {
         return aura.regenerateLoadedChunks(level, moonPhase);
     }
 
-    /** BETA26 AuraThread cadence is server-tick based, not tied to daylight-cycle time. */
+    /** BETA26 AuraThread only processes aura records when world time changes. */
+    static boolean shouldProcessAuraWorldTime(long previousWorldTime, long currentWorldTime) {
+        return previousWorldTime != currentWorldTime;
+    }
+
+    /** Modern event-loop throttle approximating AuraThread's one-second wake interval. */
     static boolean shouldProcessAuraWorldTick(long serverTickCount) {
         return serverTickCount % 20L == 0L;
     }
