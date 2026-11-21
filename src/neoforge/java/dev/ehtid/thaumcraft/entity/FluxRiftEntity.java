@@ -308,8 +308,11 @@ public final class FluxRiftEntity extends Entity {
             if (!targets.isEmpty()) {
                 for (LivingEntity target : targets) {
                     try {
-                        target.addEffect(new MobEffectInstance(
-                                FluxInfectionEffectRegistration.infectious(), 3000, 2));
+                        MobEffectInstance initialInfection = new MobEffectInstance(
+                                FluxInfectionEffectRegistration.infectious(), 3000, 2);
+                        // BETA26 clears curative items only on the initial Rift-event application.
+                        initialInfection.getCures().clear();
+                        target.addEffect(initialInfection);
                     } catch (Exception ignored) {
                         // BETA26 isolates addPotionEffect failures per target.
                     }

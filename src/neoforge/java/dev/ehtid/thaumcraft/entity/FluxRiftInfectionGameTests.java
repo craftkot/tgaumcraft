@@ -8,6 +8,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.neoforged.neoforge.common.EffectCures;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -41,11 +42,17 @@ public final class FluxRiftInfectionGameTests {
                 || applied == null
                 || applied.getDuration() != 3000
                 || applied.getAmplifier() != 2
+                || !applied.getCures().isEmpty()
                 || outside.hasEffect(infectious)
                 || Math.abs(rift.getRiftStability()) > 0.001F) {
             throw new AssertionError("BETA26 Rift event 2 must apply 3000t amplifier-2 Flux Phage in the Rift AABB+16 and pay +10 stability");
         }
-        System.out.println("TC_GAMETEST_FLUX_RIFT_EVENT_2=PASS aabb_inflate=16 duration=3000 amplifier=2 stability_cost=10");
+        inside.removeEffectsCuredBy(EffectCures.MILK);
+        MobEffectInstance afterMilk = inside.getEffect(infectious);
+        if (afterMilk == null || afterMilk.getDuration() != 3000) {
+            throw new AssertionError("BETA26 initial Rift event 2 infection must have no curative items");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_EVENT_2=PASS aabb_inflate=16 duration=3000 amplifier=2 stability_cost=10 initial_cures=0 milk_retained=YES");
 
         inside.discard();
         outside.discard();
@@ -125,7 +132,15 @@ public final class FluxRiftInfectionGameTests {
                 || thirdHop.hasEffect(infectious)) {
             throw new AssertionError("BETA26 amplifier-zero Flux Phage must convert to 6000t Flux Flu");
         }
+        if (!first.getCures().contains(EffectCures.MILK)) {
+            throw new AssertionError("BETA26 propagated Flux Phage must retain the default milk cure");
+        }
+        firstHop.removeEffectsCuredBy(EffectCures.MILK);
+        if (firstHop.hasEffect(infectious)) {
+            throw new AssertionError("BETA26 propagated Flux Phage must be removable by milk");
+        }
         System.out.println("TC_GAMETEST_FLUX_PHAGE_SPREAD=PASS interval=40 aabb_inflate=4 hops=2,1,0 final=flux_flu duration=6000 existing=unchanged");
+        System.out.println("TC_GAMETEST_FLUX_PHAGE_PROPAGATED_CURE=PASS milk_removes=YES initial_event_only_uncurable=YES");
         helper.succeed();
     }
 
