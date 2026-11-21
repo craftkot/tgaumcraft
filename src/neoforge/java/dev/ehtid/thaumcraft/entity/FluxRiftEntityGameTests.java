@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.entity;
 
+import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
+import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
@@ -17,8 +21,11 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
 
 /**
  * Native server acceptance for BETA26 Flux Rift segment effects and collapse.
@@ -299,6 +306,8 @@ public final class FluxRiftEntityGameTests {
         veryUnstableRift.setCollapse(true);
         Pig veryUnstableNear = spawnPig(level,
                 pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        FakePlayer veryUnstablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
         Pig veryUnstableEdge = spawnPig(level,
                 pos.getX() + 0.5D, pos.getY() + 6.15D, pos.getZ() + 0.5D);
         veryUnstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
@@ -308,6 +317,15 @@ public final class FluxRiftEntityGameTests {
                 || veryUnstableEdge.getEffect(MobEffects.WEAKNESS) != null) {
             throw new AssertionError("BETA26 VERY_UNSTABLE collapse must apply distance-scaled Weakness only when integer duration is positive");
         }
+        var veryUnstableWarp = veryUnstablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var veryUnstableKnowledge = veryUnstablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (veryUnstableWarp.get(WarpType.NORMAL) != 12
+                || veryUnstableWarp.get(WarpType.TEMPORARY) != 12
+                || veryUnstableWarp.getCounter() != 24
+                || !veryUnstableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE collapse must grant both Warp buckets and unlock WARP after FIRSTSTEPS");
+        }
+        veryUnstablePlayer.discard();
         veryUnstableNear.discard();
         veryUnstableEdge.discard();
 
@@ -330,11 +348,50 @@ public final class FluxRiftEntityGameTests {
         stableRift.setCollapse(true);
         Pig stableNear = spawnPig(level,
                 pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        FakePlayer stablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        FakePlayer stableEdge = spawnWarpPlayer(level,
+                pos.getX() + 6.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
         stableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
         if (stableNear.getEffect(MobEffects.WEAKNESS) != null) {
             throw new AssertionError("BETA26 STABLE collapse must not apply Weakness");
         }
+        var stableWarp = stablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var stableKnowledge = stablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (stableWarp.get(WarpType.NORMAL) != 12
+                || stableWarp.get(WarpType.TEMPORARY) != 12
+                || stableWarp.getCounter() != 24
+                || !stableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 STABLE collapse must grant distance-scaled NORMAL/TEMPORARY Warp and unlock WARP");
+        }
+        var edgeWarp = stableEdge.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var edgeKnowledge = stableEdge.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (edgeWarp.get(WarpType.NORMAL) != 0
+                || edgeWarp.get(WarpType.TEMPORARY) != 0
+                || edgeWarp.getCounter() != 0
+                || edgeKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 collapse must not grant Warp outside the positive distance-scaled range");
+        }
+        stablePlayer.discard();
+        stableEdge.discard();
         stableNear.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity veryStableCollapse = createRift(level, pos, 2);
+        veryStableCollapse.setRiftStability(50.01F);
+        veryStableCollapse.setCollapse(true);
+        FakePlayer veryStablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        veryStableCollapse.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var veryStableWarp = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var veryStableKnowledge = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (veryStableWarp.get(WarpType.NORMAL) != 0
+                || veryStableWarp.get(WarpType.TEMPORARY) != 0
+                || veryStableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 VERY_STABLE collapse must not grant Warp");
+        }
+        veryStablePlayer.discard();
+
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WEAKNESS=PASS very_unstable=3000 unstable=3000 stable=none edge=none");
 
         FluxRiftEntity automatic = createRift(level, pos, 0);
@@ -343,8 +400,25 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("BETA26 Rift with fewer than three geometry points must enter collapse");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified void_seed=deferred flux_taint_warp=deferred");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WARP=PASS very_unstable=12+12 stable=12+12 edge=0 very_stable=none research=WARP_UNLOCKED");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified void_seed=deferred flux_taint=deferred");
         helper.succeed();
+    }
+
+    private static FakePlayer spawnWarpPlayer(ServerLevel level, double x, double y, double z,
+                                                boolean completeFirstSteps) {
+        FakePlayer player = new FakePlayer(level,
+                new GameProfile(UUID.randomUUID(), "rift-warp-test"));
+        player.moveTo(x, y, z, 0.0F, 0.0F);
+        if (completeFirstSteps) {
+            var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+            knowledge.addResearch("FIRSTSTEPS");
+            knowledge.setResearchStage("FIRSTSTEPS", 4);
+        }
+        if (!level.addFreshEntity(player)) {
+            throw new AssertionError("Unable to add Flux Rift Warp target player");
+        }
+        return player;
     }
 
     private static Pig spawnPig(ServerLevel level, double x, double y, double z) {

@@ -1,13 +1,20 @@
 package dev.ehtid.thaumcraft.entity;
 
+import dev.ehtid.thaumcraft.network.ThaumcraftNetworking;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftGeometry;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
+import dev.ehtid.thaumcraft.port.core.ResearchProgressionService;
+import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
@@ -40,9 +47,9 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth and the BETA26 weighted collapse event are implemented. The vanilla
- * Weakness portion of collapse completion is also ported; Wisp, taint-seed, infection and
- * focus events, void-seed drops, Flux Taint and player warp remain separate follow-up work.
+ * Flux-driven growth, weighted event selection, pearl rewards, Weakness and player Warp
+ * are implemented. Wisp, taint-seed, infection and focus events, void-seed drops and
+ * the very-unstable Flux Taint effect remain separate follow-up work.
  * This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -352,14 +359,15 @@ public final class FluxRiftEntity extends Entity {
                     serverLevel, getX(), getY(), getZ(), pearl));
         }
         applyCollapseWeakness(serverLevel);
+        applyCollapseWarp(serverLevel);
         discard();
     }
 
     /**
-     * BETA26 completeCollapse applies Weakness to every nearby living target for both
-     * UNSTABLE and VERY_UNSTABLE rifts. The source queries an axis-aligned 32-block box,
-     * then derives the effect duration from squared Euclidean distance (not radius 32).
-     * The very-unstable Flux Taint effect and player warp are separate, still-unported effects.
+     * BETA26 completeCollapse applies Weakness to nearby living targets for UNSTABLE
+     * and VERY_UNSTABLE rifts. The source query is a point-centred 32-block AABB and
+     * duration is derived from squared Euclidean distance (not radius 32).
+     * The very-unstable Flux Taint effect remains unported.
      */
     private void applyCollapseWeakness(ServerLevel serverLevel) {
         if (getRiftStability() >= 0.0F) {
@@ -376,6 +384,84 @@ public final class FluxRiftEntity extends Entity {
                 target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, weight * 20, 0));
             }
         }
+    }
+
+    /**
+     * BETA26 completeCollapse falls through to the STABLE case for every stability
+     * tier except VERY_STABLE (> 50), adding equal NORMAL and TEMPORARY Warp to
+     * nearby players. EntityUtils.getEntitiesInRange uses a point-centred 32-block AABB.
+     */
+    private void applyCollapseWarp(ServerLevel serverLevel) {
+        if (getRiftStability() > 50.0F) {
+            return;
+        }
+
+        AABB bounds = new AABB(
+                getX() - 32.0D, getY() - 32.0D, getZ() - 32.0D,
+                getX() + 32.0D, getY() + 32.0D, getZ() + 32.0D
+        );
+        for (ServerPlayer target : serverLevel.getEntitiesOfClass(ServerPlayer.class, bounds)) {
+            int amount = (int) ((1.0D - target.distanceToSqr(this) / 32.0D) * 25.0D);
+            if (amount <= 0) {
+                continue;
+            }
+
+            addWarpToPlayer(target, amount, WarpType.NORMAL);
+            addWarpToPlayer(target, amount, WarpType.TEMPORARY);
+        }
+    }
+
+    /**
+     * Port of BETA26 InternalMethodHandler.addWarpToPlayer for positive collapse
+     * rewards, including the automatic WARP research unlock after FIRSTSTEPS.
+     */
+    private static void addWarpToPlayer(ServerPlayer player, int amount, WarpType type) {
+        if (amount == 0) {
+            return;
+        }
+
+        var data = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA);
+        var warp = data.warp();
+        int current = warp.get(type);
+        if (amount < 0 && current + amount < 0) {
+            amount = current;
+        }
+        warp.add(type, amount);
+        if (amount > 0) {
+            warp.setCounter(
+                    warp.get(WarpType.TEMPORARY)
+                            + warp.get(WarpType.PERMANENT)
+                            + warp.get(WarpType.NORMAL)
+            );
+        }
+
+        if (type != WarpType.TEMPORARY) {
+            var catalog = BuiltInResearchCatalog.create();
+            var knowledge = data.knowledge();
+            if (knowledge.isResearchComplete("FIRSTSTEPS", catalog)
+                    && !knowledge.isResearchComplete("WARP", catalog)) {
+                var service = new ResearchProgressionService(catalog);
+                for (int stage = 0; stage < 5; stage++) {
+                    var outcome = service.progress(
+                            knowledge, warp, "WARP", false, true, false, false, true);
+                    if (!outcome.progressed()) {
+                        break;
+                    }
+                    if (outcome.xpAward() > 0) {
+                        player.giveExperiencePoints(outcome.xpAward());
+                    }
+                }
+                warp.setCounter(
+                        warp.get(WarpType.TEMPORARY)
+                                + warp.get(WarpType.PERMANENT)
+                                + warp.get(WarpType.NORMAL)
+                );
+                // BETA26 also sends research.WARP.warn; the key is absent from both
+                // current locale files, so do not expose an untranslated raw key.
+            }
+        }
+
+        ThaumcraftNetworking.sync(player);
     }
 
     /**
