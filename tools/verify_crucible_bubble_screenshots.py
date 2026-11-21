@@ -78,7 +78,12 @@ def verify_images(before: Image.Image, after: Image.Image) -> dict[str, float | 
 
 
 def self_test() -> None:
-    before = Image.new("RGB", (1280, 800), (12, 14, 16))
+    yy, xx = np.mgrid[0:800, 0:1280]
+    pixels = np.empty((800, 1280, 3), dtype=np.uint8)
+    pixels[:, :, 0] = 28 + (xx % 83)
+    pixels[:, :, 1] = 34 + (yy % 79)
+    pixels[:, :, 2] = 38 + ((xx + yy) % 91)
+    before = Image.fromarray(pixels, mode="RGB")
     draw = ImageDraw.Draw(before)
     draw.rectangle((500, 300, 780, 520), fill=(52, 48, 40))
     draw.rectangle((590, 365, 690, 465), fill=(90, 92, 82))
