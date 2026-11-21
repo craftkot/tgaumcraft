@@ -320,6 +320,7 @@ for fragment in (
 
 # BETA26 TileCrucible.drawEffects -> FXDispatcher.crucibleBubble visual contract.
 crucible_rules = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyCrucibleBubbleRules.java").read_text()
+crucible_test = Path("src/test/java/dev/ehtid/thaumcraft/port/core/LegacyCrucibleBubbleRulesTest.java").read_text()
 assert "public static final double DEFAULT_SLOW_DOWN = 0.9800000190734863D;" in crucible_rules
 assert "Double.doubleToRawLongBits(LegacyCrucibleBubbleRules.DEFAULT_SLOW_DOWN)" in crucible_test
 assert "0x3fef5c2900000000L" in crucible_test
@@ -333,7 +334,6 @@ for fragment in (
 ):
     assert fragment in crucible_rules, fragment
 
-crucible_test = Path("src/test/java/dev/ehtid/thaumcraft/port/core/LegacyCrucibleBubbleRulesTest.java").read_text()
 assert "public static void main(String[] args)" in crucible_test
 assert "BETA26 Crucible FXDispatcher.crucibleBubble" in crucible_test
 # CoreParityTest.java is currently owned by other open PRs; compile and execute
