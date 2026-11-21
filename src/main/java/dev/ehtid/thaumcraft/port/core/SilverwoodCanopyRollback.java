@@ -27,12 +27,20 @@ public final class SilverwoodCanopyRollback {
             Objects.requireNonNull(entry.getValue(), "original canopy state");
         }
         int restored = 0;
+        RuntimeException firstFailure = null;
         for (Map.Entry<P, S> entry : originals.entrySet()) {
-            if (writtenLeaves.equals(currentState.apply(entry.getKey()))
-                    && setState.test(entry.getKey(), entry.getValue())) {
-                restored++;
+            try {
+                if (writtenLeaves.equals(currentState.apply(entry.getKey()))
+                        && setState.test(entry.getKey(), entry.getValue())) {
+                    restored++;
+                }
+            } catch (RuntimeException failure) {
+                // One failing position must not strand unrelated leaves.
+                if (firstFailure == null) firstFailure = failure;
+                else if (firstFailure != failure) firstFailure.addSuppressed(failure);
             }
         }
+        if (firstFailure != null) throw firstFailure;
         return restored;
     }
 }
