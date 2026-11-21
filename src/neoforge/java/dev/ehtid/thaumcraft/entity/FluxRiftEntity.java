@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.port.core.ResearchProgressionService;
 import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -47,9 +48,9 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth, weighted event selection, pearl rewards, Weakness and player Warp
- * are implemented. Wisp, taint-seed, infection and focus events, void-seed drops and
- * the very-unstable Flux Taint effect remain separate follow-up work.
+ * Flux-driven growth, weighted event selection, pearl rewards, Flux Taint, Weakness and
+ * player Warp are implemented. Wisp, taint-seed, infection and focus events and guaranteed
+ * void-seed drops remain separate follow-up work.
  * This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -305,7 +306,7 @@ public final class FluxRiftEntity extends Entity {
 
     /**
      * Executes one BETA26 collapse tick using the entity-owned random stream.
-     * Void-seed drops and nearby taint/weakness/warp effects remain separate porting tasks.
+     * Guaranteed void-seed drops and the nearby Wisp/Taint Seed events remain separate tasks.
      *
      * @return the created explosion, or null when the one-in-ten roll did not fire
      */
@@ -358,9 +359,34 @@ public final class FluxRiftEntity extends Entity {
             serverLevel.addFreshEntity(new ItemEntity(
                     serverLevel, getX(), getY(), getZ(), pearl));
         }
+        applyCollapseFluxTaint(serverLevel);
         applyCollapseWeakness(serverLevel);
         applyCollapseWarp(serverLevel);
         discard();
+    }
+
+    /**
+     * BETA26 completeCollapse's VERY_UNSTABLE switch arm applies PotionFluxTaint
+     * before falling through to the UNSTABLE Weakness and STABLE Warp arms.
+     * The original query is a point-centred 32-block AABB; its duration formula
+     * only produces a positive effect when squared distance is below 32.
+     */
+    private void applyCollapseFluxTaint(ServerLevel serverLevel) {
+        if (getRiftStability() > -25.0F) {
+            return;
+        }
+
+        AABB bounds = new AABB(
+                getX() - 32.0D, getY() - 32.0D, getZ() - 32.0D,
+                getX() + 32.0D, getY() + 32.0D, getZ() + 32.0D
+        );
+        for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class, bounds)) {
+            int weight = (int) ((1.0D - target.distanceToSqr(this) / 32.0D) * 120.0D);
+            if (weight > 0) {
+                target.addEffect(new MobEffectInstance(
+                        FluxTaintEffectRegistration.get(), weight * 20, 0));
+            }
+        }
     }
 
     /**

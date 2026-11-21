@@ -7,9 +7,11 @@ import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
 import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
+import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.gametest.framework.GameTest;
@@ -18,6 +20,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.block.Blocks;
@@ -310,7 +313,57 @@ public final class FluxRiftEntityGameTests {
                 pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
         Pig veryUnstableEdge = spawnPig(level,
                 pos.getX() + 0.5D, pos.getY() + 6.15D, pos.getZ() + 0.5D);
+        Zombie veryUnstableUndead = spawnZombie(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        TaintedPig veryUnstableTainted = spawnTaintedPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        Pig veryUnstableBoundary = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 4.5D, pos.getZ() + 0.5D);
         veryUnstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var fluxTaintHolder = FluxTaintEffectRegistration.get();
+        var fluxTaintEffect = fluxTaintHolder.value();
+        var veryUnstableFluxTaint = veryUnstableNear.getEffect(fluxTaintHolder);
+        var veryUnstablePlayerFluxTaint = veryUnstablePlayer.getEffect(fluxTaintHolder);
+        var veryUnstableUndeadFluxTaint = veryUnstableUndead.getEffect(fluxTaintHolder);
+        var veryUnstableTaintedFluxTaint = veryUnstableTainted.getEffect(fluxTaintHolder);
+        if (fluxTaintEffect.getColor() != 6697847
+                || veryUnstableFluxTaint == null
+                || veryUnstableFluxTaint.getDuration() != 1200
+                || veryUnstableFluxTaint.getAmplifier() != 0
+                || veryUnstablePlayerFluxTaint == null
+                || veryUnstablePlayerFluxTaint.getDuration() != 1200
+                || veryUnstableUndeadFluxTaint == null
+                || veryUnstableUndeadFluxTaint.getDuration() != 1200
+                || veryUnstableTaintedFluxTaint == null
+                || veryUnstableTaintedFluxTaint.getDuration() != 1200
+                || veryUnstableBoundary.getEffect(fluxTaintHolder) != null) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE Flux Taint application/range/color mismatch");
+        }
+        if (!fluxTaintEffect.shouldApplyEffectTickThisTick(40, 0)
+                || fluxTaintEffect.shouldApplyEffectTickThisTick(39, 0)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(20, 1)
+                || fluxTaintEffect.shouldApplyEffectTickThisTick(19, 1)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(1, 5)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(1, 6)
+                || !level.damageSources().magic().is(DamageTypeTags.BYPASSES_ARMOR)) {
+            throw new AssertionError("BETA26 Flux Taint tick cadence or magic/bypass-armor damage source mismatch");
+        }
+        float pigHealthBeforeTaintTick = veryUnstableNear.getHealth();
+        if (!fluxTaintEffect.applyEffectTick(veryUnstableNear, 0)
+                || Math.abs(veryUnstableNear.getHealth() - (pigHealthBeforeTaintTick - 1.0F)) > 0.001F) {
+            throw new AssertionError("BETA26 Flux Taint must deal one point of magic damage to non-undead targets");
+        }
+        float undeadHealthBeforeTaintTick = veryUnstableUndead.getHealth();
+        fluxTaintEffect.applyEffectTick(veryUnstableUndead, 0);
+        if (veryUnstableUndead.getHealth() != undeadHealthBeforeTaintTick) {
+            throw new AssertionError("BETA26 Flux Taint must not damage undead targets");
+        }
+        veryUnstableTainted.setHealth(10.0F);
+        fluxTaintEffect.applyEffectTick(veryUnstableTainted, 0);
+        if (Math.abs(veryUnstableTainted.getHealth() - 11.0F) > 0.001F) {
+            throw new AssertionError("BETA26 tainted-mob exception must heal one point instead of damaging");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_FLUX_TAINT=PASS stability=-25 duration=1200 interval=40 undead=immune tainted=heal magic=bypasses_armor boundary=32");
         var veryUnstableWeakness = veryUnstableNear.getEffect(MobEffects.WEAKNESS);
         if (veryUnstableWeakness == null
                 || veryUnstableWeakness.getDuration() != 3000
@@ -328,6 +381,9 @@ public final class FluxRiftEntityGameTests {
         veryUnstablePlayer.discard();
         veryUnstableNear.discard();
         veryUnstableEdge.discard();
+        veryUnstableUndead.discard();
+        veryUnstableTainted.discard();
+        veryUnstableBoundary.discard();
 
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity unstableRift = createRift(level, pos, 2);
@@ -337,7 +393,8 @@ public final class FluxRiftEntityGameTests {
                 pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
         unstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
         var unstableWeakness = unstableNear.getEffect(MobEffects.WEAKNESS);
-        if (unstableWeakness == null || unstableWeakness.getDuration() != 3000) {
+        if (unstableWeakness == null || unstableWeakness.getDuration() != 3000
+                || unstableNear.getEffect(fluxTaintHolder) != null) {
             throw new AssertionError("BETA26 UNSTABLE collapse must apply distance-scaled Weakness");
         }
         unstableNear.discard();
@@ -353,7 +410,8 @@ public final class FluxRiftEntityGameTests {
         FakePlayer stableEdge = spawnWarpPlayer(level,
                 pos.getX() + 6.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
         stableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
-        if (stableNear.getEffect(MobEffects.WEAKNESS) != null) {
+        if (stableNear.getEffect(MobEffects.WEAKNESS) != null
+                || stableNear.getEffect(fluxTaintHolder) != null) {
             throw new AssertionError("BETA26 STABLE collapse must not apply Weakness");
         }
         var stableWarp = stablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
@@ -385,7 +443,8 @@ public final class FluxRiftEntityGameTests {
         veryStableCollapse.tickCollapse(findTerminalCollapseRandom(true, 1, false));
         var veryStableWarp = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
         var veryStableKnowledge = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
-        if (veryStableWarp.get(WarpType.NORMAL) != 0
+        if (veryStablePlayer.getEffect(fluxTaintHolder) != null
+                || veryStableWarp.get(WarpType.NORMAL) != 0
                 || veryStableWarp.get(WarpType.TEMPORARY) != 0
                 || veryStableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
             throw new AssertionError("BETA26 VERY_STABLE collapse must not grant Warp");
@@ -401,7 +460,7 @@ public final class FluxRiftEntityGameTests {
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WARP=PASS very_unstable=12+12 stable=12+12 edge=0 very_stable=none research=WARP_UNLOCKED");
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified void_seed=deferred flux_taint=deferred");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified flux_taint=verified void_seed=deferred");
         helper.succeed();
     }
 
@@ -419,6 +478,29 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("Unable to add Flux Rift Warp target player");
         }
         return player;
+    }
+
+    private static Zombie spawnZombie(ServerLevel level, double x, double y, double z) {
+        Zombie zombie = EntityType.ZOMBIE.create(level);
+        if (zombie == null) {
+            throw new AssertionError("Unable to create Flux Taint undead target");
+        }
+        zombie.setNoAi(true);
+        zombie.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(zombie)) {
+            throw new AssertionError("Unable to add Flux Taint undead target");
+        }
+        return zombie;
+    }
+
+    private static TaintedPig spawnTaintedPig(ServerLevel level, double x, double y, double z) {
+        TaintedPig pig = new TaintedPig(level);
+        pig.setNoAi(true);
+        pig.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(pig)) {
+            throw new AssertionError("Unable to add Flux Taint healable target");
+        }
+        return pig;
     }
 
     private static Pig spawnPig(ServerLevel level, double x, double y, double z) {
@@ -504,6 +586,12 @@ public final class FluxRiftEntityGameTests {
             }
         }
         throw new AssertionError("Unable to find deterministic BETA26 explosion fixture");
+    }
+
+    private static final class TaintedPig extends Pig implements FluxTaintHealable {
+        private TaintedPig(ServerLevel level) {
+            super(EntityType.PIG, level);
+        }
     }
 
     private record ExplosionFixture(long seed, boolean addVis, double x, double y, double z) {}
