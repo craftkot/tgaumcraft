@@ -400,6 +400,12 @@ for marker in (
     "TC_CRUCIBLE_ASPECT_READY",
     "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",
     "TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES",
+    "send_chat '/time set noon'",
+    "send_chat '/gamerule doDaylightCycle false'",
+    "send_chat '/fill 18 63 0 24 63 4 minecraft:stone'",
+    "send_chat '/fill 18 64 0 24 72 4 minecraft:air'",
+    "send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'",
+    "python3 tools/verify_crucible_bubble_screenshots.py",
     "capture crucible-bubble-before",
     "capture crucible-bubble-after",
 ):
@@ -415,4 +421,19 @@ assert (
     < runtime_template.index("capture crucible-bubble-after")
 ), "Crucible bubble smoke must prove empty baseline, synced aspect state, and rendered particle"
 
+shot_verifier = Path("tools/verify_crucible_bubble_screenshots.py").read_text()
+for fragment in (
+    "def center_pixels",
+    "def verify_images",
+    "yellow_delta < 2",
+    "mean_luma",
+    "identical before/after images must fail closed",
+):
+    assert fragment in shot_verifier, fragment
+shot_test = subprocess.run(
+    ["python3", "tools/verify_crucible_bubble_screenshots.py", "--self-test"],
+    check=True, capture_output=True, text=True,
+)
+assert "Crucible screenshot verifier self-test: PASS" in shot_test.stdout
+print(shot_test.stdout.strip())
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal shader/audio and BETA26 Crucible bubble real-client contracts: PASS")
