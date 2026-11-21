@@ -4,7 +4,9 @@ import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectListData;
 import dev.ehtid.thaumcraft.port.core.LegacyCrucibleSurface;
 import dev.ehtid.thaumcraft.port.core.visual.LegacyCrucibleBubbleRules;
+import dev.ehtid.thaumcraft.port.core.visual.LegacyCrucibleFrothRules;
 import dev.ehtid.thaumcraft.registry.CrucibleBubbleParticleRegistration;
+import dev.ehtid.thaumcraft.registry.CrucibleFrothParticleRegistration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -27,6 +29,30 @@ public final class CrucibleBubbleClientEffects {
 
         AspectListData aspects = tile.getAspects();
         RandomSource random = level.getRandom();
+
+        // BETA26 TileCrucible.drawEffects: hot water emits one blue surface
+        // froth each client tick, then eight purple edge particles above 500 Vis.
+        if (LegacyCrucibleFrothRules.shouldSpawnSurface(tile.heat(), tile.waterMb())) {
+            float x = pos.getX() + 0.2F + random.nextFloat() * 0.6F;
+            float z = pos.getZ() + 0.2F + random.nextFloat() * 0.6F;
+            float y = pos.getY() + LegacyCrucibleSurface.height(tile.waterMb(), aspects.visSize());
+            level.addParticle(CrucibleFrothParticleRegistration.SURFACE, x, y, z, 0.0D, 0.0D, 0.0D);
+
+            int overflowCount = LegacyCrucibleFrothRules.overflowParticleCount(
+                    tile.heat(), tile.waterMb(), aspects.visSize());
+            for (int round = 0; round < overflowCount / 4; round++) {
+                float edgeY = pos.getY() + 1.0F;
+                level.addParticle(CrucibleFrothParticleRegistration.OVERFLOW,
+                        pos.getX(), edgeY, pos.getZ() + random.nextFloat(), 0.0D, 0.0D, 0.0D);
+                level.addParticle(CrucibleFrothParticleRegistration.OVERFLOW,
+                        pos.getX() + 1.0F, edgeY, pos.getZ() + random.nextFloat(), 0.0D, 0.0D, 0.0D);
+                level.addParticle(CrucibleFrothParticleRegistration.OVERFLOW,
+                        pos.getX() + random.nextFloat(), edgeY, pos.getZ(), 0.0D, 0.0D, 0.0D);
+                level.addParticle(CrucibleFrothParticleRegistration.OVERFLOW,
+                        pos.getX() + random.nextFloat(), edgeY, pos.getZ() + 1.0F, 0.0D, 0.0D, 0.0D);
+            }
+        }
+
         if (!LegacyCrucibleBubbleRules.shouldSpawn(random.nextInt(6), aspects.size())) return;
 
         AspectData[] values = aspects.getAspects();

@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""Generate a focused real Minecraft Flux Rift ambient-sound smoke."""
+"""Generate a focused real Minecraft Flux Rift ambient-sound and Crucible FX smoke."""
 from pathlib import Path
+import subprocess
+import sys
+
+# Run the loader-neutral BETA26 froth contract before generating the real-client script.
+subprocess.run(["bash", "tools/test_crucible_froth_rules.sh"], check=True, stdout=sys.stderr, stderr=sys.stderr)
 
 full_source = Path("tools/client_smoke.sh").read_text()
 source = full_source
@@ -558,6 +563,44 @@ probe = r'''
     client-smoke/screenshots/crucible-bubble-after.png \
     | tee -a client-smoke-status.txt
   echo "CRUCIBLE_BUBBLE_REAL_CLIENT=PASS $bubble_created_line | $bubble_rendered_line" | tee -a client-smoke-status.txt
+
+  # BETA26 TileCrucible.drawEffects hot-surface froth and >500-Vis overflow.
+  froth_log_offset="$(wc -c < "$probe_log")"
+  send_chat '/setblock 20 63 2 minecraft:magma_block'
+  send_chat '/data merge block 20 64 2 {Heat:200s,Water:1000,Aspects:[{key:"aer",amount:600}]}'
+  send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:600}] run say TC_CRUCIBLE_FROTH_ASPECT_READY'
+  if ! wait_for_server_marker 'TC_CRUCIBLE_FROTH_ASPECT_READY'; then
+    echo 'CRUCIBLE_FROTH_REAL_CLIENT=FAIL high-Vis hot-water payload was not accepted' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+
+  froth_created_line=''
+  froth_rendered_line=''
+  froth_down_created_line=''
+  froth_down_rendered_line=''
+  for _ in $(seq 1 80); do
+    froth_created_line="$(tail -c +$((froth_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_FROTH_CREATED=YES' | head -n 1 || true)"
+    froth_rendered_line="$(tail -c +$((froth_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_FROTH_RENDERED=YES' | head -n 1 || true)"
+    froth_down_created_line="$(tail -c +$((froth_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_FROTH_DOWN_CREATED=YES' | head -n 1 || true)"
+    froth_down_rendered_line="$(tail -c +$((froth_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_FROTH_DOWN_RENDERED=YES' | head -n 1 || true)"
+    if [ -n "$froth_created_line" ] && [ -n "$froth_rendered_line" ] \
+       && [ -n "$froth_down_created_line" ] && [ -n "$froth_down_rendered_line" ]; then break; fi
+    sleep 0.25
+  done
+  if [ -z "$froth_created_line" ] || [ -z "$froth_rendered_line" ] \
+     || [ -z "$froth_down_created_line" ] || [ -z "$froth_down_rendered_line" ]; then
+    echo 'CRUCIBLE_FROTH_REAL_CLIENT=FAIL surface and overflow particles must both be created and rendered' | tee -a client-smoke-status.txt
+    tail -120 "$probe_log" >&2 || true
+    exit 1
+  fi
+  if grep -Fq 'Unknown particle type thaumcraft:crucible_froth' "$probe_log" \
+     || grep -Fq 'Unknown particle type thaumcraft:crucible_froth_down' "$probe_log"; then
+    echo 'CRUCIBLE_FROTH_REAL_CLIENT=FAIL particle type was not registered' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  capture crucible-froth-after
+  test -s client-smoke/screenshots/crucible-froth-after.png
+  echo "CRUCIBLE_FROTH_REAL_CLIENT=PASS $froth_created_line | $froth_rendered_line | $froth_down_created_line | $froth_down_rendered_line" | tee -a client-smoke-status.txt
 '''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,dx=1,dy=250,dz=1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
@@ -620,11 +663,15 @@ crucible_baseline_command = "send_chat '/data merge block 20 64 2 {Heat:151s,Wat
 crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
 crucible_aspects_command = "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
 crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
+crucible_froth_heater_command = "send_chat '/setblock 20 63 2 minecraft:magma_block'"
+crucible_froth_aspects_command = "send_chat '/data merge block 20 64 2 {Heat:200s,Water:1000,Aspects:[{key:\"aer\",amount:600}]}'"
+crucible_froth_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:600}] run say TC_CRUCIBLE_FROTH_ASPECT_READY'"""
 if any(probe.count(command) != 1 for command in (
     crucible_set_command, crucible_baseline_command, crucible_baseline_probe,
     crucible_aspects_command, crucible_aspects_probe,
+    crucible_froth_heater_command, crucible_froth_aspects_command, crucible_froth_aspects_probe,
     "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
-    "capture crucible-bubble-after",
+    "capture crucible-bubble-after", "capture crucible-froth-after",
 )):
     raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state with valid NBT paths")
 if "execute if data block 20 64 2 {Heat:" in probe or "execute if data block 20 64 2 {Aspects:" in probe:
@@ -645,6 +692,16 @@ if not (
     < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", probe.index(crucible_aspects_probe))
     < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_probe))
     < probe.index("capture crucible-bubble-after")
+    < probe.index("CRUCIBLE_BUBBLE_REAL_CLIENT=PASS")
+    < probe.index(crucible_froth_heater_command)
+    < probe.index(crucible_froth_aspects_command)
+    < probe.index(crucible_froth_aspects_probe)
+    < probe.index("TC_CRUCIBLE_FROTH_ASPECT_READY")
+    < probe.index("TC_SMOKE_CRUCIBLE_FROTH_CREATED=YES", probe.index(crucible_froth_aspects_probe))
+    < probe.index("TC_SMOKE_CRUCIBLE_FROTH_RENDERED=YES", probe.index(crucible_froth_aspects_probe))
+    < probe.index("TC_SMOKE_CRUCIBLE_FROTH_DOWN_CREATED=YES", probe.index(crucible_froth_aspects_probe))
+    < probe.index("TC_SMOKE_CRUCIBLE_FROTH_DOWN_RENDERED=YES", probe.index(crucible_froth_aspects_probe))
+    < probe.index("capture crucible-froth-after")
 ):
     raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
 fixture_commands = (
@@ -654,6 +711,7 @@ fixture_commands = (
     "send_chat '/fill 18 63 0 24 63 4 minecraft:stone'",
     "send_chat '/fill 18 64 0 24 72 4 minecraft:air'",
     "send_chat '/setblock 20 64 1 minecraft:glowstone'",
+    "send_chat '/setblock 20 63 2 minecraft:magma_block'",
     "send_chat '/setblock 22 67 2 minecraft:stone'",
     "send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'",
     "send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'",
