@@ -62,6 +62,31 @@ public final class SilverwoodLegacyTreeTest {
                 assertions += 5;
             }
         }
+        // A replaceability read can fail before any leaf write. Do not enter
+        // the log phase or silently swallow the exception.
+        for (int height = 7; height <= 10; height++) {
+            Random failedRead = new Random(20261121L);
+            int[] leafWrites = {0};
+            int[] logWrites = {0};
+            int[] reads = {0};
+            try {
+                SilverwoodLegacyTree.place(8, 70, 8, height, failedRead,
+                        (x, y, z) -> {
+                            reads[0]++;
+                            throw new IllegalStateException("unavailable chunk read");
+                        },
+                        (x, y, z) -> leafWrites[0]++,
+                        (x, y, z, meta) -> logWrites[0]++);
+                throw new AssertionError("failed replaceability read was swallowed");
+            } catch (IllegalStateException expected) {
+                check("unavailable chunk read".equals(expected.getMessage()),
+                        "wrong replaceability failure");
+                check(reads[0] == 1, "continued after failed read");
+                check(leafWrites[0] == 0, "leaf written after failed read");
+                check(logWrites[0] == 0, "log phase entered after failed read");
+                assertions += 4;
+            }
+        }
         Random invalid = new Random(7);
         int[] writes = {0};
         try {
