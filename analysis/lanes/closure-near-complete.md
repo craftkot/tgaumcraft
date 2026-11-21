@@ -3360,3 +3360,13 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Checked exact changed paths against all 56 other open PRs (#1–#3 and #5–#57): no overlaps. The pre-existing PR #3/#4 conflicts remain SalisMundusItem.java and ArcaneWorkbenchMenu.java; neither was touched. No shared entity registry, Gradle, workflow, localization, main or foreign branch was changed.
 - Fixed audit remains 59/100; M08 remains 5/9, M16 4/6. No point awarded: Wisp's first server-side event path is implemented, but exact-head compilation, Native GameTests, audio/renderer parity, natural spawn rules and real client behavior remain unverified or incomplete.
 - Next: wait for #44963156081 and #44963156017. Fix any compile/GameTest failure on this branch before adding more Wisp presentation. If both pass, next implement exact BETA26 Wisp audio and additive/node-sheet rendering, then add natural Nether spawn rules and a real client smoke; do not claim M08 complete until those acceptance items pass.
+
+
+## 2026-11-22 — harden the Wisp spawn RNG boundary and GameTest fixtures
+
+- Follow-up review found two avoidable integration risks before accepting the first Wisp run: Rift code read another Entity subclass's protected random field, and the test instantiated Zombie directly rather than using the project's established EntityType factory pattern.
+- Added a no-argument Wisp spawn gate that consumes the Wisp's own random stream; FluxRiftEntity now calls that API in production and only accepts an injected RandomSource in its package-private deterministic test seam. The two zap targets now use EntityType.ZOMBIE.create(level) with null checks.
+- Follow-up commits: Wisp API a34b2db2d321602297d2a618e1d78682c53d4688; Rift call-site da3e1a885c29771331f07c3125ec3b4d47e05431; GameTest fixture 63c57a74086ba221b79fbf14744aaedb06fa5d2c.
+- Current code head is 63c57a74086ba221b79fbf14744aaedb06fa5d2c. Exact-head Native Aura/Crystal GameTests [#44963452856](https://github.com/craftkot/tgaumcraft/actions/runs/44963452856) and Full Port CI [#44963452995](https://github.com/craftkot/tgaumcraft/actions/runs/44963452995) are QUEUED; CircleCI verify-connection is PENDING. Earlier runs for ebd14ef and 2be4b21 are not acceptance evidence for this exact head.
+- The local Java 21 boundary test for LegacyWispSpawnRules remains PASS (10 assertions). No new NeoForge compile or native GameTest result is claimed yet; no score is awarded.
+- Next: wait for exact-head Full Port CI and Native Aura/Crystal GameTests. If either fails, fix that blocker before adding audio/renderer parity or natural Nether spawn rules.
