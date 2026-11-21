@@ -44,6 +44,9 @@ public final class LegacyCrucibleBubbleRulesTest {
         expect(LegacyCrucibleBubbleRules.lifetime(0), 15, "minimum BETA26 bubble lifetime");
         expect(LegacyCrucibleBubbleRules.lifetime(4), 19, "middle BETA26 bubble lifetime");
         expect(LegacyCrucibleBubbleRules.lifetime(9), 24, "maximum BETA26 bubble lifetime");
+        expect(Double.doubleToRawLongBits(LegacyCrucibleBubbleRules.DEFAULT_SLOW_DOWN)
+                        == 0x3fef5c2900000000L,
+                true, "exact BETA26 FXGeneric default slowdown IEEE-754 bits");
         close(LegacyCrucibleBubbleRules.scale(0.0F), 0.3D, 0.000001D, "minimum bubble scale");
         close(LegacyCrucibleBubbleRules.scale(0.999999F), 0.5999997D,
                 0.000001D, "maximum bubble scale");
