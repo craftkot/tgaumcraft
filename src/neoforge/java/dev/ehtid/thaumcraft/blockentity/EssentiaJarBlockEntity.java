@@ -211,13 +211,23 @@ public final class EssentiaJarBlockEntity extends BlockEntity implements Essenti
             return;
         if (!jar.isVoidJar() && jar.stored.amount() >= LegacyEssentiaJarLogic.CAPACITY)
             return;
-        // Atomically debit source before granting one unit to the target.
-        // Both adapters use the same synchronous server-thread transaction.
+        // Plan normal-jar credit before debiting the source. Committing this
+        // immutable plan avoids a second acceptance check after source debit.
+        // Void jars retain their deliberate overflow and flux behavior.
+        LegacyEssentiaJarLogic.Transfer planned = null;
+        if (!jar.isVoidJar()) {
+            planned = LegacyEssentiaJarLogic.add(jar.stored, aspect, 1);
+            if (planned.transferred() != 1) return;
+        }
         if (above.takeTransport(aspect, 1, Direction.DOWN) == 1) {
-            int accepted=jar.addFromTransport(aspect, 1, Direction.UP);
-            if (accepted==1 && above instanceof EssentiaTubeBlockEntity)
+            if (planned != null) {
+                jar.updateStored(planned.state());
+            } else {
+                jar.addFromTransport(aspect, 1, Direction.UP);
+            }
+            if (above instanceof EssentiaTubeBlockEntity)
                 dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("TUBE_TO_JAR");
-            if (accepted==1 && above instanceof EssentiaMirrorBlockEntity)
+            if (above instanceof EssentiaMirrorBlockEntity)
                 dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit.mark("MIRROR_TO_JAR");
         }
     }
