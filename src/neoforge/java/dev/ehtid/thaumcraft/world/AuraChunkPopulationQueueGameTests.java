@@ -5,15 +5,20 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
+import java.util.Comparator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Native server proof for the BETA26 chunk-load aura population path. */
 @GameTestHolder(ThaumcraftPort.MOD_ID)
 public final class AuraChunkPopulationQueueGameTests {
+    private static final TicketType<ChunkPos> TEST_CHUNK_TICKET = TicketType.create(
+            "thaumcraft_aura_queue_gametest", Comparator.comparingLong(ChunkPos::toLong));
+
     private AuraChunkPopulationQueueGameTests() {}
 
     @SuppressWarnings("deprecation")
@@ -59,6 +64,32 @@ public final class AuraChunkPopulationQueueGameTests {
         }
         System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_DEFERRED=PASS no_force_load=YES");
 
+        // Retain the five sample chunks for the duration of this asynchronous
+        // assertion. getChunk() alone only loads them synchronously; it does not
+        // keep distant test chunks resident until the server tick processes the
+        // ready queue. These test-only tickets never enter production code.
+        ChunkPos[] retainedChunks = {
+                target,
+                new ChunkPos(target.x - 1, target.z),
+                new ChunkPos(target.x + 1, target.z),
+                new ChunkPos(target.x, target.z - 1),
+                new ChunkPos(target.x, target.z + 1)
+        };
+        for (ChunkPos retained : retainedChunks) {
+            level.getChunkSource().addRegionTicket(TEST_CHUNK_TICKET, retained, 0, retained);
+        }
+        boolean[] ticketsReleased = {false};
+        Runnable releaseTickets = () -> {
+            if (ticketsReleased[0]) return;
+            ticketsReleased[0] = true;
+            for (ChunkPos retained : retainedChunks) {
+                level.getChunkSource().removeRegionTicket(TEST_CHUNK_TICKET, retained, 0, retained);
+            }
+            System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_TICKETS=RELEASED count=5");
+        };
+        System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_TICKETS=HELD count=5");
+        helper.runAfterDelay(80, releaseTickets);
+
         // The missing sample chunks are explicitly loaded by the fixture, not
         // by production. Their ChunkEvent.Load callbacks also re-enqueue the
         // center, proving that a deferred boundary request can become ready.
@@ -76,7 +107,7 @@ public final class AuraChunkPopulationQueueGameTests {
         System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_PRIORITY=PASS pending="
                 + ThaumcraftAuraChunkPopulationQueue.PENDING.size());
 
-        awaitPopulation(helper, level, target, center, 40);
+        awaitPopulation(helper, level, target, center, 40, releaseTickets);
     }
 
     private static ChunkPos findUnreadyChunkWithNoAura(ServerLevel level, BlockPos anchor) {
@@ -101,7 +132,8 @@ public final class AuraChunkPopulationQueueGameTests {
             ServerLevel level,
             ChunkPos target,
             BlockPos center,
-            int remainingTicks
+            int remainingTicks,
+            Runnable releaseTickets
     ) {
         helper.runAfterDelay(1, () -> {
             ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.getIfPresent(level);
@@ -120,17 +152,20 @@ public final class AuraChunkPopulationQueueGameTests {
                 System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_INITIALIZED=PASS base=" + base
                         + " vis=" + aura.getVis(center) + " flux=" + aura.getFlux(center));
                 System.out.println("TC_GAMETEST_AURA_CHUNK_QUEUE_ACCEPTED=YES");
+                releaseTickets.run();
                 helper.succeed();
                 return;
             }
             if (remainingTicks <= 1) {
+                releaseTickets.run();
                 throw new AssertionError("Chunk-load aura queue did not initialize the center after neighbors loaded"
                         + " pending=" + ThaumcraftAuraChunkPopulationQueue.isPending(level, target)
                         + " prioritized=" + ThaumcraftAuraChunkPopulationQueue.PENDING.isPrioritized(level, target)
+                        + " fiveChunksLoaded=" + ThaumcraftAuraWorldEvents.fiveChunksLoaded(level, target.x, target.z)
                         + " pendingEntries=" + ThaumcraftAuraChunkPopulationQueue.PENDING.size()
                         + " loadedChunks=" + level.getChunkSource().getLoadedChunksCount());
             }
-            awaitPopulation(helper, level, target, center, remainingTicks - 1);
+            awaitPopulation(helper, level, target, center, remainingTicks - 1, releaseTickets);
         });
     }
 }
