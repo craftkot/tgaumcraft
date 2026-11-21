@@ -349,7 +349,7 @@ for fragment in (
     "private static final int GRID_SIZE = 64;",
     "LegacyCrucibleBubbleRules.frame(this.age, this.lifetime)",
     "this.gravity = -0.001F;",
-    "this.slowDown = 0.98D;",
+    "private final double slowDown = 0.98D;",
     "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",
     "TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES",
 ):
@@ -383,8 +383,8 @@ assert (
     < runtime_template.index("TC_CRUCIBLE_BASELINE_READY")
     < runtime_template.index("capture crucible-bubble-before")
     < runtime_template.index("TC_CRUCIBLE_ASPECT_READY")
-    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES")
-    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES")
+    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", runtime_template.index("TC_CRUCIBLE_ASPECT_READY"))
+    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", runtime_template.index("TC_CRUCIBLE_ASPECT_READY"))
     < runtime_template.index("capture crucible-bubble-after")
 ), "Crucible bubble smoke must prove empty baseline, synced aspect state, and rendered particle"
 

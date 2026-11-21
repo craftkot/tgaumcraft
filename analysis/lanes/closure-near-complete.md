@@ -3007,3 +3007,6 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - The existing M16 Rift client workflow is reused through its already-owned tools/*rift* path filter; its probe now creates an empty-aspect Crucible baseline, then syncs one aer aspect and requires both particle-created and particle-rendered markers plus before/after screenshots. No workflow YAML edit was needed.
 - Coordination notice posted to PR #2 (comment 7053989206) describing the client-only Crucible change and the PR #3/#7 block-entity overlap.
 - Acceptance pending: Core rules test, NeoForge compile/dedicated server, static verifier, and real Minecraft client screenshot/log must all pass. M16 and total score remain unchanged until the client artifact is inspected.
+
+
+- Core parity on the first implementation SHA e7edff84cf139e8ad22f67ba6fee2819dd91f7a3 completed successfully, including the new standalone Crucible bubble rules test. The first client run was still installing the real-client environment when this note was written; the smoke/verifier order checks were tightened before accepting any visual result.

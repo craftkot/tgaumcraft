@@ -616,8 +616,8 @@ if not (
     < probe.index(crucible_baseline_command)
     < probe.index("capture crucible-bubble-before")
     < probe.index(crucible_aspects_command)
-    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES")
-    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES")
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", probe.index(crucible_aspects_command))
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_command))
     < probe.index("capture crucible-bubble-after")
 ):
     raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
