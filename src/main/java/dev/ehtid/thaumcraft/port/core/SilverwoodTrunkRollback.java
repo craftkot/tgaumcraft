@@ -30,13 +30,21 @@ public final class SilverwoodTrunkRollback {
             Objects.requireNonNull(originals.get(pos), "original trunk state");
         }
         int restored = 0;
+        RuntimeException firstFailure = null;
         for (Map.Entry<P, S> entry : written.entrySet()) {
             P pos = entry.getKey();
-            if (Objects.equals(entry.getValue(), currentState.apply(pos))
-                    && setState.test(pos, originals.get(pos))) {
-                restored++;
+            try {
+                if (Objects.equals(entry.getValue(), currentState.apply(pos))
+                        && setState.test(pos, originals.get(pos))) {
+                    restored++;
+                }
+            } catch (RuntimeException failure) {
+                // A failing log must not prevent independent trunk cleanup.
+                if (firstFailure == null) firstFailure = failure;
+                else if (firstFailure != failure) firstFailure.addSuppressed(failure);
             }
         }
+        if (firstFailure != null) throw firstFailure;
         return restored;
     }
 }
