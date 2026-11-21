@@ -3108,3 +3108,11 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Exact-head CI for the new code SHA `7f87f51d61c4680982ce8c32dfcf4c829bc561f7` is pending at this entry's creation. Do not count the prior `5900c9b` run as validation of the new damping change. Required: M16 verifier + real client, Full Port/NeoForge/JAR/server, and Aura/Crystal native GameTests.
 - Fixed rubric remains **59/100** (M16 **4/6**, M08 **5/9**). No point is awarded: this is a source-parity correction with exact numeric regression, not completion of the category.
 - Next: inspect the exact-head runs; if the client job again hits Maven Central 429, rerun only that failed job after the transient outage. Then continue M16 with the outstanding goggles-only depth bypass or another independently verifiable residual, without touching shared registry/parallel paths.
+
+
+
+### Local verification follow-up — 2026-11-21
+
+- Recompiled the updated pure-Java helper and regression with OpenJDK 21.0.12 using `javac --release 21`, then executed the test main: **29 assertions PASS**, including exact raw double bits `0x3fef5c2900000000L`.
+- This local reproduction compiles the helper and test class only. It does **not** compile `CrucibleBubbleParticle` against NeoForge and does not replace the queued exact-head Full Port or real-client workflow.
+- CircleCI `verify-connection` on code SHA `7f87f51d61c4680982ce8c32dfcf4c829bc561f7` is SUCCESS. At the latest poll, exact-head GitHub Actions remain queued: M16 real client [#44864607407](https://github.com/craftkot/tgaumcraft/actions/runs/44864607407), Full Port [#44864607290](https://github.com/craftkot/tgaumcraft/actions/runs/44864607290), Aura/Crystal [#44864607351](https://github.com/craftkot/tgaumcraft/actions/runs/44864607351). No exact-head CI success is inferred from queued status.
