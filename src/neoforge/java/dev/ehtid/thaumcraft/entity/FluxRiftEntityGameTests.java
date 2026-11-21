@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
+import dev.ehtid.thaumcraft.registry.VoidSeedItemRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -268,6 +269,15 @@ public final class FluxRiftEntityGameTests {
             throw new AssertionError("BETA26 collapse must remove a Rift once its decremented size is <= 1");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_TERMINAL=PASS size=1 removed=YES maxSize=2");
+        var terminalDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var terminalSeeds = terminalDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (terminalSeeds.size() != 1 || terminalSeeds.get(0).getItem().getCount() != 1) {
+            throw new AssertionError("BETA26 maxSize 2 collapse must drop one individual void seed");
+        }
+        terminalDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_VOID_SEED_TERMINAL=PASS maxSize=2 count=1");
 
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity rewarded = createRift(level, pos, 100);
@@ -279,9 +289,15 @@ public final class FluxRiftEntityGameTests {
                 || rewarded.getMaxSize() != 100) {
             throw new AssertionError("BETA26 pearl reward must use the pre-collapse maxSize");
         }
-        var pearlDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
-        if (pearlDrops.size() != 1) {
-            throw new AssertionError("BETA26 10% collapse reward must spawn exactly one primordial pearl");
+        var rewardDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var pearlDrops = rewardDrops.stream()
+                .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                .toList();
+        var rewardedSeeds = rewardDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (pearlDrops.size() != 1 || rewardedSeeds.size() != 10) {
+            throw new AssertionError("BETA26 maxSize 100 collapse must drop one pearl and ten void seeds");
         }
         var pearl = pearlDrops.get(0).getItem();
         if (!pearl.is(ThaumcraftItems.PRIMORDIAL_PEARL.get())
@@ -290,18 +306,28 @@ public final class FluxRiftEntityGameTests {
                 || pearl.getDamageValue() > 7) {
             throw new AssertionError("BETA26 collapse pearl must preserve metadata stage 4..7");
         }
-        pearlDrops.forEach(ItemEntity::discard);
+        rewardDrops.forEach(ItemEntity::discard);
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_PRIMORDIAL_PEARL=PASS chance=10 maxSize=100 stage=4..7 item_entity=YES");
 
         FluxRiftEntity noPearl = createRift(level, pos, 100);
         noPearl.setCollapse(true);
         noPearl.setRiftSize(2);
         if (noPearl.tickCollapse(findTerminalCollapseRandom(false, 10, false)) != null
-                || !noPearl.isRemoved()
-                || !level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos)).isEmpty()) {
-            throw new AssertionError("BETA26 collapse must not drop a pearl when the maxSize chance roll fails");
+                || !noPearl.isRemoved()) {
+            throw new AssertionError("BETA26 collapse must finish when the maxSize pearl chance roll fails");
         }
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_item_entity=YES");
+        var noPearlDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var noPearlPearls = noPearlDrops.stream()
+                .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                .toList();
+        var noPearlSeeds = noPearlDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (!noPearlPearls.isEmpty() || noPearlSeeds.size() != 10) {
+            throw new AssertionError("BETA26 failed pearl roll must still drop ten void seeds at maxSize 100");
+        }
+        noPearlDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_pearl_entity=YES void_seed_count=10");
 
         aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
         FluxRiftEntity veryUnstableRift = createRift(level, pos, 2);
@@ -460,7 +486,63 @@ public final class FluxRiftEntityGameTests {
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WARP=PASS very_unstable=12+12 stable=12+12 edge=0 very_stable=none research=WARP_UNLOCKED");
-        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified flux_taint=verified void_seed=deferred");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified flux_taint=verified void_seed=verified");
+        helper.succeed();
+    }
+
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 100
+    )
+    public static void dropsBETA26VoidSeedsFromOriginalMaximumSize(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_FLUX_RIFT_VOID_SEED_DROPS_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+        int[] maxSizes = {0, 1, 3, 4, 24, 25, 35, 36, 99, 100};
+
+        for (int maxSize : maxSizes) {
+            aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+            FluxRiftEntity rift = createRift(level, pos, maxSize);
+            rift.setCollapse(true);
+            // Collapse countdown is shortened for the fixture after maxSize has
+            // captured the original BETA26 maximum-size reward basis.
+            rift.setRiftSize(2);
+            if (rift.getMaxSize() != maxSize
+                    || rift.tickCollapse(findTerminalCollapseRandom(
+                            true, (int) Math.sqrt(maxSize), false)) != null
+                    || !rift.isRemoved()
+                    || rift.getRiftSize() != 1
+                    || rift.getMaxSize() != maxSize) {
+                throw new AssertionError("BETA26 void-seed fixture did not complete from maxSize=" + maxSize);
+            }
+
+            var drops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+            var seeds = drops.stream()
+                    .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                    .toList();
+            var pearls = drops.stream()
+                    .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                    .toList();
+            int expected = (int) Math.sqrt(maxSize);
+            if (seeds.size() != expected || !pearls.isEmpty()
+                    || seeds.stream().anyMatch(seed -> seed.getItem().getCount() != 1)) {
+                throw new AssertionError("BETA26 void-seed count mismatch at maxSize=" + maxSize
+                        + " expected=" + expected + " actual=" + seeds.size()
+                        + " pearls=" + pearls.size());
+            }
+            drops.forEach(ItemEntity::discard);
+        }
+
+        System.out.println("TC_GAMETEST_FLUX_RIFT_VOID_SEED_DROPS=PASS sizes=0,1,3,4,24,25,35,36,99,100 count=floor_sqrt individual=YES");
         helper.succeed();
     }
 

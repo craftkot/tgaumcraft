@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.port.core.ResearchProgressionService;
 import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
+import dev.ehtid.thaumcraft.registry.VoidSeedItemRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -48,9 +49,9 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth, weighted event selection, pearl rewards, Flux Taint, Weakness and
- * player Warp are implemented. Wisp, taint-seed, infection and focus events and guaranteed
- * void-seed drops remain separate follow-up work.
+ * Flux-driven growth, weighted event selection, pearl and void-seed rewards, Flux Taint,
+ * Weakness and player Warp are implemented. Wisp, taint-seed, infection and focus events
+ * remain separate follow-up work.
  * This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -306,7 +307,7 @@ public final class FluxRiftEntity extends Entity {
 
     /**
      * Executes one BETA26 collapse tick using the entity-owned random stream.
-     * Guaranteed void-seed drops and the nearby Wisp/Taint Seed events remain separate tasks.
+     * The nearby Wisp/Taint Seed events remain separate tasks.
      *
      * @return the created explosion, or null when the one-in-ten roll did not fire
      */
@@ -346,9 +347,8 @@ public final class FluxRiftEntity extends Entity {
     }
 
     /**
-     * BETA26 completeCollapse's primordial-pearl branch. The original void-seed
-     * item is not registered in this port yet, so its guaranteed qq drops and
-     * the nearby visual/status effects remain separate work.
+     * BETA26 completeCollapse drops an optional primordial pearl followed by
+     * floor(sqrt(maxSize)) individual void seeds, then applies the stability-tier effects.
      */
     private void completeCollapse(ServerLevel serverLevel, RandomSource sourceRandom) {
         int rewardChance = (int) Math.sqrt(maxSize);
@@ -358,6 +358,12 @@ public final class FluxRiftEntity extends Entity {
             pearl.setDamageValue(4 + sourceRandom.nextInt(4));
             serverLevel.addFreshEntity(new ItemEntity(
                     serverLevel, getX(), getY(), getZ(), pearl));
+        }
+        int voidSeedCount = (int) Math.sqrt(maxSize);
+        for (int i = 0; i < voidSeedCount; i++) {
+            serverLevel.addFreshEntity(new ItemEntity(
+                    serverLevel, getX(), getY(), getZ(),
+                    new ItemStack(VoidSeedItemRegistration.get())));
         }
         applyCollapseFluxTaint(serverLevel);
         applyCollapseWeakness(serverLevel);
@@ -393,7 +399,7 @@ public final class FluxRiftEntity extends Entity {
      * BETA26 completeCollapse applies Weakness to nearby living targets for UNSTABLE
      * and VERY_UNSTABLE rifts. The source query is a point-centred 32-block AABB and
      * duration is derived from squared Euclidean distance (not radius 32).
-     * The very-unstable Flux Taint effect remains unported.
+     * The preceding collapse phase applies Flux Taint for VERY_UNSTABLE rifts.
      */
     private void applyCollapseWeakness(ServerLevel serverLevel) {
         if (getRiftStability() >= 0.0F) {
