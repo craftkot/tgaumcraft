@@ -29,7 +29,7 @@ public final class VoidSeedItemRegistration {
     @SubscribeEvent
     public static void register(RegisterEvent event) {
         event.register(Registries.ITEM, helper -> helper.register(
-                ID, new VoidSeedItem(new Item.Properties().setId(ITEM_KEY).stacksTo(64))));
+                ID, new VoidSeedItem(new Item.Properties().stacksTo(64))));
     }
 
     @SubscribeEvent
