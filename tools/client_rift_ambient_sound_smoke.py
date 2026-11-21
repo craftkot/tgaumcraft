@@ -633,8 +633,4 @@ if not (
 ):
     raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
 print(generated_script)
-    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_command))
-    < probe.index("capture crucible-bubble-after")
-):
-    raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
-print(generated_script)
+
