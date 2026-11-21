@@ -91,6 +91,10 @@ public final class WispEntity extends FlyingMob implements Enemy {
         return aspect == null ? 0xFFFFFF : aspect.color();
     }
 
+    public boolean canSpawnFromRift() {
+        return canSpawnFromRift(random);
+    }
+
     /**
      * BETA26 EntityWisp.getCanSpawnHere: fewer than eight nearby Wisps,
      * non-peaceful difficulty, dark sky/local light, then a collision-free body.
