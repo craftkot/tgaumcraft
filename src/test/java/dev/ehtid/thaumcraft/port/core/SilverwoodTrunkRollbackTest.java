@@ -117,7 +117,22 @@ public final class SilverwoodTrunkRollbackTest {
         }
         check(nullOriginalRejected, "Null original state rejected");
         check(corruptWrites[0] == 0, "Null original state fails before any write");
-        System.out.println("SilverwoodTrunkRollbackTest: OK (21 assertions)");
+        // A null position after a valid journal entry must fail before any writes.
+        Map<Integer, String> nullPositionWritten = new LinkedHashMap<>();
+        nullPositionWritten.put(1, "LOG_Y");
+        nullPositionWritten.put(null, "LOG_X");
+        final int[] nullPositionWrites = {0};
+        boolean nullPositionRejected = false;
+        try {
+            SilverwoodTrunkRollback.restore(Map.of(1, "AIR"), nullPositionWritten,
+                    pos -> "LOG_Y",
+                    (pos, state) -> { nullPositionWrites[0]++; return true; });
+        } catch (NullPointerException expected) {
+            nullPositionRejected = true;
+        }
+        check(nullPositionRejected, "Null trunk position rejected");
+        check(nullPositionWrites[0] == 0, "Null trunk position fails before any write");
+        System.out.println("SilverwoodTrunkRollbackTest: OK (23 assertions)");
     }
 
     private static void check(boolean condition, String message) {
