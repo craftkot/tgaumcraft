@@ -3010,3 +3010,6 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 
 - Core parity on the first implementation SHA e7edff84cf139e8ad22f67ba6fee2819dd91f7a3 completed successfully, including the new standalone Crucible bubble rules test. The first client run was still installing the real-client environment when this note was written; the smoke/verifier order checks were tightened before accepting any visual result.
+
+
+- The generic Full Port Core parity step on e7edff84 passed, but its explicit command list does not include the new LegacyCrucibleBubbleRulesTest. CoreParityTest.java is overlapped by open PR #1 and PR #6, so it was deliberately left untouched. The owned M16 verifier now compiles and executes the pure-Java regression directly with the workflow's provisioned Java 21 before the real-client smoke; no shared test runner or workflow YAML was edited.

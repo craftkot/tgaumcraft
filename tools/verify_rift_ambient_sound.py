@@ -3,6 +3,8 @@
 from pathlib import Path
 import hashlib
 import json
+import subprocess
+import tempfile
 
 ROOT = Path("src/main/resources/assets/thaumcraft")
 EXPECTED_BLOB = "b44b6767fe855520eae55383992510da787d42f4"
@@ -330,6 +332,20 @@ for fragment in (
 crucible_test = Path("src/test/java/dev/ehtid/thaumcraft/port/core/LegacyCrucibleBubbleRulesTest.java").read_text()
 assert "public static void main(String[] args)" in crucible_test
 assert "BETA26 Crucible FXDispatcher.crucibleBubble" in crucible_test
+# CoreParityTest.java is currently owned by other open PRs; compile and execute
+# this pure-Java regression directly in the already provisioned Java 21 client job.
+with tempfile.TemporaryDirectory(prefix="thaumcraft-crucible-bubble-") as classes:
+    subprocess.run([
+        "javac", "-d", classes,
+        "src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyCrucibleBubbleRules.java",
+        "src/test/java/dev/ehtid/thaumcraft/port/core/LegacyCrucibleBubbleRulesTest.java",
+    ], check=True, capture_output=True, text=True)
+    result = subprocess.run([
+        "java", "-cp", classes,
+        "dev.ehtid.thaumcraft.port.core.LegacyCrucibleBubbleRulesTest",
+    ], check=True, capture_output=True, text=True)
+    assert "BETA26 Crucible FXDispatcher.crucibleBubble: OK (" in result.stdout
+    print(result.stdout.strip())
 
 crucible_block = Path("src/neoforge/java/dev/ehtid/thaumcraft/block/CrucibleBlock.java").read_text()
 assert "if (level.isClientSide)" in crucible_block
