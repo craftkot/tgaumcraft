@@ -2,6 +2,7 @@ package dev.ehtid.thaumcraft.block;
 
 import com.mojang.serialization.MapCodec;
 import dev.ehtid.thaumcraft.blockentity.CrucibleBlockEntity;
+import dev.ehtid.thaumcraft.blockentity.CrucibleBubbleClientEffects;
 import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -62,8 +63,12 @@ public final class CrucibleBlock extends BaseEntityBlock {
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
             Level level, BlockState state, BlockEntityType<T> type) {
-        return level.isClientSide ? null : createTickerHelper(type,
-                ThaumcraftBlockEntities.CRUCIBLE.get(),
+        if (level.isClientSide) {
+            return createTickerHelper(type, ThaumcraftBlockEntities.CRUCIBLE.get(),
+                    (world, pos, actualState, tile) ->
+                            CrucibleBubbleClientEffects.tick(world, pos, tile));
+        }
+        return createTickerHelper(type, ThaumcraftBlockEntities.CRUCIBLE.get(),
                 (world, pos, actualState, tile) -> {
                     if (world instanceof ServerLevel server)
                         CrucibleBlockEntity.serverTick(server, pos, actualState, tile);

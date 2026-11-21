@@ -315,4 +315,77 @@ for fragment in (
 ):
     assert fragment in driver, fragment
 
-print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal star shader, render-state and real-client audio contracts: PASS")
+
+# BETA26 TileCrucible.drawEffects -> FXDispatcher.crucibleBubble visual contract.
+crucible_rules = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyCrucibleBubbleRules.java").read_text()
+for fragment in (
+    "return roll == 0 && aspectCount > 0;",
+    "7.0D + 8.0D / (random * 0.8D + 0.2D)",
+    "random * 0.3F + 0.3F",
+    "return index == 0 ? 65 : 66;",
+    "return 64;",
+):
+    assert fragment in crucible_rules, fragment
+
+crucible_test = Path("src/test/java/dev/ehtid/thaumcraft/port/core/LegacyCrucibleBubbleRulesTest.java").read_text()
+assert "public static void main(String[] args)" in crucible_test
+assert "BETA26 Crucible FXDispatcher.crucibleBubble" in crucible_test
+
+crucible_block = Path("src/neoforge/java/dev/ehtid/thaumcraft/block/CrucibleBlock.java").read_text()
+assert "if (level.isClientSide)" in crucible_block
+assert "CrucibleBubbleClientEffects.tick(world, pos, tile)" in crucible_block
+
+crucible_effects = Path("src/neoforge/java/dev/ehtid/thaumcraft/blockentity/CrucibleBubbleClientEffects.java").read_text()
+for fragment in (
+    "LegacyCrucibleBubbleRules.shouldSpawn(random.nextInt(6), aspects.size())",
+    "LegacyCrucibleSurface.height(tile.waterMb(), aspects.visSize())",
+    "level.addParticle(CrucibleBubbleParticleRegistration.TYPE",
+    "TC_SMOKE_CRUCIBLE_BUBBLE_SPAWN=YES",
+):
+    assert fragment in crucible_effects, fragment
+
+crucible_particle = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/CrucibleBubbleParticle.java").read_text()
+for fragment in (
+    "private static final int GRID_SIZE = 64;",
+    "LegacyCrucibleBubbleRules.frame(this.age, this.lifetime)",
+    "this.gravity = -0.001F;",
+    "this.slowDown = 0.98D;",
+    "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",
+    "TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES",
+):
+    assert fragment in crucible_particle, fragment
+
+crucible_registration = Path("src/neoforge/java/dev/ehtid/thaumcraft/registry/CrucibleBubbleParticleRegistration.java").read_text()
+assert "new SimpleParticleType(false)" in crucible_registration
+assert 'fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "crucible_bubble")' in crucible_registration
+assert "Registries.PARTICLE_TYPE" in crucible_registration
+
+crucible_client_events = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/CrucibleBubbleParticleClientEvents.java").read_text()
+assert "RegisterParticleProvidersEvent" in crucible_client_events
+assert "event.registerSpriteSet" in crucible_client_events
+
+crucible_particle_spec = json.loads(Path("src/main/resources/assets/thaumcraft/particles/crucible_bubble.json").read_text())
+assert crucible_particle_spec["textures"] == ["thaumcraft:particles"]
+
+for marker in (
+    "TC_CRUCIBLE_PRESENT",
+    "TC_CRUCIBLE_BASELINE_READY",
+    "TC_CRUCIBLE_ASPECT_READY",
+    "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",
+    "TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES",
+    "capture crucible-bubble-before",
+    "capture crucible-bubble-after",
+):
+    assert marker in runtime_template, marker
+assert (
+    runtime_template.index("RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS")
+    < runtime_template.index("TC_CRUCIBLE_PRESENT")
+    < runtime_template.index("TC_CRUCIBLE_BASELINE_READY")
+    < runtime_template.index("capture crucible-bubble-before")
+    < runtime_template.index("TC_CRUCIBLE_ASPECT_READY")
+    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES")
+    < runtime_template.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES")
+    < runtime_template.index("capture crucible-bubble-after")
+), "Crucible bubble smoke must prove empty baseline, synced aspect state, and rendered particle"
+
+print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal shader/audio and BETA26 Crucible bubble real-client contracts: PASS")

@@ -481,6 +481,66 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS' | tee -a client-smoke-status.txt
+
+  # BETA26 TileCrucible.drawEffects -> FXDispatcher.crucibleBubble.
+  # Remove the Rift and resume world ticks; the audio acceptance above is complete.
+  send_chat '/kill @e[type=thaumcraft:flux_rift]'
+  send_chat '/tick unfreeze'
+
+  send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'
+  send_chat '/execute if block 20 64 2 thaumcraft:crucible run say TC_CRUCIBLE_PRESENT'
+  if ! wait_for_server_marker 'TC_CRUCIBLE_PRESENT'; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL crucible block was not placed' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat '/data merge block 20 64 2 {Heat:151s,Water:1000,Aspects:[]}'
+  send_chat '/execute if data block 20 64 2 {Heat:151s,Water:1000} run say TC_CRUCIBLE_BASELINE_READY'
+  if ! wait_for_server_marker 'TC_CRUCIBLE_BASELINE_READY'; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL empty-aspect water baseline was not accepted' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  send_chat_fast '/tp @p 22.5 67.5 2.5 90 55'
+  send_chat '/execute if entity @p[x=22,y=67,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'
+  if ! wait_for_server_marker 'TC_CRUCIBLE_CAMERA_READY'; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL overhead crucible camera was not acknowledged' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  sleep 1
+  capture crucible-bubble-before
+  test -s client-smoke/screenshots/crucible-bubble-before.png
+  if grep -Fq 'TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES' "$probe_log"; then
+    echo 'CRUCIBLE_BUBBLE_BASELINE=FAIL particle spawned with an empty aspect list' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+
+  crucible_log_offset="$(wc -c < "$probe_log")"
+  send_chat '/data merge block 20 64 2 {Aspects:[{key:"aer",amount:1}]}'
+  send_chat '/execute if data block 20 64 2 {Aspects:[{key:"aer",amount:1}]} run say TC_CRUCIBLE_ASPECT_READY'
+  if ! wait_for_server_marker 'TC_CRUCIBLE_ASPECT_READY'; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL aspect payload was not accepted by the server' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+
+  bubble_created_line=''
+  bubble_rendered_line=''
+  for _ in $(seq 1 80); do
+    bubble_created_line="$(tail -c +$((crucible_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES' | head -n 1 || true)"
+    bubble_rendered_line="$(tail -c +$((crucible_log_offset + 1)) "$probe_log" | grep -F 'TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES' | head -n 1 || true)"
+    if [ -n "$bubble_created_line" ] && [ -n "$bubble_rendered_line" ]; then break; fi
+    sleep 0.25
+  done
+  if [ -z "$bubble_created_line" ] || [ -z "$bubble_rendered_line" ]; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL no created-and-rendered particle after aspect sync' | tee -a client-smoke-status.txt
+    tail -120 "$probe_log" >&2 || true
+    exit 1
+  fi
+  if grep -Fq 'Unknown particle type thaumcraft:crucible_bubble' "$probe_log"; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL particle type was not registered' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  capture crucible-bubble-after
+  test -s client-smoke/screenshots/crucible-bubble-after.png
+  echo "CRUCIBLE_BUBBLE_REAL_CLIENT=PASS $bubble_created_line | $bubble_rendered_line" | tee -a client-smoke-status.txt
 '''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
 high_teleport_probe = "send_chat_fast '/execute if entity @p[x=3,y=150,z=12,dx=1,dy=250,dz=1] run say TC_RIFT_HIGH_TELEPORT_PRESENT'"
@@ -538,4 +598,27 @@ for required_marker in (
 ):
     if probe.count(required_marker) < 2:
         raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)
+crucible_set_command = "send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'"
+crucible_baseline_command = "send_chat '/data merge block 20 64 2 {Heat:151s,Water:1000,Aspects:[]}'"
+crucible_aspects_command = "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
+if any(probe.count(command) != 1 for command in (
+    crucible_set_command, crucible_baseline_command, crucible_aspects_command,
+    "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
+    "capture crucible-bubble-after",
+)):
+    raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state")
+if not (
+    probe.index("RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS")
+    < probe.index("send_chat '/kill @e[type=thaumcraft:flux_rift]'")
+    < probe.index("send_chat '/tick unfreeze'")
+    < probe.index(crucible_set_command)
+    < probe.index("TC_CRUCIBLE_PRESENT")
+    < probe.index(crucible_baseline_command)
+    < probe.index("capture crucible-bubble-before")
+    < probe.index(crucible_aspects_command)
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES")
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES")
+    < probe.index("capture crucible-bubble-after")
+):
+    raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
 print(generated_script)
