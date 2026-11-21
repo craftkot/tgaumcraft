@@ -47,6 +47,8 @@ checks = {
     "rejected leaf writes fail placement and trigger rollback": "rejectedLeafWrite[0] = true;" in source
                           and "if (rejectedLeafWrite[0] || rejectedLogWrite[0] || attemptedLogs[0] == 0 || writtenLogs.size() != attemptedLogs[0])" in source,
     "failed preflight returns false": "return false;" in source,
+    "placement failure never self-suppressed": "if (rollbackFailure != failure) failure.addSuppressed(rollbackFailure);" in source,
+    "two rollback failures never self-suppressed": "if (canopyFailure != trunkFailure) trunkFailure.addSuppressed(canopyFailure);" in source,
     "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
 }
 for name, ok in checks.items():
