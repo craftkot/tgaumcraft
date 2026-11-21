@@ -132,10 +132,28 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                                  Map<BlockPos, BlockState> writtenLogs,
                                  Map<BlockPos, BlockState> originalLeaves,
                                  BlockState leaves) {
-        SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
-                level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
-        SilverwoodCanopyRollback.restore(originalLeaves, leaves,
-                level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
+        // A trunk rollback read/write may fail. Still attempt the independent
+        // canopy cleanup rather than abandoning every remaining leaf.
+        RuntimeException trunkFailure = null;
+        try {
+            SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
+                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
+        } catch (RuntimeException failure) {
+            trunkFailure = failure;
+        }
+        try {
+            SilverwoodCanopyRollback.restore(originalLeaves, leaves,
+                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
+        } catch (RuntimeException canopyFailure) {
+            if (trunkFailure != null) {
+                trunkFailure.addSuppressed(canopyFailure);
+            } else {
+                throw canopyFailure;
+            }
+        }
+        if (trunkFailure != null) {
+            throw trunkFailure;
+        }
     }
 
     /**
