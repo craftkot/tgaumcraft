@@ -87,6 +87,28 @@ public final class SilverwoodLegacyTreeTest {
                 assertions += 4;
             }
         }
+        // A log-phase failure must propagate immediately; do not continue writing
+        // later trunk/root positions after a failed world write. Pure-core only.
+        for (int height = 7; height <= 10; height++) {
+            int[] attemptedLogs = {0};
+            int[] canopyWrites = {0};
+            try {
+                SilverwoodLegacyTree.place(8, 70, 8, height, new Random(20261121L),
+                        (x, y, z) -> true,
+                        (x, y, z) -> canopyWrites[0]++,
+                        (x, y, z, meta) -> {
+                            attemptedLogs[0]++;
+                            throw new IllegalStateException("failed log write");
+                        });
+                throw new AssertionError("failed log write was swallowed");
+            } catch (IllegalStateException expected) {
+                check("failed log write".equals(expected.getMessage()),
+                        "wrong log failure");
+                check(attemptedLogs[0] == 1, "continued writing logs after failure");
+                check(canopyWrites[0] > 0, "log phase started without canopy");
+                assertions += 3;
+            }
+        }
         // Invalid callback contracts must fail before consuming the RNG or writing blocks.
         for (int missing = 0; missing < 4; missing++) {
             Random untouched = new Random(20261121L);
