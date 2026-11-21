@@ -6,6 +6,9 @@ package dev.ehtid.thaumcraft.port.core.visual;
  * one aspect are present; its texture frames are cells 64, 65 and 66.
  */
 public final class LegacyCrucibleBubbleRules {
+    /** FXGeneric constructor default in BETA26; crucibleBubble does not override it. */
+    public static final double DEFAULT_SLOW_DOWN = 0.9800000190734863D;
+
     private LegacyCrucibleBubbleRules() {}
 
     public static boolean shouldSpawn(int roll, int aspectCount) {
