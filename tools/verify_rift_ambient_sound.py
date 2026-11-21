@@ -435,5 +435,6 @@ shot_test = subprocess.run(
     check=True, capture_output=True, text=True,
 )
 assert "Crucible screenshot verifier self-test: PASS" in shot_test.stdout
+assert "no-change rejection" in shot_test.stdout
 print(shot_test.stdout.strip())
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal shader/audio and BETA26 Crucible bubble real-client contracts: PASS")
