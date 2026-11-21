@@ -357,8 +357,10 @@ public final class FluxRiftEntity extends Entity {
             wisp.setAspectType("vitium");
         }
 
-        RandomSource checkRandom = spawnCheckRandom == null ? wisp.random : spawnCheckRandom;
-        if (!wisp.canSpawnFromRift(checkRandom) || !level().addFreshEntity(wisp)) {
+        boolean spawnAllowed = spawnCheckRandom == null
+                ? wisp.canSpawnFromRift()
+                : wisp.canSpawnFromRift(spawnCheckRandom);
+        if (!spawnAllowed || !level().addFreshEntity(wisp)) {
             return false;
         }
 
