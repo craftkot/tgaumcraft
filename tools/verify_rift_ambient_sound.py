@@ -320,6 +320,9 @@ for fragment in (
 
 # BETA26 TileCrucible.drawEffects -> FXDispatcher.crucibleBubble visual contract.
 crucible_rules = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyCrucibleBubbleRules.java").read_text()
+assert "public static final double DEFAULT_SLOW_DOWN = 0.9800000190734863D;" in crucible_rules
+assert "Double.doubleToRawLongBits(LegacyCrucibleBubbleRules.DEFAULT_SLOW_DOWN)" in crucible_test
+assert "0x3fef5c2900000000L" in crucible_test
 for fragment in (
     "return roll == 0 && aspectCount > 0;",
     "return 15 + randomRoll;",
@@ -367,7 +370,7 @@ for fragment in (
     "LegacyCrucibleBubbleRules.frame(this.age, this.lifetime)",
     "LegacyCrucibleBubbleRules.lifetime(level.random.nextInt(10))",
     "this.gravity = -0.001F;",
-    "private final double slowDown = 0.98D;",
+    "private final double slowDown = LegacyCrucibleBubbleRules.DEFAULT_SLOW_DOWN;",
     "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",
     "TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES",
 ):
