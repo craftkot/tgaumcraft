@@ -6,6 +6,7 @@ import sys
 
 # Run the loader-neutral BETA26 froth contract before generating the real-client script.
 subprocess.run(["bash", "tools/test_crucible_froth_rules.sh"], check=True, stdout=sys.stderr, stderr=sys.stderr)
+subprocess.run(["python3", "tools/m16/test_rift_shader_camera.py"], check=True, stdout=sys.stderr, stderr=sys.stderr)
 
 full_source = Path("tools/client_smoke.sh").read_text()
 source = full_source
@@ -315,6 +316,13 @@ probe = r'''
     exit 1
   fi
   echo 'RIFT_SHADER=PASS registered=YES sampler=Sampler0' | tee -a client-smoke-status.txt
+  if ! python3 tools/m16/verify_rift_shader_camera.py "$render_probe_log" \
+      --yaw-degrees "$rift_visual_yaw" \
+      --pitch-degrees "$rift_visual_pitch" >> client-smoke-status.txt 2>&1; then
+    tail -100 "$render_probe_log" >&2 || true
+    tail -40 client-smoke-status.txt >&2 || true
+    exit 1
+  fi
   for _ in $(seq 1 40); do
     if grep -Fq 'TC_SMOKE_RIFT_RENDER_LAYER=PASS' "$render_probe_log"; then break; fi
     sleep 0.25
