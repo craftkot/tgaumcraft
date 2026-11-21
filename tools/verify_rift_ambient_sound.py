@@ -424,10 +424,16 @@ assert (
 shot_verifier = Path("tools/verify_crucible_bubble_screenshots.py").read_text()
 for fragment in (
     "def center_pixels",
+    "def crucible_pixels",
+    "def yellow_mask",
+    "def component_sizes",
     "def verify_images",
-    "yellow_delta < 2",
+    "bubble_pixel_count < 6",
+    "not visible_components",
     "mean_luma",
     "identical before/after images must fail closed",
+    "yellow pixels outside the Crucible ROI must not pass",
+    "one yellow pixel must not pass as a bubble",
 ):
     assert fragment in shot_verifier, fragment
 shot_test = subprocess.run(
@@ -435,6 +441,6 @@ shot_test = subprocess.run(
     check=True, capture_output=True, text=True,
 )
 assert "Crucible screenshot verifier self-test: PASS" in shot_test.stdout
-assert "no-change rejection" in shot_test.stdout
+assert "one bowl bubble cluster" in shot_test.stdout
 print(shot_test.stdout.strip())
 print(f"BETA26 Flux Rift evilportal.ogg blob={blob}, original end-portal shader/audio and BETA26 Crucible bubble real-client contracts: PASS")
