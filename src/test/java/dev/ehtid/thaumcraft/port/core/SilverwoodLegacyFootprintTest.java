@@ -27,6 +27,18 @@ public final class SilverwoodLegacyFootprintTest {
         check(SilverwoodLegacyFootprint.withinChunk(-12, -8, -1, -1), true);
         check(SilverwoodLegacyFootprint.withinChunk(-4, -8, -1, -1), false);
         check(SilverwoodLegacyFootprint.withinChunk(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, 0), false);
+        // Extreme signed chunk coordinates must not overflow the 16-block origin math.
+        check(SilverwoodLegacyFootprint.withinChunk(Integer.MIN_VALUE, 8, Integer.MIN_VALUE, 0), false);
+        check(SilverwoodLegacyFootprint.withinChunk(Integer.MAX_VALUE, 8, Integer.MAX_VALUE, 0), false);
+        check(SilverwoodLegacyFootprint.withinChunk(Integer.MIN_VALUE + 8, 8, Integer.MIN_VALUE / 16, 0), true);
+        check(SilverwoodLegacyFootprint.withinChunk(Integer.MAX_VALUE - 8, 8, Integer.MAX_VALUE / 16, 0), true);
+        check(SilverwoodLegacyFootprint.withinChunk(-8, -8, 0, -1), false);
+        check(SilverwoodLegacyFootprint.withinChunk(8, 8, -1, 0), false);
+        // Even an extreme dimension range must reject overflowing vertical footprints.
+        check(SilverwoodLegacyFootprint.withinBuildHeight(Integer.MAX_VALUE, 7,
+                Integer.MIN_VALUE, Integer.MAX_VALUE), false);
+        check(SilverwoodLegacyFootprint.withinBuildHeight(Integer.MIN_VALUE, 7,
+                Integer.MIN_VALUE, Integer.MAX_VALUE), false);
         // Archived 9x9 origin distribution: x/z offsets 4..12 within each chunk.
         // Reachable canopy writes extend +/-4; safe offsets are 4..11.
         // Lock down this known parity loss until cross-chunk placement is coordinated.
