@@ -566,17 +566,16 @@ probe = r'''
 
   # BETA26 TileCrucible.drawEffects hot-surface froth and >500-Vis overflow.
   froth_log_offset="$(wc -c < "$probe_log")"
-  send_chat '/setblock 20 63 2 minecraft:magma_block'
+  send_chat_fast '/setblock 20 63 2 minecraft:magma_block'
   send_chat_fast '/data merge block 20 64 2 {Heat:200s,Water:1000,Aspects:[{key:"aer",amount:2000}]}'
   send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:2000}] run say TC_CRUCIBLE_FROTH_ASPECT_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_FROTH_ASPECT_READY'; then
     echo 'CRUCIBLE_FROTH_REAL_CLIENT=FAIL high-Vis hot-water payload was not accepted' | tee -a client-smoke-status.txt
     exit 1
   fi
-  # BETA26 spillRandom removes one aspect each server tick while visSize > 500.
-  # Freeze server simulation after the authoritative NBT marker; client particles
-  # continue ticking/rendering against the synchronized 2000-Vis state.
-  send_chat_fast '/tick freeze'
+  # BETA26 spillRandom removes one aspect per server tick while visSize > 500.
+  # A 2000-Vis fixture leaves a 75-second margin; the Crucible is removed after
+  # capture so the rest of the shared client smoke can continue ticking normally.
 
   froth_created_line=''
   froth_rendered_line=''
@@ -604,6 +603,7 @@ probe = r'''
   fi
   capture crucible-froth-after
   test -s client-smoke/screenshots/crucible-froth-after.png
+  send_chat_fast '/setblock 20 64 2 minecraft:air'
   echo "CRUCIBLE_FROTH_REAL_CLIENT=PASS $froth_created_line | $froth_rendered_line | $froth_down_created_line | $froth_down_rendered_line" | tee -a client-smoke-status.txt
 '''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
@@ -667,15 +667,15 @@ crucible_baseline_command = "send_chat '/data merge block 20 64 2 {Heat:151s,Wat
 crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
 crucible_aspects_command = "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
 crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
-crucible_froth_heater_command = "send_chat '/setblock 20 63 2 minecraft:magma_block'"
+crucible_froth_heater_command = "send_chat_fast '/setblock 20 63 2 minecraft:magma_block'"
 crucible_froth_aspects_command = "send_chat_fast '/data merge block 20 64 2 {Heat:200s,Water:1000,Aspects:[{key:\"aer\",amount:2000}]}'"
 crucible_froth_aspects_probe = """send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:2000}] run say TC_CRUCIBLE_FROTH_ASPECT_READY'"""
-crucible_froth_freeze_command = "send_chat_fast '/tick freeze'"
+crucible_froth_cleanup_command = "send_chat_fast '/setblock 20 64 2 minecraft:air'"
 if any(probe.count(command) != 1 for command in (
     crucible_set_command, crucible_baseline_command, crucible_baseline_probe,
     crucible_aspects_command, crucible_aspects_probe,
     crucible_froth_heater_command, crucible_froth_aspects_command, crucible_froth_aspects_probe,
-    crucible_froth_freeze_command, "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
+    crucible_froth_cleanup_command, "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
     "capture crucible-bubble-after", "capture crucible-froth-after",
 )):
     raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state with valid NBT paths")
@@ -702,12 +702,13 @@ if not (
     < probe.index(crucible_froth_aspects_command)
     < probe.index(crucible_froth_aspects_probe)
     < probe.index("TC_CRUCIBLE_FROTH_ASPECT_READY")
-    < probe.index(crucible_froth_freeze_command)
     < probe.index("TC_SMOKE_CRUCIBLE_FROTH_CREATED=YES", probe.index(crucible_froth_aspects_probe))
     < probe.index("TC_SMOKE_CRUCIBLE_FROTH_RENDERED=YES", probe.index(crucible_froth_aspects_probe))
     < probe.index("TC_SMOKE_CRUCIBLE_FROTH_DOWN_CREATED=YES", probe.index(crucible_froth_aspects_probe))
     < probe.index("TC_SMOKE_CRUCIBLE_FROTH_DOWN_RENDERED=YES", probe.index(crucible_froth_aspects_probe))
     < probe.index("capture crucible-froth-after")
+    < probe.index(crucible_froth_cleanup_command)
+    < probe.index("CRUCIBLE_FROTH_REAL_CLIENT=PASS")
 ):
     raise SystemExit("Crucible bubble/froth smoke must verify empty, aspect-bearing and frozen high-Vis states in order")
 fixture_commands = (
@@ -717,8 +718,8 @@ fixture_commands = (
     "send_chat '/fill 18 63 0 24 63 4 minecraft:stone'",
     "send_chat '/fill 18 64 0 24 72 4 minecraft:air'",
     "send_chat '/setblock 20 64 1 minecraft:glowstone'",
-    "send_chat '/setblock 20 63 2 minecraft:magma_block'",
-    "send_chat_fast '/tick freeze'",
+    "send_chat_fast '/setblock 20 63 2 minecraft:magma_block'",
+    "send_chat_fast '/setblock 20 64 2 minecraft:air'",
     "send_chat '/setblock 22 67 2 minecraft:stone'",
     "send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'",
     "send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'",
