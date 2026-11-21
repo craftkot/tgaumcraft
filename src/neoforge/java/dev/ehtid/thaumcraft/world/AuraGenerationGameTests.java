@@ -316,7 +316,16 @@ public final class AuraGenerationGameTests {
             System.out.println("TC_GAMETEST_FLUX_RIFT_THRESHOLD=PASS exact_size=5 no_spawn=YES no_debit=YES");
 
             int nearChunkX = chunkX + 128;
+            ChunkPos nearbyChunk = new ChunkPos(nearChunkX, chunkZ);
+            // Keep the asynchronous blocker fixture in a ticking chunk. Loading
+            // once with getChunk() is not a ticket and the chunk may unload before
+            // EntityManager publishes/ticks the newly added Rift.
+            level.getChunkSource().addRegionTicket(
+                    FLUX_RIFT_TEST_TICKET, nearbyChunk, 2, nearbyChunk, true);
             level.getChunk(nearChunkX, chunkZ);
+            if (level.getChunkSource().getChunkNow(nearChunkX, chunkZ) == null) {
+                throw new AssertionError("Nearby Rift blocker fixture chunk did not load");
+            }
             BlockPos nearSample = new BlockPos(nearChunkX * 16 + 8, 0, chunkZ * 16 + 8);
             ThaumcraftAuraSavedData nearby = new ThaumcraftAuraSavedData();
             nearby.putChunk(nearSample, (short) 100, 0.0F, 1000.0F);
@@ -338,20 +347,25 @@ public final class AuraGenerationGameTests {
             AABB blockerSearchArea = FluxRiftSpawnEvents.nearbyRiftBounds(
                     new BlockPos(centerX, surface.getY(), centerZ));
             awaitFluxRiftRegistration(helper, level, blockerSearchArea, blocker, 20, () -> {
-                BlockPos expectedSpawnCenter = new BlockPos(centerX, surface.getY(), centerZ);
-                if (!FluxRiftSpawnEvents.hasNearbyRift(level, expectedSpawnCenter)) {
-                    throw new AssertionError("Nearby Rift fixture was not visible to the production spatial query");
-                }
+                try {
+                    BlockPos expectedSpawnCenter = new BlockPos(centerX, surface.getY(), centerZ);
+                    if (!FluxRiftSpawnEvents.hasNearbyRift(level, expectedSpawnCenter)) {
+                        throw new AssertionError("Nearby Rift fixture was not visible to the production spatial query");
+                    }
 
-                boolean duplicateSpawned = FluxRiftSpawnEvents.trySpawnRift(
-                        level, nearby, new BlockPos(nearChunkX * 16, 0, chunkZ * 16));
-                if (duplicateSpawned || Math.abs(nearby.getFlux(nearSample) - 1000.0F) > 0.001F) {
-                    throw new AssertionError("Nearby Rift guard did not reject spawn before Flux debit");
+                    boolean duplicateSpawned = FluxRiftSpawnEvents.trySpawnRift(
+                            level, nearby, new BlockPos(nearChunkX * 16, 0, chunkZ * 16));
+                    if (duplicateSpawned || Math.abs(nearby.getFlux(nearSample) - 1000.0F) > 0.001F) {
+                        throw new AssertionError("Nearby Rift guard did not reject spawn before Flux debit");
+                    }
+                    System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCKER_REGISTERED=PASS query_visible=YES chunk_loaded=YES entity_ticks=YES");
+                    System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
+                    System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
+                } finally {
+                    blocker.discard();
+                    level.getChunkSource().removeRegionTicket(
+                            FLUX_RIFT_TEST_TICKET, nearbyChunk, 2, nearbyChunk);
                 }
-                blocker.discard();
-                System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCKER_REGISTERED=PASS query_visible=YES");
-                System.out.println("TC_GAMETEST_FLUX_RIFT_NEARBY_GUARD=PASS radius=32 no_spawn=YES no_debit=YES");
-                System.out.println("TC_GAMETEST_FLUX_RIFT_SPAWN_ACCEPTED=YES");
                 awaitFluxRiftStabilityDecay(helper, level, riftChunk, rift, initialStabilityBucket, 10.0F, 130);
             });
         });
@@ -1550,7 +1564,10 @@ public final class AuraGenerationGameTests {
         helper.runAfterDelay(1L, () -> {
             var registered = level.getEntity(rift.getUUID());
             var matches = level.getEntitiesOfClass(FluxRiftEntity.class, searchArea);
-            if (registered == rift && !rift.isRemoved()
+            boolean chunkLoaded = level.getChunkSource().getChunkNow(
+                    rift.blockPosition().getX() >> 4,
+                    rift.blockPosition().getZ() >> 4) != null;
+            if (registered == rift && !rift.isRemoved() && chunkLoaded && rift.tickCount > 0
                     && matches.size() == 1 && matches.get(0) == rift) {
                 continuation.run();
                 return;
@@ -1558,10 +1575,7 @@ public final class AuraGenerationGameTests {
 
             if (remainingTicks <= 1) {
                 AABB bounds = rift.getBoundingBox();
-                boolean chunkLoaded = level.getChunkSource().getChunkNow(
-                        rift.blockPosition().getX() >> 4,
-                        rift.blockPosition().getZ() >> 4) != null;
-                throw new AssertionError("Flux Rift did not become visible in the entity manager within 20 ticks: entities="
+                throw new AssertionError("Flux Rift did not become visible in the ticking entity manager within 20 ticks: entities="
                         + matches.size() + " directPresent=" + (registered == rift)
                         + " removed=" + rift.isRemoved() + " entityTicks=" + rift.tickCount
                         + " chunkLoaded=" + chunkLoaded + " pos=" + rift.position()
