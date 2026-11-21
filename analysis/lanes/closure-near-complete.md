@@ -3031,3 +3031,5 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Follow-up review of the generated-script self-check found an orphaned duplicate ordering tail left by the first patch. Removed it in the immediate follow-up commit before treating any new CI as evidence; the first patch had not produced a new workflow result.
 
 - A second static-review correction: the verifier initially counted the probe literal in the generator's self-check as well as in the runtime template. Changed its uniqueness assertions to inspect runtime_template only, where each command must occur exactly once. The 874632d run was queued before this correction; its result will not be used as evidence for the final commit.
+
+- Third preflight correction: the verifier's negative check also searched the full Python generator source, which necessarily contains the rejected SNBT strings in its own fail-closed self-check. Scoped those negative checks to runtime_template as well, so they inspect emitted runtime commands rather than source literals. This was caught before accepting the queued 663cd0d run.

@@ -391,8 +391,8 @@ crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if d
 crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
 assert runtime_template.count(crucible_baseline_probe) == 1
 assert runtime_template.count(crucible_aspects_probe) == 1
-assert "execute if data block 20 64 2 {Heat:" not in driver
-assert "execute if data block 20 64 2 {Aspects:" not in driver
+assert "execute if data block 20 64 2 {Heat:" not in runtime_template
+assert "execute if data block 20 64 2 {Aspects:" not in runtime_template
 
 for marker in (
     "TC_CRUCIBLE_PRESENT",
