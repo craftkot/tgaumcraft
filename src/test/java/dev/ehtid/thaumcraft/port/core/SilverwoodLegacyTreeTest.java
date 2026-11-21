@@ -87,6 +87,28 @@ public final class SilverwoodLegacyTreeTest {
                 assertions += 4;
             }
         }
+        // A leaf writer failure must abort the canopy before the trunk phase.
+        // This is a callback-level regression, not a native world rollback test.
+        for (int height = 7; height <= 10; height++) {
+            int[] leafWrites = {0};
+            int[] logWrites = {0};
+            try {
+                SilverwoodLegacyTree.place(8, 70, 8, height, new Random(20261121L),
+                        (x, y, z) -> true,
+                        (x, y, z) -> {
+                            leafWrites[0]++;
+                            throw new IllegalStateException("failed leaf write");
+                        },
+                        (x, y, z, meta) -> logWrites[0]++);
+                throw new AssertionError("failed leaf write was swallowed");
+            } catch (IllegalStateException expected) {
+                check("failed leaf write".equals(expected.getMessage()),
+                        "wrong leaf write failure");
+                check(leafWrites[0] == 1, "continued writing leaves after failure");
+                check(logWrites[0] == 0, "trunk phase entered after failed leaf write");
+                assertions += 3;
+            }
+        }
         // A log-phase failure must propagate immediately; do not continue writing
         // later trunk/root positions after a failed world write. Pure-core only.
         for (int height = 7; height <= 10; height++) {
