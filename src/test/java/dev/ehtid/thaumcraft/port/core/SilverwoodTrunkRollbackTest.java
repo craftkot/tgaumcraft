@@ -88,7 +88,36 @@ public final class SilverwoodTrunkRollbackTest {
         check(rejectedCalls[0] == 2, "Rejected first restoration does not abort later writes");
         check(rejectedWorld.get(1).equals("LOG_Y"), "Rejected log remains untouched");
         check(rejectedWorld.get(2).equals("WATER"), "Later log is restored despite first rejection");
-        System.out.println("SilverwoodTrunkRollbackTest: OK (17 assertions)");
+        // A null journal value must be rejected before any block is touched,
+        // even when the corrupt entry follows a valid trunk position.
+        Map<Integer, String> nullWritten = new LinkedHashMap<>();
+        nullWritten.put(1, "LOG_Y");
+        nullWritten.put(2, null);
+        Map<Integer, String> nullOriginals = new LinkedHashMap<>();
+        nullOriginals.put(1, "AIR");
+        nullOriginals.put(2, null);
+        final int[] corruptWrites = {0};
+        boolean nullWrittenRejected = false;
+        try {
+            SilverwoodTrunkRollback.restore(Map.of(1, "AIR", 2, "WATER"),
+                    nullWritten, pos -> "LOG_Y",
+                    (pos, state) -> { corruptWrites[0]++; return true; });
+        } catch (NullPointerException expected) {
+            nullWrittenRejected = true;
+        }
+        check(nullWrittenRejected, "Null written state rejected");
+        check(corruptWrites[0] == 0, "Null written state fails before any write");
+        boolean nullOriginalRejected = false;
+        try {
+            SilverwoodTrunkRollback.restore(nullOriginals,
+                    Map.of(1, "LOG_Y", 2, "LOG_X"), pos -> "LOG_Y",
+                    (pos, state) -> { corruptWrites[0]++; return true; });
+        } catch (NullPointerException expected) {
+            nullOriginalRejected = true;
+        }
+        check(nullOriginalRejected, "Null original state rejected");
+        check(corruptWrites[0] == 0, "Null original state fails before any write");
+        System.out.println("SilverwoodTrunkRollbackTest: OK (21 assertions)");
     }
 
     private static void check(boolean condition, String message) {
