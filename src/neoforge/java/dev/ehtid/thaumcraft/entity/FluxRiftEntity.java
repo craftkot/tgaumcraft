@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.port.core.ResearchProgressionService;
 import dev.ehtid.thaumcraft.port.core.WarpType;
 import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
+import dev.ehtid.thaumcraft.registry.FluxInfectionEffectRegistration;
 import dev.ehtid.thaumcraft.registry.VoidSeedItemRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
@@ -49,9 +50,9 @@ import java.util.List;
  * This slice ports the synced seed/size/stability/collapse state, source-seeded
  * polycone geometry, per-tick segment block destruction/entity damage/item removal,
  * timed stability decay, and the BETA26 collapse countdown/aura/explosion phase.
- * Flux-driven growth, weighted event selection, pearl and void-seed rewards, Flux Taint,
- * Weakness and player Warp are implemented. Wisp, taint-seed, infection and focus events
- * remain separate follow-up work.
+ * Flux-driven growth, weighted event selection, pearl and void-seed rewards, collapse
+ * effects, and the BETA26 Infectious Vis Exhaust event are implemented. Wisp, taint-seed,
+ * and focus events remain separate follow-up work.
  * This entity is not full parity.
  */
 public final class FluxRiftEntity extends Entity {
@@ -291,15 +292,33 @@ public final class FluxRiftEntity extends Entity {
     }
 
     /**
-     * Resolves the original five weighted entries. Only event 4 (begin collapse)
-     * has its required ported foundation; events 0-3 intentionally remain no-ops
-     * until their Wisp, Taint Seed, potion and focus systems exist.
+     * Resolves the original five weighted entries. Event 2 is the BETA26
+     * Infectious Vis Exhaust pulse; event 4 begins collapse. Wisp, Taint Seed,
+     * and focus events remain independent follow-up work.
      *
      * @return the BETA26 event id selected by the original weight table
      */
     int executeWeightedEvent(double weightedRoll) {
         int event = LegacyFluxRiftEventLogic.selectWeightedEvent(weightedRoll);
-        if (event == 4) {
+        if (event == 2 && level() instanceof ServerLevel serverLevel) {
+            // BETA26 EntityFluxRift.executeRiftEvent case 2 queries the Rift's
+            // actual bounding box grown by 16, not a point-centred sphere.
+            List<LivingEntity> targets = serverLevel.getEntitiesOfClass(
+                    LivingEntity.class, getBoundingBox().inflate(16.0D));
+            if (!targets.isEmpty()) {
+                for (LivingEntity target : targets) {
+                    try {
+                        target.addEffect(new MobEffectInstance(
+                                FluxInfectionEffectRegistration.infectious(), 3000, 2));
+                    } catch (Exception ignored) {
+                        // BETA26 isolates addPotionEffect failures per target.
+                    }
+                }
+                // FluxEventEntry(2, 20, 10, true): the cost is paid once when
+                // at least one living target was found, even if an add failed.
+                setRiftStability(getRiftStability() + 10.0F);
+            }
+        } else if (event == 4) {
             setCollapse(true);
         }
         return event;
