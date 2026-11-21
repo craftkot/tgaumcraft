@@ -508,6 +508,9 @@ probe = r'''
     exit 1
   fi
   # Aim the crosshair at the crucible surface from a clear east-side camera.
+  # Support the camera during the asynchronous chat/marker round-trip; without
+  # this block the player falls from Y=68.5 and the strict Y=68 selector misses.
+  send_chat '/setblock 22 67 2 minecraft:stone'
   send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'
   send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_CAMERA_READY'; then
@@ -651,6 +654,7 @@ fixture_commands = (
     "send_chat '/fill 18 63 0 24 63 4 minecraft:stone'",
     "send_chat '/fill 18 64 0 24 72 4 minecraft:air'",
     "send_chat '/setblock 20 64 1 minecraft:glowstone'",
+    "send_chat '/setblock 22 67 2 minecraft:stone'",
     "send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'",
     "send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'",
     "python3 tools/verify_crucible_bubble_screenshots.py",
@@ -666,6 +670,7 @@ if not (
     < probe.index("send_chat '/setblock 20 64 1 minecraft:glowstone'")
     < probe.index("TC_CRUCIBLE_PRESENT")
     < probe.index("TC_CRUCIBLE_BASELINE_READY")
+    < probe.index("send_chat '/setblock 22 67 2 minecraft:stone'")
     < probe.index("send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'")
     < probe.index("TC_CRUCIBLE_CAMERA_READY")
     < probe.index("capture crucible-bubble-before")
