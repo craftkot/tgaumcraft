@@ -385,6 +385,15 @@ assert "event.registerSpriteSet" in crucible_client_events
 crucible_particle_spec = json.loads(Path("src/main/resources/assets/thaumcraft/particles/crucible_bubble.json").read_text())
 assert crucible_particle_spec["textures"] == ["thaumcraft:particles"]
 
+# /execute if data consumes NBT paths. A compound SNBT literal is valid for
+# /data merge, but invalid as the path argument to /execute if data.
+crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
+crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
+assert driver.count(crucible_baseline_probe) == 1
+assert driver.count(crucible_aspects_probe) == 1
+assert "execute if data block 20 64 2 {Heat:" not in driver
+assert "execute if data block 20 64 2 {Aspects:" not in driver
+
 for marker in (
     "TC_CRUCIBLE_PRESENT",
     "TC_CRUCIBLE_BASELINE_READY",

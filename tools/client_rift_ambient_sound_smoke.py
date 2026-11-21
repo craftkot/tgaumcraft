@@ -494,7 +494,8 @@ probe = r'''
     exit 1
   fi
   send_chat '/data merge block 20 64 2 {Heat:151s,Water:1000,Aspects:[]}'
-  send_chat '/execute if data block 20 64 2 {Heat:151s,Water:1000} run say TC_CRUCIBLE_BASELINE_READY'
+  # /execute if data accepts an NBT path, not an SNBT compound literal.
+  send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_BASELINE_READY'; then
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL empty-aspect water baseline was not accepted' | tee -a client-smoke-status.txt
     exit 1
@@ -515,7 +516,8 @@ probe = r'''
 
   crucible_log_offset="$(wc -c < "$probe_log")"
   send_chat '/data merge block 20 64 2 {Aspects:[{key:"aer",amount:1}]}'
-  send_chat '/execute if data block 20 64 2 {Aspects:[{key:"aer",amount:1}]} run say TC_CRUCIBLE_ASPECT_READY'
+  # Match the compound with an NBT list-filter path.
+  send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_ASPECT_READY'; then
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL aspect payload was not accepted by the server' | tee -a client-smoke-status.txt
     exit 1
@@ -600,13 +602,18 @@ for required_marker in (
         raise SystemExit("Rift listener smoke lacks fail-closed runtime marker: " + required_marker)
 crucible_set_command = "send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'"
 crucible_baseline_command = "send_chat '/data merge block 20 64 2 {Heat:151s,Water:1000,Aspects:[]}'"
+crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
 crucible_aspects_command = "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
+crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
 if any(probe.count(command) != 1 for command in (
-    crucible_set_command, crucible_baseline_command, crucible_aspects_command,
+    crucible_set_command, crucible_baseline_command, crucible_baseline_probe,
+    crucible_aspects_command, crucible_aspects_probe,
     "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
     "capture crucible-bubble-after",
 )):
-    raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state")
+    raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state with valid NBT paths")
+if "execute if data block 20 64 2 {Heat:" in probe or "execute if data block 20 64 2 {Aspects:" in probe:
+    raise SystemExit("execute if data must use NBT paths, not SNBT compound literals")
 if not (
     probe.index("RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS")
     < probe.index("send_chat '/kill @e[type=thaumcraft:flux_rift]'")
@@ -614,9 +621,18 @@ if not (
     < probe.index(crucible_set_command)
     < probe.index("TC_CRUCIBLE_PRESENT")
     < probe.index(crucible_baseline_command)
+    < probe.index(crucible_baseline_probe)
+    < probe.index("TC_CRUCIBLE_BASELINE_READY")
     < probe.index("capture crucible-bubble-before")
     < probe.index(crucible_aspects_command)
-    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", probe.index(crucible_aspects_command))
+    < probe.index(crucible_aspects_probe)
+    < probe.index("TC_CRUCIBLE_ASPECT_READY")
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", probe.index(crucible_aspects_probe))
+    < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_probe))
+    < probe.index("capture crucible-bubble-after")
+):
+    raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
+print(generated_script)
     < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_command))
     < probe.index("capture crucible-bubble-after")
 ):
