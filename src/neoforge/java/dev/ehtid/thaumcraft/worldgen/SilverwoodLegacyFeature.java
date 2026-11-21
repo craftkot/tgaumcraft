@@ -113,7 +113,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
             try {
                 rollback(level, originalLogs, writtenLogs, originalLeaves, leaves);
             } catch (RuntimeException rollbackFailure) {
-                failure.addSuppressed(rollbackFailure);
+                // The world callback may reuse the same exception instance. Java
+                // forbids self-suppression; preserve the original placement error.
+                if (rollbackFailure != failure) failure.addSuppressed(rollbackFailure);
             }
             throw failure;
         }
@@ -146,7 +148,9 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
         } catch (RuntimeException canopyFailure) {
             if (trunkFailure != null) {
-                trunkFailure.addSuppressed(canopyFailure);
+                // Do not mask the first rollback error if callbacks throw the
+                // very same RuntimeException object on both cleanup passes.
+                if (canopyFailure != trunkFailure) trunkFailure.addSuppressed(canopyFailure);
             } else {
                 throw canopyFailure;
             }
