@@ -3001,7 +3001,7 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 ## 2026-11-21 — M16: BETA26 Crucible aspect bubble (implementation pending CI)
 
 - Re-read current main audit/roadmap and the current closure lane head before selecting this slice. The historical matrix remains 59/100; no score is awarded here.
-- Compared original TileCrucible.drawEffects and FXDispatcher.crucibleBubble against the port. The client-side aspect bubble was absent: BETA26 samples once per six client ticks when water and at least one aspect are present, chooses an aspect RGB, spawns atlas cell 64 with final cells 65/66, lifetime (int)(7 + 8 / (random * 0.8 + 0.2)), scale random * 0.3 + 0.3, gravity -0.001, slowdown 0.98, and Gaussian drift 0.002.
+- Compared original TileCrucible.drawEffects and FXDispatcher.crucibleBubble against the port. The client-side aspect bubble was absent: BETA26 samples once per six client ticks when water and at least one aspect are present, chooses an aspect RGB, spawns atlas cell 64 with final frames 65/66/66, lifetime 15 + random.nextInt(10), scale random.nextFloat() * 0.3 + 0.3, gravity -0.001, slowdown 0.98, and Gaussian drift 0.002.
 - Implemented an isolated client ticker from CrucibleBlock and an isolated particle registration/provider. Deliberately did not edit CrucibleBlockEntity.java: open PR #3 and PR #7 both overlap that file. No shared ThaumcraftParticles, ThaumcraftItems, ThaumcraftPort, Gradle, CI workflow, or global language files were changed.
 - Changed paths: CrucibleBlock.java, new CrucibleBubbleClientEffects.java, new particle registration/provider/client-event classes, new particle JSON, new core rules/test, tools/client_rift_ambient_sound_smoke.py, tools/verify_rift_ambient_sound.py, this journal.
 - The existing M16 Rift client workflow is reused through its already-owned tools/*rift* path filter; its probe now creates an empty-aspect Crucible baseline, then syncs one aer aspect and requires both particle-created and particle-rendered markers plus before/after screenshots. No workflow YAML edit was needed.
@@ -3013,3 +3013,6 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 
 - The generic Full Port Core parity step on e7edff84 passed, but its explicit command list does not include the new LegacyCrucibleBubbleRulesTest. CoreParityTest.java is overlapped by open PR #1 and PR #6, so it was deliberately left untouched. The owned M16 verifier now compiles and executes the pure-Java regression directly with the workflow's provisioned Java 21 before the real-client smoke; no shared test runner or workflow YAML was edited.
+
+
+- Source re-check correction before client acceptance: the earlier draft accidentally borrowed the lifetime formula from BETA26 FXDispatcher.crucibleBoil. The actual crucibleBubble method uses 15 + world.rand.nextInt(10) and setFinalFrames(65, 66, 66). Updated the core rules, particle provider and tests to those exact bubble values; the boil formula is not used.

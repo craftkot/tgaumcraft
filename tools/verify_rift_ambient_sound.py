@@ -322,8 +322,9 @@ for fragment in (
 crucible_rules = Path("src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyCrucibleBubbleRules.java").read_text()
 for fragment in (
     "return roll == 0 && aspectCount > 0;",
-    "7.0D + 8.0D / (random * 0.8D + 0.2D)",
+    "return 15 + randomRoll;",
     "random * 0.3F + 0.3F",
+    "age > lifetime - 3",
     "return index == 0 ? 65 : 66;",
     "return 64;",
 ):
@@ -364,6 +365,7 @@ crucible_particle = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/Crucible
 for fragment in (
     "private static final int GRID_SIZE = 64;",
     "LegacyCrucibleBubbleRules.frame(this.age, this.lifetime)",
+    "LegacyCrucibleBubbleRules.lifetime(level.random.nextInt(10))",
     "this.gravity = -0.001F;",
     "private final double slowDown = 0.98D;",
     "TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES",

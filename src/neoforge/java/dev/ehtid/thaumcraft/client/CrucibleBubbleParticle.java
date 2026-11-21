@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * BETA26 FXDispatcher.crucibleBubble: particles.png cell 64, final cells 65/66,
- * aspect RGB, random 15..47 tick lifetime, 0.3..0.6 scale and gravity -0.001.
+ * aspect RGB, random 15..24 tick lifetime, 0.3..0.6 scale and gravity -0.001.
  */
 public final class CrucibleBubbleParticle extends TextureSheetParticle {
     private static final int GRID_SIZE = 64;
@@ -52,7 +52,7 @@ public final class CrucibleBubbleParticle extends TextureSheetParticle {
         this.xd = 0.0D;
         this.yd = 0.0D;
         this.zd = 0.0D;
-        this.lifetime = LegacyCrucibleBubbleRules.lifetime(Math.random());
+        this.lifetime = LegacyCrucibleBubbleRules.lifetime(level.random.nextInt(10));
         this.quadSize = 0.1F * LegacyCrucibleBubbleRules.scale(level.random.nextFloat());
         this.gravity = -0.001F;
         this.setColor(channel(red), channel(green), channel(blue));
