@@ -66,7 +66,8 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
         final Set<BlockPos> ownLeaves = new HashSet<>();
         // Preserve original states so a canopy-only failed attempt can be undone.
         final Map<BlockPos, BlockState> originalLeaves = new HashMap<>();
-        SilverwoodLegacyTree.place(x, y, z, height, random,
+        try {
+            SilverwoodLegacyTree.place(x, y, z, height, random,
                 (px, py, pz) -> !rejectedLeafWrite[0]
                         && canReplace(level.getBlockState(new BlockPos(px, py, pz))),
                 (px, py, pz) -> {
@@ -106,17 +107,35 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                         rejectedLogWrite[0] = true;
                     }
                 });
+        } catch (RuntimeException failure) {
+            // A world read/write may throw after some leaves or logs were written.
+            // Best-effort rollback must not hide the original placement failure.
+            try {
+                rollback(level, originalLogs, writtenLogs, originalLeaves, leaves);
+            } catch (RuntimeException rollbackFailure) {
+                failure.addSuppressed(rollbackFailure);
+            }
+            throw failure;
+        }
         // Every requested log must succeed; a partial skeleton is not a tree.
         if (rejectedLeafWrite[0] || rejectedLogWrite[0] || attemptedLogs[0] == 0 || writtenLogs.size() != attemptedLogs[0]) {
             // Restore logs first, then the remaining canopy. Both passes avoid
             // overwriting positions changed by another writer since our write.
-            SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
-                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
-            SilverwoodCanopyRollback.restore(originalLeaves, leaves,
-                    level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
+            rollback(level, originalLogs, writtenLogs, originalLeaves, leaves);
             return false;
         }
         return true;
+    }
+
+    private static void rollback(WorldGenLevel level,
+                                 Map<BlockPos, BlockState> originalLogs,
+                                 Map<BlockPos, BlockState> writtenLogs,
+                                 Map<BlockPos, BlockState> originalLeaves,
+                                 BlockState leaves) {
+        SilverwoodTrunkRollback.restore(originalLogs, writtenLogs,
+                level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
+        SilverwoodCanopyRollback.restore(originalLeaves, leaves,
+                level::getBlockState, (pos, before) -> level.setBlock(pos, before, 2));
     }
 
     /**
