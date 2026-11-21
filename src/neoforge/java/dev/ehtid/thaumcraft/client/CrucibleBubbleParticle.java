@@ -42,7 +42,7 @@ public final class CrucibleBubbleParticle extends TextureSheetParticle {
     };
 
     private final TextureAtlasSprite atlas;
-    private final double slowDown = 0.98D;
+    private final double slowDown = LegacyCrucibleBubbleRules.DEFAULT_SLOW_DOWN;
     private final int smokeId;
     private boolean smokeRendered;
 
