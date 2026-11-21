@@ -11,6 +11,7 @@ import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
 import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
 import dev.ehtid.thaumcraft.registry.FluxInfectionEffectRegistration;
 import dev.ehtid.thaumcraft.registry.VoidSeedItemRegistration;
+import dev.ehtid.thaumcraft.registry.WispRegistration;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
 import net.minecraft.core.BlockPos;
@@ -300,7 +301,9 @@ public final class FluxRiftEntity extends Entity {
      */
     int executeWeightedEvent(double weightedRoll) {
         int event = LegacyFluxRiftEventLogic.selectWeightedEvent(weightedRoll);
-        if (event == 2 && level() instanceof ServerLevel serverLevel) {
+        if (event == 0) {
+            spawnWispEvent();
+        } else if (event == 2 && level() instanceof ServerLevel serverLevel) {
             // BETA26 EntityFluxRift.executeRiftEvent case 2 queries the Rift's
             // actual bounding box grown by 16, not a point-centred sphere.
             List<LivingEntity> targets = serverLevel.getEntitiesOfClass(
@@ -325,6 +328,42 @@ public final class FluxRiftEntity extends Entity {
             setCollapse(true);
         }
         return event;
+    }
+
+    /**
+     * BETA26 EntityFluxRift event 0: a Wisp appears at a Gaussian offset
+     * (sigma 5) and has a one-in-five chance to be forced to Flux/vitium.
+     * Stability cost +5 is paid only when the entity passes its spawn gate
+     * and the server accepts it.
+     */
+    private boolean spawnWispEvent() {
+        double x = getX() + random.nextGaussian() * 5.0D;
+        double y = getY() + random.nextGaussian() * 5.0D;
+        double z = getZ() + random.nextGaussian() * 5.0D;
+        boolean fluxType = random.nextInt(5) == 0;
+        return spawnWispAt(x, y, z, fluxType, null);
+    }
+
+    boolean spawnWispAt(
+            double x,
+            double y,
+            double z,
+            boolean fluxType,
+            RandomSource spawnCheckRandom
+    ) {
+        WispEntity wisp = new WispEntity(WispRegistration.get(), level());
+        wisp.moveTo(x, y, z, 0.0F, 0.0F);
+        if (fluxType) {
+            wisp.setAspectType("vitium");
+        }
+
+        RandomSource checkRandom = spawnCheckRandom == null ? wisp.random : spawnCheckRandom;
+        if (!wisp.canSpawnFromRift(checkRandom) || !level().addFreshEntity(wisp)) {
+            return false;
+        }
+
+        setRiftStability(getRiftStability() + 5.0F);
+        return true;
     }
 
     /**
