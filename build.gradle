@@ -31,6 +31,11 @@ neoForge {
     runs {
         client { client() }
         server { server() }
+        gameTestServer {
+            type = 'gameTestServer'
+            gameDirectory = project.file('run/closure-gametest')
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
         data {
             data()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').absolutePath,

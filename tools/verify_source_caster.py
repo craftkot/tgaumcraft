@@ -19,7 +19,9 @@ assert all("tintindex" in side for element in gauntlet["elements"]
            for side in element["faces"].values())
 assert "firstperson_righthand" in gauntlet["display"]
 assert basic["parent"]=="thaumcraft:item/caster_gauntlet"
-assert basic["textures"]["skin"]=="thaumcraft:entity/armor/caster_basic"
+item_png=(base/"textures/item/caster_basic.png").read_bytes()
+assert item_png==png, "inventory-atlas copy must preserve the exact BETA26 caster texture"
+assert basic["textures"]["skin"]=="thaumcraft:item/caster_basic"
 
 item=Path("src/neoforge/java/dev/ehtid/thaumcraft/item/BasicCasterItem.java").read_text()
 matrix=Path("src/neoforge/java/dev/ehtid/thaumcraft/blockentity/InfusionMatrixBlockEntity.java").read_text()

@@ -1,10 +1,12 @@
 package dev.ehtid.thaumcraft.item;
 
 import dev.ehtid.thaumcraft.blockentity.EssentiaJarBlockEntity;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.sounds.SoundSource;
 
 /**
  * Original ItemsTC.jarBrace and BlockJar#onBlockActivated: the iron brace is
@@ -24,7 +26,13 @@ public final class JarBraceItem extends Item {
                 context.getClickedFace(), context.getItemInHand()))
             return InteractionResult.FAIL;
         if (jar.blocked()) return InteractionResult.PASS;
-        if (context.getLevel().isClientSide()) return InteractionResult.SUCCESS;
+        if (context.getLevel().isClientSide()) {
+            // BETA26 BlockJar plays SoundsTC.key only on the client when the
+            // unbraced jar accepts its iron brace.
+            context.getLevel().playLocalSound(context.getClickedPos(),
+                    ThaumcraftSounds.KEY.get(), SoundSource.BLOCKS, 1.0F, 1.0F, false);
+            return InteractionResult.SUCCESS;
+        }
         if (!jar.applyBrace()) return InteractionResult.FAIL;
         context.getItemInHand().shrink(1);
         player.getInventory().setChanged();

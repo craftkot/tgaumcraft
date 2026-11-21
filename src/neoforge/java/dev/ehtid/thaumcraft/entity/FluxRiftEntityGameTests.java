@@ -1,0 +1,680 @@
+package dev.ehtid.thaumcraft.entity;
+
+import com.mojang.authlib.GameProfile;
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.player.ThaumcraftPlayerAttachments;
+import dev.ehtid.thaumcraft.port.core.BuiltInResearchCatalog;
+import dev.ehtid.thaumcraft.port.core.WarpType;
+import dev.ehtid.thaumcraft.port.core.LegacyFluxRiftEventLogic;
+import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
+import dev.ehtid.thaumcraft.registry.FluxTaintEffectRegistration;
+import dev.ehtid.thaumcraft.registry.VoidSeedItemRegistration;
+import dev.ehtid.thaumcraft.registry.ThaumcraftItems;
+import dev.ehtid.thaumcraft.world.ThaumcraftAuraSavedData;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.RandomSource;
+import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Pig;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.util.FakePlayer;
+import net.neoforged.neoforge.gametest.GameTestHolder;
+import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
+
+/**
+ * Native server acceptance for BETA26 Flux Rift segment effects and collapse.
+ */
+@GameTestHolder(ThaumcraftPort.MOD_ID)
+public final class FluxRiftEntityGameTests {
+    private FluxRiftEntityGameTests() {}
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 100
+    )
+    public static void destroysOnlyCollidableBreakableBlocksAlongSegment(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos target = helper.absolutePos(new BlockPos(8, 2, 8));
+
+        FluxRiftEntity rift = new FluxRiftEntity(FluxRiftRegistration.get(), level);
+        rift.setRiftSeed(1);
+        rift.setRiftSize(5);
+        rift.moveTo(target.getX(), target.getY() + 0.5D, target.getZ() + 0.5D, 0.0F, 0.0F);
+
+        var points = rift.getGeometry();
+        if (points.size() <= 3 || points.get(2).x() >= 0.0D || points.get(3).x() <= 0.0D) {
+            throw new AssertionError("Seed 1 size 5 must make segment 2 cross the target block's west face");
+        }
+
+        if (!level.setBlock(target, Blocks.STONE.defaultBlockState(), 3)) {
+            throw new AssertionError("Unable to place breakable Flux Rift ray target");
+        }
+        rift.applySegmentEffectsAt(2);
+        if (!level.getBlockState(target).isAir()) {
+            throw new AssertionError("BETA26 Flux Rift must remove a collidable block with non-negative hardness");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCK_RAYTRACE_BREAKABLE=PASS stone=REMOVED");
+
+        if (!level.setBlock(target, Blocks.BEDROCK.defaultBlockState(), 3)) {
+            throw new AssertionError("Unable to place unbreakable Flux Rift ray target");
+        }
+        rift.applySegmentEffectsAt(2);
+        if (!level.getBlockState(target).is(Blocks.BEDROCK)) {
+            throw new AssertionError("BETA26 Flux Rift must retain blocks with negative hardness");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCK_RAYTRACE_HARDNESS=PASS bedrock=RETAINED");
+
+        if (!level.setBlock(target, Blocks.WATER.defaultBlockState(), 3)) {
+            throw new AssertionError("Unable to place liquid Flux Rift ray target");
+        }
+        rift.applySegmentEffectsAt(2);
+        if (!level.getBlockState(target).is(Blocks.WATER)) {
+            throw new AssertionError("BETA26 rayTraceBlocks(..., false) must ignore fluids");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCK_RAYTRACE_FLUID=PASS water=IGNORED");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_BLOCK_RAYTRACE=PASS breakable=REMOVED unbreakable=RETAINED fluid=IGNORED");
+
+        level.setBlock(target, Blocks.AIR.defaultBlockState(), 3);
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 100
+    )
+    public static void advancesBETA26CollapseAndAuraPulses(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+
+        float growthCost = (float) Math.sqrt(10.0D);
+        aura.putChunk(pos, (short) 100, 10.0F, growthCost);
+        FluxRiftEntity growing = createRift(level, pos, 5);
+        growing.setRiftStability(0.0F);
+        tickAtBETA26GrowthPhase(growing, true);
+        if (growing.getRiftSize() != 6 || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("BETA26 scheduled Flux growth mismatch"
+                    + " size=" + growing.getRiftSize()
+                    + " flux=" + aura.getFlux(pos)
+                    + " tickCount=" + growing.tickCount
+                    + " entityId=" + growing.getId()
+                    + " phase=" + Math.floorMod(growing.getId(), 600)
+                    + " stability=" + growing.getRiftStability());
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH_CADENCE=PASS size=6 flux=0.0 cost=sqrt(10)");
+        growing.discard();
+
+        float offCycleFlux = growthCost + 1.0F;
+        aura.putChunk(pos, (short) 100, 10.0F, offCycleFlux);
+        FluxRiftEntity offCycle = createRift(level, pos, 5);
+        tickAtBETA26GrowthPhase(offCycle, false);
+        if (offCycle.getRiftSize() != 5 || aura.getFlux(pos) != offCycleFlux) {
+            throw new AssertionError("BETA26 Flux growth must not run outside the entity-specific 600-tick phase");
+        }
+        offCycle.discard();
+
+        float insufficientFlux = growthCost - 0.01F;
+        aura.putChunk(pos, (short) 100, 10.0F, insufficientFlux);
+        FluxRiftEntity insufficient = createRift(level, pos, 5);
+        insufficient.tryGrowFromFlux();
+        if (insufficient.getRiftSize() != 5 || aura.getFlux(pos) != insufficientFlux) {
+            throw new AssertionError("BETA26 Flux growth must not partially debit below the sqrt threshold");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, offCycleFlux);
+        FluxRiftEntity veryStable = createRift(level, pos, 5);
+        veryStable.setRiftStability(50.01F);
+        veryStable.tryGrowFromFlux();
+        if (veryStable.getRiftSize() != 5 || aura.getFlux(pos) != offCycleFlux) {
+            throw new AssertionError("BETA26 VERY_STABLE rifts must not grow from Flux");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, growthCost);
+        FluxRiftEntity stabilityBoundary = createRift(level, pos, 5);
+        stabilityBoundary.setRiftStability(50.0F);
+        stabilityBoundary.tryGrowFromFlux();
+        if (stabilityBoundary.getRiftSize() != 6 || aura.getFlux(pos) != 0.0F) {
+            throw new AssertionError("BETA26 stability 50.0 is STABLE and must remain eligible for growth");
+        }
+
+        aura.putChunk(pos, (short) 100, 10.0F, 100.0F);
+        FluxRiftEntity sizeCap = createRift(level, pos, 100);
+        sizeCap.tryGrowFromFlux();
+        if (sizeCap.getRiftSize() != 100 || aura.getFlux(pos) != 100.0F) {
+            throw new AssertionError("BETA26 Flux growth must stop at size 100 without debiting aura");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_GROWTH=PASS cadence=600 exact_cost=sqrt(2*size) stability_boundary=50 very_stable=blocked size_cap=100");
+
+        // Pinned BETA26 EntityFluxRift.onUpdate / executeRiftEvent:
+        // negative stability gates a 0..999 roll against abs(stability)+size.
+        if (!LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 14)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 15)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(0.0F, 5, 0)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, -1)
+                || LegacyFluxRiftEventLogic.shouldAttemptEvent(-10.0F, 5, 1000)) {
+            throw new AssertionError("BETA26 Rift instability event trigger boundary mismatch");
+        }
+
+        // Original RandomItemChooser weights are 50,10,20,20,1 (total 101).
+        if (LegacyFluxRiftEventLogic.selectWeightedEvent(0.0D) != 0
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.51D) != 1
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.61D) != 2
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.81D) != 3
+                || LegacyFluxRiftEventLogic.selectWeightedEvent(0.995D) != 4) {
+            throw new AssertionError("BETA26 Rift weighted event distribution mismatch");
+        }
+
+        FluxRiftEntity unsupportedEvent = createRift(level, pos, 5);
+        unsupportedEvent.setRiftStability(-10.0F);
+        if (unsupportedEvent.executeWeightedEvent(0.99D) != 3
+                || unsupportedEvent.getCollapse()
+                || unsupportedEvent.getRiftStability() != -10.0F) {
+            throw new AssertionError("Unported BETA26 focus event must not be substituted with another effect");
+        }
+
+        FluxRiftEntity weightedCollapse = createRift(level, pos, 5);
+        weightedCollapse.setRiftStability(-10.0F);
+        if (weightedCollapse.executeWeightedEvent(0.995D) != 4
+                || !weightedCollapse.getCollapse()
+                || weightedCollapse.getMaxSize() != 5
+                || weightedCollapse.getRiftStability() != -10.0F) {
+            throw new AssertionError("BETA26 weighted event 4 must start collapse without stability cost");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_WEIGHTED_EVENTS=PASS trigger=strict stability_plus_size weights=50,10,20,20,1 collapse=YES unsupported=NOOP");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity beforeSave = createRift(level, pos, 5);
+        beforeSave.setCollapse(true);
+        CompoundTag saved = beforeSave.saveWithoutId(new CompoundTag());
+        FluxRiftEntity restored = createRift(level, pos, 5);
+        restored.load(saved);
+        if (!restored.getCollapse() || restored.getMaxSize() != 5 || restored.getRiftSize() != 5) {
+            throw new AssertionError("BETA26 collapse state/maxSize did not survive entity save/load");
+        }
+        if (restored.tickCollapse(findCollapseRandom(true, false)) != null
+                || restored.getRiftSize() != 4
+                || restored.getMaxSize() != 5
+                || aura.getVis(pos) != 11.0F
+                || aura.getFlux(pos) != 2.0F) {
+            throw new AssertionError("BETA26 collapse Vis pulse/countdown mismatch");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_VIS=PASS size=4 vis=11.0 flux=2.0 maxSize=5");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity fluxRift = createRift(level, pos, 5);
+        fluxRift.setCollapse(true);
+        if (fluxRift.tickCollapse(findCollapseRandom(false, false)) != null
+                || fluxRift.getRiftSize() != 4
+                || aura.getVis(pos) != 10.0F
+                || aura.getFlux(pos) != 3.0F) {
+            throw new AssertionError("BETA26 collapse Flux pollution/countdown mismatch");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_FLUX=PASS size=4 vis=10.0 flux=3.0");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity explodingRift = createRift(level, pos, 5);
+        explodingRift.setCollapse(true);
+        ExplosionFixture fixture = findExplosionFixture(explodingRift);
+        Pig pig = EntityType.PIG.create(level);
+        if (pig == null) {
+            throw new AssertionError("Unable to create explosion damage target");
+        }
+        pig.setNoAi(true);
+        pig.moveTo(fixture.x(), fixture.y(), fixture.z(), 0.0F, 0.0F);
+        if (!level.addFreshEntity(pig)) {
+            throw new AssertionError("Unable to add explosion damage target");
+        }
+        float healthBefore = pig.getHealth();
+        Explosion explosion = explodingRift.tickCollapse(RandomSource.create(fixture.seed()));
+        if (explosion == null
+                || explosion.getBlockInteraction() != Explosion.BlockInteraction.KEEP
+                || !explosion.getToBlow().isEmpty()
+                || pig.getHealth() >= healthBefore) {
+            throw new AssertionError("BETA26 createExplosion(..., false) must damage entities while keeping blocks");
+        }
+        float expectedVis = fixture.addVis() ? 11.0F : 10.0F;
+        float expectedFlux = fixture.addVis() ? 2.0F : 3.0F;
+        if (aura.getVis(pos) != expectedVis || aura.getFlux(pos) != expectedFlux) {
+            throw new AssertionError("BETA26 explosion tick changed the wrong aura channel");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_EXPLOSION=PASS pig_damaged=YES block_interaction=KEEP affected_blocks=0");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity terminal = createRift(level, pos, 2);
+        terminal.setCollapse(true);
+        if (terminal.tickCollapse(findTerminalCollapseRandom(true, 1, false)) != null
+                || terminal.getRiftSize() != 1
+                || terminal.getMaxSize() != 2
+                || !terminal.isRemoved()) {
+            throw new AssertionError("BETA26 collapse must remove a Rift once its decremented size is <= 1");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_TERMINAL=PASS size=1 removed=YES maxSize=2");
+        var terminalDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var terminalSeeds = terminalDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (terminalSeeds.size() != 1 || terminalSeeds.get(0).getItem().getCount() != 1) {
+            throw new AssertionError("BETA26 maxSize 2 collapse must drop one individual void seed");
+        }
+        terminalDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_VOID_SEED_TERMINAL=PASS maxSize=2 count=1");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity rewarded = createRift(level, pos, 100);
+        rewarded.setCollapse(true);
+        rewarded.setRiftSize(2);
+        if (rewarded.getMaxSize() != 100
+                || rewarded.tickCollapse(findTerminalCollapseRandom(true, 10, true)) != null
+                || !rewarded.isRemoved()
+                || rewarded.getMaxSize() != 100) {
+            throw new AssertionError("BETA26 pearl reward must use the pre-collapse maxSize");
+        }
+        var rewardDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var pearlDrops = rewardDrops.stream()
+                .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                .toList();
+        var rewardedSeeds = rewardDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (pearlDrops.size() != 1 || rewardedSeeds.size() != 10) {
+            throw new AssertionError("BETA26 maxSize 100 collapse must drop one pearl and ten void seeds");
+        }
+        var pearl = pearlDrops.get(0).getItem();
+        if (!pearl.is(ThaumcraftItems.PRIMORDIAL_PEARL.get())
+                || pearl.getCount() != 1
+                || pearl.getDamageValue() < 4
+                || pearl.getDamageValue() > 7) {
+            throw new AssertionError("BETA26 collapse pearl must preserve metadata stage 4..7");
+        }
+        rewardDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_PRIMORDIAL_PEARL=PASS chance=10 maxSize=100 stage=4..7 item_entity=YES");
+
+        FluxRiftEntity noPearl = createRift(level, pos, 100);
+        noPearl.setCollapse(true);
+        noPearl.setRiftSize(2);
+        if (noPearl.tickCollapse(findTerminalCollapseRandom(false, 10, false)) != null
+                || !noPearl.isRemoved()) {
+            throw new AssertionError("BETA26 collapse must finish when the maxSize pearl chance roll fails");
+        }
+        var noPearlDrops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+        var noPearlPearls = noPearlDrops.stream()
+                .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                .toList();
+        var noPearlSeeds = noPearlDrops.stream()
+                .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                .toList();
+        if (!noPearlPearls.isEmpty() || noPearlSeeds.size() != 10) {
+            throw new AssertionError("BETA26 failed pearl roll must still drop ten void seeds at maxSize 100");
+        }
+        noPearlDrops.forEach(ItemEntity::discard);
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_NO_PEARL=PASS chance=10 no_pearl_entity=YES void_seed_count=10");
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity veryUnstableRift = createRift(level, pos, 2);
+        veryUnstableRift.setRiftStability(-25.0F);
+        veryUnstableRift.setCollapse(true);
+        Pig veryUnstableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        FakePlayer veryUnstablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        Pig veryUnstableEdge = spawnPig(level,
+                pos.getX() + 0.5D, pos.getY() + 6.15D, pos.getZ() + 0.5D);
+        Zombie veryUnstableUndead = spawnZombie(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        TaintedPig veryUnstableTainted = spawnTaintedPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        Pig veryUnstableBoundary = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 4.5D, pos.getZ() + 0.5D);
+        veryUnstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var fluxTaintHolder = FluxTaintEffectRegistration.get();
+        var fluxTaintEffect = fluxTaintHolder.value();
+        var veryUnstableFluxTaint = veryUnstableNear.getEffect(fluxTaintHolder);
+        var veryUnstablePlayerFluxTaint = veryUnstablePlayer.getEffect(fluxTaintHolder);
+        var veryUnstableUndeadFluxTaint = veryUnstableUndead.getEffect(fluxTaintHolder);
+        var veryUnstableTaintedFluxTaint = veryUnstableTainted.getEffect(fluxTaintHolder);
+        if (fluxTaintEffect.getColor() != 6697847
+                || veryUnstableFluxTaint == null
+                || veryUnstableFluxTaint.getDuration() != 1200
+                || veryUnstableFluxTaint.getAmplifier() != 0
+                || veryUnstablePlayerFluxTaint == null
+                || veryUnstablePlayerFluxTaint.getDuration() != 1200
+                || veryUnstableUndeadFluxTaint == null
+                || veryUnstableUndeadFluxTaint.getDuration() != 1200
+                || veryUnstableTaintedFluxTaint == null
+                || veryUnstableTaintedFluxTaint.getDuration() != 1200
+                || veryUnstableBoundary.getEffect(fluxTaintHolder) != null) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE Flux Taint application/range/color mismatch");
+        }
+        if (!fluxTaintEffect.shouldApplyEffectTickThisTick(40, 0)
+                || fluxTaintEffect.shouldApplyEffectTickThisTick(39, 0)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(20, 1)
+                || fluxTaintEffect.shouldApplyEffectTickThisTick(19, 1)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(1, 5)
+                || !fluxTaintEffect.shouldApplyEffectTickThisTick(1, 6)
+                || !level.damageSources().magic().is(DamageTypeTags.BYPASSES_ARMOR)) {
+            throw new AssertionError("BETA26 Flux Taint tick cadence or magic/bypass-armor damage source mismatch");
+        }
+        float pigHealthBeforeTaintTick = veryUnstableNear.getHealth();
+        if (!fluxTaintEffect.applyEffectTick(veryUnstableNear, 0)
+                || Math.abs(veryUnstableNear.getHealth() - (pigHealthBeforeTaintTick - 1.0F)) > 0.001F) {
+            throw new AssertionError("BETA26 Flux Taint must deal one point of magic damage to non-undead targets");
+        }
+        float undeadHealthBeforeTaintTick = veryUnstableUndead.getHealth();
+        fluxTaintEffect.applyEffectTick(veryUnstableUndead, 0);
+        if (veryUnstableUndead.getHealth() != undeadHealthBeforeTaintTick) {
+            throw new AssertionError("BETA26 Flux Taint must not damage undead targets");
+        }
+        veryUnstableTainted.setHealth(5.0F);
+        fluxTaintEffect.applyEffectTick(veryUnstableTainted, 0);
+        if (Math.abs(veryUnstableTainted.getHealth() - 6.0F) > 0.001F) {
+            throw new AssertionError("BETA26 tainted-mob exception must heal one point instead of damaging");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_FLUX_TAINT=PASS stability=-25 duration=1200 interval=40 undead=immune tainted=heal magic=bypasses_armor boundary=32");
+        var veryUnstableWeakness = veryUnstableNear.getEffect(MobEffects.WEAKNESS);
+        if (veryUnstableWeakness == null
+                || veryUnstableWeakness.getDuration() != 3000
+                || veryUnstableEdge.getEffect(MobEffects.WEAKNESS) != null) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE collapse must apply distance-scaled Weakness only when integer duration is positive");
+        }
+        var veryUnstableWarp = veryUnstablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var veryUnstableKnowledge = veryUnstablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (veryUnstableWarp.get(WarpType.NORMAL) != 12
+                || veryUnstableWarp.get(WarpType.TEMPORARY) != 12
+                || veryUnstableWarp.getCounter() != 24
+                || !veryUnstableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 VERY_UNSTABLE collapse must grant both Warp buckets and unlock WARP after FIRSTSTEPS");
+        }
+        veryUnstablePlayer.discard();
+        veryUnstableNear.discard();
+        veryUnstableEdge.discard();
+        veryUnstableUndead.discard();
+        veryUnstableTainted.discard();
+        veryUnstableBoundary.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity unstableRift = createRift(level, pos, 2);
+        unstableRift.setRiftStability(-24.99F);
+        unstableRift.setCollapse(true);
+        Pig unstableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        unstableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var unstableWeakness = unstableNear.getEffect(MobEffects.WEAKNESS);
+        if (unstableWeakness == null || unstableWeakness.getDuration() != 3000
+                || unstableNear.getEffect(fluxTaintHolder) != null) {
+            throw new AssertionError("BETA26 UNSTABLE collapse must apply distance-scaled Weakness");
+        }
+        unstableNear.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity stableRift = createRift(level, pos, 2);
+        stableRift.setRiftStability(0.0F);
+        stableRift.setCollapse(true);
+        Pig stableNear = spawnPig(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D);
+        FakePlayer stablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        FakePlayer stableEdge = spawnWarpPlayer(level,
+                pos.getX() + 6.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        stableRift.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        if (stableNear.getEffect(MobEffects.WEAKNESS) != null
+                || stableNear.getEffect(fluxTaintHolder) != null) {
+            throw new AssertionError("BETA26 STABLE collapse must not apply Weakness");
+        }
+        var stableWarp = stablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var stableKnowledge = stablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (stableWarp.get(WarpType.NORMAL) != 12
+                || stableWarp.get(WarpType.TEMPORARY) != 12
+                || stableWarp.getCounter() != 24
+                || !stableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 STABLE collapse must grant distance-scaled NORMAL/TEMPORARY Warp and unlock WARP");
+        }
+        var edgeWarp = stableEdge.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var edgeKnowledge = stableEdge.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (edgeWarp.get(WarpType.NORMAL) != 0
+                || edgeWarp.get(WarpType.TEMPORARY) != 0
+                || edgeWarp.getCounter() != 0
+                || edgeKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 collapse must not grant Warp outside the positive distance-scaled range");
+        }
+        stablePlayer.discard();
+        stableEdge.discard();
+        stableNear.discard();
+
+        aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+        FluxRiftEntity veryStableCollapse = createRift(level, pos, 2);
+        veryStableCollapse.setRiftStability(50.01F);
+        veryStableCollapse.setCollapse(true);
+        FakePlayer veryStablePlayer = spawnWarpPlayer(level,
+                pos.getX() + 4.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, true);
+        veryStableCollapse.tickCollapse(findTerminalCollapseRandom(true, 1, false));
+        var veryStableWarp = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).warp();
+        var veryStableKnowledge = veryStablePlayer.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+        if (veryStablePlayer.getEffect(fluxTaintHolder) != null
+                || veryStableWarp.get(WarpType.NORMAL) != 0
+                || veryStableWarp.get(WarpType.TEMPORARY) != 0
+                || veryStableKnowledge.isResearchComplete("WARP", BuiltInResearchCatalog.create())) {
+            throw new AssertionError("BETA26 VERY_STABLE collapse must not grant Warp");
+        }
+        veryStablePlayer.discard();
+
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WEAKNESS=PASS very_unstable=3000 unstable=3000 stable=none edge=none");
+
+        FluxRiftEntity automatic = createRift(level, pos, 0);
+        automatic.tick();
+        if (!automatic.getCollapse() || !automatic.isRemoved() || automatic.getMaxSize() != 0) {
+            throw new AssertionError("BETA26 Rift with fewer than three geometry points must enter collapse");
+        }
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_AUTO_TRIGGER=PASS points=2 removed=YES");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_WARP=PASS very_unstable=12+12 stable=12+12 edge=0 very_stable=none research=WARP_UNLOCKED");
+        System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE=PASS vis=1 flux=1 explosion=1 terminal=removed maxSize=preserved auto_trigger=YES pearl=verified weakness=verified warp=verified flux_taint=verified void_seed=verified");
+        helper.succeed();
+    }
+
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 100
+    )
+    public static void dropsBETA26VoidSeedsFromOriginalMaximumSize(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_FLUX_RIFT_VOID_SEED_DROPS_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
+        ThaumcraftAuraSavedData aura = ThaumcraftAuraSavedData.get(level);
+        int[] maxSizes = {0, 1, 3, 4, 24, 25, 35, 36, 99, 100};
+
+        for (int maxSize : maxSizes) {
+            aura.putChunk(pos, (short) 100, 10.0F, 2.0F);
+            FluxRiftEntity rift = createRift(level, pos, maxSize);
+            rift.setCollapse(true);
+            // Collapse countdown is shortened for the fixture after maxSize has
+            // captured the original BETA26 maximum-size reward basis.
+            rift.setRiftSize(2);
+            if (rift.getMaxSize() != maxSize
+                    || rift.tickCollapse(findTerminalCollapseRandom(
+                            true, (int) Math.sqrt(maxSize), false)) != null
+                    || !rift.isRemoved()
+                    || rift.getRiftSize() != 1
+                    || rift.getMaxSize() != maxSize) {
+                throw new AssertionError("BETA26 void-seed fixture did not complete from maxSize=" + maxSize);
+            }
+
+            var drops = level.getEntitiesOfClass(ItemEntity.class, itemBounds(pos));
+            var seeds = drops.stream()
+                    .filter(drop -> drop.getItem().is(VoidSeedItemRegistration.get()))
+                    .toList();
+            var pearls = drops.stream()
+                    .filter(drop -> drop.getItem().is(ThaumcraftItems.PRIMORDIAL_PEARL.get()))
+                    .toList();
+            int expected = (int) Math.sqrt(maxSize);
+            if (seeds.size() != expected || !pearls.isEmpty()
+                    || seeds.stream().anyMatch(seed -> seed.getItem().getCount() != 1)) {
+                throw new AssertionError("BETA26 void-seed count mismatch at maxSize=" + maxSize
+                        + " expected=" + expected + " actual=" + seeds.size()
+                        + " pearls=" + pearls.size());
+            }
+            drops.forEach(ItemEntity::discard);
+        }
+
+        System.out.println("TC_GAMETEST_FLUX_RIFT_VOID_SEED_DROPS=PASS sizes=0,1,3,4,24,25,35,36,99,100 count=floor_sqrt individual=YES");
+        helper.succeed();
+    }
+
+    private static FakePlayer spawnWarpPlayer(ServerLevel level, double x, double y, double z,
+                                                boolean completeFirstSteps) {
+        FakePlayer player = new FakePlayer(level,
+                new GameProfile(UUID.randomUUID(), "rift-warp-test"));
+        player.moveTo(x, y, z, 0.0F, 0.0F);
+        if (completeFirstSteps) {
+            var knowledge = player.getData(ThaumcraftPlayerAttachments.PLAYER_DATA).knowledge();
+            knowledge.addResearch("FIRSTSTEPS");
+            knowledge.setResearchStage("FIRSTSTEPS", 4);
+        }
+        if (!level.addFreshEntity(player)) {
+            throw new AssertionError("Unable to add Flux Rift Warp target player");
+        }
+        return player;
+    }
+
+    private static Zombie spawnZombie(ServerLevel level, double x, double y, double z) {
+        Zombie zombie = EntityType.ZOMBIE.create(level);
+        if (zombie == null) {
+            throw new AssertionError("Unable to create Flux Taint undead target");
+        }
+        zombie.setNoAi(true);
+        zombie.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(zombie)) {
+            throw new AssertionError("Unable to add Flux Taint undead target");
+        }
+        return zombie;
+    }
+
+    private static TaintedPig spawnTaintedPig(ServerLevel level, double x, double y, double z) {
+        TaintedPig pig = new TaintedPig(level);
+        pig.setNoAi(true);
+        pig.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(pig)) {
+            throw new AssertionError("Unable to add Flux Taint healable target");
+        }
+        return pig;
+    }
+
+    private static Pig spawnPig(ServerLevel level, double x, double y, double z) {
+        Pig pig = EntityType.PIG.create(level);
+        if (pig == null) {
+            throw new AssertionError("Unable to create Flux Rift collapse effect target");
+        }
+        pig.setNoAi(true);
+        pig.moveTo(x, y, z, 0.0F, 0.0F);
+        if (!level.addFreshEntity(pig)) {
+            throw new AssertionError("Unable to add Flux Rift collapse effect target");
+        }
+        return pig;
+    }
+
+    private static FluxRiftEntity createRift(ServerLevel level, BlockPos pos, int size) {
+        FluxRiftEntity rift = new FluxRiftEntity(FluxRiftRegistration.get(), level);
+        rift.setRiftSeed(1);
+        rift.setRiftSize(size);
+        rift.moveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 0.0F, 0.0F);
+        return rift;
+    }
+
+    private static void tickAtBETA26GrowthPhase(FluxRiftEntity rift, boolean due) {
+        ServerLevel level = (ServerLevel) rift.level();
+        if (!level.addFreshEntity(rift)) {
+            throw new AssertionError("Unable to register Flux Rift for scheduled growth tick");
+        }
+        int phase = Math.floorMod(rift.getId(), 600);
+        // ServerLevel.commonTick increments tickCount before Entity.tick().
+        // This focused test invokes tick() directly, so set the post-commonTick
+        // value instead of expecting super.tick() to increment it.
+        rift.tickCount = due ? phase : Math.floorMod(phase + 1, 600);
+        rift.tick();
+    }
+
+    private static RandomSource findCollapseRandom(boolean addVis, boolean explode) {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource probe = RandomSource.create(seed);
+            if (probe.nextBoolean() == addVis && (probe.nextInt(10) == 0) == explode) {
+                return RandomSource.create(seed);
+            }
+        }
+        throw new AssertionError("Unable to find deterministic BETA26 collapse RNG fixture");
+    }
+
+    private static RandomSource findTerminalCollapseRandom(boolean addVis, int pearlChance, boolean dropPearl) {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource probe = RandomSource.create(seed);
+            if (probe.nextBoolean() != addVis || probe.nextInt(10) == 0) {
+                continue;
+            }
+            if ((probe.nextInt(100) < pearlChance) == dropPearl) {
+                return RandomSource.create(seed);
+            }
+        }
+        throw new AssertionError("Unable to find deterministic terminal-collapse pearl RNG fixture");
+    }
+
+    private static net.minecraft.world.phys.AABB itemBounds(BlockPos pos) {
+        return new net.minecraft.world.phys.AABB(
+                pos.getX() - 4.0D, pos.getY() - 4.0D, pos.getZ() - 4.0D,
+                pos.getX() + 5.0D, pos.getY() + 5.0D, pos.getZ() + 5.0D
+        );
+    }
+
+    private static ExplosionFixture findExplosionFixture(FluxRiftEntity rift) {
+        for (long seed = 0; seed < 100_000L; seed++) {
+            RandomSource probe = RandomSource.create(seed);
+            boolean addVis = probe.nextBoolean();
+            if (probe.nextInt(10) != 0) {
+                continue;
+            }
+            double x = rift.getX() + probe.nextGaussian() * 2.0D;
+            double y = rift.getY() + probe.nextGaussian() * 2.0D;
+            double z = rift.getZ() + probe.nextGaussian() * 2.0D;
+            float power = probe.nextFloat() / 2.0F;
+            if (power >= 0.30F
+                    && Math.abs(x - rift.getX()) < 0.5D
+                    && Math.abs(y - rift.getY()) < 0.5D
+                    && Math.abs(z - rift.getZ()) < 0.5D) {
+                return new ExplosionFixture(seed, addVis, x, y, z);
+            }
+        }
+        throw new AssertionError("Unable to find deterministic BETA26 explosion fixture");
+    }
+
+    private static final class TaintedPig extends Pig implements FluxTaintHealable {
+        private TaintedPig(ServerLevel level) {
+            super(EntityType.PIG, level);
+        }
+    }
+
+    private record ExplosionFixture(long seed, boolean addVis, double x, double y, double z) {}
+}

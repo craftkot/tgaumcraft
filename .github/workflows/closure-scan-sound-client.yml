@@ -1,0 +1,84 @@
+name: M16 real Minecraft Thaumometer scan sound smoke
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'tools/client_scan_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
+      - 'tools/match_scan_audio_pcm.py'
+      - 'tools/test_scan_audio_match.py'
+      - '.github/workflows/closure-scan-sound-client.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'tools/client_scan_sound_smoke.py'
+      - 'tools/check_page_audio_pcm.py'
+      - 'tools/test_pcm_capture_validation.py'
+      - 'tools/match_scan_audio_pcm.py'
+      - 'tools/test_scan_audio_match.py'
+      - '.github/workflows/closure-scan-sound-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-scan-sound-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install virtual graphics, audio and input tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg \
+            pulseaudio pulseaudio-utils
+      - name: Generate isolated real-client script and check syntax
+        run: |
+          python3 tools/test_pcm_capture_validation.py
+          python3 tools/client_scan_sound_smoke.py > client-scan-sound-generated.sh
+          bash -n client-scan-sound-generated.sh
+      - name: Start PulseAudio and capture actual Minecraft scan audio
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_scan_sink rate=48000 channels=2
+          pactl set-default-sink tc_scan_sink
+          pactl info
+          bash client-scan-sound-generated.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Attribute captured PCM to byte-identical BETA26 scan.ogg
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/test_scan_audio_match.py
+          python tools/match_scan_audio_pcm.py \
+            client-smoke/scan-baseline.pcm client-smoke/scan-event.pcm \
+            src/main/resources/assets/thaumcraft/sounds/scan.ogg \
+            | tee client-smoke/scan-source-match.txt
+      - name: Upload real game audio and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-real-thaumometer-scan-sound-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

@@ -1,0 +1,120 @@
+#!/usr/bin/env python3
+"""Guard the real Salis audio/particle fixture against capture-time interference.
+
+This checks the generated *real Minecraft* shell sequence, not pixel rendering
+or successful sound playback. The latter remain mandatory in the client CI.
+"""
+from pathlib import Path
+import subprocess
+import sys
+
+generated = subprocess.run(
+    [sys.executable, "tools/client_dust_sound_smoke.py"],
+    check=True, capture_output=True, text=True,
+).stdout
+subprocess.run(["bash", "-n"], input=generated, text=True, check=True)
+
+def unique(needle: str) -> int:
+    count = generated.count(needle)
+    assert count == 1, (needle, count)
+    return generated.index(needle)
+
+music = unique("soundCategory_music:0.0")
+ambient = unique("soundCategory_ambient:0.0")
+launch = unique("gradle runClient")
+baseline = unique("python3 tools/check_dust_capture_noise.py client-smoke/dust-baseline.pcm")
+record = unique("dust-event.pcm &")
+click = unique("  xdotool click 3\n  # BETA26 face particles are staggered")
+frame = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-early.png")
+mid = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-mid.png")
+peak = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-peak.png")
+tail = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-tail.png")
+final = unique("import -display :99 -window root -silent client-smoke/screenshots/08k-salis-sparkles-final.png")
+assert "  sleep 0.30\n" in generated[click:frame]
+assert all("  sleep 0.18\n" in generated[a:b]
+           for a, b in ((frame, mid), (mid, peak), (peak, tail), (tail, final)))
+assert "  sleep 0.2\n" not in generated[click:final]
+assert all(f"SALIS_FRAME_{label}_CAPTURE_MS=$(date +%s%3N)" in generated
+           for label in ("EARLY", "MID", "PEAK", "TAIL", "FINAL"))
+assert all(f"test -s client-smoke/screenshots/08k-salis-sparkles-{label}.png" in generated
+           for label in ("early", "mid", "peak", "tail", "final"))
+
+wait = unique('  wait "$dust_capture_pid" || test "$?" -eq 124')
+thumbnail = unique("convert client-smoke/screenshots/08k-salis-sparkles-early.png -resize")
+base64 = unique("base64 -w0 client-smoke/screenshots/08k-salis-sparkles-early-thumb.png")
+particle = unique("grep -Fq 'SALIS_PARTICLE_SEND_INVOKED' client-smoke/client.log")
+delayed = unique("grep -Fq 'SALIS_TRAIL_DELAY_QUEUE_DRAINED' client-smoke/client.log")
+particle_log = unique("python3 tools/verify_salis_sparkle_particle_log.py client-smoke/client.log")
+matcher = unique("python3 tools/match_dust_audio_pcm.py")
+assert music < ambient < launch < baseline < record < click < frame < mid < peak < tail < final < wait < thumbnail < base64 < particle < delayed < particle_log < matcher
+assert "soundCategory_players:0.0" not in generated
+assert "soundCategory_master:0.0" not in generated
+assert "capture 08k-salis-sparkles-early" not in generated
+assert "0.33" not in Path("tools/match_dust_audio_pcm.py").read_text(), "matcher must not hardcode game volume"
+matcher_source = Path("tools/match_dust_audio_pcm.py").read_text()
+assert "MIN_CORRELATION = 0.20" in matcher_source
+assert "MIN_MARGIN = 0.08" in matcher_source
+assert "send_chat '/tp @p 2.5 150 11.5 0 0'" in generated
+
+
+# FIRSTSTEPS bed setup is a real interaction: require a placed foot/head pair
+# before the player attempts sleep, and aim using the actual one-block geometry.
+place_aim = unique("send_chat '/tp @p 2.5 150 5.5 0 58'")
+place_state = unique("send_chat '/execute if block 2 150 6 minecraft:red_bed[facing=south,part=foot] if block 2 150 7 minecraft:red_bed[facing=south,part=head] run say FIRSTSTEPS_REAL_BED_PLACED_OK'")
+place_ack = unique("grep -Fq 'FIRSTSTEPS_REAL_BED_PLACED_OK' client-smoke/client.log")
+sleep_aim = unique("send_chat '/tp @p 2.5 150 5.5 0 53'")
+wake_gate = unique("  assert_smoke_event WAKE_UNLOCK")
+assert place_aim < place_state < place_ack < sleep_aim < wake_gate
+assert "send_chat '/tp @p 2.5 150 5.5 0 22'" not in generated
+assert "FIRSTSTEPS_REAL_BED_PLACED_OK" in generated
+
+# The first post-world command must be acknowledged by the integrated server.
+# Re-activate the actual window for every send_chat call, not just at title screen.
+assert generated.count('xdotool windowactivate --sync "$WIN"') == 2
+channel_focus = generated.rindex('xdotool windowactivate --sync "$WIN"')
+channel_raise = unique('xdotool windowraise "$WIN"')
+channel_force_focus = unique('xdotool windowfocus --sync "$WIN"')
+channel_move = unique('xdotool mousemove --window "$WIN" 512 384')
+active_window = unique('active="$(xdotool getactivewindow 2>/dev/null || true)"')
+focused_window = unique('focused="$(xdotool getwindowfocus 2>/dev/null || true)"')
+game_pid = unique('game_pid="$(xdotool getwindowpid "$WIN" 2>/dev/null || true)"')
+active_pid = unique('active_pid="$(xdotool getwindowpid "$active" 2>/dev/null || true)"')
+focused_pid = unique('focused_pid="$(xdotool getwindowpid "$focused" 2>/dev/null || true)"')
+focus_fail = unique("SALIS_INPUT_FOCUS=FAIL")
+focus_capture = unique("capture 05e-command-focus-not-minecraft")
+focus_pass = unique("SALIS_INPUT_FOCUS=PASS")
+channel_chat_key = generated.index("    xdotool key --clearmodifiers t", generated.index('  ensure_minecraft_command_channel() {'))
+channel_chat_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05g-command-chat-open.png")
+channel_type = unique("xdotool type --clearmodifiers --delay 24 '/say TC_SMOKE_COMMAND_CHANNEL_READY'")
+channel_text_frame = unique("import -display :99 -window root -silent client-smoke/screenshots/05h-command-text-before-submit.png")
+channel_ack = unique("grep -Fq 'TC_SMOKE_COMMAND_CHANNEL_READY' run/logs/latest.log")
+channel_fail = unique("SALIS_COMMAND_CHANNEL=FAIL")
+channel_pass = unique("SALIS_COMMAND_CHANNEL=PASS")
+activate_fn = unique('  activate_minecraft_client() {')
+ensure_fn = unique('  ensure_minecraft_command_channel() {')
+chat_fn = unique('  send_chat() {')
+first_game_command = generated.index("  send_chat '/gamemode creative'", chat_fn)
+assert activate_fn < ensure_fn < chat_fn < first_game_command
+activate_body = generated[activate_fn:ensure_fn]
+assert channel_focus < channel_raise < channel_force_focus < channel_move
+assert active_window < focused_window < game_pid < active_pid < focused_pid < focus_fail < focus_capture < focus_pass
+assert 'sleep 0.25' in activate_body
+assert 'SALIS_INPUT_FOCUS=PASS' in activate_body
+ensure_body = generated[ensure_fn:chat_fn]
+assert channel_chat_key < channel_chat_frame < channel_type < channel_text_frame < channel_ack < channel_fail < channel_pass
+assert 'xdotool key --clearmodifiers slash' not in ensure_body
+assert ensure_body.count('activate_minecraft_client') == 2
+focus_after_chat = generated.index('activate_minecraft_client', channel_chat_frame)
+focus_before_submit = generated.index('activate_minecraft_client', channel_text_frame)
+submit_return = generated.index('xdotool key --clearmodifiers Return', channel_text_frame)
+assert channel_chat_frame < focus_after_chat < channel_type < channel_text_frame < focus_before_submit < submit_return < channel_ack
+assert 'for _ in $(seq 1 40)' in ensure_body
+assert 'capture 05f-command-channel-not-ready' in ensure_body
+assert '05g-command-chat-open.png' in ensure_body
+assert '05h-command-text-before-submit.png' in ensure_body
+chat_end = generated.index("\n  }", chat_fn)
+chat_body = generated[chat_fn:chat_end]
+assert chat_body.index('activate_minecraft_client') < chat_body.index('ensure_minecraft_command_channel') < chat_body.index('xdotool key --clearmodifiers t')
+assert 'xdotool type --clearmodifiers --delay 24 "$1"' in chat_body
+
+print("Salis focused T-chat/full-slash command acknowledgement, pre-submit evidence, quiet client categories, clean PCM baseline gate, screenshot ordering and unchanged waveform thresholds: PASS")

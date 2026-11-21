@@ -1,0 +1,6 @@
+// Add Maven Central before settings plugin requests are resolved.
+// The NeoForge ModDev plugin's transitive Gson dependency is published there;
+// the plugin portal alone does not expose every transitive Maven Central artifact.
+gradle.beforeSettings { settings ->
+    settings.pluginManagement.repositories.mavenCentral()
+}

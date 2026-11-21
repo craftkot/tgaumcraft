@@ -1,6 +1,9 @@
 package dev.ehtid.thaumcraft.client;
 
 import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.entity.FluxRiftEntity;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import net.neoforged.neoforge.event.PlayLevelSoundEvent;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -10,6 +13,41 @@ import net.neoforged.neoforge.client.event.RenderGuiEvent;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public final class ThaumcraftClientGameEvents {
     private ThaumcraftClientGameEvents() {}
+
+    @SubscribeEvent
+    public static void onFluxRiftAmbientSound(PlayLevelSoundEvent.AtEntity event) {
+        if (!"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            return;
+        }
+        if (event.getEntity() instanceof FluxRiftEntity rift
+                && event.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()) {
+            System.out.println("TC_SMOKE_RIFT_SOUND_CLIENT_ENTITY_EVENT=YES entityId=" + rift.getId()
+                    + " pos=" + rift.getX() + "," + rift.getY() + "," + rift.getZ()
+                    + " volume=" + event.getOriginalVolume()
+                    + " pitch=" + event.getOriginalPitch()
+                    + " newVolume=" + event.getNewVolume()
+                    + " newPitch=" + event.getNewPitch()
+                    + " source=" + event.getSource()
+                    + " canceled=" + event.isCanceled());
+        }
+    }
+
+    @SubscribeEvent
+    public static void onFluxRiftAmbientSoundAtPosition(PlayLevelSoundEvent.AtPosition event) {
+        if (!"1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            return;
+        }
+        if (event.getSound().value() == ThaumcraftSounds.EVILPORTAL.get()) {
+            System.out.println("TC_SMOKE_RIFT_SOUND_CLIENT_POSITION_EVENT=YES"
+                    + " pos=" + event.getPosition().x + "," + event.getPosition().y + "," + event.getPosition().z
+                    + " volume=" + event.getOriginalVolume()
+                    + " pitch=" + event.getOriginalPitch()
+                    + " newVolume=" + event.getNewVolume()
+                    + " newPitch=" + event.getNewPitch()
+                    + " source=" + event.getSource()
+                    + " canceled=" + event.isCanceled());
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderGui(RenderGuiEvent.Post event) {

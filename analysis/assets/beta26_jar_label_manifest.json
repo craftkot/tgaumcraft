@@ -1,0 +1,386 @@
+{
+  "source_repo": "TheDarkTower314/Thaumcraft-6-Source-Code",
+  "source_commit": "954022bb777b7546281fb36df8522f0ba6b43f81",
+  "source_note": "Pinned Thaumcraft 6.1.BETA26 source tree; Git blob SHA-1 values are byte-identity checks.",
+  "label": {
+    "path": "src/main/resources/assets/thaumcraft/textures/models/label.png",
+    "source_path": "src/main/resources/assets/thaumcraft/textures/models/label.png",
+    "git_blob_sha1": "3b3b98ebc7c8d1b4b57503cf5e36535d590392c0",
+    "dimensions": [
+      16,
+      16
+    ]
+  },
+  "aspects": [
+    {
+      "tag": "aer",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/aer.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/aer.png",
+      "git_blob_sha1": "c3c4d65716424c6929971ca55568b352989290b1",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "terra",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/terra.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/terra.png",
+      "git_blob_sha1": "e6f100f6ec825d99437e9b24d91ea0463fe9788b",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "ignis",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/ignis.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/ignis.png",
+      "git_blob_sha1": "0166dcfb7b91c68bdecdd87f99d02bf229d387e9",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "aqua",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/aqua.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/aqua.png",
+      "git_blob_sha1": "81f1ade7b6811b2fae4f600f1f521e8144b5f5b1",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "ordo",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/ordo.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/ordo.png",
+      "git_blob_sha1": "84046621904afc8628c50ef9b56c20fafb9bdd7e",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "perditio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/perditio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/perditio.png",
+      "git_blob_sha1": "0e59ef1eb905221468213e75b3dc66aebd3a3bb7",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "vacuos",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/vacuos.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/vacuos.png",
+      "git_blob_sha1": "b4ce0ba21a428de64f9318656beaec97fdfa125b",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "lux",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/lux.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/lux.png",
+      "git_blob_sha1": "a19f05a4982f7b7b8da93baab711ff1087a99130",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "motus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/motus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/motus.png",
+      "git_blob_sha1": "f0694e941d686618c226375a7d935f9bffb080a4",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "gelum",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/gelum.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/gelum.png",
+      "git_blob_sha1": "c68581f8997b7f09d6d8396f821fe81f4cb4d0f2",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "vitreus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/vitreus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/vitreus.png",
+      "git_blob_sha1": "007d831dbe0edbb02b722fb18fdb51c6fc0d706a",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "metallum",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/metallum.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/metallum.png",
+      "git_blob_sha1": "01d2cf9e0411bd367f73acd2e10ec6607bd7377a",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "victus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/victus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/victus.png",
+      "git_blob_sha1": "5f2f3d54443f3abb4768e8c18a47de0b350c90c7",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "mortuus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/mortuus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/mortuus.png",
+      "git_blob_sha1": "e4c5e64b4f63688a13c02e5c184130882aba7ca9",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "potentia",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/potentia.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/potentia.png",
+      "git_blob_sha1": "5dc83c9d29799b7807365301ae81114b6c9b471a",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "permutatio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/permutatio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/permutatio.png",
+      "git_blob_sha1": "79c8c9b264256e30383f17a6e2d788df5bcda322",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "praecantatio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/praecantatio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/praecantatio.png",
+      "git_blob_sha1": "5dd2b0d849b7c845180922990de57bdb6eab2aa3",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "auram",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/auram.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/auram.png",
+      "git_blob_sha1": "a701c98298ea125e7544d6cb2f9e058eadcd6c64",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "alkimia",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/alkimia.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/alkimia.png",
+      "git_blob_sha1": "f28ab2855ec402d2eafdd0d3e5162f4509111262",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "vitium",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/vitium.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/vitium.png",
+      "git_blob_sha1": "6e8674ae475b09e570c301411ea975d4f420f0d6",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "tenebrae",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/tenebrae.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/tenebrae.png",
+      "git_blob_sha1": "ac69f2c18fc54ce534fd02c6bdd3710dac00434d",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "alienis",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/alienis.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/alienis.png",
+      "git_blob_sha1": "b838927496437a3851a9f8d6ca84219f00a2ba20",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "volatus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/volatus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/volatus.png",
+      "git_blob_sha1": "4df2d11912689cd684c16b54a5d8197cefe6a06a",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "herba",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/herba.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/herba.png",
+      "git_blob_sha1": "f35dc4d3dce1be4ef41139fe27d0f30e32344cf6",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "instrumentum",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/instrumentum.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/instrumentum.png",
+      "git_blob_sha1": "6c7311a27db23c3eced05b563f46a63d1d00286c",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "fabrico",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/fabrico.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/fabrico.png",
+      "git_blob_sha1": "073973788862bca5da9d7f92de3ddd90d0f9e881",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "machina",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/machina.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/machina.png",
+      "git_blob_sha1": "be1f7726a90e0857f901fce9edf5ef9eb3b5bbb6",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "vinculum",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/vinculum.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/vinculum.png",
+      "git_blob_sha1": "b188356784cd5213c5fbea8d89c6019f524e9375",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "spiritus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/spiritus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/spiritus.png",
+      "git_blob_sha1": "96c730fe02fd20ca1ad019fc2e4face14e8c9440",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "cognitio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/cognitio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/cognitio.png",
+      "git_blob_sha1": "c4c9413c19d77421ee3bf7f2c56868ddc1a9b7f4",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "sensus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/sensus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/sensus.png",
+      "git_blob_sha1": "590b8240a85f9c7c046b0b0e821aa8f2b8d1c7c9",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "aversio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/aversio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/aversio.png",
+      "git_blob_sha1": "75069e7587a4f1e657573032e956571433bdc272",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "praemunio",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/praemunio.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/praemunio.png",
+      "git_blob_sha1": "83f85ee5a0547660ef7ab1d4f01f3d0fadefce67",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "desiderium",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/desiderium.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/desiderium.png",
+      "git_blob_sha1": "0e96c8bc14cbf809db06c5cabc04fe5ee48c747a",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "exanimis",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/exanimis.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/exanimis.png",
+      "git_blob_sha1": "e667920f02cd1d906df461058f0004e7eb75a7e7",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "bestia",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/bestia.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/bestia.png",
+      "git_blob_sha1": "1a5966a899378c32ed89cb42d23cd8cf8d7deaff",
+      "dimensions": [
+        32,
+        32
+      ]
+    },
+    {
+      "tag": "humanus",
+      "path": "src/main/resources/assets/thaumcraft/textures/aspects/humanus.png",
+      "source_path": "src/main/resources/assets/thaumcraft/textures/aspects/humanus.png",
+      "git_blob_sha1": "fed973fb8f6aa4caaed0445172d69801aed4869f",
+      "dimensions": [
+        32,
+        32
+      ]
+    }
+  ]
+}
