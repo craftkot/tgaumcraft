@@ -229,6 +229,32 @@ public final class SilverwoodRollbackFailureInjectionTest {
                     return true;
                 }) == 0, "skip canopy rollback when current state is unavailable");
         check(unloadedWrites[0] == 0, "unavailable positions never invoke world writes");
+        // A null position is not a valid BlockPos. Validate the complete
+        // journal before reading or mutating even its valid prefix.
+        for (boolean trunk : new boolean[] {true, false}) {
+            Map<Integer, String> invalid = new LinkedHashMap<>();
+            invalid.put(100, trunk ? "LOG_X" : "FLOWER");
+            invalid.put(null, trunk ? "LOG_Y" : "AIR");
+            int[] reads = {0};
+            int[] writes = {0};
+            boolean rejectedNullPosition = false;
+            try {
+                if (trunk) {
+                    SilverwoodTrunkRollback.restore(invalid, invalid,
+                            pos -> { reads[0]++; return "LOG_X"; },
+                            (pos, state) -> { writes[0]++; return true; });
+                } else {
+                    SilverwoodCanopyRollback.restore(invalid, "LEAVES",
+                            pos -> { reads[0]++; return "LEAVES"; },
+                            (pos, state) -> { writes[0]++; return true; });
+                }
+            } catch (NullPointerException expected) {
+                rejectedNullPosition = true;
+            }
+            check(rejectedNullPosition, "null journal position rejected before rollback");
+            check(reads[0] == 0, "invalid position prevents world reads");
+            check(writes[0] == 0, "invalid position prevents world writes");
+        }
         System.out.println("M12 Silverwood rollback failure injection: OK (" + checks + " assertions)");
     }
 }
