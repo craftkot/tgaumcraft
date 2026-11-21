@@ -3029,3 +3029,5 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Fixed rubric remains 59/100, M16 4/6, M08 5/9. No point awarded and no category closed. Next: require the corrected static verifier and real-client workflow to pass; only then inspect Crucible before/after PNGs and TC_SMOKE_CRUCIBLE_BUBBLE_CREATED/RENDERED markers. If the aspect list reaches the client but no particle is created, investigate BlockEntity update synchronization and the client ticker rather than weakening the smoke.
 
 - Follow-up review of the generated-script self-check found an orphaned duplicate ordering tail left by the first patch. Removed it in the immediate follow-up commit before treating any new CI as evidence; the first patch had not produced a new workflow result.
+
+- A second static-review correction: the verifier initially counted the probe literal in the generator's self-check as well as in the runtime template. Changed its uniqueness assertions to inspect runtime_template only, where each command must occur exactly once. The 874632d run was queued before this correction; its result will not be used as evidence for the final commit.
