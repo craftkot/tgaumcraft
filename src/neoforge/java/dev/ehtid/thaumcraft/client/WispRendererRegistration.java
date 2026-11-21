@@ -1,0 +1,120 @@
+package dev.ehtid.thaumcraft.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.entity.WispEntity;
+import dev.ehtid.thaumcraft.registry.WispRegistration;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import org.joml.Matrix4f;
+
+/**
+ * Visible billboard projection of BETA26 RenderWisp using the exact shipped
+ * 64x64 particle atlas. The original auranodes sheet and additive blend state
+ * are not yet available in this resource slice; the aspect-tinted third layer
+ * therefore samples the matching frame region from the particle atlas.
+ */
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, value = Dist.CLIENT)
+public final class WispRendererRegistration {
+    private WispRendererRegistration() {}
+
+    @SubscribeEvent
+    public static void register(EntityRenderersEvent.RegisterRenderers event) {
+        event.registerEntityRenderer(WispRegistration.get(), WispRenderer::new);
+    }
+
+    private static final class WispRenderer extends EntityRenderer<WispEntity> {
+        private static final ResourceLocation PARTICLE_ATLAS =
+                ResourceLocation.fromNamespaceAndPath(
+                        ThaumcraftPort.MOD_ID, "textures/particle/particles.png");
+        private static final RenderType PARTICLE_LAYER = RenderType.entityTranslucent(PARTICLE_ATLAS);
+
+        private WispRenderer(EntityRendererProvider.Context context) {
+            super(context);
+            shadowRadius = 0.0F;
+        }
+
+        @Override
+        public void render(
+                WispEntity entity,
+                float entityYaw,
+                float partialTick,
+                PoseStack poseStack,
+                MultiBufferSource buffers,
+                int packedLight
+        ) {
+            if (entity.getHealth() <= 0.0F) {
+                return;
+            }
+
+            poseStack.pushPose();
+            poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
+            VertexConsumer consumer = buffers.getBuffer(PARTICLE_LAYER);
+            Matrix4f matrix = poseStack.last().pose();
+            int frame = entity.tickCount % 16;
+            renderQuad(consumer, matrix, 0.4F, 512 + frame, 0xFFFFFF, 255);
+            renderQuad(consumer, matrix, 0.75F, 320 + frame, 0xFFFFFF, 64);
+            renderQuad(consumer, matrix, 0.75F, 800 + frame, entity.getAspectColor(), 128);
+            poseStack.popPose();
+
+            super.render(entity, entityYaw, partialTick, poseStack, buffers, LightTexture.FULL_BRIGHT);
+        }
+
+        private static void renderQuad(
+                VertexConsumer consumer,
+                Matrix4f matrix,
+                float scale,
+                int frame,
+                int color,
+                int alpha
+        ) {
+            float u0 = (frame % 64) / 64.0F;
+            float u1 = u0 + 1.0F / 64.0F;
+            float v0 = (frame / 64) / 64.0F;
+            float v1 = v0 + 1.0F / 64.0F;
+            int red = (color >> 16) & 0xFF;
+            int green = (color >> 8) & 0xFF;
+            int blue = color & 0xFF;
+
+            vertex(consumer, matrix, -scale, -scale, u1, v1, red, green, blue, alpha);
+            vertex(consumer, matrix, -scale, scale, u1, v0, red, green, blue, alpha);
+            vertex(consumer, matrix, scale, scale, u0, v0, red, green, blue, alpha);
+            vertex(consumer, matrix, scale, -scale, u0, v1, red, green, blue, alpha);
+        }
+
+        private static void vertex(
+                VertexConsumer consumer,
+                Matrix4f matrix,
+                float x,
+                float y,
+                float u,
+                float v,
+                int red,
+                int green,
+                int blue,
+                int alpha
+        ) {
+            consumer.addVertex(matrix, x, y, 0.0F)
+                    .setColor(red, green, blue, alpha)
+                    .setUv(u, v)
+                    .setOverlay(OverlayTexture.NO_OVERLAY)
+                    .setLight(LightTexture.FULL_BRIGHT)
+                    .setNormal(0.0F, 0.0F, 1.0F);
+        }
+
+        @Override
+        public ResourceLocation getTextureLocation(WispEntity entity) {
+            return PARTICLE_ATLAS;
+        }
+    }
+}
