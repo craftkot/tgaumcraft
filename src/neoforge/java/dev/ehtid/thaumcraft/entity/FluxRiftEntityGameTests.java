@@ -358,9 +358,9 @@ public final class FluxRiftEntityGameTests {
         if (veryUnstableUndead.getHealth() != undeadHealthBeforeTaintTick) {
             throw new AssertionError("BETA26 Flux Taint must not damage undead targets");
         }
-        veryUnstableTainted.setHealth(10.0F);
+        veryUnstableTainted.setHealth(5.0F);
         fluxTaintEffect.applyEffectTick(veryUnstableTainted, 0);
-        if (Math.abs(veryUnstableTainted.getHealth() - 11.0F) > 0.001F) {
+        if (Math.abs(veryUnstableTainted.getHealth() - 6.0F) > 0.001F) {
             throw new AssertionError("BETA26 tainted-mob exception must heal one point instead of damaging");
         }
         System.out.println("TC_GAMETEST_FLUX_RIFT_COLLAPSE_FLUX_TAINT=PASS stability=-25 duration=1200 interval=40 undead=immune tainted=heal magic=bypasses_armor boundary=32");
