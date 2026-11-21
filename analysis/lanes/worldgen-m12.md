@@ -836,3 +836,11 @@
 - Test commit 53fadb41ff9db2fac03d5a63eb96c2b7cd769848 extends SilverwoodRollbackFailureInjectionTest: simulate a rejected canopy setBlock before log phase; restore both previously written leaves, preserve rejected-position STONE and assert idempotent cleanup. No production or shared registry/Gradle changes.
 - This is a loader-neutral simulated failure, NOT a native WorldGenLevel GameTest. Java 21 runner, exact-head NeoForge build and fresh-chunk generation not executed in this iteration. New-head CI status checked immediately after commit; success not assumed.
 - Next: execute tools/test_silverwood_rollback_failure_injection.sh on exact checkout, run native setBlock rejection GameTest, then coordinate placed-feature and biome integration. 17/81 original Silverwood centers remain rejected. No main/foreign branch changes or merge; historical 59/100 unchanged.
+
+
+## 2026-11-21 — M12 rollback null-position journal prevalidation
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane. Inspected six feature branches, main...feature/worldgen-m12 (ahead 225 / behind 0 before edits), and attempted PR inventory (issue search returned no entries; previously known Draft PR #9 not modified).
+- Added deterministic null-position journal cases for both SilverwoodTrunkRollback and SilverwoodCanopyRollback: reject null BlockPos keys before any world reads or writes, including when a valid prefix exists. Test commit 835d19594d9f59611ac6d12ac6db625b8b7fbe5d (6 assertions); runner expected count 37 -> 43 in 2abb2ef9342b3deeb6a83363e22bda6d4cbcf7a5.
+- This tests existing fail-closed production behavior, not a new feature or native WorldGenLevel setBlock failure. Direct git ls-remote failed DNS; exact checkout Java 21 runner, NeoForge GameTest, and fresh-chunk generation not executed. CI for these new commits must be checked; do not claim PASS.
+- Remaining: 17/81 Silverwood centers excluded by chunk boundary policy, natural biome/placed-feature registration not integrated, and no gameplay proof. Next: run exact Java runner, native GameTest, then coordinate worldgen registration; no main, foreign branches, shared registries, Gradle or merge changes. Historical 59/100 unchanged.
