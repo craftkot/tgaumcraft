@@ -740,4 +740,64 @@ public final class CrystalSpreadGameTests {
         }
         throw new AssertionError("Could not find deterministic crystal-spread seed");
     }
+
+    @SuppressWarnings("deprecation")
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 40
+    )
+    public static void polishedStoneSupportsCrystalsLikeBETA26(GameTestHelper helper) {
+        if ("read".equals(System.getenv("TC_AURA_COLD_RESTART_PHASE"))) {
+            System.out.println("TC_GAMETEST_CRYSTAL_POLISHED_STONE_SKIPPED_PHASE=read");
+            helper.succeed();
+            return;
+        }
+
+        ServerLevel level = helper.getLevel();
+        BlockPos origin = helper.absolutePos(new BlockPos(2, TEST_Y, TEST_Z));
+        CrystalClusterBlock crystal = ThaumcraftBlocks.CRYSTAL_AER.get();
+        Block[] polishedStone = {
+                Blocks.POLISHED_GRANITE,
+                Blocks.POLISHED_DIORITE,
+                Blocks.POLISHED_ANDESITE
+        };
+        String[] names = {"polished_granite", "polished_diorite", "polished_andesite"};
+
+        for (int index = 0; index < polishedStone.length; index++) {
+            BlockPos supportPos = origin.offset(index * 3, 0, 0);
+            BlockPos crystalPos = supportPos.above();
+            level.setBlock(supportPos, polishedStone[index].defaultBlockState(), 3);
+
+            if (!CrystalClusterBlock.hasCrystalSupport(level, crystalPos, Direction.DOWN)) {
+                throw new AssertionError("BETA26 ROCK support was rejected: " + names[index]);
+            }
+            BlockState crystalState = crystal.defaultBlockState();
+            if (!crystalState.canSurvive(level, crystalPos)) {
+                throw new AssertionError("Crystal cannot survive on BETA26 ROCK support: " + names[index]);
+            }
+            if (!level.setBlock(crystalPos, crystalState, 3)
+                    || !level.getBlockState(crystalPos).is(crystal)) {
+                throw new AssertionError("Crystal placement failed on BETA26 ROCK support: " + names[index]);
+            }
+        }
+
+        BlockPos glassSupport = origin.offset(10, 0, 0);
+        level.setBlock(glassSupport, Blocks.GLASS.defaultBlockState(), 3);
+        if (crystal.defaultBlockState().canSurvive(level, glassSupport.above())) {
+            throw new AssertionError("Glass must not be accepted as BETA26 Material.ROCK");
+        }
+
+        BlockPos metalSupport = origin.offset(13, 0, 0);
+        level.setBlock(metalSupport, Blocks.GOLD_BLOCK.defaultBlockState(), 3);
+        if (crystal.defaultBlockState().canSurvive(level, metalSupport.above())) {
+            throw new AssertionError("Gold block must not be accepted as BETA26 Material.ROCK");
+        }
+
+        System.out.println("TC_GAMETEST_CRYSTAL_POLISHED_STONE_SUPPORT=PASS"
+                + " variants=3 glass_rejected=YES gold_rejected=YES");
+        helper.succeed();
+    }
+
 }
