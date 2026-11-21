@@ -3,7 +3,7 @@ package dev.ehtid.thaumcraft.entity;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
+import net.minecraft.tags.EntityTypeTags;
 
 /**
  * BETA26 PotionFluxTaint: one point of magic damage every (40 >> amplifier)
@@ -20,7 +20,7 @@ public final class FluxTaintMobEffect extends MobEffect {
     public boolean applyEffectTick(LivingEntity entity, int amplifier) {
         if (entity instanceof FluxTaintHealable) {
             entity.heal(1.0F);
-        } else if (entity.getMobType() != MobType.UNDEAD) {
+        } else if (!entity.getType().is(EntityTypeTags.UNDEAD)) {
             // BETA26 DamageSourceThaumcraft.taint is magic and bypasses armor.
             entity.hurt(entity.level().damageSources().magic(), 1.0F);
         }
