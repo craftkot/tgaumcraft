@@ -87,6 +87,24 @@ public final class SilverwoodLegacyTreeTest {
                 assertions += 4;
             }
         }
+        // Invalid callback contracts must fail before consuming the RNG or writing blocks.
+        for (int missing = 0; missing < 4; missing++) {
+            Random untouched = new Random(20261121L);
+            int[] callbackWrites = {0};
+            try {
+                SilverwoodLegacyTree.place(8, 70, 8, 7,
+                        missing == 0 ? null : untouched,
+                        missing == 1 ? null : (x, y, z) -> true,
+                        missing == 2 ? null : (x, y, z) -> callbackWrites[0]++,
+                        missing == 3 ? null : (x, y, z, meta) -> callbackWrites[0]++);
+                throw new AssertionError("missing dependency accepted: " + missing);
+            } catch (NullPointerException expected) {
+                check(callbackWrites[0] == 0, "null dependency wrote blocks");
+                check(untouched.nextLong() == new Random(20261121L).nextLong(),
+                        "null dependency consumed RNG");
+                assertions += 2;
+            }
+        }
         Random invalid = new Random(7);
         int[] writes = {0};
         try {
