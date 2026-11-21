@@ -10,8 +10,8 @@ javac --release 21 -d "$tmp" \
 # Fail closed if the regression silently loses assertions or never reaches its summary.
 output="$(java -cp "$tmp" dev.ehtid.thaumcraft.port.core.SilverwoodRollbackFailureInjectionTest)"
 printf '%s\n' "$output"
-expected='M12 Silverwood rollback failure injection: OK (37 assertions)'
+expected='M12 Silverwood rollback failure injection: OK (43 assertions)'
 if [[ "$output" != "$expected" ]]; then
-  printf 'Unexpected Silverwood rollback regression summary (expected 37 assertions)\n' >&2
+  printf 'Unexpected Silverwood rollback regression summary (expected 43 assertions)\n' >&2
   exit 1
 fi
