@@ -9,7 +9,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
@@ -105,9 +104,12 @@ public final class WispEntityGameTests {
 
         WispEntity wisp = new WispEntity(WispRegistration.get(), level);
         wisp.moveTo(origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
-        Zombie stationary = new Zombie(EntityType.ZOMBIE, level);
+        Zombie stationary = EntityType.ZOMBIE.create(level);
+        Zombie moving = EntityType.ZOMBIE.create(level);
+        if (stationary == null || moving == null) {
+            throw new AssertionError("Unable to create Wisp zap targets");
+        }
         stationary.moveTo(origin.getX() + 2.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
-        Zombie moving = new Zombie(EntityType.ZOMBIE, level);
         moving.moveTo(origin.getX() + 4.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
         moving.setDeltaMovement(0.2D, 0.0D, 0.0D);
 
