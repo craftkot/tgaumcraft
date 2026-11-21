@@ -487,7 +487,14 @@ probe = r'''
   send_chat '/kill @e[type=thaumcraft:flux_rift]'
   send_chat '/tick unfreeze'
 
+  # Build a lit, open test stage so the camera cannot end up inside terrain.
+  send_chat '/time set noon'
+  send_chat '/gamerule doDaylightCycle false'
+  send_chat '/weather clear'
+  send_chat '/fill 18 63 0 24 63 4 minecraft:stone'
+  send_chat '/fill 18 64 0 24 72 4 minecraft:air'
   send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'
+  send_chat '/setblock 20 64 1 minecraft:glowstone'
   send_chat '/execute if block 20 64 2 thaumcraft:crucible run say TC_CRUCIBLE_PRESENT'
   if ! wait_for_server_marker 'TC_CRUCIBLE_PRESENT'; then
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL crucible block was not placed' | tee -a client-smoke-status.txt
@@ -500,8 +507,9 @@ probe = r'''
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL empty-aspect water baseline was not accepted' | tee -a client-smoke-status.txt
     exit 1
   fi
-  send_chat_fast '/tp @p 22.5 67.5 2.5 90 55'
-  send_chat '/execute if entity @p[x=22,y=67,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'
+  # Aim the crosshair at the crucible surface from a clear east-side camera.
+  send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'
+  send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_CAMERA_READY'; then
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL overhead crucible camera was not acknowledged' | tee -a client-smoke-status.txt
     exit 1
@@ -542,6 +550,10 @@ probe = r'''
   fi
   capture crucible-bubble-after
   test -s client-smoke/screenshots/crucible-bubble-after.png
+  python3 tools/verify_crucible_bubble_screenshots.py \
+    client-smoke/screenshots/crucible-bubble-before.png \
+    client-smoke/screenshots/crucible-bubble-after.png \
+    | tee -a client-smoke-status.txt
   echo "CRUCIBLE_BUBBLE_REAL_CLIENT=PASS $bubble_created_line | $bubble_rendered_line" | tee -a client-smoke-status.txt
 '''
 high_teleport_command = 'send_chat_fast "/tp @p $rift_x 300 $rift_z 0 0"'
@@ -632,5 +644,35 @@ if not (
     < probe.index("capture crucible-bubble-after")
 ):
     raise SystemExit("Crucible bubble smoke must compare empty and aspect-bearing client states in order")
+fixture_commands = (
+    "send_chat '/time set noon'",
+    "send_chat '/gamerule doDaylightCycle false'",
+    "send_chat '/weather clear'",
+    "send_chat '/fill 18 63 0 24 63 4 minecraft:stone'",
+    "send_chat '/fill 18 64 0 24 72 4 minecraft:air'",
+    "send_chat '/setblock 20 64 1 minecraft:glowstone'",
+    "send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'",
+    "send_chat '/execute if entity @p[x=22,y=68,z=2,distance=..1] run say TC_CRUCIBLE_CAMERA_READY'",
+    "python3 tools/verify_crucible_bubble_screenshots.py",
+)
+if any(probe.count(command) != 1 for command in fixture_commands):
+    raise SystemExit("Crucible screenshot smoke must build one lit stage, aim one camera, and run one pixel verifier")
+if not (
+    probe.index("send_chat '/time set noon'")
+    < probe.index("send_chat '/gamerule doDaylightCycle false'")
+    < probe.index("send_chat '/fill 18 63 0 24 63 4 minecraft:stone'")
+    < probe.index("send_chat '/fill 18 64 0 24 72 4 minecraft:air'")
+    < probe.index("send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'")
+    < probe.index("send_chat '/setblock 20 64 1 minecraft:glowstone'")
+    < probe.index("TC_CRUCIBLE_PRESENT")
+    < probe.index("TC_CRUCIBLE_BASELINE_READY")
+    < probe.index("send_chat_fast '/tp @p 22.5 68.5 2.5 90 70'")
+    < probe.index("TC_CRUCIBLE_CAMERA_READY")
+    < probe.index("capture crucible-bubble-before")
+    < probe.index("TC_CRUCIBLE_ASPECT_READY")
+    < probe.index("capture crucible-bubble-after")
+    < probe.index("python3 tools/verify_crucible_bubble_screenshots.py")
+):
+    raise SystemExit("Crucible pixel evidence must follow a lit scene, camera confirmation, empty baseline, and aspect-bearing capture")
 print(generated_script)
 
