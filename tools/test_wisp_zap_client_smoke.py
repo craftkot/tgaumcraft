@@ -60,7 +60,6 @@ def main() -> int:
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
-        '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
@@ -108,10 +107,11 @@ def main() -> int:
     rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"', post_aim_snapshot_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$post_aim_log_lines"', rendered_index)
     aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < summon_index < present_index < aim_index < aim_wait_index < post_aim_snapshot_index < rendered_index < telemetry_index < aim_capture_index, (
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < summon_index < aim_index < aim_wait_index < post_aim_snapshot_index < rendered_index < telemetry_index < aim_capture_index, (
         "absolute platform and support proof must precede Wisp spawn; exact facing teleport and fresh camera telemetry must precede screenshot"
     )
     assert "Successfully filled 81 block(s)" in generated
+    assert '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' not in generated
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
     assert "wisp_verify_aim_telemetry" in generated
