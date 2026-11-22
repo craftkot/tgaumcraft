@@ -72,7 +72,7 @@ def main() -> int:
         "WISP_RENDER_AFTER_AIM=YES",
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "wisp_capture 78-wisp-aim-check",
-        "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
+        "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
         "--aim-only",
         "wisp_capture 79-wisp-before-a",
@@ -94,14 +94,19 @@ def main() -> int:
         "fixture chunk must be entered and observed loaded before the platform fill response is accepted"
     )
     present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
-    aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p")
-    aim_teleport_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"')
+    position_aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 ~ ~'")
+    position_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"', position_aim_index)
+    rotation_snapshot_index = setup.index('aim_rotation_log_lines="$(wc -l < client-smoke/client.log)"', position_wait_index)
+    rotation_aim_index = setup.index("wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~'", rotation_snapshot_index)
+    rotation_wait_index = setup.index('wisp_wait_for_teleport "$aim_rotation_log_lines"', rotation_aim_index)
     post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"')
     rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"')
     aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check")
-    assert present_index < aim_index < aim_teleport_wait_index < post_aim_snapshot_index < rendered_index < aim_capture_index, (
-        "only a renderer callback appended after the confirmed live-relative teleport is valid post-aim evidence"
+    assert present_index < position_aim_index < position_wait_index < rotation_snapshot_index < rotation_aim_index < rotation_wait_index < post_aim_snapshot_index < rendered_index < aim_capture_index, (
+        "position must be confirmed first, then player-eye facing must be confirmed before accepting a fresh render"
     )
+    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in generated
+    assert "~-1.5 ~ ~ facing entity" not in generated
     assert 'wisp_wait_for_fresh_render "$aim_log_lines"' not in generated
     assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
     assert generated.count("  send_chat() {") == 1
@@ -129,7 +134,7 @@ def main() -> int:
     status = "\n".join((
         "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 35 block(s)]",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
-        "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
+        "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES",
         "WISP_RENDER_AFTER_AIM=YES",
         "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 9.0, 149.0, 10.5",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",

@@ -169,9 +169,18 @@ def render() -> str:
   wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
+  # Move to the east side of the live Wisp. The positive offset keeps the
+  # player on the stone fixture instead of dropping outside its west edge.
+  wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 ~ ~'
   wisp_wait_for_teleport "$aim_log_lines"
-  echo 'WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE' | tee -a client-smoke-status.txt
+  # "at Wisp" is correct for relative positioning, but not for computing the
+  # player's look rotation: it makes the Wisp the command source. Rebase the
+  # execution context to the player, anchor at the player's eyes, then face
+  # the live Wisp before teleporting the player to the same position.
+  aim_rotation_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~'
+  wisp_wait_for_teleport "$aim_rotation_log_lines"
+  echo 'WISP_ZAP_AIM=PLAYER_CONTEXT_EYES' | tee -a client-smoke-status.txt
   # Start the render gate only after the server confirmed the teleport; a
   # callback from while the command was being typed is not post-aim evidence.
   post_aim_log_lines="$(wc -l < client-smoke/client.log)"
