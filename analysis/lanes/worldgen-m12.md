@@ -979,3 +979,11 @@
 - Exact SHA `c1d1f2239abc34be82b385de8e24afcfd4837438`: GitHub Actions Thaumcraft Port CI run [45039035084](https://github.com/craftkot/tgaumcraft/actions/runs/45039035084) completed SUCCESS; CircleCI `ci/circleci: verify-connection` SUCCESS (workflow d5c7ee57-42da-424a-809a-d520c1fed6b2). These statuses do not establish that standalone Silverwood Java scripts were executed.
 - Re-read SilverwoodLegacyFeature, its source-level wiring guard and SilverwoodLegacyFootprintTest. Local `git ls-remote` again failed DNS (`Could not resolve host: github.com`), so exact checkout Java regression, NeoForge GameTest and Minecraft new-chunk worldgen are NOT verified. No production code changes this pass.
 - Next: run exact `tools/test_silverwood_legacy_footprint.sh` and other M12 Java scripts in a working checkout; then test rollback on WorldGenLevel and coordinate biome/placed-feature registration. Existing 17/81 exclusion and best-effort rollback remain. Draft PR #9 unmerged; project audit stays 59/100.
+
+
+## 2026-11-22 — M12 representable chunk-coordinate edge regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked branch inventory and open PR search. Compared main...feature/worldgen-m12 before edits: ahead 266, behind 0, base a4280834adc5a20b6951098af937d30ca4aeca56. Previous head cdfc32ce92511be068b07695771baaf809d835ab.
+- Test-only commit 11758d43f6b0dfbe53e494167fa7356fa600f146 adds 18 assertions in LegacyTreeAttemptTest for all nine offsets at the lowest/highest representable chunk origins. This complements the existing extreme-overflow rejection checks; no production code, shared registries, Gradle or CI changed.
+- Exact-checkout Java runner and NeoForge/GameTest/new-chunk Minecraft validation were not executed in this pass; no PASS is claimed for the new test or new HEAD. Next: execute tools/test_legacy_tree_attempt.sh on the exact SHA, inspect CI, then add native WorldGenLevel failure-injection coverage and coordinate natural biome registration.
+- Remaining: 17/81 Silverwood positions excluded by same-chunk policy, no natural registration, best-effort non-atomic rollback, no native worldgen proof. Draft PR #9 remains unmerged; audit 59/100 unchanged.
