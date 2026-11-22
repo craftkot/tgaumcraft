@@ -91,6 +91,21 @@ public final class LegacyTreeAttemptTest {
             catch (IllegalArgumentException expected) { thrown = true; }
             check(thrown, "overflow rejected");
         }
+        // Greatwood uses a strict support threshold and exactly one float draw,
+        // even for zero support. A spider roll is a separate, caller-gated step.
+        for (float support : new float[]{0F, 0.25F, 0.5F, 1F}) {
+            for (float roll : new float[]{0F, 0.25F, 0.5F, 0.999F}) {
+                Scripted biome = new Scripted(new int[0], new float[]{roll});
+                check(LegacyTreeAttempt.greatwoodBiome(support, biome) == (support > roll)
+                        && biome.f == 1 && biome.i == 0,
+                        "greatwood strict threshold and RNG consumption " + support + "/" + roll);
+            }
+        }
+        Scripted spider = new Scripted(new int[]{0, 7}, new float[0]);
+        check(LegacyTreeAttempt.spiderGreatwood(spider) && spider.i == 1,
+                "spider success consumes one bounded int");
+        check(!LegacyTreeAttempt.spiderGreatwood(spider) && spider.i == 2,
+                "spider rejection consumes one bounded int");
         System.out.println("M12 LegacyTreeAttempt: OK (" + assertions + " assertions)");
     }
 }
