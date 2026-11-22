@@ -391,12 +391,12 @@ assert crucible_particle_spec["textures"] == ["thaumcraft:particles"]
 # /execute if data consumes NBT paths. A compound SNBT literal is valid for
 # /data merge, but invalid as the path argument to /execute if data.
 crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
-crucible_aspects_command = "send_chat_fast '/data merge block 20 64 2 {Aspects:[{key:\\"aer\\",amount:1}]}'"
+crucible_aspects_command = "send_chat_fast '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
 crucible_aspects_probe = """send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
 assert runtime_template.count(crucible_baseline_probe) == 1
 assert runtime_template.count(crucible_aspects_command) == 1
 assert runtime_template.count(crucible_aspects_probe) == 1
-assert "send_chat '/data merge block 20 64 2 {Aspects:[{key:\\"aer\\",amount:1}]}'" not in runtime_template
+assert "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'" not in runtime_template
 assert "send_chat '/execute if data block 20 64 2 Aspects[{key:" not in runtime_template
 assert "execute if data block 20 64 2 {Heat:" not in runtime_template
 assert "execute if data block 20 64 2 {Aspects:" not in runtime_template
