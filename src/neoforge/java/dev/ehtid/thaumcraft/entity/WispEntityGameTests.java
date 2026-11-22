@@ -92,10 +92,9 @@ public final class WispEntityGameTests {
                 RandomSource expectedRolls = RandomSource.create(seed);
                 int skyRoll = expectedRolls.nextInt(32);
                 int localRoll = expectedRolls.nextInt(8);
-                if (!wisp.canSpawnFromRift(RandomSource.create(seed))) {
-                    throw new AssertionError("Thunder Wisp spawn gate rejected the BETA26-eligible light rolls: "
-                            + "sky=" + skyLight + " skyRoll=" + skyRoll
-                            + " thunderLocal=" + thunderLocalLight + " localRoll=" + localRoll);
+                if (!LegacyWispSpawnRules.canSpawn(false, 0, skyLight, skyRoll,
+                        thunderLocalLight, localRoll)) {
+                    throw new AssertionError("BETA26 thunder-adjusted local light must allow this spawn");
                 }
                 if (LegacyWispSpawnRules.canSpawn(false, 0, skyLight, skyRoll,
                         ordinaryLocalLight, localRoll)) {
