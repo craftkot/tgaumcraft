@@ -3429,3 +3429,11 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Changed paths: `WispEntity.java`, `ThaumcraftSounds.java`, `FluxRiftSoundGameTests.java`, `assets/thaumcraft/sounds.json`, six Wisp OGGs, and this lane journal. Before editing, checked all other open PRs #1–#3 and #5–#57: none touched these paths; PR #3/#4 overlaps in `SalisMundusItem.java` and `ArcaneWorkbenchMenu.java` remain untouched.
 - New exact-head NeoForge build, native GameTests and client audio smoke are pending. Fixed rubric remains **59/100**, M08 **5/9**, M16 **4/6**; no point or category closure is claimed.
 - Next: require Full Port PASS and the new `TC_GAMETEST_WISP_SOUND=PASS` marker. Then add a real Minecraft-client audio capture for `wisplive`, `wispdead`, vanilla hurt and `zap`; only afterward continue the missing Wisp particle/beam presentation and thunder-adjusted natural spawn parity.
+
+
+## 2026-11-22 — NeoForge 1.21.1 sound mapping correction
+
+- First exact-head build for `eec23c8c93fd22df0436045a05530403e1b6cbef` exposed one source-mapping error in the new Wisp hurt-sound override and its GameTest: this target uses Mojang-mapped `SoundEvents.LAVA_EXTINGUISH`, not the legacy name `BLOCK_LAVA_EXTINGUISH`. The authoritative 1.21.1 mapping table lists the field as `LAVA_EXTINGUISH` and its Yarn/legacy name as `BLOCK_LAVA_EXTINGUISH` ([mappings.dev 1.21.1](https://mappings.dev/1.21.1/net/minecraft/sounds/SoundEvents.html#nQ)).
+- Corrected both production and assertion to `SoundEvents.LAVA_EXTINGUISH`. No gameplay timing, sound ID, or audio asset changed.
+- The first Full Port attempt also had a separate transient dependency-resolution failure for Gson from the Gradle Plugin Portal; its failed job was queued for retry. The native GameTest run reached compilation and failed on the mapping name before any GameTest executed. No runtime PASS is claimed for this sound change yet.
+- Next: require successful NeoForge compilation, then the native `TC_GAMETEST_WISP_SOUND=PASS` packet assertion and a real client audio capture. Fixed score remains **59/100** (M08 **5/9**, M16 **4/6**); no category closure or point awarded.

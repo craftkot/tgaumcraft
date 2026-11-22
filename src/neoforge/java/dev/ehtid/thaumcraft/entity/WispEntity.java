@@ -73,7 +73,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     protected SoundEvent getHurtSound(DamageSource damageSource) {
-        return SoundEvents.BLOCK_LAVA_EXTINGUISH;
+        return SoundEvents.LAVA_EXTINGUISH;
     }
 
     @Override

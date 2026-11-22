@@ -172,7 +172,7 @@ public final class FluxRiftSoundGameTests {
         }
 
         if (wisp.getAmbientSound() != ThaumcraftSounds.WISP_LIVE.get()
-                || wisp.getHurtSound(null) != SoundEvents.BLOCK_LAVA_EXTINGUISH
+                || wisp.getHurtSound(null) != SoundEvents.LAVA_EXTINGUISH
                 || wisp.getDeathSound() != ThaumcraftSounds.WISP_DEAD.get()
                 || Float.compare(wisp.getSoundVolume(), 0.25F) != 0) {
             wisp.discard();
