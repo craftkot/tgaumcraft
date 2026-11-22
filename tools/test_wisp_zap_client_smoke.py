@@ -26,6 +26,7 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
+        'nbt={Type:"aer"}',
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
         "WISP_ZAP_REAL_CLIENT=PASS",
@@ -41,6 +42,10 @@ def main() -> int:
     assert syntax.returncode == 0, syntax.stderr
 
     log = "\n".join((
+        "TC_SMOKE_WISP_PLATFORM_READY=YES",
+        "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+        "TC_SMOKE_WISP_SPAWNED=YES",
+        "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
@@ -57,7 +62,8 @@ def main() -> int:
         root = Path(directory)
         for name in verify_wisp_zap_client.SCREENSHOTS:
             (root / name).write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 256)
-        assert verify_wisp_zap_client.verify(log, status, root) == []
+        errors = verify_wisp_zap_client.verify(log, status, root)
+        assert errors == [], errors
         assert verify_wisp_zap_client.verify(
             log.replace("target=1", "target=2", 1), status, root
         ), "mismatched server target must fail"
