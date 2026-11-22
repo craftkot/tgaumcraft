@@ -129,6 +129,7 @@ def main() -> int:
         "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 35 block(s)]",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
+        "WISP_RENDER_AFTER_AIM=YES",
         "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 9.0, 149.0, 10.5",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
@@ -164,6 +165,9 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_AFTER_AIM=YES", ""), root
+        ), "stale pre-aim renderer callback must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("target=1", "target=2", 1), status, root
         ), "mismatched server target must fail"
