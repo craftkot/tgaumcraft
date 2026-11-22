@@ -144,17 +144,20 @@ def render() -> str:
   wisp_command '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
-  # Require the actual entity renderer before attempting a melee hit.
-  wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
-
+  # The bootstrap camera may leave the Wisp outside the view frustum.
+  # Its renderer marker is emitted only from render(), so waiting for that
+  # marker before aiming creates a circular gate: the camera is never turned
+  # toward the entity and the renderer is never called.
   # Confirm the live entity, then move the player relative to its current
-  # server position. The previous same-position tp left the Wisp off-screen.
+  # server position and face the entity before requiring a render callback.
   wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
   aim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
   wisp_wait_for_teleport "$aim_log_lines"
   echo 'WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE' | tee -a client-smoke-status.txt
+  # Now the camera faces the live Wisp; require the actual renderer callback.
+  wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
   wisp_capture 78-wisp-aim-check
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
