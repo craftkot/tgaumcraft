@@ -90,6 +90,22 @@ def render() -> str:
     exit 1
   }
 
+  wisp_wait_for_fill() {
+    local after_lines="$1"
+    for _ in $(seq 1 200); do
+      local fill_line
+      fill_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Successfully filled 35 block(s)' | tail -1 || true)"
+      if [ -n "$fill_line" ]; then
+        echo "WISP_FIXTURE_PLATFORM_FILL=YES $fill_line" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_FIXTURE_PLATFORM_FILL_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_capture() {
     local name="$1"
     import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
@@ -113,8 +129,11 @@ def render() -> str:
   # "That position is not loaded" and silently leaves the platform absent.
   wisp_command '/tp @p 10.5 149 8.5 0 22'
   wisp_wait_for_loaded_chunk
+  fill_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_fast_command '/execute at @p run fill ~-2 ~-1 ~-1 ~2 ~-1 ~5 minecraft:stone'
-  wisp_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_WISP_PLATFORM_READY=YES' 'TC_SMOKE_WISP_PLATFORM_READY=YES'
+  # The vanilla command's own server response is the authoritative success
+  # signal; avoid a second coordinate predicate that can obscure the result.
+  wisp_wait_for_fill "$fill_log_lines"
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
   # 2.0 blocks keeps the Wisp inside survival melee reach while leaving its
