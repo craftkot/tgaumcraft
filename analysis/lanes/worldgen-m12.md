@@ -954,3 +954,11 @@
 - Previous SHA af041fa04b1a8c90de48a8fe2925f360dcdfff3d had GitHub Actions Thaumcraft Port CI run 44930657385 SUCCESS. No exact-new-HEAD Java runner, NeoForge compile, native GameTest or Minecraft fresh-chunk smoke verified. The updated wiring script has not been executed; its pre-existing RNG caveat string check also requires inspection before a PASS can be claimed.
 - Remaining: natural biome/placed-feature registration missing; 17/81 candidate Silverwood centers excluded by same-chunk gate; rollback remains best-effort and non-atomic. Next: run exact-head source and Java regressions, fix any wiring false positives, then native fault-injection GameTest and coordinate biome registration. No shared registries, Gradle, main, foreign branches or merge touched; audit stays 59/100.
 - Follow-up test-only commit 772a6052cd004be0c13d5cfa49e2b89af568c95b corrects a pre-existing source-check false negative: the RNG caveat now matches the actual feature comment. Script execution still unverified.
+
+
+## 2026-11-22 — M12 exact-SHA CI evidence audit
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; confirmed branch HEAD f2dbfe3998a50d1a6a255965051a145cc14ac6db and six feature branch names. No foreign branch writes.
+- GitHub Actions Thaumcraft Port CI run 45003412915 for exact SHA f2dbfe3998a50d1a6a255965051a145cc14ac6db: verify job SUCCESS, including Java 21 setup, Core parity test, NeoForge build, dedicated server smoke test and JAR upload. CircleCI ci/circleci: verify-connection also SUCCESS (workflow 0ce0f2de-5b7b-4303-905b-950861668573).
+- Scope: the workflow does NOT list the standalone M12 Silverwood Java regression runners, a native Silverwood GameTest, or natural new-chunk Silverwood placement verification. NeoForge build/server smoke PASS is evidence for this commit's general compilation/server startup, not evidence of working worldgen.
+- No production changes this pass. Still outstanding: 17/81 conservative same-chunk exclusions, absent natural biome/placed-feature registration, non-atomic best-effort rollback and exact-runner/gameplay proof. Next: run M12 standalone Java scripts from exact checkout and coordinate registration in a separate authorized integration change. Draft PR #9 remains unmerged; 59/100 unchanged.
