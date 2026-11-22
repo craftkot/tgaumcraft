@@ -77,7 +77,7 @@ def main() -> int:
         "wisp_capture 79-wisp-before-a",
         "wisp_capture 79-wisp-before-b",
         'nbt={Type:"aer"}',
-        "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 35 block(s)]",
+        "WISP_FIXTURE_PLATFORM_FILL=YES",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
         "WISP_ZAP_REAL_CLIENT=PASS",
@@ -116,6 +116,7 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=0.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
     ))
     status = "\n".join((
+        "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 35 block(s)]",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
         "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 9.0, 149.0, 10.5",
