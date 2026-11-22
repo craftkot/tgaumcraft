@@ -107,6 +107,8 @@ def main() -> int:
         "position must be confirmed first, then player-eye facing must be confirmed before accepting a fresh render"
     )
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in generated
+    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "~-1.5 ~ ~ facing entity" not in generated
     assert 'wisp_wait_for_fresh_render "$aim_log_lines"' not in generated
     assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
