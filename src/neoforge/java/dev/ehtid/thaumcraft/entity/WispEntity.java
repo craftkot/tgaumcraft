@@ -1,6 +1,7 @@
 package dev.ehtid.thaumcraft.entity;
 
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.network.WispZapPayload;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyWispSpawnRules;
@@ -10,6 +11,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -31,6 +33,7 @@ import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 
@@ -40,8 +43,8 @@ import java.util.List;
  * The original aspect tag is synchronized and persisted as "Type". Flight,
  * target acquisition, the 20-tick zap wind-up, movement-dependent damage,
  * the eight-nearby cap, dark-light spawn gate, and aspect crystal drop are
- * retained. The original client particle renderer and sounds are separate
- * presentation work.
+ * retained. The BETA26 two-entity zap packet is restored separately; the
+ * continuous ambient wispy-mote field remains client presentation work.
  */
 public final class WispEntity extends FlyingMob implements Enemy {
     /** Exact strict movement threshold from BETA26 EntityWisp.java. */
@@ -256,6 +259,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
                 attackCounter++;
                 if (attackCounter == 20) {
                     playZapSound();
+                    sendZapVisual(target);
                     tryZap(target, random.nextFloat());
                     attackCounter = -20 + random.nextInt(20);
                 }
@@ -283,6 +287,21 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     void playZapSound() {
         playSound(WispSoundRegistration.WISP_ZAP, 1.0F, 1.1F);
+    }
+
+    /** BETA26 PacketFXWispZap: send source/target IDs to players within 32 blocks. */
+    private void sendZapVisual(LivingEntity target) {
+        if (level() instanceof ServerLevel serverLevel) {
+            PacketDistributor.sendToPlayersNear(
+                    serverLevel,
+                    null,
+                    getX(),
+                    getY(),
+                    getZ(),
+                    32.0D,
+                    new WispZapPayload(getId(), target.getId())
+            );
+        }
     }
 
     /**

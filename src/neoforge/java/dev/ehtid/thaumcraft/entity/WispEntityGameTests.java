@@ -1,12 +1,15 @@
 package dev.ehtid.thaumcraft.entity;
 
+import io.netty.buffer.Unpooled;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
+import dev.ehtid.thaumcraft.network.WispZapPayload;
 import dev.ehtid.thaumcraft.port.core.LegacyWispSpawnRules;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
 import dev.ehtid.thaumcraft.registry.WispRegistration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -43,6 +46,30 @@ public final class WispEntityGameTests {
         check(!LegacyWispSpawnRules.canSpawn(false, 0, 0, 0, 8, 7), "local light threshold");
         check(LegacyWispSpawnRules.canSpawn(false, 0, 0, 0, 7, 7), "local light inclusive");
         System.out.println("TC_GAMETEST_WISP_SPAWN_GATE=PASS assertions=7");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 40
+    )
+    public static void wispZapPayloadPreservesBETA26EntityIds(GameTestHelper helper) {
+        WispZapPayload expected = new WispZapPayload(0x12345678, 0x76543210);
+        RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
+                Unpooled.buffer(), helper.getLevel().registryAccess());
+        try {
+            WispZapPayload.STREAM_CODEC.encode(buffer, expected);
+            WispZapPayload decoded = WispZapPayload.STREAM_CODEC.decode(buffer);
+            if (!expected.equals(decoded)) {
+                throw new AssertionError("Wisp zap payload changed BETA26 source/target IDs: " + decoded);
+            }
+        } finally {
+            buffer.release();
+        }
+
+        System.out.println("TC_GAMETEST_WISP_ZAP_PAYLOAD=PASS source=0x12345678 target=0x76543210");
         helper.succeed();
     }
 
