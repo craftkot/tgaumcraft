@@ -80,14 +80,53 @@ def render() -> str:
       local teleport_line
       teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Teleported Dev to ' | tail -1 || true)"
       if [ -n "$teleport_line" ]; then
+        echo "WISP_FIXTURE_TELEPORT=YES $teleport_line" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_FIXTURE_TELEPORT_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
+  wisp_wait_for_exact_aim_teleport() {
+    local after_lines="$1"
+    local expected='Teleported Dev to 12.500000, 149.000000, 10.500000'
+    for _ in $(seq 1 200); do
+      local teleport_line
+      teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F -- "$expected" | tail -1 || true)"
+      if [ -n "$teleport_line" ]; then
         echo "WISP_ZAP_AIM_TELEPORT=YES $teleport_line" | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 0.025
     done
-    echo 'WISP_AIM_TELEPORT_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    echo 'WISP_AIM_TELEPORT_POSITION_MISMATCH=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
     exit 1
+  }
+
+  wisp_verify_aim_telemetry() {
+    local after_lines="$1"
+    local telemetry player_x player_y player_z aim_dot
+    telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | tail -1 || true)"
+    if [ -z "$telemetry" ]; then
+      echo 'WISP_CAMERA_TELEMETRY_MISSING=YES' | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      exit 1
+    fi
+    player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v dot="$aim_dot" \
+      'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && dot >= 0.99) }'; then
+      echo "WISP_CAMERA_TELEMETRY_FAILED playerX=$player_x playerY=$player_y playerZ=$player_z aimDot=$aim_dot" | tee -a client-smoke-status.txt
+      echo "$telemetry" >&2
+      exit 1
+    fi
+    echo "WISP_CAMERA_TELEMETRY=PASS playerX=$player_x playerY=$player_y playerZ=$player_z aimDot=$aim_dot" | tee -a client-smoke-status.txt
   }
 
   wisp_wait_for_loaded_chunk() {
@@ -113,7 +152,7 @@ def render() -> str:
     local after_lines="$1"
     for _ in $(seq 1 200); do
       local fill_line
-      fill_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Successfully filled 35 block(s)' | tail -1 || true)"
+      fill_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Successfully filled 81 block(s)' | tail -1 || true)"
       if [ -n "$fill_line" ]; then
         echo "WISP_FIXTURE_PLATFORM_FILL=YES $fill_line" | tee -a client-smoke-status.txt
         return 0
@@ -149,45 +188,38 @@ def render() -> str:
   wisp_command '/tp @p 10.5 149 8.5 0 22'
   wisp_wait_for_loaded_chunk
   fill_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/execute at @p run fill ~-2 ~-1 ~-1 ~2 ~-1 ~5 minecraft:stone'
-  # The vanilla command's own server response is the authoritative success
-  # signal; avoid a second coordinate predicate that can obscure the result.
+  # Use an absolute 9x9 floor inside the already-loaded chunk. The previous
+  # relative fill reported 35 changed blocks, but telemetry showed the player
+  # falling immediately after teleport; a fill count did not prove support.
+  wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'
   wisp_wait_for_fill "$fill_log_lines"
+
+  # Put the player on one known floor block and ask the server to prove that
+  # exact block is stone before spawning or aiming at the Wisp.
+  fixture_teleport_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_fast_command '/tp @p 12.5 149 10.5 0 22'
+  wisp_wait_for_teleport "$fixture_teleport_log_lines"
+  wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
-  # 2.0 blocks keeps the Wisp inside survival melee reach while leaving its
-  # complete source-to-player zap path in the camera frustum.
+  # Keep the Wisp two blocks in front of the supported player. One vanilla tp
+  # command sets an absolute fixture position and faces the live entity; it
+  # avoids mixing execute's anchored-eye origin with relative tp coordinates.
   wisp_command '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
-  # The bootstrap camera may leave the Wisp outside the view frustum.
-  # Its renderer marker is emitted only from render(), so waiting for that
-  # marker before aiming creates a circular gate: the camera is never turned
-  # toward the entity and the renderer is never called.
-  # Confirm the live entity, then move the player relative to its current
-  # server position and face the entity before requiring a render callback.
   wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
+
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  # Keep feet at y=149 above the confirmed y=148 stone fixture: the Wisp
-  # flies below/above that level and copying its Y made the player fall.
-  # Positive X keeps the player on the east side of the fixture.
-  wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 149 ~'
-  wisp_wait_for_teleport "$aim_log_lines"
-  # "at Wisp" is correct for relative positioning, but not for computing the
-  # player's look rotation: it makes the Wisp the command source. Rebase the
-  # execution context to the player, anchor at the player's eyes, then face
-  # the live Wisp before teleporting the player to the same position.
-  # Explicit relative yaw/pitch are required: position-only tp preserves
-  # the player's previous yaw=0/pitch=22 despite execute facing.
-  aim_rotation_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~ ~ ~'
-  wisp_wait_for_teleport "$aim_rotation_log_lines"
-  echo 'WISP_ZAP_AIM=PLAYER_CONTEXT_EYES' | tee -a client-smoke-status.txt
-  # Start the render gate only after the server confirmed the teleport; a
-  # callback from while the command was being typed is not post-aim evidence.
+  wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
+  wisp_wait_for_exact_aim_teleport "$aim_log_lines"
+  echo 'WISP_ZAP_AIM=PLAYER_FACING_ENTITY' | tee -a client-smoke-status.txt
+  # Require fresh renderer telemetry to show both a centered view vector and
+  # a player still standing on the verified floor before inspecting pixels.
   post_aim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_wait_for_fresh_render "$post_aim_log_lines"
+  wisp_verify_aim_telemetry "$post_aim_log_lines"
   wisp_capture 78-wisp-aim-check
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 

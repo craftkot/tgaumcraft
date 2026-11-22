@@ -27,13 +27,16 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_ASPECT_AER=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
     "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
+    "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
 )
 
 REQUIRED_STATUS = (
     "WISP_FIXTURE_PLATFORM_FILL=YES",
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
-    "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES",
+    "WISP_FIXTURE_TELEPORT=YES",
+    "WISP_ZAP_AIM=PLAYER_FACING_ENTITY",
     "WISP_ZAP_AIM_TELEPORT=YES",
+    "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_AIM=YES",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -175,11 +178,29 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append(f"missing real-client status marker: {marker}")
 
     aim_teleport = _first(
-        r"(?m)^WISP_ZAP_AIM_TELEPORT=YES .*Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+)",
+        r"(?m)^WISP_ZAP_AIM_TELEPORT=YES .*Teleported Dev to 12\.500000, 149\.000000, 10\.500000$",
         status_text,
     )
     if aim_teleport is None:
-        errors.append("missing live-entity-relative player teleport result")
+        errors.append("missing exact fixture-position facing-entity teleport result")
+
+    telemetry = _first(
+        r"(?m)^WISP_CAMERA_TELEMETRY=PASS playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        status_text,
+    )
+    if telemetry is None:
+        errors.append("missing fresh post-aim camera telemetry")
+    else:
+        player_x, player_y, player_z, aim_dot = map(float, telemetry.groups())
+        if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
+                and 10.0 <= player_z <= 11.0 and aim_dot >= 0.99):
+            errors.append(
+                "post-aim camera is not on the verified platform and centered on Wisp: "
+                f"player=({player_x:.3f},{player_y:.3f},{player_z:.3f}) aimDot={aim_dot:.4f}"
+            )
+
+    if "Successfully filled 81 block(s)" not in status_text:
+        errors.append("fixture platform was not confirmed as the exact 81-block absolute fill")
 
     aim_marker_count = status_text.count("WISP_AIM_SCREENSHOT_VISIBLE=YES")
     if aim_marker_count < len(AIM_SCREENSHOTS):

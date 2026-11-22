@@ -53,8 +53,12 @@ def main() -> int:
         "minecraft:resistance infinite 4 true",
         "wisp_wait_for_loaded_chunk()",
         "wisp_wait_for_fill()",
-        "Successfully filled 35 block(s)",
+        "Successfully filled 81 block(s)",
         "WISP_FIXTURE_PLATFORM_FILL=YES",
+        '/fill 6 148 6 14 148 14 minecraft:stone',
+        '/tp @p 12.5 149 10.5 0 22',
+        '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
+        "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "TC_SMOKE_WISP_TARGET_SET=YES",
@@ -66,8 +70,11 @@ def main() -> int:
         "wisp_fast_command()",
         "sleep 0.5",
         '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES',
-        '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 149 ~',
-        '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~ ~ ~',
+        '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes',
+        "wisp_wait_for_exact_aim_teleport",
+        "wisp_verify_aim_telemetry",
+        "WISP_CAMERA_TELEMETRY=PASS",
+        "WISP_ZAP_AIM=PLAYER_FACING_ENTITY",
         "wisp_wait_for_teleport",
         "wisp_wait_for_fresh_render",
         "WISP_RENDER_AFTER_AIM=YES",
@@ -89,26 +96,29 @@ def main() -> int:
     setup = generated.split("  wisp_command '/difficulty normal'", 1)[1]
     teleport_index = setup.index("wisp_command '/tp @p 10.5 149 8.5 0 22'")
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
-    fill_index = setup.index("wisp_fast_command '/execute at @p run fill ~-2 ~-1 ~-1 ~2 ~-1 ~5 minecraft:stone'")
-    fill_wait_index = setup.index("wisp_wait_for_fill", fill_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index, (
-        "fixture chunk must be entered and observed loaded before the platform fill response is accepted"
+    fill_index = setup.index("wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'")
+    fill_wait_index = setup.index('wisp_wait_for_fill "$fill_log_lines"', fill_index)
+    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 22'", fill_wait_index)
+    fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
+    support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
+    summon_index = setup.index("wisp_command '/summon thaumcraft:wisp 10.5 149 10.5", support_index)
+    present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'", summon_index)
+    aim_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'", present_index)
+    aim_wait_index = setup.index('wisp_wait_for_exact_aim_teleport "$aim_log_lines"', aim_index)
+    post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"', aim_wait_index)
+    rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"', post_aim_snapshot_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$post_aim_log_lines"', rendered_index)
+    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check", telemetry_index)
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < summon_index < present_index < aim_index < aim_wait_index < post_aim_snapshot_index < rendered_index < telemetry_index < aim_capture_index, (
+        "absolute platform and support proof must precede Wisp spawn; exact facing teleport and fresh camera telemetry must precede screenshot"
     )
-    present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
-    position_aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 149 ~'")
-    position_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"', position_aim_index)
-    rotation_snapshot_index = setup.index('aim_rotation_log_lines="$(wc -l < client-smoke/client.log)"', position_wait_index)
-    rotation_aim_index = setup.index("wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~ ~ ~'", rotation_snapshot_index)
-    rotation_wait_index = setup.index('wisp_wait_for_teleport "$aim_rotation_log_lines"', rotation_aim_index)
-    post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"')
-    rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"')
-    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check")
-    assert present_index < position_aim_index < position_wait_index < rotation_snapshot_index < rotation_aim_index < rotation_wait_index < post_aim_snapshot_index < rendered_index < aim_capture_index, (
-        "position must be confirmed first, then player-eye facing must be confirmed before accepting a fresh render"
-    )
-    assert "run tp @p ~1.5 ~ ~" not in generated
-    assert "run tp @s ~ ~ ~\x27" not in generated
-    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in generated
+    assert "Successfully filled 81 block(s)" in generated
+    assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" in generated
+    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
+    assert "execute as @p at @s anchored eyes facing entity" not in generated
+    assert "run tp @p ~1.5" not in generated
+    assert "run tp @s ~ ~ ~ ~ ~" not in generated
+
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "~-1.5 ~ ~ facing entity" not in generated
@@ -131,17 +141,20 @@ def main() -> int:
         "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
+        "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=0.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
     ))
     status = "\n".join((
-        "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 35 block(s)]",
+        "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 81 block(s)]",
+        "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
-        "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES",
+        "WISP_ZAP_AIM=PLAYER_FACING_ENTITY",
         "WISP_RENDER_AFTER_AIM=YES",
-        "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 9.0, 149.0, 10.5",
+        "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
+        "WISP_CAMERA_TELEMETRY=PASS playerX=12.5 playerY=149.0 playerZ=10.5 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
@@ -182,6 +195,15 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log.replace("target=1", "target=2", 1), status, root
         ), "mismatched server target must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("playerY=149.0", "playerY=138.19"), root
+        ), "player falling below the verified platform must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("aimDot=0.999", "aimDot=0.8"), root
+        ), "camera not facing the Wisp must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_SUPPORT_BLOCK=YES", ""), status, root
+        ), "missing exact support block must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("blend=SRC_ALPHA_ONE", "blend=ALPHA"), status, root
         ), "non-additive renderer must fail"
