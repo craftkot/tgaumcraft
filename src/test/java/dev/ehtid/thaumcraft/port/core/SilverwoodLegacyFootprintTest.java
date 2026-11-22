@@ -57,6 +57,22 @@ public final class SilverwoodLegacyFootprintTest {
                 check(accepted == 64, true);
             }
         }
+        // Exhaustive local-coordinate gate: only the central 8x8 footprint is safe.
+        // Check every offset, including all four edges and negative chunk origins.
+        for (int cx : new int[] {-1024, -1, 0, 1024}) {
+            for (int cz : new int[] {-1024, -1, 0, 1024}) {
+                int accepted = 0;
+                for (int dx = 0; dx < 16; dx++) {
+                    for (int dz = 0; dz < 16; dz++) {
+                        boolean expected = dx >= 4 && dx <= 11 && dz >= 4 && dz <= 11;
+                        check(SilverwoodLegacyFootprint.withinChunk(
+                                cx * 16 + dx, cz * 16 + dz, cx, cz), expected);
+                        if (expected) accepted++;
+                    }
+                }
+                check(accepted == 64, true);
+            }
+        }
         System.out.println("M12 SilverwoodLegacyFootprint: OK (" + assertions + " assertions)");
     }
 }
