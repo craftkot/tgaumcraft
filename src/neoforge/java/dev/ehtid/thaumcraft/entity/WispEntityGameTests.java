@@ -9,10 +9,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -109,27 +111,46 @@ public final class WispEntityGameTests {
         if (stationary == null || moving == null) {
             throw new AssertionError("Unable to create Wisp zap targets");
         }
+        stationary.setNoAi(true);
+        moving.setNoAi(true);
         stationary.moveTo(origin.getX() + 2.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
         moving.moveTo(origin.getX() + 4.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
-        moving.setDeltaMovement(0.2D, 0.0D, 0.0D);
 
-        level.addFreshEntity(wisp);
-        level.addFreshEntity(stationary);
-        level.addFreshEntity(moving);
+        if (!level.addFreshEntity(wisp)
+                || !level.addFreshEntity(stationary)
+                || !level.addFreshEntity(moving)) {
+            throw new AssertionError("Wisp zap GameTest could not add all three entities");
+        }
+
+        // Reassert both velocity vectors after insertion so spawn/finalization hooks
+        // cannot accidentally move the stationary fixture across BETA26's 0.1 threshold.
+        stationary.setDeltaMovement(Vec3.ZERO);
+        moving.setDeltaMovement(new Vec3(0.2D, 0.0D, 0.0D));
+
+        double attackDamage = wisp.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        if (Math.abs(attackDamage - 3.0D) > 0.001D) {
+            throw new AssertionError("Wisp attack attribute must be 3.0 before stationary=" + attackDamage);
+        }
 
         float stationaryBefore = stationary.getHealth();
-        if (!wisp.tryZap(stationary, 0.0F)
-                || Math.abs(stationaryBefore - stationary.getHealth() - 4.0F) > 0.001F) {
-            throw new AssertionError("Stationary target must take four damage on a successful 0.0 roll");
+        boolean stationaryHit = wisp.tryZap(stationary, 0.0F);
+        float stationaryDamage = stationaryBefore - stationary.getHealth();
+        if (!stationaryHit || Math.abs(stationaryDamage - 4.0F) > 0.001F) {
+            throw new AssertionError("Stationary target must take four damage: hit=" + stationaryHit
+                    + " damage=" + stationaryDamage + " attack=" + attackDamage
+                    + " motion=" + stationary.getDeltaMovement());
         }
 
         float movingBefore = moving.getHealth();
-        if (!wisp.tryZap(moving, 0.0F)
-                || Math.abs(movingBefore - moving.getHealth() - 3.0F) > 0.001F) {
-            throw new AssertionError("Moving target must take three damage on a successful 0.0 roll");
+        boolean movingHit = wisp.tryZap(moving, 0.0F);
+        float movingDamage = movingBefore - moving.getHealth();
+        if (!movingHit || Math.abs(movingDamage - 3.0F) > 0.001F) {
+            throw new AssertionError("Moving target must take three damage: hit=" + movingHit
+                    + " damage=" + movingDamage + " attack=" + attackDamage
+                    + " motion=" + moving.getDeltaMovement());
         }
 
-        System.out.println("TC_GAMETEST_WISP_ZAP_DAMAGE=PASS stationary=4 moving=3");
+        System.out.println("TC_GAMETEST_WISP_ZAP_DAMAGE=PASS stationary=4 moving=3 attack=" + attackDamage);
         helper.succeed();
     }
 
