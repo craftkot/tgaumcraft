@@ -92,6 +92,14 @@ def main() -> int:
     assert teleport_index < loaded_index < fill_index < fill_wait_index, (
         "fixture chunk must be entered and observed loaded before the platform fill response is accepted"
     )
+    present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
+    aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p")
+    aim_teleport_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"')
+    rendered_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'")
+    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check")
+    assert present_index < aim_index < aim_teleport_wait_index < rendered_index < aim_capture_index, (
+        "the live Wisp must be faced before waiting for its frustum-dependent renderer callback"
+    )
     assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
     assert generated.count("  send_chat() {") == 1
     wisp_body = generated.split("  wisp_command() {", 1)[1]
