@@ -50,6 +50,74 @@ public final class WispEntityGameTests {
     @GameTest(
             template = "crystal_spread_empty",
             templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 40
+    )
+    public static void thunderSpawnGateUsesBETA26SkylightSubtraction(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos anchor = helper.absolutePos(new BlockPos(2, 2, 2));
+        BlockPos spawnPos = new BlockPos(
+                anchor.getX(), level.getMaxBuildHeight() - 3, anchor.getZ());
+        WispEntity wisp = new WispEntity(WispRegistration.get(), level);
+        wisp.moveTo(spawnPos.getX() + 0.5D, spawnPos.getY(),
+                spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
+
+        long previousDayTime = level.getDayTime();
+        boolean previousRaining = level.isRaining();
+        boolean previousThundering = level.isThundering();
+        level.setDayTime(6000L);
+        level.setWeatherParameters(0, 1200, true, true);
+
+        helper.runAfterDelay(5, () -> {
+            try {
+                if (!level.isThundering() || !level.canSeeSky(spawnPos)) {
+                    throw new AssertionError("Thunder fixture did not expose the spawn position to open sky");
+                }
+
+                int skyLight = level.getBrightness(LightLayer.SKY, spawnPos);
+                int ordinaryLocalLight = level.getMaxLocalRawBrightness(spawnPos);
+                int thunderLocalLight = level.getMaxLocalRawBrightness(spawnPos, 10);
+                int actualLocalLight = wisp.getLocalLightForSpawn(spawnPos);
+                if (skyLight != 15 || ordinaryLocalLight <= 7
+                        || thunderLocalLight > 7 || ordinaryLocalLight <= thunderLocalLight) {
+                    throw new AssertionError("Thunder fixture cannot distinguish BETA26 fixed subtraction: sky="
+                            + skyLight + " ordinary=" + ordinaryLocalLight
+                            + " thunder=" + thunderLocalLight);
+                }
+                if (actualLocalLight != thunderLocalLight) {
+                    throw new AssertionError("Wisp must use fixed thunder skylight subtraction 10: actual="
+                            + actualLocalLight + " expected=" + thunderLocalLight);
+                }
+
+                long seed = findThunderSpawnSeed(skyLight, thunderLocalLight, ordinaryLocalLight);
+                RandomSource expectedRolls = RandomSource.create(seed);
+                int skyRoll = expectedRolls.nextInt(32);
+                int localRoll = expectedRolls.nextInt(8);
+                if (!wisp.canSpawnFromRift(RandomSource.create(seed))) {
+                    throw new AssertionError("Thunder Wisp spawn gate rejected the BETA26-eligible light rolls: "
+                            + "sky=" + skyLight + " skyRoll=" + skyRoll
+                            + " thunderLocal=" + thunderLocalLight + " localRoll=" + localRoll);
+                }
+                if (LegacyWispSpawnRules.canSpawn(false, 0, skyLight, skyRoll,
+                        ordinaryLocalLight, localRoll)) {
+                    throw new AssertionError("Without the fixed thunder subtraction the same spawn must be rejected");
+                }
+
+                System.out.println("TC_GAMETEST_WISP_THUNDER_LIGHT=PASS sky=" + skyLight
+                        + " ordinary=" + ordinaryLocalLight + " thunder=" + thunderLocalLight
+                        + " rolls=" + skyRoll + "," + localRoll);
+            } finally {
+                level.setWeatherParameters(0, 1200,
+                        previousRaining, previousThundering);
+                level.setDayTime(previousDayTime);
+            }
+            helper.succeed();
+        });
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
             timeoutTicks = 120
     )
     public static void fluxRiftEventZeroSpawnsWispAndPaysFiveStability(GameTestHelper helper) {
@@ -206,6 +274,21 @@ public final class WispEntityGameTests {
 
         System.out.println("TC_GAMETEST_WISP_ASPECT_DROP=PASS aspect=vitium");
         helper.succeed();
+    }
+
+    private static long findThunderSpawnSeed(
+            int skyLight, int thunderLocalLight, int ordinaryLocalLight) {
+        for (long seed = 0L; seed < 100_000L; seed++) {
+            RandomSource candidate = RandomSource.create(seed);
+            int skyRoll = candidate.nextInt(32);
+            int localRoll = candidate.nextInt(8);
+            if (skyRoll >= skyLight
+                    && localRoll >= thunderLocalLight
+                    && localRoll < ordinaryLocalLight) {
+                return seed;
+            }
+        }
+        throw new AssertionError("Unable to find deterministic BETA26 thunder spawn rolls");
     }
 
     private static void setArmorToZero(Zombie target) {
