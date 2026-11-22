@@ -4,11 +4,14 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyWispSpawnRules;
+import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.Difficulty;
@@ -61,6 +64,26 @@ public final class WispEntity extends FlyingMob implements Enemy {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 22.0D)
                 .add(Attributes.ATTACK_DAMAGE, 3.0D);
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return ThaumcraftSounds.WISP_LIVE.get();
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(DamageSource damageSource) {
+        return SoundEvents.BLOCK_LAVA_EXTINGUISH;
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ThaumcraftSounds.WISP_DEAD.get();
+    }
+
+    @Override
+    protected float getSoundVolume() {
+        return 0.25F;
     }
 
     @Override
@@ -218,6 +241,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
             if (hasLineOfSight(target)) {
                 attackCounter++;
                 if (attackCounter == 20) {
+                    playZapSound();
                     tryZap(target, random.nextFloat());
                     attackCounter = -20 + random.nextInt(20);
                 }
@@ -241,6 +265,10 @@ public final class WispEntity extends FlyingMob implements Enemy {
         float desiredYaw = (float) (Math.atan2(nextVelocity.z, nextVelocity.x)
                 * 180.0D / Math.PI) - 90.0F;
         setYRot(getYRot() + Mth.wrapDegrees(desiredYaw - getYRot()));
+    }
+
+    void playZapSound() {
+        playSound(ThaumcraftSounds.WISP_ZAP.get(), 1.0F, 1.1F);
     }
 
     /**

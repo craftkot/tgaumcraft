@@ -67,5 +67,29 @@
         "stream": false
       }
     ]
+  },
+  "wisplive": {
+    "category": "hostile",
+    "sounds": [
+      "thaumcraft:wisplive1",
+      "thaumcraft:wisplive2",
+      "thaumcraft:wisplive3"
+    ]
+  },
+  "wispdead": {
+    "category": "hostile",
+    "sounds": [
+      {
+        "name": "thaumcraft:wispdead",
+        "stream": false
+      }
+    ]
+  },
+  "zap": {
+    "category": "master",
+    "sounds": [
+      "thaumcraft:zap1",
+      "thaumcraft:zap2"
+    ]
   }
 }

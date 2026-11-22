@@ -3,6 +3,8 @@ package dev.ehtid.thaumcraft.entity;
 import com.mojang.authlib.GameProfile;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.registry.FluxRiftRegistration;
+import dev.ehtid.thaumcraft.registry.WispRegistration;
+import dev.ehtid.thaumcraft.entity.WispEntity;
 import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOutboundHandlerAdapter;
@@ -24,6 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.Vec3;
@@ -152,6 +155,75 @@ public final class FluxRiftSoundGameTests {
         });
     }
 
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 80
+    )
+    public static void wispUsesOriginalSoundSurfaceAndEmitsZapPacket(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        BlockPos pos = helper.absolutePos(new BlockPos(8, 2, 8));
+        WispEntity wisp = new WispEntity(WispRegistration.get(), level);
+        wisp.moveTo(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 0.0F, 0.0F);
+        if (!level.addFreshEntity(wisp)) {
+            throw new AssertionError("Unable to add Wisp sound fixture");
+        }
+
+        if (wisp.getAmbientSound() != ThaumcraftSounds.WISP_LIVE.get()
+                || wisp.getHurtSound(null) != SoundEvents.BLOCK_LAVA_EXTINGUISH
+                || wisp.getDeathSound() != ThaumcraftSounds.WISP_DEAD.get()
+                || Float.compare(wisp.getSoundVolume(), 0.25F) != 0) {
+            wisp.discard();
+            throw new AssertionError("Wisp ambient/hurt/death sound contract differs from BETA26");
+        }
+
+        ConnectedPlayer recipient = createConnectedPlayer(level, pos, "wisp-sound-recipient");
+        ConcurrentLinkedQueue<SoundPacketEvidence> observed = new ConcurrentLinkedQueue<>();
+        try {
+            installWispZapRecorder(recipient, observed);
+            flush(recipient.channel());
+        } catch (RuntimeException | Error failure) {
+            disconnect(level, recipient, "Wisp zap sound recorder setup failed");
+            wisp.discard();
+            throw failure;
+        }
+
+        helper.runAfterDelay(2, () -> {
+            try {
+                wisp.playZapSound();
+                flush(recipient.channel());
+                if (observed.size() != 1) {
+                    throw new AssertionError("Expected one BETA26 Wisp zap packet, got "
+                            + observed.size() + " packets=" + describePackets(observed));
+                }
+
+                SoundPacketEvidence packet = observed.peek();
+                if (packet == null || Float.compare(packet.volume(), 1.0F) != 0
+                        || Float.compare(packet.pitch(), 1.1F) != 0) {
+                    throw new AssertionError("BETA26 Wisp zap packet volume/pitch mismatch: " + packet);
+                }
+                if (packet.entityId() >= 0 && packet.entityId() != wisp.getId()) {
+                    throw new AssertionError("Wisp zap sound packet is attached to the wrong entity");
+                }
+                if (packet.entityId() < 0
+                        && (Math.abs(packet.x() - wisp.getX()) > 0.125D
+                        || Math.abs(packet.y() - wisp.getY()) > 0.125D
+                        || Math.abs(packet.z() - wisp.getZ()) > 0.125D)) {
+                    throw new AssertionError("Wisp zap sound packet position mismatch: " + packet);
+                }
+            } finally {
+                removeWispZapRecorder(recipient);
+                disconnect(level, recipient, "Wisp zap sound GameTest finished");
+                wisp.discard();
+            }
+            helper.succeed();
+            System.out.println("TC_GAMETEST_WISP_SOUND=PASS ambient=wisplive hurt=lava_extinguish "
+                    + "death=wispdead zap=1.0@1.1 volume=0.25");
+        });
+    }
+
     private static Vec3 quantizeSoundPacketPosition(Vec3 entityPosition) {
         // The server's sound path converts large world coordinates to float before
         // ClientboundSoundPacket's 1/8-block fixed-point coordinate encoding.
@@ -255,6 +327,58 @@ public final class FluxRiftSoundGameTests {
         player.connection.chunkSender.sendNextChunks(player);
         player.connection.chunkSender.onChunkBatchReceivedByClient(64.0F);
         return new ConnectedPlayer(player, connection, channel);
+    }
+
+
+    private static void installWispZapRecorder(
+            ConnectedPlayer recipient,
+            ConcurrentLinkedQueue<SoundPacketEvidence> observed
+    ) {
+        EmbeddedChannel channel = recipient.channel();
+        if (!channel.isActive()) {
+            throw new AssertionError("Wisp zap sound recipient connection is not active");
+        }
+        Runnable install = () -> channel.pipeline().addLast(RECORDER, new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
+                    throws Exception {
+                if (message instanceof ClientboundSoundPacket packet
+                        && packet.getSound().value() == ThaumcraftSounds.WISP_ZAP.get()) {
+                    observed.add(new SoundPacketEvidence(
+                            packet.getSource(), packet.getVolume(), packet.getPitch(), -1,
+                            packet.getX(), packet.getY(), packet.getZ()
+                    ));
+                } else if (message instanceof ClientboundSoundEntityPacket packet
+                        && packet.getSound().value() == ThaumcraftSounds.WISP_ZAP.get()) {
+                    observed.add(new SoundPacketEvidence(
+                            packet.getSource(), packet.getVolume(), packet.getPitch(), packet.getId(),
+                            Double.NaN, Double.NaN, Double.NaN
+                    ));
+                }
+                context.write(message, promise);
+            }
+        });
+        if (channel.eventLoop().inEventLoop()) {
+            install.run();
+        } else {
+            channel.eventLoop().submit(install).syncUninterruptibly();
+        }
+        if (channel.pipeline().get(RECORDER) == null) {
+            throw new AssertionError("Wisp zap sound packet recorder was not installed");
+        }
+    }
+
+    private static void removeWispZapRecorder(ConnectedPlayer recipient) {
+        EmbeddedChannel channel = recipient.channel();
+        if (!channel.isOpen()) return;
+        Runnable remove = () -> {
+            if (channel.pipeline().get(RECORDER) != null) channel.pipeline().remove(RECORDER);
+        };
+        if (channel.eventLoop().inEventLoop()) {
+            remove.run();
+        } else {
+            channel.eventLoop().submit(remove).syncUninterruptibly();
+        }
     }
 
     private static void installRecorder(
