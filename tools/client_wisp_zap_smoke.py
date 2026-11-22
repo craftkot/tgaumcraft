@@ -74,6 +74,22 @@ def render() -> str:
     exit 1
   }
 
+  wisp_wait_for_loaded_chunk() {
+    local marker='TC_SMOKE_WISP_CHUNK_LOADED=YES'
+    # Poll the destination chunk after teleport. "execute if loaded" is a
+    # read-only check: it does not force-load the chunk or mutate the world.
+    for _ in $(seq 1 20); do
+      wisp_fast_command '/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES'
+      if grep -Fq -- "$marker" client-smoke/client.log; then
+        echo 'WISP_FIXTURE_CHUNK_LOADED=YES' | tee -a client-smoke-status.txt
+        return 0
+      fi
+    done
+    echo 'WISP_FIXTURE_CHUNK_LOAD_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_capture() {
     local name="$1"
     import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
@@ -91,8 +107,13 @@ def render() -> str:
   wisp_command '/time set noon'
   wisp_command '/gamemode survival'
   wisp_command '/effect give @p minecraft:resistance infinite 4 true'
-  wisp_command '/fill 8 148 8 12 148 14 minecraft:stone'
+  # The integrated-world bootstrap leaves the player at a random spawn
+  # (currently around -327,-245). Teleport into the fixture area BEFORE
+  # placing blocks there; an absolute /fill from the old spawn fails with
+  # "That position is not loaded" and silently leaves the platform absent.
   wisp_command '/tp @p 10.5 149 8.5 0 22'
+  wisp_wait_for_loaded_chunk
+  wisp_fast_command '/execute at @p run fill ~-2 ~-1 ~-1 ~2 ~-1 ~5 minecraft:stone'
   wisp_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_WISP_PLATFORM_READY=YES' 'TC_SMOKE_WISP_PLATFORM_READY=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 

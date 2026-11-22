@@ -51,6 +51,8 @@ def main() -> int:
         "/difficulty normal",
         "/gamemode survival",
         "minecraft:resistance infinite 4 true",
+        "wisp_wait_for_loaded_chunk()",
+        "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES",
@@ -78,6 +80,15 @@ def main() -> int:
     )
     for marker in required:
         assert marker in generated, marker
+    setup = generated.split("  wisp_command '/difficulty normal'", 1)[1]
+    teleport_index = setup.index("wisp_command '/tp @p 10.5 149 8.5 0 22'")
+    loaded_index = setup.index("wisp_wait_for_loaded_chunk")
+    fill_index = setup.index("wisp_fast_command '/execute at @p run fill ~-2 ~-1 ~-1 ~2 ~-1 ~5 minecraft:stone'")
+    platform_index = setup.index("wisp_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_WISP_PLATFORM_READY=YES'")
+    assert teleport_index < loaded_index < fill_index < platform_index, (
+        "fixture chunk must be entered and observed loaded before platform fill"
+    )
+    assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
     assert generated.count("  send_chat() {") == 1
     wisp_body = generated.split("  wisp_command() {", 1)[1]
     assert "sleep 4" not in wisp_body
@@ -89,6 +100,7 @@ def main() -> int:
     assert syntax.returncode == 0, syntax.stderr
 
     log = "\n".join((
+        "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLATFORM_READY=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "TC_SMOKE_WISP_SPAWNED=YES",
