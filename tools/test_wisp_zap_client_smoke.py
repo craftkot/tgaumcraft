@@ -202,6 +202,16 @@ def main() -> int:
     assert "Map<WispEntity, Integer> SMOKE_RENDERED_TICK = new WeakHashMap<>()" in renderer_registration
     assert "SMOKE_RENDERED_TICK.put(entity, entity.tickCount)" in renderer_registration
     assert "previousTick.intValue() != entity.tickCount" in renderer_registration
+    assert "import net.minecraft.client.Minecraft;" in renderer_registration
+    assert "import net.minecraft.world.phys.Vec3;" in renderer_registration
+    assert "TC_SMOKE_WISP_CAMERA=YES id=" in renderer_registration
+    assert "player.getEyePosition(partialTick)" in renderer_registration
+    assert "entity.getEyePosition(partialTick)" in renderer_registration
+    assert "player.getViewVector(partialTick)" in renderer_registration
+    assert "aimDot=" in renderer_registration
+    assert renderer_registration.index("TC_SMOKE_WISP_CAMERA=YES id=") < renderer_registration.index("TC_SMOKE_WISP_RENDERED=YES id="), (
+        "camera telemetry must be written before the fresh-render marker"
+    )
     assert "SMOKE_RENDERED.add(entity.getId())" not in renderer_registration
     assert "WispRenderTypes.additive(PARTICLE_ATLAS)" in renderer_registration
     assert "RenderType.entityTranslucent(PARTICLE_ATLAS)" not in renderer_registration

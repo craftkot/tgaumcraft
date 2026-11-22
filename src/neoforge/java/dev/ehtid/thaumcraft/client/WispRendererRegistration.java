@@ -8,6 +8,7 @@ import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.entity.WispEntity;
 import dev.ehtid.thaumcraft.registry.WispRegistration;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderStateShard;
@@ -16,6 +17,7 @@ import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -83,6 +85,34 @@ public final class WispRendererRegistration {
             if (SMOKE_PROBE) {
                 Integer previousTick = SMOKE_RENDERED_TICK.put(entity, entity.tickCount);
                 if (previousTick == null || previousTick.intValue() != entity.tickCount) {
+                    // Emit camera geometry before the render marker so a smoke-driver
+                    // that observes the marker is guaranteed to see this same-tick telemetry.
+                    var player = Minecraft.getInstance().player;
+                    if (player != null) {
+                        Vec3 playerEye = player.getEyePosition(partialTick);
+                        Vec3 wispEye = entity.getEyePosition(partialTick);
+                        Vec3 toWisp = wispEye.subtract(playerEye);
+                        double aimDot = toWisp.lengthSqr() < 1.0E-12D
+                                ? 1.0D
+                                : player.getViewVector(partialTick).dot(toWisp.normalize());
+                        System.out.println("TC_SMOKE_WISP_CAMERA=YES id=" + entity.getId()
+                                + " tick=" + entity.tickCount
+                                + " playerX=" + player.getX()
+                                + " playerY=" + player.getY()
+                                + " playerZ=" + player.getZ()
+                                + " playerYaw=" + player.getYRot()
+                                + " playerPitch=" + player.getXRot()
+                                + " playerEyeX=" + playerEye.x
+                                + " playerEyeY=" + playerEye.y
+                                + " playerEyeZ=" + playerEye.z
+                                + " wispX=" + entity.getX()
+                                + " wispY=" + entity.getY()
+                                + " wispZ=" + entity.getZ()
+                                + " wispEyeX=" + wispEye.x
+                                + " wispEyeY=" + wispEye.y
+                                + " wispEyeZ=" + wispEye.z
+                                + " aimDot=" + aimDot);
+                    }
                     System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
                             + " aspect=" + entity.getAspectType()
                             + " tick=" + entity.tickCount);
