@@ -97,11 +97,13 @@ def main() -> int:
     present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
     aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p")
     aim_teleport_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"')
-    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"')
+    post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"')
+    rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"')
     aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check")
-    assert present_index < aim_index < aim_teleport_wait_index < rendered_index < aim_capture_index, (
-        "the live Wisp must be faced before waiting for its frustum-dependent renderer callback"
+    assert present_index < aim_index < aim_teleport_wait_index < post_aim_snapshot_index < rendered_index < aim_capture_index, (
+        "only a renderer callback appended after the confirmed live-relative teleport is valid post-aim evidence"
     )
+    assert 'wisp_wait_for_fresh_render "$aim_log_lines"' not in generated
     assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
     assert generated.count("  send_chat() {") == 1
     wisp_body = generated.split("  wisp_command() {", 1)[1]
@@ -118,7 +120,7 @@ def main() -> int:
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "TC_SMOKE_WISP_SPAWNED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
-        "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer",
+        "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
@@ -197,6 +199,10 @@ def main() -> int:
     ).read_text(encoding="utf-8")
     assert "bus = EventBusSubscriber.Bus.MOD" in renderer_registration
     assert "TC_SMOKE_WISP_RENDERED=YES" in renderer_registration
+    assert "WeakHashMap<WispEntity, Integer> SMOKE_RENDERED_TICK" in renderer_registration
+    assert "SMOKE_RENDERED_TICK.put(entity, entity.tickCount)" in renderer_registration
+    assert "previousTick.intValue() != entity.tickCount" in renderer_registration
+    assert "SMOKE_RENDERED.add(entity.getId())" not in renderer_registration
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer
     assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer

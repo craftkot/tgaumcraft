@@ -172,8 +172,10 @@ def render() -> str:
   wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
   wisp_wait_for_teleport "$aim_log_lines"
   echo 'WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE' | tee -a client-smoke-status.txt
-  # The marker must be newly emitted after the camera actually faced the Wisp.
-  wisp_wait_for_fresh_render "$aim_log_lines"
+  # Start the render gate only after the server confirmed the teleport; a
+  # callback from while the command was being typed is not post-aim evidence.
+  post_aim_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_wait_for_fresh_render "$post_aim_log_lines"
   wisp_capture 78-wisp-aim-check
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 

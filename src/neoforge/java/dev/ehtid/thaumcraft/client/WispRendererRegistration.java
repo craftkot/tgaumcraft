@@ -18,8 +18,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.joml.Matrix4f;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Visible billboard projection of BETA26 RenderWisp using the exact shipped
@@ -30,7 +30,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class WispRendererRegistration {
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
-    private static final Set<Integer> SMOKE_RENDERED = ConcurrentHashMap.newKeySet();
+    // Entity render callbacks run on the client render thread. Weak keys keep this
+    // smoke-only cadence tracker from retaining removed entities.
+    private static final Map<WispEntity, Integer> SMOKE_RENDERED_TICK = new WeakHashMap<>();
 
     private WispRendererRegistration() {}
 
@@ -74,9 +76,13 @@ public final class WispRendererRegistration {
             poseStack.popPose();
 
             super.render(entity, entityYaw, partialTick, poseStack, buffers, LightTexture.FULL_BRIGHT);
-            if (SMOKE_PROBE && SMOKE_RENDERED.add(entity.getId())) {
-                System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
-                        + " aspect=" + entity.getAspectType());
+            if (SMOKE_PROBE) {
+                Integer previousTick = SMOKE_RENDERED_TICK.put(entity, entity.tickCount);
+                if (previousTick == null || previousTick.intValue() != entity.tickCount) {
+                    System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
+                            + " aspect=" + entity.getAspectType()
+                            + " tick=" + entity.tickCount);
+                }
             }
         }
 
