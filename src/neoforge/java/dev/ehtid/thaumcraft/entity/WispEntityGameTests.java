@@ -69,10 +69,14 @@ public final class WispEntityGameTests {
 
         helper.runAfterDelay(5, () -> {
             try {
-                if (!level.isThundering() || !level.canSeeSky(spawnPos)) {
-                    throw new AssertionError("Thunder fixture did not expose the spawn position to open sky");
+                if (!level.isThundering()) {
+                    throw new AssertionError("Thunder fixture did not enter thunder state: raining="
+                            + level.isRaining() + " dayTime=" + level.getDayTime());
                 }
 
+                // BETA26 tests raw sky brightness, not canSeeSky(). In GameTestServer,
+                // canSeeSky() can be false at the upper build boundary even when the
+                // raw sky-light value used by the legacy gate is fully exposed.
                 int skyLight = level.getBrightness(LightLayer.SKY, spawnPos);
                 int ordinaryLocalLight = level.getMaxLocalRawBrightness(spawnPos);
                 int thunderLocalLight = level.getMaxLocalRawBrightness(spawnPos, 10);
@@ -81,7 +85,8 @@ public final class WispEntityGameTests {
                         || thunderLocalLight > 7 || ordinaryLocalLight <= thunderLocalLight) {
                     throw new AssertionError("Thunder fixture cannot distinguish BETA26 fixed subtraction: sky="
                             + skyLight + " ordinary=" + ordinaryLocalLight
-                            + " thunder=" + thunderLocalLight);
+                            + " thunder=" + thunderLocalLight + " canSeeSky=" + level.canSeeSky(spawnPos)
+                        + " spawnPos=" + spawnPos + " maxBuildHeight=" + level.getMaxBuildHeight());
                 }
                 if (actualLocalLight != thunderLocalLight) {
                     throw new AssertionError("Wisp must use fixed thunder skylight subtraction 10: actual="
