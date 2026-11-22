@@ -58,6 +58,22 @@ def render() -> str:
     wisp_wait_for_marker "$marker"
   }
 
+  # A renderer marker from before aiming is not evidence that the Wisp
+  # rendered in the new camera view. Only accept lines appended after aim.
+  wisp_wait_for_fresh_render() {
+    local after_lines="$1"
+    for _ in $(seq 1 200); do
+      if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq 'TC_SMOKE_WISP_RENDERED=YES'; then
+        echo 'WISP_RENDER_AFTER_AIM=YES' | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_RENDER_AFTER_AIM_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_wait_for_teleport() {
     local after_lines="$1"
     for _ in $(seq 1 200); do
@@ -156,8 +172,8 @@ def render() -> str:
   wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
   wisp_wait_for_teleport "$aim_log_lines"
   echo 'WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE' | tee -a client-smoke-status.txt
-  # Now the camera faces the live Wisp; require the actual renderer callback.
-  wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
+  # The marker must be newly emitted after the camera actually faced the Wisp.
+  wisp_wait_for_fresh_render "$aim_log_lines"
   wisp_capture 78-wisp-aim-check
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
