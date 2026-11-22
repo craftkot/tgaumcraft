@@ -67,13 +67,11 @@ public final class WispEntity extends FlyingMob implements Enemy {
     }
 
     @Override
-    @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Type", getAspectType());
     }
 
-    @Override
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
@@ -300,7 +298,6 @@ public final class WispEntity extends FlyingMob implements Enemy {
                 ? ItemStack.EMPTY : CrystalEssenceItem.ofAspect(getAspectType());
     }
 
-    @Override
     @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return true;
