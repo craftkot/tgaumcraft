@@ -67,7 +67,7 @@ def main() -> int:
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "wisp_capture 78-wisp-aim-check",
         "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
-        "WISP_AIM_SCREENSHOT_VISIBLE=YES",
+        "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
         "--aim-only",
         "wisp_capture 79-wisp-before-a",
         "wisp_capture 79-wisp-before-b",
