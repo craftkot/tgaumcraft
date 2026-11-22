@@ -199,7 +199,8 @@ def main() -> int:
     ).read_text(encoding="utf-8")
     assert "bus = EventBusSubscriber.Bus.MOD" in renderer_registration
     assert "TC_SMOKE_WISP_RENDERED=YES" in renderer_registration
-    assert "WeakHashMap<WispEntity, Integer> SMOKE_RENDERED_TICK" in renderer_registration
+    assert "import java.util.WeakHashMap;" in renderer_registration
+    assert "Map<WispEntity, Integer> SMOKE_RENDERED_TICK = new WeakHashMap<>()" in renderer_registration
     assert "SMOKE_RENDERED_TICK.put(entity, entity.tickCount)" in renderer_registration
     assert "previousTick.intValue() != entity.tickCount" in renderer_registration
     assert "SMOKE_RENDERED.add(entity.getId())" not in renderer_registration
