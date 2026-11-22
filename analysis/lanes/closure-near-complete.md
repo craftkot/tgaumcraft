@@ -3811,3 +3811,11 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 
 - Source-level post-commit contract review on 2026-11-22: all seven checks for the weak-map declaration/import, per-tick marker, removal of the one-shot entity-ID gate, post-teleport line boundary, fresh-render wait ordering and matching regression assertions **PASS**. This is a GitHub-source inspection, not execution of the Python regression or a Minecraft client. Exact-head Port CI and Wisp real-client workflow are still queued.
+
+
+### 2026-11-22 — Wisp native preflight: remove obsolete renderer wait expectation
+
+- Fresh-read main a4280834adc5a20b6951098af937d30ca4aeca56, ROADMAP_RU.md, AGENTS.md, parallel workflow, fixed audit, this lane, open PR inventory, branch comparison (1634 ahead / 0 behind) and exact-head GitHub Actions. No main/foreign branch changes.
+- On branch head 07447f7b2e4b02efcb6019ddccaa5883157af7c4, real Wisp client workflow [#45059369382](https://github.com/craftkot/tgaumcraft/actions/runs/45059369382) FAILED before launching Minecraft. Its actual Python traceback is `AssertionError: wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'` in tools/test_wisp_zap_client_smoke.py:88. The driver now intentionally uses `wisp_wait_for_fresh_render` after teleport; the old required-string assertion contradicts the current strict evidence contract.
+- Removed only that obsolete required-string assertion in tools/test_wisp_zap_client_smoke.py, commit bd178ef5444afa04e2987fc108cf9b5047ca9d30. The existing ordered fresh-render check, post-teleport log boundary, real screenshot pixel gate, hit, packet and FX checks remain mandatory. No production Java changed.
+- On prior head, Full Port CI, Aura/Crystal GameTests, Wisp geometry and two-client Salis passed; six-crystal audio failed and jar renderer was in progress when checked. These are prior-head results and cannot validate this correction. Exact-head Python/NeoForge/client reruns are pending; no local checkout or executable client run. No native Salis ticket/network-send acceptance yet. Fixed audit remains 59/100, M16 4/6, M08 5/9. Next: inspect the new exact-head Wisp workflow and PNG, then investigate any actual in-game failure.
