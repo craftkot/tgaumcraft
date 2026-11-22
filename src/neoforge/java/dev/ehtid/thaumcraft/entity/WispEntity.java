@@ -46,6 +46,7 @@ import java.util.List;
 public final class WispEntity extends FlyingMob implements Enemy {
     /** Exact strict movement threshold from BETA26 EntityWisp.java. */
     private static final double BETA26_MOVING_TARGET_THRESHOLD = 0.10000000149011612D;
+    private static final int BETA26_THUNDER_SKYLIGHT_SUBTRACTION = 10;
 
     private static final AspectRegistry ASPECTS = new AspectRegistry();
     private static final EntityDataAccessor<String> ASPECT_TYPE =
@@ -130,8 +131,8 @@ public final class WispEntity extends FlyingMob implements Enemy {
     /**
      * BETA26 EntityWisp.getCanSpawnHere: fewer than eight nearby Wisps,
      * non-peaceful difficulty, dark sky/local light, then a collision-free body.
-     * The thunder-specific temporary skylight subtraction remains a known
-     * parity gap; ordinary day/night and block-light thresholds are exact.
+     * Thunderstorms temporarily use the source's fixed skylight subtraction of 10
+     * for the local-light check, rather than the world's current sky-darken value.
      */
     public boolean canSpawnFromRift(RandomSource spawnRandom) {
         if (level().isClientSide || level().getDifficulty() == Difficulty.PEACEFUL) {
@@ -151,11 +152,18 @@ public final class WispEntity extends FlyingMob implements Enemy {
             return false;
         }
 
-        int localLight = level().getMaxLocalRawBrightness(spawnPos);
+        int localLight = getLocalLightForSpawn(spawnPos);
         int localRoll = spawnRandom.nextInt(8);
         return LegacyWispSpawnRules.canSpawn(
                 false, nearby, skyLight, skyRoll, localLight, localRoll)
                 && level().noCollision(this);
+    }
+
+    int getLocalLightForSpawn(BlockPos spawnPos) {
+        return level().isThundering()
+                ? level().getMaxLocalRawBrightness(
+                        spawnPos, BETA26_THUNDER_SKYLIGHT_SUBTRACTION)
+                : level().getMaxLocalRawBrightness(spawnPos);
     }
 
     @Override
