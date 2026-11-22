@@ -90,6 +90,9 @@ def render() -> str:
     exit 1
   }
 
+  # Treat the new vanilla server fill result as the platform gate. This
+  # avoids a second chat predicate whose own input/coordinate path can fail
+  # after the server has already confirmed all 35 blocks were placed.
   wisp_wait_for_fill() {
     local after_lines="$1"
     for _ in $(seq 1 200); do
