@@ -109,8 +109,10 @@ def render() -> str:
 
   wisp_verify_aim_telemetry() {
     local after_lines="$1"
-    local telemetry player_x player_y player_z aim_dot
-    telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | tail -1 || true)"
+    local telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot
+    # Use the first fresh camera sample. Later samples can legitimately drift
+    # because BETA26 Wisps continue their autonomous flight until hit.
+    telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1 || true)"
     if [ -z "$telemetry" ]; then
       echo 'WISP_CAMERA_TELEMETRY_MISSING=YES' | tee -a client-smoke-status.txt
       tail -120 client-smoke/client.log >&2
@@ -119,14 +121,18 @@ def render() -> str:
     player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    wisp_x="$(sed -n 's/.* wispX=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    wisp_y="$(sed -n 's/.* wispY=\([^ ]*\).*/\1/p' <<<"$telemetry")"
+    wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$telemetry")"
-    if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v dot="$aim_dot" \
-      'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && dot >= 0.99) }'; then
-      echo "WISP_CAMERA_TELEMETRY_FAILED playerX=$player_x playerY=$player_y playerZ=$player_z aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+    if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
+      'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
+      echo "WISP_CAMERA_TELEMETRY_FAILED player=($player_x,$player_y,$player_z) wisp=($wisp_x,$wisp_y,$wisp_z) distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       echo "$telemetry" >&2
       exit 1
     fi
-    echo "WISP_CAMERA_TELEMETRY=PASS playerX=$player_x playerY=$player_y playerZ=$player_z aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    echo "WISP_CAMERA_TELEMETRY=PASS playerX=$player_x playerY=$player_y playerZ=$player_z wispX=$wisp_x wispY=$wisp_y wispZ=$wisp_z distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
   }
 
   wisp_wait_for_loaded_chunk() {
@@ -202,17 +208,13 @@ def render() -> str:
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
-  # Keep the Wisp two blocks in front of the supported player. One vanilla tp
-  # command sets an absolute fixture position and faces the live entity; it
-  # avoids mixing execute's anchored-eye origin with relative tp coordinates.
-  wisp_command '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
-  wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
-  wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
-  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
-  wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
-
+  # Spawn close to the supported player. The Wisp wanders until the first
+  # real hit, so do not spend several chat round-trips on redundant markers.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
+  wisp_fast_command '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
+  # This conditional facing teleport is also the server-side existence/aspect
+  # gate: it cannot emit a teleport result unless the tagged Aer Wisp exists.
+  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
   wisp_wait_for_exact_aim_teleport "$aim_log_lines"
   echo 'WISP_ZAP_AIM=PLAYER_FACING_ENTITY' | tee -a client-smoke-status.txt
   # Require fresh renderer telemetry to show both a centered view vector and

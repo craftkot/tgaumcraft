@@ -2,6 +2,7 @@
 """Fail-closed verifier for a real two-entity BETA26 Wisp zap client smoke."""
 from pathlib import Path
 import argparse
+import math
 import re
 import subprocess
 import sys
@@ -23,10 +24,7 @@ AIM_ROI = (128, 128, 448, 320)
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
-    "TC_SMOKE_WISP_SPAWNED=YES",
-    "TC_SMOKE_WISP_ASPECT_AER=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
-    "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
 )
 
@@ -185,18 +183,22 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("missing exact fixture-position facing-entity teleport result")
 
     telemetry = _first(
-        r"(?m)^WISP_CAMERA_TELEMETRY=PASS playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        r"(?m)^WISP_CAMERA_TELEMETRY=PASS playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
     if telemetry is None:
         errors.append("missing fresh post-aim camera telemetry")
     else:
-        player_x, player_y, player_z, aim_dot = map(float, telemetry.groups())
+        player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups())
+        measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
         if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
-                and 10.0 <= player_z <= 11.0 and aim_dot >= 0.99):
+                and 10.0 <= player_z <= 11.0 and distance <= 3.0
+                and abs(distance - measured_distance) <= 0.1 and aim_dot >= 0.99):
             errors.append(
-                "post-aim camera is not on the verified platform and centered on Wisp: "
-                f"player=({player_x:.3f},{player_y:.3f},{player_z:.3f}) aimDot={aim_dot:.4f}"
+                "post-aim camera is not on the verified platform, within melee reach and centered on Wisp: "
+                f"player=({player_x:.3f},{player_y:.3f},{player_z:.3f}) "
+                f"wisp=({wisp_x:.3f},{wisp_y:.3f},{wisp_z:.3f}) "
+                f"distance={distance:.3f} aimDot={aim_dot:.4f}"
             )
 
     if "Successfully filled 81 block(s)" not in status_text:

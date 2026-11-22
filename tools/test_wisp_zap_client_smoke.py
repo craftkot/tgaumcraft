@@ -65,12 +65,13 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
-        "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES",
         "wisp_fast_command()",
         "sleep 0.5",
-        '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES',
-        '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes',
+        '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
+        '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes',
+        "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
+        "d <= 3.0",
         "wisp_wait_for_exact_aim_teleport",
         "wisp_verify_aim_telemetry",
         "WISP_CAMERA_TELEMETRY=PASS",
@@ -78,7 +79,6 @@ def main() -> int:
         "wisp_wait_for_teleport",
         "wisp_wait_for_fresh_render",
         "WISP_RENDER_AFTER_AIM=YES",
-        "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "wisp_capture 78-wisp-aim-check",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
@@ -101,9 +101,8 @@ def main() -> int:
     fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 22'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
-    summon_index = setup.index("wisp_command '/summon thaumcraft:wisp 10.5 149 10.5", support_index)
-    present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'", summon_index)
-    aim_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'", present_index)
+    summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 11.9 149.3 10.5", support_index)
+    aim_index = setup.index("wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:\"aer\"},limit=1] run tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'", summon_index)
     aim_wait_index = setup.index('wisp_wait_for_exact_aim_teleport "$aim_log_lines"', aim_index)
     post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"', aim_wait_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"', post_aim_snapshot_index)
@@ -115,6 +114,10 @@ def main() -> int:
     assert "Successfully filled 81 block(s)" in generated
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
+    assert "wisp_verify_aim_telemetry" in generated
+    assert "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1" in generated
+    assert "d <= 3.0" in generated
+    assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
     assert "run tp @p ~1.5" not in generated
     assert "run tp @s ~ ~ ~ ~ ~" not in generated
@@ -139,10 +142,7 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
-        "TC_SMOKE_WISP_SPAWNED=YES",
-        "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
-        "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
@@ -156,7 +156,7 @@ def main() -> int:
         "WISP_ZAP_AIM=PLAYER_FACING_ENTITY",
         "WISP_RENDER_AFTER_AIM=YES",
         "WISP_ZAP_AIM_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
-        "WISP_CAMERA_TELEMETRY=PASS playerX=12.5 playerY=149.0 playerZ=10.5 aimDot=0.999",
+        "WISP_CAMERA_TELEMETRY=PASS playerX=12.5 playerY=149.0 playerZ=10.5 wispX=11.9 wispY=149.3 wispZ=10.5 distance=0.6708 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
@@ -203,6 +203,9 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("aimDot=0.999", "aimDot=0.8"), root
         ), "camera not facing the Wisp must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("distance=0.6708", "distance=6.7"), root
+        ), "Wisp outside the 3-block melee reach must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_SUPPORT_BLOCK=YES", ""), status, root
         ), "missing exact support block must fail"
