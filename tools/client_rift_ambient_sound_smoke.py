@@ -725,6 +725,8 @@ if any(probe.count(command) != 1 for command in (
     raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state with valid NBT paths")
 if "execute if data block 20 64 2 {Heat:" in probe or "execute if data block 20 64 2 {Aspects:" in probe:
     raise SystemExit("execute if data must use NBT paths, not SNBT compound literals")
+if "send_chat '/data merge block 20 64 2 {Aspects:[{key:" in probe or "send_chat '/execute if data block 20 64 2 Aspects[{key:" in probe:
+    raise SystemExit("Crucible bubble commands must use the fast path or their 15..24-tick particles expire before capture")
 if not (
     probe.index("RIFT_AMBIENT_SOUND_REAL_CLIENT=PASS")
     < probe.index("send_chat '/kill @e[type=thaumcraft:flux_rift]'")
