@@ -67,13 +67,15 @@ public final class WispEntity extends FlyingMob implements Enemy {
     }
 
     @Override
-    protected void addAdditionalSaveData(CompoundTag tag) {
+    @Override
+    public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("Type", getAspectType());
     }
 
     @Override
-    protected void readAdditionalSaveData(CompoundTag tag) {
+    @Override
+    public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setAspectType(tag.getString("Type"));
     }
@@ -299,7 +301,8 @@ public final class WispEntity extends FlyingMob implements Enemy {
     }
 
     @Override
-    protected boolean removeWhenFarAway(double distanceToClosestPlayer) {
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return true;
     }
 }
