@@ -7,7 +7,7 @@ import net.minecraft.world.level.Level;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.fml.DistExecutor;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 
 /** Isolated BETA26 PacketFXWispZap delivery; client rendering is kept on Dist.CLIENT. */
@@ -40,7 +40,8 @@ public final class WispZapNetworking {
         }
 
         // Keep client-only renderer classes out of dedicated-server class loading.
-        DistExecutor.safeRunWhenOn(Dist.CLIENT,
-                () -> () -> dev.ehtid.thaumcraft.client.WispZapClientEffects.accept(level, source, target));
+        if (FMLEnvironment.dist == Dist.CLIENT) {
+            dev.ehtid.thaumcraft.client.WispZapClientEffects.accept(level, source, target);
+        }
     }
 }
