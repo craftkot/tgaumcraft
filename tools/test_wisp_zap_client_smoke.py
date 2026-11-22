@@ -69,6 +69,8 @@ def main() -> int:
         '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES',
         '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes',
         "wisp_wait_for_teleport",
+        "wisp_wait_for_fresh_render",
+        "WISP_RENDER_AFTER_AIM=YES",
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "wisp_capture 78-wisp-aim-check",
         "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE",
@@ -95,7 +97,7 @@ def main() -> int:
     present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
     aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p")
     aim_teleport_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"')
-    rendered_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'")
+    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"')
     aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check")
     assert present_index < aim_index < aim_teleport_wait_index < rendered_index < aim_capture_index, (
         "the live Wisp must be faced before waiting for its frustum-dependent renderer callback"
