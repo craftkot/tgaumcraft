@@ -61,6 +61,18 @@ public final class LegacyTreeAttemptTest {
         Scripted s = new Scripted(new int[0], new float[]{0.9F});
         check(LegacyTreeAttempt.silverwoodBiome(0F, true, false, 18, s) && s.f == 1,
                 "legacy override RNG consumption");
+        // A centered coordinate is valid at the last representable chunk edge,
+        // and the random offset must be consumed before the overflow guard.
+        int minValidChunk = Math.ceilDiv(Integer.MIN_VALUE - 4, 16);
+        int maxValidChunk = Math.floorDiv(Integer.MAX_VALUE - 12, 16);
+        for (int chunk : new int[]{minValidChunk, maxValidChunk}) {
+            for (int n = 0; n < 9; n++) {
+                int expected = (int) ((long) chunk * 16 + 4 + n);
+                check(LegacyTreeAttempt.centeredCoordinate(chunk,
+                        new Scripted(new int[]{n}, new float[0])) == expected,
+                        "representable chunk edge " + chunk + " offset " + n);
+            }
+        }
         for (int chunk : new int[]{Integer.MIN_VALUE, Integer.MAX_VALUE}) {
             boolean thrown = false;
             try { LegacyTreeAttempt.centeredCoordinate(chunk,
