@@ -28,6 +28,15 @@ def render() -> str:
     sleep 0.2
   }
 
+  wisp_fast_command() {
+    local command="$1"
+    xdotool key --clearmodifiers t
+    sleep 0.08
+    xdotool type --clearmodifiers --delay 1 "$command"
+    xdotool key --clearmodifiers Return
+    sleep 0.08
+  }
+
   wisp_wait_for_marker() {
     local marker="$1"
     for _ in $(seq 1 200); do
@@ -70,27 +79,36 @@ def render() -> str:
   wisp_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_WISP_PLATFORM_READY=YES' 'TC_SMOKE_WISP_PLATFORM_READY=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
-  # 2.9 blocks keeps the Wisp inside survival melee reach while leaving its
+  # 2.0 blocks keeps the Wisp inside survival melee reach while leaving its
   # complete source-to-player zap path in the camera frustum.
-  wisp_command '/summon thaumcraft:wisp 10.5 149 11.4 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
+  wisp_command '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
   # Require the actual entity renderer before attempting a melee hit.
   wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
 
-  # F1 removes HUD/crosshair. Two pre-attack frames estimate scene/Wisp
-  # animation noise for comparison with the short-lived bolt and its expiry.
+  # Two clean pre-attack frames estimate scene/Wisp animation noise.
   xdotool key --clearmodifiers F1
   sleep 0.2
   wisp_capture 79-wisp-before-a
-  sleep 0.15
+  sleep 0.05
   wisp_capture 79-wisp-before-b
+
+  # Restore the crosshair and use vanilla entity-facing to aim at the live
+  # Wisp. Do not warp the grabbed X11 pointer: that can rotate the camera.
+  xdotool key --clearmodifiers F1
+  sleep 0.05
+  wisp_fast_command '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
+  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_AIMED=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_AIMED=YES'
+  echo 'WISP_ZAP_AIM=VANILLA_FACING_ENTITY' | tee -a client-smoke-status.txt
+  wisp_capture 78-wisp-aim-check
+  xdotool key --clearmodifiers F1
+  sleep 0.05
 
   # A genuine survival left-click invokes WispEntity.hurt(Player), which sets
   # the normal target. No synthetic packet, direct target setter or command
   # invokes the zap itself.
-  xdotool mousemove 512 384
-  sleep 0.1
   xdotool click 1
   echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'

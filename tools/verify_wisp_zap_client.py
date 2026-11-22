@@ -7,6 +7,7 @@ import sys
 
 
 SCREENSHOTS = (
+    "78-wisp-aim-check.png",
     "79-wisp-before-a.png",
     "79-wisp-before-b.png",
     "80-wisp-zap-frame-a.png",
@@ -21,10 +22,12 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_SPAWNED=YES",
     "TC_SMOKE_WISP_ASPECT_AER=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
+    "TC_SMOKE_WISP_AIMED=YES",
 )
 
 REQUIRED_STATUS = (
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
+    "WISP_ZAP_AIM=VANILLA_FACING_ENTITY",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
     "WISP_ZAP_REAL_CLIENT=PASS",
 )

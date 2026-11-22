@@ -28,7 +28,11 @@ def main() -> int:
         "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES",
         "wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'",
-        "xdotool mousemove 512 384",
+        "wisp_fast_command()",
+        '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes',
+        "TC_SMOKE_WISP_AIMED=YES",
+        "wisp_capture 78-wisp-aim-check",
+        "WISP_ZAP_AIM=VANILLA_FACING_ENTITY",
         'nbt={Type:"aer"}',
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
@@ -39,7 +43,7 @@ def main() -> int:
     assert generated.count("  send_chat() {") == 1
     wisp_body = generated.split("  wisp_command() {", 1)[1]
     assert "sleep 4" not in wisp_body
-    assert "xdotool mousemove --sync 512 384" not in generated
+    assert "xdotool mousemove" not in generated
     syntax = subprocess.run(
         ["bash", "-n"], input=generated, text=True, capture_output=True, check=False
     )
@@ -51,6 +55,7 @@ def main() -> int:
         "TC_SMOKE_WISP_SPAWNED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer",
+        "TC_SMOKE_WISP_AIMED=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
@@ -58,6 +63,7 @@ def main() -> int:
     ))
     status = "\n".join((
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
+        "WISP_ZAP_AIM=VANILLA_FACING_ENTITY",
         "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
         "WISP_ZAP_REAL_CLIENT=PASS",
         "WISP_ZAP_BASELINE_NOISE=3",
