@@ -66,8 +66,8 @@ def main() -> int:
         "wisp_fast_command()",
         "sleep 0.5",
         '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES',
-        '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 ~ ~',
-        '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~',
+        '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 149 ~',
+        '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~ ~ ~',
         "wisp_wait_for_teleport",
         "wisp_wait_for_fresh_render",
         "WISP_RENDER_AFTER_AIM=YES",
@@ -95,10 +95,10 @@ def main() -> int:
         "fixture chunk must be entered and observed loaded before the platform fill response is accepted"
     )
     present_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'")
-    position_aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 ~ ~'")
+    position_aim_index = setup.index("wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~1.5 149 ~'")
     position_wait_index = setup.index('wisp_wait_for_teleport "$aim_log_lines"', position_aim_index)
     rotation_snapshot_index = setup.index('aim_rotation_log_lines="$(wc -l < client-smoke/client.log)"', position_wait_index)
-    rotation_aim_index = setup.index("wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~'", rotation_snapshot_index)
+    rotation_aim_index = setup.index("wisp_fast_command '/execute as @p at @s anchored eyes facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes run tp @s ~ ~ ~ ~ ~'", rotation_snapshot_index)
     rotation_wait_index = setup.index('wisp_wait_for_teleport "$aim_rotation_log_lines"', rotation_aim_index)
     post_aim_snapshot_index = setup.index('post_aim_log_lines="$(wc -l < client-smoke/client.log)"')
     rendered_index = setup.index('wisp_wait_for_fresh_render "$post_aim_log_lines"')
@@ -106,6 +106,8 @@ def main() -> int:
     assert present_index < position_aim_index < position_wait_index < rotation_snapshot_index < rotation_aim_index < rotation_wait_index < post_aim_snapshot_index < rendered_index < aim_capture_index, (
         "position must be confirmed first, then player-eye facing must be confirmed before accepting a fresh render"
     )
+    assert "run tp @p ~1.5 ~ ~" not in generated
+    assert "run tp @s ~ ~ ~\x27" not in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
