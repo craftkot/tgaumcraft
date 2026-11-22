@@ -18,14 +18,20 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import org.joml.Matrix4f;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Visible billboard projection of BETA26 RenderWisp using the exact shipped
  * 64x64 particle atlas. The original auranodes sheet and additive blend state
  * are not yet available in this resource slice; the aspect-tinted third layer
  * therefore samples the matching frame region from the particle atlas.
  */
-@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, value = Dist.CLIENT)
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class WispRendererRegistration {
+    private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private static final Set<Integer> SMOKE_RENDERED = ConcurrentHashMap.newKeySet();
+
     private WispRendererRegistration() {}
 
     @SubscribeEvent
@@ -68,6 +74,10 @@ public final class WispRendererRegistration {
             poseStack.popPose();
 
             super.render(entity, entityYaw, partialTick, poseStack, buffers, LightTexture.FULL_BRIGHT);
+            if (SMOKE_PROBE && SMOKE_RENDERED.add(entity.getId())) {
+                System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
+                        + " aspect=" + entity.getAspectType());
+            }
         }
 
         private static void renderQuad(
