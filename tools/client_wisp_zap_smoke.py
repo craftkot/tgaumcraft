@@ -31,10 +31,11 @@ def render() -> str:
   wisp_fast_command() {
     local command="$1"
     xdotool key --clearmodifiers t
-    sleep 0.08
+    # Keep the reliable chat-open delay; only character typing is accelerated.
+    sleep 0.5
     xdotool type --clearmodifiers --delay 1 "$command"
     xdotool key --clearmodifiers Return
-    sleep 0.08
+    sleep 0.2
   }
 
   wisp_wait_for_marker() {
@@ -55,6 +56,22 @@ def render() -> str:
     local command="$1" marker="$2"
     wisp_command "$command"
     wisp_wait_for_marker "$marker"
+  }
+
+  wisp_wait_for_teleport() {
+    local after_lines="$1"
+    for _ in $(seq 1 200); do
+      local teleport_line
+      teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Teleported Dev to ' | tail -1 || true)"
+      if [ -n "$teleport_line" ]; then
+        echo "WISP_ZAP_AIM_TELEPORT=YES $teleport_line" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_AIM_TELEPORT_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
   }
 
   wisp_capture() {
@@ -87,22 +104,26 @@ def render() -> str:
   # Require the actual entity renderer before attempting a melee hit.
   wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
 
-  # Two clean pre-attack frames estimate scene/Wisp animation noise.
+  # Confirm the live entity, then move the player relative to its current
+  # server position. The previous same-position tp left the Wisp off-screen.
+  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'
+  aim_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_fast_command '/execute at @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run tp @p ~-1.5 ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
+  wisp_wait_for_teleport "$aim_log_lines"
+  echo 'WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE' | tee -a client-smoke-status.txt
+  wisp_capture 78-wisp-aim-check
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
+
+  # Two clean pre-attack frames now include the centered Wisp, so their
+  # animation delta is a real baseline rather than an empty platform.
   xdotool key --clearmodifiers F1
   sleep 0.2
   wisp_capture 79-wisp-before-a
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/79-wisp-before-a.png | tee -a client-smoke-status.txt
   sleep 0.05
   wisp_capture 79-wisp-before-b
-
-  # Restore the crosshair and use vanilla entity-facing to aim at the live
-  # Wisp. Do not warp the grabbed X11 pointer: that can rotate the camera.
-  xdotool key --clearmodifiers F1
-  sleep 0.05
-  wisp_fast_command '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
-  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_AIMED=YES'
-  wisp_wait_for_marker 'TC_SMOKE_WISP_AIMED=YES'
-  echo 'WISP_ZAP_AIM=VANILLA_FACING_ENTITY' | tee -a client-smoke-status.txt
-  wisp_capture 78-wisp-aim-check
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/79-wisp-before-b.png | tee -a client-smoke-status.txt
   xdotool key --clearmodifiers F1
   sleep 0.05
 
