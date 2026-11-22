@@ -3383,3 +3383,12 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - The failed full build also caused several downstream M16 real-client workflows to fail during their build stage; those failures are not evidence of visual regressions. Their job logs must be inspected individually if they remain after the Wisp compile fix.
 - Fixed rubric remains **59/100**, M08 **5/9**, M16 **4/6**. No point awarded: this repairs a compile blocker only.
 - Next: inspect the new Full Port and Native Aura/Crystal runs for commit `94f5b1b`; if compilation passes, read the GameTest log for all four Wisp markers (spawn gate, event-0, zap damage, Type NBT/crystal payload) and then check the dedicated-server smoke. Do not add further Wisp features until this acceptance gate is green.
+
+
+### 2026-11-22 — second exact-head build exposed a correction error
+
+- Full Port CI on code commit `94f5b1b` reached `:compileJava` but failed with three diagnostics: `Override is not a repeatable annotation interface` at the three Wisp methods. Cause: the source already had `@Override`; the first patch accidentally inserted a second annotation while changing visibility. This was introduced by the repair itself, not by NeoForge or infrastructure.
+- Removed exactly the three duplicate annotations while keeping the required `public` visibility and the original single `@Override` on each method. No gameplay logic changed.
+- Follow-up code commit: [`69b0814`](https://github.com/craftkot/tgaumcraft/commit/69b0814892ddd32844bd42d736a21bbeefc0bd32). Static post-write inspection confirms zero adjacent duplicate `@Override` annotations.
+- The previous exact-head build [#44965412015](https://github.com/craftkot/tgaumcraft/actions/runs/44965412015) **FAILED**; the Native Aura/Crystal run [#44965412119](https://github.com/craftkot/tgaumcraft/actions/runs/44965412119) remained queued at last poll, so no Wisp GameTest has run on a compilable build yet.
+- Next: inspect Full Port CI and Native Aura/Crystal GameTests triggered by `69b0814`; do not proceed to audio, renderer or Nether spawning until the build succeeds and the Wisp markers are visible in native GameTest logs.
