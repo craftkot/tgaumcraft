@@ -77,13 +77,13 @@ public final class SilverwoodLegacyFeature extends Feature<NoneFeatureConfigurat
                     if (rejectedLeafWrite[0]) return;
                     BlockPos pos = new BlockPos(px, py, pz);
                     BlockState before = level.getBlockState(pos);
-                    if (canReplace(before)) {
-                        if (level.setBlock(pos, leaves, 2)) {
-                            originalLeaves.putIfAbsent(pos, before);
-                            ownLeaves.add(pos);
-                        } else {
-                            rejectedLeafWrite[0] = true;
-                        }
+                    if (canReplace(before) && level.setBlock(pos, leaves, 2)) {
+                        originalLeaves.putIfAbsent(pos, before);
+                        ownLeaves.add(pos);
+                    } else {
+                        // The predicate may have observed an earlier replaceable state.
+                        // A newly blocked position is a failed write, not a valid partial canopy.
+                        rejectedLeafWrite[0] = true;
                     }
                 },
                 (px, py, pz, meta) -> {
