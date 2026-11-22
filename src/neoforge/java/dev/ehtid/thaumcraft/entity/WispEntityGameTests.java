@@ -108,49 +108,76 @@ public final class WispEntityGameTests {
         wisp.moveTo(origin.getX() + 0.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
         Zombie stationary = EntityType.ZOMBIE.create(level);
         Zombie moving = EntityType.ZOMBIE.create(level);
-        if (stationary == null || moving == null) {
+        Zombie exactThreshold = EntityType.ZOMBIE.create(level);
+        if (stationary == null || moving == null || exactThreshold == null) {
             throw new AssertionError("Unable to create Wisp zap targets");
         }
         stationary.setNoAi(true);
         moving.setNoAi(true);
+        exactThreshold.setNoAi(true);
         stationary.moveTo(origin.getX() + 2.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
         moving.moveTo(origin.getX() + 4.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
+        exactThreshold.moveTo(origin.getX() + 6.5D, origin.getY() + 1.0D, origin.getZ() + 0.5D, 0.0F, 0.0F);
 
         if (!level.addFreshEntity(wisp)
                 || !level.addFreshEntity(stationary)
-                || !level.addFreshEntity(moving)) {
-            throw new AssertionError("Wisp zap GameTest could not add all three entities");
+                || !level.addFreshEntity(moving)
+                || !level.addFreshEntity(exactThreshold)) {
+            throw new AssertionError("Wisp zap GameTest could not add all four entities");
         }
 
-        // Reassert both velocity vectors after insertion so spawn/finalization hooks
-        // cannot accidentally move the stationary fixture across BETA26's 0.1 threshold.
+        // Zombie armor reduces a raw four-point hit to 3.936; zero it so this
+        // test measures the Wisp's BETA26 damage branch rather than armor mitigation.
+        setArmorToZero(stationary);
+        setArmorToZero(moving);
+        setArmorToZero(exactThreshold);
+
+        // BETA26 classifies velocity before hurt() applies knockback to the target.
         stationary.setDeltaMovement(Vec3.ZERO);
         moving.setDeltaMovement(new Vec3(0.2D, 0.0D, 0.0D));
+        exactThreshold.setDeltaMovement(new Vec3(0.10000000149011612D, 0.0D, 0.0D));
 
         double attackDamage = wisp.getAttributeValue(Attributes.ATTACK_DAMAGE);
         if (Math.abs(attackDamage - 3.0D) > 0.001D) {
             throw new AssertionError("Wisp attack attribute must be 3.0 before stationary=" + attackDamage);
         }
 
+        Vec3 stationaryMotionBefore = stationary.getDeltaMovement();
         float stationaryBefore = stationary.getHealth();
         boolean stationaryHit = wisp.tryZap(stationary, 0.0F);
         float stationaryDamage = stationaryBefore - stationary.getHealth();
         if (!stationaryHit || Math.abs(stationaryDamage - 4.0F) > 0.001F) {
-            throw new AssertionError("Stationary target must take four damage: hit=" + stationaryHit
+            throw new AssertionError("Stationary target must take four raw damage: hit=" + stationaryHit
                     + " damage=" + stationaryDamage + " attack=" + attackDamage
-                    + " motion=" + stationary.getDeltaMovement());
+                    + " motionBefore=" + stationaryMotionBefore
+                    + " motionAfter=" + stationary.getDeltaMovement());
         }
 
+        Vec3 movingMotionBefore = moving.getDeltaMovement();
         float movingBefore = moving.getHealth();
         boolean movingHit = wisp.tryZap(moving, 0.0F);
         float movingDamage = movingBefore - moving.getHealth();
         if (!movingHit || Math.abs(movingDamage - 3.0F) > 0.001F) {
-            throw new AssertionError("Moving target must take three damage: hit=" + movingHit
+            throw new AssertionError("Moving target must take three raw damage: hit=" + movingHit
                     + " damage=" + movingDamage + " attack=" + attackDamage
-                    + " motion=" + moving.getDeltaMovement());
+                    + " motionBefore=" + movingMotionBefore
+                    + " motionAfter=" + moving.getDeltaMovement());
+        }
+
+        // The source uses strict > 0.10000000149011612, so equality is stationary.
+        Vec3 thresholdMotionBefore = exactThreshold.getDeltaMovement();
+        float thresholdBefore = exactThreshold.getHealth();
+        boolean thresholdHit = wisp.tryZap(exactThreshold, 0.5F);
+        float thresholdDamage = thresholdBefore - exactThreshold.getHealth();
+        if (!thresholdHit || Math.abs(thresholdDamage - 4.0F) > 0.001F) {
+            throw new AssertionError("Exact BETA26 movement threshold must use stationary branch: hit="
+                    + thresholdHit + " damage=" + thresholdDamage
+                    + " motionBefore=" + thresholdMotionBefore
+                    + " motionAfter=" + exactThreshold.getDeltaMovement());
         }
 
         System.out.println("TC_GAMETEST_WISP_ZAP_DAMAGE=PASS stationary=4 moving=3 attack=" + attackDamage);
+        System.out.println("TC_GAMETEST_WISP_ZAP_THRESHOLD=PASS exact=0.10000000149011612 branch=stationary");
         helper.succeed();
     }
 
@@ -179,6 +206,14 @@ public final class WispEntityGameTests {
 
         System.out.println("TC_GAMETEST_WISP_ASPECT_DROP=PASS aspect=vitium");
         helper.succeed();
+    }
+
+    private static void setArmorToZero(Zombie target) {
+        var armor = target.getAttribute(Attributes.ARMOR);
+        if (armor == null) {
+            throw new AssertionError("Zombie GameTest target is missing its armor attribute");
+        }
+        armor.setBaseValue(0.0D);
     }
 
     private static void buildDarkRoom(ServerLevel level, BlockPos center) {
