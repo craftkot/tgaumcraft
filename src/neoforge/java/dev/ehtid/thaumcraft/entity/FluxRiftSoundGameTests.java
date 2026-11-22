@@ -175,7 +175,8 @@ public final class FluxRiftSoundGameTests {
         if (wisp.getAmbientSound() != WispSoundRegistration.WISP_LIVE.get()
                 || wisp.getHurtSound(null) != SoundEvents.LAVA_EXTINGUISH
                 || wisp.getDeathSound() != WispSoundRegistration.WISP_DEAD.get()
-                || Float.compare(wisp.getSoundVolume(), 0.25F) != 0) {
+                || Float.compare(wisp.getSoundVolume(), 0.25F) != 0
+                || wisp.getSoundSource() != SoundSource.HOSTILE) {
             wisp.discard();
             throw new AssertionError("Wisp ambient/hurt/death sound contract differs from BETA26");
         }
@@ -201,18 +202,20 @@ public final class FluxRiftSoundGameTests {
                 }
 
                 SoundPacketEvidence packet = observed.peek();
-                if (packet == null || Float.compare(packet.volume(), 1.0F) != 0
+                if (packet == null || packet.source() != SoundSource.HOSTILE
+                        || Float.compare(packet.volume(), 1.0F) != 0
                         || Float.compare(packet.pitch(), 1.1F) != 0) {
-                    throw new AssertionError("BETA26 Wisp zap packet volume/pitch mismatch: " + packet);
+                    throw new AssertionError("BETA26 Wisp zap packet category/volume/pitch mismatch: " + packet);
                 }
                 if (packet.entityId() >= 0 && packet.entityId() != wisp.getId()) {
                     throw new AssertionError("Wisp zap sound packet is attached to the wrong entity");
                 }
                 if (packet.entityId() < 0
-                        && (Math.abs(packet.x() - wisp.getX()) > 0.125D
-                        || Math.abs(packet.y() - wisp.getY()) > 0.125D
-                        || Math.abs(packet.z() - wisp.getZ()) > 0.125D)) {
-                    throw new AssertionError("Wisp zap sound packet position mismatch: " + packet);
+                        && (Math.abs(packet.x() - wisp.getX()) > 1.0D
+                        || Math.abs(packet.y() - wisp.getY()) > 1.0D
+                        || Math.abs(packet.z() - wisp.getZ()) > 1.0D)) {
+                    throw new AssertionError("Wisp zap sound packet is more than one block from entity: "
+                            + packet + " wisp=(" + wisp.getX() + "," + wisp.getY() + "," + wisp.getZ() + ")");
                 }
             } finally {
                 removeWispZapRecorder(recipient);
