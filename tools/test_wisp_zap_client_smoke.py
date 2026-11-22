@@ -80,7 +80,7 @@ def main() -> int:
         "WISP_RENDER_AFTER_AIM=YES",
         "TC_SMOKE_WISP_PRESENT_FOR_AIM=YES",
         "wisp_capture 78-wisp-aim-check",
-        "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES",
+        "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
         "--aim-only",
         "wisp_capture 79-wisp-before-a",
@@ -119,7 +119,9 @@ def main() -> int:
     assert "run tp @p ~1.5" not in generated
     assert "run tp @s ~ ~ ~ ~ ~" not in generated
 
-    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "~-1.5 ~ ~ facing entity" not in generated
     assert 'wisp_wait_for_fresh_render "$aim_log_lines"' not in generated
