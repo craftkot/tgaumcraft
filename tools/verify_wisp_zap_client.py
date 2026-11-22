@@ -15,6 +15,13 @@ SCREENSHOTS = (
     "83-wisp-zap-after-expiry.png",
 )
 
+REQUIRED_LOG_MARKERS = (
+    "TC_SMOKE_WISP_PLATFORM_READY=YES",
+    "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+    "TC_SMOKE_WISP_SPAWNED=YES",
+    "TC_SMOKE_WISP_ASPECT_AER=YES",
+)
+
 REQUIRED_STATUS = (
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -75,6 +82,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         age = float(rendered.group(4))
         if not 0.0 <= age < 3.0:
             errors.append(f"FXBolt render age outside BETA26 three-tick lifetime: {age}")
+
+    for marker in REQUIRED_LOG_MARKERS:
+        if marker not in log_text:
+            errors.append(f"missing real server world marker: {marker}")
 
     for marker in REQUIRED_STATUS:
         if marker not in status_text:

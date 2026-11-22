@@ -74,7 +74,7 @@ def render() -> str:
   # complete source-to-player zap path in the camera frustum.
   wisp_command '/summon thaumcraft:wisp 10.5 149 11.4 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
-  wisp_send_chat '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] if data entity @s {Type:"aer"} run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
+  wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
 
   # F1 removes HUD/crosshair. Two pre-attack frames estimate scene/Wisp
   # animation noise for comparison with the short-lived bolt and its expiry.

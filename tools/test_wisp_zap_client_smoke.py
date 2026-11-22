@@ -25,6 +25,7 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
+        "TC_SMOKE_WISP_ASPECT_AER=YES",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
         "WISP_ZAP_REAL_CLIENT=PASS",
@@ -32,7 +33,8 @@ def main() -> int:
     for marker in required:
         assert marker in generated, marker
     assert generated.count("  send_chat() {") == 1
-    assert "sleep 4" not in generated
+    wisp_body = generated.split("  wisp_command() {", 1)[1]
+    assert "sleep 4" not in wisp_body
     syntax = subprocess.run(
         ["bash", "-n"], input=generated, text=True, capture_output=True, check=False
     )
@@ -78,6 +80,9 @@ def main() -> int:
     assert "TC_SMOKE_WISP_ZAP_SENT=YES" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES" in renderer
     assert "TC_SMOKE_WISP_ZAP_RENDERED=YES" in renderer
+    assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
+    assert ".setWriteMaskState(COLOR_WRITE)" in renderer
+    assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer
 
     print("WISP_ZAP_CLIENT_SMOKE_TESTS=PASS")
     return 0
