@@ -20,7 +20,7 @@ def main() -> int:
         "/difficulty normal",
         "/gamemode survival",
         "minecraft:resistance infinite 4 true",
-        '/summon thaumcraft:wisp 10.5 149 11.4 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
+        '/summon thaumcraft:wisp 10.5 149 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
