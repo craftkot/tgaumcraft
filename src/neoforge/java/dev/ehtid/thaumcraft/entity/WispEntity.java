@@ -69,7 +69,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return WispSoundRegistration.WISP_LIVE.get();
+        return WispSoundRegistration.WISP_LIVE;
     }
 
     @Override
@@ -79,7 +79,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     protected SoundEvent getDeathSound() {
-        return WispSoundRegistration.WISP_DEAD.get();
+        return WispSoundRegistration.WISP_DEAD;
     }
 
     @Override
@@ -274,7 +274,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
     }
 
     void playZapSound() {
-        playSound(WispSoundRegistration.WISP_ZAP.get(), 1.0F, 1.1F);
+        playSound(WispSoundRegistration.WISP_ZAP, 1.0F, 1.1F);
     }
 
     /**

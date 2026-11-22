@@ -172,9 +172,9 @@ public final class FluxRiftSoundGameTests {
             throw new AssertionError("Unable to add Wisp sound fixture");
         }
 
-        if (wisp.getAmbientSound() != WispSoundRegistration.WISP_LIVE.get()
+        if (wisp.getAmbientSound() != WispSoundRegistration.WISP_LIVE
                 || wisp.getHurtSound(null) != SoundEvents.LAVA_EXTINGUISH
-                || wisp.getDeathSound() != WispSoundRegistration.WISP_DEAD.get()
+                || wisp.getDeathSound() != WispSoundRegistration.WISP_DEAD
                 || Float.compare(wisp.getSoundVolume(), 0.25F) != 0
                 || wisp.getSoundSource() != SoundSource.HOSTILE) {
             wisp.discard();
@@ -347,13 +347,13 @@ public final class FluxRiftSoundGameTests {
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
                     throws Exception {
                 if (message instanceof ClientboundSoundPacket packet
-                        && packet.getSound().value() == WispSoundRegistration.WISP_ZAP.get()) {
+                        && packet.getSound().value() == WispSoundRegistration.WISP_ZAP) {
                     observed.add(new SoundPacketEvidence(
                             packet.getSource(), packet.getVolume(), packet.getPitch(), -1,
                             packet.getX(), packet.getY(), packet.getZ()
                     ));
                 } else if (message instanceof ClientboundSoundEntityPacket packet
-                        && packet.getSound().value() == WispSoundRegistration.WISP_ZAP.get()) {
+                        && packet.getSound().value() == WispSoundRegistration.WISP_ZAP) {
                     observed.add(new SoundPacketEvidence(
                             packet.getSource(), packet.getVolume(), packet.getPitch(), packet.getId(),
                             Double.NaN, Double.NaN, Double.NaN
