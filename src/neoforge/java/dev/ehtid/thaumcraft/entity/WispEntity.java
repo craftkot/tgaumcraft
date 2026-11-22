@@ -172,13 +172,19 @@ public final class WispEntity extends FlyingMob implements Enemy {
     @Override
     public void tick() {
         super.tick();
+        // BETA26 EntityWisp.onUpdate damps vertical motion on both logical sides
+        // before its server-only onLivingUpdate movement/attack logic.
+        setDeltaMovement(applyBETA26VerticalDamping(getDeltaMovement()));
         if (level().isClientSide) {
             return;
         }
 
         tickServer();
-        Vec3 velocity = getDeltaMovement();
-        setDeltaMovement(velocity.x, velocity.y * 0.6D, velocity.z);
+    }
+
+    static Vec3 applyBETA26VerticalDamping(Vec3 velocity) {
+        // Preserve the original float 0.6 coefficient widened to double.
+        return new Vec3(velocity.x, velocity.y * 0.6000000238418579D, velocity.z);
     }
 
     private void tickServer() {

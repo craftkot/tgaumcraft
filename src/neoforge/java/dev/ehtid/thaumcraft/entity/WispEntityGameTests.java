@@ -55,6 +55,33 @@ public final class WispEntityGameTests {
             templateNamespace = ThaumcraftPort.MOD_ID,
             timeoutTicks = 40
     )
+    public static void verticalDampingMatchesBETA26Coefficient(GameTestHelper helper) {
+        Vec3[] inputs = {
+                new Vec3(0.25D, 1.0D, -0.5D),
+                new Vec3(-1.0D, -0.75D, 0.0D),
+                new Vec3(0.0D, 0.125D, 1.0D)
+        };
+        for (Vec3 input : inputs) {
+            Vec3 actual = WispEntity.applyBETA26VerticalDamping(input);
+            double expectedY = input.y * 0.6000000238418579D;
+            if (Double.doubleToLongBits(actual.x) != Double.doubleToLongBits(input.x)
+                    || Double.doubleToLongBits(actual.y) != Double.doubleToLongBits(expectedY)
+                    || Double.doubleToLongBits(actual.z) != Double.doubleToLongBits(input.z)) {
+                throw new AssertionError("BETA26 Wisp vertical damping mismatch: input="
+                        + input + " actual=" + actual + " expectedY=" + expectedY);
+            }
+        }
+
+        System.out.println("TC_GAMETEST_WISP_VERTICAL_DAMPING=PASS coefficient=0.6000000238418579 xz=unchanged");
+        helper.succeed();
+    }
+
+    @PrefixGameTestTemplate(false)
+    @GameTest(
+            template = "crystal_spread_empty",
+            templateNamespace = ThaumcraftPort.MOD_ID,
+            timeoutTicks = 40
+    )
     public static void wispZapPayloadPreservesBETA26EntityIds(GameTestHelper helper) {
         WispZapPayload expected = new WispZapPayload(0x12345678, 0x76543210);
         RegistryFriendlyByteBuf buffer = new RegistryFriendlyByteBuf(
