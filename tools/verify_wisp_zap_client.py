@@ -20,6 +20,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "TC_SMOKE_WISP_SPAWNED=YES",
     "TC_SMOKE_WISP_ASPECT_AER=YES",
+    "TC_SMOKE_WISP_RENDERED=YES",
 )
 
 REQUIRED_STATUS = (
@@ -57,17 +58,24 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) color=#([0-9A-Fa-f]{6})",
         log_text,
     )
+    wisp_rendered = _first(
+        r"TC_SMOKE_WISP_RENDERED=YES id=(\d+) aspect=aer",
+        log_text,
+    )
     rendered = _first(
         r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         log_text,
     )
 
-    for label, match in (("player hit/target", hit), ("server payload send", sent),
+    for label, match in (("client Wisp entity renderer", wisp_rendered),
+                         ("player hit/target", hit), ("server payload send", sent),
                          ("client payload receive", received), ("client additive render", rendered)):
         if match is None:
             errors.append(f"missing real gameplay/render evidence: {label}")
 
+    if wisp_rendered and hit and wisp_rendered.group(1) != hit.group(1):
+        errors.append("rendered Wisp and player-hit source use different entity IDs")
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
         errors.append("server hit and zap payload use different source/target entity IDs")
     if sent and received and sent.group(1, 2) != received.group(1, 2):
