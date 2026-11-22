@@ -58,18 +58,18 @@ def render() -> str:
     wisp_wait_for_marker "$marker"
   }
 
-  # A renderer marker from before aiming is not evidence that the Wisp
-  # rendered in the new camera view. Only accept lines appended after aim.
+  # The camera is pre-aimed at the fixed spawn point before the Wisp exists.
+  # Only accept a renderer callback appended after the summon command.
   wisp_wait_for_fresh_render() {
     local after_lines="$1"
     for _ in $(seq 1 200); do
       if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq 'TC_SMOKE_WISP_RENDERED=YES'; then
-        echo 'WISP_RENDER_AFTER_AIM=YES' | tee -a client-smoke-status.txt
+        echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 0.025
     done
-    echo 'WISP_RENDER_AFTER_AIM_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN_TIMEOUT=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
     exit 1
   }
@@ -86,23 +86,6 @@ def render() -> str:
       sleep 0.025
     done
     echo 'WISP_FIXTURE_TELEPORT_TIMEOUT=YES' | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    exit 1
-  }
-
-  wisp_wait_for_exact_aim_teleport() {
-    local after_lines="$1"
-    local expected='Teleported Dev to 12.500000, 149.000000, 10.500000'
-    for _ in $(seq 1 200); do
-      local teleport_line
-      teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F -- "$expected" | tail -1 || true)"
-      if [ -n "$teleport_line" ]; then
-        echo "WISP_ZAP_AIM_TELEPORT=YES $teleport_line" | tee -a client-smoke-status.txt
-        return 0
-      fi
-      sleep 0.025
-    done
-    echo 'WISP_AIM_TELEPORT_POSITION_MISMATCH=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
     exit 1
   }
@@ -203,25 +186,21 @@ def render() -> str:
   # Put the player on one known floor block and ask the server to prove that
   # exact block is stone before spawning or aiming at the Wisp.
   fixture_teleport_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/tp @p 12.5 149 10.5 0 22'
+  wisp_fast_command '/tp @p 12.5 149 10.5 0 29'
   wisp_wait_for_teleport "$fixture_teleport_log_lines"
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
-  # Spawn close to the supported player. The Wisp wanders until the first
-  # real hit, so do not spend several chat round-trips on redundant markers.
+  # Aim at a fixed spawn point BEFORE the Wisp exists. The previous
+  # post-spawn facing command cost another chat round-trip while the BETA26
+  # autonomous flight moved the target beyond melee reach. Zero initial motion
+  # keeps the first tick deterministic without disabling the real Wisp AI.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
-  # This conditional facing teleport is also the server-side existence/aspect
-  # gate: it cannot emit a teleport result unless the tagged Aer Wisp exists.
-  wisp_fast_command '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] eyes'
-  wisp_wait_for_exact_aim_teleport "$aim_log_lines"
-  echo 'WISP_ZAP_AIM=PLAYER_FACING_ENTITY' | tee -a client-smoke-status.txt
-  # Require fresh renderer telemetry to show both a centered view vector and
-  # a player still standing on the verified floor before inspecting pixels.
-  post_aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_wait_for_fresh_render "$post_aim_log_lines"
-  wisp_verify_aim_telemetry "$post_aim_log_lines"
+  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"],Motion:[0.0d,0.0d,0.0d]}'
+  echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
+  # Only a renderer callback after this real summon can satisfy the gate.
+  wisp_wait_for_fresh_render "$aim_log_lines"
+  wisp_verify_aim_telemetry "$aim_log_lines"
   wisp_capture 78-wisp-aim-check
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
