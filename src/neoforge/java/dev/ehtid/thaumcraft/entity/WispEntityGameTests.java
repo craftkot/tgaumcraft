@@ -62,21 +62,30 @@ public final class WispEntityGameTests {
                 spawnPos.getZ() + 0.5D, 0.0F, 0.0F);
 
         long previousDayTime = level.getDayTime();
-        boolean previousRaining = level.isRaining();
-        boolean previousThundering = level.isThundering();
+        boolean previousRaining = level.getLevelData().isRaining();
+        boolean previousThundering = level.getLevelData().isThundering();
+        float previousRainLevel = level.getRainLevel(1.0F);
+        float previousThunderLevel = level.getThunderLevel(1.0F);
         level.setDayTime(6000L);
         level.setWeatherParameters(0, 1200, true, true);
+        // isRaining()/isThundering() read interpolated gradients, not only
+        // saved weather flags. Set them directly for this short GameTest.
+        level.setRainLevel(1.0F);
+        level.setThunderLevel(1.0F);
 
         helper.runAfterDelay(5, () -> {
             try {
                 if (!level.isThundering()) {
                     throw new AssertionError("Thunder fixture did not enter thunder state: raining="
-                            + level.isRaining() + " dayTime=" + level.getDayTime());
+                            + level.isRaining() + " thundering=" + level.isThundering()
+                            + " dataRaining=" + level.getLevelData().isRaining()
+                            + " dataThundering=" + level.getLevelData().isThundering()
+                            + " rainLevel=" + level.getRainLevel(1.0F)
+                            + " thunderLevel=" + level.getThunderLevel(1.0F)
+                            + " dayTime=" + level.getDayTime());
                 }
 
-                // BETA26 tests raw sky brightness, not canSeeSky(). In GameTestServer,
-                // canSeeSky() can be false at the upper build boundary even when the
-                // raw sky-light value used by the legacy gate is fully exposed.
+                // BETA26 tests raw sky brightness, not the additional canSeeSky() predicate.
                 int skyLight = level.getBrightness(LightLayer.SKY, spawnPos);
                 int ordinaryLocalLight = level.getMaxLocalRawBrightness(spawnPos);
                 int thunderLocalLight = level.getMaxLocalRawBrightness(spawnPos, 10);
@@ -112,6 +121,8 @@ public final class WispEntityGameTests {
             } finally {
                 level.setWeatherParameters(0, 1200,
                         previousRaining, previousThundering);
+                level.setRainLevel(previousRainLevel);
+                level.setThunderLevel(previousThunderLevel);
                 level.setDayTime(previousDayTime);
             }
             helper.succeed();

@@ -3492,3 +3492,13 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Changed files: `src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntityGameTests.java` and this lane journal. Targeted open-PR path check for PRs #1–#3, #5–#10, #17, #21, #54–#57 found no overlap with either changed path. No shared registry, Gradle, workflow, localization, main or foreign branch changed.
 - New exact-head Native GameTest is required before accepting this fixture correction. Fixed rubric remains **59/100**, M08 **5/9**, M16 **4/6**; no point awarded.
 - Next: require `TC_GAMETEST_WISP_THUNDER_LIGHT=PASS` and the full native suite. If it still fails, use the new distinct weather/sky diagnostics rather than weakening the brightness assertions.
+
+
+## 2026-11-22 — make the thunder GameTest set weather gradients, not only flags
+
+- Exact-head Native Aura/Crystal run [#44992790513](https://github.com/craftkot/tgaumcraft/actions/runs/44992790513) failed at the new thunder fixture. The log shows `level.isRaining()` and `level.isThundering()` both false five ticks after `setWeatherParameters(0, 1200, true, true)`; the previous assertion did not distinguish saved weather flags from interpolated gradients.
+- Minecraft 1.21.1 exposes separate `LevelData.isRaining()/isThundering()` state and `Level.get/setRainLevel`, `get/setThunderLevel` gradient methods. The fixture set only the saved weather parameters and waited five ticks, too short for the normal gradient transition to reach the boolean thresholds. This is a test-fixture timing issue, not evidence against the production Wisp thunder subtraction.
+- The fixture now snapshots the saved weather flags and both gradients, applies thunder weather, immediately sets rain/thunder gradients to `1.0F`, then restores the original flags, gradients and day time in `finally`. The raw sky-light check remains exact; the extra `canSeeSky()` predicate stays removed because it is not part of BETA26's light gate. Production Java is unchanged.
+- Changed files: `src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntityGameTests.java` and this lane journal. Targeted open-PR path check for #1–#3, #5–#10, #17, #21, #54–#57 found no overlap. No shared registry, Gradle, workflow, localization, main or foreign branch changed.
+- New exact-head Native GameTest and Full Port are required; no PASS is claimed for this fixture correction. Fixed rubric remains **59/100**, M08 **5/9**, M16 **4/6**.
+- Next: require `TC_GAMETEST_WISP_THUNDER_LIGHT=PASS` and all required native tests. If the fixture fails, inspect the saved flags and gradient values in the expanded diagnostic rather than relaxing the light thresholds.
