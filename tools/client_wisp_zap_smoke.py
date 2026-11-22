@@ -75,6 +75,8 @@ def render() -> str:
   wisp_command '/summon thaumcraft:wisp 10.5 149 11.4 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
   wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,nbt={Type:"aer"},limit=1] run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
+  # Require the actual entity renderer before attempting a melee hit.
+  wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'
 
   # F1 removes HUD/crosshair. Two pre-attack frames estimate scene/Wisp
   # animation noise for comparison with the short-lived bolt and its expiry.
@@ -87,7 +89,9 @@ def render() -> str:
   # A genuine survival left-click invokes WispEntity.hurt(Player), which sets
   # the normal target. No synthetic packet, direct target setter or command
   # invokes the zap itself.
-  xdotool mousemove --sync 512 384 click 1
+  xdotool mousemove 512 384
+  sleep 0.1
+  xdotool click 1
   echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_SENT=YES'
