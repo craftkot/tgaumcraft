@@ -7,6 +7,8 @@ import sys
 # Run the loader-neutral BETA26 froth contract before generating the real-client script.
 subprocess.run(["bash", "tools/test_crucible_froth_rules.sh"], check=True, stdout=sys.stderr, stderr=sys.stderr)
 subprocess.run(["python3", "tools/m16/test_rift_shader_camera.py"], check=True, stdout=sys.stderr, stderr=sys.stderr)
+subprocess.run(["python3", "tools/verify_crucible_bubble_screenshots.py", "--self-test"],
+               check=True, stdout=sys.stderr, stderr=sys.stderr)
 
 full_source = Path("tools/client_smoke.sh").read_text()
 source = full_source
@@ -539,9 +541,12 @@ probe = r'''
   fi
 
   crucible_log_offset="$(wc -c < "$probe_log")"
-  send_chat '/data merge block 20 64 2 {Aspects:[{key:"aer",amount:1}]}'
-  # Match the compound with an NBT list-filter path.
-  send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'
+  # The source FXGeneric lifetime is only 15..24 client ticks (0.75..1.2s).
+  # Use the verified fast chat path for both state mutation and its NBT ack;
+  # the normal send_chat helper sleeps four seconds and expires every bubble.
+  send_chat_fast '/data merge block 20 64 2 {Aspects:[{key:"aer",amount:1}]}'
+  # Match the compound with an NBT list-filter path without a four-second delay.
+  send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'
   if ! wait_for_server_marker 'TC_CRUCIBLE_ASPECT_READY'; then
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL aspect payload was not accepted by the server' | tee -a client-smoke-status.txt
     exit 1
@@ -564,12 +569,42 @@ probe = r'''
     echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL particle type was not registered' | tee -a client-smoke-status.txt
     exit 1
   fi
-  capture crucible-bubble-after
-  test -s client-smoke/screenshots/crucible-bubble-after.png
-  python3 tools/verify_crucible_bubble_screenshots.py \
-    client-smoke/screenshots/crucible-bubble-before.png \
-    client-smoke/screenshots/crucible-bubble-after.png \
-    | tee -a client-smoke-status.txt
+  # Capture a short burst before the 15..24-tick particles expire. Keep the
+  # original pixel thresholds; only move image analysis after the raw captures.
+  bubble_frame=''
+  for frame in $(seq 1 12); do
+    frame_path="client-smoke/screenshots/crucible-bubble-frame-${frame}.png"
+    import -display :99 -window root -silent "$frame_path"
+    test -s "$frame_path"
+    sleep 0.05
+  done
+  for frame in $(seq 1 12); do
+    frame_path="client-smoke/screenshots/crucible-bubble-frame-${frame}.png"
+    result_path="client-smoke/crucible-bubble-frame-${frame}.txt"
+    if python3 tools/verify_crucible_bubble_screenshots.py \
+        client-smoke/screenshots/crucible-bubble-before.png "$frame_path" \
+        > "$result_path" 2>&1; then
+      bubble_frame="$frame_path"
+      cp "$frame_path" client-smoke/screenshots/crucible-bubble-after.png
+      cat "$result_path" | tee -a client-smoke-status.txt
+      break
+    fi
+  done
+  if [ -z "$bubble_frame" ]; then
+    echo 'CRUCIBLE_BUBBLE_REAL_CLIENT=FAIL no visible bubble in 12-frame capture burst' | tee -a client-smoke-status.txt
+    for frame in $(seq 1 12); do
+      result_path="client-smoke/crucible-bubble-frame-${frame}.txt"
+      if [ -s "$result_path" ]; then cat "$result_path" | tee -a client-smoke-status.txt; fi
+    done
+    exit 1
+  fi
+  identify client-smoke/screenshots/crucible-bubble-after.png
+  convert client-smoke/screenshots/crucible-bubble-after.png -resize 512x320 -colors 64 \
+    PNG8:client-smoke/screenshots/crucible-bubble-after-thumb.png
+  echo -n 'REAL_CLIENT_SCREEN_crucible-bubble-after='
+  base64 -w0 client-smoke/screenshots/crucible-bubble-after-thumb.png
+  echo
+  echo "CRUCIBLE_BUBBLE_CAPTURE_BURST=PASS selected=${bubble_frame##*/} frames=12 interval_ms=50" | tee -a client-smoke-status.txt
   echo "CRUCIBLE_BUBBLE_REAL_CLIENT=PASS $bubble_created_line | $bubble_rendered_line" | tee -a client-smoke-status.txt
 
   # BETA26 TileCrucible.drawEffects hot-surface froth and >500-Vis overflow.
@@ -673,8 +708,8 @@ for required_marker in (
 crucible_set_command = "send_chat_fast '/setblock 20 64 2 thaumcraft:crucible'"
 crucible_baseline_command = "send_chat '/data merge block 20 64 2 {Heat:151s,Water:1000,Aspects:[]}'"
 crucible_baseline_probe = """send_chat '/execute if data block 20 64 2 Heat if data block 20 64 2 Water if data block 20 64 2 Aspects unless data block 20 64 2 Aspects[0] run say TC_CRUCIBLE_BASELINE_READY'"""
-crucible_aspects_command = "send_chat '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
-crucible_aspects_probe = """send_chat '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
+crucible_aspects_command = "send_chat_fast '/data merge block 20 64 2 {Aspects:[{key:\"aer\",amount:1}]}'"
+crucible_aspects_probe = """send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:1}] run say TC_CRUCIBLE_ASPECT_READY'"""
 crucible_froth_heater_command = "send_chat_fast '/setblock 20 63 2 minecraft:magma_block'"
 crucible_froth_aspects_command = "send_chat_fast '/data merge block 20 64 2 {Heat:200s,Water:1000,Aspects:[{key:\"aer\",amount:2000}]}'"
 crucible_froth_aspects_probe = """send_chat_fast '/execute if data block 20 64 2 Aspects[{key:"aer",amount:2000}] run say TC_CRUCIBLE_FROTH_ASPECT_READY'"""
@@ -684,7 +719,8 @@ if any(probe.count(command) != 1 for command in (
     crucible_aspects_command, crucible_aspects_probe,
     crucible_froth_heater_command, crucible_froth_aspects_command, crucible_froth_aspects_probe,
     crucible_froth_cleanup_command, "send_chat '/tick unfreeze'", "capture crucible-bubble-before",
-    "capture crucible-bubble-after", "capture crucible-froth-after",
+    "bubble_frame=''", "CRUCIBLE_BUBBLE_CAPTURE_BURST=PASS",
+    "CRUCIBLE_BUBBLE_REAL_CLIENT=PASS", "capture crucible-froth-after",
 )):
     raise SystemExit("Crucible bubble smoke must set one baseline and one aspect-bearing state with valid NBT paths")
 if "execute if data block 20 64 2 {Heat:" in probe or "execute if data block 20 64 2 {Aspects:" in probe:
@@ -704,7 +740,9 @@ if not (
     < probe.index("TC_CRUCIBLE_ASPECT_READY")
     < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_CREATED=YES", probe.index(crucible_aspects_probe))
     < probe.index("TC_SMOKE_CRUCIBLE_BUBBLE_RENDERED=YES", probe.index(crucible_aspects_probe))
-    < probe.index("capture crucible-bubble-after")
+    < probe.index("bubble_frame=''")
+    < probe.index("python3 tools/verify_crucible_bubble_screenshots.py")
+    < probe.index("CRUCIBLE_BUBBLE_CAPTURE_BURST=PASS")
     < probe.index("CRUCIBLE_BUBBLE_REAL_CLIENT=PASS")
     < probe.index(crucible_froth_heater_command)
     < probe.index(crucible_froth_aspects_command)
@@ -749,7 +787,7 @@ if not (
     < probe.index("TC_CRUCIBLE_CAMERA_READY")
     < probe.index("capture crucible-bubble-before")
     < probe.index("TC_CRUCIBLE_ASPECT_READY")
-    < probe.index("capture crucible-bubble-after")
+    < probe.index("bubble_frame=''")
     < probe.index("python3 tools/verify_crucible_bubble_screenshots.py")
 ):
     raise SystemExit("Crucible pixel evidence must follow a lit scene, camera confirmation, empty baseline, and aspect-bearing capture")
