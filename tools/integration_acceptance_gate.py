@@ -11,6 +11,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlsplit
 
 REQUIRED = (
     "java_core",
@@ -21,6 +22,29 @@ REQUIRED = (
     "cold_save_reload",
     "anti_duplication",
 )
+
+
+def is_github_run_url(value: object) -> bool:
+    """Check URL shape only; caller must verify run, SHA, jobs and artifacts via API."""
+    if not isinstance(value, str):
+        return False
+    try:
+        url = urlsplit(value)
+    except ValueError:
+        return False
+    return (
+        url.scheme == "https"
+        and url.hostname == "github.com"
+        and url.port in (None, 443)
+        and not url.username
+        and not url.password
+        and not url.query
+        and not url.fragment
+        and re.fullmatch(
+            r"/craftkot/tgaumcraft/actions/runs/[1-9][0-9]*(?:/job/[1-9][0-9]*)?/?",
+            url.path,
+        ) is not None
+    )
 
 
 def verify(evidence: object, expected_sha: str) -> list[str]:
@@ -43,8 +67,8 @@ def verify(evidence: object, expected_sha: str) -> list[str]:
             problems.append(f"{name}: conclusion is not success")
         # A named workflow alone is not evidence. Demand a retrievable run/log.
         proof = entry.get("evidence_url")
-        if not isinstance(proof, str) or not proof.startswith("https://"):
-            problems.append(f"{name}: missing HTTPS evidence URL")
+        if not is_github_run_url(proof):
+            problems.append(f"{name}: expected craftkot/tgaumcraft GitHub Actions run URL")
         if entry.get("commit_sha") != expected_sha:
             problems.append(f"{name}: evidence SHA mismatch")
     return problems
@@ -65,8 +89,8 @@ def main() -> int:
         for problem in problems:
             print(f"BLOCKED: {problem}", file=sys.stderr)
         return 1
-    print("EVIDENCE COMPLETE: all seven gates report success for exact SHA.")
-    print("NOTE: validate authenticity and applicability of evidence before merging.")
+    print("STRUCTURAL EVIDENCE COMPLETE: seven gates self-report success for exact SHA.")
+    print("NOT VERIFIED: independently inspect GitHub API run SHA, job status, artifacts and in-game coverage before merging.")
     return 0
 
 

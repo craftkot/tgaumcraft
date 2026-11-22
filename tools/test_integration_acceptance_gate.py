@@ -16,7 +16,7 @@ def valid():
         "gates": {
             name: {
                 "conclusion": "success",
-                "evidence_url": "https://github.com/example/example/actions/runs/123",
+                "evidence_url": "https://github.com/craftkot/tgaumcraft/actions/runs/123",
                 "commit_sha": SHA,
             }
             for name in gate.REQUIRED
@@ -27,6 +27,28 @@ def valid():
 class GateTests(unittest.TestCase):
     def test_complete_evidence(self):
         self.assertEqual(gate.verify(valid(), SHA), [])
+
+    def test_untrusted_evidence_urls_rejected(self):
+        invalid = (
+            "https://evil.example/actions/runs/123",
+            "https://github.com.evil.example/craftkot/tgaumcraft/actions/runs/123",
+            "https://github.com/example/example/actions/runs/123",
+            "https://github.com/craftkot/tgaumcraft/actions/runs/not-a-run",
+            "https://github.com/craftkot/tgaumcraft/actions/runs/123?fake=1",
+            "https://github.com@evil.example/craftkot/tgaumcraft/actions/runs/123",
+        )
+        for url in invalid:
+            with self.subTest(url=url):
+                data = valid()
+                data["gates"]["java_core"]["evidence_url"] = url
+                self.assertTrue(gate.verify(data, SHA))
+
+    def test_job_url_accepted_structurally(self):
+        data = valid()
+        data["gates"]["java_core"]["evidence_url"] = (
+            "https://github.com/craftkot/tgaumcraft/actions/runs/123/job/456"
+        )
+        self.assertEqual(gate.verify(data, SHA), [])
 
     def test_missing_gate_fails_closed(self):
         data = valid()
