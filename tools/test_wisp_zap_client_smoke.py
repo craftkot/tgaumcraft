@@ -63,7 +63,6 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
         "TC_SMOKE_WISP_RENDERED=YES",
-        "wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'",
         "wisp_fast_command()",
         "sleep 0.5",
         '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_PRESENT_FOR_AIM=YES',
