@@ -51,7 +51,7 @@ checks = {
     "failed preflight returns false": "return false;" in source,
     "placement failure never self-suppressed": "if (rollbackFailure != failure) failure.addSuppressed(rollbackFailure);" in source,
     "two rollback failures never self-suppressed": "if (canopyFailure != trunkFailure) trunkFailure.addSuppressed(canopyFailure);" in source,
-    "explicit RNG caveat": "NOT exact legacy RNG parity" in source,
+    "explicit RNG caveat": "does NOT prove BETA26 RNG parity" in source,
 }
 for name, ok in checks.items():
     print(f"{'PASS' if ok else 'FAIL'}: {name}")
