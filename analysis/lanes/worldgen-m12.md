@@ -987,3 +987,11 @@
 - Test-only commit 11758d43f6b0dfbe53e494167fa7356fa600f146 adds 18 assertions in LegacyTreeAttemptTest for all nine offsets at the lowest/highest representable chunk origins. This complements the existing extreme-overflow rejection checks; no production code, shared registries, Gradle or CI changed.
 - Exact-checkout Java runner and NeoForge/GameTest/new-chunk Minecraft validation were not executed in this pass; no PASS is claimed for the new test or new HEAD. Next: execute tools/test_legacy_tree_attempt.sh on the exact SHA, inspect CI, then add native WorldGenLevel failure-injection coverage and coordinate natural biome registration.
 - Remaining: 17/81 Silverwood positions excluded by same-chunk policy, no natural registration, best-effort non-atomic rollback, no native worldgen proof. Draft PR #9 remains unmerged; audit 59/100 unchanged.
+
+
+## 2026-11-22 — M12 Silverwood biome RNG-order regressions
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; compared main...feature/worldgen-m12 (ahead 268 / behind 0 before edits; main a4280834), checked six feature branches and Draft PR #9. No merge or foreign writes.
+- Test-only commit 9cfdf998484e60587e430a6e5e6f409bf62fd86e adds three deterministic assertions to LegacyTreeAttemptTest: support-accepted and support-rejected paths each consume one biome float, and legacy biome 28 still overrides magical-forest exclusion after consuming the float. No production worldgen, shared registry, Gradle or CI changes.
+- Previous SHA 294141804908c32ce54029b0c01dd01376aeb807 has GitHub Actions run 45050660125 SUCCESS. This is generic workflow evidence, NOT confirmation of standalone M12 Java runners, native NeoForge GameTest or natural new-chunk placement. New test assertions have NOT been executed, and no exact-new-HEAD CI PASS is claimed.
+- Outstanding: 17/81 Silverwood origins excluded by conservative same-chunk gate; no natural biome/placed-feature registration; rollback best-effort/non-atomic; Greatwood/flora/ore/crystal worldgen incomplete. Next: run tools/test_legacy_tree_attempt.sh on exact SHA, then native WorldGenLevel failure injection and coordinated biome registration. Historical audit 59/100 unchanged.
