@@ -1,12 +1,16 @@
 package dev.ehtid.thaumcraft.client;
 
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.entity.WispEntity;
 import dev.ehtid.thaumcraft.registry.WispRegistration;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -22,10 +26,10 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * Visible billboard projection of BETA26 RenderWisp using the exact shipped
- * 64x64 particle atlas. The original auranodes sheet and additive blend state
- * are not yet available in this resource slice; the aspect-tinted third layer
- * therefore samples the matching frame region from the particle atlas.
+ * BETA26 RenderWisp billboard layers. The particle-sheet frames and aspect tint
+ * are retained; all layers use the source's SRC_ALPHA/ONE additive blend and
+ * depth-write-off state. The original auranodes sheet is still missing, so the
+ * aspect-tinted third layer remains a documented resource-parity gap.
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class WispRendererRegistration {
@@ -45,7 +49,7 @@ public final class WispRendererRegistration {
         private static final ResourceLocation PARTICLE_ATLAS =
                 ResourceLocation.fromNamespaceAndPath(
                         ThaumcraftPort.MOD_ID, "textures/particle/particles.png");
-        private static final RenderType PARTICLE_LAYER = RenderType.entityTranslucent(PARTICLE_ATLAS);
+        private static final RenderType PARTICLE_LAYER = WispRenderTypes.additive(PARTICLE_ATLAS);
 
         private WispRenderer(EntityRendererProvider.Context context) {
             super(context);
@@ -132,5 +136,41 @@ public final class WispRendererRegistration {
         public ResourceLocation getTextureLocation(WispEntity entity) {
             return PARTICLE_ATLAS;
         }
+    /**
+     * RenderWisp delegates to UtilsFX.renderFacingQuad with GL_SRC_ALPHA/GL_ONE
+     * and depth writes disabled. LIGHTNING_TRANSPARENCY is NeoForge's matching
+     * additive blend state; COLOR_WRITE preserves the source depth-mask behavior.
+     */
+    private static final class WispRenderTypes extends RenderStateShard {
+        private static final ShaderStateShard ENTITY_TRANSLUCENT =
+                new ShaderStateShard(GameRenderer::getRendertypeEntityTranslucentShader);
+
+        private WispRenderTypes() {
+            super("thaumcraft_wisp_render_types", () -> {}, () -> {});
+        }
+
+        private static RenderType additive(ResourceLocation texture) {
+            return RenderType.create(
+                    "thaumcraft:wisp_additive",
+                    DefaultVertexFormat.NEW_ENTITY,
+                    VertexFormat.Mode.QUADS,
+                    256,
+                    false,
+                    false,
+                    RenderType.CompositeState.builder()
+                            .setShaderState(ENTITY_TRANSLUCENT)
+                            .setTextureState(new TextureStateShard(texture, false, false))
+                            .setTransparencyState(LIGHTNING_TRANSPARENCY)
+                            .setDepthTestState(LEQUAL_DEPTH_TEST)
+                            .setCullState(NO_CULL)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .setLightmapState(LIGHTMAP)
+                            .setOverlayState(OVERLAY)
+                            .setOutputState(MAIN_TARGET)
+                            .createCompositeState(false)
+            );
+        }
+    }
+
     }
 }
