@@ -26,6 +26,9 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
+        "TC_SMOKE_WISP_RENDERED=YES",
+        "wisp_wait_for_marker 'TC_SMOKE_WISP_RENDERED=YES'",
+        "xdotool mousemove 512 384",
         'nbt={Type:"aer"}',
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
@@ -36,6 +39,7 @@ def main() -> int:
     assert generated.count("  send_chat() {") == 1
     wisp_body = generated.split("  wisp_command() {", 1)[1]
     assert "sleep 4" not in wisp_body
+    assert "xdotool mousemove --sync 512 384" not in generated
     syntax = subprocess.run(
         ["bash", "-n"], input=generated, text=True, capture_output=True, check=False
     )
@@ -46,6 +50,7 @@ def main() -> int:
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "TC_SMOKE_WISP_SPAWNED=YES",
         "TC_SMOKE_WISP_ASPECT_AER=YES",
+        "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
@@ -86,6 +91,11 @@ def main() -> int:
     assert "TC_SMOKE_WISP_ZAP_SENT=YES" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES" in renderer
     assert "TC_SMOKE_WISP_ZAP_RENDERED=YES" in renderer
+    renderer_registration = Path(
+        "src/neoforge/java/dev/ehtid/thaumcraft/client/WispRendererRegistration.java"
+    ).read_text(encoding="utf-8")
+    assert "bus = EventBusSubscriber.Bus.MOD" in renderer_registration
+    assert "TC_SMOKE_WISP_RENDERED=YES" in renderer_registration
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer
     assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer
