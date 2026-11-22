@@ -203,6 +203,12 @@ def main() -> int:
     assert "SMOKE_RENDERED_TICK.put(entity, entity.tickCount)" in renderer_registration
     assert "previousTick.intValue() != entity.tickCount" in renderer_registration
     assert "SMOKE_RENDERED.add(entity.getId())" not in renderer_registration
+    assert "WispRenderTypes.additive(PARTICLE_ATLAS)" in renderer_registration
+    assert "RenderType.entityTranslucent(PARTICLE_ATLAS)" not in renderer_registration
+    assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer_registration
+    assert ".setWriteMaskState(COLOR_WRITE)" in renderer_registration
+    assert ".setCullState(NO_CULL)" in renderer_registration
+    assert ".setDepthTestState(LEQUAL_DEPTH_TEST)" in renderer_registration
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer
     assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer
