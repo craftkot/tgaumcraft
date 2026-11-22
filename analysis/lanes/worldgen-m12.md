@@ -1002,3 +1002,11 @@
 - Test-only commit 43fae83b85c947709ad19cb7dff7fc49856e74b5 adds 18 deterministic assertions to LegacyTreeAttemptTest: 16 strict Greatwood biome threshold/one-float-consumption cases plus 2 spider variant nextInt consumption cases. No production worldgen, shared registry, Gradle, main, foreign branches or merge changed.
 - Local git ls-remote failed with DNS "Could not resolve host: github.com". Exact checkout Java test was NOT executed; no new SHA CI PASS, native NeoForge GameTest, rollback-in-world or new-chunk worldgen evidence claimed.
 - Remaining: no natural placed-feature/biome registration, conservative 17/81 Silverwood exclusion, non-atomic best-effort rollback, Greatwood/flora/ore/crystal worldgen unfinished. Next: execute tools/test_legacy_tree_attempt.sh from exact SHA and inspect GitHub Actions, then implement source-verified Greatwood feature without touching shared registration. Draft PR #9 remains unmerged; historical 59/100 unchanged.
+
+
+## 2026-11-22 — M12 combined tree RNG sequence regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; checked main...feature/worldgen-m12 (ahead 272, behind 0 before edit), six feature branches and existing Draft PR #9. No shared/foreign branch writes.
+- Test commit e3a7158f65095396e6d568f78154ee24bab1df63 adds LegacyTreeAttemptRngSequenceTest (11 assertions) to check exact bounded RNG API call order for Silverwood and Greatwood, both chunk-coordinate signs, spider selection and overflow draw consumption. This is a deterministic Java regression source, not a gameplay feature.
+- Exact checkout unavailable: local git ls-remote failed DNS resolution of github.com. This new test has NOT been executed, nor has native NeoForge GameTest or new-chunk worldgen. Exact-head CI needs separate verification. No compilation or PASS claimed for the new test.
+- Remaining: Greatwood Feature and flora/ore/crystal generation incomplete; no natural biome/placed-feature registration; 17/81 Silverwood origins excluded by same-chunk rule; rollback non-atomic. Next: execute original Java runners on exact SHA, then add isolated Greatwood Feature and native WorldGenLevel tests. Draft PR #9 stays unmerged; historical 59/100 unchanged.
