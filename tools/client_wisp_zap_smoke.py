@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+"""Generate an isolated real Minecraft-client smoke for BETA26 Wisp zap rendering.
+
+The shared tools/client_smoke.sh is read-only. This generator reuses its
+verified integrated-world bootstrap, then performs one real player-vs-Wisp
+attack and captures the transient three-tick additive bolt.
+"""
+from pathlib import Path
+import sys
+
+
+def render() -> str:
+    source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
+    anchor = "  # The initial world is already creative + peaceful, as established"
+    if source.count(anchor) != 1 or source.count("  send_chat() {") != 1:
+        raise SystemExit("Client smoke world/command hook changed; refusing unsafe injection")
+
+    head = source.split(anchor, 1)[0]
+    body = r'''
+  echo 'WISP_ZAP_REAL_CLIENT_WORLD=YES' | tee -a client-smoke-status.txt
+
+  wisp_command() {
+    local command="$1"
+    xdotool key --clearmodifiers t
+    sleep 0.5
+    xdotool type --clearmodifiers --delay 24 "$command"
+    xdotool key --clearmodifiers Return
+    sleep 0.2
+  }
+
+  wisp_wait_for_marker() {
+    local marker="$1"
+    for _ in $(seq 1 200); do
+      if grep -Fq -- "$marker" client-smoke/client.log; then
+        echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$marker" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo "WISP_MARKER_TIMEOUT=$marker" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
+  wisp_send_chat() {
+    local command="$1" marker="$2"
+    wisp_command "$command"
+    wisp_wait_for_marker "$marker"
+  }
+
+  wisp_capture() {
+    local name="$1"
+    import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
+    test -s "client-smoke/screenshots/$name.png"
+    echo "WISP_REAL_CLIENT_SCREEN=$name" | tee -a client-smoke-status.txt
+  }
+
+  # The base fixture creates a safe creative/peaceful world. Switch only this
+  # isolated scenario to normal difficulty and survival so WispEntity.hurt()
+  # receives a real Player attacker and exercises its ordinary target path.
+  wisp_command '/difficulty normal'
+  wisp_command '/gamerule doMobSpawning false'
+  wisp_command '/gamerule doDaylightCycle false'
+  wisp_command '/gamerule doWeatherCycle false'
+  wisp_command '/time set noon'
+  wisp_command '/gamemode survival'
+  wisp_command '/effect give @p minecraft:resistance infinite 4 true'
+  wisp_command '/fill 8 148 8 12 148 14 minecraft:stone'
+  wisp_command '/tp @p 10.5 149 8.5 0 22'
+  wisp_send_chat '/execute if block 10 148 10 minecraft:stone run say TC_SMOKE_WISP_PLATFORM_READY=YES' 'TC_SMOKE_WISP_PLATFORM_READY=YES'
+  wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
+
+  # 2.9 blocks keeps the Wisp inside survival melee reach while leaving its
+  # complete source-to-player zap path in the camera frustum.
+  wisp_command '/summon thaumcraft:wisp 10.5 149 11.4 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
+  wisp_send_chat '/execute if entity @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] run say TC_SMOKE_WISP_SPAWNED=YES' 'TC_SMOKE_WISP_SPAWNED=YES'
+  wisp_send_chat '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] if data entity @s {Type:"aer"} run say TC_SMOKE_WISP_ASPECT_AER=YES' 'TC_SMOKE_WISP_ASPECT_AER=YES'
+
+  # F1 removes HUD/crosshair. Two pre-attack frames estimate scene/Wisp
+  # animation noise for comparison with the short-lived bolt and its expiry.
+  xdotool key --clearmodifiers F1
+  sleep 0.2
+  wisp_capture 79-wisp-before-a
+  sleep 0.15
+  wisp_capture 79-wisp-before-b
+
+  # A genuine survival left-click invokes WispEntity.hurt(Player), which sets
+  # the normal target. No synthetic packet, direct target setter or command
+  # invokes the zap itself.
+  xdotool mousemove --sync 512 384 click 1
+  echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
+  wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_SENT=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_RENDERED=YES'
+
+  # The effect lasts three game ticks. Capture immediately after the renderer
+  # reports its first completed additive batch, then capture after expiry.
+  wisp_capture 80-wisp-zap-frame-a
+  sleep 0.025
+  wisp_capture 81-wisp-zap-frame-b
+  sleep 0.025
+  wisp_capture 82-wisp-zap-frame-c
+  sleep 0.35
+  wisp_capture 83-wisp-zap-after-expiry
+
+  wisp_crop_metric() {
+    local left="$1" right="$2" temporary metric
+    temporary="$(mktemp -d)"
+    convert "$left" -crop 360x320+332+340 +repage "$temporary/left.png"
+    convert "$right" -crop 360x320+332+340 +repage "$temporary/right.png"
+    metric="$(compare -metric AE -fuzz 4% "$temporary/left.png" "$temporary/right.png" null: 2>&1 || true)"
+    rm -rf "$temporary"
+    printf '%s\n' "$metric" | awk 'NR == 1 {print $1}'
+  }
+
+  baseline_noise="$(wisp_crop_metric \
+    client-smoke/screenshots/79-wisp-before-a.png \
+    client-smoke/screenshots/79-wisp-before-b.png)"
+  transient_diff="$(wisp_crop_metric \
+    client-smoke/screenshots/80-wisp-zap-frame-a.png \
+    client-smoke/screenshots/83-wisp-zap-after-expiry.png)"
+  if ! [[ "$baseline_noise" =~ ^[0-9]+$ ]] || ! [[ "$transient_diff" =~ ^[0-9]+$ ]]; then
+    echo "WISP_ZAP_PIXEL_METRIC_INVALID baseline=$baseline_noise transient=$transient_diff" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  threshold=$((baseline_noise * 2 + 8))
+  if [ "$transient_diff" -lt "$threshold" ]; then
+    echo "WISP_ZAP_TRANSIENT_PIXEL_DIFF_FAILED=$transient_diff threshold=$threshold baseline=$baseline_noise" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "WISP_ZAP_BASELINE_NOISE=$baseline_noise" | tee -a client-smoke-status.txt
+  echo "WISP_ZAP_TRANSIENT_PIXEL_DIFF=$transient_diff" | tee -a client-smoke-status.txt
+
+  for log in client-smoke/client.log run/logs/latest.log; do
+    if [ -f "$log" ] && grep -Eiq \
+      '(Missing textures|Unable to load texture|Failed to load texture).*essentia\.png|essentia\.png.*(missing texture|Unable to load)' \
+      "$log"; then
+      echo "WISP_ESSENTIA_TEXTURE_LOAD_ERROR=YES log=$log" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+  done
+
+  echo 'WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS' | tee -a client-smoke-status.txt
+  echo 'WISP_ZAP_REAL_CLIENT=PASS' | tee -a client-smoke-status.txt
+fi
+'''
+    return head + body
+
+
+if __name__ == "__main__":
+    sys.stdout.write(render())

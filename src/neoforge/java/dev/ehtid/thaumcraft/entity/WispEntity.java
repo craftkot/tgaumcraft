@@ -50,6 +50,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
     /** Exact strict movement threshold from BETA26 EntityWisp.java. */
     private static final double BETA26_MOVING_TARGET_THRESHOLD = 0.10000000149011612D;
     private static final int BETA26_THUNDER_SKYLIGHT_SUBTRACTION = 10;
+    private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
 
     private static final AspectRegistry ASPECTS = new AspectRegistry();
     private static final EntityDataAccessor<String> ASPECT_TYPE =
@@ -298,6 +299,10 @@ public final class WispEntity extends FlyingMob implements Enemy {
     /** BETA26 PacketFXWispZap: send source/target IDs to players within 32 blocks. */
     private void sendZapVisual(LivingEntity target) {
         if (level() instanceof ServerLevel serverLevel) {
+            if (SMOKE_PROBE) {
+                System.out.println("TC_SMOKE_WISP_ZAP_SENT=YES source=" + getId()
+                        + " target=" + target.getId() + " aspect=" + getAspectType());
+            }
             PacketDistributor.sendToPlayersNear(
                     serverLevel,
                     null,
@@ -339,6 +344,10 @@ public final class WispEntity extends FlyingMob implements Enemy {
         if (hurt && source.getEntity() instanceof LivingEntity attacker) {
             setTarget(attacker);
             aggroCooldown = 200;
+            if (SMOKE_PROBE && attacker instanceof Player) {
+                System.out.println("TC_SMOKE_WISP_TARGET_SET=YES source=" + getId()
+                        + " target=" + attacker.getId() + " aspect=" + getAspectType());
+            }
         }
         return hurt;
     }
