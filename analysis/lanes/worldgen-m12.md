@@ -971,3 +971,11 @@
 - Java 21 is installed, but exact checkout remains unavailable: `git ls-remote` fails with `Could not resolve host: github.com`. **New assertions have not been executed**; no Java PASS, NeoForge GameTest or live new-chunk proof claimed. GitHub CI for the new SHA still needs verification.
 - Existing unresolved blockers: natural biome/placed-feature wiring, 17/81 excluded legacy positions, non-atomic rollback and real in-world behavior.
 - Next: run `bash tools/test_silverwood_legacy_footprint.sh` on exact commit; then verify GitHub Actions and exercise failure rollback in NeoForge. Draft PR #9 stays unmerged.
+
+
+## 22.11.2026 — M12 CI confirmation for c1d1f22
+
+- Fresh-read main AGENTS/ROADMAP/PARALLEL_WORKFLOW and this lane; compared main...feature/worldgen-m12 (ahead 265, behind 0), checked parallel feature branches and PR search.
+- Exact SHA `c1d1f2239abc34be82b385de8e24afcfd4837438`: GitHub Actions Thaumcraft Port CI run [45039035084](https://github.com/craftkot/tgaumcraft/actions/runs/45039035084) completed SUCCESS; CircleCI `ci/circleci: verify-connection` SUCCESS (workflow d5c7ee57-42da-424a-809a-d520c1fed6b2). These statuses do not establish that standalone Silverwood Java scripts were executed.
+- Re-read SilverwoodLegacyFeature, its source-level wiring guard and SilverwoodLegacyFootprintTest. Local `git ls-remote` again failed DNS (`Could not resolve host: github.com`), so exact checkout Java regression, NeoForge GameTest and Minecraft new-chunk worldgen are NOT verified. No production code changes this pass.
+- Next: run exact `tools/test_silverwood_legacy_footprint.sh` and other M12 Java scripts in a working checkout; then test rollback on WorldGenLevel and coordinate biome/placed-feature registration. Existing 17/81 exclusion and best-effort rollback remain. Draft PR #9 unmerged; project audit stays 59/100.
