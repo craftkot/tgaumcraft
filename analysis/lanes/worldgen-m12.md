@@ -1010,3 +1010,11 @@
 - Test commit e3a7158f65095396e6d568f78154ee24bab1df63 adds LegacyTreeAttemptRngSequenceTest (11 assertions) to check exact bounded RNG API call order for Silverwood and Greatwood, both chunk-coordinate signs, spider selection and overflow draw consumption. This is a deterministic Java regression source, not a gameplay feature.
 - Exact checkout unavailable: local git ls-remote failed DNS resolution of github.com. This new test has NOT been executed, nor has native NeoForge GameTest or new-chunk worldgen. Exact-head CI needs separate verification. No compilation or PASS claimed for the new test.
 - Remaining: Greatwood Feature and flora/ore/crystal generation incomplete; no natural biome/placed-feature registration; 17/81 Silverwood origins excluded by same-chunk rule; rollback non-atomic. Next: execute original Java runners on exact SHA, then add isolated Greatwood Feature and native WorldGenLevel tests. Draft PR #9 stays unmerged; historical 59/100 unchanged.
+
+
+## 2026-11-22 — M12 RNG regression runner wiring
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked six feature branches, Draft PR #9 and main comparison (ahead 274, behind 0 before edit; head fdaa3ae079f17f2783b14423014fb37e134367c1).
+- Found a concrete test coverage gap: `tools/test_legacy_tree_attempt.sh` compiled and executed only LegacyTreeAttemptTest, silently omitting the new LegacyTreeAttemptRngSequenceTest (11 assertions). Commit `86651067e525ac4d37ebac97e5fcc474c02db7e7` now compiles and executes both tests, with shell fail-fast behavior unchanged.
+- Runner change is committed but exact-head Java 21 execution, NeoForge compilation, native GameTest and real new-chunk worldgen have NOT been verified in this pass. No claim that the 11 RNG assertions passed. Check CI for journal HEAD separately.
+- Remaining: Greatwood Feature, flora/ore/crystal worldgen, natural biome registration, 17/81 Silverwood exclusions and non-atomic rollback. Next: run updated runner on exact SHA and add native failure-injection coverage. No main, foreign branch, shared registry, Gradle or merge changes; historical audit 59/100.
