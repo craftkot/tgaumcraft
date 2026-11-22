@@ -4,7 +4,7 @@ import dev.ehtid.thaumcraft.item.CrystalEssenceItem;
 import dev.ehtid.thaumcraft.port.core.AspectData;
 import dev.ehtid.thaumcraft.port.core.AspectRegistry;
 import dev.ehtid.thaumcraft.port.core.LegacyWispSpawnRules;
-import dev.ehtid.thaumcraft.registry.ThaumcraftSounds;
+import dev.ehtid.thaumcraft.registry.WispSoundRegistration;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -68,7 +68,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     protected SoundEvent getAmbientSound() {
-        return ThaumcraftSounds.WISP_LIVE.get();
+        return WispSoundRegistration.WISP_LIVE.get();
     }
 
     @Override
@@ -78,7 +78,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     protected SoundEvent getDeathSound() {
-        return ThaumcraftSounds.WISP_DEAD.get();
+        return WispSoundRegistration.WISP_DEAD.get();
     }
 
     @Override
@@ -268,7 +268,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
     }
 
     void playZapSound() {
-        playSound(ThaumcraftSounds.WISP_ZAP.get(), 1.0F, 1.1F);
+        playSound(WispSoundRegistration.WISP_ZAP.get(), 1.0F, 1.1F);
     }
 
     /**

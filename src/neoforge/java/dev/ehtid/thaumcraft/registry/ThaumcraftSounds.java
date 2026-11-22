@@ -55,17 +55,6 @@ public final class ThaumcraftSounds {
             () -> SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "evilportal")));
 
-    // BETA26 EntityWisp ambient/death/zap sound events.
-    public static final Supplier<SoundEvent> WISP_LIVE = SOUND_EVENTS.register("wisplive",
-            () -> SoundEvent.createVariableRangeEvent(
-                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "wisplive")));
-    public static final Supplier<SoundEvent> WISP_DEAD = SOUND_EVENTS.register("wispdead",
-            () -> SoundEvent.createVariableRangeEvent(
-                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "wispdead")));
-    public static final Supplier<SoundEvent> WISP_ZAP = SOUND_EVENTS.register("zap",
-            () -> SoundEvent.createVariableRangeEvent(
-                    ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "zap")));
-
     public static void register(IEventBus modBus) {
         SOUND_EVENTS.register(modBus);
     }

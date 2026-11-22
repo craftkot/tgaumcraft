@@ -3437,3 +3437,11 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Corrected both production and assertion to `SoundEvents.LAVA_EXTINGUISH`. No gameplay timing, sound ID, or audio asset changed.
 - The first Full Port attempt also had a separate transient dependency-resolution failure for Gson from the Gradle Plugin Portal; its failed job was queued for retry. The native GameTest run reached compilation and failed on the mapping name before any GameTest executed. No runtime PASS is claimed for this sound change yet.
 - Next: require successful NeoForge compilation, then the native `TC_GAMETEST_WISP_SOUND=PASS` packet assertion and a real client audio capture. Fixed score remains **59/100** (M08 **5/9**, M16 **4/6**); no category closure or point awarded.
+
+
+## 2026-11-22 — isolate Wisp sound registration from the shared registry
+
+- Re-read the current main instructions: `AGENTS.md`, `ROADMAP_RU.md` and `analysis/PARALLEL_WORKFLOW_RU.md` explicitly require avoiding common registries without coordination. The first implementation temporarily added Wisp entries to `ThaumcraftSounds.java`, which is shared by other feature lanes; that violates the path-isolation constraint even though no other open PR currently touched it.
+- Refactored the three Wisp events into the new, self-contained `WispSoundRegistration` mod-bus `RegisterEvent` subscriber. Restored `ThaumcraftSounds.java` to its pre-Wisp state from the branch parent, and redirected only Wisp production/test references to the isolated registration class. This avoids changing the common sound registry or the main mod constructor.
+- The first build on `eec23c8` failed because the legacy sound field name was used under Mojang 1.21.1 mappings; the next commit corrected it to `SoundEvents.LAVA_EXTINGUISH`. This commit further isolates the Wisp registration. Exact-head build/GameTest for `612e5aac332a9888aa5c194ea00299b53deadc82` are still running; no result for the isolated registration is claimed yet.
+- Next: require Full Port and native GameTests on the new commit; inspect the Wisp sound packet marker. If direct `RegisterEvent` registration fails or the holder is not synchronized, repair only this new class rather than modifying the common registry. Fixed score remains **59/100**, M08 **5/9**, M16 **4/6**.
