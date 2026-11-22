@@ -95,7 +95,7 @@ def main() -> int:
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
     fill_index = setup.index("wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'")
     fill_wait_index = setup.index('wisp_wait_for_fill "$fill_log_lines"', fill_index)
-    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 22'", fill_wait_index)
+    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 29'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', support_index)
