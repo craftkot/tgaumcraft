@@ -32,10 +32,9 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_PLATFORM_FILL=YES",
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
     "WISP_FIXTURE_TELEPORT=YES",
-    "WISP_ZAP_AIM=PLAYER_FACING_ENTITY",
-    "WISP_ZAP_AIM_TELEPORT=YES",
+    "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
-    "WISP_RENDER_AFTER_AIM=YES",
+    "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
     "WISP_ZAP_REAL_CLIENT=PASS",
@@ -175,19 +174,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if marker not in status_text:
             errors.append(f"missing real-client status marker: {marker}")
 
-    aim_teleport = _first(
-        r"(?m)^WISP_ZAP_AIM_TELEPORT=YES .*Teleported Dev to 12\.500000, 149\.000000, 10\.500000$",
-        status_text,
-    )
-    if aim_teleport is None:
-        errors.append("missing exact fixture-position facing-entity teleport result")
-
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
     if telemetry is None:
-        errors.append("missing fresh post-aim camera telemetry")
+        errors.append("missing fresh pre-aimed-spawn camera telemetry")
     else:
         player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups())
         measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
