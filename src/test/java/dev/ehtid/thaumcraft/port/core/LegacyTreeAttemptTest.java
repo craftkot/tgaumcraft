@@ -61,6 +61,17 @@ public final class LegacyTreeAttemptTest {
         Scripted s = new Scripted(new int[0], new float[]{0.9F});
         check(LegacyTreeAttempt.silverwoodBiome(0F, true, false, 18, s) && s.f == 1,
                 "legacy override RNG consumption");
+        // A successful support roll must short-circuit the biome overrides,
+        // while a failed support roll still consumes exactly one float.
+        Scripted supportAccepted = new Scripted(new int[0], new float[]{0.1F});
+        check(LegacyTreeAttempt.silverwoodBiome(1F, true, false, 18, supportAccepted)
+                && supportAccepted.f == 1, "support acceptance RNG order");
+        Scripted supportRejected = new Scripted(new int[0], new float[]{0.9F});
+        check(!LegacyTreeAttempt.silverwoodBiome(0F, false, false, 0, supportRejected)
+                && supportRejected.f == 1, "support rejection RNG order");
+        Scripted forestOverride = new Scripted(new int[0], new float[]{0.9F});
+        check(LegacyTreeAttempt.silverwoodBiome(0F, true, true, 28, forestOverride)
+                && forestOverride.f == 1, "legacy biome overrides magical forest");
         // A centered coordinate is valid at the last representable chunk edge,
         // and the random offset must be consumed before the overflow guard.
         int minValidChunk = Math.ceilDiv(Integer.MIN_VALUE - 4, 16);
