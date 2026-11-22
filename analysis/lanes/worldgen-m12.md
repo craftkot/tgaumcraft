@@ -962,3 +962,12 @@
 - GitHub Actions Thaumcraft Port CI run 45003412915 for exact SHA f2dbfe3998a50d1a6a255965051a145cc14ac6db: verify job SUCCESS, including Java 21 setup, Core parity test, NeoForge build, dedicated server smoke test and JAR upload. CircleCI ci/circleci: verify-connection also SUCCESS (workflow 0ce0f2de-5b7b-4303-905b-950861668573).
 - Scope: the workflow does NOT list the standalone M12 Silverwood Java regression runners, a native Silverwood GameTest, or natural new-chunk Silverwood placement verification. NeoForge build/server smoke PASS is evidence for this commit's general compilation/server startup, not evidence of working worldgen.
 - No production changes this pass. Still outstanding: 17/81 conservative same-chunk exclusions, absent natural biome/placed-feature registration, non-atomic best-effort rollback and exact-runner/gameplay proof. Next: run M12 standalone Java scripts from exact checkout and coordinate registration in a separate authorized integration change. Draft PR #9 remains unmerged; 59/100 unchanged.
+
+
+## 22.11.2026 — M12 Silverwood: exhaustive chunk-boundary regression
+
+- Fresh-read `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` and this lane; inspected open PRs and parallel feature branches. Before changes: `main` a4280834, lane ahead 263 / behind 0.
+- Added 4,112 deterministic assertions to `SilverwoodLegacyFootprintTest`: all 16×16 origin offsets across 16 combinations of positive/negative chunk coordinates, including edge cases and exactly 64 safe positions per chunk. Test-only commit `c10d8a383b591adaa82de814a74cf8d9e523cf7a`. No generator or shared registry changes.
+- Java 21 is installed, but exact checkout remains unavailable: `git ls-remote` fails with `Could not resolve host: github.com`. **New assertions have not been executed**; no Java PASS, NeoForge GameTest or live new-chunk proof claimed. GitHub CI for the new SHA still needs verification.
+- Existing unresolved blockers: natural biome/placed-feature wiring, 17/81 excluded legacy positions, non-atomic rollback and real in-world behavior.
+- Next: run `bash tools/test_silverwood_legacy_footprint.sh` on exact commit; then verify GitHub Actions and exercise failure rollback in NeoForge. Draft PR #9 stays unmerged.
