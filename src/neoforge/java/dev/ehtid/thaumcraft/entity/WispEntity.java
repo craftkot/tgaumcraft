@@ -40,6 +40,9 @@ import java.util.List;
  * presentation work.
  */
 public final class WispEntity extends FlyingMob implements Enemy {
+    /** Exact strict movement threshold from BETA26 EntityWisp.java. */
+    private static final double BETA26_MOVING_TARGET_THRESHOLD = 0.10000000149011612D;
+
     private static final AspectRegistry ASPECTS = new AspectRegistry();
     private static final EntityDataAccessor<String> ASPECT_TYPE =
             SynchedEntityData.defineId(WispEntity.class, EntityDataSerializers.STRING);
@@ -250,9 +253,9 @@ public final class WispEntity extends FlyingMob implements Enemy {
         }
 
         Vec3 motion = target.getDeltaMovement();
-        boolean moving = Math.abs(motion.x) > 0.1D
-                || Math.abs(motion.y) > 0.1D
-                || Math.abs(motion.z) > 0.1D;
+        boolean moving = Math.abs(motion.x) > BETA26_MOVING_TARGET_THRESHOLD
+                || Math.abs(motion.y) > BETA26_MOVING_TARGET_THRESHOLD
+                || Math.abs(motion.z) > BETA26_MOVING_TARGET_THRESHOLD;
         float chance = moving ? 0.4F : 0.66F;
         if (damageRoll >= chance) {
             return false;
