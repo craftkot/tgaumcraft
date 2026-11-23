@@ -257,7 +257,9 @@ def render() -> str:
     # the real Wisp EntityHitResult, then issue the real mouse click immediately.
     for attempt in 1 2 3; do
       if [ "$attempt" -eq 1 ]; then
-        frame_log_lines="$aim_log_lines"
+        # The first completed frame was already consumed by wisp_wait_for_fresh_render.
+        # Start after the current log tail so the real click can only use a fresh frame.
+        frame_log_lines="$(wc -l < client-smoke/client.log)"
         attack_camera_source="PREAIMED_FIRST_FRAME"
         if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM "$attempt"; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt

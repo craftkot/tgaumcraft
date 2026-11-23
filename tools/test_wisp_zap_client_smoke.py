@@ -91,7 +91,8 @@ log_path="$1"
 pattern="$2"
 frame_line=""
 watcher_status=0
-exec {frame_fd}< <(tail -n +1 -f "$log_path")
+after_lines="$3"
+exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f "$log_path")
 frame_tail_pid=$!
 deadline=$((SECONDS + 2))
 while :; do
@@ -131,7 +132,8 @@ printf '%s\n' "$frame_line"
             )
             clicker.chmod(0o755)
             log_path = root / "client.log"
-            log_path.write_text("", encoding="utf-8")
+            # This matching frame predates the watcher cursor and must never trigger a click.
+            log_path.write_text(first + "\n", encoding="utf-8")
             click_log = root / "clicks.log"
             event_log = root / "events.log"
             env = os.environ.copy()
@@ -140,14 +142,15 @@ printf '%s\n' "$frame_line"
             env["EVENT_LOG"] = str(event_log)
             env["CLICK_EXIT"] = str(click_exit)
             process = subprocess.Popen(
-                ["bash", "-c", watcher, "_", str(log_path), pattern],
+                ["bash", "-c", watcher, "_", str(log_path), pattern, "1"],
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
             )
             time.sleep(0.1)
-            log_path.write_text(first + "\n" + second + "\n", encoding="utf-8")
+            with log_path.open("a", encoding="utf-8") as log_file:
+                log_file.write(second + "\n")
             try:
                 stdout, stderr = process.communicate(timeout=3)
             except subprocess.TimeoutExpired:
@@ -160,7 +163,7 @@ printf '%s\n' "$frame_line"
 
     rc, output, clicks, events = run_case(0)
     assert rc == 0, rc
-    assert output == first, output
+    assert output == second, output
     assert clicks == ["click 1"], clicks
     assert events == ["CLICK_DISPATCHED", "PARENT_AFTER_WATCHER"], events
 
@@ -332,6 +335,10 @@ def main() -> int:
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
+    fresh_cursor = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
+    assert fresh_cursor in preaim_branch, "the attack must not replay the already-consumed pre-aim frame"
+    assert preaim_branch.index(fresh_cursor) < preaim_branch.index("wisp_wait_for_attack_frame")
+    assert 'frame_log_lines="$aim_log_lines"' not in preaim_branch
     assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
     assert "wisp_reaim_camera_at_live_wisp" not in preaim_branch
     fallback_branch = attack_body.split('\n      else\n        reaim_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
