@@ -111,7 +111,8 @@ def render() -> str:
     # Return the server log line number so callers include the first fresh
     # camera sample instead of skipping it with a later wc -l snapshot.
     # Keep the default chat-open/type pacing: the 0.1s override produced no server teleport response in the native client run.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'
+    # Face the exact live entity eye anchor; the relative-point form left the native player's pitch unchanged after teleport.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to 12.500000, 149.000000, 10.500000' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -135,7 +136,8 @@ def render() -> str:
     # keeps flying. Retry from a melee position relative to the exact tagged
     # smoke entity; do not select an unrelated naturally spawned Wisp.
     # This moves only the Survival player. Wisp AI, motion and target remain live.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing ~ ~0.45 ~'
+    # Resolve facing against the same tagged Wisp, rather than a relative point whose rotation stayed stale in the real client.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
