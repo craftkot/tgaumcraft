@@ -165,7 +165,7 @@ def main() -> int:
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
-    assert "wisp_capture 78-wisp-aim-check" not in generated
+    assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
     assert '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' not in generated
