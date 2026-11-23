@@ -110,7 +110,8 @@ def render() -> str:
     # face the live entity. Never move/freeze the Wisp or alter its AI/target.
     # Return the server log line number so callers include the first fresh
     # camera sample instead of skipping it with a later wc -l snapshot.
-    wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes' 0.1 1
+    # Keep the default chat-open/type pacing: the 0.1s override produced no server teleport response in the native client run.
+    wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to 12.500000, 149.000000, 10.500000' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
