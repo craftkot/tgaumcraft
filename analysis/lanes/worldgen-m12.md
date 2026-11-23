@@ -1092,3 +1092,12 @@
 - Commit 3dcb0e1 adds deterministic fake-world tests for success, replaceability rejection, false/throwing writes, reverse restoration, failed restoration, empty and duplicate plans. Commit a057d9d adds tools/test_greatwood_trunk_placement.sh.
 - **Not yet run on exact checkout:** new Java runner, NeoForge build, native GameTest, actual chunk generation and save/reload. This helper does NOT guarantee atomicity when an adapter rejects restoration, and is not wired to a NeoForge Feature. Archived BETA26 branch/canopy geometry and natural biome registration remain outstanding.
 - Next: run Java 21 runner on exact HEAD; implement isolated NeoForge adapter with block snapshots and failure-injection GameTest before enabling any worldgen registration. Silverwood origin exclusions, flora, ores, crystals remain. Historical audit 59/100 unchanged; no merge.
+
+
+## 2026-11-23 — Greatwood rollback self-suppression regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this M12 lane; checked main comparison (ahead 308/behind 0 before writes), current open PRs including Draft #9, and other branches. No shared registry, Gradle, main, foreign branch or merge changes.
+- Production fix 564f850d65bb02bc9faaa4f6bc374040d1f196a9: if a broken WorldAdapter rethrows the same RuntimeException instance during the original Greatwood write and rollback, do not call Throwable.addSuppressed on itself (which otherwise masks the original error with IllegalArgumentException).
+- Regression 4f27cb7da4ad81a42b135ae5d7b32f18bf21ae4d: fake adapter throws the identical exception during second log write and both reverse restorations; asserts original exception identity, zero self-suppression, and all rollback attempts. Existing restore-failure tests retained.
+- At test commit, compare main...feature/worldgen-m12: ahead 310 / behind 0. GitHub PR-triggered workflow lookup for 4f27cb7 returned no runs; exact-head standalone Java 21 runner, NeoForge build, native GameTest, real worldgen and save/reload are NOT verified. This is a targeted failure-path fix, not full atomic rollback or an integrated Greatwood tree.
+- Next: run tools/test_greatwood_trunk_placement.sh on exact checkout; implement a narrowly scoped unregistered NeoForge Greatwood adapter and test it with failure-injection GameTests, after verifying BETA26 trunk length and leaf/branch geometry. Natural registration, Silverwood 17/81 exclusions, flora, ores and crystals remain. Historical 59/100 unchanged.
