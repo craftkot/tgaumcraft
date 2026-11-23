@@ -52,9 +52,9 @@ def main() -> int:
     # BETA26 RenderWisp draws at entity position, while getEyePosition is 0.765 blocks higher.
     old_eye_dot = _aim_dot(29.0, -0.555, 1.0)
     old_render_dot = _aim_dot(29.0, -1.32, 1.0)
-    new_render_dot = _aim_dot(52.0, -1.32, 1.0)
-    assert old_eye_dot >= 0.99 and old_render_dot < 0.99 and new_render_dot >= 0.99, (
-        old_eye_dot, old_render_dot, new_render_dot
+    hitbox_center_dot = _aim_dot(41.0, -0.87, 1.0)
+    assert old_eye_dot >= 0.99 and old_render_dot < 0.99 and hitbox_center_dot >= 0.99, (
+        old_eye_dot, old_render_dot, hitbox_center_dot
     )
 
     anchor = "  # The initial world is already creative + peaceful, as established"
@@ -72,7 +72,7 @@ def main() -> int:
         "Successfully filled 81 block(s)",
         "WISP_FIXTURE_PLATFORM_FILL=YES",
         '/fill 6 148 6 14 148 14 minecraft:stone',
-        '/tp @p 12.5 149 10.5 0 52',
+        '/tp @p 12.5 149 10.5 0 41',
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
@@ -114,7 +114,7 @@ def main() -> int:
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
     fill_index = setup.index("wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'")
     fill_wait_index = setup.index('wisp_wait_for_fill "$fill_log_lines"', fill_index)
-    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 52'", fill_wait_index)
+    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 41'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
     baseline_a_index = setup.index("wisp_capture 79-wisp-before-a", support_index)
@@ -183,7 +183,7 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_origin tick=21 playerX=12.5",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -337,9 +337,12 @@ def main() -> int:
     assert "player.getEyePosition(partialTick)" in renderer_registration
     assert "entity.getEyePosition(partialTick)" in renderer_registration
     assert "Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());" in renderer_registration
+    assert "entity.getBoundingBox().getCenter()" in renderer_registration
+    assert "player.getViewVector(partialTick).dot(toWispHitboxCenter.normalize())" in renderer_registration
     assert "player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize())" in renderer_registration
     assert "player.getViewVector(partialTick).dot(toWisp.normalize())" not in renderer_registration
-    assert "aimTarget=render_origin" in renderer_registration
+    assert "aimTarget=hitbox_center" in renderer_registration
+    assert "aimTarget=render_origin" not in renderer_registration
     assert "eyeAimDot=" in renderer_registration
     assert "player.getViewVector(partialTick)" in renderer_registration
     assert "aimDot=" in renderer_registration
