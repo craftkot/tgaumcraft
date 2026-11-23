@@ -373,7 +373,7 @@ def main() -> int:
     )
     wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     click_log_snapshot_index = wait_attack_body.index('click_log_lines="$(wc -l < client-smoke/client.log)"')
-    frame_wait_index = wait_attack_body.index('frame_line="$(timeout 5s')
+    frame_wait_index = wait_attack_body.index('exec {frame_fd}< <(tail -n +')
     camera_line_index = wait_attack_body.index('camera_line="$(grep -F')
     attack_click_index = wait_attack_body.index("xdotool click 1")
     diagnostics_index = wait_attack_body.index('distance="$(awk')
@@ -387,7 +387,8 @@ def main() -> int:
     assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in wait_attack_body
     assert 'echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt"' in wait_attack_body
     assert "exit 1" in wait_attack_body[attack_click_index:], "post-click diagnostics must fail closed rather than retry with a second click"
-    assert "timeout 5s bash -c" in wait_attack_body
+    assert "timeout 5s bash -c" not in wait_attack_body
+    assert "timeout 5s bash -c" in attack_body
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
     assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
     assert "dot >= 0.99" not in wait_attack_body, "the actual same-ID EntityHitResult is authoritative"
