@@ -108,6 +108,9 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
+        "minecraft:generic.knockback_resistance base set 1",
+        "Base value of attribute Knockback Resistance for player Dev is now 1.0",
+        "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
@@ -192,13 +195,15 @@ def main() -> int:
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", client_attack_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    reaim_snapshot_index = setup.index('reaim_log_lines="$(wc -l < client-smoke/client.log)"', target_index)
+    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", target_index)
+    stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
+    reaim_snapshot_index = setup.index('reaim_log_lines="$(wc -l < client-smoke/client.log)"', stabilize_marker_index)
     reaim_index = setup.index('wisp_reaim_camera_at_live_wisp "$reaim_log_lines"', reaim_snapshot_index)
     capture_snapshot_index = setup.index('after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"', reaim_index)
     capture_index = setup.index('wisp_capture_aim_after_hit "$after_hit_log_lines"', capture_snapshot_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
         "the attack helper must re-aim, wait for a matching completed frame, and prove the real hit before post-hit capture"
     )
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
@@ -325,6 +330,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
+        "Base value of attribute Knockback Resistance for player Dev is now 1.0",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -354,6 +360,7 @@ def main() -> int:
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
+        "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
@@ -409,6 +416,12 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES", ""), root
         ), "stale pre-spawn renderer callback must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", ""), root
+        ), "missing post-hit player stabilization must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("Base value of attribute Knockback Resistance for player Dev is now 1.0", ""), status, root
+        ), "missing server confirmation of knockback resistance must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", ""), root
         ), "baseline must be explicitly captured before Wisp spawn"
