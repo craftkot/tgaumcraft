@@ -92,7 +92,7 @@ pattern="$2"
 frame_line=""
 watcher_status=0
 after_lines="$3"
-exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f "$log_path")
+exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f "$log_path")
 frame_tail_pid=$!
 deadline=$((SECONDS + 2))
 while :; do
@@ -380,7 +380,8 @@ def main() -> int:
     )
     wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     click_log_snapshot_index = wait_attack_body.index('click_log_lines="$(wc -l < client-smoke/client.log)"')
-    frame_wait_index = wait_attack_body.index('exec {frame_fd}< <(tail -n +')
+    frame_wait_index = wait_attack_body.index('exec {frame_fd}< <(tail --sleep-interval=0.01 -n +')
+    assert "--sleep-interval=0.01" in wait_attack_body, "keep fallback tail polling below one tick"
     camera_line_index = wait_attack_body.index('camera_line="$(grep -F')
     attack_click_index = wait_attack_body.index("xdotool click 1")
     diagnostics_index = wait_attack_body.index('distance="$(awk')
