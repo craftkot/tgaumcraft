@@ -6,6 +6,11 @@ on:
       - feature/closure-near-complete
     paths:
       - '.github/workflows/closure-auranodes-import.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/closure-auranodes-import.yml'
   workflow_dispatch:
 
 permissions:
@@ -17,13 +22,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.ref_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
           fetch-depth: 0
 
       - name: Fetch and verify the pinned BETA26 source asset
         shell: bash
         run: |
           set -euo pipefail
+          branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          test "$branch" = 'feature/closure-near-complete'
           target='src/main/resources/assets/thaumcraft/textures/misc/auranodes.png'
           mkdir -p "$(dirname "$target")"
           curl --fail --location --retry 3 --retry-all-errors \
@@ -39,7 +46,7 @@ jobs:
           python3 - "$target" <<'PY'
           import pathlib, struct, sys
           data = pathlib.Path(sys.argv[1]).read_bytes()
-          assert data[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+          assert data[:8] == b"\x89PNG\r\n\x1a\n"
           width, height = struct.unpack(">II", data[16:24])
           bit_depth, color_type = data[24], data[25]
           assert (width, height, bit_depth, color_type) == (2048, 2048, 8, 6), (
@@ -56,4 +63,4 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'assets: restore original BETA26 Wisp node atlas'
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          git push origin "HEAD:$branch"
