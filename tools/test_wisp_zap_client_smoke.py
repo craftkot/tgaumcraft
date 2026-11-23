@@ -226,7 +226,7 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
         "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none",
         "WISP_ATTACKABLE_FRAME=YES",
-        'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)',
+        'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)',
         'deadline=$((SECONDS + 5))',
         'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then',
         'kill "$frame_tail_pid" 2>/dev/null || true',
@@ -323,7 +323,7 @@ def main() -> int:
         "the attack helper must re-aim, wait for a matching completed frame, and prove the real hit before post-hit capture"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
-    assert 'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
+    assert 'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
     assert 'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then' in attack_frame_body
     assert 'if [[ "$candidate_line" =~ $frame_pattern ]]; then' in attack_frame_body
     assert attack_frame_body.count("xdotool click 1") == 1
