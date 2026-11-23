@@ -35,6 +35,7 @@ REQUIRED_STATUS = (
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
+    "WISP_RENDER_CAPTURE_TICK=",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
     "WISP_ZAP_REAL_CLIENT=PASS",
@@ -133,8 +134,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) color=#([0-9A-Fa-f]{6})",
         log_text,
     )
+    wisp_camera = _first(
+        r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_origin tick=(\d+)",
+        log_text,
+    )
     wisp_rendered = _first(
-        r"TC_SMOKE_WISP_RENDERED=YES id=(\d+) aspect=aer",
+        r"TC_SMOKE_WISP_RENDERED=YES id=(\d+) aspect=aer tick=(\d+)",
         log_text,
     )
     rendered = _first(
@@ -143,12 +148,18 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         log_text,
     )
 
-    for label, match in (("client Wisp entity renderer", wisp_rendered),
+    for label, match in (("client Wisp camera sample", wisp_camera),
+                         ("client Wisp entity renderer", wisp_rendered),
                          ("player hit/target", hit), ("server payload send", sent),
                          ("client payload receive", received), ("client additive render", rendered)):
         if match is None:
             errors.append(f"missing real gameplay/render evidence: {label}")
 
+    if wisp_camera and wisp_rendered:
+        if wisp_camera.group(1) != wisp_rendered.group(1):
+            errors.append("camera sample and rendered Wisp use different entity IDs")
+        if wisp_camera.group(2) != wisp_rendered.group(2):
+            errors.append("camera sample and rendered Wisp are from different ticks")
     if wisp_rendered and hit and wisp_rendered.group(1) != hit.group(1):
         errors.append("rendered Wisp and player-hit source use different entity IDs")
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
@@ -175,13 +186,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append(f"missing real-client status marker: {marker}")
 
     telemetry = _first(
-        r"(?m)^WISP_CAMERA_TELEMETRY=PASS playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
+    capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
     if telemetry is None:
         errors.append("missing fresh pre-aimed-spawn camera telemetry")
     else:
-        player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups())
+        camera_id, camera_tick = telemetry.group(1), telemetry.group(2)
+        player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups()[2:])
+        if wisp_rendered and camera_id != wisp_rendered.group(1):
+            errors.append("camera telemetry and rendered Wisp use different entity IDs")
+        if wisp_rendered and camera_tick != wisp_rendered.group(2):
+            errors.append("camera telemetry and rendered Wisp use different ticks")
+        if capture_tick is None:
+            errors.append("missing render-callback capture tick")
+        elif camera_tick != capture_tick.group(1):
+            errors.append("aim screenshot was not captured from the first render callback tick")
         measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
         if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
                 and 10.0 <= player_z <= 11.0 and distance <= 3.0
