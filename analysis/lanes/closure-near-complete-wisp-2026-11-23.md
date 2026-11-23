@@ -68,3 +68,12 @@
 - New exact-SHA run [#45247584938](https://github.com/craftkot/tgaumcraft/actions/runs/45247584938) was queued at the last poll; Full Port CI [#45247585089](https://github.com/craftkot/tgaumcraft/actions/runs/45247585089) and Aura/Crystal GameTests [#45247585017](https://github.com/craftkot/tgaumcraft/actions/runs/45247585017) were also queued.
 - Previous exact-SHA Aura/Crystal GameTests [#45246351459](https://github.com/craftkot/tgaumcraft/actions/runs/45246351459) **SUCCESS**: both read/write phases reported 29/29 required tests; logs include a two-process cold restart and Wisp damage/payload/spawn checks. This is not full M08 game acceptance.
 - No fixed-audit points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The four-tick click-to-input delay remains unresolved; if the next client still misses, instrument the client input event and attack event timestamps rather than changing polling intervals again.
+
+
+## CI state correction (latest poll, 2026-11-23)
+
+- Full Port CI [#45246351646](https://github.com/craftkot/tgaumcraft/actions/runs/45246351646) has now completed **SUCCESS** on code SHA `badcf26`: Core parity **10,054 assertions**, BETA26 jar parity **51 assertions**, NeoForge `build` **SUCCESS**, dedicated server reached `Done (6.527s)`, and the JAR artifact uploaded. This is before the later test-driver cursor changes; production Java/resources were unchanged by those later commits.
+- Aura/Crystal GameTests [#45246351459](https://github.com/craftkot/tgaumcraft/actions/runs/45246351459) completed **SUCCESS** with 29/29 required tests in both write and read phases, plus a two-process cold restart. No M08 score is awarded: the broader world/game acceptance matrix remains incomplete.
+- The follow-up Wisp client [#45247584938](https://github.com/craftkot/tgaumcraft/actions/runs/45247584938) and follow-up Full Port CI [#45247585089](https://github.com/craftkot/tgaumcraft/actions/runs/45247585089) remain queued at the latest poll due the large number of parallel PR workflows. The exact cursor fix has not yet been exercised in a new real client.
+- Branch comparison against fresh main `a4280834adc5a20b6951098af937d30ca4aeca56`: 1,767 commits ahead, 0 behind; PR #4 still contains 367 files. It remains open and unmerged; no merge/force-push was performed. This size is an integration risk, not evidence of readiness.
+- Fixed audit remains **59/100** (M16 **4/6**, M08 **5/9**); no category closure or point increase.
