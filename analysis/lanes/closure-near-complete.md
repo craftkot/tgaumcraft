@@ -3,7 +3,7 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Кодовый HEAD на начало этой записи: `7a84c0fd97921aa52bf630745e1a5b57a4707963`
+- Кодовый HEAD после follow-up cleanup: `98d2cfad75d83fc21498baf271ec20e525771652`
 - Фиксированный аудит: **59/100**. Баллы не начислять без игровых критериев и аудиторского доказательства.
 
 ## Границы lane
@@ -32,7 +32,9 @@
 - `99f9be01edbf86848aeacc500fce5898eabd76e0` — re-anchor player only;
 - `e83283d1096351d573506875359c6738414d7850` — verifier provenance/tracking gate;
 - `c532725c124194376c6bf9cb1d28ff84f3afa17d` — regression contract;
-- `7a84c0fd97921aa52bf630745e1a5b57a4707963` — assertion that tracker stays behind smoke env gate.
+- `7a84c0fd97921aa52bf630745e1a5b57a4707963` — assertion that tracker stays behind smoke env gate;
+- `c95cf79014dbe967e671f81dc7a425b83240cf0f` — remove duplicate platform re-anchor marker;
+- `98d2cfad75d83fc21498baf271ec20e525771652` — assert the re-anchor marker is emitted exactly once.
 
 ## CI evidence и ограничения
 
@@ -41,13 +43,13 @@
 - [Aura/Crystal GameTests #45258224431](https://github.com/craftkot/tgaumcraft/actions/runs/45258224431) — SUCCESS, 29/29 required tests; Wisp payload/sound/damage and aura/crystal cases; two-process persistence restart passed.
 - [Wisp real client #45258224263](https://github.com/craftkot/tgaumcraft/actions/runs/45258224263) — FAILURE только на post-hit camera capture; actual hit/damage/target/payload/render markers присутствуют.
 
-На текущем HEAD `7a84c0fd` GitHub Actions run не найден через commit workflow lookup, combined status не содержит checks. Из доступных инструментов нет workflow_dispatch; не выдавать предыдущие SHA за проверку текущего. Требуется запустить `closure-wisp-zap-client.yml` и `ci.yml` на точном HEAD через обычный GitHub push/Actions dispatch и получить их логи.
+На точном code HEAD `98d2cfad` созданы новые run: Wisp client [#45262255344](https://github.com/craftkot/tgaumcraft/actions/runs/45262255344), Full Port CI [#45262255633](https://github.com/craftkot/tgaumcraft/actions/runs/45262255633), Aura/Crystal GameTests [#45262255796](https://github.com/craftkot/tgaumcraft/actions/runs/45262255796) — все QUEUED на последнем опросе; CircleCI `verify-connection` PENDING. Результатов exact-SHA пока нет. Не выдавать предыдущие SHA за проверку текущего.
 
 ## Текущая оценка и следующий шаг
 
 - Общий индекс: **59/100**, без изменения.
 - Модели/звуки/частицы/локализация/UI: **4/6**, не закрыто.
 - Аура/кристаллы/мир: **5/9**, не закрыто.
-- PR #4 остаётся 367 файлов / 1,779 коммитов впереди main на момент проверки; это крупный интеграционный риск, не готовность к merge.
+- PR #4 остаётся 367 файлов / 1,783 коммита впереди main на момент проверки; это крупный интеграционный риск, не готовность к merge.
 
 Следующее действие: получить exact-SHA Wisp client run на `7a84c0fd`; проверить offline contract, `bash -n`, same-ID real hit, camera tracking, payload, три FX кадра, expiry и pixel delta. Затем — exact-SHA full NeoForge build/server smoke. Если трекинг не удержит aimDot, инструментировать tick/event ordering; не ослаблять порог 0.99 и не синтезировать hit/payload/FX.
