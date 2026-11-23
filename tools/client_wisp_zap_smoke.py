@@ -476,7 +476,7 @@ def render() -> str:
   # The real Survival hit and target acquisition are already complete. Keep
   # only the player's horizontal position stable while the Wisp performs its
   # natural zap wind-up; this does not change Wisp AI, damage, target or FX.
-  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value of attribute Knockback Resistance for player Dev is now 1.0'
+  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
   reaim_log_lines="$(wc -l < client-smoke/client.log)"
