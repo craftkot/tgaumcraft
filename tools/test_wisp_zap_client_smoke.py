@@ -82,16 +82,16 @@ def main() -> int:
         "TC_SMOKE_WISP_RENDERED=YES",
         "wisp_fast_command()",
         "sleep 0.5",
-        '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"],Motion:[0.0d,0.0d,0.0d]}',
+        '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}',
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
         "d <= 3.0",
         "wisp_verify_aim_telemetry",
         "WISP_CAMERA_TELEMETRY=PASS",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "wisp_wait_for_teleport",
-        "wisp_wait_for_fresh_render",
+        'wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check',
+        "WISP_RENDER_CAPTURE_TICK=",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "wisp_capture 78-wisp-aim-check",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
         "--aim-only",
@@ -114,12 +114,18 @@ def main() -> int:
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', support_index)
     summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5", spawn_snapshot_index)
-    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
-    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check", rendered_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', aim_capture_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < spawn_snapshot_index < summon_index < rendered_index < aim_capture_index < telemetry_index, (
-        "the player must be supported and pre-aimed at the render origin before Wisp spawn; capture immediately after the first fresh render, then validate that frame's camera sample"
+    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check', summon_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', rendered_index)
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < spawn_snapshot_index < summon_index < rendered_index < telemetry_index, (
+        "the player must be supported and pre-aimed at the render origin before Wisp spawn; capture must happen inside the first-render wait before telemetry parsing"
     )
+    fresh_render_body = generated.split("  wisp_wait_for_fresh_render() {", 1)[1].split("  }", 1)[0]
+    assert fresh_render_body.index('wisp_capture "$capture_name"') < fresh_render_body.index("WISP_RENDER_CAPTURE_TICK=") < fresh_render_body.index("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES")
+    fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
+    return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
+    assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
+    assert "wisp_capture 78-wisp-aim-check" not in generated
+    assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
     assert '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' not in generated
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in generated
@@ -137,6 +143,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM_TELEPORT=YES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "~-1.5 ~ ~ facing entity" not in generated
@@ -156,6 +163,7 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_origin tick=21 playerX=12.5",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
@@ -168,8 +176,9 @@ def main() -> int:
         "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
+        "WISP_RENDER_CAPTURE_TICK=21",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "WISP_CAMERA_TELEMETRY=PASS playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
+        "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
@@ -210,6 +219,15 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ZAP_AIM=PREAIMED_SPAWN", ""), root
         ), "missing pre-aimed spawn mode must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_CAMERA=YES id=17", "TC_SMOKE_WISP_CAMERA=YES id=18"), status, root
+        ), "camera sample from another Wisp must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21", "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22"), status, root
+        ), "camera and renderer ticks must match"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_CAPTURE_TICK=21", "WISP_RENDER_CAPTURE_TICK=22"), root
+        ), "capture tick must match camera/render callback"
         assert verify_wisp_zap_client.verify(
             log.replace("target=1", "target=2", 1), status, root
         ), "mismatched server target must fail"
