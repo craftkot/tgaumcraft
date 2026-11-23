@@ -244,14 +244,14 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-frame-sequence-") as directory:
         root = Path(directory)
         (root / "client-smoke").mkdir()
-        (root / "client-smoke" / "client.log").write_text("\\n".join(log_lines) + "\\n", encoding="utf-8")
+        (root / "client-smoke" / "client.log").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
         (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
         harness = (
-            "set -euo pipefail\\n"
-            "wisp_wait_for_marker() { grep -Fq -- \"$1\" client-smoke/client.log; }\\n"
-            "wisp_capture() { printf 'CAPTURE=%s\\\\n' \"$1\"; }\\n"
+            "set -euo pipefail\n"
+            "wisp_wait_for_marker() { grep -Fq -- \"$1\" client-smoke/client.log; }\n"
+            "wisp_capture() { printf 'CAPTURE=%s\\n' \"$1\"; }\n"
             + "".join(functions)
-            + "wisp_capture_zap_frames 0 17\\n"
+            + "wisp_capture_zap_frames 0 17\n"
         )
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -419,7 +419,7 @@ def main() -> int:
     fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 41'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
-    night_index = setup.index("wisp_send_chat '/time set midnight' 'Set the time to 18000'", support_index)
+    night_index = setup.index("wisp_send_chat '/time set midnight' 'Set the time to 18000'")
     baseline_a_index = setup.index("wisp_capture 79-wisp-before-a", support_index)
     assert night_index < baseline_a_index, "night lighting must be fixed before baseline screenshots"
     baseline_b_index = setup.index("wisp_capture 79-wisp-before-b", baseline_a_index)
@@ -439,7 +439,7 @@ def main() -> int:
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
     assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < night_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < capture_retry_index < telemetry_index < aim_verify_index, (
-        "after the real hit, the smoke must retry live-entity camera re-aim before post-hit capture"
+        "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     assert 'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
@@ -577,6 +577,9 @@ def main() -> int:
 
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_TEST_TIME=MIDNIGHT" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_FRAME_CAPTURE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_EFFECT_EXPIRED=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert verify_wisp_zap_client.AIM_SCREENSHOTS == ("78-wisp-aim-check.png",)
     assert verify_wisp_zap_client.BASELINE_SCREENSHOTS == ("79-wisp-before-a.png", "79-wisp-before-b.png")
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
@@ -619,15 +622,24 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
-        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=0.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520",
+        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=0.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=520 ageTick=0",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=520 wispTick=23 ageTick=0 age=0.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+        "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=100 gameTime=523 ageTicks=3",
     ))
     status = "\n".join((
         "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 81 block(s)]",
         "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
+        "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
+        "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
@@ -644,6 +656,10 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
+        "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=0 wispTick=23",
+        "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24",
+        "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25",
+        "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=100",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REAIM=CLIENT_TRACKING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
