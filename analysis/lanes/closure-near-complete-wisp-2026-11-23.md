@@ -45,3 +45,14 @@
 - The exact Wisp client workflow is push-triggered on this feature branch; the GitHub connector's `fetch_commit_workflow_runs` exposes PR-triggered runs only and returned no runs for the preceding push commits. Combined status on the new commit must be checked separately. Container Git access is still blocked by DNS (`github.com` cannot resolve), so the full Python contract has not been run locally. No PASS is claimed.
 - Before this edit, changed-path overlap was checked against all other open PRs returned by GitHub (#1–#3 and #5–#62); none touched the Wisp driver, verifier, test, or smoke probe paths. PR #4 is the owning lane.
 - Next: inspect the new commit status and, if the Actions run remains inaccessible through the connector, obtain its exact run/artifact through a supported GitHub Actions listing path before changing the watcher again. Do not infer Minecraft success from the static contract fix.
+
+
+## Exact-SHA verification after stale assertion repair (2026-11-23)
+
+- Code/test SHA: [badcf26](https://github.com/craftkot/tgaumcraft/commit/badcf26adee35e5ef4465d79962b62d9e101cdb3).
+- Wisp client workflow [#45246351434](https://github.com/craftkot/tgaumcraft/actions/runs/45246351434): the **offline geometry + Python client-smoke contract passed**, and generated Bash plus `bash -n` passed. At the latest poll, the real Minecraft client launch step was still **in progress**; no Wisp hit, payload, FXBolt or screenshot acceptance is claimed yet.
+- Aura/Crystal native GameTests [#45246351459](https://github.com/craftkot/tgaumcraft/actions/runs/45246351459) completed **SUCCESS**. This confirms that test lane only; it does not close M08.
+- Full Port CI [#45246351646](https://github.com/craftkot/tgaumcraft/actions/runs/45246351646) was still queued. The other M16 client checks were mixed queued/in-progress at the last poll.
+- Combined status on the code SHA reports CircleCI `verify-connection=success`. No Full Port or real-client success is inferred from that status.
+- The corrected test assertions are therefore accepted by the exact-SHA offline contract. The 10 ms tail-polling hypothesis remains unproven until the current real Minecraft client step and verifier finish.
+- No fixed-audit points awarded: **59/100**, M16 **4/6**, M08 **5/9**. PR #4 remains open/draft/unmerged.
