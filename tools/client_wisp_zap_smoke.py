@@ -219,39 +219,37 @@ def render() -> str:
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
 
-  # Aim at a fixed spawn point BEFORE the Wisp exists. The previous
-  # post-spawn facing command cost another chat round-trip while the BETA26
-  # autonomous flight moved the target beyond melee reach. Zero initial motion
-  # keeps the first tick deterministic without disabling the real Wisp AI.
+  # Capture stable animation-noise baselines BEFORE the Wisp exists. BETA26
+  # autonomous flight starts immediately; post-spawn baseline delays let it
+  # leave the crosshair before the real melee click.
+  xdotool key --clearmodifiers F1
+  sleep 0.05
+  wisp_capture 79-wisp-before-a
+  python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-a.png | tee -a client-smoke-status.txt
+  sleep 0.05
+  wisp_capture 79-wisp-before-b
+  python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-b.png | tee -a client-smoke-status.txt
+  echo 'WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN' | tee -a client-smoke-status.txt
+
+  # Aim at the fixed spawn point before the Wisp exists. Only a fresh callback
+  # followed by AFTER_LEVEL may capture the first completed billboard frame.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
-  # Only a renderer callback after this real summon can satisfy the gate.
   wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check
-  wisp_verify_aim_telemetry "$aim_log_lines"
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
-  # Two clean pre-attack frames now include the centered Wisp, so their
-  # animation delta is a real baseline rather than an empty platform.
-  xdotool key --clearmodifiers F1
-  sleep 0.2
-  wisp_capture 79-wisp-before-a
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/79-wisp-before-a.png | tee -a client-smoke-status.txt
-  sleep 0.05
-  wisp_capture 79-wisp-before-b
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/79-wisp-before-b.png | tee -a client-smoke-status.txt
-  xdotool key --clearmodifiers F1
-  sleep 0.05
-
-  # A genuine survival left-click invokes WispEntity.hurt(Player), which sets
-  # the normal target. No synthetic packet, direct target setter or command
-  # invokes the zap itself.
+  # Attack immediately while the first rendered tick is still within melee
+  # reach. Do not spend more ticks parsing screenshots or camera telemetry first.
   xdotool click 1
   echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_SENT=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_RENDERED=YES'
+
+  # Validate the already-captured first frame after the attack has been accepted.
+  wisp_verify_aim_telemetry "$aim_log_lines"
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
   # The effect lasts three game ticks. Capture immediately after the renderer
   # reports its first completed additive batch, then capture after expiry.
