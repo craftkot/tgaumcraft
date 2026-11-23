@@ -220,15 +220,14 @@ def main() -> int:
     fallback_branch = attack_body.split('\n      else\n        reaim_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
     assert "wisp_move_player_to_live_wisp" in fallback_branch
     assert "wisp_wait_for_attack_frame" in fallback_branch
+    assert "xdotool click 1" not in attack_body, "the caller must not delay the click after frame parsing"
+    assert 'attack_log_lines="$WISP_ATTACK_INPUT_LOG_LINES"' in attack_body
     attack_frame_index = attack_body.index("wisp_wait_for_attack_frame")
-    attack_click_index = attack_body.index("xdotool click 1")
     attack_input_index = attack_body.index("TC_SMOKE_WISP_ATTACK_INPUT=YES")
-    assert attack_frame_index < attack_click_index < attack_input_index
+    assert attack_frame_index < attack_input_index
     fallback_reaim_index = fallback_branch.index("wisp_move_player_to_live_wisp")
     fallback_frame_index = fallback_branch.index('wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP')
     assert fallback_reaim_index < fallback_frame_index
-    between_frame_and_click = attack_body[attack_body.rindex("wisp_wait_for_attack_frame"):attack_click_index]
-    assert "sleep " not in between_frame_and_click, "click immediately after the actual Wisp EntityHitResult frame"
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert "WISP_ATTACK_ATTEMPT_REJECTED=" in attack_body, "BLOCK hits must be rejected rather than accepted"
     assert 'attack_camera_source="PREAIMED_FIRST_FRAME"' in preaim_branch
@@ -256,6 +255,17 @@ def main() -> int:
         "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
     wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
+    click_log_snapshot_index = wait_attack_body.index('click_log_lines="$(wc -l < client-smoke/client.log)"')
+    frame_wait_index = wait_attack_body.index('frame_line="$(timeout 5s')
+    camera_line_index = wait_attack_body.index('camera_line="$(grep -F')
+    attack_click_index = wait_attack_body.index("xdotool click 1")
+    diagnostics_index = wait_attack_body.index('distance="$(awk')
+    assert click_log_snapshot_index < frame_wait_index < camera_line_index < attack_click_index < diagnostics_index, (
+        "dispatch the real click immediately after the matching camera/EntityHitResult pair, before expensive diagnostics"
+    )
+    assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in wait_attack_body
+    assert 'echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt"' in wait_attack_body
+    assert "exit 1" in wait_attack_body[attack_click_index:], "post-click diagnostics must fail closed rather than retry with a second click"
     assert "timeout 5s bash -c" in wait_attack_body
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
     assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
