@@ -252,6 +252,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                     "real click did not follow its actual Wisp EntityHitResult within one game tick: "
                     f"frameGameTime={attackable_frame.group(3)} clickGameTime={attack_input.group(3)}"
                 )
+            player_tick_delta = int(attack_input.group(4)) - int(attackable_frame.group(4))
+            if player_tick_delta < 0 or player_tick_delta > 1:
+                errors.append(
+                    "real click did not follow its attackable Wisp frame within one player tick: "
+                    f"framePlayerTick={attackable_frame.group(4)} clickPlayerTick={attack_input.group(4)}"
+                )
             frame_position = log_text.find(attackable_frame.group(0))
             input_position = log_text.find(attack_input.group(0))
             if frame_position < 0 or input_position < frame_position:
@@ -260,6 +266,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("no completed frame exposed the live Wisp as Minecraft.hitResult")
     if attack_input and client_attack and attack_input.group(1) != client_attack.group(2):
         errors.append("client hit result and AttackEntityEvent selected different entities")
+    if attack_input and client_attack:
+        client_game_time_delta = int(client_attack.group(5)) - int(attack_input.group(3))
+        if client_game_time_delta < 0 or client_game_time_delta > 1:
+            errors.append("AttackEntityEvent was not emitted in the same or immediately following game tick")
     if client_attack and hurt and client_attack.group(1, 2) != hurt.group(2, 1):
         errors.append("client AttackEntityEvent and server hurt callback use different player/Wisp IDs")
     if hurt and hit and hurt.group(1, 2) != hit.group(1, 2):

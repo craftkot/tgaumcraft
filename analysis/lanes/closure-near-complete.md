@@ -4169,3 +4169,10 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - The first exact-head contract run for commit 451df57 failed only in the positive verifier fixture: the fixture's attack-camera sample had been advanced to tick 22 while the log fixture accidentally moved that camera line to tick 23; the post-hit capture status still used tick 22 while its capture tick was 23.
 - Corrected the synthetic positive fixture to model three distinct events: first rendered frame tick 21 (BLOCK), attackable frame/click tick 22 (ENTITY), and post-hit capture tick 23. This is a test-fixture correction only; no production code or real-client criteria were relaxed.
 - Re-run the exact-head offline contract and Bash syntax before trusting the new real-client run. No acceptance points awarded; fixed audit remains 59/100, M16 4/6, M08 5/9.
+
+
+### 2026-11-23 — tighten click/frame freshness checks
+
+- The first corrected positive fixture now models camera samples at ticks 21/22/23 separately: initial render, actual Wisp EntityHitResult used for the click, and post-hit screenshot capture. The previous offline failures were fixture-only mismatches, not Java compilation or game behavior.
+- Tightened the verifier to require both client game time and player tick to advance by at most one between the attackable AFTER_LEVEL frame and the real input event; the subsequent AttackEntityEvent must also occur within one game tick. Added a negative regression for a stale player-tick sample.
+- The exact-head Wisp/Full Port workflows for the fixture correction are queued; no CI result is inferred. No acceptance points awarded.

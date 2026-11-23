@@ -428,6 +428,10 @@ def main() -> int:
                         "tick=22 gameTime=517 playerTick=504 hitType=ENTITY", 1), status, root
         ), "a click more than one game tick after the actual hit-result frame must fail"
         assert verify_wisp_zap_client.verify(
+            log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
+                        "tick=22 gameTime=520 playerTick=504 hitType=ENTITY", 1), status, root
+        ), "a click more than one player tick after the actual hit-result frame must fail"
+        assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACKABLE_FRAME=YES", "WISP_ATTACKABLE_FRAME=NO"), root
         ), "missing attackable-frame status must fail"
         assert verify_wisp_zap_client.verify(
