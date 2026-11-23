@@ -20,7 +20,10 @@ public final class GreatwoodTrunkPlan {
     public static List<Cell> create(int x, int baseY, int z, int trunkLength,
                                     int minBuildY, int maxBuildYExclusive) {
         // Prevent allocation overflow and reject invalid bounds before visiting.
-        if (trunkLength <= 0 || (long) trunkLength * 4L > Integer.MAX_VALUE\n                || minBuildY >= maxBuildYExclusive || baseY < minBuildY\n                || (long) baseY + trunkLength > maxBuildYExclusive\n                || x == Integer.MAX_VALUE || z == Integer.MAX_VALUE) {
+        if (trunkLength <= 0 || (long) trunkLength * 4L > Integer.MAX_VALUE
+                || minBuildY >= maxBuildYExclusive || baseY < minBuildY
+                || (long) baseY + trunkLength > maxBuildYExclusive
+                || x == Integer.MAX_VALUE || z == Integer.MAX_VALUE) {
             return List.of();
         }
         ArrayList<Cell> cells = new ArrayList<>(trunkLength * 4);
