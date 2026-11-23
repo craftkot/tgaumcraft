@@ -40,17 +40,19 @@ REQUIRED_STATUS = (
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
+    "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
     "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
     "WISP_RENDER_FIRST_FRAME=YES",
     "WISP_RENDER_FIRST_FRAME_ID=",
     "WISP_RENDER_FIRST_FRAME_TICK=",
+    "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
     "WISP_RENDER_CAPTURE_ID=",
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
-    "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING",
+    "WISP_ATTACK_CAMERA_REAIM=",
     "WISP_ATTACK_CAMERA_FRAME=YES",
     "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
     "WISP_ATTACK_CAMERA_FRAME_USED=YES",
@@ -268,6 +270,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     first_frame_tick = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_TICK=(\d+)$", status_text)
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
     capture_id = _first(r"(?m)^WISP_RENDER_CAPTURE_ID=(\d+)$", status_text)
+    first_frame_camera_sample = _first(
+        r"(?m)^WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
+        status_text,
+    )
     capture_camera = _first(
         r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) "
         r"playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+).*"
@@ -292,7 +298,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     attack_camera_reaim = _first(
-        r"(?m)^WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING (.+)$",
+        r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_FIRST_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
     if frame_status is None:
@@ -309,7 +315,9 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     if attack_camera_sample is None:
         errors.append("missing copied live camera sample used for the real attack")
     if attack_camera_reaim is None:
-        errors.append("missing server-confirmed live Wisp re-aim before the real attack")
+        errors.append("missing provenance for the camera sample used by the real attack")
+    if first_frame_camera_sample is None:
+        errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
         attack_id, attack_tick = attack_camera_frame.group(1, 2)
         complete_id, complete_tick = attack_camera_complete.group(1, 2)
@@ -365,7 +373,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         reaim_position = status_text.find(attack_camera_reaim.group(0)) if attack_camera_reaim else -1
         frame_status_position = status_text.find(attack_camera_frame.group(0))
         if reaim_position < 0 or frame_status_position < reaim_position:
-            errors.append("attack camera frame was not recorded after server-confirmed live re-aim")
+            errors.append("attack camera frame was not recorded after its declared camera source")
+        if attack_camera_reaim.group(1) == "PREAIMED_FIRST_FRAME":
+            first_frame_status_position = status_text.find("WISP_RENDER_FIRST_FRAME=YES")
+            if first_frame_status_position < 0 or reaim_position < first_frame_status_position:
+                errors.append("pre-aimed attack camera was not sourced after the first completed Wisp frame")
+            if first_frame_camera_sample is not None and attack_camera_sample.group(1) != first_frame_camera_sample.group(1):
+                errors.append("pre-aimed attack sample differs from the first completed-frame camera sample")
+        elif status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING") < 0:
+            errors.append("live-reaim attack sample lacks its server-confirmed teleport marker")
 
     if telemetry is None:
         errors.append("missing first-frame camera telemetry")
@@ -412,6 +428,24 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             capture_frame = f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={capture_id.group(1)} tick={capture_tick.group(1)}"
             if capture_frame not in log_text:
                 errors.append("post-hit screenshot was not taken after its matching completed level frame")
+        if first_frame_camera_sample is not None:
+            first_sample_id, first_sample_tick = first_frame_camera_sample.group(2, 3)
+            if first_frame_id and first_frame_tick and (first_sample_id, first_sample_tick) != (first_frame_id.group(1), first_frame_tick.group(1)):
+                errors.append("copied first-frame camera sample has a different Wisp ID/tick")
+            first_sample_line = first_frame_camera_sample.group(1)
+            first_sample_position = _first(
+                r"playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+).*"
+                r"wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+)",
+                first_sample_line,
+            )
+            first_sample_aim = float(first_frame_camera_sample.group(4))
+            if first_sample_position is None:
+                errors.append("first-frame camera sample lacks player/Wisp positions")
+            else:
+                fx, fy, fz, wx, wy, wz = map(float, first_sample_position.groups())
+                fd = math.dist((fx, fy, fz), (wx, wy, wz))
+                if not (12.0 <= fx <= 13.0 and 148.5 <= fy <= 149.5 and 10.0 <= fz <= 11.0 and fd <= 3.0 and first_sample_aim >= 0.99):
+                    errors.append("first completed Wisp frame was not aligned inside melee reach on the fixture platform")
         measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
         if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
                 and 10.0 <= player_z <= 11.0 and distance <= 3.0
