@@ -316,11 +316,11 @@ def main() -> int:
     node_atlas = Path(
         "src/main/resources/assets/thaumcraft/textures/misc/auranodes.png"
     ).read_bytes()
-    assert node_atlas[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+    assert node_atlas[:8] == b"\x89PNG\r\n\x1a\n"
     width, height = struct.unpack(">II", node_atlas[16:24])
     assert (width, height) == (2048, 2048), (width, height)
     blob_sha = hashlib.sha1(
-        b"blob " + str(len(node_atlas)).encode("ascii") + b"\\0" + node_atlas
+        b"blob " + str(len(node_atlas)).encode("ascii") + b"\0" + node_atlas
     ).hexdigest()
     assert blob_sha == "411d52fefb272574dfbb0466e3437e377e2cb907", blob_sha
     assert hashlib.sha256(node_atlas).hexdigest() == (

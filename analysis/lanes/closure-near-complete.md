@@ -3979,3 +3979,11 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Restored a separate additive `NODE_LAYER` backed by `auranodes.png`; the aspect layer now uses the 32x32 grid while both particle layers keep 64x64 UVs. Added a pure Java atlas contract, standalone regression test, exact binary hash/dimension checks in the client-smoke contract, and workflow path filters so renderer/atlas changes launch the Wisp client.
 - Exact-head tests are pending at commit creation; no new NeoForge compile or real-client pass is claimed yet. Prior to this fix, Wisp geometry and Full Port CI were green, but Wisp real-client failed at the Aer pixel gate.
 - No audit points awarded: overall remains **59/100**, M16 **4/6**, M08 **5/9**. Next: inspect the exact-head Wisp client. If the aspect-colored billboard passes, continue real Survival melee → server target/send → client payload → additive FX frames → three-tick expiry. If not, inspect node texture sampling and buffer submission order without lowering the existing pixel threshold.
+
+
+### 2026-11-23 — repair the Wisp atlas smoke's Python byte literal
+
+- Exact-head Wisp client run [#45095581422](https://github.com/craftkot/tgaumcraft/actions/runs/45095581422) passed the standalone Java FXBolt and atlas tests, then stopped in the offline Python contract before Minecraft launch. The failure was the newly added PNG-signature assertion: the generated Python source contained doubled backslashes and compared literal backslash characters instead of the PNG bytes. The Git blob SHA of the committed atlas is still the pinned source SHA; this was a test-fixture escaping error, not a renderer or resource failure.
+- Corrected the Python PNG signature and Git blob NUL separator byte literals. No production Java or resource was changed in this repair.
+- The standalone Java atlas test passed locally and in [geometry run #45095581423](https://github.com/craftkot/tgaumcraft/actions/runs/45095581423): 24 assertions, including frames 512..527, 320..335, 800..815, 64x64 vs 32x32 UV rows and invalid-grid rejection. The Wisp client has not launched on this SHA yet.
+- Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**. Next: require the exact-head offline Python contract to pass, then inspect the real client Aer-pixel gate; only after that continue melee, payload, FX and expiry.
