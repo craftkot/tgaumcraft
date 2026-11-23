@@ -84,7 +84,7 @@ public final class GreatwoodTrunkPlacement {
                 }
             } catch (RuntimeException error) {
                 if (failure == null) failure = error;
-                else failure.addSuppressed(error);
+                else if (error != failure) failure.addSuppressed(error);
             }
         }
         if (failure != null) throw failure;
