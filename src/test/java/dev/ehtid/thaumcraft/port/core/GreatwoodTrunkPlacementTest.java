@@ -133,6 +133,20 @@ public final class GreatwoodTrunkPlacementTest {
             check(throwAndRejectRestore.writes.size() == 4, "both restore attempts completed");
         }
 
+        // A failed placement must restore each distinct original block state,
+        // not replace the entire footprint with air.
+        World mixedOriginal = new World();
+        mixedOriginal.blocks.put(plan.get(0), "dirt");
+        mixedOriginal.blocks.put(plan.get(1), "grass");
+        mixedOriginal.blocks.put(plan.get(2), "stone");
+        mixedOriginal.rejectAt = 3;
+        check(!GreatwoodTrunkPlacement.place(plan, "log", mixedOriginal),
+                "mixed-state placement rejected");
+        check("dirt".equals(mixedOriginal.blocks.get(plan.get(0))), "dirt restored");
+        check("grass".equals(mixedOriginal.blocks.get(plan.get(1))), "grass restored");
+        check("stone".equals(mixedOriginal.blocks.get(plan.get(2))), "stone restored");
+        check(mixedOriginal.writes.size() == 6, "mixed-state reverse restoration attempted");
+
         check(!GreatwoodTrunkPlacement.place(List.of(), "log", new World()), "empty plan rejected");
         check(!GreatwoodTrunkPlacement.place(List.of(plan.get(0), plan.get(0)),
                 "log", new World()), "duplicate plan rejected");
