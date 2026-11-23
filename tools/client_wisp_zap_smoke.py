@@ -53,6 +53,100 @@ def render() -> str:
     exit 1
   }
 
+  wisp_wait_for_zap_frame() {
+    local after_lines="$1" wisp_id="$2" created_at="${3:-}" expected_age="$4"
+    local created_filter="" candidate marker_line
+    if [ -n "$created_at" ]; then created_filter="createdAt=$created_at "; fi
+    for _ in $(seq 1 400); do
+      candidate="$(tail -n +"$((after_lines + 1))" client-smoke/client.log \
+        | grep -F "TC_SMOKE_WISP_ZAP_FRAME=YES source=$wisp_id " \
+        | grep -F "$created_filter" \
+        | grep -F "ageTick=$expected_age " | head -1 || true)"
+      if [ -n "$candidate" ]; then
+        marker_line="$(grep -n -F -- "$candidate" client-smoke/client.log | tail -1 | cut -d: -f1)"
+        if ! [[ "$marker_line" =~ ^[0-9]+$ ]]; then
+          echo "WISP_ZAP_FRAME_LINE_NUMBER_INVALID=$marker_line" | tee -a client-smoke-status.txt
+          return 1
+        fi
+        WISP_ZAP_FRAME_LINE="$candidate"
+        WISP_ZAP_FRAME_LINE_NUMBER="$marker_line"
+        WISP_ZAP_FRAME_CREATED_AT="$(sed -n 's/.* createdAt=\([0-9][0-9]*\) .*/\1/p' <<<"$candidate")"
+        WISP_ZAP_FRAME_AGE_TICK="$expected_age"
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo "WISP_ZAP_FRAME_TIMEOUT=YES source=$wisp_id createdAt=${created_at:-next-cycle} ageTick=$expected_age" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    return 1
+  }
+
+  wisp_wait_for_completed_wisp_frame() {
+    local after_line="$1" wisp_id="$2" wisp_tick="$3" marker frame_line
+    marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$wisp_tick"
+    for _ in $(seq 1 200); do
+      frame_line="$(tail -n +"$((after_line + 1))" client-smoke/client.log | grep -F -- "$marker" | head -1 || true)"
+      if [ -n "$frame_line" ]; then
+        WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER="$(grep -n -F -- "$marker" client-smoke/client.log | tail -1 | cut -d: -f1)"
+        if [[ "$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER" =~ ^[0-9]+$ ]]; then return 0; fi
+        echo "WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER_INVALID=$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER" | tee -a client-smoke-status.txt
+        return 1
+      fi
+      sleep 0.005
+    done
+    echo "WISP_ZAP_FRAME_COMPLETE_TIMEOUT=YES id=$wisp_id tick=$wisp_tick" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    return 1
+  }
+
+  wisp_capture_zap_frames() {
+    local after_lines="$1" wisp_id="$2" cursor="$1" created_at="" target_id payload_line rendered_line
+    local expected_age wisp_tick frame_name
+    wisp_wait_for_zap_frame "$cursor" "$wisp_id" "" 0
+    created_at="$WISP_ZAP_FRAME_CREATED_AT"
+    payload_line="$(grep -F "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=$wisp_id " client-smoke/client.log \
+      | grep -F "createdAt=$created_at " | tail -1 || true)"
+    if [ -z "$payload_line" ]; then
+      echo "WISP_ZAP_CAPTURE_PAYLOAD_MISSING=YES source=$wisp_id createdAt=$created_at" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    target_id="$(sed -n 's/.* target=\([0-9][0-9]*\) .*/\1/p' <<<"$payload_line")"
+    if ! [[ "$target_id" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_CAPTURE_TARGET_INVALID=$target_id" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_SENT=YES source=$wisp_id target=$target_id"
+    rendered_line="$(grep -F "TC_SMOKE_WISP_ZAP_RENDERED=YES source=$wisp_id target=$target_id " client-smoke/client.log \
+      | grep -F "createdAt=$created_at " | tail -1 || true)"
+    if [ -z "$rendered_line" ]; then
+      echo "WISP_ZAP_CAPTURE_RENDER_MISSING=YES source=$wisp_id target=$target_id createdAt=$created_at" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    for expected_age in 0 1 2; do
+      if [ "$expected_age" -gt 0 ]; then
+        cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
+        wisp_wait_for_zap_frame "$cursor" "$wisp_id" "$created_at" "$expected_age"
+      fi
+      wisp_tick="$(sed -n 's/.* wispTick=\([0-9][0-9]*\) .*/\1/p' <<<"$WISP_ZAP_FRAME_LINE")"
+      if ! [[ "$wisp_tick" =~ ^[0-9]+$ ]]; then
+        echo "WISP_ZAP_FRAME_WISP_TICK_INVALID=$wisp_tick" | tee -a client-smoke-status.txt
+        return 1
+      fi
+      wisp_wait_for_completed_wisp_frame "$WISP_ZAP_FRAME_LINE_NUMBER" "$wisp_id" "$wisp_tick"
+      case "$expected_age" in
+        0) frame_name="80-wisp-zap-frame-a" ;;
+        1) frame_name="81-wisp-zap-frame-b" ;;
+        2) frame_name="82-wisp-zap-frame-c" ;;
+      esac
+      wisp_capture "$frame_name"
+      echo "WISP_ZAP_FRAME_CAPTURE=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick" | tee -a client-smoke-status.txt
+      cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
+    done
+    wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at"
+    echo "WISP_ZAP_EFFECT_EXPIRED=YES source=$wisp_id createdAt=$created_at" | tee -a client-smoke-status.txt
+    wisp_capture 83-wisp-zap-after-expiry
+  }
+
   wisp_send_chat() {
     local command="$1" marker="$2"
     wisp_command "$command"
@@ -485,7 +579,8 @@ def render() -> str:
   wisp_command '/gamerule doMobSpawning false'
   wisp_command '/gamerule doDaylightCycle false'
   wisp_command '/gamerule doWeatherCycle false'
-  wisp_command '/time set noon'
+  wisp_send_chat '/time set midnight' 'Set the time to 18000'
+  echo 'WISP_ZAP_TEST_TIME=MIDNIGHT' | tee -a client-smoke-status.txt
   wisp_command '/gamemode survival'
   wisp_command '/effect give @p minecraft:resistance infinite 4 true'
   # The integrated-world bootstrap leaves the player at a random spawn
@@ -539,26 +634,19 @@ def render() -> str:
   # the player on the verified platform; the client-only probe tracks the same
   # attacked Wisp's AABB centre while its BETA26 flight and zap wind-up continue.
   # No Wisp movement, target, damage or FX state is changed by the camera probe.
+  wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+  zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
+
+  # Capture three distinct BETA26 effect ages immediately, each after its
+  # matching AFTER_LEVEL frame. A later camera re-anchor would miss the
+  # three-tick bolt entirely.
+  wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"
 
   wisp_capture_aim_after_hit_with_retries
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
-
-  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_SENT=YES'
-  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES'
-  wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_RENDERED=YES'
-
-  # The effect lasts three game ticks. Capture immediately after the renderer
-  # reports its first completed additive batch, then capture after expiry.
-  wisp_capture 80-wisp-zap-frame-a
-  sleep 0.025
-  wisp_capture 81-wisp-zap-frame-b
-  sleep 0.025
-  wisp_capture 82-wisp-zap-frame-c
-  sleep 0.35
-  wisp_capture 83-wisp-zap-after-expiry
 
   wisp_crop_metric() {
     local left="$1" right="$2" temporary metric
