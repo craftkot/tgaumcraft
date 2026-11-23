@@ -166,13 +166,19 @@ def render() -> str:
       tail -100 client-smoke/client.log >&2
       return 1
     fi
+    # Dispatch the real OS click immediately when the same-ID AFTER_LEVEL
+    # EntityHitResult line arrives. Do not spend client ticks parsing camera
+    # telemetry first: the live Wisp can move out of the ray before input lands.
+    WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
+    xdotool click 1
+    echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
     if [[ "$frame_line" =~ TC_SMOKE_WISP_FRAME_COMPLETE=YES\ id=([0-9]+)\ tick=([0-9]+)\ gameTime=([0-9]+)\ playerTick=([0-9]+) ]]; then
       camera_tick="${BASH_REMATCH[2]}"
       game_time="${BASH_REMATCH[3]}"
       player_tick="${BASH_REMATCH[4]}"
     else
       echo "WISP_ATTACKABLE_FRAME_PARSE_FAILED=$frame_line" | tee -a client-smoke-status.txt
-      return 1
+      exit 1
     fi
     camera_line="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center tick=$camera_tick " client-smoke/client.log | tail -1 || true)"
     if [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+).*wispX=([-0-9.]+)\ wispY=([-0-9.]+)\ wispZ=([-0-9.]+).*aimDot=(-?[0-9.]+) ]]; then
@@ -185,15 +191,8 @@ def render() -> str:
       aim_dot="${BASH_REMATCH[7]}"
     else
       echo "WISP_ATTACKABLE_FRAME_CAMERA_MISSING=$frame_line" | tee -a client-smoke-status.txt
-      return 1
+      exit 1
     fi
-    # AFTER_LEVEL has already sampled the same-ID vanilla EntityHitResult and
-    # its matching camera telemetry. Dispatch the real OS click before spawning
-    # awk/tee diagnostics: the CI client can advance many ticks while shell
-    # telemetry is being parsed, making an otherwise valid hit result stale.
-    WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
-    xdotool click 1
-    echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
     # The same-frame, same-ID vanilla EntityHitResult is the ray test. This dot
     # compares an interpolated view vector with the AABB center and is diagnostic;
