@@ -20,6 +20,7 @@ public final class GreatwoodTrunkPlacementTest {
         boolean denyReplace;
         boolean rejectRestore;
         int trunkWrites;
+        RuntimeException sharedFailure;
 
         public String read(GreatwoodTrunkPlan.Cell cell) {
             return blocks.getOrDefault(cell, "air");
@@ -32,10 +33,14 @@ public final class GreatwoodTrunkPlacementTest {
             if ("log".equals(state)) {
                 trunkWrites++;
                 blocks.put(cell, state); // Model an adapter that mutates before failure.
-                if (trunkWrites == throwAt) throw new IllegalStateException("injected");
+                if (trunkWrites == throwAt) {
+                    if (sharedFailure != null) throw sharedFailure;
+                    throw new IllegalStateException("injected");
+                }
                 return trunkWrites != rejectAt;
             }
             if (rejectRestore) return false;
+            if (sharedFailure != null) throw sharedFailure;
             blocks.put(cell, state);
             return true;
         }
@@ -80,6 +85,20 @@ public final class GreatwoodTrunkPlacementTest {
             throw new AssertionError("rollback failure hidden");
         } catch (IllegalStateException expected) {
             check(expected.getMessage().contains("rollback rejected"), "restore failure visible");
+        }
+
+        // The same RuntimeException object can be thrown by both callbacks.
+        // Never mask the original failure with IllegalArgumentException from addSuppressed(self).
+        World sameException = new World();
+        sameException.throwAt = 2;
+        sameException.sharedFailure = new IllegalStateException("shared failure");
+        try {
+            GreatwoodTrunkPlacement.place(plan, "log", sameException);
+            throw new AssertionError("shared exception not propagated");
+        } catch (IllegalStateException expected) {
+            check(expected == sameException.sharedFailure, "original shared exception identity");
+            check(expected.getSuppressed().length == 0, "no self-suppression");
+            check(sameException.writes.size() == 4, "rollback attempted after shared failure");
         }
 
         check(!GreatwoodTrunkPlacement.place(List.of(), "log", new World()), "empty plan rejected");
