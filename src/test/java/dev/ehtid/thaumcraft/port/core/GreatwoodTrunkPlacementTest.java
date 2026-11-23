@@ -101,6 +101,20 @@ public final class GreatwoodTrunkPlacementTest {
             check(sameException.writes.size() == 4, "rollback attempted after shared failure");
         }
 
+        // A false write followed by repeated identical restore exceptions must
+        // preserve the first rollback failure instead of self-suppressing it.
+        World repeatedRestore = new World();
+        repeatedRestore.rejectAt = 2;
+        repeatedRestore.sharedFailure = new IllegalStateException("repeated restore failure");
+        try {
+            GreatwoodTrunkPlacement.place(plan, "log", repeatedRestore);
+            throw new AssertionError("repeated restore failure hidden");
+        } catch (IllegalStateException expected) {
+            check(expected == repeatedRestore.sharedFailure, "first restore failure preserved");
+            check(expected.getSuppressed().length == 0, "repeated restore has no self-suppression");
+            check(repeatedRestore.writes.size() == 4, "all attempted restores executed");
+        }
+
         check(!GreatwoodTrunkPlacement.place(List.of(), "log", new World()), "empty plan rejected");
         check(!GreatwoodTrunkPlacement.place(List.of(plan.get(0), plan.get(0)),
                 "log", new World()), "duplicate plan rejected");
