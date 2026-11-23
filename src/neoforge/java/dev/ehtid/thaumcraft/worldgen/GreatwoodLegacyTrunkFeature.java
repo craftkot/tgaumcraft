@@ -41,6 +41,8 @@ public final class GreatwoodLegacyTrunkFeature extends Feature<NoneFeatureConfig
         if (plan.isEmpty()) return false;
         // Never spill into a neighboring chunk from this unregistered prototype.
         if ((origin.getX() & 15) == 15 || (origin.getZ() & 15) == 15) return false;
+        // Soil is one block below the origin; never query outside build bounds.
+        if (origin.getY() <= level.getMinBuildHeight()) return false;
         // Every column of the 2x2 trunk needs its own suitable foundation.
         for (int dx = 0; dx < 2; dx++) {
             for (int dz = 0; dz < 2; dz++) {
