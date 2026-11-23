@@ -163,7 +163,8 @@ def render() -> str:
     WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
     frame_line=""
     watcher_status=0
-    exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)
+    # On runners without inotify, GNU tail otherwise polls once per second; bound the live hit-to-click fallback.
+    exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)
     frame_tail_pid="$!"
     deadline=$((SECONDS + 5))
     while :; do
