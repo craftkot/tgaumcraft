@@ -402,6 +402,7 @@ def main() -> int:
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
         "WISP_ZAP_REAL_CLIENT=PASS",
+        "WISP_ALL_WISP_TEXTURES_NO_LOAD_ERRORS=PASS",
     )
     for marker in required:
         assert marker in generated, marker
@@ -580,6 +581,7 @@ def main() -> int:
     assert "WISP_ZAP_TEST_TIME=MIDNIGHT" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_FRAME_CAPTURE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_EFFECT_EXPIRED=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ALL_WISP_TEXTURES_NO_LOAD_ERRORS=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
     assert verify_wisp_zap_client.AIM_SCREENSHOTS == ("78-wisp-aim-check.png",)
     assert verify_wisp_zap_client.BASELINE_SCREENSHOTS == ("79-wisp-before-a.png", "79-wisp-before-b.png")
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
@@ -639,7 +641,6 @@ def main() -> int:
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
-        "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
@@ -673,6 +674,7 @@ def main() -> int:
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
+        "WISP_ALL_WISP_TEXTURES_NO_LOAD_ERRORS=PASS",
         "WISP_ZAP_REAL_CLIENT=PASS",
         "WISP_ZAP_BASELINE_NOISE=3",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF=18",
