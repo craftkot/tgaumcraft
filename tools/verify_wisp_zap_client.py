@@ -18,7 +18,8 @@ SCREENSHOTS = (
     "83-wisp-zap-after-expiry.png",
 )
 
-AIM_SCREENSHOTS = SCREENSHOTS[:3]
+AIM_SCREENSHOTS = SCREENSHOTS[:1]
+BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
 AIM_ROI = (128, 128, 448, 320)
 
 REQUIRED_LOG_MARKERS = (
@@ -38,6 +39,7 @@ REQUIRED_STATUS = (
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
     "WISP_RENDER_CAPTURE_TICK=",
+    "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
     "WISP_ZAP_REAL_CLIENT=PASS",
@@ -55,15 +57,10 @@ BAD_LOG_PATTERNS = (
 
 
 
-def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, int, int] | None]:
-    """Require Aer-tinted Wisp pixels near the 1024x768 viewport crosshair.
-
-    ImageMagick is already installed by the isolated client workflow. Reading
-    only the 128x128 crosshair ROI excludes the player's hand, HUD and most of
-    the animated platform/background, so a renderer callback alone cannot pass.
-    """
+def _read_aer_pixels(path: Path) -> tuple[list[str], list[int], list[int]]:
+    """Read Aer-tinted pixels from the fixed crosshair ROI."""
     if not path.is_file() or path.stat().st_size < 128:
-        return [f"missing or empty aim screenshot: {path.name}"], 0, None
+        return [f"missing or empty aim screenshot: {path.name}"], [], []
 
     width, height, left, top = AIM_ROI
     try:
@@ -76,16 +73,16 @@ def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, i
             check=False,
         )
     except FileNotFoundError:
-        return ["ImageMagick convert is required to inspect Wisp aim screenshots"], 0, None
+        return ["ImageMagick convert is required to inspect Wisp screenshots"], [], []
 
     if result.returncode != 0:
         detail = result.stderr.decode("utf-8", errors="replace").strip()
-        return [f"cannot decode Wisp aim screenshot {path.name}: {detail}"], 0, None
+        return [f"cannot decode Wisp screenshot {path.name}: {detail}"], [], []
 
     pixels = result.stdout
     expected = width * height * 3
     if len(pixels) != expected:
-        return [f"unexpected Wisp aim ROI byte count: {len(pixels)} != {expected}"], 0, None
+        return [f"unexpected Wisp ROI byte count: {len(pixels)} != {expected}"], [], []
 
     xs: list[int] = []
     ys: list[int] = []
@@ -98,10 +95,21 @@ def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, i
         ):
             xs.append(index % width)
             ys.append(index // width)
+    return [], xs, ys
+
+
+def _pixel_bounds(xs: list[int], ys: list[int]) -> tuple[int, int, int, int] | None:
+    return (min(xs), min(ys), max(xs), max(ys)) if xs else None
+
+
+def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, int, int] | None]:
+    """Require Aer-tinted Wisp pixels near the 1024x768 viewport crosshair."""
+    errors, xs, ys = _read_aer_pixels(path)
+    if errors:
+        return errors, 0, None
 
     count = len(xs)
-    bbox = (min(xs), min(ys), max(xs), max(ys)) if count else None
-    errors: list[str] = []
+    bbox = _pixel_bounds(xs, ys)
     if count < 12:
         errors.append(
             f"{path.name} crosshair ROI contains only {count} Aer-tinted pixels; expected at least 12"
@@ -109,6 +117,7 @@ def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, i
     else:
         center_x = sum(xs) / count
         center_y = sum(ys) / count
+        width, height, _, _ = AIM_ROI
         if (center_x - width / 2) ** 2 + (center_y - height / 2) ** 2 > 48 ** 2:
             errors.append(
                 f"{path.name} Aer-tinted pixels are not near the crosshair: "
@@ -116,6 +125,19 @@ def verify_aim_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, i
             )
     return errors, count, bbox
 
+
+def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, int, int, int] | None]:
+    """Require a clean crosshair ROI before the Wisp is summoned."""
+    errors, xs, ys = _read_aer_pixels(path)
+    if errors:
+        return errors, 0, None
+    bbox = _pixel_bounds(xs, ys)
+    if xs:
+        errors.append(
+            f"{path.name} baseline already contains {len(xs)} Aer-tinted pixels; "
+            "capture must happen before Wisp spawn"
+        )
+    return errors, len(xs), bbox
 
 def _first(pattern: str, text: str):
     return re.search(pattern, text)
@@ -248,6 +270,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             f"only {aim_marker_count}/{len(AIM_SCREENSHOTS)} crosshair-visibility markers were recorded"
         )
 
+    baseline_marker_count = status_text.count("WISP_BASELINE_SCREENSHOT_CLEAR=YES")
+    if baseline_marker_count < len(BASELINE_SCREENSHOTS):
+        errors.append(
+            f"only {baseline_marker_count}/{len(BASELINE_SCREENSHOTS)} pre-spawn baseline markers were recorded"
+        )
+    for name in BASELINE_SCREENSHOTS:
+        baseline_errors, _, _ = verify_baseline_screenshot(screenshot_dir / name)
+        errors.extend(baseline_errors)
+
     metrics = {}
     for key in ("WISP_ZAP_BASELINE_NOISE", "WISP_ZAP_TRANSIENT_PIXEL_DIFF"):
         match = re.search(rf"(?m)^{key}=([0-9]+)$", status_text)
@@ -282,6 +313,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--aim-only", type=Path, help="verify one crosshair-centered Aer Wisp screenshot")
+    parser.add_argument("--baseline-only", type=Path, help="verify one empty pre-Wisp baseline screenshot")
     parser.add_argument("client_log", type=Path, nargs="?")
     parser.add_argument("status_file", type=Path, nargs="?")
     parser.add_argument("screenshots", type=Path, nargs="?")
@@ -294,6 +326,15 @@ def main() -> int:
                 print(f"WISP_AIM_SCREENSHOT_ERROR: {error}", file=sys.stderr)
             return 1
         print(f"WISP_AIM_SCREENSHOT_VISIBLE=YES pixels={count} bbox={bbox[0]},{bbox[1]},{bbox[2]},{bbox[3]}")
+        return 0
+
+    if args.baseline_only is not None:
+        errors, count, _ = verify_baseline_screenshot(args.baseline_only)
+        if errors:
+            for error in errors:
+                print(f"WISP_BASELINE_SCREENSHOT_ERROR: {error}", file=sys.stderr)
+            return 1
+        print(f"WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels={count}")
         return 0
 
     if args.client_log is None or args.status_file is None or args.screenshots is None:
