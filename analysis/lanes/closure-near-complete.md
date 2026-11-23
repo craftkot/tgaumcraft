@@ -4162,3 +4162,10 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Reworked the driver to wait for an AFTER_LEVEL frame where the live Wisp is the actual EntityHitResult, verify the matching camera sample remains on the fixture platform, within 3 blocks and aimDot >= 0.99, then send the real left click immediately. Replaced the 200-iteration multi-process poll with one bounded tail -f | grep wait. The verifier now requires the actual entity-hit frame and a click within one game tick; BLOCK/MISS frames cannot authorize an attack.
 - Files changed: WispRenderSmokeProbe.java, WispAttackSmokeProbe.java, tools/client_wisp_zap_smoke.py, tools/test_wisp_zap_client_smoke.py, tools/verify_wisp_zap_client.py, this journal. No Wisp AI, damage, range, target selection, renderer, registry, Gradle or shared CI behavior changed.
 - No acceptance points awarded. Fixed audit remains 59/100; M16 4/6, M08 5/9. Pending exact-head offline contract, NeoForge build, dedicated-server and real-client checks. Next: inspect the new exact-head run; require same-frame EntityHitResult, real click, accepted server hurt, target acquisition, payload receive, three-tick additive FX and expiry before changing category.
+
+
+### 2026-11-23 — offline fixture correction after exact-head run
+
+- The first exact-head contract run for commit 451df57 failed only in the positive verifier fixture: the fixture's attack-camera sample had been advanced to tick 22 while the log fixture accidentally moved that camera line to tick 23; the post-hit capture status still used tick 22 while its capture tick was 23.
+- Corrected the synthetic positive fixture to model three distinct events: first rendered frame tick 21 (BLOCK), attackable frame/click tick 22 (ENTITY), and post-hit capture tick 23. This is a test-fixture correction only; no production code or real-client criteria were relaxed.
+- Re-run the exact-head offline contract and Bash syntax before trusting the new real-client run. No acceptance points awarded; fixed audit remains 59/100, M16 4/6, M08 5/9.

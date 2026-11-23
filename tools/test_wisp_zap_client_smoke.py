@@ -275,15 +275,15 @@ def main() -> int:
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 gameTime=520 blockPos=none tick=507",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
@@ -311,12 +311,12 @@ def main() -> int:
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
-        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
+        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
@@ -402,11 +402,11 @@ def main() -> int:
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=21 distance=1.0440 aimDot=0.999",
-                                "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=21 distance=1.0440 aimDot=0.8"), root
+            log, status.replace("WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.999",
+                                "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.8"), root
         ), "misaligned live attack camera frame must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=21",
+            log, status.replace("WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
                                 "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=23"), root
         ), "attack camera frame tick mismatch must fail"
         misordered_lines = log.splitlines()
@@ -437,7 +437,7 @@ def main() -> int:
             log.replace("TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21", "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22"), status, root
         ), "camera and renderer ticks must match"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_CAPTURE_TICK=22", "WISP_RENDER_CAPTURE_TICK=23"), root
+            log, status.replace("WISP_RENDER_CAPTURE_TICK=23", "WISP_RENDER_CAPTURE_TICK=24"), root
         ), "post-hit capture tick must match its copied camera sample"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_CAPTURE_ID=17", "WISP_RENDER_CAPTURE_ID=18"), root
