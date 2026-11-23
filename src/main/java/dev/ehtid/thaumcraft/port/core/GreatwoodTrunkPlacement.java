@@ -62,7 +62,9 @@ public final class GreatwoodTrunkPlacement {
             rollback(snapshots, attempted, world);
         } catch (RuntimeException rollbackFailure) {
             if (writeFailure != null) {
-                writeFailure.addSuppressed(rollbackFailure);
+                // A broken adapter may throw the same exception instance during
+                // placement and restoration. Java forbids self-suppression.
+                if (rollbackFailure != writeFailure) writeFailure.addSuppressed(rollbackFailure);
             } else {
                 throw rollbackFailure;
             }
