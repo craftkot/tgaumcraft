@@ -48,6 +48,7 @@ REQUIRED_STATUS = (
     "WISP_RENDER_FIRST_FRAME=YES",
     "WISP_RENDER_FIRST_FRAME_ID=",
     "WISP_RENDER_FIRST_FRAME_TICK=",
+    "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=",
     "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
     "WISP_RENDER_CAPTURE_ID=",
     "WISP_RENDER_CAPTURE_TICK=",
@@ -334,6 +335,9 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_RENDER_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)$",
         status_text,
     )
+    first_frame_line_number = _first(
+        r"(?m)^WISP_RENDER_FIRST_FRAME_LINE_NUMBER=(\d+)$", status_text
+    )
     attack_camera_frame = _first(
         r"(?m)^WISP_ATTACK_CAMERA_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
@@ -361,6 +365,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("first completed-frame status and rendered Wisp use different entity IDs")
         if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):
             errors.append("first completed-frame status and rendered Wisp use different ticks")
+    if first_frame_line_number is None:
+        errors.append("missing exact first-frame client-log cursor")
+    elif frame_status is not None:
+        frame_prefix = (
+            f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={frame_status.group(1)} "
+            f"tick={frame_status.group(2)} "
+        )
+        actual_frame_line = next(
+            (index for index, line in enumerate(log_text.splitlines(), start=1)
+             if line.startswith(frame_prefix)),
+            None,
+        )
+        if actual_frame_line is None or int(first_frame_line_number.group(1)) != actual_frame_line:
+            errors.append(
+                "first-frame cursor does not point to the exact completed frame: "
+                f"expectedLine={actual_frame_line} actualLine={first_frame_line_number.group(1)}"
+            )
     if attack_camera_frame is None:
         errors.append("missing camera frame used for the real Wisp attack")
     if attack_camera_complete is None:
