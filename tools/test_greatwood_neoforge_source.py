@@ -4,7 +4,8 @@ from pathlib import Path
 
 source = Path("src/neoforge/java/dev/ehtid/thaumcraft/worldgen/GreatwoodLegacyTrunkFeature.java").read_text()
 checks = {
-    "reject air trunk material": 'if (log.isAir()) throw new IllegalArgumentException("Greatwood log must not be air")' in source,
+    "reject air trunk material": "log.isAir()" in source and "IllegalArgumentException" in source,
+    "reject fluid-filled trunk material": "!log.getFluidState().isEmpty()" in source,
     "real Feature subclass": "extends Feature<NoneFeatureConfiguration>" in source,
     "one legacy seed draw": "new Random(context.random().nextLong())" in source,
     "legacy height limit": "11 + treeRandom.nextInt(11)" in source,
