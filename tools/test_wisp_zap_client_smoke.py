@@ -143,7 +143,7 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME=YES",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES",
-        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'",
+        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'",
         'open_delay="0.5"',
         'type_delay="2"',
         'sleep "$open_delay"',
@@ -261,14 +261,14 @@ def main() -> int:
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
     reaim_body = _bash_function_body(generated, "wisp_reaim_camera_at_live_wisp")
     assert " 0.1 1" not in reaim_body, "attack-time re-aim must not override the reliable default chat-open/type pacing"
-    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'" in reaim_body
+    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'" in reaim_body
     assert "tag=tc_wisp_zap_smoke" in reaim_body
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    assert "run tp @p ~1.0 ~ ~ facing ~ ~0.45 ~" in move_body
+    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
-    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~" in reaim_body
-    assert "/tp @p ~ ~ ~ facing entity" not in reaim_body
+    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes" in reaim_body
+    assert "facing entity @s eyes" in reaim_body
     assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reaim_body
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
