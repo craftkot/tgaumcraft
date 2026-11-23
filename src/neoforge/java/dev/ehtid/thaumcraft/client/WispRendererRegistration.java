@@ -91,11 +91,18 @@ public final class WispRendererRegistration {
                     if (player != null) {
                         Vec3 playerEye = player.getEyePosition(partialTick);
                         Vec3 wispEye = entity.getEyePosition(partialTick);
-                        Vec3 toWisp = wispEye.subtract(playerEye);
-                        double aimDot = toWisp.lengthSqr() < 1.0E-12D
+                        // RenderWisp/this billboard is centered at entity position, not its eye.
+                        Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());
+                        Vec3 toWispRenderOrigin = wispRenderOrigin.subtract(playerEye);
+                        Vec3 toWispEye = wispEye.subtract(playerEye);
+                        double aimDot = toWispRenderOrigin.lengthSqr() < 1.0E-12D
                                 ? 1.0D
-                                : player.getViewVector(partialTick).dot(toWisp.normalize());
+                                : player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize());
+                        double eyeAimDot = toWispEye.lengthSqr() < 1.0E-12D
+                                ? 1.0D
+                                : player.getViewVector(partialTick).dot(toWispEye.normalize());
                         System.out.println("TC_SMOKE_WISP_CAMERA=YES id=" + entity.getId()
+                                + " aimTarget=render_origin"
                                 + " tick=" + entity.tickCount
                                 + " playerX=" + player.getX()
                                 + " playerY=" + player.getY()
@@ -111,7 +118,8 @@ public final class WispRendererRegistration {
                                 + " wispEyeX=" + wispEye.x
                                 + " wispEyeY=" + wispEye.y
                                 + " wispEyeZ=" + wispEye.z
-                                + " aimDot=" + aimDot);
+                                + " aimDot=" + aimDot
+                                + " eyeAimDot=" + eyeAimDot);
                     }
                     System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
                             + " aspect=" + entity.getAspectType()

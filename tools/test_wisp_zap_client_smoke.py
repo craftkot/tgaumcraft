@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 import subprocess
 import struct
+import math
 import tempfile
 import zlib
 
@@ -40,7 +41,21 @@ def write_png(path: Path, patch: tuple[int, int, int, int] | None = (506, 378, 5
 
 
 
+def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
+    pitch = math.radians(pitch_degrees)
+    length = math.hypot(delta_y, delta_z)
+    return (-math.sin(pitch) * delta_y + math.cos(pitch) * delta_z) / length
+
+
 def main() -> int:
+    # BETA26 RenderWisp draws at entity position, while getEyePosition is 0.765 blocks higher.
+    old_eye_dot = _aim_dot(29.0, -0.555, 1.0)
+    old_render_dot = _aim_dot(29.0, -1.32, 1.0)
+    new_render_dot = _aim_dot(52.0, -1.32, 1.0)
+    assert old_eye_dot >= 0.99 and old_render_dot < 0.99 and new_render_dot >= 0.99, (
+        old_eye_dot, old_render_dot, new_render_dot
+    )
+
     anchor = "  # The initial world is already creative + peaceful, as established"
     fixture = "#!/usr/bin/env bash\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n" + anchor + "\n"
     with patch.object(Path, "read_text", return_value=fixture):
@@ -56,7 +71,7 @@ def main() -> int:
         "Successfully filled 81 block(s)",
         "WISP_FIXTURE_PLATFORM_FILL=YES",
         '/fill 6 148 6 14 148 14 minecraft:stone',
-        '/tp @p 12.5 149 10.5 0 29',
+        '/tp @p 12.5 149 10.5 0 52',
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
@@ -94,16 +109,16 @@ def main() -> int:
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
     fill_index = setup.index("wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'")
     fill_wait_index = setup.index('wisp_wait_for_fill "$fill_log_lines"', fill_index)
-    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 29'", fill_wait_index)
+    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 52'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', support_index)
     summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5", spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', rendered_index)
-    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < spawn_snapshot_index < summon_index < rendered_index < telemetry_index < aim_capture_index, (
-        "the player must be supported and pre-aimed before Wisp spawn; only a fresh post-spawn render and camera sample may precede the screenshot"
+    aim_capture_index = setup.index("wisp_capture 78-wisp-aim-check", rendered_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', aim_capture_index)
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < spawn_snapshot_index < summon_index < rendered_index < aim_capture_index < telemetry_index, (
+        "the player must be supported and pre-aimed at the render origin before Wisp spawn; capture immediately after the first fresh render, then validate that frame's camera sample"
     )
     assert "Successfully filled 81 block(s)" in generated
     assert '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' not in generated
@@ -245,6 +260,11 @@ def main() -> int:
     assert "TC_SMOKE_WISP_CAMERA=YES id=" in renderer_registration
     assert "player.getEyePosition(partialTick)" in renderer_registration
     assert "entity.getEyePosition(partialTick)" in renderer_registration
+    assert "Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());" in renderer_registration
+    assert "player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize())" in renderer_registration
+    assert "player.getViewVector(partialTick).dot(toWisp.normalize())" not in renderer_registration
+    assert "aimTarget=render_origin" in renderer_registration
+    assert "eyeAimDot=" in renderer_registration
     assert "player.getViewVector(partialTick)" in renderer_registration
     assert "aimDot=" in renderer_registration
     assert renderer_registration.index("TC_SMOKE_WISP_CAMERA=YES id=") < renderer_registration.index("TC_SMOKE_WISP_RENDERED=YES id="), (
