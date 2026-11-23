@@ -97,7 +97,9 @@ def main() -> int:
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
-        "--aim-only",
+        "python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-a.png",
+        "python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-b.png",
+        "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
         "wisp_capture 79-wisp-before-a",
         "wisp_capture 79-wisp-before-b",
         "WISP_FIXTURE_PLATFORM_FILL=YES",
@@ -115,13 +117,21 @@ def main() -> int:
     fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 52'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
-    spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', support_index)
+    baseline_a_index = setup.index("wisp_capture 79-wisp-before-a", support_index)
+    baseline_b_index = setup.index("wisp_capture 79-wisp-before-b", baseline_a_index)
+    baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
+    spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
     summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5", spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check', summon_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', rendered_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < spawn_snapshot_index < summon_index < rendered_index < telemetry_index, (
-        "the player must be supported and pre-aimed at the render origin before Wisp spawn; capture must happen inside the first-render wait before telemetry parsing"
+    click_index = setup.index("xdotool click 1", rendered_index)
+    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", click_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', target_index)
+    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < click_index < target_index < telemetry_index < aim_verify_index, (
+        "capture stable baselines before spawn, then attack on the first completed render frame before slower telemetry/pixel verification"
     )
+    between_render_and_click = setup[rendered_index:click_index]
+    assert "sleep " not in between_render_and_click, "do not let autonomous Wisp flight advance before the real melee click"
     fresh_render_body = generated.split("  wisp_wait_for_fresh_render() {", 1)[1].split("  }", 1)[0]
     frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
     capture_index = fresh_render_body.index('wisp_capture "$capture_name"')
@@ -147,6 +157,9 @@ def main() -> int:
     assert "run tp @s ~ ~ ~ ~ ~" not in generated
 
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert verify_wisp_zap_client.AIM_SCREENSHOTS == ("78-wisp-aim-check.png",)
+    assert verify_wisp_zap_client.BASELINE_SCREENSHOTS == ("79-wisp-before-a.png", "79-wisp-before-b.png")
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
@@ -184,13 +197,14 @@ def main() -> int:
         "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
+        "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_TICK=21",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
-        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
-        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
+        "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
+        "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
         "WISP_ZAP_REAL_CLIENT=PASS",
         "WISP_ZAP_BASELINE_NOISE=3",
@@ -202,6 +216,8 @@ def main() -> int:
             target = root / name
             if name in verify_wisp_zap_client.AIM_SCREENSHOTS:
                 write_png(target)
+            elif name in verify_wisp_zap_client.BASELINE_SCREENSHOTS:
+                write_png(target, None)
             else:
                 target.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 256)
         positive = root / "aim-positive.png"
@@ -220,11 +236,29 @@ def main() -> int:
         aim_errors, count, _ = verify_wisp_zap_client.verify_aim_screenshot(invisible)
         assert aim_errors and count == 0, aim_errors
 
+        clean_baseline = root / "baseline-clean.png"
+        write_png(clean_baseline, None)
+        baseline_errors, baseline_count, _ = verify_wisp_zap_client.verify_baseline_screenshot(clean_baseline)
+        assert baseline_errors == [] and baseline_count == 0, (baseline_errors, baseline_count)
+        contaminated_baseline = root / "baseline-contaminated.png"
+        write_png(contaminated_baseline)
+        baseline_errors, baseline_count, _ = verify_wisp_zap_client.verify_baseline_screenshot(contaminated_baseline)
+        assert baseline_errors and baseline_count == 144, (baseline_errors, baseline_count)
+
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES", ""), root
         ), "stale pre-spawn renderer callback must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", ""), root
+        ), "baseline must be explicitly captured before Wisp spawn"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_BASELINE_SCREENSHOT_CLEAR=YES", "", 1), root
+        ), "both pre-spawn baseline screenshots must be checked"
+        write_png(root / verify_wisp_zap_client.BASELINE_SCREENSHOTS[0])
+        assert verify_wisp_zap_client.verify(log, status, root), "a Wisp-colored baseline must fail closed"
+        write_png(root / verify_wisp_zap_client.BASELINE_SCREENSHOTS[0], None)
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21", ""), status, root
         ), "missing AFTER_LEVEL frame completion must fail"
