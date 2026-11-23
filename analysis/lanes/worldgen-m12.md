@@ -1018,3 +1018,11 @@
 - Found a concrete test coverage gap: `tools/test_legacy_tree_attempt.sh` compiled and executed only LegacyTreeAttemptTest, silently omitting the new LegacyTreeAttemptRngSequenceTest (11 assertions). Commit `86651067e525ac4d37ebac97e5fcc474c02db7e7` now compiles and executes both tests, with shell fail-fast behavior unchanged.
 - Runner change is committed but exact-head Java 21 execution, NeoForge compilation, native GameTest and real new-chunk worldgen have NOT been verified in this pass. No claim that the 11 RNG assertions passed. Check CI for journal HEAD separately.
 - Remaining: Greatwood Feature, flora/ore/crystal worldgen, natural biome registration, 17/81 Silverwood exclusions and non-atomic rollback. Next: run updated runner on exact SHA and add native failure-injection coverage. No main, foreign branch, shared registry, Gradle or merge changes; historical audit 59/100.
+
+
+## 2026-11-23 — M12 RNG rejection/fallback regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and own lane; checked six feature branches, open PR search, main comparison (ahead 276 / behind 0 before edit) and existing Draft PR #9.
+- Test-only commit c6d3c203e59a5d1caa430899c3d7dc2b0c28a70c adds four deterministic assertions to LegacyTreeAttemptRngSequenceTest: Greatwood strict biome threshold rejection consumes only its float (no spider roll), and magical Silverwood fallback consumes exactly one biome float. Expected sequence-test assertions increase from 11 to 15; not an executed PASS.
+- Previous exact SHA 5fc1d04f2cd57b1575188095945f6c372d7448fc has GitHub Actions #45073346540 SUCCESS and CircleCI verify-connection SUCCESS. These do not prove standalone M12 runner or Minecraft worldgen. Local git ls-remote still fails DNS resolution of github.com, so exact checkout Java runner, NeoForge GameTest and new-chunk placement were NOT run for the new SHA.
+- Still outstanding: isolated Greatwood Feature, flora/ores/crystals, natural biome/placed-feature registration, 17/81 Silverwood origin exclusions, best-effort rollback and native in-world proof. Next: execute tools/test_legacy_tree_attempt.sh on exact SHA, then implement isolated Greatwood Feature and native rollback coverage. No main, shared registry, Gradle, foreign branch or merge changes. Historical audit 59/100 unchanged.
