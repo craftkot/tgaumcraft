@@ -52,6 +52,7 @@ public final class WispZapClientEffects {
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final Map<Integer, Zap> ACTIVE = new ConcurrentHashMap<>();
     private static final Set<Long> SMOKE_RENDERED = ConcurrentHashMap.newKeySet();
+    private static final Map<Long, Integer> SMOKE_FRAME_AGE = new ConcurrentHashMap<>();
     private static final RenderType BETA26_ADDITIVE_BOLT = BoltRenderTypes.additive();
 
     private WispZapClientEffects() {}
@@ -81,7 +82,9 @@ public final class WispZapClientEffects {
         if (SMOKE_PROBE) {
             System.out.println("TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=" + source.getId()
                     + " target=" + target.getId() + " color=#"
-                    + String.format("%06X", zap.rgb()));
+                    + String.format("%06X", zap.rgb())
+                    + " createdAt=" + zap.createdAt()
+                    + " clientGameTime=" + clientLevel.getGameTime());
         }
     }
 
@@ -92,13 +95,21 @@ public final class WispZapClientEffects {
         if (level == null) {
             ACTIVE.clear();
             SMOKE_RENDERED.clear();
+            SMOKE_FRAME_AGE.clear();
             return;
         }
 
         long gameTime = level.getGameTime();
-        ACTIVE.entrySet().removeIf(entry ->
-                !entry.getValue().dimension().equals(level.dimension())
-                        || gameTime - entry.getValue().createdAt() >= 3L);
+        ACTIVE.entrySet().removeIf(entry -> {
+            Zap zap = entry.getValue();
+            boolean wrongDimension = !zap.dimension().equals(level.dimension());
+            boolean expired = gameTime - zap.createdAt() >= 3L;
+            if (wrongDimension || expired) {
+                forgetSmokeState(zap, gameTime, expired);
+                return true;
+            }
+            return false;
+        });
     }
 
     @SubscribeEvent
@@ -111,6 +122,8 @@ public final class WispZapClientEffects {
         net.minecraft.client.multiplayer.ClientLevel level = minecraft.level;
         if (level == null) {
             ACTIVE.clear();
+            SMOKE_RENDERED.clear();
+            SMOKE_FRAME_AGE.clear();
             return;
         }
 
@@ -129,8 +142,12 @@ public final class WispZapClientEffects {
             }
 
             double age = level.getGameTime() - zap.createdAt() + partialTick;
-            if (age < 0.0D || age >= 3.0D) {
+            if (age < 0.0D) {
+                continue;
+            }
+            if (age >= 3.0D) {
                 ACTIVE.remove(entry.getKey(), zap);
+                forgetSmokeState(zap, level.getGameTime(), true);
                 continue;
             }
 
@@ -174,17 +191,47 @@ public final class WispZapClientEffects {
         if (!rendered.isEmpty()) {
             buffers.endBatch(BETA26_ADDITIVE_BOLT);
             if (SMOKE_PROBE) {
+                long gameTime = level.getGameTime();
                 for (ZapRender result : rendered) {
-                    long key = (((long) result.zap().sourceId()) << 32)
-                            ^ (result.zap().createdAt() & 0xFFFFFFFFL);
+                    Zap zap = result.zap();
+                    long key = smokeKey(zap);
+                    int ageTick = (int) Math.floor(result.age());
+                    Entity source = level.getEntity(zap.sourceId());
+                    int wispTick = source == null ? -1 : source.tickCount;
                     if (SMOKE_RENDERED.add(key)) {
                         System.out.println("TC_SMOKE_WISP_ZAP_RENDERED=YES source="
-                                + result.zap().sourceId() + " target=" + result.zap().targetId()
+                                + zap.sourceId() + " target=" + zap.targetId()
                                 + " points=" + result.pointCount() + " age=" + result.age()
+                                + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
+                                + " createdAt=" + zap.createdAt() + " gameTime=" + gameTime
+                                + " ageTick=" + ageTick);
+                    }
+                    Integer previousAgeTick = SMOKE_FRAME_AGE.put(key, ageTick);
+                    if (previousAgeTick == null || previousAgeTick.intValue() != ageTick) {
+                        System.out.println("TC_SMOKE_WISP_ZAP_FRAME=YES source=" + zap.sourceId()
+                                + " target=" + zap.targetId() + " createdAt=" + zap.createdAt()
+                                + " gameTime=" + gameTime + " wispTick=" + wispTick
+                                + " ageTick=" + ageTick + " age=" + result.age()
+                                + " points=" + result.pointCount()
                                 + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF");
                     }
                 }
             }
+        }
+    }
+
+    private static long smokeKey(Zap zap) {
+        return (((long) zap.sourceId()) << 32) ^ (zap.createdAt() & 0xFFFFFFFFL);
+    }
+
+    private static void forgetSmokeState(Zap zap, long gameTime, boolean expired) {
+        long key = smokeKey(zap);
+        SMOKE_FRAME_AGE.remove(key);
+        SMOKE_RENDERED.remove(key);
+        if (SMOKE_PROBE && expired) {
+            System.out.println("TC_SMOKE_WISP_ZAP_EXPIRED=YES source=" + zap.sourceId()
+                    + " target=" + zap.targetId() + " createdAt=" + zap.createdAt()
+                    + " gameTime=" + gameTime + " ageTicks=" + (gameTime - zap.createdAt()));
         }
     }
 
