@@ -174,10 +174,11 @@ printf '%s\n' "$frame_line"
     assert events == [], events
 
 
+
 def _test_capture_reaim_retry(generated: str) -> None:
     """The post-hit camera must re-aim again if the live Wisp moved after the first command."""
     body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
-    function = "  wisp_capture_aim_after_hit_with_retries() {\\n" + body + "\\n  }\\n"
+    function = "  wisp_capture_aim_after_hit_with_retries() {\n" + body + "\n  }\n"
 
     def run_case(success_on: int) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-reaim-retry-") as temporary:
@@ -185,17 +186,25 @@ def _test_capture_reaim_retry(generated: str) -> None:
             (root / "client-smoke").mkdir()
             (root / "client-smoke" / "client.log").write_text("", encoding="utf-8")
             script = (
-                "set -euo pipefail\\n"
-                "WISP_CAMERA_REAIM_LINE_NUMBER=\\n"
-                "reaim_calls=0\\n"
-                "capture_calls=0\\n"
-                "wisp_reaim_camera_at_live_wisp() { reaim_calls=$((reaim_calls + 1)); WISP_CAMERA_REAIM_LINE_NUMBER=$((100 + reaim_calls)); }\\n"
-                "wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ \\\"$1\\\" = \\\"$WISP_CAMERA_REAIM_LINE_NUMBER\\\" ] || return 90; if [ \\\"$capture_calls\\\" -ge " + str(success_on) + " ]; then return 0; fi; return 1; }\\n"
+                "set -euo pipefail\n"
+                'WISP_CAMERA_REAIM_LINE_NUMBER=""\n'
+                "reaim_calls=0\n"
+                "capture_calls=0\n"
+                "wisp_reaim_camera_at_live_wisp() { reaim_calls=$((reaim_calls + 1)); WISP_CAMERA_REAIM_LINE_NUMBER=$((100 + reaim_calls)); }\n"
+                'wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ "$1" = "$WISP_CAMERA_REAIM_LINE_NUMBER" ] || return 90; if [ "$capture_calls" -ge '
+                + str(success_on)
+                + ' ]; then return 0; fi; return 1; }\n'
                 + function
-                + "if wisp_capture_aim_after_hit_with_retries; then result=0; else result=$?; fi\\n"
-                + "printf 'RESULT=%s REAIMS=%s CAPTURES=%s\\\\n' \\\"$result\\\" \\\"$reaim_calls\\\" \\\"$capture_calls\\\"\\n"
+                + "if wisp_capture_aim_after_hit_with_retries; then result=0; else result=$?; fi\n"
+                + 'echo "RESULT=$result REAIMS=$reaim_calls CAPTURES=$capture_calls"\n'
             )
-            process = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, check=False)
+            process = subprocess.run(
+                ["bash", "-c", script],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             status_path = root / "client-smoke-status.txt"
             status = status_path.read_text(encoding="utf-8") if status_path.exists() else ""
             return process.returncode, process.stdout, status
@@ -210,7 +219,6 @@ def _test_capture_reaim_retry(generated: str) -> None:
     assert rc == 0, (rc, output)
     assert "RESULT=1 REAIMS=3 CAPTURES=3" in output, output
     assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in status, status
-
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
     length = math.hypot(delta_y, delta_z)
