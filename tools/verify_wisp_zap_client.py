@@ -32,6 +32,8 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CAMERA_TRACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
+    "TC_SMOKE_WISP_ZAP_FRAME=YES",
+    "TC_SMOKE_WISP_ZAP_EXPIRED=YES",
 )
 
 REQUIRED_STATUS = (
@@ -62,6 +64,9 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_CAMERA_FRAME_USED=YES",
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
+    "WISP_ZAP_TEST_TIME=MIDNIGHT",
+    "WISP_ZAP_FRAME_CAPTURE=YES",
+    "WISP_ZAP_EFFECT_EXPIRED=YES",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
     "WISP_ZAP_REAL_CLIENT=PASS",
@@ -69,8 +74,8 @@ REQUIRED_STATUS = (
 
 BAD_LOG_PATTERNS = (
     re.compile(
-        r"(?:Missing textures|Unable to load texture|Failed to load texture).*essentia\.png"
-        r"|essentia\.png.*(?:missing texture|Unable to load)",
+        r"(?:Missing textures|Unable to load texture|Failed to load texture).*(?:essentia|auranodes|particles)\.png"
+        r"|(?:essentia|auranodes|particles)\.png.*(?:missing texture|Unable to load)",
         re.IGNORECASE,
     ),
     re.compile(r'Exception in thread "Render thread"|Minecraft has crashed|Mod loading has failed', re.IGNORECASE),
@@ -293,6 +298,94 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         age = float(rendered.group(4))
         if not 0.0 <= age < 3.0:
             errors.append(f"FXBolt render age outside BETA26 three-tick lifetime: {age}")
+
+    zap_frame_pattern = re.compile(
+        r"TC_SMOKE_WISP_ZAP_FRAME=YES source=(\d+) target=(\d+) createdAt=(\d+) "
+        r"gameTime=(\d+) wispTick=(\d+) ageTick=(\d+) age=([0-9.]+) points=(\d+)"
+    )
+    zap_frames = list(zap_frame_pattern.finditer(log_text))
+    captured_frames = re.findall(
+        r"(?m)^WISP_ZAP_FRAME_CAPTURE=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) wispTick=(\d+)$",
+        status_text,
+    )
+    if len(captured_frames) != 3:
+        errors.append(f"expected exactly three distinct captured FXBolt frames, got {len(captured_frames)}")
+    else:
+        expected_ages = [0, 1, 2]
+        actual_ages = [int(frame[2]) for frame in captured_frames]
+        if actual_ages != expected_ages:
+            errors.append(f"captured FXBolt ages are not consecutive BETA26 ticks: {actual_ages}")
+        if len({(frame[0], frame[1]) for frame in captured_frames}) != 1:
+            errors.append("captured FXBolt frames do not belong to one source/createdAt event")
+        if len({frame[3] for frame in captured_frames}) != 3:
+            errors.append("captured FXBolt frames do not use three distinct completed Wisp ticks")
+        for source_id, created_at, age_tick, wisp_tick in captured_frames:
+            matching_frame = next(
+                (
+                    frame for frame in zap_frames
+                    if frame.group(1) == source_id
+                    and frame.group(3) == created_at
+                    and frame.group(5) == wisp_tick
+                    and frame.group(6) == age_tick
+                ),
+                None,
+            )
+            if matching_frame is None:
+                errors.append(
+                    f"captured FXBolt screenshot has no matching rendered age={age_tick} frame "
+                    f"for source={source_id} createdAt={created_at} wispTick={wisp_tick}"
+                )
+            elif int(matching_frame.group(8)) <= 2:
+                errors.append(f"FXBolt age={age_tick} frame has no interior polycone points")
+
+        if sent is not None:
+            source_id, target_id = captured_frames[0][0], sent.group(2)
+            created_at = captured_frames[0][1]
+            payload_for_event = re.search(
+                rf"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source={re.escape(source_id)} "
+                rf"target={re.escape(target_id)} color=#FFFF7E createdAt={re.escape(created_at)} clientGameTime=\d+",
+                log_text,
+            )
+            rendered_for_event = re.search(
+                rf"TC_SMOKE_WISP_ZAP_RENDERED=YES source={re.escape(source_id)} "
+                rf"target={re.escape(target_id)} points=(\d+) age=([0-9.]+) "
+                rf"texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF "
+                rf"createdAt={re.escape(created_at)} gameTime=\d+ ageTick=\d+",
+                log_text,
+            )
+            expired_for_event = re.search(
+                rf"TC_SMOKE_WISP_ZAP_EXPIRED=YES source={re.escape(source_id)} "
+                rf"target={re.escape(target_id)} createdAt={re.escape(created_at)} "
+                rf"gameTime=(\d+) ageTicks=(\d+)",
+                log_text,
+            )
+            status_expired = re.search(
+                rf"(?m)^WISP_ZAP_EFFECT_EXPIRED=YES source={re.escape(source_id)} createdAt={re.escape(created_at)}$",
+                status_text,
+            )
+            if payload_for_event is None:
+                errors.append("captured FXBolt cycle has no matching client payload receipt")
+            if rendered_for_event is None:
+                errors.append("captured FXBolt cycle has no matching completed additive render batch")
+            if expired_for_event is None or status_expired is None:
+                errors.append("captured FXBolt cycle has no matching three-tick expiry evidence")
+            elif int(expired_for_event.group(2)) < 3:
+                errors.append("FXBolt expired before the BETA26 three-tick lifetime")
+
+            if rendered_for_event is not None and int(rendered_for_event.group(1)) <= 2:
+                errors.append("captured FXBolt render batch has no interior polycone points")
+
+            last_capture_position = status_text.find(
+                f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=2 "
+            )
+            camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_AFTER_HIT=YES")
+            if last_capture_position < 0 or camera_capture_position < 0 or last_capture_position > camera_capture_position:
+                errors.append("transient FXBolt frames were not captured before the later Wisp camera re-anchor")
+
+            baseline_time_position = status_text.find("WISP_ZAP_TEST_TIME=MIDNIGHT")
+            baseline_capture_position = status_text.find("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN")
+            if baseline_time_position < 0 or baseline_capture_position < 0 or baseline_time_position > baseline_capture_position:
+                errors.append("night fixture time was not established before baseline screenshots")
 
     for marker in REQUIRED_LOG_MARKERS:
         if marker not in log_text:
