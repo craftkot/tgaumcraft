@@ -681,12 +681,23 @@ def main() -> int:
         ), "missing live attack camera frame must fail"
         fallback_status = status.replace(
             "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
-            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\\n"
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\n"
             "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         )
         assert not verify_wisp_zap_client.verify(log, fallback_status, root), (
             "live-reposition attack path with its server teleport marker must remain valid"
         )
+        missing_attack_reaim_status = fallback_status.replace(
+            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
+            "",
+        )
+        missing_attack_reaim_errors = verify_wisp_zap_client.verify(
+            log, missing_attack_reaim_status, root
+        )
+        assert any(
+            error == "missing provenance for the camera sample used by the real attack"
+            for error in missing_attack_reaim_errors
+        ), "missing attack-camera provenance must fail closed without raising"
         assert verify_wisp_zap_client.verify(
             log, fallback_status.replace("WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION", ""), root
         ), "live-reposition attack without its own teleport marker must fail"
