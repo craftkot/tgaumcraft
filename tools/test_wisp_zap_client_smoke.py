@@ -42,6 +42,33 @@ def write_png(path: Path, patch: tuple[int, int, int, int] | None = (506, 378, 5
 
 
 
+def _bash_function_body(script: str, name: str) -> str:
+    """Extract a generated Bash function without mistaking nested braces for its end."""
+    signature = f"  {name}() {{\n"
+    if script.count(signature) != 1:
+        raise AssertionError(f"expected exactly one generated function {name!r}")
+    remainder = script.split(signature, 1)[1]
+    closing = "\n  }\n"
+    if closing not in remainder:
+        raise AssertionError(f"generated function {name!r} has no top-level closing line")
+    return remainder.split(closing, 1)[0]
+
+
+def _test_bash_function_body_extraction() -> None:
+    nested = (
+        "  probe() {\n"
+        "    awk 'BEGIN {\n"
+        "      print \"nested\"\n"
+        "    }'\n"
+        "    echo after-nested-block\n"
+        "  }\n"
+        "  next() { true; }\n"
+    )
+    body = _bash_function_body(nested, "probe")
+    assert "print \"nested\"" in body
+    assert body.endswith("echo after-nested-block")
+
+
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
     length = math.hypot(delta_y, delta_z)
@@ -49,6 +76,7 @@ def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
 
 
 def main() -> int:
+    _test_bash_function_body_extraction()
     # BETA26 RenderWisp draws at entity position, while getEyePosition is 0.765 blocks higher.
     old_eye_dot = _aim_dot(29.0, -0.555, 1.0)
     old_render_dot = _aim_dot(29.0, -1.32, 1.0)
@@ -173,7 +201,7 @@ def main() -> int:
     assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
         "the attack helper must re-aim, wait for a matching completed frame, and prove the real hit before post-hit capture"
     )
-    attack_body = generated.split("  wisp_attack_live_wisp() {", 1)[1].split("  }", 1)[0]
+    attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
     assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
@@ -204,19 +232,19 @@ def main() -> int:
     assert "sleep " not in between_render_and_attack and "wisp_capture" not in between_render_and_attack, (
         "no external capture or delay may be inserted before the live-target retry helper"
     )
-    fresh_render_body = generated.split("  wisp_wait_for_fresh_render() {", 1)[1].split("  }", 1)[0]
+    fresh_render_body = _bash_function_body(generated, "wisp_wait_for_fresh_render")
     frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
     first_frame_status_index = fresh_render_body.index("WISP_RENDER_FIRST_FRAME=YES")
     assert frame_marker_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
     assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
-    capture_body = generated.split("  wisp_capture_aim_after_hit() {", 1)[1].split("  }", 1)[0]
+    capture_body = _bash_function_body(generated, "wisp_capture_aim_after_hit")
     capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
     capture_aim_guard_index = capture_body.index('awk -v dot="$aim_dot"')
     capture_image_index = capture_body.index("wisp_capture 78-wisp-aim-check")
     assert capture_aim_guard_index < capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
         "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
-    wait_attack_body = generated.split("  wisp_wait_for_attack_frame() {", 1)[1].split("  }", 1)[0]
+    wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     assert "timeout 5s bash -c" in wait_attack_body
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
     assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
@@ -225,17 +253,17 @@ def main() -> int:
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
     assert "WISP_ATTACKABLE_FRAME=YES" in wait_attack_body
     assert "for _ in $(seq 1 200)" not in wait_attack_body
-    fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
+    fast_command_body = _bash_function_body(generated, "wisp_fast_command")
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert 'open_delay="0.5"' in fast_command_body and 'type_delay="2"' in fast_command_body
     assert 'sleep "$open_delay"' in fast_command_body
     assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
-    reaim_body = generated.split("  wisp_reaim_camera_at_live_wisp() {", 1)[1].split("  }", 1)[0]
+    reaim_body = _bash_function_body(generated, "wisp_reaim_camera_at_live_wisp")
     assert " 0.1 1" not in reaim_body, "attack-time re-aim must not override the reliable default chat-open/type pacing"
     assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'" in reaim_body
     assert "tag=tc_wisp_zap_smoke" in reaim_body
-    move_body = generated.split("  wisp_move_player_to_live_wisp() {", 1)[1].split("  }", 1)[0]
+    move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~ ~ facing ~ ~0.45 ~" in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
@@ -273,10 +301,10 @@ def main() -> int:
     assert "wisp_wait_for_exact_aim_teleport" not in generated
     assert "/fill 8 148 8 12 148 14 minecraft:stone" not in generated
     assert generated.count("  send_chat() {") == 1
-    wisp_body = generated.split("  wisp_command() {", 1)[1]
+    wisp_body = _bash_function_body(generated, "wisp_command")
     assert "sleep 4" not in wisp_body
     assert "xdotool mousemove" not in generated
-    assert "sleep 0.08" not in generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
+    assert "sleep 0.08" not in _bash_function_body(generated, "wisp_fast_command")
     syntax = subprocess.run(
         ["bash", "-n"], input=generated, text=True, capture_output=True, check=False
     )
