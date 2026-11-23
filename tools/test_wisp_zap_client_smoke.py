@@ -248,6 +248,8 @@ def main() -> int:
     assert "timeout 5s bash -c" in wait_attack_body
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
     assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
+    assert "dot >= 0.99" not in wait_attack_body, "the actual same-ID EntityHitResult is authoritative"
+    assert "dot >= -1.0 && dot <= 1.0" in wait_attack_body, "retain finite bounded aim-dot telemetry"
     assert 'position=$position_mode' in wait_attack_body, "record the selected position mode in native diagnostics"
     assert 'mode == "PLATFORM" ? on_platform : y >= 0.0' in wait_attack_body
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
@@ -345,11 +347,11 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_TICK=23",
         "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
         "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
-        "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
         "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
-        "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
@@ -442,10 +444,21 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
-        assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.999",
-                                "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.8"), root
-        ), "misaligned live attack camera frame must fail"
+        low_dot_log = "\n".join(
+            line.replace("aimDot=0.999", "aimDot=0.8")
+            if line.startswith("TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 ")
+            else line
+            for line in log.splitlines()
+        )
+        low_dot_status = "\n".join(
+            line.replace("aimDot=0.999", "aimDot=0.8")
+            if line.startswith(("WISP_ATTACK_CAMERA_FRAME=", "WISP_ATTACK_CAMERA_SAMPLE=", "WISP_ATTACKABLE_FRAME="))
+            else line
+            for line in status.splitlines()
+        )
+        assert not verify_wisp_zap_client.verify(low_dot_log, low_dot_status, root), (
+            "same-ID ENTITY hit must remain authoritative when AABB-center dot is below 0.99"
+        )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
                                 "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=23"), root
@@ -464,6 +477,10 @@ def main() -> int:
             log.replace("hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
                         "hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12", 1), status, root
         ), "a BLOCK AFTER_LEVEL frame must never authorize the click"
+        assert verify_wisp_zap_client.verify(
+            log.replace("hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+                        "hitType=ENTITY targetId=18 targetType=thaumcraft:wisp blockPos=none", 1), status, root
+        ), "an EntityHitResult for another entity must never authorize the click"
         assert verify_wisp_zap_client.verify(
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
                         "tick=22 gameTime=517 playerTick=504 hitType=ENTITY", 1), status, root

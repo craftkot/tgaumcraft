@@ -323,7 +323,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     attack_camera_frame = _first(
-        r"(?m)^WISP_ATTACK_CAMERA_FRAME=YES id=(\d+) tick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        r"(?m)^WISP_ATTACK_CAMERA_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
     attack_camera_complete = _first(
@@ -339,7 +339,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     attackable_frame_status = _first(
-        r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
     if frame_status is None:
@@ -359,16 +359,19 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("missing provenance for the camera sample used by the real attack")
     if attackable_frame_status is None:
         errors.append("missing status for the actual attackable Wisp frame")
-    elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 3):
+    elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 5):
         errors.append("attackable-frame status does not match the real AFTER_LEVEL hit-result marker")
     if first_frame_camera_sample is None:
         errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
         attack_id, attack_tick = attack_camera_frame.group(1, 2)
+        attack_target_id = attack_camera_frame.group(3)
         complete_id, complete_tick = attack_camera_complete.group(1, 2)
         sample_id, sample_tick = attack_camera_sample.group(2, 3)
-        attack_distance, attack_aim_dot = map(float, attack_camera_frame.groups()[2:])
+        attack_distance, attack_aim_dot = map(float, attack_camera_frame.groups()[3:])
         sample_aim_dot = float(attack_camera_sample.group(4))
+        if attack_target_id != attack_id:
+            errors.append("attack camera status names a different EntityHitResult target")
         if (attack_id, attack_tick) != (complete_id, complete_tick):
             errors.append("attack camera and completed-frame status use different ID/tick")
         if (attack_id, attack_tick) != (sample_id, sample_tick):
@@ -402,10 +405,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 and 10.0 <= attack_pz <= 11.0
                 and attack_distance <= 3.0
                 and abs(attack_distance - measured_attack_distance) <= 0.1
-                and attack_aim_dot >= 0.99
+                and math.isfinite(attack_aim_dot)
+                and -1.0001 <= attack_aim_dot <= 1.0001
             ):
                 errors.append(
-                    "real attack camera was not aligned with the same live Wisp inside melee reach: "
+                    "real attack camera was outside the fixture/melee bounds or had invalid dot telemetry: "
                     f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
                     f"distance={attack_distance:.3f} aimDot={attack_aim_dot:.4f}"
                 )

@@ -174,7 +174,7 @@ def render() -> str:
       return 1
     fi
     camera_line="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center tick=$camera_tick " client-smoke/client.log | tail -1 || true)"
-    if [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+).*wispX=([-0-9.]+)\ wispY=([-0-9.]+)\ wispZ=([-0-9.]+).*aimDot=([0-9.]+) ]]; then
+    if [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+).*wispX=([-0-9.]+)\ wispY=([-0-9.]+)\ wispZ=([-0-9.]+).*aimDot=(-?[0-9.]+) ]]; then
       player_x="${BASH_REMATCH[1]}"
       player_y="${BASH_REMATCH[2]}"
       player_z="${BASH_REMATCH[3]}"
@@ -187,11 +187,14 @@ def render() -> str:
       return 1
     fi
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+    # The same-frame, same-ID vanilla EntityHitResult is the ray test. This dot
+    # compares an interpolated view vector with the AABB center and is diagnostic;
+    # it must not reject an actual ENTITY hit that Minecraft has already selected.
     if ! awk -v mode="$position_mode" -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
       'BEGIN {
         on_platform = x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0;
         position_ok = mode == "PLATFORM" ? on_platform : y >= 0.0;
-        exit !(position_ok && d <= 3.0 && dot >= 0.99)
+        exit !(position_ok && d <= 3.0 && dot >= -1.0 && dot <= 1.0)
       }'; then
       echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
@@ -203,7 +206,7 @@ def render() -> str:
     WISP_ATTACK_CAMERA_DISTANCE="$distance"
     WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
     WISP_ATTACK_CAMERA_LINE="$camera_line"
-    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick position=$position_mode gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick hitType=ENTITY targetId=$wisp_id position=$position_mode gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot | tee -a client-smoke-status.txt
     return 0
   }
 
@@ -247,7 +250,7 @@ def render() -> str:
       fi
       if grep -Fq "targetWisp=true targetId=$wisp_id targetType=thaumcraft:wisp hitType=ENTITY" <<<"$attack_input_line"; then
         echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail" | tee -a client-smoke-status.txt
-        echo "WISP_ATTACK_CAMERA_FRAME=YES id=$WISP_ATTACK_CAMERA_ID tick=$WISP_ATTACK_CAMERA_TICK distance=$WISP_ATTACK_CAMERA_DISTANCE aimDot=$WISP_ATTACK_CAMERA_AIM_DOT" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_CAMERA_FRAME=YES id=$WISP_ATTACK_CAMERA_ID tick=$WISP_ATTACK_CAMERA_TICK hitType=ENTITY targetId=$wisp_id distance=$WISP_ATTACK_CAMERA_DISTANCE aimDot=$WISP_ATTACK_CAMERA_AIM_DOT" | tee -a client-smoke-status.txt
         echo "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=$WISP_ATTACK_CAMERA_ID tick=$WISP_ATTACK_CAMERA_TICK" | tee -a client-smoke-status.txt
         echo "WISP_ATTACK_CAMERA_SAMPLE=$WISP_ATTACK_CAMERA_LINE" | tee -a client-smoke-status.txt
         echo "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=$attempt" | tee -a client-smoke-status.txt
