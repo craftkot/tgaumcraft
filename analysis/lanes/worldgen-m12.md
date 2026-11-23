@@ -1140,3 +1140,10 @@
 - Commit c8defbc97e19d15b155eebb45ffc996176331f9a rejects a Greatwood origin at minimum build height before querying four foundation blocks at y-1; this avoids out-of-world soil access. The existing one-draw seed behavior and conservative same-chunk restriction are retained.
 - Commit 149728e07891ad68cef65edb60df1cf1b296bc14 adds a source-level regression guard for the new preflight. No natural generation registry, shared files, Gradle, main or foreign branches changed.
 - Source guard is written, NOT executed on an exact checkout. No claim of NeoForge compilation, native GameTest, real chunk generation or save/reload. Next: run source guard and full NeoForge compile on exact SHA, then implement native failure-injection GameTest and original BETA26 branches/canopy before natural registration. Historical audit remains 59/100.
+
+## 2026-11-23 — Greatwood air-material safety
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked branch comparison (325 ahead / 0 behind before edits), other branches and open PRs. Draft PR #9 remains open and unmerged.
+- Commit 1df69cb54b566b5df30e09a8a19f830cf3d088a6 rejects an AIR log state in the isolated Greatwood Feature constructor to prevent an accidentally injected empty material from clearing the planned trunk volume. Commit ebd4af1f4a01a9869129b25a16a5133a7258dde0 adds a source-level regression guard.
+- Previous exact HEAD e7a3237fc364305c8245d64b663d42e6e78fc38d has GitHub Actions run 45239669942 completed SUCCESS (workflow-level result). This does not establish new-head compilation or native GameTest. New source guard written, not executed on exact checkout; standalone Java tests and actual new-chunk generation/save-reload unverified.
+- Next: verify exact-head NeoForge compile and standalone M12 runners, then native failure-injection GameTest for trunk rollback; implement source-mapped branches/canopy before natural registry coordination. Historic audit 59/100 unchanged. No changes to main, foreign branches, shared registries or Gradle; no merge.
