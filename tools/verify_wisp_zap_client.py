@@ -41,6 +41,7 @@ REQUIRED_STATUS = (
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
     "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
+    "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
     "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
@@ -298,6 +299,17 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     for marker in REQUIRED_STATUS:
         if marker not in status_text:
             errors.append(f"missing real-client status marker: {marker}")
+
+    target_set_position = log_text.find("TC_SMOKE_WISP_TARGET_SET=YES")
+    knockback_set_position = log_text.find(
+        "Base value of attribute Knockback Resistance for player Dev is now 1.0"
+    )
+    stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
+    camera_reaim_position = status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING")
+    if target_set_position < 0 or knockback_set_position <= target_set_position:
+        errors.append("player knockback resistance was not confirmed after the accepted Wisp hit")
+    if stabilized_position < 0 or camera_reaim_position < 0 or stabilized_position > camera_reaim_position:
+        errors.append("post-hit player stabilization was not confirmed before camera re-aim")
 
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
