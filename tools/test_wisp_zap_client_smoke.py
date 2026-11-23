@@ -225,7 +225,7 @@ def main() -> int:
         "WISP_ATTACKABLE_FRAME=YES",
         'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)',
         'deadline=$((SECONDS + 5))',
-        'while IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; do',
+        'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then',
         'kill "$frame_tail_pid" 2>/dev/null || true',
         'WISP_ATTACK_CLICK_DISPATCHED=YES',
         'WISP_ATTACK_CLICK_DISPATCH_FAILED=YES',
@@ -321,7 +321,7 @@ def main() -> int:
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     assert 'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
-    assert 'while IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; do' in attack_frame_body
+    assert 'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then' in attack_frame_body
     assert 'if [[ "$candidate_line" =~ $frame_pattern ]]; then' in attack_frame_body
     assert attack_frame_body.count("xdotool click 1") == 1
     assert attack_frame_body.index('if [[ "$candidate_line" =~ $frame_pattern ]]') < attack_frame_body.index("xdotool click 1") < attack_frame_body.index('kill "$frame_tail_pid"')
