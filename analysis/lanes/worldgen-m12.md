@@ -1076,3 +1076,10 @@
 - Commits 2626e784 and 0d7daf96 add GreatwoodTrunkPlan: preflight of a complete 2x2 vertical trunk and immutable ordered Cell snapshot before any world mutation; bounds/overflow checks precede allocation. This is an intermediate loader-neutral staging step, NOT a NeoForge Feature, actual world snapshot/rollback, or source-verified trunk length.
 - Test 00210594 and runner cc02a8df add 13 deterministic assertions (size, ordering, uniqueness, immutability and rejection paths). Tests written but exact-head runner not executed. Previous head 7754270 GitHub Actions #45149251052 completed SUCCESS, not evidence that M12 runner ran. New-head CI, native NeoForge GameTest, real worldgen and save/reload NOT verified.
 - Next: execute tools/test_greatwood_trunk_plan.sh on exact checkout; wire staged trunk into isolated NeoForge Greatwood Feature only after verifying archived BETA26 geometry and snapshot/rollback semantics. No shared registry, Gradle, main, foreign branches or merge touched. Remaining canopy/branches, natural biome registration, Silverwood 17/81 excluded positions, flora/ores/crystals. Audit remains 59/100.
+
+## 2026-11-23 — GreatwoodTrunkPlan Java syntax repair
+
+- Re-read `main:AGENTS.md`, `main:ROADMAP_RU.md`, `main:analysis/PARALLEL_WORKFLOW_RU.md` and this lane; inspected branch comparison, open PRs, and Greatwood trunk sources.
+- Found three literal `\\n` sequences embedded in the Java `if` condition of `GreatwoodTrunkPlan.create`, making the Java source invalid. Replaced them with real line breaks without changing the preflight logic. Code commit: `1c6e23e0f7bd428d5dd2460725083b5a48c95ec0`.
+- `tools/test_greatwood_trunk_plan.sh` still requires an exact checkout run. Container has Java 21, but Git remote access failed (`Could not resolve host: github.com`); no test PASS or NeoForge/GameTest claims. Confirm CI for this exact SHA when available.
+- Next: run standalone Java runner on exact head, then implement staged Greatwood block placement and failure-safe rollback with native tests. Do not wire shared worldgen registers without coordination. Draft PR #9 remains open; no merge.
