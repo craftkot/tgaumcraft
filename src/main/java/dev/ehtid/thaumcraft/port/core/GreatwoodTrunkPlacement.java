@@ -42,24 +42,33 @@ public final class GreatwoodTrunkPlacement {
             snapshots.add(new Snapshot<>(cell, previous));
         }
         int attempted = 0;
-        try {
-            for (Snapshot<S> snapshot : snapshots) {
-                // Include the failing cell: adapters may mutate before returning false.
-                attempted++;
-                if (!world.write(snapshot.cell(), trunk)) {
-                    rollback(snapshots, attempted, world);
-                    return false;
-                }
-            }
-            return true;
-        } catch (RuntimeException failure) {
+        RuntimeException writeFailure = null;
+        boolean rejected = false;
+        for (Snapshot<S> snapshot : snapshots) {
+            // Include the failing cell: adapters may mutate before returning false.
+            attempted++;
             try {
-                rollback(snapshots, attempted, world);
-            } catch (RuntimeException rollbackFailure) {
-                failure.addSuppressed(rollbackFailure);
+                if (!world.write(snapshot.cell(), trunk)) {
+                    rejected = true;
+                    break;
+                }
+            } catch (RuntimeException failure) {
+                writeFailure = failure;
+                break;
             }
-            throw failure;
         }
+        if (!rejected && writeFailure == null) return true;
+        try {
+            rollback(snapshots, attempted, world);
+        } catch (RuntimeException rollbackFailure) {
+            if (writeFailure != null) {
+                writeFailure.addSuppressed(rollbackFailure);
+            } else {
+                throw rollbackFailure;
+            }
+        }
+        if (writeFailure != null) throw writeFailure;
+        return false;
     }
 
     private static <S> void rollback(List<Snapshot<S>> snapshots, int attempted,
