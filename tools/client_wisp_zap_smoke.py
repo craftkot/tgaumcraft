@@ -102,6 +102,7 @@ def render() -> str:
     for _ in $(seq 1 200); do
       teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Teleported Dev to ' | tail -1 || true)"
       if [ -n "$teleport_line" ]; then
+        WISP_CAMERA_REAIM_LINE="$teleport_line"
         echo "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING $teleport_line" | tee -a client-smoke-status.txt
         return 0
       fi
@@ -109,6 +110,90 @@ def render() -> str:
     done
     echo 'WISP_CAMERA_REAIM_TIMEOUT=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
+  wisp_wait_for_attack_frame() {
+    local after_lines="$1" wisp_id="$2" camera_line camera_tick frame_marker
+    local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
+    for _ in $(seq 1 200); do
+      camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center " | tail -1 || true)"
+      if [ -n "$camera_line" ]; then
+        camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
+        player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        wisp_x="$(sed -n 's/.* wispX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        wisp_y="$(sed -n 's/.* wispY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
+        aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
+        distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+        frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$camera_tick"
+        if [[ "$camera_tick" =~ ^[0-9]+$ && "$player_x" =~ ^[-0-9.]+$ && "$player_y" =~ ^[-0-9.]+$ && "$player_z" =~ ^[-0-9.]+$ && "$wisp_x" =~ ^[-0-9.]+$ && "$wisp_y" =~ ^[-0-9.]+$ && "$wisp_z" =~ ^[-0-9.]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
+          && tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker" \
+          && awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
+            'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
+          WISP_ATTACK_CAMERA_ID="$wisp_id"
+          WISP_ATTACK_CAMERA_TICK="$camera_tick"
+          WISP_ATTACK_CAMERA_DISTANCE="$distance"
+          WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
+          WISP_ATTACK_CAMERA_LINE="$camera_line"
+          return 0
+        fi
+      fi
+      sleep 0.005
+    done
+    echo "WISP_ATTACK_AIM_FRAME_TIMEOUT=id=$wisp_id" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    return 1
+  }
+
+  wisp_attack_live_wisp() {
+    local wisp_id attempt reaim_log_lines frame_log_lines attack_log_lines attack_input_line
+    wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ATTACK_WISP_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    # A Wisp can move between an AFTER_LEVEL callback and OS input delivery.
+    # Re-aim at the still-live entity, wait for a fresh aligned completed frame,
+    # then click immediately. A block hit is a rejected attempt, never success.
+    for attempt in 1 2 3; do
+      reaim_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
+      echo "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING $WISP_CAMERA_REAIM_LINE" | tee -a client-smoke-status.txt
+      frame_log_lines="$(wc -l < client-smoke/client.log)"
+      if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id"; then
+        echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
+        continue
+      fi
+      attack_log_lines="$(wc -l < client-smoke/client.log)"
+      xdotool click 1
+      echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
+      attack_input_line=""
+      for _ in $(seq 1 200); do
+        attack_input_line="$(tail -n +"$((attack_log_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_ATTACK_INPUT=YES' | head -1 || true)"
+        if [ -n "$attack_input_line" ]; then
+          break
+        fi
+        sleep 0.005
+      done
+      if [ -z "$attack_input_line" ]; then
+        echo "WISP_ATTACK_INPUT_TIMEOUT=$attempt" | tee -a client-smoke-status.txt
+        continue
+      fi
+      if grep -Fq "targetWisp=true targetId=$wisp_id targetType=thaumcraft:wisp hitType=ENTITY" <<<"$attack_input_line"; then
+        echo "WISP_ATTACK_CAMERA_FRAME=YES id=$WISP_ATTACK_CAMERA_ID tick=$WISP_ATTACK_CAMERA_TICK distance=$WISP_ATTACK_CAMERA_DISTANCE aimDot=$WISP_ATTACK_CAMERA_AIM_DOT" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=$WISP_ATTACK_CAMERA_ID tick=$WISP_ATTACK_CAMERA_TICK" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_CAMERA_SAMPLE=$WISP_ATTACK_CAMERA_LINE" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=$attempt" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_TARGET_CONFIRMED=YES" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      echo "WISP_ATTACK_ATTEMPT_REJECTED=$attempt $attack_input_line" | tee -a client-smoke-status.txt
+    done
+    echo 'WISP_ATTACK_RETRIES_EXHAUSTED=YES' | tee -a client-smoke-status.txt
+    tail -160 client-smoke/client.log >&2
     exit 1
   }
 
@@ -315,16 +400,7 @@ def render() -> str:
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 
-  xdotool click 1
-  echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
-  wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'
-  attack_input_line="$(grep -F 'TC_SMOKE_WISP_ATTACK_INPUT=YES' client-smoke/client.log | tail -1)"
-  if ! grep -Fq 'targetWisp=true' <<<"$attack_input_line"; then
-    echo "WISP_ATTACK_TARGET_NOT_WISP=$attack_input_line" | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    exit 1
-  fi
-  echo 'WISP_ATTACK_TARGET_CONFIRMED=YES' | tee -a client-smoke-status.txt
+  wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
