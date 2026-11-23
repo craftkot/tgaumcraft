@@ -21,7 +21,7 @@ jobs:
       - name: Check Python version
         run: python3 --version
       - name: Run evidence gate regression suite
-        run: python3 -m unittest -v tools/test_integration_acceptance_gate.py
+        run: python3 -m unittest -v tools/test_integration_acceptance_gate.py tools/test_verify_actions_evidence.py
       - name: Confirm gate fails closed without evidence
         shell: bash
         run: |
