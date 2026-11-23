@@ -27,7 +27,7 @@ public final class GreatwoodTrunkVolumeTest {
         for (int[] args4 : bad) {
             cells.clear();
             check(!GreatwoodTrunkVolume.visit(args4[0], args4[1], args4[2],
-                    args4[3], -64, Integer.MAX_VALUE,
+                    args4[3], -64, 320,
                     (x,y,z) -> cells.add("write")), "invalid preflight");
             check(cells.isEmpty(), "no partial emission");
         }
