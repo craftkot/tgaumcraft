@@ -81,6 +81,8 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
         "TC_SMOKE_WISP_RENDERED=YES",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
+        "WISP_RENDER_FRAME_COMPLETE=YES",
         "wisp_fast_command()",
         "sleep 0.5",
         '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}',
@@ -121,7 +123,11 @@ def main() -> int:
         "the player must be supported and pre-aimed at the render origin before Wisp spawn; capture must happen inside the first-render wait before telemetry parsing"
     )
     fresh_render_body = generated.split("  wisp_wait_for_fresh_render() {", 1)[1].split("  }", 1)[0]
-    assert fresh_render_body.index('wisp_capture "$capture_name"') < fresh_render_body.index("WISP_RENDER_CAPTURE_TICK=") < fresh_render_body.index("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES")
+    frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
+    capture_index = fresh_render_body.index('wisp_capture "$capture_name"')
+    assert frame_marker_index < capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < fresh_render_body.index("WISP_RENDER_CAPTURE_TICK=") < fresh_render_body.index("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES"), (
+        "capture must wait for the matching AFTER_LEVEL marker, not run inside the entity renderer callback"
+    )
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
@@ -166,6 +172,7 @@ def main() -> int:
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_origin tick=21 playerX=12.5",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
@@ -177,6 +184,7 @@ def main() -> int:
         "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
+        "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_TICK=21",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
@@ -217,6 +225,20 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES", ""), root
         ), "stale pre-spawn renderer callback must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21", ""), status, root
+        ), "missing AFTER_LEVEL frame completion must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21", ""), root
+        ), "missing completed-frame status must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
+                                "WISP_RENDER_FRAME_COMPLETE=YES id=18 tick=21"), root
+        ), "completed-frame entity ID mismatch must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
+                                "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=22"), root
+        ), "completed-frame tick mismatch must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ZAP_AIM=PREAIMED_SPAWN", ""), root
         ), "missing pre-aimed spawn mode must fail"
@@ -270,6 +292,7 @@ def main() -> int:
     ).read_text(encoding="utf-8")
     assert "bus = EventBusSubscriber.Bus.MOD" in renderer_registration
     assert "TC_SMOKE_WISP_RENDERED=YES" in renderer_registration
+    assert "WispRenderSmokeProbe.recordRendered(entity.getId(), entity.tickCount)" in renderer_registration
     assert "import java.util.WeakHashMap;" in renderer_registration
     assert "Map<WispEntity, Integer> SMOKE_RENDERED_TICK = new WeakHashMap<>()" in renderer_registration
     assert "SMOKE_RENDERED_TICK.put(entity, entity.tickCount)" in renderer_registration
@@ -304,6 +327,12 @@ def main() -> int:
     assert "1.0F / 64.0F" not in renderer_registration
     assert "WispRenderTypes.additive(PARTICLE_ATLAS)" not in renderer_registration
     assert "RenderType.entityTranslucent(PARTICLE_ATLAS)" not in renderer_registration
+    render_probe = Path(
+        "src/neoforge/java/dev/ehtid/thaumcraft/client/WispRenderSmokeProbe.java"
+    ).read_text(encoding="utf-8")
+    assert "bus = EventBusSubscriber.Bus.GAME" in render_probe
+    assert "RenderLevelStageEvent.Stage.AFTER_LEVEL" in render_probe
+    assert "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" in render_probe
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer_registration
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer_registration
     assert ".setCullState(NO_CULL)" in renderer_registration

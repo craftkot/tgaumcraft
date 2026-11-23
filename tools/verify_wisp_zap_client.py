@@ -25,6 +25,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
+    "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
 )
 
@@ -35,6 +36,7 @@ REQUIRED_STATUS = (
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
+    "WISP_RENDER_FRAME_COMPLETE=YES",
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -142,6 +144,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_RENDERED=YES id=(\d+) aspect=aer tick=(\d+)",
         log_text,
     )
+    wisp_frame_complete = _first(
+        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)",
+        log_text,
+    )
     rendered = _first(
         r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -150,6 +156,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
 
     for label, match in (("client Wisp camera sample", wisp_camera),
                          ("client Wisp entity renderer", wisp_rendered),
+                         ("completed level render frame", wisp_frame_complete),
                          ("player hit/target", hit), ("server payload send", sent),
                          ("client payload receive", received), ("client additive render", rendered)):
         if match is None:
@@ -160,6 +167,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("camera sample and rendered Wisp use different entity IDs")
         if wisp_camera.group(2) != wisp_rendered.group(2):
             errors.append("camera sample and rendered Wisp are from different ticks")
+    if wisp_rendered and wisp_frame_complete:
+        if wisp_rendered.group(1) != wisp_frame_complete.group(1):
+            errors.append("completed level frame and rendered Wisp use different entity IDs")
+        if wisp_rendered.group(2) != wisp_frame_complete.group(2):
+            errors.append("completed level frame and rendered Wisp use different ticks")
     if wisp_rendered and hit and wisp_rendered.group(1) != hit.group(1):
         errors.append("rendered Wisp and player-hit source use different entity IDs")
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
@@ -190,6 +202,17 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
+    frame_status = _first(
+        r"(?m)^WISP_RENDER_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)$",
+        status_text,
+    )
+    if frame_status is None:
+        errors.append("missing post-LevelRenderer completed-frame status")
+    else:
+        if wisp_rendered and frame_status.group(1) != wisp_rendered.group(1):
+            errors.append("completed-frame status and rendered Wisp use different entity IDs")
+        if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):
+            errors.append("completed-frame status and rendered Wisp use different ticks")
     if telemetry is None:
         errors.append("missing fresh pre-aimed-spawn camera telemetry")
     else:
@@ -203,6 +226,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("missing render-callback capture tick")
         elif camera_tick != capture_tick.group(1):
             errors.append("aim screenshot was not captured from the first render callback tick")
+        if frame_status and capture_tick and frame_status.group(2) != capture_tick.group(1):
+            errors.append("aim screenshot capture tick does not match the completed level frame")
         measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
         if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
                 and 10.0 <= player_z <= 11.0 and distance <= 3.0

@@ -60,20 +60,35 @@ def render() -> str:
   # The camera is pre-aimed at the billboard render origin before the Wisp exists.
   # Only accept a renderer callback appended after the summon command.
   wisp_wait_for_fresh_render() {
-    local after_lines="$1" capture_name="$2" render_line render_tick
+    local after_lines="$1" capture_name="$2" render_line render_id render_tick frame_marker
     for _ in $(seq 1 200); do
       render_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_RENDERED=YES' | head -1 || true)"
       if [ -n "$render_line" ]; then
-        # Capture before telemetry parsing: BETA26 autonomous flight starts immediately.
-        wisp_capture "$capture_name"
+        render_id="$(sed -n 's/.*TC_SMOKE_WISP_RENDERED=YES id=\([0-9][0-9]*\) aspect=.*/\1/p' <<<"$render_line")"
         render_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$render_line")"
-        if ! [[ "$render_tick" =~ ^[0-9]+$ ]]; then
-          echo "WISP_RENDER_CAPTURE_TICK_INVALID=$render_tick" | tee -a client-smoke-status.txt
+        if ! [[ "$render_id" =~ ^[0-9]+$ && "$render_tick" =~ ^[0-9]+$ ]]; then
+          echo "WISP_RENDER_CALLBACK_INVALID id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
           exit 1
         fi
-        echo "WISP_RENDER_CAPTURE_TICK=$render_tick" | tee -a client-smoke-status.txt
-        echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
-        return 0
+        # The renderer callback is inside LevelRenderer. Wait for AFTER_LEVEL,
+        # when the entity buffers have been submitted and the world frame is complete.
+        frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$render_id tick=$render_tick"
+        for _ in $(seq 1 200); do
+          if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
+            # Allow the completed level pass to reach the display; one render
+            # interval is shorter than the Wisp's 50 ms server tick.
+            sleep 0.01
+            wisp_capture "$capture_name"
+            echo "WISP_RENDER_FRAME_COMPLETE=YES id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_CAPTURE_TICK=$render_tick" | tee -a client-smoke-status.txt
+            echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
+            return 0
+          fi
+          sleep 0.005
+        done
+        echo "WISP_RENDER_FRAME_COMPLETE_TIMEOUT=$frame_marker" | tee -a client-smoke-status.txt
+        tail -120 client-smoke/client.log >&2
+        exit 1
       fi
       sleep 0.005
     done

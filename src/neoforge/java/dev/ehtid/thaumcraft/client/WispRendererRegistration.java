@@ -138,6 +138,7 @@ public final class WispRendererRegistration {
                     System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
                             + " aspect=" + entity.getAspectType()
                             + " tick=" + entity.tickCount);
+                    WispRenderSmokeProbe.recordRendered(entity.getId(), entity.tickCount);
                 }
             }
         }
