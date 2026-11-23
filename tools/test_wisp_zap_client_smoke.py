@@ -439,7 +439,7 @@ def main() -> int:
     capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", zap_capture_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < night_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < capture_retry_index < telemetry_index < aim_verify_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < capture_retry_index < telemetry_index < aim_verify_index, (
         "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
