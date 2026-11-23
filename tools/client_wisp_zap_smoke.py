@@ -111,7 +111,7 @@ def render() -> str:
     # Return the server log line number so callers include the first fresh
     # camera sample instead of skipping it with a later wc -l snapshot.
     # Keep the default chat-open/type pacing: the 0.1s override produced no server teleport response in the native client run.
-    wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to 12.500000, 149.000000, 10.500000' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -129,8 +129,32 @@ def render() -> str:
     exit 1
   }
 
+  wisp_move_player_to_live_wisp() {
+    local after_lines="$1" teleport_match relative_line
+    # The first click can be delayed by client tick scheduling while the Wisp
+    # keeps flying. Retry from a melee position relative to the exact tagged
+    # smoke entity; do not select an unrelated naturally spawned Wisp.
+    # This moves only the Survival player. Wisp AI, motion and target remain live.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing ~ ~0.45 ~'
+    for _ in $(seq 1 200); do
+      teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
+      if [ -n "$teleport_match" ]; then
+        relative_line="$(cut -d: -f1 <<<"$teleport_match")"
+        WISP_ATTACK_REPOSITION_LINE="$(cut -d: -f2- <<<"$teleport_match")"
+        WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"
+        echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_CAMERA_REPOSITION_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_wait_for_attack_frame() {
-    local after_lines="$1" wisp_id="$2" frame_pattern frame_line camera_tick game_time player_tick camera_line
+    local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" frame_pattern frame_line camera_tick game_time player_tick camera_line
     local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     frame_pattern="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id .*hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none"
     frame_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -E "$3"' _ "$((after_lines + 1))" client-smoke/client.log "$frame_pattern" || true)"
@@ -161,8 +185,13 @@ def render() -> str:
       return 1
     fi
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-    if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot"       'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
-      echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    if ! awk -v mode="$position_mode" -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
+      'BEGIN {
+        on_platform = x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0;
+        position_ok = mode == "PLATFORM" ? on_platform : y >= 0.0;
+        exit !(position_ok && d <= 3.0 && dot >= 0.99)
+      }'; then
+      echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
     fi
     WISP_ATTACK_CAMERA_ID="$wisp_id"
@@ -172,7 +201,7 @@ def render() -> str:
     WISP_ATTACK_CAMERA_DISTANCE="$distance"
     WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
     WISP_ATTACK_CAMERA_LINE="$camera_line"
-    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick position=$position_mode gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
     return 0
   }
 
@@ -190,18 +219,18 @@ def render() -> str:
       if [ "$attempt" -eq 1 ]; then
         frame_log_lines="$aim_log_lines"
         attack_camera_source="PREAIMED_FIRST_FRAME"
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id"; then
+        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue
         fi
         attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"
       else
         reaim_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
+        wisp_move_player_to_live_wisp "$reaim_log_lines"
         attack_camera_source="LIVE_ENTITY_FACING"
-        attack_camera_detail="$WISP_CAMERA_REAIM_LINE"
-        frame_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id"; then
+        attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
+        frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
+        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue
         fi
@@ -429,7 +458,7 @@ def render() -> str:
   # Pre-aim at the exact spawn AABB centre. The first completed level frame is
   # the trigger for the real click; no external screenshot is taken beforehand.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}'
+  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 
