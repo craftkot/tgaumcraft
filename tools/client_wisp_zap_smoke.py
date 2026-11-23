@@ -129,82 +129,71 @@ def render() -> str:
   }
 
   wisp_wait_for_attack_frame() {
-    local after_lines="$1" wisp_id="$2" camera_line camera_tick frame_marker
+    local after_lines="$1" wisp_id="$2" frame_pattern frame_line camera_tick game_time player_tick camera_line
     local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
-    for _ in $(seq 1 200); do
-      camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center " | tail -1 || true)"
-      if [ -n "$camera_line" ]; then
-        camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
-        player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_x="$(sed -n 's/.* wispX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_y="$(sed -n 's/.* wispY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
-        distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-        frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$camera_tick"
-        if [[ "$camera_tick" =~ ^[0-9]+$ && "$player_x" =~ ^[-0-9.]+$ && "$player_y" =~ ^[-0-9.]+$ && "$player_z" =~ ^[-0-9.]+$ && "$wisp_x" =~ ^[-0-9.]+$ && "$wisp_y" =~ ^[-0-9.]+$ && "$wisp_z" =~ ^[-0-9.]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
-          && tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker" \
-          && awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
-            'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
-          WISP_ATTACK_CAMERA_ID="$wisp_id"
-          WISP_ATTACK_CAMERA_TICK="$camera_tick"
-          WISP_ATTACK_CAMERA_DISTANCE="$distance"
-          WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
-          WISP_ATTACK_CAMERA_LINE="$camera_line"
-          return 0
-        fi
-      fi
-      sleep 0.005
-    done
-    echo "WISP_ATTACK_AIM_FRAME_TIMEOUT=id=$wisp_id" | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    return 1
+    frame_pattern="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id .*hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none"
+    frame_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -E "$3"' _ "$((after_lines + 1))" client-smoke/client.log "$frame_pattern" || true)"
+    if [ -z "$frame_line" ]; then
+      echo "WISP_ATTACKABLE_FRAME_TIMEOUT=id=$wisp_id" | tee -a client-smoke-status.txt
+      tail -100 client-smoke/client.log >&2
+      return 1
+    fi
+    if [[ "$frame_line" =~ TC_SMOKE_WISP_FRAME_COMPLETE=YES\ id=([0-9]+)\ tick=([0-9]+)\ gameTime=([0-9]+)\ playerTick=([0-9]+) ]]; then
+      camera_tick="${BASH_REMATCH[2]}"
+      game_time="${BASH_REMATCH[3]}"
+      player_tick="${BASH_REMATCH[4]}"
+    else
+      echo "WISP_ATTACKABLE_FRAME_PARSE_FAILED=$frame_line" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    camera_line="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center tick=$camera_tick " client-smoke/client.log | tail -1 || true)"
+    if [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+).*wispX=([-0-9.]+)\ wispY=([-0-9.]+)\ wispZ=([-0-9.]+).*aimDot=([0-9.]+) ]]; then
+      player_x="${BASH_REMATCH[1]}"
+      player_y="${BASH_REMATCH[2]}"
+      player_z="${BASH_REMATCH[3]}"
+      wisp_x="${BASH_REMATCH[4]}"
+      wisp_y="${BASH_REMATCH[5]}"
+      wisp_z="${BASH_REMATCH[6]}"
+      aim_dot="${BASH_REMATCH[7]}"
+    else
+      echo "WISP_ATTACKABLE_FRAME_CAMERA_MISSING=$frame_line" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+    if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot"       'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
+      echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    WISP_ATTACK_CAMERA_ID="$wisp_id"
+    WISP_ATTACK_CAMERA_TICK="$camera_tick"
+    WISP_ATTACK_CAMERA_GAME_TIME="$game_time"
+    WISP_ATTACK_CAMERA_PLAYER_TICK="$player_tick"
+    WISP_ATTACK_CAMERA_DISTANCE="$distance"
+    WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
+    WISP_ATTACK_CAMERA_LINE="$camera_line"
+    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    return 0
   }
 
   wisp_attack_live_wisp() {
     local wisp_id attempt reaim_log_lines frame_log_lines attack_log_lines attack_input_line
-    local camera_line camera_id camera_tick player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance frame_marker
     local attack_camera_source attack_camera_detail
     wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
     if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
       echo "WISP_ATTACK_WISP_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
       exit 1
     fi
-    # The first completed frame is already pre-aimed at the exact spawn AABB.
-    # Spend that short-lived opportunity immediately; only use chat re-aim on
-    # bounded retries after a real BLOCK/missed hit. Never relax ENTITY/distance.
+    # A geometric camera sample is not enough: wait for AFTER_LEVEL to report
+    # the real Wisp EntityHitResult, then issue the real mouse click immediately.
     for attempt in 1 2 3; do
       if [ "$attempt" -eq 1 ]; then
-        camera_line="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=//p' client-smoke-status.txt | tail -1)"
-        camera_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA=YES id=\([0-9][0-9]*\) aimTarget=.*/\1/p' <<<"$camera_line")"
-        camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
-        player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_x="$(sed -n 's/.* wispX=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_y="$(sed -n 's/.* wispY=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$camera_line")"
-        aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
-        distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-        frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$camera_id tick=$camera_tick"
-        if [[ "$camera_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$player_x" =~ ^[-0-9.]+$ && "$player_y" =~ ^[-0-9.]+$ && "$player_z" =~ ^[-0-9.]+$ && "$wisp_x" =~ ^[-0-9.]+$ && "$wisp_y" =~ ^[-0-9.]+$ && "$wisp_z" =~ ^[-0-9.]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
-          && [ "$camera_id" = "$wisp_id" ] \
-          && grep -Fq -- "$frame_marker" client-smoke/client.log \
-          && awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
-            'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
-          WISP_ATTACK_CAMERA_ID="$camera_id"
-          WISP_ATTACK_CAMERA_TICK="$camera_tick"
-          WISP_ATTACK_CAMERA_DISTANCE="$distance"
-          WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
-          WISP_ATTACK_CAMERA_LINE="$camera_line"
-          attack_camera_source="PREAIMED_FIRST_FRAME"
-          attack_camera_detail="id=$camera_id tick=$camera_tick"
-        else
-          echo "WISP_ATTACK_PREAIM_FRAME_REJECTED=id=$wisp_id tick=$camera_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+        frame_log_lines="$aim_log_lines"
+        attack_camera_source="PREAIMED_FIRST_FRAME"
+        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id"; then
+          echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue
         fi
+        attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"
       else
         reaim_log_lines="$(wc -l < client-smoke/client.log)"
         wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
@@ -219,14 +208,7 @@ def render() -> str:
       attack_log_lines="$(wc -l < client-smoke/client.log)"
       xdotool click 1
       echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
-      attack_input_line=""
-      for _ in $(seq 1 200); do
-        attack_input_line="$(tail -n +"$((attack_log_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_ATTACK_INPUT=YES' | head -1 || true)"
-        if [ -n "$attack_input_line" ]; then
-          break
-        fi
-        sleep 0.005
-      done
+      attack_input_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -F "TC_SMOKE_WISP_ATTACK_INPUT=YES"' _ "$((attack_log_lines + 1))" client-smoke/client.log || true)"
       if [ -z "$attack_input_line" ]; then
         echo "WISP_ATTACK_INPUT_TIMEOUT=$attempt" | tee -a client-smoke-status.txt
         continue

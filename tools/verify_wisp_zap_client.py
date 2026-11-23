@@ -52,6 +52,7 @@ REQUIRED_STATUS = (
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
+    "WISP_ATTACKABLE_FRAME=YES",
     "WISP_ATTACK_CAMERA_REAIM=",
     "WISP_ATTACK_CAMERA_FRAME=YES",
     "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
@@ -165,11 +166,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     errors: list[str] = []
 
     attack_input = _first(
-        r"TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=(\d+) targetType=thaumcraft:wisp hitType=ENTITY distance=([0-9.]+) tick=(\d+)",
+        r"TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=(\d+) targetType=thaumcraft:wisp hitType=ENTITY distance=([0-9.]+) gameTime=(\d+) blockPos=none tick=(\d+)",
         log_text,
     )
     client_attack = _first(
-        r"TC_SMOKE_WISP_CLIENT_ATTACK=YES player=(\d+) target=(\d+) tick=(\d+) distance=([0-9.]+)",
+        r"TC_SMOKE_WISP_CLIENT_ATTACK=YES player=(\d+) target=(\d+) tick=(\d+) distance=([0-9.]+) gameTime=(\d+)",
         log_text,
     )
     hurt = _first(
@@ -200,6 +201,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)",
         log_text,
     )
+    attackable_frame = _first(
+        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
+        r"hitType=ENTITY targetId=(\d+) targetType=thaumcraft:wisp blockPos=none",
+        log_text,
+    )
     rendered = _first(
         r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -209,6 +215,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     for label, match in (("client Wisp camera sample", wisp_camera),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
+                         ("same-frame Wisp EntityHitResult", attackable_frame),
                          ("client attack input/hit result", attack_input),
                          ("client selected attack target", client_attack),
                          ("server accepted damage", hurt),
@@ -231,6 +238,26 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("rendered Wisp and player-hit source use different entity IDs")
     if attack_input and wisp_rendered and attack_input.group(1) != wisp_rendered.group(1):
         errors.append("client hit result did not select the rendered Wisp")
+    if attackable_frame:
+        if attackable_frame.group(1) != attackable_frame.group(5):
+            errors.append("AFTER_LEVEL EntityHitResult ID differs from the rendered Wisp ID")
+        if wisp_rendered and attackable_frame.group(1) != wisp_rendered.group(1):
+            errors.append("attackable AFTER_LEVEL frame belongs to a different Wisp")
+        if attack_input:
+            if attackable_frame.group(1) != attack_input.group(1):
+                errors.append("attackable AFTER_LEVEL frame and real click selected different Wisps")
+            game_time_delta = int(attack_input.group(3)) - int(attackable_frame.group(3))
+            if game_time_delta < 0 or game_time_delta > 1:
+                errors.append(
+                    "real click did not follow its actual Wisp EntityHitResult within one game tick: "
+                    f"frameGameTime={attackable_frame.group(3)} clickGameTime={attack_input.group(3)}"
+                )
+            frame_position = log_text.find(attackable_frame.group(0))
+            input_position = log_text.find(attack_input.group(0))
+            if frame_position < 0 or input_position < frame_position:
+                errors.append("real click occurred before the matching attackable AFTER_LEVEL frame")
+    if attackable_frame is None:
+        errors.append("no completed frame exposed the live Wisp as Minecraft.hitResult")
     if attack_input and client_attack and attack_input.group(1) != client_attack.group(2):
         errors.append("client hit result and AttackEntityEvent selected different entities")
     if client_attack and hurt and client_attack.group(1, 2) != hurt.group(2, 1):
@@ -301,6 +328,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_FIRST_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
+    attackable_frame_status = _first(
+        r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        status_text,
+    )
     if frame_status is None:
         errors.append("missing first post-LevelRenderer completed-frame status")
     else:
@@ -316,6 +347,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("missing copied live camera sample used for the real attack")
     if attack_camera_reaim is None:
         errors.append("missing provenance for the camera sample used by the real attack")
+    if attackable_frame_status is None:
+        errors.append("missing status for the actual attackable Wisp frame")
+    elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 3):
+        errors.append("attackable-frame status does not match the real AFTER_LEVEL hit-result marker")
     if first_frame_camera_sample is None:
         errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
@@ -328,6 +363,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("attack camera and completed-frame status use different ID/tick")
         if (attack_id, attack_tick) != (sample_id, sample_tick):
             errors.append("attack camera status and copied camera sample use different ID/tick")
+        if attackable_frame and (attack_id, attack_tick) != (attackable_frame.group(1), attackable_frame.group(2)):
+            errors.append("attack camera sample does not match the AFTER_LEVEL frame that exposed the Wisp hit result")
+        if attackable_frame_status and (attack_id, attack_tick) != attackable_frame_status.group(1, 2):
+            errors.append("attack camera status does not match the attackable-frame status")
         if attack_input and attack_id != attack_input.group(1):
             errors.append("real attack selected a Wisp different from the attack camera sample")
         if wisp_rendered and attack_id != wisp_rendered.group(1):
@@ -378,8 +417,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             first_frame_status_position = status_text.find("WISP_RENDER_FIRST_FRAME=YES")
             if first_frame_status_position < 0 or reaim_position < first_frame_status_position:
                 errors.append("pre-aimed attack camera was not sourced after the first completed Wisp frame")
-            if first_frame_camera_sample is not None and attack_camera_sample.group(1) != first_frame_camera_sample.group(1):
-                errors.append("pre-aimed attack sample differs from the first completed-frame camera sample")
+            if first_frame_camera_sample is not None:
+                if attack_camera_sample.group(2) != first_frame_camera_sample.group(2):
+                    errors.append("pre-aimed attack sample uses a different Wisp entity")
+                if int(attack_camera_sample.group(3)) < int(first_frame_camera_sample.group(3)):
+                    errors.append("pre-aimed attack sample predates the first completed Wisp frame")
         elif status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING") < 0:
             errors.append("live-reaim attack sample lacks its server-confirmed teleport marker")
 

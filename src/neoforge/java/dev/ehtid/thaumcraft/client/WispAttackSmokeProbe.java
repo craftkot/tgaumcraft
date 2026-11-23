@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.entity.WispEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.api.distmarker.Dist;
@@ -43,16 +44,22 @@ public final class WispAttackSmokeProbe {
         String targetType = target == null
                 ? "none"
                 : String.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(target.getType()));
+        String blockPos = hit instanceof BlockHitResult blockHit
+                ? blockHit.getBlockPos().getX() + "," + blockHit.getBlockPos().getY() + "," + blockHit.getBlockPos().getZ()
+                : "none";
         boolean targetWisp = target instanceof WispEntity;
         double distance = minecraft.player == null || target == null
                 ? -1.0D
                 : minecraft.player.distanceTo(target);
+        long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
 
         System.out.println("TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=" + targetWisp
                 + " targetId=" + (target == null ? -1 : target.getId())
                 + " targetType=" + targetType
                 + " hitType=" + hitType
                 + " distance=" + distance
+                + " gameTime=" + gameTime
+                + " blockPos=" + blockPos
                 + " tick=" + (minecraft.player == null ? -1 : minecraft.player.tickCount));
     }
 
@@ -68,10 +75,12 @@ public final class WispAttackSmokeProbe {
         }
 
         if (event.getTarget() instanceof WispEntity wisp) {
+            long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
             System.out.println("TC_SMOKE_WISP_CLIENT_ATTACK=YES player=" + minecraft.player.getId()
                     + " target=" + wisp.getId()
                     + " tick=" + wisp.tickCount
-                    + " distance=" + minecraft.player.distanceTo(wisp));
+                    + " distance=" + minecraft.player.distanceTo(wisp)
+                    + " gameTime=" + gameTime);
         }
     }
 }

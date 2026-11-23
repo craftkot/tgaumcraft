@@ -88,6 +88,9 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
         "TC_SMOKE_WISP_RENDERED=YES",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
+        "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none",
+        "WISP_ATTACKABLE_FRAME=YES",
+        "timeout 5s bash -c",
         "WISP_RENDER_FRAME_COMPLETE=YES",
         "wisp_fast_command()",
         "sleep 0.5",
@@ -172,22 +175,25 @@ def main() -> int:
     )
     attack_body = generated.split("  wisp_attack_live_wisp() {", 1)[1].split("  }", 1)[0]
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
-    assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" in preaim_branch
+    assert "wisp_wait_for_attack_frame" in preaim_branch
+    assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
     assert "wisp_reaim_camera_at_live_wisp" not in preaim_branch
     fallback_branch = attack_body.split('\n      else\n        reaim_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
     assert "wisp_reaim_camera_at_live_wisp" in fallback_branch
     assert "wisp_wait_for_attack_frame" in fallback_branch
-    attack_reaim_index = attack_body.index("wisp_reaim_camera_at_live_wisp")
     attack_frame_index = attack_body.index("wisp_wait_for_attack_frame")
     attack_click_index = attack_body.index("xdotool click 1")
     attack_input_index = attack_body.index("TC_SMOKE_WISP_ATTACK_INPUT=YES")
-    assert attack_reaim_index < attack_frame_index < attack_click_index < attack_input_index
-    between_frame_and_click = attack_body[attack_frame_index:attack_click_index]
-    assert "sleep " not in between_frame_and_click, "click immediately after the aligned completed render frame"
+    assert attack_frame_index < attack_click_index < attack_input_index
+    fallback_reaim_index = fallback_branch.index("wisp_reaim_camera_at_live_wisp")
+    fallback_frame_index = fallback_branch.index("wisp_wait_for_attack_frame")
+    assert fallback_reaim_index < fallback_frame_index
+    between_frame_and_click = attack_body[attack_body.rindex("wisp_wait_for_attack_frame"):attack_click_index]
+    assert "sleep " not in between_frame_and_click, "click immediately after the actual Wisp EntityHitResult frame"
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert "WISP_ATTACK_ATTEMPT_REJECTED=" in attack_body, "BLOCK hits must be rejected rather than accepted"
     assert 'attack_camera_source="PREAIMED_FIRST_FRAME"' in preaim_branch
-    assert 'attack_camera_detail="id=$camera_id tick=$camera_tick"' in preaim_branch
+    assert 'attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"' in preaim_branch
     assert 'attack_camera_source="LIVE_ENTITY_FACING"' in fallback_branch
     assert 'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"' in attack_body
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'" not in generated
@@ -207,6 +213,11 @@ def main() -> int:
     assert capture_aim_guard_index < capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
         "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
+    wait_attack_body = generated.split("  wisp_wait_for_attack_frame() {", 1)[1].split("  }", 1)[0]
+    assert "timeout 5s bash -c" in wait_attack_body
+    assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
+    assert "WISP_ATTACKABLE_FRAME=YES" in wait_attack_body
+    assert "for _ in $(seq 1 200)" not in wait_attack_body
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert 'open_delay="0.5"' in fast_command_body and 'type_delay="2"' in fast_command_body
@@ -263,14 +274,15 @@ def main() -> int:
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22",
-        "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 tick=507",
-        "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=21 distance=1.0440",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+        "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 gameTime=520 blockPos=none tick=507",
+        "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
@@ -289,13 +301,14 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
-        "WISP_RENDER_CAPTURE_TICK=22",
+        "WISP_RENDER_CAPTURE_TICK=23",
         "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
-        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=21",
-        "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=21 distance=1.0440 aimDot=0.999",
-        "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=21",
-        "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
+        "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
+        "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
+        "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
@@ -398,7 +411,7 @@ def main() -> int:
         ), "attack camera frame tick mismatch must fail"
         misordered_lines = log.splitlines()
         attack_line_index = next(i for i, line in enumerate(misordered_lines) if line.startswith("TC_SMOKE_WISP_ATTACK_INPUT=YES"))
-        attack_frame_index = next(i for i, line in enumerate(misordered_lines) if line == "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21")
+        attack_frame_index = next(i for i, line in enumerate(misordered_lines) if line.startswith("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime="))
         misordered_lines.insert(attack_frame_index, misordered_lines.pop(attack_line_index))
         assert verify_wisp_zap_client.verify("\\n".join(misordered_lines), status, root), (
             "real click before the matching completed camera frame must fail"
@@ -406,6 +419,17 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_CAMERA_CAPTURE_TELEMETRY=PASS", ""), root
         ), "missing post-hit camera telemetry gate must fail"
+        assert verify_wisp_zap_client.verify(
+            log.replace("hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+                        "hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12", 1), status, root
+        ), "a BLOCK AFTER_LEVEL frame must never authorize the click"
+        assert verify_wisp_zap_client.verify(
+            log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
+                        "tick=22 gameTime=517 playerTick=504 hitType=ENTITY", 1), status, root
+        ), "a click more than one game tick after the actual hit-result frame must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_ATTACKABLE_FRAME=YES", "WISP_ATTACKABLE_FRAME=NO"), root
+        ), "missing attackable-frame status must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_CAMERA=YES id=17", "TC_SMOKE_WISP_CAMERA=YES id=18"), status, root
         ), "camera sample from another Wisp must fail"
@@ -462,6 +486,9 @@ def main() -> int:
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispAttackSmokeProbe.java"
     ).read_text(encoding="utf-8")
     assert "InputEvent.InteractionKeyMappingTriggered" in attack_probe
+    assert "BlockHitResult" in attack_probe
+    assert "gameTime=" in attack_probe
+    assert "blockPos=" in attack_probe
     assert "event.isAttack()" in attack_probe
     assert "minecraft.hitResult" in attack_probe
     assert "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=" in attack_probe
@@ -525,6 +552,11 @@ def main() -> int:
     assert "bus = EventBusSubscriber.Bus.GAME" in render_probe
     assert "RenderLevelStageEvent.Stage.AFTER_LEVEL" in render_probe
     assert "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" in render_probe
+    assert "minecraft.hitResult" in render_probe
+    assert "hitType=" in render_probe
+    assert "targetType=" in render_probe
+    assert "blockPos=" in render_probe
+    assert "gameTime=" in render_probe
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer_registration
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer_registration
     assert ".setCullState(NO_CULL)" in renderer_registration
