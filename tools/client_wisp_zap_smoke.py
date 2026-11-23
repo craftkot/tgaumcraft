@@ -677,14 +677,17 @@ def render() -> str:
   echo "WISP_ZAP_TRANSIENT_PIXEL_DIFF=$transient_diff" | tee -a client-smoke-status.txt
 
   for log in client-smoke/client.log run/logs/latest.log; do
-    if [ -f "$log" ] && grep -Eiq \
-      '(Missing textures|Unable to load texture|Failed to load texture).*essentia\.png|essentia\.png.*(missing texture|Unable to load)' \
-      "$log"; then
-      echo "WISP_ESSENTIA_TEXTURE_LOAD_ERROR=YES log=$log" | tee -a client-smoke-status.txt
-      exit 1
-    fi
+    [ -f "$log" ] || continue
+    for texture in essentia.png auranodes.png particles.png; do
+      texture_error="$(grep -Ei '(Missing textures|Unable to load texture|Failed to load texture|missing texture)' "$log" | grep -F "$texture" | head -1 || true)"
+      if [ -n "$texture_error" ]; then
+        echo "WISP_TEXTURE_LOAD_ERROR=YES texture=$texture log=$log detail=$texture_error" | tee -a client-smoke-status.txt
+        exit 1
+      fi
+    done
   done
 
+  echo 'WISP_ALL_WISP_TEXTURES_NO_LOAD_ERRORS=PASS' | tee -a client-smoke-status.txt
   echo 'WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS' | tee -a client-smoke-status.txt
   echo 'WISP_ZAP_REAL_CLIENT=PASS' | tee -a client-smoke-status.txt
 fi
