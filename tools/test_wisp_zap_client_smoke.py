@@ -260,8 +260,12 @@ def main() -> int:
     camera_line_index = wait_attack_body.index('camera_line="$(grep -F')
     attack_click_index = wait_attack_body.index("xdotool click 1")
     diagnostics_index = wait_attack_body.index('distance="$(awk')
-    assert click_log_snapshot_index < frame_wait_index < camera_line_index < attack_click_index < diagnostics_index, (
-        "dispatch the real click immediately after the matching camera/EntityHitResult pair, before expensive diagnostics"
+    assert click_log_snapshot_index < frame_wait_index < attack_click_index < camera_line_index < diagnostics_index, (
+        "dispatch the real click as soon as the matching AFTER_LEVEL EntityHitResult arrives, before camera parsing"
+    )
+    assert wait_attack_body.count("xdotool click 1") == 1
+    assert "return 1" not in wait_attack_body[attack_click_index:], (
+        "after dispatching a real click, telemetry failures must abort rather than retry with a second attack"
     )
     assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in wait_attack_body
     assert 'echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt"' in wait_attack_body
