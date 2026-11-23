@@ -5,6 +5,8 @@ on:
     branches: [feature/closure-near-complete]
     paths:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java'
       - 'tools/test_wisp_zap_geometry.sh'
       - '.github/workflows/closure-wisp-zap-geometry.yml'
@@ -12,6 +14,8 @@ on:
     branches: [main]
     paths:
       - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
       - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java'
       - 'tools/test_wisp_zap_geometry.sh'
       - '.github/workflows/closure-wisp-zap-geometry.yml'

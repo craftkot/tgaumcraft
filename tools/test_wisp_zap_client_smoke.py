@@ -5,6 +5,7 @@ from unittest.mock import patch
 import subprocess
 import struct
 import math
+import hashlib
 import tempfile
 import zlib
 
@@ -289,7 +290,19 @@ def main() -> int:
         "camera telemetry must be written before the fresh-render marker"
     )
     assert "SMOKE_RENDERED.add(entity.getId())" not in renderer_registration
-    assert "WispRenderTypes.additive(PARTICLE_ATLAS)" in renderer_registration
+    assert 'textures/misc/auranodes.png' in renderer_registration
+    assert 'WispRenderTypes.additive("thaumcraft:wisp_particle_additive", PARTICLE_ATLAS)' in renderer_registration
+    assert 'WispRenderTypes.additive("thaumcraft:wisp_node_additive", NODE_ATLAS)' in renderer_registration
+    assert "buffers.getBuffer(NODE_LAYER)" in renderer_registration
+    assert "LegacyWispRenderAtlas.OUTER_BASE_FRAME" in renderer_registration
+    assert "LegacyWispRenderAtlas.INNER_BASE_FRAME" in renderer_registration
+    assert "LegacyWispRenderAtlas.ASPECT_BASE_FRAME" in renderer_registration
+    assert "LegacyWispRenderAtlas.PARTICLE_GRID" in renderer_registration
+    assert "LegacyWispRenderAtlas.NODE_GRID" in renderer_registration
+    assert "LegacyWispRenderAtlas.frameUv(frame, gridSize)" in renderer_registration
+    assert "frame / 64" not in renderer_registration
+    assert "1.0F / 64.0F" not in renderer_registration
+    assert "WispRenderTypes.additive(PARTICLE_ATLAS)" not in renderer_registration
     assert "RenderType.entityTranslucent(PARTICLE_ATLAS)" not in renderer_registration
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer_registration
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer_registration
@@ -298,6 +311,21 @@ def main() -> int:
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer
     assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer
+
+    # Verify the committed node atlas is the exact pinned BETA26 Git blob.
+    node_atlas = Path(
+        "src/main/resources/assets/thaumcraft/textures/misc/auranodes.png"
+    ).read_bytes()
+    assert node_atlas[:8] == b"\\x89PNG\\r\\n\\x1a\\n"
+    width, height = struct.unpack(">II", node_atlas[16:24])
+    assert (width, height) == (2048, 2048), (width, height)
+    blob_sha = hashlib.sha1(
+        b"blob " + str(len(node_atlas)).encode("ascii") + b"\\0" + node_atlas
+    ).hexdigest()
+    assert blob_sha == "411d52fefb272574dfbb0466e3437e377e2cb907", blob_sha
+    assert hashlib.sha256(node_atlas).hexdigest() == (
+        "3b46124e4a48422bbb64d7948707c3d4422e9399970b7637e255726e5156bda4"
+    )
 
     print("WISP_ZAP_CLIENT_SMOKE_TESTS=PASS")
     return 0

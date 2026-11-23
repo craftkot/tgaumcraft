@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.entity.WispEntity;
+import dev.ehtid.thaumcraft.port.core.visual.LegacyWispRenderAtlas;
 import dev.ehtid.thaumcraft.registry.WispRegistration;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.Minecraft;
@@ -28,10 +29,9 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 /**
- * BETA26 RenderWisp billboard layers. The particle-sheet frames and aspect tint
- * are retained; all layers use the source's SRC_ALPHA/ONE additive blend and
- * depth-write-off state. The original auranodes sheet is still missing, so the
- * aspect-tinted third layer remains a documented resource-parity gap.
+ * BETA26 RenderWisp billboard layers. The two particle-sheet frames use the
+ * 64x64 particles atlas; the aspect-coloured third layer uses the original
+ * 32x32 auranodes atlas. All three retain SRC_ALPHA/ONE additive blending.
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class WispRendererRegistration {
@@ -51,7 +51,13 @@ public final class WispRendererRegistration {
         private static final ResourceLocation PARTICLE_ATLAS =
                 ResourceLocation.fromNamespaceAndPath(
                         ThaumcraftPort.MOD_ID, "textures/particle/particles.png");
-        private static final RenderType PARTICLE_LAYER = WispRenderTypes.additive(PARTICLE_ATLAS);
+        private static final ResourceLocation NODE_ATLAS =
+                ResourceLocation.fromNamespaceAndPath(
+                        ThaumcraftPort.MOD_ID, "textures/misc/auranodes.png");
+        private static final RenderType PARTICLE_LAYER =
+                WispRenderTypes.additive("thaumcraft:wisp_particle_additive", PARTICLE_ATLAS);
+        private static final RenderType NODE_LAYER =
+                WispRenderTypes.additive("thaumcraft:wisp_node_additive", NODE_ATLAS);
 
         private WispRenderer(EntityRendererProvider.Context context) {
             super(context);
@@ -73,12 +79,20 @@ public final class WispRendererRegistration {
 
             poseStack.pushPose();
             poseStack.mulPose(entityRenderDispatcher.cameraOrientation());
-            VertexConsumer consumer = buffers.getBuffer(PARTICLE_LAYER);
             Matrix4f matrix = poseStack.last().pose();
-            int frame = entity.tickCount % 16;
-            renderQuad(consumer, matrix, 0.4F, 512 + frame, 0xFFFFFF, 255);
-            renderQuad(consumer, matrix, 0.75F, 320 + frame, 0xFFFFFF, 64);
-            renderQuad(consumer, matrix, 0.75F, 800 + frame, entity.getAspectColor(), 128);
+            VertexConsumer particles = buffers.getBuffer(PARTICLE_LAYER);
+            renderQuad(particles, matrix, 0.4F,
+                    LegacyWispRenderAtlas.animatedFrame(LegacyWispRenderAtlas.OUTER_BASE_FRAME, entity.tickCount),
+                    LegacyWispRenderAtlas.PARTICLE_GRID, 0xFFFFFF, 255);
+            renderQuad(particles, matrix, 0.75F,
+                    LegacyWispRenderAtlas.animatedFrame(LegacyWispRenderAtlas.INNER_BASE_FRAME, entity.tickCount),
+                    LegacyWispRenderAtlas.PARTICLE_GRID, 0xFFFFFF, 64);
+
+            // BETA26 binds UtilsFX.nodeTexture before drawing this third layer.
+            VertexConsumer nodes = buffers.getBuffer(NODE_LAYER);
+            renderQuad(nodes, matrix, 0.75F,
+                    LegacyWispRenderAtlas.animatedFrame(LegacyWispRenderAtlas.ASPECT_BASE_FRAME, entity.tickCount),
+                    LegacyWispRenderAtlas.NODE_GRID, entity.getAspectColor(), 128);
             poseStack.popPose();
 
             super.render(entity, entityYaw, partialTick, poseStack, buffers, LightTexture.FULL_BRIGHT);
@@ -133,21 +147,19 @@ public final class WispRendererRegistration {
                 Matrix4f matrix,
                 float scale,
                 int frame,
+                int gridSize,
                 int color,
                 int alpha
         ) {
-            float u0 = (frame % 64) / 64.0F;
-            float u1 = u0 + 1.0F / 64.0F;
-            float v0 = (frame / 64) / 64.0F;
-            float v1 = v0 + 1.0F / 64.0F;
+            LegacyWispRenderAtlas.Uv uv = LegacyWispRenderAtlas.frameUv(frame, gridSize);
             int red = (color >> 16) & 0xFF;
             int green = (color >> 8) & 0xFF;
             int blue = color & 0xFF;
 
-            vertex(consumer, matrix, -scale, -scale, u1, v1, red, green, blue, alpha);
-            vertex(consumer, matrix, -scale, scale, u1, v0, red, green, blue, alpha);
-            vertex(consumer, matrix, scale, scale, u0, v0, red, green, blue, alpha);
-            vertex(consumer, matrix, scale, -scale, u0, v1, red, green, blue, alpha);
+            vertex(consumer, matrix, -scale, -scale, uv.u1(), uv.v1(), red, green, blue, alpha);
+            vertex(consumer, matrix, -scale, scale, uv.u1(), uv.v0(), red, green, blue, alpha);
+            vertex(consumer, matrix, scale, scale, uv.u0(), uv.v0(), red, green, blue, alpha);
+            vertex(consumer, matrix, scale, -scale, uv.u0(), uv.v1(), red, green, blue, alpha);
         }
 
         private static void vertex(
@@ -187,9 +199,9 @@ public final class WispRendererRegistration {
             super("thaumcraft_wisp_render_types", () -> {}, () -> {});
         }
 
-        private static RenderType additive(ResourceLocation texture) {
+        private static RenderType additive(String name, ResourceLocation texture) {
             return RenderType.create(
-                    "thaumcraft:wisp_additive",
+                    name,
                     DefaultVertexFormat.NEW_ENTITY,
                     VertexFormat.Mode.QUADS,
                     256,

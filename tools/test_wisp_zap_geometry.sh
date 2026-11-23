@@ -7,6 +7,9 @@ trap 'rm -rf "$TMP"' EXIT
 
 javac --release 21 -encoding UTF-8 -d "$TMP" \
   "$ROOT/src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java" \
-  "$ROOT/src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java"
+  "$ROOT/src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java" \
+  "$ROOT/src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java" \
+  "$ROOT/src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java"
 
 java -cp "$TMP" dev.ehtid.thaumcraft.port.core.visual.LegacyWispZapGeometryTest
+java -cp "$TMP" dev.ehtid.thaumcraft.port.core.visual.LegacyWispRenderAtlasTest
