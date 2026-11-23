@@ -39,9 +39,15 @@ public final class GreatwoodLegacyTrunkFeature extends Feature<NoneFeatureConfig
                 origin.getX(), origin.getY(), origin.getZ(), heightLimit,
                 level.getMinBuildHeight(), level.getMaxBuildHeight());
         if (plan.isEmpty()) return false;
-        BlockPos below = origin.below();
-        BlockState soil = level.getBlockState(below);
-        if (!soil.is(Blocks.GRASS_BLOCK) && !soil.is(Blocks.DIRT)) return false;
+        // Never spill into a neighboring chunk from this unregistered prototype.
+        if ((origin.getX() & 15) == 15 || (origin.getZ() & 15) == 15) return false;
+        // Every column of the 2x2 trunk needs its own suitable foundation.
+        for (int dx = 0; dx < 2; dx++) {
+            for (int dz = 0; dz < 2; dz++) {
+                BlockState soil = level.getBlockState(origin.offset(dx, -1, dz));
+                if (!soil.is(Blocks.GRASS_BLOCK) && !soil.is(Blocks.DIRT)) return false;
+            }
+        }
 
         return GreatwoodTrunkPlacement.place(plan, log,
                 new GreatwoodTrunkPlacement.WorldAdapter<>() {
