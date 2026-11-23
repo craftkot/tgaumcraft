@@ -81,6 +81,17 @@ public final class LegacyTreeAttemptRngSequenceTest {
         }
         check(rejected, "overflow rejected");
         check("I9;".equals(overflow.calls()), "overflow still consumes offset roll");
+        // Negative overflow must fail after exactly one coordinate draw too.
+        Sequence underflow = new Sequence();
+        boolean underflowRejected = false;
+        try {
+            LegacyTreeAttempt.centeredCoordinate(Integer.MIN_VALUE, underflow);
+        } catch (IllegalArgumentException expected) {
+            underflowRejected = true;
+        }
+        check(underflowRejected, "negative chunk overflow rejected");
+        check("I9;".equals(underflow.calls()), "negative overflow consumes one offset roll");
+
         System.out.println("M12 LegacyTreeAttempt RNG sequence: OK (" + assertions + " assertions)");
     }
 }
