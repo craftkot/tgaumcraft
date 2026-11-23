@@ -105,18 +105,24 @@ public final class WispRendererRegistration {
                     if (player != null) {
                         Vec3 playerEye = player.getEyePosition(partialTick);
                         Vec3 wispEye = entity.getEyePosition(partialTick);
-                        // RenderWisp/this billboard is centered at entity position, not its eye.
+                        // The visible billboard is centered at entity position, but the
+                        // Survival attack ray must intersect the actual entity AABB.
                         Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());
+                        Vec3 wispHitboxCenter = entity.getBoundingBox().getCenter();
                         Vec3 toWispRenderOrigin = wispRenderOrigin.subtract(playerEye);
+                        Vec3 toWispHitboxCenter = wispHitboxCenter.subtract(playerEye);
                         Vec3 toWispEye = wispEye.subtract(playerEye);
-                        double aimDot = toWispRenderOrigin.lengthSqr() < 1.0E-12D
+                        double aimDot = toWispHitboxCenter.lengthSqr() < 1.0E-12D
+                                ? 1.0D
+                                : player.getViewVector(partialTick).dot(toWispHitboxCenter.normalize());
+                        double renderAimDot = toWispRenderOrigin.lengthSqr() < 1.0E-12D
                                 ? 1.0D
                                 : player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize());
                         double eyeAimDot = toWispEye.lengthSqr() < 1.0E-12D
                                 ? 1.0D
                                 : player.getViewVector(partialTick).dot(toWispEye.normalize());
                         System.out.println("TC_SMOKE_WISP_CAMERA=YES id=" + entity.getId()
-                                + " aimTarget=render_origin"
+                                + " aimTarget=hitbox_center"
                                 + " tick=" + entity.tickCount
                                 + " playerX=" + player.getX()
                                 + " playerY=" + player.getY()
@@ -132,7 +138,11 @@ public final class WispRendererRegistration {
                                 + " wispEyeX=" + wispEye.x
                                 + " wispEyeY=" + wispEye.y
                                 + " wispEyeZ=" + wispEye.z
+                                + " wispHitboxCenterX=" + wispHitboxCenter.x
+                                + " wispHitboxCenterY=" + wispHitboxCenter.y
+                                + " wispHitboxCenterZ=" + wispHitboxCenter.z
                                 + " aimDot=" + aimDot
+                                + " renderAimDot=" + renderAimDot
                                 + " eyeAimDot=" + eyeAimDot);
                     }
                     System.out.println("TC_SMOKE_WISP_RENDERED=YES id=" + entity.getId()
