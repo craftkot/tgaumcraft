@@ -4081,3 +4081,9 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Changed files: tools/client_wisp_zap_smoke.py, tools/verify_wisp_zap_client.py, tools/test_wisp_zap_client_smoke.py, and this journal. No production Java, renderer, resources, registry, Gradle, workflow, or other lane was changed.
 - Current fixed rubric remains 59/100, M16 4/6, M08 5/9. No point awarded. The real Survival hit chain is now proven on the previous head, but the re-aimed screenshot, three-tick FXBolt frames, and expiry still require a fresh exact-head Minecraft client run.
 - Next: inspect the new Wisp client run and artifact on the resulting commit. If the aimed Wisp screenshot passes but the transient bolt does not, diagnose the exact FX frame/camera timing; do not lower pixel thresholds or disable Wisp AI.
+
+
+### 2026-11-23 — offline fixture correction after first re-aim commit
+
+- Wisp run #45111355205 on f6f415cd7a5821d1ab32f614fa7a9521ce078c9d stopped in the offline contract step before Minecraft launch. The geometry test passed (21 assertions) and Wisp atlas test passed (24 assertions). The failing negative fixture attempted to replace adjacent wispZ/aimDot tokens that are separated by the eye/hitbox telemetry fields, so the mutation did not change the capture sample. This was a test-fixture defect, not a production or client failure.
+- Corrected the mutation to target the actual hitbox-center field sequence. Strengthened both Bash and Python capture gates to require the camera-only re-aim to leave the player on the verified fixture platform, keep the live Wisp within 16 blocks, and preserve aimDot >= 0.99. Added an explicit out-of-range capture negative fixture. No score change; no Minecraft client was launched in #45111355205.

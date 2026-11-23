@@ -353,8 +353,13 @@ def main() -> int:
                                 "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.8"), root
         ), "initial camera not facing the Wisp must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("wispZ=11.5 aimDot=0.999", "wispZ=11.5 aimDot=0.8"), root
+            log, status.replace("wispHitboxCenterZ=11.5 aimDot=0.999",
+                                "wispHitboxCenterZ=11.5 aimDot=0.8"), root
         ), "post-hit capture camera not facing the live Wisp must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("playerEyeZ=10.5 wispX=12.5",
+                                "playerEyeZ=10.5 wispX=40.5"), root
+        ), "post-hit capture camera outside the Wisp tracking radius must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("distance=1.0440", "distance=6.7"), root
         ), "Wisp outside the 3-block melee reach must fail"

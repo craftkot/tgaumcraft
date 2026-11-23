@@ -311,9 +311,16 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 (capture_player_x, capture_player_y, capture_player_z),
                 (capture_wisp_x, capture_wisp_y, capture_wisp_z),
             )
-            if capture_distance > 16.0 or capture_aim_dot < 0.99:
+            if not (
+                12.0 <= capture_player_x <= 13.0
+                and 148.5 <= capture_player_y <= 149.5
+                and 10.0 <= capture_player_z <= 11.0
+                and capture_distance <= 16.0
+                and capture_aim_dot >= 0.99
+            ):
                 errors.append(
-                    "post-hit screenshot camera is not facing the live Wisp within 16 blocks: "
+                    "post-hit camera re-aim moved the player off the verified platform or lost the live Wisp: "
+                    f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
                     f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
                 )
         if capture_id and capture_tick:
