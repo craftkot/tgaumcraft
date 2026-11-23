@@ -340,13 +340,19 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     public boolean hurt(DamageSource source, float amount) {
+        LivingEntity attacker = source.getEntity() instanceof LivingEntity living ? living : null;
         boolean hurt = super.hurt(source, amount);
-        if (hurt && source.getEntity() instanceof LivingEntity attacker) {
+        if (SMOKE_PROBE && attacker instanceof Player player) {
+            System.out.println("TC_SMOKE_WISP_HURT=YES accepted=" + hurt
+                    + " source=" + getId() + " attacker=" + player.getId()
+                    + " amount=" + amount + " health=" + getHealth());
+        }
+        if (hurt && attacker != null) {
             setTarget(attacker);
             aggroCooldown = 200;
-            if (SMOKE_PROBE && attacker instanceof Player) {
+            if (SMOKE_PROBE && attacker instanceof Player player) {
                 System.out.println("TC_SMOKE_WISP_TARGET_SET=YES source=" + getId()
-                        + " target=" + attacker.getId() + " aspect=" + getAspectType());
+                        + " target=" + player.getId() + " aspect=" + getAspectType());
             }
         }
         return hurt;

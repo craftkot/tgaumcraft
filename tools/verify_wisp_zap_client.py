@@ -27,6 +27,9 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
     "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
+    "TC_SMOKE_WISP_ATTACK_INPUT=YES",
+    "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+    "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
 )
 
@@ -38,7 +41,14 @@ REQUIRED_STATUS = (
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
+    "WISP_RENDER_FIRST_FRAME=YES",
+    "WISP_RENDER_FIRST_FRAME_ID=",
+    "WISP_RENDER_FIRST_FRAME_TICK=",
+    "WISP_RENDER_CAPTURE_ID=",
     "WISP_RENDER_CAPTURE_TICK=",
+    "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+    "WISP_ATTACK_TARGET_CONFIRMED=YES",
+    "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -146,6 +156,18 @@ def _first(pattern: str, text: str):
 def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     errors: list[str] = []
 
+    attack_input = _first(
+        r"TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=(\d+) targetType=thaumcraft:wisp hitType=ENTITY distance=([0-9.]+) tick=(\d+)",
+        log_text,
+    )
+    client_attack = _first(
+        r"TC_SMOKE_WISP_CLIENT_ATTACK=YES player=(\d+) target=(\d+) tick=(\d+) distance=([0-9.]+)",
+        log_text,
+    )
+    hurt = _first(
+        r"TC_SMOKE_WISP_HURT=YES accepted=true source=(\d+) attacker=(\d+) amount=([0-9.]+) health=([0-9.]+)",
+        log_text,
+    )
     hit = _first(
         r"TC_SMOKE_WISP_TARGET_SET=YES source=(\d+) target=(\d+) aspect=aer",
         log_text,
@@ -179,6 +201,9 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     for label, match in (("client Wisp camera sample", wisp_camera),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
+                         ("client attack input/hit result", attack_input),
+                         ("client selected attack target", client_attack),
+                         ("server accepted damage", hurt),
                          ("player hit/target", hit), ("server payload send", sent),
                          ("client payload receive", received), ("client additive render", rendered)):
         if match is None:
@@ -196,6 +221,16 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("completed level frame and rendered Wisp use different ticks")
     if wisp_rendered and hit and wisp_rendered.group(1) != hit.group(1):
         errors.append("rendered Wisp and player-hit source use different entity IDs")
+    if attack_input and wisp_rendered and attack_input.group(1) != wisp_rendered.group(1):
+        errors.append("client hit result did not select the rendered Wisp")
+    if attack_input and client_attack and attack_input.group(1) != client_attack.group(2):
+        errors.append("client hit result and AttackEntityEvent selected different entities")
+    if client_attack and hurt and client_attack.group(1, 2) != hurt.group(2, 1):
+        errors.append("client AttackEntityEvent and server hurt callback use different player/Wisp IDs")
+    if hurt and hit and hurt.group(1, 2) != hit.group(1, 2):
+        errors.append("server accepted-damage callback and target acquisition use different IDs")
+    if attack_input and float(attack_input.group(2)) > 3.0:
+        errors.append("client-selected Wisp is outside the configured melee reach")
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
         errors.append("server hit and zap payload use different source/target entity IDs")
     if sent and received and sent.group(1, 2) != received.group(1, 2):
@@ -223,39 +258,56 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
+    first_frame_id = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_ID=(\d+)$", status_text)
+    first_frame_tick = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_TICK=(\d+)$", status_text)
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
+    capture_id = _first(r"(?m)^WISP_RENDER_CAPTURE_ID=(\d+)$", status_text)
+    capture_camera = _first(
+        r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) ",
+        status_text,
+    )
     frame_status = _first(
         r"(?m)^WISP_RENDER_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)$",
         status_text,
     )
     if frame_status is None:
-        errors.append("missing post-LevelRenderer completed-frame status")
+        errors.append("missing first post-LevelRenderer completed-frame status")
     else:
         if wisp_rendered and frame_status.group(1) != wisp_rendered.group(1):
-            errors.append("completed-frame status and rendered Wisp use different entity IDs")
+            errors.append("first completed-frame status and rendered Wisp use different entity IDs")
         if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):
-            errors.append("completed-frame status and rendered Wisp use different ticks")
+            errors.append("first completed-frame status and rendered Wisp use different ticks")
     if telemetry is None:
-        errors.append("missing fresh pre-aimed-spawn camera telemetry")
+        errors.append("missing first-frame camera telemetry")
     else:
         camera_id, camera_tick = telemetry.group(1), telemetry.group(2)
         player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups()[2:])
         if wisp_rendered and camera_id != wisp_rendered.group(1):
-            errors.append("camera telemetry and rendered Wisp use different entity IDs")
+            errors.append("first-frame camera telemetry and rendered Wisp use different entity IDs")
         if wisp_rendered and camera_tick != wisp_rendered.group(2):
-            errors.append("camera telemetry and rendered Wisp use different ticks")
-        if capture_tick is None:
-            errors.append("missing render-callback capture tick")
-        elif camera_tick != capture_tick.group(1):
-            errors.append("aim screenshot was not captured from the first render callback tick")
-        if frame_status and capture_tick and frame_status.group(2) != capture_tick.group(1):
-            errors.append("aim screenshot capture tick does not match the completed level frame")
+            errors.append("first-frame camera telemetry and rendered Wisp use different ticks")
+        if first_frame_id is None or first_frame_tick is None:
+            errors.append("missing first-frame entity ID/tick status")
+        elif (camera_id, camera_tick) != (first_frame_id.group(1), first_frame_tick.group(1)):
+            errors.append("first-frame camera telemetry and first-frame status use different ID/tick")
+        if capture_id is None or capture_tick is None:
+            errors.append("missing post-hit screenshot entity ID/tick")
+        elif camera_id != capture_id.group(1):
+            errors.append("post-hit screenshot and first-frame camera use different Wisp IDs")
+        if capture_camera is None:
+            errors.append("missing camera sample copied at post-hit screenshot capture")
+        elif capture_id and capture_tick and capture_camera.group(1, 2) != (capture_id.group(1), capture_tick.group(1)):
+            errors.append("post-hit screenshot camera sample does not match capture ID/tick")
+        if capture_id and capture_tick:
+            capture_frame = f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={capture_id.group(1)} tick={capture_tick.group(1)}"
+            if capture_frame not in log_text:
+                errors.append("post-hit screenshot was not taken after its matching completed level frame")
         measured_distance = math.dist((player_x, player_y, player_z), (wisp_x, wisp_y, wisp_z))
         if not (12.0 <= player_x <= 13.0 and 148.5 <= player_y <= 149.5
                 and 10.0 <= player_z <= 11.0 and distance <= 3.0
                 and abs(distance - measured_distance) <= 0.1 and aim_dot >= 0.99):
             errors.append(
-                "post-aim camera is not on the verified platform, within melee reach and centered on Wisp: "
+                "first-frame camera is not on the verified platform, within melee reach and centered on Wisp: "
                 f"player=({player_x:.3f},{player_y:.3f},{player_z:.3f}) "
                 f"wisp=({wisp_x:.3f},{wisp_y:.3f},{wisp_z:.3f}) "
                 f"distance={distance:.3f} aimDot={aim_dot:.4f}"

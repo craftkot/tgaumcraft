@@ -57,10 +57,11 @@ def render() -> str:
     wisp_wait_for_marker "$marker"
   }
 
-  # The camera is pre-aimed at the billboard render origin before the Wisp exists.
-  # Only accept a renderer callback appended after the summon command.
+  # Pre-aim at the Wisp AABB centre before it exists. Do not capture a desktop
+  # screenshot between the first completed frame and the real click: capture is
+  # deliberately deferred until the server accepts the hit and stops autonomous flight.
   wisp_wait_for_fresh_render() {
-    local after_lines="$1" capture_name="$2" render_line render_id render_tick frame_marker
+    local after_lines="$1" render_line render_id render_tick frame_marker
     for _ in $(seq 1 200); do
       render_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_RENDERED=YES' | head -1 || true)"
       if [ -n "$render_line" ]; then
@@ -70,17 +71,13 @@ def render() -> str:
           echo "WISP_RENDER_CALLBACK_INVALID id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
           exit 1
         fi
-        # The renderer callback is inside LevelRenderer. Wait for AFTER_LEVEL,
-        # when the entity buffers have been submitted and the world frame is complete.
         frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$render_id tick=$render_tick"
         for _ in $(seq 1 200); do
           if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
-            # Allow the completed level pass to reach the display; one render
-            # interval is shorter than the Wisp's 50 ms server tick.
-            sleep 0.01
-            wisp_capture "$capture_name"
             echo "WISP_RENDER_FRAME_COMPLETE=YES id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_CAPTURE_TICK=$render_tick" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_FIRST_FRAME_ID=$render_id" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_FIRST_FRAME_TICK=$render_tick" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_FIRST_FRAME=YES id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
             echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
             return 0
           fi
@@ -96,6 +93,38 @@ def render() -> str:
     tail -120 client-smoke/client.log >&2
     exit 1
   }
+
+  wisp_capture_aim_after_hit() {
+    local after_lines="$1" wisp_id camera_line camera_tick frame_marker
+    wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
+      echo "WISP_RENDER_FIRST_FRAME_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    for _ in $(seq 1 200); do
+      camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id " | tail -1 || true)"
+      if [ -n "$camera_line" ]; then
+        camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
+        if [[ "$camera_tick" =~ ^[0-9]+$ ]]; then
+          frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$camera_tick"
+          if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
+            sleep 0.01
+            wisp_capture 78-wisp-aim-check
+            echo "WISP_RENDER_CAPTURE_ID=$wisp_id" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_CAPTURE_TICK=$camera_tick" | tee -a client-smoke-status.txt
+            echo "$camera_line" | tee -a client-smoke-status.txt
+            echo 'WISP_RENDER_CAPTURE_AFTER_HIT=YES' | tee -a client-smoke-status.txt
+            return 0
+          fi
+        fi
+      fi
+      sleep 0.005
+    done
+    echo 'WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_wait_for_teleport() {
     local after_lines="$1"
     for _ in $(seq 1 200); do
@@ -113,8 +142,7 @@ def render() -> str:
   }
 
   wisp_verify_aim_telemetry() {
-    local after_lines="$1"
-    local telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot wisp_id camera_tick capture_tick
+    local after_lines="$1" telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot wisp_id camera_tick first_frame_id first_frame_tick capture_id capture_tick
     telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1 || true)"
     if [ -z "$telemetry" ]; then
       echo 'WISP_CAMERA_TELEMETRY_MISSING=YES' | tee -a client-smoke-status.txt
@@ -123,6 +151,9 @@ def render() -> str:
     fi
     wisp_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA=YES id=\([0-9][0-9]*\) aimTarget=.*/\1/p' <<<"$telemetry")"
     camera_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$telemetry")"
+    first_frame_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+    first_frame_tick="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_TICK=//p' client-smoke-status.txt | tail -1)"
+    capture_id="$(sed -n 's/^WISP_RENDER_CAPTURE_ID=//p' client-smoke-status.txt | tail -1)"
     capture_tick="$(sed -n 's/^WISP_RENDER_CAPTURE_TICK=//p' client-smoke-status.txt | tail -1)"
     player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$telemetry")"
@@ -132,9 +163,9 @@ def render() -> str:
     wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$capture_tick" =~ ^[0-9]+$ ]] \
-      || [ "$camera_tick" != "$capture_tick" ]; then
-      echo "WISP_CAMERA_RENDER_TICK_MISMATCH id=$wisp_id camera_tick=$camera_tick capture_tick=$capture_tick" | tee -a client-smoke-status.txt
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$first_frame_id" =~ ^[0-9]+$ && "$first_frame_tick" =~ ^[0-9]+$ && "$capture_id" =~ ^[0-9]+$ && "$capture_tick" =~ ^[0-9]+$ ]] \
+      || [ "$camera_tick" != "$first_frame_tick" ] || [ "$wisp_id" != "$first_frame_id" ] || [ "$wisp_id" != "$capture_id" ]; then
+      echo "WISP_CAMERA_RENDER_TICK_MISMATCH id=$wisp_id camera_tick=$camera_tick first_frame_id=$first_frame_id first_frame_tick=$first_frame_tick capture_id=$capture_id capture_tick=$capture_tick" | tee -a client-smoke-status.txt
       echo "$telemetry" >&2
       exit 1
     fi
@@ -231,25 +262,36 @@ def render() -> str:
   python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-b.png | tee -a client-smoke-status.txt
   echo 'WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN' | tee -a client-smoke-status.txt
 
-  # Aim at the fixed spawn point before the Wisp exists. Only a fresh callback
-  # followed by AFTER_LEVEL may capture the first completed billboard frame.
+  # Pre-aim at the exact spawn AABB centre. The first completed level frame is
+  # the trigger for the real click; no external screenshot is taken beforehand.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
-  wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check
+  wisp_wait_for_fresh_render "$aim_log_lines"
 
-  # Attack immediately while the first rendered tick is still within melee
-  # reach. Do not spend more ticks parsing screenshots or camera telemetry first.
   xdotool click 1
   echo 'WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK' | tee -a client-smoke-status.txt
+  wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'
+  attack_input_line="$(grep -F 'TC_SMOKE_WISP_ATTACK_INPUT=YES' client-smoke/client.log | tail -1)"
+  if ! grep -Fq 'targetWisp=true' <<<"$attack_input_line"; then
+    echo "WISP_ATTACK_TARGET_NOT_WISP=$attack_input_line" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  fi
+  echo 'WISP_ATTACK_TARGET_CONFIRMED=YES' | tee -a client-smoke-status.txt
+  wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
+  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
+
+  after_hit_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_capture_aim_after_hit "$after_hit_log_lines"
+  wisp_verify_aim_telemetry "$aim_log_lines"
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
+
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_SENT=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_ZAP_RENDERED=YES'
-
-  # Validate the already-captured first frame after the attack has been accepted.
-  wisp_verify_aim_telemetry "$aim_log_lines"
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
   # The effect lasts three game ticks. Capture immediately after the renderer
   # reports its first completed additive batch, then capture after expiry.

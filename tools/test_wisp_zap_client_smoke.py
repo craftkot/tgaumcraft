@@ -76,7 +76,13 @@ def main() -> int:
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
+        "TC_SMOKE_WISP_ATTACK_INPUT=YES",
+        "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+        "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
+        "WISP_ATTACK_TARGET_CONFIRMED=YES",
+        "WISP_ATTACK_HURT_ACCEPTED=YES",
+        "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
@@ -87,13 +93,20 @@ def main() -> int:
         "sleep 0.5",
         '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}',
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
+        "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+        "TC_SMOKE_WISP_HURT=YES accepted=true",
         "d <= 3.0",
         "wisp_verify_aim_telemetry",
         "WISP_CAMERA_TELEMETRY=PASS",
+        "WISP_ATTACK_TARGET_CONFIRMED=YES",
+        "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "wisp_wait_for_teleport",
-        'wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check',
+        'wisp_wait_for_fresh_render "$aim_log_lines"',
+        "wisp_capture_aim_after_hit",
+        "targetWisp=true",
         "WISP_RENDER_CAPTURE_TICK=",
+        "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
@@ -122,21 +135,32 @@ def main() -> int:
     baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
     summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5", spawn_snapshot_index)
-    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check', summon_index)
+    rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
     click_index = setup.index("xdotool click 1", rendered_index)
-    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", click_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', target_index)
+    input_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'", click_index)
+    client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", input_index)
+    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", client_attack_index)
+    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
+    capture_index = setup.index("wisp_capture_aim_after_hit", target_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < click_index < target_index < telemetry_index < aim_verify_index, (
-        "capture stable baselines before spawn, then attack on the first completed render frame before slower telemetry/pixel verification"
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < click_index < input_index < client_attack_index < hurt_index < target_index < capture_index < telemetry_index < aim_verify_index, (
+        "attack on first completed frame; prove input target, client selection and accepted server damage before the slower screenshot"
     )
     between_render_and_click = setup[rendered_index:click_index]
-    assert "sleep " not in between_render_and_click, "do not let autonomous Wisp flight advance before the real melee click"
+    assert "sleep " not in between_render_and_click and "wisp_capture" not in between_render_and_click, (
+        "no autonomous flight tick or desktop screenshot may intervene before the real melee click"
+    )
     fresh_render_body = generated.split("  wisp_wait_for_fresh_render() {", 1)[1].split("  }", 1)[0]
     frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
-    capture_index = fresh_render_body.index('wisp_capture "$capture_name"')
-    assert frame_marker_index < capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < fresh_render_body.index("WISP_RENDER_CAPTURE_TICK=") < fresh_render_body.index("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES"), (
-        "capture must wait for the matching AFTER_LEVEL marker, not run inside the entity renderer callback"
+    first_frame_status_index = fresh_render_body.index("WISP_RENDER_FIRST_FRAME=YES")
+    assert frame_marker_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
+    assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
+    capture_body = generated.split("  wisp_capture_aim_after_hit() {", 1)[1].split("  }", 1)[0]
+    capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
+    capture_image_index = capture_body.index("wisp_capture 78-wisp-aim-check")
+    assert capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
+        "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
@@ -186,8 +210,12 @@ def main() -> int:
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21",
-        "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
+        "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 tick=21",
+        "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=21 distance=1.0440",
+        "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22",
+        "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=0.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -199,8 +227,16 @@ def main() -> int:
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
-        "WISP_RENDER_CAPTURE_TICK=21",
+        "WISP_RENDER_FIRST_FRAME_ID=17",
+        "WISP_RENDER_FIRST_FRAME_TICK=21",
+        "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
+        "WISP_RENDER_CAPTURE_ID=17",
+        "WISP_RENDER_CAPTURE_TICK=22",
+        "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+        "WISP_ATTACK_TARGET_CONFIRMED=YES",
+        "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
@@ -283,8 +319,11 @@ def main() -> int:
             log.replace("TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21", "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22"), status, root
         ), "camera and renderer ticks must match"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_CAPTURE_TICK=21", "WISP_RENDER_CAPTURE_TICK=22"), root
-        ), "capture tick must match camera/render callback"
+            log, status.replace("WISP_RENDER_CAPTURE_TICK=22", "WISP_RENDER_CAPTURE_TICK=23"), root
+        ), "post-hit capture tick must match its copied camera sample"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_CAPTURE_ID=17", "WISP_RENDER_CAPTURE_ID=18"), root
+        ), "post-hit capture ID must match the rendered Wisp"
         assert verify_wisp_zap_client.verify(
             log.replace("target=1", "target=2", 1), status, root
         ), "mismatched server target must fail"
@@ -314,10 +353,23 @@ def main() -> int:
     wisp_entity = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntity.java"
     ).read_text(encoding="utf-8")
+    assert "TC_SMOKE_WISP_HURT=YES accepted=" in wisp_entity
+    assert wisp_entity.index("TC_SMOKE_WISP_HURT=YES accepted=") < wisp_entity.index("TC_SMOKE_WISP_TARGET_SET=YES")
+    attack_probe = Path(
+        "src/neoforge/java/dev/ehtid/thaumcraft/client/WispAttackSmokeProbe.java"
+    ).read_text(encoding="utf-8")
+    assert "InputEvent.InteractionKeyMappingTriggered" in attack_probe
+    assert "event.isAttack()" in attack_probe
+    assert "minecraft.hitResult" in attack_probe
+    assert "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=" in attack_probe
+    assert "AttackEntityEvent" in attack_probe
+    assert "TC_SMOKE_WISP_CLIENT_ATTACK=YES" in attack_probe
+    assert "event.setCanceled" not in attack_probe
     renderer = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java"
     ).read_text(encoding="utf-8")
     assert "TC_SMOKE_WISP_TARGET_SET=YES" in wisp_entity
+    assert "TC_SMOKE_WISP_HURT=YES accepted=" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_SENT=YES" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES" in renderer
     assert "TC_SMOKE_WISP_ZAP_RENDERED=YES" in renderer
