@@ -388,7 +388,7 @@ def main() -> int:
         "dispatch the real click as soon as the matching AFTER_LEVEL EntityHitResult arrives, before camera parsing"
     )
     assert wait_attack_body.count("xdotool click 1") == 1
-    assert "return 1" not in wait_attack_body[attack_click_index:], (
+    assert "return 1" not in wait_attack_body[wait_attack_body.index('echo \\"WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt\\"'):], (
         "after dispatching a real click, telemetry failures must abort rather than retry with a second attack"
     )
     assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in wait_attack_body
