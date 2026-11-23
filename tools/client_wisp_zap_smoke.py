@@ -214,7 +214,7 @@ def render() -> str:
   # Put the player on one known floor block and ask the server to prove that
   # exact block is stone before spawning or aiming at the Wisp.
   fixture_teleport_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/tp @p 12.5 149 10.5 0 52'
+  wisp_fast_command '/tp @p 12.5 149 10.5 0 41'
   wisp_wait_for_teleport "$fixture_teleport_log_lines"
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
