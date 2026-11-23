@@ -156,21 +156,49 @@ def render() -> str:
   }
 
   wisp_wait_for_attack_frame() {
-    local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" attempt="${4:-1}" frame_pattern frame_line camera_tick game_time player_tick camera_line click_log_lines
+    local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" attempt="${4:-1}" frame_pattern frame_line camera_tick game_time player_tick camera_line click_log_lines frame_fd frame_tail_pid candidate_line watcher_status deadline remaining
     local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     frame_pattern="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id .*hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none"
     click_log_lines="$(wc -l < client-smoke/client.log)"
-    frame_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -E "$3"' _ "$((after_lines + 1))" client-smoke/client.log "$frame_pattern" || true)"
+    WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
+    frame_line=""
+    watcher_status=0
+    exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)
+    frame_tail_pid="$!"
+    deadline=$((SECONDS + 5))
+    while :; do
+      remaining=$((deadline - SECONDS))
+      if [ "$remaining" -le 0 ]; then
+        break
+      fi
+      if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then
+        break
+      fi
+      if [[ "$candidate_line" =~ $frame_pattern ]]; then
+        frame_line="$candidate_line"
+        # Dispatch the real OS click inside the streaming reader. Do not wait
+        # for tail/grep teardown or parse camera telemetry before sending input.
+        if ! xdotool click 1; then
+          echo "WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+          watcher_status=1
+        else
+          echo "WISP_ATTACK_CLICK_DISPATCHED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+        fi
+        break
+      fi
+    done
+    kill "$frame_tail_pid" 2>/dev/null || true
+    wait "$frame_tail_pid" 2>/dev/null || true
+    exec {frame_fd}<&-
+    if [ "$watcher_status" -ne 0 ]; then
+      tail -100 client-smoke/client.log >&2
+      exit 1
+    fi
     if [ -z "$frame_line" ]; then
       echo "WISP_ATTACKABLE_FRAME_TIMEOUT=id=$wisp_id" | tee -a client-smoke-status.txt
       tail -100 client-smoke/client.log >&2
       return 1
     fi
-    # Dispatch the real OS click immediately when the same-ID AFTER_LEVEL
-    # EntityHitResult line arrives. Do not spend client ticks parsing camera
-    # telemetry first: the live Wisp can move out of the ray before input lands.
-    WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
-    xdotool click 1
     echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
     if [[ "$frame_line" =~ TC_SMOKE_WISP_FRAME_COMPLETE=YES\ id=([0-9]+)\ tick=([0-9]+)\ gameTime=([0-9]+)\ playerTick=([0-9]+) ]]; then
       camera_tick="${BASH_REMATCH[2]}"

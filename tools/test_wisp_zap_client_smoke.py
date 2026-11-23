@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Offline generator/verifier regressions for the real Wisp zap client smoke."""
 from pathlib import Path
+import os
+import time
 from unittest.mock import patch
 import subprocess
 import struct
@@ -69,6 +71,105 @@ def _test_bash_function_body_extraction() -> None:
     assert body.endswith("echo after-nested-block")
 
 
+
+def _test_streaming_click_dispatch() -> None:
+    """The live-frame reader must click before returning to its caller, once only."""
+    pattern = (
+        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=42 .*hitType=ENTITY "
+        r"targetId=42 targetType=thaumcraft:wisp blockPos=none"
+    )
+    first = (
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=42 tick=10 gameTime=100 "
+        "playerTick=90 hitType=ENTITY targetId=42 targetType=thaumcraft:wisp blockPos=none"
+    )
+    second = (
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=42 tick=11 gameTime=101 "
+        "playerTick=91 hitType=ENTITY targetId=42 targetType=thaumcraft:wisp blockPos=none"
+    )
+    watcher = r'''set -euo pipefail
+log_path="$1"
+pattern="$2"
+frame_line=""
+watcher_status=0
+exec {frame_fd}< <(tail -n +1 -f "$log_path")
+frame_tail_pid=$!
+deadline=$((SECONDS + 2))
+while :; do
+  remaining=$((deadline - SECONDS))
+  if [ "$remaining" -le 0 ]; then break; fi
+  if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then break; fi
+  if [[ "$candidate_line" =~ $pattern ]]; then
+    frame_line="$candidate_line"
+    if ! xdotool click 1; then
+      watcher_status=1
+    else
+      printf 'CLICK_DISPATCHED\n' >> "$EVENT_LOG"
+    fi
+    break
+  fi
+done
+kill "$frame_tail_pid" 2>/dev/null || true
+wait "$frame_tail_pid" 2>/dev/null || true
+exec {frame_fd}<&-
+if [ "$watcher_status" -ne 0 ]; then exit 2; fi
+if [ -z "$frame_line" ]; then exit 3; fi
+printf 'PARENT_AFTER_WATCHER\n' >> "$EVENT_LOG"
+printf '%s\n' "$frame_line"
+'''
+
+    def run_case(click_exit: int) -> tuple[int, str, list[str], list[str]]:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            clicker = bin_dir / "xdotool"
+            clicker.write_text(
+                "#!/bin/sh\n"
+                "printf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\n"
+                "exit \"$CLICK_EXIT\"\n",
+                encoding="utf-8",
+            )
+            clicker.chmod(0o755)
+            log_path = root / "client.log"
+            log_path.write_text("", encoding="utf-8")
+            click_log = root / "clicks.log"
+            event_log = root / "events.log"
+            env = os.environ.copy()
+            env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+            env["CLICK_LOG"] = str(click_log)
+            env["EVENT_LOG"] = str(event_log)
+            env["CLICK_EXIT"] = str(click_exit)
+            process = subprocess.Popen(
+                ["bash", "-c", watcher, "_", str(log_path), pattern],
+                text=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=env,
+            )
+            time.sleep(0.1)
+            log_path.write_text(first + "\n" + second + "\n", encoding="utf-8")
+            try:
+                stdout, stderr = process.communicate(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate()
+                raise AssertionError("streaming Wisp watcher did not terminate")
+            clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
+            events = event_log.read_text(encoding="utf-8").splitlines() if event_log.exists() else []
+            return process.returncode, stdout.strip(), clicks, events
+
+    rc, output, clicks, events = run_case(0)
+    assert rc == 0, rc
+    assert output == first, output
+    assert clicks == ["click 1"], clicks
+    assert events == ["CLICK_DISPATCHED", "PARENT_AFTER_WATCHER"], events
+
+    rc, output, clicks, events = run_case(1)
+    assert rc == 2, rc
+    assert output == "", output
+    assert clicks == ["click 1"], clicks
+    assert events == [], events
+
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
     length = math.hypot(delta_y, delta_z)
@@ -77,6 +178,7 @@ def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
 
 def main() -> int:
     _test_bash_function_body_extraction()
+    _test_streaming_click_dispatch()
     # BETA26 RenderWisp draws at entity position, while getEyePosition is 0.765 blocks higher.
     old_eye_dot = _aim_dot(29.0, -0.555, 1.0)
     old_render_dot = _aim_dot(29.0, -1.32, 1.0)
@@ -121,7 +223,12 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
         "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none",
         "WISP_ATTACKABLE_FRAME=YES",
-        "timeout 5s bash -c",
+        'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)',
+        'deadline=$((SECONDS + 5))',
+        'while IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; do',
+        'kill "$frame_tail_pid" 2>/dev/null || true',
+        'WISP_ATTACK_CLICK_DISPATCHED=YES',
+        'WISP_ATTACK_CLICK_DISPATCH_FAILED=YES',
         "WISP_RENDER_FRAME_COMPLETE=YES",
         "wisp_fast_command()",
         "sleep 0.5",
@@ -212,6 +319,16 @@ def main() -> int:
     assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
         "the attack helper must re-aim, wait for a matching completed frame, and prove the real hit before post-hit capture"
     )
+    attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
+    assert 'exec {frame_fd}< <(tail -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
+    assert 'while IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; do' in attack_frame_body
+    assert 'if [[ "$candidate_line" =~ $frame_pattern ]]; then' in attack_frame_body
+    assert attack_frame_body.count("xdotool click 1") == 1
+    assert attack_frame_body.index('if [[ "$candidate_line" =~ $frame_pattern ]]') < attack_frame_body.index("xdotool click 1") < attack_frame_body.index('kill "$frame_tail_pid"')
+    assert attack_frame_body.index('WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"') < attack_frame_body.index("xdotool click 1")
+    assert "timeout 5s bash -c" not in attack_frame_body
+    assert 'if [ "$watcher_status" -ne 0 ]; then' in attack_frame_body
+    assert 'exit 1' in attack_frame_body
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
