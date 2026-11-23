@@ -46,6 +46,20 @@ public final class LegacyTreeAttemptRngSequenceTest {
         check(LegacyTreeAttempt.spiderGreatwood(greatwood), "spider variant");
         check("I25;I9;F;I8;".equals(greatwood.calls()), "greatwood call order");
 
+        // A rejected Greatwood biome must not consume the spider-variant roll.
+        Sequence rejectedGreatwood = new Sequence();
+        check(!LegacyTreeAttempt.greatwoodBiome(0.75F, rejectedGreatwood),
+                "greatwood strict threshold rejection");
+        check("F;".equals(rejectedGreatwood.calls()),
+                "rejected greatwood biome does not draw spider variant");
+
+        // Magical fallback still consumes the initial biome float exactly once.
+        Sequence magicalSilverwood = new Sequence();
+        check(LegacyTreeAttempt.silverwoodBiome(0F, true, false, 0, magicalSilverwood),
+                "magical silverwood fallback");
+        check("F;".equals(magicalSilverwood.calls()),
+                "magical silverwood fallback consumes exactly one float");
+
         Sequence overflow = new Sequence();
         boolean rejected = false;
         try {
