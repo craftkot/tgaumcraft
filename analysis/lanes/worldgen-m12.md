@@ -1034,3 +1034,11 @@
 - Test-only commit 4ff2a5176aec5ae045983e4f296eaa959ddd30a5 adds four assertions for rejected Silverwood and Greatwood tree rolls: exact false result and one bounded RNG draw each. Existing Sequence defaults remain unchanged; no production generator, shared registry, Gradle or foreign branch modified.
 - These checks exercise the pure helper in isolation, not caller short-circuit flow or natural chunk generation. Exact-head Java runner, NeoForge GameTest, live Minecraft worldgen and CI remain to be verified; no PASS claimed.
 - Remaining: Greatwood Feature, flora/ores/crystals, natural registration, Silverwood 17/81 same-chunk exclusions, non-atomic rollback. Next: execute tools/test_legacy_tree_attempt.sh on exact HEAD, inspect workflow jobs, then implement isolated Greatwood Feature and native WorldGenLevel tests. Historical 59/100 unchanged; no merge.
+
+
+## 2026-11-23 — M12 negative coordinate overflow RNG regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md and analysis/PARALLEL_WORKFLOW_RU.md, plus this lane; compared main...feature/worldgen-m12 (ahead 280 / behind 0 before change, main a4280834), inspected six feature branches and open PRs including Draft #9.
+- Previous HEAD 1c1b3c8bb7a4658ad4d9d8b6cdc678ac1fac947d: GitHub Actions run https://github.com/craftkot/tgaumcraft/actions/runs/45095604461 reports completed SUCCESS. This generic CI status is not evidence of standalone M12 runner or in-world placement.
+- Test-only commit f1da30f4362dbd3aef6edb80ebeddb59c6a1b3ef adds two assertions: Integer.MIN_VALUE chunk coordinate overflow must throw, and must consume exactly one nextInt(9), symmetric with existing MAX_VALUE coverage. No production feature, shared registry, Gradle, foreign branch or main changes.
+- Java 21 runner on exact new HEAD, NeoForge compile, native GameTest, dedicated game worldgen and new-HEAD CI are NOT verified. Next: run tools/test_legacy_tree_attempt.sh on exact HEAD, inspect new CI jobs, then implement source-mapped isolated Greatwood Feature with native WorldGenLevel rollback tests. Remaining: natural biome wiring, Silverwood 17/81 excluded positions, non-atomic rollback, Greatwood/flora/ore/crystal work. Draft PR #9 unmerged; historical audit 59/100.
