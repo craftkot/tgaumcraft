@@ -1083,3 +1083,12 @@
 - Found three literal `\\n` sequences embedded in the Java `if` condition of `GreatwoodTrunkPlan.create`, making the Java source invalid. Replaced them with real line breaks without changing the preflight logic. Code commit: `1c6e23e0f7bd428d5dd2460725083b5a48c95ec0`.
 - `tools/test_greatwood_trunk_plan.sh` still requires an exact checkout run. Container has Java 21, but Git remote access failed (`Could not resolve host: github.com`); no test PASS or NeoForge/GameTest claims. Confirm CI for this exact SHA when available.
 - Next: run standalone Java runner on exact head, then implement staged Greatwood block placement and failure-safe rollback with native tests. Do not wire shared worldgen registers without coordination. Draft PR #9 remains open; no merge.
+
+
+## 2026-11-23 — Greatwood staged trunk write/rollback adapter
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked six feature branches, open PRs (including Draft #9), main comparison (ahead 303 / behind 0 before writes), and PR-triggered workflow runs for previous HEAD 58d0bca (none returned).
+- Commits 87e1d79, 30f3105 add loader-neutral GreatwoodTrunkPlacement: snapshot/preflight before any writes, duplicate rejection, reverse restoration of every attempted cell (including one that mutated before failure), explicit restoration failure and suppressed exception handling. No shared registry or Gradle edits.
+- Commit 3dcb0e1 adds deterministic fake-world tests for success, replaceability rejection, false/throwing writes, reverse restoration, failed restoration, empty and duplicate plans. Commit a057d9d adds tools/test_greatwood_trunk_placement.sh.
+- **Not yet run on exact checkout:** new Java runner, NeoForge build, native GameTest, actual chunk generation and save/reload. This helper does NOT guarantee atomicity when an adapter rejects restoration, and is not wired to a NeoForge Feature. Archived BETA26 branch/canopy geometry and natural biome registration remain outstanding.
+- Next: run Java 21 runner on exact HEAD; implement isolated NeoForge adapter with block snapshots and failure-injection GameTest before enabling any worldgen registration. Silverwood origin exclusions, flora, ores, crystals remain. Historical audit 59/100 unchanged; no merge.
