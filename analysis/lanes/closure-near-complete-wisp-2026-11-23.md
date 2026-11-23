@@ -100,3 +100,12 @@
 - Exact-SHA Wisp client/full-port runs for `7a84c0fd` were not visible through the available run lookup; combined status returned no checks. Do not infer success from the previous SHA. The connected GitHub actions surface has no workflow-dispatch operation, so a normal push or manual Actions dispatch is still required to execute the new code.
 - Previous SHA full-port [#45258224496](https://github.com/craftkot/tgaumcraft/actions/runs/45258224496) succeeded: 10,054 Core assertions, NeoForge build, dedicated server `Done (8.770s)`, JAR upload. Aura/Crystal GameTests [#45258224431](https://github.com/craftkot/tgaumcraft/actions/runs/45258224431) passed 29/29 and a two-process persistence restart. These results predate the camera-tracker code and are not exact-HEAD evidence.
 - Fixed audit remains **59/100**; visual/audio/resources **4/6**, aura/world **5/9**. No point awarded and no category closed.
+
+
+## Follow-up — exact SHA queue and single re-anchor marker
+
+- `c95cf79014dbe967e671f81dc7a425b83240cf0f` удаляет дублирующий `WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM` из shell-функции.
+- `98d2cfad75d83fc21498baf271ec20e525771652` добавляет регрессионную проверку, что маркер платформенного re-anchor появляется ровно один раз.
+- Локально через `bash -n` проверено извлечённое определение `wisp_reanchor_player_for_capture`: **PASS**. Это только синтаксис функции, не весь сгенерированный Bash и не Python contract.
+- Exact code SHA `98d2cfad`: Wisp client [#45262255344](https://github.com/craftkot/tgaumcraft/actions/runs/45262255344), Full Port CI [#45262255633](https://github.com/craftkot/tgaumcraft/actions/runs/45262255633), Aura/Crystal GameTests [#45262255796](https://github.com/craftkot/tgaumcraft/actions/runs/45262255796) — все QUEUED; CircleCI verify-connection PENDING. На текущем запуске результатов ещё нет.
+- Никаких баллов не начислено. Полный Python contract, NeoForge compile, dedicated server и новый real-client smoke остаются ожидающими exact-SHA CI.
