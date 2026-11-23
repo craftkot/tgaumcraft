@@ -4241,3 +4241,9 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 - Added explicit `hitType=ENTITY targetId=...` fields to the attackable-frame and accepted-camera status markers. Offline regressions now prove a same-ID ENTITY frame with dot 0.8 is accepted, while BLOCK and an ENTITY hit on another ID are rejected.
 - Changed files: `tools/client_wisp_zap_smoke.py`, `tools/test_wisp_zap_client_smoke.py`, `tools/verify_wisp_zap_client.py`, this lane journal. No production Java, renderer, Wisp AI, damage, range, registry, resources, Gradle, workflow YAML, main or foreign branch changed. Local Python/Gradle/client execution remains unavailable because this runtime has no local clone and `git ls-remote` previously failed DNS; the new exact-head Actions run must execute the updated offline contract and real client.
 - Fixed rubric remains **59/100**, M16 **4/6**, M08 **5/9**; no points awarded. Next: inspect the exact-head Wisp client for the real click, AttackEntityEvent, accepted hurt, TARGET_SET, matching payload IDs, three additive FX frames and expiry. Do not count the attack gate repair as gameplay acceptance.
+
+
+### 2026-11-23 — repair generated Wisp status-marker quoting after offline contract
+
+- Exact-head Wisp Actions [#45164017188](https://github.com/craftkot/tgaumcraft/actions/runs/45164017188) stopped in the offline contract before script generation/Minecraft launch. The log identified a missing closing quote in the newly expanded `WISP_ATTACKABLE_FRAME` echo; generated Bash failed `bash -n` at line 338. This is an implementation typo in the test driver, not a game failure.
+- Restored the closing quote before `tee`. The same-ID `EntityHitResult` gate and all distance/position/freshness/hurt/payload/FX requirements are unchanged. Re-run the exact-head offline contract and native client before treating the prior gate change as validated.

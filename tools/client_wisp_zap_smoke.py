@@ -206,7 +206,7 @@ def render() -> str:
     WISP_ATTACK_CAMERA_DISTANCE="$distance"
     WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
     WISP_ATTACK_CAMERA_LINE="$camera_line"
-    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick hitType=ENTITY targetId=$wisp_id position=$position_mode gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot | tee -a client-smoke-status.txt
+    echo "WISP_ATTACKABLE_FRAME=YES id=$wisp_id tick=$camera_tick hitType=ENTITY targetId=$wisp_id position=$position_mode gameTime=$game_time playerTick=$player_tick distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
     return 0
   }
 
