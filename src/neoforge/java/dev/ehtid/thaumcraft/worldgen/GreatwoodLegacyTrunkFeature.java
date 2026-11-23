@@ -24,6 +24,7 @@ public final class GreatwoodLegacyTrunkFeature extends Feature<NoneFeatureConfig
     public GreatwoodLegacyTrunkFeature(BlockState log) {
         super(NoneFeatureConfiguration.CODEC);
         this.log = Objects.requireNonNull(log, "log");
+        if (log.isAir()) throw new IllegalArgumentException("Greatwood log must not be air");
     }
 
     @Override
