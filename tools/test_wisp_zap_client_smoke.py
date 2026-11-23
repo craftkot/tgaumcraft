@@ -488,6 +488,7 @@ def main() -> int:
     assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5" in reanchor_body
     assert "facing entity @s eyes" in reanchor_body
     assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reanchor_body
+    assert reanchor_body.count("WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM") == 1
     assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in reanchor_body
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
