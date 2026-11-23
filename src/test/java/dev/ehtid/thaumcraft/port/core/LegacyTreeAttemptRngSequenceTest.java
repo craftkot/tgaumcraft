@@ -12,11 +12,14 @@ public final class LegacyTreeAttemptRngSequenceTest {
 
     private static final class Sequence extends Random {
         private final StringBuilder calls = new StringBuilder();
+        private final boolean missTreeRoll;
+        Sequence() { this(false); }
+        Sequence(boolean missTreeRoll) { this.missTreeRoll = missTreeRoll; }
         @Override public int nextInt(int bound) {
             calls.append("I").append(bound).append(';');
             return switch (bound) {
-                case 80 -> 3;
-                case 25 -> 7;
+                case 80 -> missTreeRoll ? 0 : 3;
+                case 25 -> missTreeRoll ? 0 : 7;
                 case 9 -> 4;
                 case 8 -> 0;
                 default -> throw new AssertionError("Unexpected RNG bound: " + bound);
@@ -59,6 +62,15 @@ public final class LegacyTreeAttemptRngSequenceTest {
                 "magical silverwood fallback");
         check("F;".equals(magicalSilverwood.calls()),
                 "magical silverwood fallback consumes exactly one float");
+
+        // A rejected tree roll must not draw coordinates or biome support.
+        Sequence missedSilverwood = new Sequence(true);
+        check(!LegacyTreeAttempt.silverwoodRoll(missedSilverwood), "silverwood roll rejection");
+        check("I80;".equals(missedSilverwood.calls()), "silverwood rejection RNG count");
+
+        Sequence missedGreatwood = new Sequence(true);
+        check(!LegacyTreeAttempt.greatwoodRoll(missedGreatwood), "greatwood roll rejection");
+        check("I25;".equals(missedGreatwood.calls()), "greatwood rejection RNG count");
 
         Sequence overflow = new Sequence();
         boolean rejected = false;
