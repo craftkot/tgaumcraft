@@ -94,7 +94,7 @@ def main() -> int:
         "WISP_RENDER_FRAME_COMPLETE=YES",
         "wisp_fast_command()",
         "sleep 0.5",
-        '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}',
+        '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
@@ -115,7 +115,7 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME=YES",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES",
-        "/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'",
+        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'",
         'open_delay="0.5"',
         'type_delay="2"',
         'sleep "$open_delay"',
@@ -158,7 +158,7 @@ def main() -> int:
     baseline_b_index = setup.index("wisp_capture 79-wisp-before-b", baseline_a_index)
     baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
-    summon_index = setup.index("wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5", spawn_snapshot_index)
+    summon_index = setup.index('wisp_fast_command \'/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}\'', spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
@@ -179,14 +179,14 @@ def main() -> int:
     assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
     assert "wisp_reaim_camera_at_live_wisp" not in preaim_branch
     fallback_branch = attack_body.split('\n      else\n        reaim_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
-    assert "wisp_reaim_camera_at_live_wisp" in fallback_branch
+    assert "wisp_move_player_to_live_wisp" in fallback_branch
     assert "wisp_wait_for_attack_frame" in fallback_branch
     attack_frame_index = attack_body.index("wisp_wait_for_attack_frame")
     attack_click_index = attack_body.index("xdotool click 1")
     attack_input_index = attack_body.index("TC_SMOKE_WISP_ATTACK_INPUT=YES")
     assert attack_frame_index < attack_click_index < attack_input_index
-    fallback_reaim_index = fallback_branch.index("wisp_reaim_camera_at_live_wisp")
-    fallback_frame_index = fallback_branch.index("wisp_wait_for_attack_frame")
+    fallback_reaim_index = fallback_branch.index("wisp_move_player_to_live_wisp")
+    fallback_frame_index = fallback_branch.index('wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP')
     assert fallback_reaim_index < fallback_frame_index
     between_frame_and_click = attack_body[attack_body.rindex("wisp_wait_for_attack_frame"):attack_click_index]
     assert "sleep " not in between_frame_and_click, "click immediately after the actual Wisp EntityHitResult frame"
@@ -195,6 +195,9 @@ def main() -> int:
     assert 'attack_camera_source="PREAIMED_FIRST_FRAME"' in preaim_branch
     assert 'attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"' in preaim_branch
     assert 'attack_camera_source="LIVE_ENTITY_FACING"' in fallback_branch
+    assert 'attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"' in fallback_branch
+    assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' in fallback_branch
+    assert 'wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM' in preaim_branch
     assert 'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"' in attack_body
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'" not in generated
     between_render_and_attack = setup[rendered_index:attack_call_index]
@@ -215,6 +218,9 @@ def main() -> int:
     )
     wait_attack_body = generated.split("  wisp_wait_for_attack_frame() {", 1)[1].split("  }", 1)[0]
     assert "timeout 5s bash -c" in wait_attack_body
+    assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
+    assert 'position=$position_mode' in wait_attack_body
+    assert 'mode == "PLATFORM" ? on_platform : y >= 0.0' in wait_attack_body
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
     assert "WISP_ATTACKABLE_FRAME=YES" in wait_attack_body
     assert "for _ in $(seq 1 200)" not in wait_attack_body
@@ -226,14 +232,19 @@ def main() -> int:
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
     reaim_body = generated.split("  wisp_reaim_camera_at_live_wisp() {", 1)[1].split("  }", 1)[0]
     assert " 0.1 1" not in reaim_body, "attack-time re-aim must not override the reliable default chat-open/type pacing"
-    assert "wisp_fast_command '/tp @p 12.5 149 10.5 facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'" in reaim_body
-    assert "/tp @p 12.5 149 10.5 facing entity" in reaim_body
+    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~'" in reaim_body
+    assert "tag=tc_wisp_zap_smoke" in reaim_body
+    move_body = generated.split("  wisp_move_player_to_live_wisp() {", 1)[1].split("  }", 1)[0]
+    assert "run tp @p ~1.0 ~ ~ facing ~ ~0.45 ~" in move_body
+    assert "Teleported Dev to " in move_body
+    assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
+    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing ~ ~0.45 ~" in reaim_body
     assert "/tp @p ~ ~ ~ facing entity" not in reaim_body
     assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reaim_body
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
-    assert '/summon thaumcraft:wisp 11.9 149.3 10.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' not in generated
+    assert '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' in generated
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in generated
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
