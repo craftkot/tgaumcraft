@@ -486,7 +486,7 @@ def main() -> int:
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
     assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5" in reanchor_body
-    assert "facing entity @s eyes" in reanchor_body
+    assert "facing entity @s eyes" not in reanchor_body, "post-hit aim must remain client-tracked"
     assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reanchor_body
     assert reanchor_body.count("WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM") == 1
     assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in reanchor_body
