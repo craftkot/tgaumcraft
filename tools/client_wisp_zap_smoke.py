@@ -29,11 +29,13 @@ def render() -> str:
   }
 
   wisp_fast_command() {
-    local command="$1"
+    local command="$1" open_delay="0.5" type_delay="2"
+    if [ "$#" -ge 2 ]; then open_delay="$2"; fi
+    if [ "$#" -ge 3 ]; then type_delay="$3"; fi
     xdotool key --clearmodifiers t
     # Delay only before sending. Callers wait for authoritative markers after Return.
-    sleep 0.5
-    xdotool type --clearmodifiers --delay 2 "$command"
+    sleep "$open_delay"
+    xdotool type --clearmodifiers --delay "$type_delay" "$command"
     xdotool key --clearmodifiers Return
   }
 
@@ -98,7 +100,9 @@ def render() -> str:
     local after_lines="$1" teleport_line
     # Rotate the real Survival player's view toward the live Wisp without
     # moving either entity, changing AI, or touching the server target.
-    wisp_fast_command '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'
+    # This command runs between autonomous Wisp ticks; avoid the generic
+    # half-second chat-open delay so the aim sample is still current at click.
+    wisp_fast_command '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes' 0.1 1
     for _ in $(seq 1 200); do
       teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Teleported Dev to ' | tail -1 || true)"
       if [ -n "$teleport_line" ]; then

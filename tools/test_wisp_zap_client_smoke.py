@@ -112,7 +112,12 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME=YES",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES",
-        "/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes",
+        "/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes' 0.1 1",
+        'open_delay="0.5"',
+        'type_delay="2"',
+        'sleep "$open_delay"',
+        'xdotool type --clearmodifiers --delay "$type_delay" "$command"',
+        "0.1 1",
         "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
         "targetWisp=true",
@@ -189,7 +194,12 @@ def main() -> int:
     )
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
+    assert 'open_delay="0.5"' in fast_command_body and 'type_delay="2"' in fast_command_body
+    assert 'sleep "$open_delay"' in fast_command_body
+    assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
+    reaim_body = generated.split("  wisp_reaim_camera_at_live_wisp() {", 1)[1].split("  }", 1)[0]
+    assert " 0.1 1" in reaim_body, "attack-time re-aim must use the short chat-open/type delay"
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
