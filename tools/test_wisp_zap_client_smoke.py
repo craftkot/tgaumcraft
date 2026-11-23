@@ -802,6 +802,8 @@ def main() -> int:
     assert "AttackEntityEvent" in attack_probe
     assert "TC_SMOKE_WISP_CLIENT_ATTACK=YES" in attack_probe
     assert "ClientTickEvent.Pre" in attack_probe
+    assert 'private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));' in attack_probe
+    assert "if (!ENABLED || trackedWispId < 0)" in attack_probe
     assert "trackedWispId = wisp.getId()" in attack_probe
     assert "minecraft.level.getEntity(trackedWispId)" in attack_probe
     assert "EntityAnchorArgument.Anchor.EYES" in attack_probe
