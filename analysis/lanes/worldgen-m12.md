@@ -1068,3 +1068,11 @@
 - Test commits a2b973d and ba86748: deterministic 20 assertions for valid volume, ceiling/floor, zero length, coordinate overflow, and no partial emission on rejected inputs. Runner ad52c29: tools/test_greatwood_trunk_volume.sh (Java 21).
 - Tests were written but NOT executed on exact checkout in this run; full NeoForge build, native GameTest, natural chunk generation and save/reload are NOT proven by this slice. Previous HEAD 6473be6 had GitHub Actions #45140604005 completed SUCCESS, not proof of M12 runners.
 - Next: execute exact-head Java runners, inspect exact-head CI, connect this volume to source-verified Greatwood trunk/branch geometry in an isolated NeoForge feature with staged writes and failure-injection rollback; later coordinate biome registration. Silverwood 17/81 origin exclusions, flora/ores/crystals remain. Historical audit 59/100 unchanged.
+
+
+## 2026-11-23 — M12 immutable Greatwood trunk staging plan
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked six feature branches, open PRs and main comparison (ahead 296 / behind 0 before writes). Existing Draft PR #9 remains unmerged.
+- Commits 2626e784 and 0d7daf96 add GreatwoodTrunkPlan: preflight of a complete 2x2 vertical trunk and immutable ordered Cell snapshot before any world mutation; bounds/overflow checks precede allocation. This is an intermediate loader-neutral staging step, NOT a NeoForge Feature, actual world snapshot/rollback, or source-verified trunk length.
+- Test 00210594 and runner cc02a8df add 13 deterministic assertions (size, ordering, uniqueness, immutability and rejection paths). Tests written but exact-head runner not executed. Previous head 7754270 GitHub Actions #45149251052 completed SUCCESS, not evidence that M12 runner ran. New-head CI, native NeoForge GameTest, real worldgen and save/reload NOT verified.
+- Next: execute tools/test_greatwood_trunk_plan.sh on exact checkout; wire staged trunk into isolated NeoForge Greatwood Feature only after verifying archived BETA26 geometry and snapshot/rollback semantics. No shared registry, Gradle, main, foreign branches or merge touched. Remaining canopy/branches, natural biome registration, Silverwood 17/81 excluded positions, flora/ores/crystals. Audit remains 59/100.
