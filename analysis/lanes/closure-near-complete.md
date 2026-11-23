@@ -53,3 +53,10 @@
 - PR #4 остаётся 367 файлов / 1,783 коммита впереди main на момент проверки; это крупный интеграционный риск, не готовность к merge.
 
 Следующее действие: получить exact-SHA Wisp client run на `7a84c0fd`; проверить offline contract, `bash -n`, same-ID real hit, camera tracking, payload, три FX кадра, expiry и pixel delta. Затем — exact-SHA full NeoForge build/server smoke. Если трекинг не удержит aimDot, инструментировать tick/event ordering; не ослаблять порог 0.99 и не синтезировать hit/payload/FX.
+
+## 23.11.2026 — Wisp offline contract regression (run #45262255344)
+
+- Exact-SHA `98d2cfad75d83fc21498baf271ec20e525771652`: [Wisp Actions #45262255344](https://github.com/craftkot/tgaumcraft/actions/runs/45262255344) **FAIL** до запуска Minecraft: `tools/test_wisp_zap_client_smoke.py:489` всё ещё требовал `facing entity @s eyes` в post-hit re-anchor, хотя текущий сценарий намеренно делегирует наведение клиентскому smoke-only tick tracker. Geometry 21/21 и atlas 24/24 PASS.
+- Кодовый commit `eb786d709ae4aa824ab54c0207e66591a7e7bd95`: заменено устаревшее положительное требование на отрицательный контракт (`facing entity @s eyes` запрещено в re-anchor). Раннее melee-position наведение остаётся отдельным проверяемым условием; пороги попадания, урон и FX не ослаблены.
+- Новый exact-SHA Wisp CI / Minecraft / Gradle на `eb786d7` пока **не подтверждены**. Не считать игровой приёмкой. Индекс 59/100, M16 4/6 неизменны.
+- Следующее: проверить CI нового SHA, затем получить настоящий post-hit capture трёх кадров FXBolt, expiry и pixel delta; отдельно — нативный Salis chunk tickets/network-send audit.
