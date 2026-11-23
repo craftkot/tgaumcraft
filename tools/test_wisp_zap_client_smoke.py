@@ -173,6 +173,44 @@ printf '%s\n' "$frame_line"
     assert clicks == ["click 1"], clicks
     assert events == [], events
 
+
+def _test_capture_reaim_retry(generated: str) -> None:
+    """The post-hit camera must re-aim again if the live Wisp moved after the first command."""
+    body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
+    function = "  wisp_capture_aim_after_hit_with_retries() {\\n" + body + "\\n  }\\n"
+
+    def run_case(success_on: int) -> tuple[int, str, str]:
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-reaim-retry-") as temporary:
+            root = Path(temporary)
+            (root / "client-smoke").mkdir()
+            (root / "client-smoke" / "client.log").write_text("", encoding="utf-8")
+            script = (
+                "set -euo pipefail\\n"
+                "WISP_CAMERA_REAIM_LINE_NUMBER=\\n"
+                "reaim_calls=0\\n"
+                "capture_calls=0\\n"
+                "wisp_reaim_camera_at_live_wisp() { reaim_calls=$((reaim_calls + 1)); WISP_CAMERA_REAIM_LINE_NUMBER=$((100 + reaim_calls)); }\\n"
+                "wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ \\\"$1\\\" = \\\"$WISP_CAMERA_REAIM_LINE_NUMBER\\\" ] || return 90; if [ \\\"$capture_calls\\\" -ge " + str(success_on) + " ]; then return 0; fi; return 1; }\\n"
+                + function
+                + "if wisp_capture_aim_after_hit_with_retries; then result=0; else result=$?; fi\\n"
+                + "printf 'RESULT=%s REAIMS=%s CAPTURES=%s\\\\n' \\\"$result\\\" \\\"$reaim_calls\\\" \\\"$capture_calls\\\"\\n"
+            )
+            process = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, check=False)
+            status_path = root / "client-smoke-status.txt"
+            status = status_path.read_text(encoding="utf-8") if status_path.exists() else ""
+            return process.returncode, process.stdout, status
+
+    rc, output, status = run_case(2)
+    assert rc == 0, (rc, output)
+    assert "RESULT=0 REAIMS=2 CAPTURES=2" in output, output
+    assert "WISP_RENDER_CAPTURE_RETRY=1" in status, status
+    assert "WISP_RENDER_CAPTURE_REAIM_ATTEMPT=2" in status, status
+
+    rc, output, status = run_case(99)
+    assert rc == 0, (rc, output)
+    assert "RESULT=1 REAIMS=3 CAPTURES=3" in output, output
+    assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in status, status
+
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
     length = math.hypot(delta_y, delta_z)
@@ -194,6 +232,7 @@ def main() -> int:
     fixture = "#!/usr/bin/env bash\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n" + anchor + "\n"
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
+    _test_capture_reaim_retry(generated)
 
     required = (
         "wisp_send_chat()",
@@ -249,6 +288,9 @@ def main() -> int:
         "wisp_wait_for_teleport",
         'wisp_wait_for_fresh_render "$aim_log_lines"',
         "wisp_capture_aim_after_hit",
+        "wisp_capture_aim_after_hit_with_retries",
+        "WISP_RENDER_CAPTURE_RETRY=",
+        "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES",
         "wisp_reaim_camera_at_live_wisp()",
         "wisp_wait_for_attack_frame()",
         "wisp_attack_live_wisp()",
@@ -314,14 +356,11 @@ def main() -> int:
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", target_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
-    reaim_snapshot_index = setup.index('reaim_log_lines="$(wc -l < client-smoke/client.log)"', stabilize_marker_index)
-    reaim_index = setup.index('wisp_reaim_camera_at_live_wisp "$reaim_log_lines"', reaim_snapshot_index)
-    capture_snapshot_index = setup.index('after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"', reaim_index)
-    capture_index = setup.index('wisp_capture_aim_after_hit "$after_hit_log_lines"', capture_snapshot_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_index)
+    capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", stabilize_marker_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
-        "the attack helper must re-aim, wait for a matching completed frame, and prove the real hit before post-hit capture"
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
+        "after the real hit, the smoke must retry live-entity camera re-aim before post-hit capture"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     assert 'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
@@ -383,6 +422,16 @@ def main() -> int:
     assert capture_aim_guard_index < capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
         "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
+    timeout_index = capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES")
+    assert "return 1" in capture_body[timeout_index:] and "exit 1" not in capture_body[timeout_index:], (
+        "a missed camera alignment must return to the bounded re-aim loop, not abort immediately"
+    )
+    retry_body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
+    assert "for attempt in 1 2 3" in retry_body
+    assert 'wisp_reaim_camera_at_live_wisp "$reaim_log_lines"' in retry_body
+    assert 'wisp_capture_aim_after_hit "$after_hit_log_lines"' in retry_body
+    assert "WISP_RENDER_CAPTURE_RETRY=$attempt" in retry_body
+    assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in retry_body
     wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     click_log_snapshot_index = wait_attack_body.index('click_log_lines="$(wc -l < client-smoke/client.log)"')
     frame_wait_index = wait_attack_body.index('exec {frame_fd}< <(tail --sleep-interval=0.01 -n +')
