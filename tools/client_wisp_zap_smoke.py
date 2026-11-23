@@ -31,11 +31,10 @@ def render() -> str:
   wisp_fast_command() {
     local command="$1"
     xdotool key --clearmodifiers t
-    # Keep the reliable chat-open delay; only character typing is accelerated.
+    # Delay only before sending. Callers wait for authoritative markers after Return.
     sleep 0.5
-    xdotool type --clearmodifiers --delay 1 "$command"
+    xdotool type --clearmodifiers --delay 2 "$command"
     xdotool key --clearmodifiers Return
-    sleep 0.2
   }
 
   wisp_wait_for_marker() {
@@ -61,19 +60,27 @@ def render() -> str:
   # The camera is pre-aimed at the billboard render origin before the Wisp exists.
   # Only accept a renderer callback appended after the summon command.
   wisp_wait_for_fresh_render() {
-    local after_lines="$1"
+    local after_lines="$1" capture_name="$2" render_line render_tick
     for _ in $(seq 1 200); do
-      if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq 'TC_SMOKE_WISP_RENDERED=YES'; then
+      render_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_RENDERED=YES' | head -1 || true)"
+      if [ -n "$render_line" ]; then
+        # Capture before telemetry parsing: BETA26 autonomous flight starts immediately.
+        wisp_capture "$capture_name"
+        render_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$render_line")"
+        if ! [[ "$render_tick" =~ ^[0-9]+$ ]]; then
+          echo "WISP_RENDER_CAPTURE_TICK_INVALID=$render_tick" | tee -a client-smoke-status.txt
+          exit 1
+        fi
+        echo "WISP_RENDER_CAPTURE_TICK=$render_tick" | tee -a client-smoke-status.txt
         echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
         return 0
       fi
-      sleep 0.025
+      sleep 0.005
     done
     echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN_TIMEOUT=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
     exit 1
   }
-
   wisp_wait_for_teleport() {
     local after_lines="$1"
     for _ in $(seq 1 200); do
@@ -92,15 +99,16 @@ def render() -> str:
 
   wisp_verify_aim_telemetry() {
     local after_lines="$1"
-    local telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot
-    # Use the first fresh camera sample. Later samples can legitimately drift
-    # because BETA26 Wisps continue their autonomous flight until hit.
+    local telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot wisp_id camera_tick capture_tick
     telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1 || true)"
     if [ -z "$telemetry" ]; then
       echo 'WISP_CAMERA_TELEMETRY_MISSING=YES' | tee -a client-smoke-status.txt
       tail -120 client-smoke/client.log >&2
       exit 1
     fi
+    wisp_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA=YES id=\([0-9][0-9]*\) aimTarget=.*/\1/p' <<<"$telemetry")"
+    camera_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$telemetry")"
+    capture_tick="$(sed -n 's/^WISP_RENDER_CAPTURE_TICK=//p' client-smoke-status.txt | tail -1)"
     player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
@@ -109,15 +117,20 @@ def render() -> str:
     wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$telemetry")"
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$capture_tick" =~ ^[0-9]+$ ]] \
+      || [ "$camera_tick" != "$capture_tick" ]; then
+      echo "WISP_CAMERA_RENDER_TICK_MISMATCH id=$wisp_id camera_tick=$camera_tick capture_tick=$capture_tick" | tee -a client-smoke-status.txt
+      echo "$telemetry" >&2
+      exit 1
+    fi
     if ! awk -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
       'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 3.0 && dot >= 0.99) }'; then
       echo "WISP_CAMERA_TELEMETRY_FAILED player=($player_x,$player_y,$player_z) wisp=($wisp_x,$wisp_y,$wisp_z) distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       echo "$telemetry" >&2
       exit 1
     fi
-    echo "WISP_CAMERA_TELEMETRY=PASS playerX=$player_x playerY=$player_y playerZ=$player_z wispX=$wisp_x wispY=$wisp_y wispZ=$wisp_z distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    echo "WISP_CAMERA_TELEMETRY=PASS id=$wisp_id tick=$camera_tick playerX=$player_x playerY=$player_y playerZ=$player_z wispX=$wisp_x wispY=$wisp_y wispZ=$wisp_z distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
   }
-
   wisp_wait_for_loaded_chunk() {
     local marker='TC_SMOKE_WISP_CHUNK_LOADED=YES'
     # Poll the destination chunk after teleport. "execute if loaded" is a
@@ -196,12 +209,10 @@ def render() -> str:
   # autonomous flight moved the target beyond melee reach. Zero initial motion
   # keeps the first tick deterministic without disabling the real Wisp AI.
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"],Motion:[0.0d,0.0d,0.0d]}'
+  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer"}'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   # Only a renderer callback after this real summon can satisfy the gate.
-  wisp_wait_for_fresh_render "$aim_log_lines"
-  # Capture on the first rendered tick before shell-side telemetry parsing lets the autonomous Wisp drift.
-  wisp_capture 78-wisp-aim-check
+  wisp_wait_for_fresh_render "$aim_log_lines" 78-wisp-aim-check
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
