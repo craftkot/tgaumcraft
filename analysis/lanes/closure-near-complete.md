@@ -115,3 +115,10 @@
 ### Acceptance and next action
 - Fixed audit remains **59/100**; M16 remains **4/6**, M08 **5/9**. No point awarded and no category closed.
 - First inspect the exact-SHA Wisp workflow. It must prove captured ageTick 0, 1, 2 on three distinct Wisp ticks, then expiry; only afterward inspect the midnight aim screenshot for at least 12 Aer-tinted pixels. If the first rendered age is already 2, inspect packet acceptance/client-tick scheduling; do not extend the BETA26 lifetime. If the Wisp remains invisible at midnight, inspect the actual renderer/shader/UV path rather than lowering the pixel threshold.
+
+
+### Follow-up state cleanup — exact SHA `e1f1134`
+- A final small Java cleanup calls `forgetSmokeState(..., false)` when the active zap is discarded on dimension change, preventing the smoke-only per-age map/set from retaining a stale key.
+- Commit: [e1f1134](https://github.com/craftkot/tgaumcraft/commit/e1f11346ad04305f8a537ee4ffe393a1930b6d7f).
+- GitHub returned no workflow runs and no combined-status entries for this exact SHA. Do not treat the queued `6f48ba4` workflows as validation of `e1f1134`.
+- The Wisp Client, Full Port CI and GameTests for `6f48ba4` remained QUEUED at the last poll; no new Minecraft run or NeoForge compile is claimed.
