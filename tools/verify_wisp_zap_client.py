@@ -29,6 +29,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
     "TC_SMOKE_WISP_ATTACK_INPUT=YES",
     "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+    "TC_SMOKE_WISP_CAMERA_TRACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
 )
@@ -39,7 +40,7 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_TELEPORT=YES",
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
-    "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
+    "WISP_CAMERA_REAIM=CLIENT_TRACKING",
     "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
     "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
     "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
@@ -306,11 +307,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0"
     )
     stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
-    camera_reaim_position = status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING", stabilized_position + 1)
+    camera_reaim_position = status_text.find("WISP_CAMERA_REAIM=CLIENT_TRACKING", stabilized_position + 1)
     if target_set_position < 0 or knockback_set_position <= target_set_position:
         errors.append("player knockback resistance was not confirmed after the accepted Wisp hit")
     if stabilized_position < 0 or camera_reaim_position < 0 or stabilized_position > camera_reaim_position:
-        errors.append("post-hit player stabilization was not confirmed before camera re-aim")
+        errors.append("post-hit player stabilization was not confirmed before client camera tracking")
 
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
@@ -469,8 +470,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                     errors.append("pre-aimed attack sample uses a different Wisp entity")
                 if int(attack_camera_sample.group(3)) < int(first_frame_camera_sample.group(3)):
                     errors.append("pre-aimed attack sample predates the first completed Wisp frame")
-        elif status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING") < 0:
-            errors.append("live-reaim attack sample lacks its server-confirmed teleport marker")
+        elif status_text.find("WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION") < 0:
+            errors.append("live-reposition attack sample lacks its server-confirmed player teleport marker")
 
     if telemetry is None:
         errors.append("missing first-frame camera telemetry")
