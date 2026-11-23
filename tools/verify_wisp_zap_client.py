@@ -50,6 +50,10 @@ REQUIRED_STATUS = (
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
+    "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING",
+    "WISP_ATTACK_CAMERA_FRAME=YES",
+    "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
+    "WISP_ATTACK_CAMERA_FRAME_USED=YES",
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
@@ -275,6 +279,22 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_RENDER_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)$",
         status_text,
     )
+    attack_camera_frame = _first(
+        r"(?m)^WISP_ATTACK_CAMERA_FRAME=YES id=(\d+) tick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        status_text,
+    )
+    attack_camera_complete = _first(
+        r"(?m)^WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)$",
+        status_text,
+    )
+    attack_camera_sample = _first(
+        r"(?m)^WISP_ATTACK_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
+        status_text,
+    )
+    attack_camera_reaim = _first(
+        r"(?m)^WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING (.+)$",
+        status_text,
+    )
     if frame_status is None:
         errors.append("missing first post-LevelRenderer completed-frame status")
     else:
@@ -282,6 +302,71 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("first completed-frame status and rendered Wisp use different entity IDs")
         if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):
             errors.append("first completed-frame status and rendered Wisp use different ticks")
+    if attack_camera_frame is None:
+        errors.append("missing camera frame used for the real Wisp attack")
+    if attack_camera_complete is None:
+        errors.append("missing completed-frame marker for the real attack camera sample")
+    if attack_camera_sample is None:
+        errors.append("missing copied live camera sample used for the real attack")
+    if attack_camera_reaim is None:
+        errors.append("missing server-confirmed live Wisp re-aim before the real attack")
+    if attack_camera_frame and attack_camera_complete and attack_camera_sample:
+        attack_id, attack_tick = attack_camera_frame.group(1, 2)
+        complete_id, complete_tick = attack_camera_complete.group(1, 2)
+        sample_id, sample_tick = attack_camera_sample.group(2, 3)
+        attack_distance, attack_aim_dot = map(float, attack_camera_frame.groups()[2:])
+        sample_aim_dot = float(attack_camera_sample.group(4))
+        if (attack_id, attack_tick) != (complete_id, complete_tick):
+            errors.append("attack camera and completed-frame status use different ID/tick")
+        if (attack_id, attack_tick) != (sample_id, sample_tick):
+            errors.append("attack camera status and copied camera sample use different ID/tick")
+        if attack_input and attack_id != attack_input.group(1):
+            errors.append("real attack selected a Wisp different from the attack camera sample")
+        if wisp_rendered and attack_id != wisp_rendered.group(1):
+            errors.append("attack camera sample and rendered Wisp use different entity IDs")
+        if abs(attack_aim_dot - sample_aim_dot) > 0.0001:
+            errors.append("attack camera status aimDot differs from the copied camera sample")
+        attack_position = _first(
+            r"playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+).*"
+            r"wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+)",
+            attack_camera_sample.group(1),
+        )
+        if attack_position is None:
+            errors.append("attack camera sample lacks player/Wisp positions")
+        else:
+            attack_px, attack_py, attack_pz, attack_wx, attack_wy, attack_wz = map(float, attack_position.groups())
+            measured_attack_distance = math.dist(
+                (attack_px, attack_py, attack_pz),
+                (attack_wx, attack_wy, attack_wz),
+            )
+            if not (
+                12.0 <= attack_px <= 13.0
+                and 148.5 <= attack_py <= 149.5
+                and 10.0 <= attack_pz <= 11.0
+                and attack_distance <= 3.0
+                and abs(attack_distance - measured_attack_distance) <= 0.1
+                and attack_aim_dot >= 0.99
+            ):
+                errors.append(
+                    "real attack camera was not aligned with the same live Wisp inside melee reach: "
+                    f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
+                    f"distance={attack_distance:.3f} aimDot={attack_aim_dot:.4f}"
+                )
+        attack_frame_marker = f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={attack_id} tick={attack_tick}"
+        sample_position = log_text.find(attack_camera_sample.group(1))
+        completed_position = log_text.find(attack_frame_marker, sample_position + 1) if sample_position >= 0 else -1
+        attack_position_in_log = log_text.find(attack_input.group(0)) if attack_input else -1
+        if sample_position < 0:
+            errors.append("copied attack camera sample does not occur in the client log")
+        elif completed_position < sample_position:
+            errors.append("attack camera sample has no later matching completed level frame")
+        elif attack_position_in_log < completed_position:
+            errors.append("real attack input did not occur after its aligned completed camera frame")
+        reaim_position = status_text.find(attack_camera_reaim.group(0)) if attack_camera_reaim else -1
+        frame_status_position = status_text.find(attack_camera_frame.group(0))
+        if reaim_position < 0 or frame_status_position < reaim_position:
+            errors.append("attack camera frame was not recorded after server-confirmed live re-aim")
+
     if telemetry is None:
         errors.append("missing first-frame camera telemetry")
     else:
