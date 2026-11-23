@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - integration/verified-port-2026-11-14
+      - ci/evidence-gate-trigger-2026-11-23
   pull_request:
     branches:
       - integration/verified-port-2026-11-14
