@@ -138,6 +138,7 @@ public final class WispZapClientEffects {
             Zap zap = entry.getValue();
             if (!zap.dimension().equals(level.dimension())) {
                 ACTIVE.remove(entry.getKey(), zap);
+                forgetSmokeState(zap, level.getGameTime(), false);
                 continue;
             }
 
