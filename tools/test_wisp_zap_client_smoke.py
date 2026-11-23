@@ -219,7 +219,8 @@ def main() -> int:
     wait_attack_body = generated.split("  wisp_wait_for_attack_frame() {", 1)[1].split("  }", 1)[0]
     assert "timeout 5s bash -c" in wait_attack_body
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
-    assert 'position=$position_mode' in wait_attack_body
+    assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
+    assert 'position=$position_mode' in wait_attack_body, "record the selected position mode in native diagnostics"
     assert 'mode == "PLATFORM" ? on_platform : y >= 0.0' in wait_attack_body
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
     assert "WISP_ATTACKABLE_FRAME=YES" in wait_attack_body
