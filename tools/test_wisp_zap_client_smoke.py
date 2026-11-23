@@ -163,7 +163,7 @@ def main() -> int:
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
     reaim_snapshot_index = setup.index('reaim_log_lines="$(wc -l < client-smoke/client.log)"', target_index)
     reaim_index = setup.index('wisp_reaim_camera_at_live_wisp "$reaim_log_lines"', reaim_snapshot_index)
-    capture_snapshot_index = setup.index('after_hit_log_lines="$(wc -l < client-smoke/client.log)"', reaim_index)
+    capture_snapshot_index = setup.index('after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"', reaim_index)
     capture_index = setup.index('wisp_capture_aim_after_hit "$after_hit_log_lines"', capture_snapshot_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
