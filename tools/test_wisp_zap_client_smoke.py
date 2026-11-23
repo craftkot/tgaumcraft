@@ -175,8 +175,8 @@ printf '%s\n' "$frame_line"
 
 
 
-def _test_capture_reaim_retry(generated: str) -> None:
-    """The post-hit camera must re-aim again if the live Wisp moved after the first command."""
+def _test_capture_reanchor_retry(generated: str) -> None:
+    """Post-hit capture retries while the client tracker follows the moving Wisp."""
     body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
     function = "  wisp_capture_aim_after_hit_with_retries() {\n" + body + "\n  }\n"
 
@@ -187,16 +187,16 @@ def _test_capture_reaim_retry(generated: str) -> None:
             (root / "client-smoke" / "client.log").write_text("", encoding="utf-8")
             script = (
                 "set -euo pipefail\n"
-                'WISP_CAMERA_REAIM_LINE_NUMBER=""\n'
-                "reaim_calls=0\n"
+                'WISP_CAMERA_REANCHOR_LINE_NUMBER=""\n'
+                "reanchor_calls=0\n"
                 "capture_calls=0\n"
-                "wisp_reaim_camera_at_live_wisp() { reaim_calls=$((reaim_calls + 1)); WISP_CAMERA_REAIM_LINE_NUMBER=$((100 + reaim_calls)); }\n"
-                'wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ "$1" = "$WISP_CAMERA_REAIM_LINE_NUMBER" ] || return 90; if [ "$capture_calls" -ge '
+                "wisp_reanchor_player_for_capture() { reanchor_calls=$((reanchor_calls + 1)); WISP_CAMERA_REANCHOR_LINE_NUMBER=$((100 + reanchor_calls)); }\n"
+                'wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ "$1" = "$WISP_CAMERA_REANCHOR_LINE_NUMBER" ] || return 90; if [ "$capture_calls" -ge '
                 + str(success_on)
                 + ' ]; then return 0; fi; return 1; }\n'
                 + function
                 + "if wisp_capture_aim_after_hit_with_retries; then result=0; else result=$?; fi\n"
-                + 'echo "RESULT=$result REAIMS=$reaim_calls CAPTURES=$capture_calls"\n'
+                + 'echo "RESULT=$result REANCHORS=$reanchor_calls CAPTURES=$capture_calls"\n'
             )
             process = subprocess.run(
                 ["bash", "-c", script],
@@ -211,13 +211,13 @@ def _test_capture_reaim_retry(generated: str) -> None:
 
     rc, output, status = run_case(2)
     assert rc == 0, (rc, output)
-    assert "RESULT=0 REAIMS=2 CAPTURES=2" in output, output
+    assert "RESULT=0 REANCHORS=2 CAPTURES=2" in output, output
     assert "WISP_RENDER_CAPTURE_RETRY=1" in status, status
-    assert "WISP_RENDER_CAPTURE_REAIM_ATTEMPT=2" in status, status
+    assert "WISP_RENDER_CAPTURE_REANCHOR_ATTEMPT=2" in status, status
 
     rc, output, status = run_case(99)
     assert rc == 0, (rc, output)
-    assert "RESULT=1 REAIMS=3 CAPTURES=3" in output, output
+    assert "RESULT=1 REANCHORS=3 CAPTURES=3" in output, output
     assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in status, status
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
@@ -240,7 +240,7 @@ def main() -> int:
     fixture = "#!/usr/bin/env bash\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n" + anchor + "\n"
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
-    _test_capture_reaim_retry(generated)
+    _test_capture_reanchor_retry(generated)
 
     required = (
         "wisp_send_chat()",
@@ -258,6 +258,7 @@ def main() -> int:
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACK=YES",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "minecraft:generic.knockback_resistance base set 1",
@@ -286,6 +287,7 @@ def main() -> int:
         '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACK=YES",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "d <= 3.0",
         "wisp_verify_aim_telemetry",
@@ -299,7 +301,7 @@ def main() -> int:
         "wisp_capture_aim_after_hit_with_retries",
         "WISP_RENDER_CAPTURE_RETRY=",
         "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES",
-        "wisp_reaim_camera_at_live_wisp()",
+        "wisp_reanchor_player_for_capture()",
         "wisp_wait_for_attack_frame()",
         "wisp_attack_live_wisp()",
         "for attempt in 1 2 3",
@@ -307,13 +309,13 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME=YES",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES",
-        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'",
+        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'",
         'open_delay="0.5"',
         'type_delay="2"',
         'sleep "$open_delay"',
         'xdotool type --clearmodifiers --delay "$type_delay" "$command"',
         "open_delay=\"0.5\"",
-        "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
+        "WISP_CAMERA_REAIM=CLIENT_TRACKING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
         "targetWisp=true",
         "WISP_RENDER_CAPTURE_TICK=",
@@ -381,7 +383,7 @@ def main() -> int:
     assert 'if [ "$watcher_status" -ne 0 ]; then' in attack_frame_body
     assert 'exit 1' in attack_frame_body
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
+    preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reanchor_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
     fresh_cursor = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
     assert fresh_cursor in preaim_branch, "the attack must continue after the exact consumed pre-aim frame"
@@ -391,8 +393,8 @@ def main() -> int:
     assert preaim_branch.index(fresh_cursor) < preaim_branch.index("wisp_wait_for_attack_frame")
     assert 'frame_log_lines="$aim_log_lines"' not in preaim_branch
     assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
-    assert "wisp_reaim_camera_at_live_wisp" not in preaim_branch
-    fallback_branch = attack_body.split('\n      else\n        reaim_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
+    assert "wisp_reanchor_player_for_capture" not in preaim_branch
+    fallback_branch = attack_body.split('\n      else\n        reanchor_log_lines=', 1)[1].split('\n      fi\n      attack_log_lines', 1)[0]
     assert "wisp_move_player_to_live_wisp" in fallback_branch
     assert "wisp_wait_for_attack_frame" in fallback_branch
     assert "xdotool click 1" not in attack_body, "the caller must not delay the click after frame parsing"
@@ -436,7 +438,7 @@ def main() -> int:
     )
     retry_body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
     assert "for attempt in 1 2 3" in retry_body
-    assert 'wisp_reaim_camera_at_live_wisp "$reaim_log_lines"' in retry_body
+    assert 'wisp_reanchor_player_for_capture "$reanchor_log_lines"' in retry_body
     assert 'wisp_capture_aim_after_hit "$after_hit_log_lines"' in retry_body
     assert "WISP_RENDER_CAPTURE_RETRY=$attempt" in retry_body
     assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in retry_body
@@ -474,17 +476,19 @@ def main() -> int:
     assert 'sleep "$open_delay"' in fast_command_body
     assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
-    reaim_body = _bash_function_body(generated, "wisp_reaim_camera_at_live_wisp")
-    assert " 0.1 1" not in reaim_body, "attack-time re-aim must not override the reliable default chat-open/type pacing"
-    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'" in reaim_body
-    assert "tag=tc_wisp_zap_smoke" in reaim_body
+    reanchor_body = _bash_function_body(generated, "wisp_reanchor_player_for_capture")
+    assert " 0.1 1" not in reanchor_body, "capture re-anchor must keep the reliable default chat-open/type pacing"
+    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'" in reanchor_body
+    assert "facing " not in reanchor_body, "client tick tracking, not a one-shot command, owns capture aim"
+    assert "tag=tc_wisp_zap_smoke" in reanchor_body
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
-    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes" in reaim_body
-    assert "facing entity @s eyes" in reaim_body
-    assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reaim_body
+    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5" in reanchor_body
+    assert "facing entity @s eyes" in reanchor_body
+    assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reanchor_body
+    assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in reanchor_body
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
@@ -494,7 +498,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
     assert "wisp_verify_aim_telemetry" in generated
     assert "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1" in generated
-    assert "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING" in generated
+    assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in generated
     assert "d <= 3.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
@@ -537,6 +541,7 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 gameTime=520 blockPos=none tick=507",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
+        "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
@@ -569,8 +574,8 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
-        "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
+        "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM Teleported Dev to 12.500000, 149.000000, 10.500000",
+        "WISP_CAMERA_REAIM=CLIENT_TRACKING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
@@ -668,11 +673,22 @@ def main() -> int:
             log, status.replace("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5", ""), root
         ), "missing first-frame cursor must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING", ""), root
-        ), "missing post-hit live-entity camera re-aim must fail"
+            log, status.replace("WISP_CAMERA_REAIM=CLIENT_TRACKING", ""), root
+        ), "missing post-hit client camera tracking must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
+        fallback_status = status.replace(
+            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\\n"
+            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
+        )
+        assert not verify_wisp_zap_client.verify(log, fallback_status, root), (
+            "live-reposition attack path with its server teleport marker must remain valid"
+        )
+        assert verify_wisp_zap_client.verify(
+            log, fallback_status.replace("WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION", ""), root
+        ), "live-reposition attack without its own teleport marker must fail"
         low_dot_log = "\n".join(
             line.replace("aimDot=0.999", "aimDot=0.8")
             if line.startswith("TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 ")
@@ -785,6 +801,12 @@ def main() -> int:
     assert "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=" in attack_probe
     assert "AttackEntityEvent" in attack_probe
     assert "TC_SMOKE_WISP_CLIENT_ATTACK=YES" in attack_probe
+    assert "ClientTickEvent.Pre" in attack_probe
+    assert "trackedWispId = wisp.getId()" in attack_probe
+    assert "minecraft.level.getEntity(trackedWispId)" in attack_probe
+    assert "EntityAnchorArgument.Anchor.EYES" in attack_probe
+    assert "wisp.getBoundingBox().getCenter()" in attack_probe
+    assert "TC_SMOKE_WISP_CAMERA_TRACK=YES id=" in attack_probe
     assert "event.setCanceled" not in attack_probe
     renderer = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java"
