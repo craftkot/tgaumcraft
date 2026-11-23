@@ -82,7 +82,6 @@ def main() -> int:
         "--aim-only",
         "wisp_capture 79-wisp-before-a",
         "wisp_capture 79-wisp-before-b",
-        'nbt={Type:"aer"}',
         "WISP_FIXTURE_PLATFORM_FILL=YES",
         "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF",
