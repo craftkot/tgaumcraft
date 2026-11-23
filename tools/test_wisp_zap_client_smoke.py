@@ -125,7 +125,9 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
-        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME",
+        'attack_camera_source="PREAIMED_FIRST_FRAME"',
+        'attack_camera_source="LIVE_ENTITY_FACING"',
+        'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"',
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
@@ -184,8 +186,10 @@ def main() -> int:
     assert "sleep " not in between_frame_and_click, "click immediately after the aligned completed render frame"
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert "WISP_ATTACK_ATTEMPT_REJECTED=" in attack_body, "BLOCK hits must be rejected rather than accepted"
-    assert "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME" in attack_body
-    assert "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING" in attack_body
+    assert 'attack_camera_source="PREAIMED_FIRST_FRAME"' in preaim_branch
+    assert 'attack_camera_detail="id=$camera_id tick=$camera_tick"' in preaim_branch
+    assert 'attack_camera_source="LIVE_ENTITY_FACING"' in fallback_branch
+    assert 'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"' in attack_body
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_ATTACK_INPUT=YES'" not in generated
     between_render_and_attack = setup[rendered_index:attack_call_index]
     assert "sleep " not in between_render_and_attack and "wisp_capture" not in between_render_and_attack, (
