@@ -9,6 +9,7 @@ checks = {
     "legacy height limit": "11 + treeRandom.nextInt(11)" in source,
     "precomputed trunk plan": "GreatwoodTrunkPlan.create(" in source,
     "transactional placement": "GreatwoodTrunkPlacement.place(" in source,
+    "soil below build height rejected": "origin.getY() <= level.getMinBuildHeight()" in source,
     "four soil checks": "origin.offset(dx, -1, dz)" in source and "dx < 2" in source and "dz < 2" in source,
     "chunk boundary rejection": "(origin.getX() & 15) == 15" in source and "(origin.getZ() & 15) == 15" in source,
     "no registry writes": "DeferredRegister" not in source and "BiomeModifier" not in source,
