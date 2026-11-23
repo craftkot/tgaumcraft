@@ -233,6 +233,7 @@ def main() -> int:
         'WISP_ATTACK_CLICK_DISPATCHED=YES',
         'WISP_ATTACK_CLICK_DISPATCH_FAILED=YES',
         "WISP_RENDER_FRAME_COMPLETE=YES",
+        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=",
         "wisp_fast_command()",
         "sleep 0.5",
         '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
@@ -335,8 +336,11 @@ def main() -> int:
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reaim_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
-    fresh_cursor = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
-    assert fresh_cursor in preaim_branch, "the attack must not replay the already-consumed pre-aim frame"
+    fresh_cursor = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
+    assert fresh_cursor in preaim_branch, "the attack must continue after the exact consumed pre-aim frame"
+    assert 'frame_log_lines="$(wc -l < client-smoke/client.log)"' not in preaim_branch, (
+        "a new tail snapshot can skip an attackable frame written during the hand-off"
+    )
     assert preaim_branch.index(fresh_cursor) < preaim_branch.index("wisp_wait_for_attack_frame")
     assert 'frame_log_lines="$aim_log_lines"' not in preaim_branch
     assert "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE" not in preaim_branch
@@ -368,8 +372,9 @@ def main() -> int:
     )
     fresh_render_body = _bash_function_body(generated, "wisp_wait_for_fresh_render")
     frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
+    cursor_capture_index = fresh_render_body.index('WISP_RENDER_FIRST_FRAME_LINE_NUMBER="$frame_line_number"')
     first_frame_status_index = fresh_render_body.index("WISP_RENDER_FIRST_FRAME=YES")
-    assert frame_marker_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
+    assert frame_marker_index < cursor_capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
     assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
     capture_body = _bash_function_body(generated, "wisp_capture_aim_after_hit")
     capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
@@ -447,6 +452,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM_TELEPORT=YES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "~-1.5 ~ ~ facing entity" not in generated
@@ -493,6 +499,7 @@ def main() -> int:
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
+        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
@@ -597,6 +604,12 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=", ""), root
         ), "missing exact first-frame camera sample must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5", "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=6"), root
+        ), "first-frame cursor must identify the exact consumed completed frame"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5", ""), root
+        ), "missing first-frame cursor must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING", ""), root
         ), "missing post-hit live-entity camera re-aim must fail"
