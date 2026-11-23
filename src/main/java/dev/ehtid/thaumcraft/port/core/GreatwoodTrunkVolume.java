@@ -27,7 +27,7 @@ public final class GreatwoodTrunkVolume {
         if (x == Integer.MAX_VALUE || z == Integer.MAX_VALUE) return false;
         long topExclusive = (long) baseY + trunkLength;
         if (baseY < minBuildY || topExclusive > maxBuildYExclusive) return false;
-        if (topExclusive > (long) Integer.MAX_VALUE + 1L) return false;
+        if (topExclusive > Integer.MAX_VALUE) return false;
         for (int y = baseY; (long) y < topExclusive; y++) {
             visitor.accept(x, y, z);
             visitor.accept(x + 1, y, z);
