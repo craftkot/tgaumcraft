@@ -473,6 +473,12 @@ def render() -> str:
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
+  # The real Survival hit and target acquisition are already complete. Keep
+  # only the player's horizontal position stable while the Wisp performs its
+  # natural zap wind-up; this does not change Wisp AI, damage, target or FX.
+  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value of attribute Knockback Resistance for player Dev is now 1.0'
+  echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
+
   reaim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
   after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"
