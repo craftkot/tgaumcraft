@@ -109,7 +109,7 @@ def main() -> int:
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "minecraft:generic.knockback_resistance base set 1",
-        "Base value of attribute Knockback Resistance for player Dev is now 1.0",
+        "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
@@ -177,6 +177,12 @@ def main() -> int:
     )
     for marker in required:
         assert marker in generated, marker
+    stabilization_command = (
+        "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' "
+        "'Base value for attribute Knockback Resistance for entity Dev set to 1.0'"
+    )
+    assert generated.count(stabilization_command) == 1
+    assert "Base value of attribute Knockback Resistance for player Dev is now 1.0" not in generated
     setup = generated.split("  wisp_command '/difficulty normal'", 1)[1]
     teleport_index = setup.index("wisp_command '/tp @p 10.5 149 8.5 0 22'")
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
@@ -330,7 +336,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
-        "Base value of attribute Knockback Resistance for player Dev is now 1.0",
+        "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -420,7 +426,7 @@ def main() -> int:
             log, status.replace("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", ""), root
         ), "missing post-hit player stabilization must fail"
         assert verify_wisp_zap_client.verify(
-            log.replace("Base value of attribute Knockback Resistance for player Dev is now 1.0", ""), status, root
+            log.replace("Base value for attribute Knockback Resistance for entity Dev set to 1.0", ""), status, root
         ), "missing server confirmation of knockback resistance must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", ""), root
