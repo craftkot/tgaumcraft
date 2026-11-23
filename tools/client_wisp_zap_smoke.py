@@ -156,9 +156,10 @@ def render() -> str:
   }
 
   wisp_wait_for_attack_frame() {
-    local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" frame_pattern frame_line camera_tick game_time player_tick camera_line
+    local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" attempt="${4:-1}" frame_pattern frame_line camera_tick game_time player_tick camera_line click_log_lines
     local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     frame_pattern="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id .*hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none"
+    click_log_lines="$(wc -l < client-smoke/client.log)"
     frame_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -E "$3"' _ "$((after_lines + 1))" client-smoke/client.log "$frame_pattern" || true)"
     if [ -z "$frame_line" ]; then
       echo "WISP_ATTACKABLE_FRAME_TIMEOUT=id=$wisp_id" | tee -a client-smoke-status.txt
@@ -186,6 +187,13 @@ def render() -> str:
       echo "WISP_ATTACKABLE_FRAME_CAMERA_MISSING=$frame_line" | tee -a client-smoke-status.txt
       return 1
     fi
+    # AFTER_LEVEL has already sampled the same-ID vanilla EntityHitResult and
+    # its matching camera telemetry. Dispatch the real OS click before spawning
+    # awk/tee diagnostics: the CI client can advance many ticks while shell
+    # telemetry is being parsed, making an otherwise valid hit result stale.
+    WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"
+    xdotool click 1
+    echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
     # The same-frame, same-ID vanilla EntityHitResult is the ray test. This dot
     # compares an interpolated view vector with the AABB center and is diagnostic;
@@ -197,7 +205,7 @@ def render() -> str:
         exit !(position_ok && d <= 3.0 && dot >= -1.0 && dot <= 1.0)
       }'; then
       echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
-      return 1
+      exit 1
     fi
     WISP_ATTACK_CAMERA_ID="$wisp_id"
     WISP_ATTACK_CAMERA_TICK="$camera_tick"
@@ -224,7 +232,7 @@ def render() -> str:
       if [ "$attempt" -eq 1 ]; then
         frame_log_lines="$aim_log_lines"
         attack_camera_source="PREAIMED_FIRST_FRAME"
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM; then
+        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM "$attempt"; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue
         fi
@@ -235,14 +243,12 @@ def render() -> str:
         attack_camera_source="LIVE_ENTITY_FACING"
         attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
         frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP; then
+        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue
         fi
       fi
-      attack_log_lines="$(wc -l < client-smoke/client.log)"
-      xdotool click 1
-      echo "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK attempt=$attempt" | tee -a client-smoke-status.txt
+      attack_log_lines="$WISP_ATTACK_INPUT_LOG_LINES"
       attack_input_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -F "TC_SMOKE_WISP_ATTACK_INPUT=YES"' _ "$((attack_log_lines + 1))" client-smoke/client.log || true)"
       if [ -z "$attack_input_line" ]; then
         echo "WISP_ATTACK_INPUT_TIMEOUT=$attempt" | tee -a client-smoke-status.txt
