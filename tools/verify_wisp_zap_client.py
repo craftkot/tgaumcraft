@@ -302,7 +302,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
 
     target_set_position = log_text.find("TC_SMOKE_WISP_TARGET_SET=YES")
     knockback_set_position = log_text.find(
-        "Base value of attribute Knockback Resistance for player Dev is now 1.0"
+        "Base value for attribute Knockback Resistance for entity Dev set to 1.0"
     )
     stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
     camera_reaim_position = status_text.find("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING", stabilized_position + 1)
