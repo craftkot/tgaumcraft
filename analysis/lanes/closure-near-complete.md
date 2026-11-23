@@ -82,3 +82,36 @@
 - Точный блокер: `WISP_AIM_SCREENSHOT_ERROR: 78-wisp-aim-check.png crosshair ROI contains only 0 Aer-tinted pixels; expected at least 12`. Значит серверное попадание и клиентский трекинг подтверждены, но видимость Wisp на скриншоте и три кадра FXBolt/expiry/pixel delta **не доказаны**. Не ослаблять ROI и не объявлять M16 готовым; сначала исследовать фактический PNG из [артефакта #14864544028](https://github.com/craftkot/tgaumcraft/actions/runs/45266789911/artifacts/14864544028), FOV, окклюзию и проекцию при distance=6.01.
 - На том же HEAD [Full Port CI #45266789837](https://github.com/craftkot/tgaumcraft/actions/runs/45266789837), [Aura/Crystal GameTests #45266789612](https://github.com/craftkot/tgaumcraft/actions/runs/45266789612) и [two-client Salis #45266790072](https://github.com/craftkot/tgaumcraft/actions/runs/45266790072) — SUCCESS. Это не независимое доказательство реальных chunk tickets и сетевых отправок при unload/reload.
 - В этой итерации Java/NeoForge и тестовые скрипты не изменялись: без анализа PNG нет доказанного дефекта для безопасного патча. Локальные Gradle/client не запускались. Аудит остаётся **59/100**, M16 **4/6**, M08 **5/9**. Следующий шаг — скачать/исследовать aim-check PNG, затем сделать минимальное исправление только при доказанной причине и повторить нативную приёмку.
+
+
+## 2026-11-23 — Wisp transient capture sequencing (diagnostic + smoke contract)
+
+### Fresh evidence inspected
+- Real client artifact: [Wisp Client #45266789911](https://github.com/craftkot/tgaumcraft/actions/runs/45266789911), artifact `wisp-client-45266789911.zip`.
+- The log records `TC_SMOKE_WISP_ZAP_RENDERED` at a Wisp tick around 97, while the post-hit aim screenshot is captured at tick 115: at least 18 ticks later. The BETA26 client effect is explicitly three ticks (`age < 3.0`). The previous script captured screenshots 80–83 only after the later aim screenshot, so it could not observe the original transient bolt. This is a confirmed test-driver ordering defect.
+- The aim screenshot was taken under `/time set noon`; the crosshair ROI contained a bright sun/halo and zero Aer-tinted pixels. The halo is a plausible washout source for the additive layer, but this is not yet a proven renderer defect.
+- The stage9 JAR from Full Port CI #45266789837 contains `particles.png` (1024×1024) and `auranodes.png` (2048×2048); the selected atlas cells are non-empty. The client log has no recorded load failure for those atlas paths. Missing packaged texture files are therefore not the current explanation.
+
+### Changes on `feature/closure-near-complete`
+- `src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java`: smoke-only per-age-tick markers now include source/target, client game time, Wisp tick, createdAt, ageTick, point count and a three-tick expiry marker. Production lifetime remains exactly three ticks; no artificial extension.
+- `tools/client_wisp_zap_smoke.py`: fixes fixture time to midnight before both baseline captures; captures age 0/1/2 only after their matching completed AFTER_LEVEL frame and **before** the later camera re-anchor; waits for expiry before screenshot 83; checks `essentia.png`, `auranodes.png` and `particles.png` load errors.
+- `tools/verify_wisp_zap_client.py`: requires three distinct captured Wisp ticks for one createdAt event, matching payload/render/expiry evidence, correct ordering before camera re-anchor, and all Wisp textures.
+- `tools/test_wisp_zap_client_smoke.py`: adds an offline Bash harness for the age 0/1/2 → expiry capture sequence and updates positive/negative verifier fixtures.
+
+### Code/test commits
+- Java per-frame telemetry: [12e4cb0](https://github.com/craftkot/tgaumcraft/commit/12e4cb0bc37b65b9b91cda26cf171981b2386be3)
+- Capture order/night fixture: [522e907](https://github.com/craftkot/tgaumcraft/commit/522e907d6abc4677a70e626618be0eda2901cf79)
+- Three-frame/expiry verifier: [3e1a56a](https://github.com/craftkot/tgaumcraft/commit/3e1a56a28c3618e2954a51aa83b5eda5d02c403b)
+- Offline sequence contract: [a2da410](https://github.com/craftkot/tgaumcraft/commit/a2da4109aa0e5b33906bd52221c3fa969d9c6e86)
+- All three texture load checks: [f9586d2](https://github.com/craftkot/tgaumcraft/commit/f9586d247b30c0d4968bc8423cc66bff19294cc1)
+- Verifier requires all texture checks: [e417b18](https://github.com/craftkot/tgaumcraft/commit/e417b183ad760fa23f3ef94c797e53bc1de12923)
+- Updated regression fixtures: [6f48ba4](https://github.com/craftkot/tgaumcraft/commit/6f48ba4ab87547882399a2717fa0fc21b61a1d1b)
+
+### Validation state on exact code SHA `6f48ba4`
+- New exact-SHA workflows are **QUEUED**, not passed: Wisp client [#45278878617](https://github.com/craftkot/tgaumcraft/actions/runs/45278878617), Full Port CI [#45278878403](https://github.com/craftkot/tgaumcraft/actions/runs/45278878403), Wisp geometry [#45278878539](https://github.com/craftkot/tgaumcraft/actions/runs/45278878539), Aura/Crystal GameTests [#45278878899](https://github.com/craftkot/tgaumcraft/actions/runs/45278878899). The combined CircleCI status is still pending.
+- No local Python contract, generated Bash `bash -n`, NeoForge compile or new Minecraft client result is claimed in this run. The earlier stage9 JAR/Full Port result is from an older SHA and is not carried forward.
+- All 61 other open PRs (#1–#3 and #5–#62) were checked for overlap with the five changed Wisp/tool/lane paths; none overlap. No shared registries, Gradle, CI YAML, global localization, other feature branches or main were changed.
+
+### Acceptance and next action
+- Fixed audit remains **59/100**; M16 remains **4/6**, M08 **5/9**. No point awarded and no category closed.
+- First inspect the exact-SHA Wisp workflow. It must prove captured ageTick 0, 1, 2 on three distinct Wisp ticks, then expiry; only afterward inspect the midnight aim screenshot for at least 12 Aer-tinted pixels. If the first rendered age is already 2, inspect packet acceptance/client-tick scheduling; do not extend the BETA26 lifetime. If the Wisp remains invisible at midnight, inspect the actual renderer/shader/UV path rather than lowering the pixel threshold.
