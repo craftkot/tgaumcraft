@@ -94,8 +94,26 @@ def render() -> str:
     exit 1
   }
 
+  wisp_reaim_camera_at_live_wisp() {
+    local after_lines="$1" teleport_line
+    # Rotate the real Survival player's view toward the live Wisp without
+    # moving either entity, changing AI, or touching the server target.
+    wisp_fast_command '/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes'
+    for _ in $(seq 1 200); do
+      teleport_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'Teleported Dev to ' | tail -1 || true)"
+      if [ -n "$teleport_line" ]; then
+        echo "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING $teleport_line" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.025
+    done
+    echo 'WISP_CAMERA_REAIM_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_capture_aim_after_hit() {
-    local after_lines="$1" wisp_id camera_line camera_tick frame_marker
+    local after_lines="$1" wisp_id camera_line camera_tick aim_dot frame_marker
     wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
     if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
       echo "WISP_RENDER_FIRST_FRAME_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
@@ -105,13 +123,15 @@ def render() -> str:
       camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id " | tail -1 || true)"
       if [ -n "$camera_line" ]; then
         camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
-        if [[ "$camera_tick" =~ ^[0-9]+$ ]]; then
+        aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
+        if [[ "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
+          && awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= 0.99) }'; then
           frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$camera_tick"
           if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
-            sleep 0.01
             wisp_capture 78-wisp-aim-check
             echo "WISP_RENDER_CAPTURE_ID=$wisp_id" | tee -a client-smoke-status.txt
             echo "WISP_RENDER_CAPTURE_TICK=$camera_tick" | tee -a client-smoke-status.txt
+            echo "WISP_RENDER_CAPTURE_AIM_DOT=$aim_dot" | tee -a client-smoke-status.txt
             echo "$camera_line" | tee -a client-smoke-status.txt
             echo 'WISP_RENDER_CAPTURE_AFTER_HIT=YES' | tee -a client-smoke-status.txt
             return 0
@@ -142,7 +162,12 @@ def render() -> str:
   }
 
   wisp_verify_aim_telemetry() {
-    local after_lines="$1" telemetry player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot wisp_id camera_tick first_frame_id first_frame_tick capture_id capture_tick
+    local after_lines="$1" telemetry capture_camera
+    local player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot
+    local wisp_id camera_tick first_frame_id first_frame_tick capture_id capture_tick
+    local capture_camera_id capture_camera_tick capture_player_x capture_player_y capture_player_z
+    local capture_wisp_x capture_wisp_y capture_wisp_z capture_distance capture_aim_dot
+
     telemetry="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1 || true)"
     if [ -z "$telemetry" ]; then
       echo 'WISP_CAMERA_TELEMETRY_MISSING=YES' | tee -a client-smoke-status.txt
@@ -175,6 +200,26 @@ def render() -> str:
       echo "$telemetry" >&2
       exit 1
     fi
+
+    capture_camera="$(grep -F 'TC_SMOKE_WISP_CAMERA=YES' client-smoke-status.txt | tail -1 || true)"
+    capture_camera_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA=YES id=\([0-9][0-9]*\) aimTarget=.*/\1/p' <<<"$capture_camera")"
+    capture_camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$capture_camera")"
+    capture_player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_wisp_x="$(sed -n 's/.* wispX=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_wisp_y="$(sed -n 's/.* wispY=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
+    capture_distance="$(awk -v px="$capture_player_x" -v py="$capture_player_y" -v pz="$capture_player_z" -v wx="$capture_wisp_x" -v wy="$capture_wisp_y" -v wz="$capture_wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
+    if ! [[ "$capture_camera_id" =~ ^[0-9]+$ && "$capture_camera_tick" =~ ^[0-9]+$ && "$capture_player_x" =~ ^[-0-9.]+$ && "$capture_player_y" =~ ^[-0-9.]+$ && "$capture_player_z" =~ ^[-0-9.]+$ && "$capture_wisp_x" =~ ^[-0-9.]+$ && "$capture_wisp_y" =~ ^[-0-9.]+$ && "$capture_wisp_z" =~ ^[-0-9.]+$ && "$capture_aim_dot" =~ ^[0-9.]+$ ]] \
+      || [ "$capture_camera_id" != "$capture_id" ] || [ "$capture_camera_tick" != "$capture_tick" ] \
+      || ! awk -v d="$capture_distance" -v dot="$capture_aim_dot" 'BEGIN { exit !(d <= 16.0 && dot >= 0.99) }'; then
+      echo "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED id=$capture_camera_id tick=$capture_camera_tick distance=$capture_distance aimDot=$capture_aim_dot" | tee -a client-smoke-status.txt
+      echo "$capture_camera" >&2
+      exit 1
+    fi
+    echo "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=$capture_camera_id tick=$capture_camera_tick distance=$capture_distance aimDot=$capture_aim_dot" | tee -a client-smoke-status.txt
     echo "WISP_CAMERA_TELEMETRY=PASS id=$wisp_id tick=$camera_tick playerX=$player_x playerY=$player_y playerZ=$player_z wispX=$wisp_x wispY=$wisp_y wispZ=$wisp_z distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
   }
   wisp_wait_for_loaded_chunk() {
@@ -284,6 +329,8 @@ def render() -> str:
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
+  reaim_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
   after_hit_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_capture_aim_after_hit "$after_hit_log_lines"
   wisp_verify_aim_telemetry "$aim_log_lines"

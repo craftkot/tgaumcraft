@@ -104,6 +104,10 @@ def main() -> int:
         "wisp_wait_for_teleport",
         'wisp_wait_for_fresh_render "$aim_log_lines"',
         "wisp_capture_aim_after_hit",
+        "wisp_reaim_camera_at_live_wisp()",
+        "/tp @p ~ ~ ~ facing entity @e[type=thaumcraft:wisp,limit=1,sort=nearest] eyes",
+        "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
+        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
         "targetWisp=true",
         "WISP_RENDER_CAPTURE_TICK=",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
@@ -141,10 +145,13 @@ def main() -> int:
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", input_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", client_attack_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    capture_index = setup.index("wisp_capture_aim_after_hit", target_index)
+    reaim_snapshot_index = setup.index('reaim_log_lines="$(wc -l < client-smoke/client.log)"', target_index)
+    reaim_index = setup.index('wisp_reaim_camera_at_live_wisp "$reaim_log_lines"', reaim_snapshot_index)
+    capture_snapshot_index = setup.index('after_hit_log_lines="$(wc -l < client-smoke/client.log)"', reaim_index)
+    capture_index = setup.index('wisp_capture_aim_after_hit "$after_hit_log_lines"', capture_snapshot_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < click_index < input_index < client_attack_index < hurt_index < target_index < capture_index < telemetry_index < aim_verify_index, (
+    assert teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < click_index < input_index < client_attack_index < hurt_index < target_index < reaim_snapshot_index < reaim_index < capture_snapshot_index < capture_index < telemetry_index < aim_verify_index, (
         "attack on first completed frame; prove input target, client selection and accepted server damage before the slower screenshot"
     )
     between_render_and_click = setup[rendered_index:click_index]
@@ -158,8 +165,9 @@ def main() -> int:
     assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
     capture_body = generated.split("  wisp_capture_aim_after_hit() {", 1)[1].split("  }", 1)[0]
     capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
+    capture_aim_guard_index = capture_body.index('awk -v dot="$aim_dot"')
     capture_image_index = capture_body.index("wisp_capture 78-wisp-aim-check")
-    assert capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
+    assert capture_aim_guard_index < capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
         "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
     )
     fast_command_body = generated.split("  wisp_fast_command() {", 1)[1].split("  }", 1)[0]
@@ -174,6 +182,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
     assert "wisp_verify_aim_telemetry" in generated
     assert "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1" in generated
+    assert "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING" in generated
     assert "d <= 3.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
@@ -232,11 +241,14 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=22",
+        "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
+        "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
+        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
@@ -313,6 +325,12 @@ def main() -> int:
             log, status.replace("WISP_ZAP_AIM=PREAIMED_SPAWN", ""), root
         ), "missing pre-aimed spawn mode must fail"
         assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_CAMERA_REAIM=LIVE_ENTITY_FACING", ""), root
+        ), "missing live-entity camera re-aim must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_CAMERA_CAPTURE_TELEMETRY=PASS", ""), root
+        ), "missing post-hit camera telemetry gate must fail"
+        assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_CAMERA=YES id=17", "TC_SMOKE_WISP_CAMERA=YES id=18"), status, root
         ), "camera sample from another Wisp must fail"
         assert verify_wisp_zap_client.verify(
@@ -331,8 +349,12 @@ def main() -> int:
             log, status.replace("playerY=149.0", "playerY=138.19"), root
         ), "player falling below the verified platform must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("aimDot=0.999", "aimDot=0.8"), root
-        ), "camera not facing the Wisp must fail"
+            log, status.replace("WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
+                                "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.8"), root
+        ), "initial camera not facing the Wisp must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("wispZ=11.5 aimDot=0.999", "wispZ=11.5 aimDot=0.8"), root
+        ), "post-hit capture camera not facing the live Wisp must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("distance=1.0440", "distance=6.7"), root
         ), "Wisp outside the 3-block melee reach must fail"

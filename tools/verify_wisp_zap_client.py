@@ -39,6 +39,8 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_TELEPORT=YES",
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
+    "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING",
+    "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
     "WISP_RENDER_FIRST_FRAME=YES",
@@ -263,7 +265,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
     capture_id = _first(r"(?m)^WISP_RENDER_CAPTURE_ID=(\d+)$", status_text)
     capture_camera = _first(
-        r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) ",
+        r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) "
+        r"playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+).*"
+        r"wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+).*"
+        r"aimDot=([0-9.+-]+)(?: |$)",
         status_text,
     )
     frame_status = _first(
@@ -298,6 +303,19 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("missing camera sample copied at post-hit screenshot capture")
         elif capture_id and capture_tick and capture_camera.group(1, 2) != (capture_id.group(1), capture_tick.group(1)):
             errors.append("post-hit screenshot camera sample does not match capture ID/tick")
+        if capture_camera is not None:
+            capture_player_x, capture_player_y, capture_player_z, capture_wisp_x, capture_wisp_y, capture_wisp_z, capture_aim_dot = map(
+                float, capture_camera.groups()[2:]
+            )
+            capture_distance = math.dist(
+                (capture_player_x, capture_player_y, capture_player_z),
+                (capture_wisp_x, capture_wisp_y, capture_wisp_z),
+            )
+            if capture_distance > 16.0 or capture_aim_dot < 0.99:
+                errors.append(
+                    "post-hit screenshot camera is not facing the live Wisp within 16 blocks: "
+                    f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
+                )
         if capture_id and capture_tick:
             capture_frame = f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={capture_id.group(1)} tick={capture_tick.group(1)}"
             if capture_frame not in log_text:
