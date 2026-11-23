@@ -1026,3 +1026,11 @@
 - Test-only commit c6d3c203e59a5d1caa430899c3d7dc2b0c28a70c adds four deterministic assertions to LegacyTreeAttemptRngSequenceTest: Greatwood strict biome threshold rejection consumes only its float (no spider roll), and magical Silverwood fallback consumes exactly one biome float. Expected sequence-test assertions increase from 11 to 15; not an executed PASS.
 - Previous exact SHA 5fc1d04f2cd57b1575188095945f6c372d7448fc has GitHub Actions #45073346540 SUCCESS and CircleCI verify-connection SUCCESS. These do not prove standalone M12 runner or Minecraft worldgen. Local git ls-remote still fails DNS resolution of github.com, so exact checkout Java runner, NeoForge GameTest and new-chunk placement were NOT run for the new SHA.
 - Still outstanding: isolated Greatwood Feature, flora/ores/crystals, natural biome/placed-feature registration, 17/81 Silverwood origin exclusions, best-effort rollback and native in-world proof. Next: execute tools/test_legacy_tree_attempt.sh on exact SHA, then implement isolated Greatwood Feature and native rollback coverage. No main, shared registry, Gradle, foreign branch or merge changes. Historical audit 59/100 unchanged.
+
+
+## 2026-11-23 — M12 rejected tree-roll RNG regression
+
+- Fresh-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane. Checked feature branch inventory, open PRs and main comparison (ahead 278 / behind 0 before edit); Draft PR #9 remains open.
+- Test-only commit 4ff2a5176aec5ae045983e4f296eaa959ddd30a5 adds four assertions for rejected Silverwood and Greatwood tree rolls: exact false result and one bounded RNG draw each. Existing Sequence defaults remain unchanged; no production generator, shared registry, Gradle or foreign branch modified.
+- These checks exercise the pure helper in isolation, not caller short-circuit flow or natural chunk generation. Exact-head Java runner, NeoForge GameTest, live Minecraft worldgen and CI remain to be verified; no PASS claimed.
+- Remaining: Greatwood Feature, flora/ores/crystals, natural registration, Silverwood 17/81 same-chunk exclusions, non-atomic rollback. Next: execute tools/test_legacy_tree_attempt.sh on exact HEAD, inspect workflow jobs, then implement isolated Greatwood Feature and native WorldGenLevel tests. Historical 59/100 unchanged; no merge.
