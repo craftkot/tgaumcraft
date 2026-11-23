@@ -63,7 +63,7 @@ def render() -> str:
   # screenshot between the first completed frame and the real click: capture is
   # deliberately deferred until the server accepts the hit and stops autonomous flight.
   wisp_wait_for_fresh_render() {
-    local after_lines="$1" render_line render_id render_tick frame_marker camera_line
+    local after_lines="$1" render_line render_id render_tick frame_marker camera_line frame_line_number
     for _ in $(seq 1 200); do
       render_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_RENDERED=YES' | head -1 || true)"
       if [ -n "$render_line" ]; then
@@ -77,6 +77,13 @@ def render() -> str:
         camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$render_id aimTarget=hitbox_center tick=$render_tick " | head -1 || true)"
         for _ in $(seq 1 200); do
           if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
+            frame_line_number="$(grep -n -F -- "$frame_marker" client-smoke/client.log | tail -1 | cut -d: -f1)"
+            if ! [[ "$frame_line_number" =~ ^[0-9]+$ ]]; then
+              echo "WISP_FIRST_FRAME_LINE_NUMBER_INVALID=$frame_line_number" | tee -a client-smoke-status.txt
+              exit 1
+            fi
+            WISP_RENDER_FIRST_FRAME_LINE_NUMBER="$frame_line_number"
+            echo "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=$frame_line_number" | tee -a client-smoke-status.txt
             if [ -z "$camera_line" ]; then
               echo "WISP_FIRST_FRAME_CAMERA_SAMPLE_MISSING=id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
               tail -120 client-smoke/client.log >&2
@@ -258,9 +265,13 @@ def render() -> str:
     # the real Wisp EntityHitResult, then issue the real mouse click immediately.
     for attempt in 1 2 3; do
       if [ "$attempt" -eq 1 ]; then
-        # The first completed frame was already consumed by wisp_wait_for_fresh_render.
-        # Start after the current log tail so the real click can only use a fresh frame.
-        frame_log_lines="$(wc -l < client-smoke/client.log)"
+        # Continue immediately after the exact frame already consumed by wisp_wait_for_fresh_render.
+        # A later wc -l snapshot can skip a valid ENTITY frame written in this hand-off window.
+        frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"
+        if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
+          echo "WISP_FIRST_FRAME_LINE_NUMBER_MISSING=$frame_log_lines" | tee -a client-smoke-status.txt
+          exit 1
+        fi
         attack_camera_source="PREAIMED_FIRST_FRAME"
         if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM "$attempt"; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
