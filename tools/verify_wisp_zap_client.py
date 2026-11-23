@@ -159,7 +159,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         log_text,
     )
     wisp_camera = _first(
-        r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_origin tick=(\d+)",
+        r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+)",
         log_text,
     )
     wisp_rendered = _first(
