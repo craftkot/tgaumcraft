@@ -4247,3 +4247,56 @@ Verify the new commit's Core parity and Full Port result. Then add/execute a rea
 
 - Exact-head Wisp Actions [#45164017188](https://github.com/craftkot/tgaumcraft/actions/runs/45164017188) stopped in the offline contract before script generation/Minecraft launch. The log identified a missing closing quote in the newly expanded `WISP_ATTACKABLE_FRAME` echo; generated Bash failed `bash -n` at line 338. This is an implementation typo in the test driver, not a game failure.
 - Restored the closing quote before `tee`. The same-ID `EntityHitResult` gate and all distance/position/freshness/hurt/payload/FX requirements are unchanged. Re-run the exact-head offline contract and native client before treating the prior gate change as validated.
+
+
+## 2026-11-23 — M16: stabilize the real post-hit Wisp camera without changing Wisp behavior
+
+### Fresh baseline and evidence
+
+- Re-read `ROADMAP_RU.md`, `AGENTS.md` (not present at repository root), `analysis/PARALLEL_WORKFLOW_RU.md`, and `analysis/PROGRESS_AUDIT_2026_10_16.md` from current `main` (`a4280834`).
+- Confirmed the lane branch was exactly `fc8e785b1b893943e5102d8a8eb67f6fd06eb7c0` before this iteration by comparing `fc8e785...feature/closure-near-complete` (identical).
+- Enumerated all 61 open PRs. Checked changed paths for PRs #1–#3 and #5–#61; none overlaps `tools/client_wisp_zap_smoke.py`, `tools/test_wisp_zap_client_smoke.py`, `tools/verify_wisp_zap_client.py`, or this lane journal. PR #4 is this lane's own draft PR.
+- Exact-head Wisp client run `45164317127` on `fc8e785` passed the offline Wisp contract and geometry checks, launched a real integrated Minecraft client, and produced real interaction evidence:
+  - Wisp id `257` rendered; first pre-aimed frame exposed the Wisp as `EntityHitResult`.
+  - First click was correctly rejected as `BLOCK`; retry selected the same Wisp id `257` as `ENTITY` at 2.3213 blocks.
+  - Real `AttackEntityEvent`, server `HURT accepted=true`, and `TARGET_SET` were observed.
+  - Server sent WispZap source `257` to player `14`; client received the same IDs and the renderer emitted a 24-point additive Essentia batch (`SRC_ALPHA_ONE`, depth writes off, age 0.7200).
+  - The job still failed at `WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT`: after a server-confirmed teleport back to the fixture platform, later camera telemetry showed the player displaced to approximately (13.70, 149.0, 12.07), with aimDot 0.9465. This establishes camera/position drift after the accepted hit; the exact physical cause is not proven. Horizontal knockback from the live Wisp attack is a plausible cause, not a confirmed diagnosis.
+- This is not a Wisp production-code defect. The server accepted the player hit, set the target, sent the two-entity payload, and the client renderer processed it. The remaining failure is the post-hit screenshot fixture's unstable player position/camera.
+
+### Change
+
+After the real hit and `TARGET_SET` have already been confirmed, the smoke now sets only the Survival player's 1.21.1 `minecraft:generic.knockback_resistance` base value to `1.0` (100% horizontal resistance), waits for the vanilla command success message, and records an explicit status marker before camera re-aim.
+
+This is deliberately after the real attack: the initial melee interaction, Wisp AI, target acquisition, attack cadence, damage roll, packet, and FX are not altered. The Wisp is not frozen, teleported, or given changed attributes. The strict post-hit aim threshold remains `aimDot >= 0.99`; no acceptance criterion was relaxed.
+
+### Files changed
+
+- `tools/client_wisp_zap_smoke.py` — stabilize only the player's horizontal knockback after the accepted hit and before camera re-aim.
+- `tools/test_wisp_zap_client_smoke.py` — require command, status marker, and correct ordering; add missing-stabilization negative cases.
+- `tools/verify_wisp_zap_client.py` — require the stabilization marker and verify it occurs after target acquisition and before camera re-aim.
+- `analysis/lanes/closure-near-complete.md` — this evidence and decision record.
+
+No Java production code, resources, registries, Gradle files, or CI workflows changed.
+
+### Commits
+
+- `1b4c0a009095149771cbe03400f0893ac842885d` — smoke player stabilization.
+- `7487ae0a07dadc492e9385f803953e4d4187bbf5` — generator/verifier regression coverage.
+- `7dfcb9943863cf3bee1ade14bf927f2fbee16cb2` — fail-closed runtime evidence ordering.
+- Lane journal commit follows.
+
+### Verification status
+
+No new-head test result is claimed yet. GitHub Actions must verify the generated script with `bash -n`, the offline contract, Wisp geometry, and then the exact-head Minecraft client. The previous run's real attack, accepted damage, target acquisition, payload receive, and renderer callback are evidence for `fc8e785` only; they are not a pass for this new HEAD.
+
+### Acceptance still outstanding
+
+1. New-head offline contract and `bash -n`.
+2. Real client: after the accepted hit, the knockback-resistance command succeeds and the player remains on the verified platform.
+3. Post-hit camera frame remains on the same Wisp id and reaches `aimDot >= 0.99`.
+4. The aim screenshot contains the Wisp near the crosshair.
+5. The three-tick FXBolt is captured in three live frames, followed by an expiry screenshot; pixel delta must exceed the pre-spawn animation baseline.
+6. No essentia texture-load error.
+
+No audit points are awarded. M16 remains unclosed; fixed audit score remains 59/100 pending gameplay acceptance. Next action: inspect all checks triggered by the new branch HEAD, then use the exact-head Minecraft-client log/artifact to verify the stabilized camera and transient FX pixels.
