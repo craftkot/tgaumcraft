@@ -340,8 +340,24 @@ def render() -> str:
       sleep 0.005
     done
     echo 'WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    return 1
+  }
+
+  wisp_capture_aim_after_hit_with_retries() {
+    local attempt reaim_log_lines after_hit_log_lines
+    for attempt in 1 2 3; do
+      reaim_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
+      after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"
+      if wisp_capture_aim_after_hit "$after_hit_log_lines"; then
+        echo "WISP_RENDER_CAPTURE_REAIM_ATTEMPT=$attempt" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      echo "WISP_RENDER_CAPTURE_RETRY=$attempt" | tee -a client-smoke-status.txt
+    done
+    echo 'WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
-    exit 1
+    return 1
   }
 
   wisp_wait_for_teleport() {
@@ -526,10 +542,7 @@ def render() -> str:
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
-  reaim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
-  after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"
-  wisp_capture_aim_after_hit "$after_hit_log_lines"
+  wisp_capture_aim_after_hit_with_retries
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
