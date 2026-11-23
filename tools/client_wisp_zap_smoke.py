@@ -110,29 +110,28 @@ def render() -> str:
     exit 1
   }
 
-  wisp_reaim_camera_at_live_wisp() {
+  wisp_reanchor_player_for_capture() {
     local after_lines="$1" teleport_match relative_line
-    # A real Wisp can move or knock the Survival player away while the smoke
-    # waits. Re-anchor only the test player on the verified platform, then
-    # face the live entity. Never move/freeze the Wisp or alter its AI/target.
+    # Re-anchor only the test player on the verified platform. The client-only
+    # tick probe keeps the exact attacked Wisp centred; never move/freeze it.
     # Return the server log line number so callers include the first fresh
     # camera sample instead of skipping it with a later wc -l snapshot.
-    # Keep the default chat-open/type pacing: the 0.1s override produced no server teleport response in the native client run.
-    # Face the exact live entity eye anchor; the relative-point form left the native player's pitch unchanged after teleport.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5 facing entity @s eyes'
+    # Keep the default chat-open/type pacing used by the native client.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to 12.500000, 149.000000, 10.500000' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
         relative_line="$(cut -d: -f1 <<<"$teleport_match")"
-        WISP_CAMERA_REAIM_LINE="$(cut -d: -f2- <<<"$teleport_match")"
-        WISP_CAMERA_REAIM_LINE_NUMBER="$((after_lines + relative_line))"
-        echo "WISP_CAMERA_REAIM=LIVE_ENTITY_FACING $WISP_CAMERA_REAIM_LINE" | tee -a client-smoke-status.txt
+        WISP_CAMERA_REANCHOR_LINE="$(cut -d: -f2- <<<"$teleport_match")"
+        WISP_CAMERA_REANCHOR_LINE_NUMBER="$((after_lines + relative_line))"
+        echo "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM $WISP_CAMERA_REANCHOR_LINE" | tee -a client-smoke-status.txt
+        echo "WISP_CAMERA_REAIM=CLIENT_TRACKING" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM' | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 0.025
     done
-    echo 'WISP_CAMERA_REAIM_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_REANCHOR_TIMEOUT=YES' | tee -a client-smoke-status.txt
     tail -120 client-smoke/client.log >&2
     exit 1
   }
@@ -254,7 +253,7 @@ def render() -> str:
   }
 
   wisp_attack_live_wisp() {
-    local wisp_id attempt reaim_log_lines frame_log_lines attack_log_lines attack_input_line
+    local wisp_id attempt reanchor_log_lines frame_log_lines attack_log_lines attack_input_line
     local attack_camera_source attack_camera_detail
     wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
     if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
@@ -279,8 +278,8 @@ def render() -> str:
         fi
         attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"
       else
-        reaim_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_move_player_to_live_wisp "$reaim_log_lines"
+        reanchor_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_move_player_to_live_wisp "$reanchor_log_lines"
         attack_camera_source="LIVE_ENTITY_FACING"
         attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
         frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
@@ -344,13 +343,13 @@ def render() -> str:
   }
 
   wisp_capture_aim_after_hit_with_retries() {
-    local attempt reaim_log_lines after_hit_log_lines
+    local attempt reanchor_log_lines after_hit_log_lines
     for attempt in 1 2 3; do
-      reaim_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_reaim_camera_at_live_wisp "$reaim_log_lines"
-      after_hit_log_lines="$WISP_CAMERA_REAIM_LINE_NUMBER"
+      reanchor_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_reanchor_player_for_capture "$reanchor_log_lines"
+      after_hit_log_lines="$WISP_CAMERA_REANCHOR_LINE_NUMBER"
       if wisp_capture_aim_after_hit "$after_hit_log_lines"; then
-        echo "WISP_RENDER_CAPTURE_REAIM_ATTEMPT=$attempt" | tee -a client-smoke-status.txt
+        echo "WISP_RENDER_CAPTURE_REANCHOR_ATTEMPT=$attempt" | tee -a client-smoke-status.txt
         return 0
       fi
       echo "WISP_RENDER_CAPTURE_RETRY=$attempt" | tee -a client-smoke-status.txt
@@ -532,13 +531,15 @@ def render() -> str:
 
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
   # The real Survival hit and target acquisition are already complete. Keep
-  # only the player's horizontal position stable while the Wisp performs its
-  # natural zap wind-up; this does not change Wisp AI, damage, target or FX.
+  # the player on the verified platform; the client-only probe tracks the same
+  # attacked Wisp's AABB centre while its BETA26 flight and zap wind-up continue.
+  # No Wisp movement, target, damage or FX state is changed by the camera probe.
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
