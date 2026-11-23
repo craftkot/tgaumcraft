@@ -1059,3 +1059,12 @@
 - Test commit 18c587869c2782a1612c1c780d9b13963f709d66 adds 79 assertions (36 origins x 2, 3 overflow origins x 2, null visitor x 1). Runner commit be9cd596b995a7e75c2c39d664e6eca28f1d3b81 adds tools/test_greatwood_trunk_footprint.sh.
 - These are written tests, not executed PASS on exact checkout. No NeoForge compilation, native GameTest, in-world generation or CI result for this HEAD is claimed. The Greatwood leaf nodes, branches, vertical geometry and atomic rollback are still missing. Natural biome registration, flora, ores, crystals and Silverwood 17/81 same-chunk exclusions remain.
 - Next: run exact Greatwood height + trunk runners, inspect CI, then integrate source-verified Greatwood vertical geometry into an isolated feature with failure-injection tests. No shared registries, Gradle, main, other branches or merge touched. Historical audit remains 59/100.
+
+
+## 2026-11-23 — M12 Greatwood bounded vertical trunk traversal
+
+- Re-read main AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and this lane; checked main comparison (ahead 290 / behind 0 before writes), other open PRs and existing Draft PR #9. No main/shared registry/Gradle/foreign-branch changes or merge.
+- Production commits 8e11036 and 11ed879: GreatwoodTrunkVolume visits the 2x2 trunk at each level, preflights horizontal overflow and build-height bounds before any visitor callback, and rejects vertical iterator overflow. This is a pure traversal helper, NOT source-verified final trunk length, rollback implementation or live NeoForge Feature.
+- Test commits a2b973d and ba86748: deterministic 20 assertions for valid volume, ceiling/floor, zero length, coordinate overflow, and no partial emission on rejected inputs. Runner ad52c29: tools/test_greatwood_trunk_volume.sh (Java 21).
+- Tests were written but NOT executed on exact checkout in this run; full NeoForge build, native GameTest, natural chunk generation and save/reload are NOT proven by this slice. Previous HEAD 6473be6 had GitHub Actions #45140604005 completed SUCCESS, not proof of M12 runners.
+- Next: execute exact-head Java runners, inspect exact-head CI, connect this volume to source-verified Greatwood trunk/branch geometry in an isolated NeoForge feature with staged writes and failure-injection rollback; later coordinate biome registration. Silverwood 17/81 origin exclusions, flora/ores/crystals remain. Historical audit 59/100 unchanged.
