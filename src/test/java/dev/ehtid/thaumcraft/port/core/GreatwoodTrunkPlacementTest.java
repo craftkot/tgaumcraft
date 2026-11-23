@@ -115,6 +115,24 @@ public final class GreatwoodTrunkPlacementTest {
             check(repeatedRestore.writes.size() == 4, "all attempted restores executed");
         }
 
+        // When placement throws and restoration rejects, preserve the placement
+        // exception and attach rollback failure instead of replacing its cause.
+        World throwAndRejectRestore = new World();
+        throwAndRejectRestore.throwAt = 2;
+        throwAndRejectRestore.rejectRestore = true;
+        try {
+            GreatwoodTrunkPlacement.place(plan, "log", throwAndRejectRestore);
+            throw new AssertionError("write/rollback failure hidden");
+        } catch (IllegalStateException expected) {
+            check("injected".equals(expected.getMessage()), "original write failure survives rollback rejection");
+            check(expected.getSuppressed().length == 1, "rollback failure attached once");
+            check(expected.getSuppressed()[0].getMessage().contains("rollback rejected"),
+                    "suppressed failure describes rejected restoration");
+            check(expected.getSuppressed()[0].getSuppressed().length == 1,
+                    "both rejected restores reported");
+            check(throwAndRejectRestore.writes.size() == 4, "both restore attempts completed");
+        }
+
         check(!GreatwoodTrunkPlacement.place(List.of(), "log", new World()), "empty plan rejected");
         check(!GreatwoodTrunkPlacement.place(List.of(plan.get(0), plan.get(0)),
                 "log", new World()), "duplicate plan rejected");
