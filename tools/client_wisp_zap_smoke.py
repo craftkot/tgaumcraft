@@ -126,7 +126,6 @@ def render() -> str:
         WISP_CAMERA_REANCHOR_LINE_NUMBER="$((after_lines + relative_line))"
         echo "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM $WISP_CAMERA_REANCHOR_LINE" | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REAIM=CLIENT_TRACKING" | tee -a client-smoke-status.txt
-        echo 'WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM' | tee -a client-smoke-status.txt
         return 0
       fi
       sleep 0.025
