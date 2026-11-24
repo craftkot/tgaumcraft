@@ -9,6 +9,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -34,6 +35,12 @@ public final class WispAttackSmokeProbe {
     private static int trackedWispId = -1;
 
     private WispAttackSmokeProbe() {}
+
+    static Vec3 cameraAimPoint(WispEntity wisp) {
+        var bounds = wisp.getBoundingBox();
+        double y = bounds.minY + (bounds.maxY - bounds.minY) * 0.25D;
+        return new Vec3(wisp.getX(), y, wisp.getZ());
+    }
 
     @SubscribeEvent
     public static void onAttackInput(InputEvent.InteractionKeyMappingTriggered event) {
@@ -108,8 +115,11 @@ public final class WispAttackSmokeProbe {
             return;
         }
 
-        // Smoke-only camera tracking; the Wisp's original AI and motion remain untouched.
-        minecraft.player.lookAt(EntityAnchorArgument.Anchor.EYES, wisp.getBoundingBox().getCenter());
+        // BETA26's visible billboard is centred at entity position. Aim at a point
+        // one quarter up the hitbox: still inside the real attack AABB, but close
+        // enough to the rendered quad for the client screenshot proof to be stable.
+        // This only steers the smoke camera; Wisp AI, motion and hitbox are untouched.
+        minecraft.player.lookAt(EntityAnchorArgument.Anchor.EYES, cameraAimPoint(wisp));
     }
 
     @SubscribeEvent

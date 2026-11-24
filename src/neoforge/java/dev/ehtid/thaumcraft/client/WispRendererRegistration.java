@@ -105,16 +105,17 @@ public final class WispRendererRegistration {
                     if (player != null) {
                         Vec3 playerEye = player.getEyePosition(partialTick);
                         Vec3 wispEye = entity.getEyePosition(partialTick);
-                        // The visible billboard is centered at entity position, but the
-                        // Survival attack ray must intersect the actual entity AABB.
+                        // Match the smoke camera's lower-quarter point inside the actual AABB.
+                        // The real Survival click is still accepted only by same-ID EntityHitResult.
                         Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());
                         Vec3 wispHitboxCenter = entity.getBoundingBox().getCenter();
+                        Vec3 wispAimPoint = WispAttackSmokeProbe.cameraAimPoint(entity);
                         Vec3 toWispRenderOrigin = wispRenderOrigin.subtract(playerEye);
-                        Vec3 toWispHitboxCenter = wispHitboxCenter.subtract(playerEye);
+                        Vec3 toWispAimPoint = wispAimPoint.subtract(playerEye);
                         Vec3 toWispEye = wispEye.subtract(playerEye);
-                        double aimDot = toWispHitboxCenter.lengthSqr() < 1.0E-12D
+                        double aimDot = toWispAimPoint.lengthSqr() < 1.0E-12D
                                 ? 1.0D
-                                : player.getViewVector(partialTick).dot(toWispHitboxCenter.normalize());
+                                : player.getViewVector(partialTick).dot(toWispAimPoint.normalize());
                         double renderAimDot = toWispRenderOrigin.lengthSqr() < 1.0E-12D
                                 ? 1.0D
                                 : player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize());
@@ -122,7 +123,7 @@ public final class WispRendererRegistration {
                                 ? 1.0D
                                 : player.getViewVector(partialTick).dot(toWispEye.normalize());
                         System.out.println("TC_SMOKE_WISP_CAMERA=YES id=" + entity.getId()
-                                + " aimTarget=hitbox_center"
+                                + " aimTarget=render_safe_quarter"
                                 + " tick=" + entity.tickCount
                                 + " playerX=" + player.getX()
                                 + " playerY=" + player.getY()
@@ -141,6 +142,9 @@ public final class WispRendererRegistration {
                                 + " wispHitboxCenterX=" + wispHitboxCenter.x
                                 + " wispHitboxCenterY=" + wispHitboxCenter.y
                                 + " wispHitboxCenterZ=" + wispHitboxCenter.z
+                                + " wispAimPointX=" + wispAimPoint.x
+                                + " wispAimPointY=" + wispAimPoint.y
+                                + " wispAimPointZ=" + wispAimPoint.z
                                 + " aimDot=" + aimDot
                                 + " renderAimDot=" + renderAimDot
                                 + " eyeAimDot=" + eyeAimDot);

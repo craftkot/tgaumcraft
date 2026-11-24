@@ -224,13 +224,13 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
             client_dir = root / "client-smoke"
             client_dir.mkdir()
             camera_line = (
-                "TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick=1 "
-                "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.02326 "
+                "TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=render_safe_quarter tick=1 "
+                "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
                 "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
                 "wispX=12.5 wispY=149.3 wispZ=11.5 "
                 "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
                 "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
-                f"aimDot={dot} renderAimDot=0.9787588908782221 eyeAimDot=0.9781741874628976"
+                f"aimDot={dot} renderAimDot=0.9957938147422856 eyeAimDot=0.9479570469041974"
             )
             frame_line = (
                 "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=106 tick=1 gameTime=520 playerTick=507 "
@@ -287,8 +287,8 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 
     def camera_line(tick: int) -> str:
         return (
-            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick={tick} "
-            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 "
+            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=render_safe_quarter tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
             "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
             "wispX=12.5 wispY=149.3 wispZ=11.5 "
             "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
@@ -365,13 +365,13 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
 
     def camera_line(tick: int) -> str:
         return (
-            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick={tick} "
-            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.02326 "
+            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=render_safe_quarter tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
             "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
             "wispX=12.5 wispY=149.3 wispZ=11.5 "
             "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
             "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
-            "aimDot=1.000000011613918 renderAimDot=0.9787588908782221 eyeAimDot=0.9781741874628976"
+            "aimDot=1.000000011613918 renderAimDot=0.9957938147422856 eyeAimDot=0.9479570469041974"
         )
 
     def frame_line(tick: int) -> str:
@@ -434,8 +434,8 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
 
     def camera_line(tick: int) -> str:
         return (
-            f"TC_SMOKE_WISP_CAMERA=YES id=157 aimTarget=hitbox_center tick={tick} "
-            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 "
+            f"TC_SMOKE_WISP_CAMERA=YES id=157 aimTarget=render_safe_quarter tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
             "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
             "wispX=12.5 wispY=149.3 wispZ=11.5 "
             "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
@@ -718,12 +718,24 @@ def _test_wisp_render_profile(generated: str) -> None:
 def main() -> int:
     _test_bash_function_body_extraction()
     _test_streaming_click_dispatch()
-    # BETA26 RenderWisp draws at entity position, while getEyePosition is 0.765 blocks higher.
+    # BETA26 RenderWisp's billboard is centred at entity position. A point one
+    # quarter up the 0.9-block hitbox stays inside the attack AABB while moving
+    # the camera toward the visible quad instead of the AABB's vertical centre.
     old_eye_dot = _aim_dot(29.0, -0.555, 1.0)
-    old_render_dot = _aim_dot(29.0, -1.32, 1.0)
-    hitbox_center_dot = _aim_dot(41.0, -0.87, 1.0)
-    assert old_eye_dot >= 0.99 and old_render_dot < 0.99 and hitbox_center_dot >= 0.99, (
-        old_eye_dot, old_render_dot, hitbox_center_dot
+    old_render_dot = _aim_dot(41.023269, -1.32, 1.0)
+    hitbox_center_dot = _aim_dot(41.023269, -0.87, 1.0)
+    render_safe_pitch = math.degrees(math.atan2(1.095, 1.0))
+    render_safe_quarter_dot = _aim_dot(render_safe_pitch, -1.095, 1.0)
+    render_safe_quarter_hitbox_dot = _aim_dot(render_safe_pitch, -0.87, 1.0)
+    assert (
+        old_eye_dot >= 0.99
+        and old_render_dot < 0.99
+        and hitbox_center_dot >= 0.99
+        and render_safe_quarter_dot >= 0.99
+        and render_safe_quarter_hitbox_dot >= 0.99
+    ), (
+        old_eye_dot, old_render_dot, hitbox_center_dot,
+        render_safe_quarter_dot, render_safe_quarter_hitbox_dot
     )
 
     anchor = "  # The initial world is already creative + peaceful, as established"
@@ -1097,14 +1109,14 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=20",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 gameTime=520 blockPos=none tick=507",
@@ -1113,7 +1125,7 @@ def main() -> int:
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
@@ -1139,7 +1151,7 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=9",
-        "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=23",
@@ -1147,7 +1159,7 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
         "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
-        "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
@@ -1172,7 +1184,7 @@ def main() -> int:
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=100 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
@@ -1222,8 +1234,8 @@ def main() -> int:
         assert errors == [], errors
 
         same_first_frame_log = log.replace(
-            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21",
-            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22",
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21",
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22",
             1,
         ).replace(
             "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
@@ -1243,8 +1255,8 @@ def main() -> int:
             "WISP_RENDER_FIRST_FRAME_TICK=22",
             1,
         ).replace(
-            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21",
-            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22",
+            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21",
+            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22",
             1,
         ).replace(
             "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
@@ -1370,7 +1382,7 @@ def main() -> int:
         ), "live-reposition attack without its own teleport marker must fail"
         low_dot_log = "\n".join(
             line.replace("aimDot=0.999", "aimDot=0.8")
-            if line.startswith("TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 ")
+            if line.startswith("TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 ")
             else line
             for line in log.splitlines()
         )
@@ -1381,7 +1393,7 @@ def main() -> int:
             for line in status.splitlines()
         )
         assert not verify_wisp_zap_client.verify(low_dot_log, low_dot_status, root), (
-            "same-ID ENTITY hit must remain authoritative when AABB-center dot is below 0.99"
+            "same-ID ENTITY hit must remain authoritative when the render-safe aim-point dot is below 0.99"
         )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
@@ -1517,7 +1529,9 @@ def main() -> int:
     assert "trackedWispId = wisp.getId()" in attack_probe
     assert "minecraft.level.getEntity(trackedWispId)" in attack_probe
     assert "EntityAnchorArgument.Anchor.EYES" in attack_probe
-    assert "wisp.getBoundingBox().getCenter()" in attack_probe
+    assert "cameraAimPoint(wisp)" in attack_probe
+    assert "static Vec3 cameraAimPoint(WispEntity wisp)" in attack_probe
+    assert "bounds.minY + (bounds.maxY - bounds.minY) * 0.25D" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_TRACK=YES id=" in attack_probe
     assert "event.setCanceled" not in attack_probe
     renderer = Path(
@@ -1545,10 +1559,12 @@ def main() -> int:
     assert "entity.getEyePosition(partialTick)" in renderer_registration
     assert "Vec3 wispRenderOrigin = new Vec3(entity.getX(), entity.getY(), entity.getZ());" in renderer_registration
     assert "entity.getBoundingBox().getCenter()" in renderer_registration
-    assert "player.getViewVector(partialTick).dot(toWispHitboxCenter.normalize())" in renderer_registration
+    assert "WispAttackSmokeProbe.cameraAimPoint(entity)" in renderer_registration
+    assert "wispAimPointY=" in renderer_registration
+    assert "player.getViewVector(partialTick).dot(toWispAimPoint.normalize())" in renderer_registration
     assert "player.getViewVector(partialTick).dot(toWispRenderOrigin.normalize())" in renderer_registration
     assert "player.getViewVector(partialTick).dot(toWisp.normalize())" not in renderer_registration
-    assert "aimTarget=hitbox_center" in renderer_registration
+    assert "aimTarget=render_safe_quarter" in renderer_registration
     assert "aimTarget=render_origin" not in renderer_registration
     assert "eyeAimDot=" in renderer_registration
     assert "player.getViewVector(partialTick)" in renderer_registration

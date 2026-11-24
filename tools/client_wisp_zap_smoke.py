@@ -299,7 +299,7 @@ def render() -> str:
     camera_line=""
     frame_line=""
     for _ in $(seq 1 200); do
-      camera_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$track_id aimTarget=hitbox_center tick=$render_tick " | head -1 || true)"
+      camera_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$track_id aimTarget=render_safe_quarter tick=$render_tick " | head -1 || true)"
       frame_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "$frame_marker" | head -1 || true)"
       if [ -n "$camera_line" ] && [ -n "$frame_line" ]; then
         break
@@ -431,7 +431,7 @@ def render() -> str:
       echo "WISP_ATTACKABLE_FRAME_PARSE_FAILED=$frame_line" | tee -a client-smoke-status.txt
       exit 1
     fi
-    camera_line="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center tick=$camera_tick " client-smoke/client.log | tail -1 || true)"
+    camera_line="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter tick=$camera_tick " client-smoke/client.log | tail -1 || true)"
     if [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+).*wispX=([-0-9.]+)\ wispY=([-0-9.]+)\ wispZ=([-0-9.]+).*aimDot=(-?[0-9.]+) ]]; then
       player_x="${BASH_REMATCH[1]}"
       player_y="${BASH_REMATCH[2]}"
@@ -446,7 +446,7 @@ def render() -> str:
     fi
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
     # The same-frame, same-ID vanilla EntityHitResult is the ray test. This dot
-    # compares an interpolated view vector with the AABB center and is diagnostic;
+    # compares an interpolated view vector with the lower-quarter point inside the AABB and is diagnostic;
     # it must not reject an actual ENTITY hit that Minecraft has already selected.
     if ! awk -v mode="$position_mode" -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
       'BEGIN {
@@ -515,7 +515,7 @@ def render() -> str:
       echo "WISP_ATTACK_INPUT_FRAME_LINE_PARSE_FAILED=$frame_line" | tee -a client-smoke-status.txt
       return 1
     fi
-    camera_matches="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=hitbox_center tick=$camera_tick " client-smoke/client.log || true)"
+    camera_matches="$(grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter tick=$camera_tick " client-smoke/client.log || true)"
     camera_count="$(printf '%s\n' "$camera_matches" | grep -c '^TC_SMOKE_WISP_CAMERA=' || true)"
     if [ "$camera_count" -ne 1 ]; then
       echo "WISP_ATTACK_INPUT_FRAME_CAMERA_COUNT=$camera_count id=$wisp_id tick=$camera_tick" | tee -a client-smoke-status.txt
@@ -639,7 +639,7 @@ def render() -> str:
     for _ in $(seq 1 200); do
       camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id " | tail -1 || true)"
       if [ -n "$camera_line" ]; then
-        camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
+        camera_tick="$(sed -n 's/.* aimTarget=render_safe_quarter tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
         aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
         if [[ "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
           && awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= 0.99) }'; then
@@ -709,7 +709,7 @@ def render() -> str:
       echo "WISP_CAMERA_FIRST_FRAME_STATUS_INVALID id=$first_frame_id tick=$first_frame_tick" | tee -a client-smoke-status.txt
       exit 1
     fi
-    frame_camera_marker="TC_SMOKE_WISP_CAMERA=YES id=$first_frame_id aimTarget=hitbox_center tick=$first_frame_tick "
+    frame_camera_marker="TC_SMOKE_WISP_CAMERA=YES id=$first_frame_id aimTarget=render_safe_quarter tick=$first_frame_tick "
     camera_sample_count="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F -c -- "$frame_camera_marker" || true)"
     if [ "$camera_sample_count" -ne 1 ]; then
       echo "WISP_CAMERA_FIRST_FRAME_SAMPLE_COUNT=$camera_sample_count expected=1 id=$first_frame_id tick=$first_frame_tick" | tee -a client-smoke-status.txt
@@ -748,7 +748,7 @@ def render() -> str:
 
     capture_camera="$(grep -F 'TC_SMOKE_WISP_CAMERA=YES' client-smoke-status.txt | tail -1 || true)"
     capture_camera_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA=YES id=\([0-9][0-9]*\) aimTarget=.*/\1/p' <<<"$capture_camera")"
-    capture_camera_tick="$(sed -n 's/.* aimTarget=hitbox_center tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$capture_camera")"
+    capture_camera_tick="$(sed -n 's/.* aimTarget=render_safe_quarter tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$capture_camera")"
     capture_player_x="$(sed -n 's/.* playerX=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_player_y="$(sed -n 's/.* playerY=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_player_z="$(sed -n 's/.* playerZ=\([^ ]*\).*/\1/p' <<<"$capture_camera")"

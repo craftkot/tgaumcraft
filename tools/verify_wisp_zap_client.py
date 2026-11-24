@@ -405,7 +405,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         log_text,
     )
     wisp_camera = _first(
-        r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+)",
+        r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_safe_quarter tick=(\d+)",
         log_text,
     )
     pre_attack_track = _first(
@@ -662,11 +662,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
     capture_id = _first(r"(?m)^WISP_RENDER_CAPTURE_ID=(\d+)$", status_text)
     first_frame_camera_sample = _first(
-        r"(?m)^WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
+        r"(?m)^WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_safe_quarter tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
         status_text,
     )
     capture_camera = _first(
-        r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) "
+        r"(?m)^TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_safe_quarter tick=(\d+) "
         r"playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+).*"
         r"wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+).*"
         r"aimDot=([0-9.+-]+)(?: |$)",
@@ -688,7 +688,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     attack_camera_sample = _first(
-        r"(?m)^WISP_ATTACK_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
+        r"(?m)^WISP_ATTACK_CAMERA_SAMPLE=(TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_safe_quarter tick=(\d+) .*? aimDot=([0-9.+-]+)(?: .*)?)$",
         status_text,
     )
     attack_camera_reaim = _first(
