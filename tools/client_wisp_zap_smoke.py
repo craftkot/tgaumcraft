@@ -871,6 +871,16 @@ def render() -> str:
   xdotool key --clearmodifiers F5
   sleep 0.1
   echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK' | tee -a client-smoke-status.txt
+  if grep -Fq 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES' client-smoke/client.log; then
+    echo 'WISP_ZAP_BASELINE_CAPTURE_TOO_LATE=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  wisp_capture 79-wisp-third-person-before-zap
+  if grep -Fq 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES' client-smoke/client.log; then
+    echo 'WISP_ZAP_BASELINE_CAPTURE_RACED_PAYLOAD=YES' | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo 'WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD' | tee -a client-smoke-status.txt
 
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
