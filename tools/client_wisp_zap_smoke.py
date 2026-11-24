@@ -219,51 +219,77 @@ def render() -> str:
   # screenshot between the first completed frame and the real click: capture is
   # deliberately deferred until the server accepts the hit and stops autonomous flight.
   wisp_wait_for_fresh_render() {
-    local after_lines="$1" render_line render_id render_tick frame_marker camera_line frame_line_number
+    local after_lines="$1" track_marker track_line track_id track_tick track_line_number
+    local render_line render_tick frame_marker camera_line frame_line frame_line_number
+    track_marker='TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id='
     for _ in $(seq 1 200); do
-      render_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F 'TC_SMOKE_WISP_RENDERED=YES' | head -1 || true)"
-      if [ -n "$render_line" ]; then
-        render_id="$(sed -n 's/.*TC_SMOKE_WISP_RENDERED=YES id=\([0-9][0-9]*\) aspect=.*/\1/p' <<<"$render_line")"
-        render_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$render_line")"
-        if ! [[ "$render_id" =~ ^[0-9]+$ && "$render_tick" =~ ^[0-9]+$ ]]; then
-          echo "WISP_RENDER_CALLBACK_INVALID id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
-          exit 1
-        fi
-        frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$render_id tick=$render_tick"
-        camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$render_id aimTarget=hitbox_center tick=$render_tick " | head -1 || true)"
-        for _ in $(seq 1 200); do
-          if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
-            frame_line_number="$(grep -n -F -- "$frame_marker" client-smoke/client.log | tail -1 | cut -d: -f1)"
-            if ! [[ "$frame_line_number" =~ ^[0-9]+$ ]]; then
-              echo "WISP_FIRST_FRAME_LINE_NUMBER_INVALID=$frame_line_number" | tee -a client-smoke-status.txt
-              exit 1
-            fi
-            WISP_RENDER_FIRST_FRAME_LINE_NUMBER="$frame_line_number"
-            echo "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=$frame_line_number" | tee -a client-smoke-status.txt
-            if [ -z "$camera_line" ]; then
-              echo "WISP_FIRST_FRAME_CAMERA_SAMPLE_MISSING=id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
-              tail -120 client-smoke/client.log >&2
-              exit 1
-            fi
-            echo "WISP_RENDER_FRAME_COMPLETE=YES id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_FIRST_FRAME_ID=$render_id" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_FIRST_FRAME_TICK=$render_tick" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=$camera_line" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_FIRST_FRAME=YES id=$render_id tick=$render_tick" | tee -a client-smoke-status.txt
-            echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
-            return 0
-          fi
-          sleep 0.005
-        done
-        echo "WISP_RENDER_FRAME_COMPLETE_TIMEOUT=$frame_marker" | tee -a client-smoke-status.txt
-        tail -120 client-smoke/client.log >&2
-        exit 1
+      track_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "$track_marker" | head -1 || true)"
+      if [ -n "$track_line" ]; then
+        break
       fi
       sleep 0.005
     done
-    echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN_TIMEOUT=YES' | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    exit 1
+    if [ -z "$track_line" ]; then
+      echo 'WISP_PREATTACK_CAMERA_TRACK_TIMEOUT=YES' | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      exit 1
+    fi
+    track_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=\([0-9][0-9]*\) tick=.*/\1/p' <<<"$track_line")"
+    track_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\) gameTime=.*/\1/p' <<<"$track_line")"
+    track_line_number="$(grep -n -F -- "$track_line" client-smoke/client.log | head -1 | cut -d: -f1)"
+    if ! [[ "$track_id" =~ ^[0-9]+$ && "$track_tick" =~ ^[0-9]+$ && "$track_line_number" =~ ^[0-9]+$ ]]; then
+      echo "WISP_PREATTACK_CAMERA_TRACK_INVALID id=$track_id tick=$track_tick line=$track_line_number" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    echo "WISP_RENDER_PREATTACK_TRACKING=YES id=$track_id tick=$track_tick line=$track_line_number" | tee -a client-smoke-status.txt
+
+    for _ in $(seq 1 200); do
+      render_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_RENDERED=YES id=$track_id aspect=aer" | head -1 || true)"
+      if [ -n "$render_line" ]; then
+        break
+      fi
+      sleep 0.005
+    done
+    if [ -z "$render_line" ]; then
+      echo "WISP_RENDER_AFTER_PREATTACK_TRACK_TIMEOUT=id=$track_id" | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      exit 1
+    fi
+    render_tick="$(sed -n 's/.* tick=\([0-9][0-9]*\).*/\1/p' <<<"$render_line")"
+    if ! [[ "$render_tick" =~ ^[0-9]+$ ]]; then
+      echo "WISP_RENDER_CALLBACK_INVALID id=$track_id tick=$render_tick" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$track_id tick=$render_tick"
+    camera_line=""
+    frame_line=""
+    for _ in $(seq 1 200); do
+      camera_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$track_id aimTarget=hitbox_center tick=$render_tick " | head -1 || true)"
+      frame_line="$(tail -n +"$((track_line_number + 1))" client-smoke/client.log | grep -F "$frame_marker" | head -1 || true)"
+      if [ -n "$camera_line" ] && [ -n "$frame_line" ]; then
+        break
+      fi
+      sleep 0.005
+    done
+    if [ -z "$camera_line" ] || [ -z "$frame_line" ]; then
+      echo "WISP_RENDER_TRACKED_FRAME_INCOMPLETE=id=$track_id tick=$render_tick" | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      exit 1
+    fi
+    frame_line_number="$(grep -n -F -- "$frame_marker" client-smoke/client.log | awk -F: -v start="$track_line_number" '$1 > start { print $1; exit }')"
+    if ! [[ "$frame_line_number" =~ ^[0-9]+$ ]]; then
+      echo "WISP_FIRST_FRAME_LINE_NUMBER_INVALID=$frame_line_number" | tee -a client-smoke-status.txt
+      exit 1
+    fi
+    WISP_RENDER_FIRST_FRAME_LINE_NUMBER="$frame_line_number"
+    echo "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=$frame_line_number" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_FRAME_COMPLETE=YES id=$track_id tick=$render_tick" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_FIRST_FRAME_ID=$track_id" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_FIRST_FRAME_TICK=$render_tick" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=$camera_line" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_FIRST_FRAME=YES id=$track_id tick=$render_tick" | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_AFTER_PREAIMED_SPAWN=YES' | tee -a client-smoke-status.txt
+    return 0
   }
 
   wisp_reanchor_player_for_capture() {
@@ -685,7 +711,7 @@ def render() -> str:
   # the trigger for the real click; no external screenshot is taken beforehand.
   wisp_start_zap_video_capture
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
+  wisp_fast_command "/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:\"aer\",Tags:[\"tc_wisp_zap_smoke\"],CustomName:'{\"text\":\"tc_wisp_zap_smoke\"}',CustomNameVisible:0b}"
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 

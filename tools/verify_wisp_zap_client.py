@@ -34,6 +34,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_ATTACK_INPUT=YES",
     "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
     "TC_SMOKE_WISP_CAMERA_TRACK=YES",
+    "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
     "TC_SMOKE_WISP_ZAP_FRAME=YES",
@@ -51,6 +52,7 @@ REQUIRED_STATUS = (
     "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
     "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
+    "WISP_RENDER_PREATTACK_TRACKING=YES",
     "WISP_RENDER_FRAME_COMPLETE=YES",
     "WISP_RENDER_FIRST_FRAME=YES",
     "WISP_RENDER_FIRST_FRAME_ID=",
@@ -386,6 +388,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=hitbox_center tick=(\d+)",
         log_text,
     )
+    pre_attack_track = _first(
+        r"TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=(\d+) tick=(\d+) gameTime=(\d+)",
+        log_text,
+    )
     wisp_rendered = _first(
         r"TC_SMOKE_WISP_RENDERED=YES id=(\d+) aspect=aer tick=(\d+)",
         log_text,
@@ -406,6 +412,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     )
 
     for label, match in (("client Wisp camera sample", wisp_camera),
+                         ("pre-attack Wisp camera tracking", pre_attack_track),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
                          ("same-frame Wisp EntityHitResult", attackable_frame),
@@ -632,6 +639,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     )
     first_frame_id = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_ID=(\d+)$", status_text)
     first_frame_tick = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_TICK=(\d+)$", status_text)
+    pre_attack_track_status = _first(
+        r"(?m)^WISP_RENDER_PREATTACK_TRACKING=YES id=(\d+) tick=(\d+) line=(\d+)$",
+        status_text,
+    )
     capture_tick = _first(r"(?m)^WISP_RENDER_CAPTURE_TICK=(\d+)$", status_text)
     capture_id = _first(r"(?m)^WISP_RENDER_CAPTURE_ID=(\d+)$", status_text)
     first_frame_camera_sample = _first(
@@ -672,9 +683,31 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
+    if pre_attack_track is not None and pre_attack_track_status is not None:
+        if pre_attack_track.group(1) != pre_attack_track_status.group(1):
+            errors.append("pre-attack tracker log and status use different Wisp IDs")
+        if pre_attack_track.group(2) != pre_attack_track_status.group(2):
+            errors.append("pre-attack tracker log and status use different Wisp ticks")
+        log_lines = log_text.splitlines()
+        actual_track_line = next(
+            (index for index, line in enumerate(log_lines, start=1) if pre_attack_track.group(0) in line),
+            None,
+        )
+        if actual_track_line is None or actual_track_line != int(pre_attack_track_status.group(3)):
+            errors.append("pre-attack tracker status does not point to its exact client-log line")
+        if first_frame_id is not None and pre_attack_track.group(1) != first_frame_id.group(1):
+            errors.append("pre-attack camera tracker and first rendered Wisp use different IDs")
+        if first_frame_tick is not None and int(pre_attack_track.group(2)) > int(first_frame_tick.group(1)):
+            errors.append("first tracked Wisp tick occurs after the first accepted render frame")
+    else:
+        errors.append("missing exact pre-attack Wisp camera tracking evidence")
+
     if frame_status is None:
         errors.append("missing first post-LevelRenderer completed-frame status")
     else:
+        if pre_attack_track_status is not None and first_frame_line_number is not None:
+            if int(pre_attack_track_status.group(3)) >= int(first_frame_line_number.group(1)):
+                errors.append("first completed render frame did not occur after pre-attack camera tracking")
         if wisp_rendered and frame_status.group(1) != wisp_rendered.group(1):
             errors.append("first completed-frame status and rendered Wisp use different entity IDs")
         if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):

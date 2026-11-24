@@ -30,6 +30,7 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 )
 public final class WispAttackSmokeProbe {
     private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";
     private static int trackedWispId = -1;
 
     private WispAttackSmokeProbe() {}
@@ -68,7 +69,7 @@ public final class WispAttackSmokeProbe {
 
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent.Pre event) {
-        if (!ENABLED || trackedWispId < 0) {
+        if (!ENABLED) {
             return;
         }
 
@@ -78,14 +79,36 @@ public final class WispAttackSmokeProbe {
             return;
         }
 
+        // Scoreboard tags are server-side and are not a reliable client selector.
+        // The smoke fixture gives only its target a hidden, synchronized custom name.
+        // Start tracking before the first click so autonomous BETA26 flight cannot
+        // outrun a one-time pre-aim while the client dispatches mouse input.
+        if (trackedWispId < 0) {
+            WispEntity smokeTarget = minecraft.level.getEntitiesOfClass(
+                    WispEntity.class,
+                    minecraft.player.getBoundingBox().inflate(32.0D),
+                    candidate -> candidate.isAlive()
+                            && candidate.hasCustomName()
+                            && SMOKE_TARGET_NAME.equals(candidate.getCustomName().getString())
+            ).stream().findFirst().orElse(null);
+            if (smokeTarget != null) {
+                trackedWispId = smokeTarget.getId();
+                System.out.println("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=" + trackedWispId
+                        + " tick=" + smokeTarget.tickCount
+                        + " gameTime=" + minecraft.level.getGameTime());
+            }
+        }
+        if (trackedWispId < 0) {
+            return;
+        }
+
         Entity target = minecraft.level.getEntity(trackedWispId);
         if (!(target instanceof WispEntity wisp) || !wisp.isAlive()) {
             trackedWispId = -1;
             return;
         }
 
-        // Keep the attacked Wisp's AABB centred while its BETA26 flight AI
-        // continues to move it during the 20-tick zap wind-up.
+        // Smoke-only camera tracking; the Wisp's original AI and motion remain untouched.
         minecraft.player.lookAt(EntityAnchorArgument.Anchor.EYES, wisp.getBoundingBox().getCenter());
     }
 

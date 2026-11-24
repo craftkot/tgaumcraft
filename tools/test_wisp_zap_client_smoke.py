@@ -456,7 +456,8 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=",
         "wisp_fast_command()",
         "sleep 0.5",
-        '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}',
+        'wisp_fast_command "/summon thaumcraft:wisp',
+        "CustomNameVisible:0b",
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
@@ -513,7 +514,7 @@ def main() -> int:
     )
     for marker in required:
         assert marker in generated, marker
-    summon_position = generated.find("wisp_fast_command '/summon thaumcraft:wisp")
+    summon_position = generated.find('wisp_fast_command "/summon thaumcraft:wisp')
     recorder_position = generated.find("wisp_start_zap_video_capture\n  aim_log_lines")
     if summon_position < 0 or recorder_position < 0 or recorder_position > summon_position:
         raise AssertionError("continuous Wisp video recorder must start before the test Wisp is summoned")
@@ -544,7 +545,7 @@ def main() -> int:
     baseline_b_index = setup.index("wisp_capture 79-wisp-before-b", baseline_a_index)
     baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
-    summon_index = setup.index('wisp_fast_command \'/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}\'', spawn_snapshot_index)
+    summon_index = setup.index('wisp_fast_command "/summon thaumcraft:wisp', spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
@@ -611,10 +612,14 @@ def main() -> int:
         "no external capture or delay may be inserted before the live-target retry helper"
     )
     fresh_render_body = _bash_function_body(generated, "wisp_wait_for_fresh_render")
-    frame_marker_index = fresh_render_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
+    track_marker_index = fresh_render_body.index("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=")
+    track_line_number_index = fresh_render_body.index('track_line_number="$(grep -n -F -- "$track_line"')
+    render_after_track_index = fresh_render_body.index('render_line="$(tail -n +"$((track_line_number + 1))"')
+    camera_after_track_index = fresh_render_body.index('camera_line="$(tail -n +"$((track_line_number + 1))"')
+    frame_after_track_index = fresh_render_body.index('frame_line="$(tail -n +"$((track_line_number + 1))"')
     cursor_capture_index = fresh_render_body.index('WISP_RENDER_FIRST_FRAME_LINE_NUMBER="$frame_line_number"')
     first_frame_status_index = fresh_render_body.index("WISP_RENDER_FIRST_FRAME=YES")
-    assert frame_marker_index < cursor_capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
+    assert track_marker_index < track_line_number_index < render_after_track_index < camera_after_track_index < frame_after_track_index < cursor_capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
     assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
     capture_body = _bash_function_body(generated, "wisp_capture_aim_after_hit")
     capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
@@ -684,7 +689,7 @@ def main() -> int:
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
-    assert '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}' in generated
+    assert "CustomName:'" in generated and "CustomNameVisible:0b" in generated
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in generated
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
@@ -729,6 +734,7 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
@@ -762,10 +768,11 @@ def main() -> int:
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
+        "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=3",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
-        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5",
+        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=6",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
@@ -873,6 +880,12 @@ def main() -> int:
         write_png(root / verify_wisp_zap_client.BASELINE_SCREENSHOTS[0])
         assert verify_wisp_zap_client.verify(log, status, root), "a Wisp-colored baseline must fail closed"
         write_png(root / verify_wisp_zap_client.BASELINE_SCREENSHOTS[0], None)
+        assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518", ""), status, root
+        ), "missing pre-attack camera tracking must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=3", ""), root
+        ), "missing pre-attack tracking status must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21", ""), status, root
         ), "missing AFTER_LEVEL frame completion must fail"
@@ -1041,7 +1054,14 @@ def main() -> int:
     assert "TC_SMOKE_WISP_CLIENT_ATTACK=YES" in attack_probe
     assert "ClientTickEvent.Pre" in attack_probe
     assert 'private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));' in attack_probe
-    assert "if (!ENABLED || trackedWispId < 0)" in attack_probe
+    assert 'private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";' in attack_probe
+    assert "if (!ENABLED)" in attack_probe
+    assert "getEntitiesOfClass(WispEntity.class" in attack_probe
+    assert "candidate.hasCustomName()" in attack_probe
+    assert "SMOKE_TARGET_NAME.equals(candidate.getCustomName().getString())" in attack_probe
+    assert "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=" in attack_probe
+    assert "if (trackedWispId < 0)" in attack_probe
+    assert "trackedWispId = smokeTarget.getId()" in attack_probe
     assert "trackedWispId = wisp.getId()" in attack_probe
     assert "minecraft.level.getEntity(trackedWispId)" in attack_probe
     assert "EntityAnchorArgument.Anchor.EYES" in attack_probe
