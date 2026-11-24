@@ -433,7 +433,6 @@ def main() -> int:
         "ffmpeg",
         "TC_SMOKE_WISP_ZAP_FRAME=YES",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES",
-        "WISP_ZAP_FRAME_CAPTURE=YES",
         "WISP_ZAP_EFFECT_EXPIRED=YES",
         "wisp_send_chat '/time set midnight' 'Set the time to 18000'",
         "WISP_ZAP_TEST_TIME=MIDNIGHT",

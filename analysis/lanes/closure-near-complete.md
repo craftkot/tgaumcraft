@@ -252,3 +252,13 @@
 - Exact-SHA Full Port CI [#45324544663](https://github.com/craftkot/tgaumcraft/actions/runs/45324544663) completed SUCCESS on `bd786f7` (Core parity, NeoForge build, dedicated-server smoke). This does not substitute for the Wisp client. The Wisp run failed before generated Bash syntax or Minecraft startup; no new gameplay result is claimed.
 - PR #4 remains OPEN / DRAFT / UNMERGED; no merge or force-push. Main and all other feature branches remain unchanged.
 - No score awarded: **59/100**, M16 **4/6**, M08 **5/9**. Next: exact-head Wisp Client must pass geometry, the full offline Python/CLI extraction regression and generated `bash -n`; only then inspect the real Minecraft run for same-event ages 1/2/3, expiry, positive per-age pixels, matching payload IDs, and no texture-load errors.
+
+
+## 2026-11-24 — remove the last verifier-output marker from the generated-shell contract
+
+- Exact PR HEAD `8f23e4d7565d0aa3d8c7b434f7f265df649eb434`: Wisp Client [#45331249354](https://github.com/craftkot/tgaumcraft/actions/runs/45331249354) passed FXBolt geometry (37 assertions), atlas UV (24 assertions), and installed ffmpeg/ffprobe. The offline Python contract then failed at `tools/test_wisp_zap_client_smoke.py:516` with `AssertionError: WISP_ZAP_FRAME_CAPTURE=YES`; Bash generation and Minecraft startup were skipped.
+- This is the same execution-layer mismatch as the previous failure, now isolated to one remaining marker. `WISP_ZAP_FRAME_CAPTURE=YES` is emitted by `verify_wisp_zap_client.py` after video-frame extraction; it is not shell source. The generated-shell static tuple must assert only script-authored commands/markers. The synthetic MP4 CLI regression now verifies the runtime extraction success marker plus all three `WISP_ZAP_FRAME_CAPTURE` and `WISP_ZAP_VIDEO_FRAME_INDEX` status records.
+- Removed only the invalid static source expectation. No production Java, renderer, payload, Wisp AI/damage, FX lifetime, assets, workflow, Gradle, shared registry, or other lane changed. Changed paths: `tools/test_wisp_zap_client_smoke.py` and this lane journal.
+- Full Port CI [#45331249505](https://github.com/craftkot/tgaumcraft/actions/runs/45331249505) was still in progress at the time of this note; no exact-head build result is claimed here.
+- PR #4 remains OPEN / DRAFT / UNMERGED; no merge or force-push. Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- No score awarded: **59/100**, M16 **4/6**, M08 **5/9**. Next: rerun the exact-head Wisp offline contract and generated `bash -n`; only then allow the real client to start and evaluate the same-event FXBolt ages, expiry, pixel evidence, payload identity, and texture loading.
