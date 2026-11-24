@@ -60,7 +60,7 @@ public final class LegacyWispZapGeometry {
             throw new IllegalArgumentException("BETA26 FXBolt phase offset must be finite");
         }
         if (particleAge < 0 || particleAge > MAX_AGE_TICKS) {
-            throw new IllegalArgumentException("BETA26 FXBolt render age must be 0.. + MAX_AGE_TICKS");
+            throw new IllegalArgumentException("BETA26 FXBolt render age must be 0.." + MAX_AGE_TICKS);
         }
         if (!Float.isFinite(partialTick) || partialTick < 0.0F || partialTick > 1.0F) {
             throw new IllegalArgumentException("BETA26 FXBolt partial tick must be in [0,1]");
