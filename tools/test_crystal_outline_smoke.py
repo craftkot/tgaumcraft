@@ -287,7 +287,10 @@ assert 'south) support_block=minecraft:nether_bricks ;;' in body
 assert "CRYSTAL_OUTLINE_SUPPORT_$face=$support_block" in body
 assert "CRYSTAL_MESH_SETUP_$face" in body
 assert "CRYSTAL_MESH_TARGET_EMPTY_$face" in body
-assert "python3 tools/verify_crystal_mesh_screenshots.py --pair \"$face\"" in body
+assert "CRYSTAL_OUTLINE_VIEWPORT=$X,$Y,$WIDTH,$HEIGHT" in body
+assert body.count('xdotool getwindowgeometry --shell "$WIN"') == 3
+assert body.count('--viewport "$X" "$Y" "$WIDTH" "$HEIGHT"') == 1
+assert "python3 tools/verify_crystal_mesh_screenshots.py" in body
 assert "crystal-mesh-$face-before.png" in body
 assert "crystal-mesh-$face-after.png" in body
 assert "size=3,gen=4" in body

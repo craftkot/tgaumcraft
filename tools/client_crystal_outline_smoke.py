@@ -280,7 +280,16 @@ PY
     assert_outline_marker "CRYSTAL_MESH_SETUP_$face"
     sleep 1
     capture_outline "crystal-mesh-$face-after"
-    python3 tools/verify_crystal_mesh_screenshots.py --pair "$face" \
+    # import -window root captures the whole Xvfb desktop (1280x800 here),
+    # while Minecraft itself is a 1024x768 window at root offset (1,20).
+    # Pass the live window geometry so the pixel ROI is centred on the game,
+    # not on the unused desktop margin.
+    geometry="$(xdotool getwindowgeometry --shell "$WIN")"
+    eval "$geometry"
+    echo "CRYSTAL_OUTLINE_VIEWPORT=$X,$Y,$WIDTH,$HEIGHT" | tee -a client-smoke-status.txt
+    python3 tools/verify_crystal_mesh_screenshots.py \
+      --viewport "$X" "$Y" "$WIDTH" "$HEIGHT" \
+      --pair "$face" \
       "client-smoke/screenshots/crystal-mesh-$face-before.png" \
       "client-smoke/screenshots/crystal-mesh-$face-after.png" | tee -a client-smoke-status.txt
     send_chat '/gamemode creative'

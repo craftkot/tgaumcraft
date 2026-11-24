@@ -20,12 +20,19 @@ MAX_COMPONENT_CENTER_OFFSET = 96.0
 
 
 def analyze_rgb_pair(before: bytes, after: bytes, width: int, height: int,
-                     threshold: int = DIFF_THRESHOLD) -> dict:
+                     threshold: int = DIFF_THRESHOLD,
+                     viewport: tuple[int, int, int, int] | None = None) -> dict:
     if width <= 0 or height <= 0 or len(before) != width * height * 3 or len(after) != len(before):
         raise ValueError("RGB dimensions do not match the supplied buffers")
-    side = min(ROI_SIZE, width, height)
-    x0 = (width - side) // 2
-    y0 = (height - side) // 2
+    if viewport is None:
+        viewport = (0, 0, width, height)
+    vx, vy, viewport_width, viewport_height = viewport
+    if (vx < 0 or vy < 0 or viewport_width <= 0 or viewport_height <= 0
+            or vx + viewport_width > width or vy + viewport_height > height):
+        raise ValueError("viewport must be positive and fully contained within the screenshot")
+    side = min(ROI_SIZE, viewport_width, viewport_height)
+    x0 = vx + (viewport_width - side) // 2
+    y0 = vy + (viewport_height - side) // 2
     mask = bytearray(side * side)
     changed = 0
     for y in range(side):
@@ -72,7 +79,12 @@ def analyze_rgb_pair(before: bytes, after: bytes, width: int, height: int,
             largest = count
             largest_box = (x0 + min_x, y0 + min_y, x0 + max_x, y0 + max_y)
 
-    return {"changed": changed, "largest": largest, "bbox": largest_box}
+    return {
+        "changed": changed,
+        "largest": largest,
+        "bbox": largest_box,
+        "viewport": (vx, vy, viewport_width, viewport_height),
+    }
 
 
 def has_visible_mesh(metrics: dict, width: int, height: int) -> bool:
@@ -84,7 +96,13 @@ def has_visible_mesh(metrics: dict, width: int, height: int) -> bool:
         return False
     center_x = (min_x + max_x) / 2.0
     center_y = (min_y + max_y) / 2.0
-    return math.hypot(center_x - width / 2.0, center_y - height / 2.0) <= MAX_COMPONENT_CENTER_OFFSET
+    vx, vy, viewport_width, viewport_height = metrics.get("viewport", (0, 0, width, height))
+    viewport_center_x = vx + viewport_width / 2.0
+    viewport_center_y = vy + viewport_height / 2.0
+    return math.hypot(
+        center_x - viewport_center_x,
+        center_y - viewport_center_y,
+    ) <= MAX_COMPONENT_CENTER_OFFSET
 
 
 def load_rgb(path: Path) -> tuple[int, int, bytes]:
@@ -103,12 +121,13 @@ def load_rgb(path: Path) -> tuple[int, int, bytes]:
     return width, height, convert.stdout
 
 
-def verify_pair(label: str, before_path: Path, after_path: Path) -> dict:
+def verify_pair(label: str, before_path: Path, after_path: Path,
+                viewport: tuple[int, int, int, int] | None = None) -> dict:
     before_width, before_height, before = load_rgb(before_path)
     after_width, after_height, after = load_rgb(after_path)
     if (before_width, before_height) != (after_width, after_height):
         raise SystemExit(f"CRYSTAL_MESH_PIXELS=FAIL label={label} reason=dimension-mismatch")
-    metrics = analyze_rgb_pair(before, after, before_width, before_height)
+    metrics = analyze_rgb_pair(before, after, before_width, before_height, viewport=viewport)
     if not has_visible_mesh(metrics, before_width, before_height):
         raise SystemExit(
             f"CRYSTAL_MESH_PIXELS=FAIL label={label} changed={metrics['changed']} "
@@ -162,16 +181,63 @@ def run_synthetic_tests() -> None:
             tiny[offset:offset + 3] = bytes((120, 120, 120))
     tiny_result = analyze_rgb_pair(base, bytes(tiny), width, height)
     assert not has_visible_mesh(tiny_result, width, height), tiny_result
-    print("CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=5")
+
+    # Xvfb's root screenshot can be larger than the Minecraft client window.
+    # A mesh at the actual window centre must be judged relative to that viewport,
+    # not to unrelated desktop pixels outside the game window.
+    desktop_width, desktop_height = 1280, 800
+    desktop_base = bytes([80]) * (desktop_width * desktop_height * 3)
+    viewport = (1, 20, 1024, 768)
+    viewport_center_x = viewport[0] + viewport[2] // 2
+    viewport_center_y = viewport[1] + viewport[3] // 2
+    desktop_mesh = bytearray(desktop_base)
+    for y in range(viewport_center_y - 6, viewport_center_y + 6):
+        for x in range(viewport_center_x - 6, viewport_center_x + 6):
+            offset = (y * desktop_width + x) * 3
+            desktop_mesh[offset:offset + 3] = bytes((95, 95, 95))
+    root_center_result = analyze_rgb_pair(
+        desktop_base, bytes(desktop_mesh), desktop_width, desktop_height
+    )
+    assert not has_visible_mesh(root_center_result, desktop_width, desktop_height), root_center_result
+    viewport_result = analyze_rgb_pair(
+        desktop_base, bytes(desktop_mesh), desktop_width, desktop_height, viewport=viewport
+    )
+    assert has_visible_mesh(viewport_result, desktop_width, desktop_height), viewport_result
+
+    # Desktop-only changes outside the game window must not count as a rendered mesh.
+    desktop_overlay = bytearray(desktop_base)
+    for y in range(viewport_center_y - 6, viewport_center_y + 6):
+        for x in range(1094, 1106):
+            offset = (y * desktop_width + x) * 3
+            desktop_overlay[offset:offset + 3] = bytes((255, 255, 255))
+    overlay_result = analyze_rgb_pair(
+        desktop_base, bytes(desktop_overlay), desktop_width, desktop_height, viewport=viewport
+    )
+    assert not has_visible_mesh(overlay_result, desktop_width, desktop_height), overlay_result
+
+    try:
+        analyze_rgb_pair(
+            desktop_base, desktop_base, desktop_width, desktop_height,
+            viewport=(1200, 0, 200, 100),
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("out-of-bounds screenshot viewport was accepted")
+
+    print("CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=8")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--viewport", nargs=4, type=int,
+                        metavar=("X", "Y", "WIDTH", "HEIGHT"))
     parser.add_argument("--pair", nargs=3, action="append", required=True,
                         metavar=("LABEL", "BEFORE_PNG", "AFTER_PNG"))
     args = parser.parse_args()
+    viewport = tuple(args.viewport) if args.viewport is not None else None
     for label, before, after in args.pair:
-        verify_pair(label, Path(before), Path(after))
+        verify_pair(label, Path(before), Path(after), viewport=viewport)
 
 
 if __name__ == "__main__":
