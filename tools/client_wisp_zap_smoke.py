@@ -865,15 +865,15 @@ def render() -> str:
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
-  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
-  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
 
-  # First-person places the camera at the target endpoint and collapses the bolt
-  # onto the view ray. Capture only the transient effect in third-person-back;
-  # WispZapClientEffects records the actual Options camera type per rendered age.
+  # The click has been dispatched. Switch before the server's target/zap callbacks
+  # so even the first transient frame is captured from third-person-back.
   xdotool key --clearmodifiers F5
   sleep 0.1
   echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK' | tee -a client-smoke-status.txt
+
+  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
+  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
   # The real Survival hit and target acquisition are already complete. Keep
