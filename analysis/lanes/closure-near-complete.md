@@ -3,56 +3,43 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний production/code-test SHA: `0502031ef1088923b4195606cc0fdcc0f9ab4c6e`; текущий test-only follow-up: `2f2a80751cfc694b24afc6fb976b834bab8d3d94`
-- Фиксированный аудит: **59/100**. Баллы не начислять без игровых критериев и аудиторского доказательства.
+- Последний code/test SHA: [`a4cfbb774b68e87cc9204d1c1666220c253d38b9`](https://github.com/craftkot/tgaumcraft/commit/a4cfbb774b68e87cc9204d1c1666220c253d38b9)
+- Exact-SHA Actions: **25/25 завершены SUCCESS**; см. доказательства ниже.
+- Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
 ## Границы lane
 
-Продолжение существующего порта Thaumcraft 6.1.BETA26 → Minecraft 1.21.1 NeoForge. Текущий фокус — узкий end-to-end Wisp zap/FX smoke в рамках визуального паритета; это не создание нового мода и не изменение чужих веток. Не менять `main`, чужие feature-ветки, общие регистры, Gradle или общий CI без координации.
+Продолжение существующего порта Thaumcraft 6.1.BETA26 → Minecraft 1.21.1 NeoForge. Текущий фокус — визуальный/звуковой паритет и аура/кристаллы в пределах этой ветки. Не менять `main`, чужие feature-ветки, общие регистры, Gradle или общую CI-конфигурацию без координации.
 
 ## Последняя инженерная итерация
 
-На SHA `3d087fbe0cd0eb0c8882fc4a5c8f607db5d86cdb` реальный клиент уже подтвердил:
-- offline geometry/client contract и generated Bash syntax — PASS;
-- реальный Survival click попал в тот же Wisp ID 593;
-- `TC_SMOKE_WISP_HURT=YES accepted=true`, `TC_SMOKE_WISP_TARGET_SET=YES`;
-- Wisp отправил zap, клиент получил payload, renderer сообщил 29 точек, texture `thaumcraft:textures/misc/essentia.png`, blend `SRC_ALPHA_ONE`, depthWrite OFF.
+На code/test SHA `a4cfbb774b68e87cc9204d1c1666220c253d38b9` устранена ошибка корреляции реального клика по Wisp: verifier теперь выбирает единственный AFTER_LEVEL кадр и camera sample того же Wisp ID, совпадающие с фактическими `gameTime/playerTick` события атаки. Ранний визуальный/доприцеленный кадр больше не может подменить кадр реального input. Добавлены positive/negative offline regressions на missing/duplicate/stale frame. Изменены только:
+- `tools/client_wisp_zap_smoke.py`
+- `tools/verify_wisp_zap_client.py`
+- `tools/test_wisp_zap_client_smoke.py`
 
-Но run [#45258224263](https://github.com/craftkot/tgaumcraft/actions/runs/45258224263) завершился FAILURE: три post-hit capture попытки не получили camera aimDot ≥ 0.99; screenshot verifier был пропущен. Поэтому три кадра FX, окончание эффекта и transient pixel delta **не доказаны**.
-
-Исправление на текущем HEAD `7a84c0fd`:
-- `WispAttackSmokeProbe` включает трекинг только при `THAUMCRAFT_SMOKE=1` и только после реального `AttackEntityEvent` по конкретному Wisp ID;
-- `ClientTickEvent.Pre` направляет камеру на центр AABB этого же Wisp, не меняя его AI, позицию, цель, урон или FX;
-- shell driver после попадания только возвращает игрока на тестовую платформу; camera aim принадлежит клиентскому smoke probe;
-- verifier требует marker `TC_SMOKE_WISP_CAMERA_TRACK=YES` и отдельно проверяет server teleport marker attack fallback;
-- offline contract проверяет smoke gate, точный entity ID и отсутствие одноразового server-facing snap при post-hit capture.
-
-Кодовые коммиты:
-- `6f641ab9254a10f01e67f40be0e18cb3bbe58683` — smoke-only client camera tracker;
-- `99f9be01edbf86848aeacc500fce5898eabd76e0` — re-anchor player only;
-- `e83283d1096351d573506875359c6738414d7850` — verifier provenance/tracking gate;
-- `c532725c124194376c6bf9cb1d28ff84f3afa17d` — regression contract;
-- `7a84c0fd97921aa52bf630745e1a5b57a4707963` — assertion that tracker stays behind smoke env gate;
-- `c95cf79014dbe967e671f81dc7a425b83240cf0f` — remove duplicate platform re-anchor marker;
-- `98d2cfad75d83fc21498baf271ec20e525771652` — assert the re-anchor marker is emitted exactly once.
+Реальный Wisp client теперь завершился SUCCESS: Survival click по Wisp `id=102`, сервер принял урон и назначил цель; source/target payload `102/24`; FXBolt наблюдался на возрастах 1/2/3 и истёк на возрасте 4; transient pixel diff `39022`; aim ROI содержал 634 Aer-пикселя; ошибок загрузки Wisp/essentia textures нет. Это подтверждает именно узкий Wisp hit→payload→FX сценарий, не всю M16.
 
 ## CI evidence и ограничения
 
-На предыдущем exact SHA `3d087fbe`:
-- [Full Port CI #45258224496](https://github.com/craftkot/tgaumcraft/actions/runs/45258224496) — SUCCESS: Core parity 10,054 assertions; Crystal Farmer 159; crystal growth 186; outline 111; jar 51; Essentia source search 15,062; infusion resource ledger 20; NeoForge build SUCCESS; dedicated server `Done (8.770s)`; JAR uploaded.
-- [Aura/Crystal GameTests #45258224431](https://github.com/craftkot/tgaumcraft/actions/runs/45258224431) — SUCCESS, 29/29 required tests; Wisp payload/sound/damage and aura/crystal cases; two-process persistence restart passed.
-- [Wisp real client #45258224263](https://github.com/craftkot/tgaumcraft/actions/runs/45258224263) — FAILURE только на post-hit camera capture; actual hit/damage/target/payload/render markers присутствуют.
+На том же SHA:
+- [Full Port CI #45397820936](https://github.com/craftkot/tgaumcraft/actions/runs/45397820936) — **SUCCESS**: Core parity, NeoForge build, dedicated server `Done (8.045s)`, JAR artifact.
+- [Aura/Crystal GameTests #45397821243](https://github.com/craftkot/tgaumcraft/actions/runs/45397821243) — **SUCCESS**, 29/29 required tests в write/read phases; two-process aura cold restart восстановил сохранённые значения.
+- [Wisp real client #45397821366](https://github.com/craftkot/tgaumcraft/actions/runs/45397821366) — **SUCCESS**: реальный Survival hit, damage/target, matching payload, FX ages 1/2/3, expiry и pixel verification.
+- [Jar SoundType/audio real client #45397821372](https://github.com/craftkot/tgaumcraft/actions/runs/45397821372) — **SUCCESS**: original jar1..jar4 PCM controls; реальные break/place/hit/step/fall звуки, label removal, emptying и brace key.
+- [Crystal outline real client #45397821352](https://github.com/craftkot/tgaumcraft/actions/runs/45397821352) — **SUCCESS**: реальные miss/hit проверки для UP/DOWN/EAST/WEST/NORTH/SOUTH и multi-face full cube; screenshots/logs загружены.
+- Все 25 workflow runs, связанных с SHA `a4cfbb`, завершены **SUCCESS**, включая Workbench RU/EN GUI, Salis two-client/chunk lifecycle, crystal audio, Nitor/Salis particles, Thaumometer, tube texture, pedestal rotation, jar renderer и читаемый GUI text.
 
-На точном code HEAD `98d2cfad` созданы новые run: Wisp client [#45262255344](https://github.com/craftkot/tgaumcraft/actions/runs/45262255344), Full Port CI [#45262255633](https://github.com/craftkot/tgaumcraft/actions/runs/45262255633), Aura/Crystal GameTests [#45262255796](https://github.com/craftkot/tgaumcraft/actions/runs/45262255796) — все QUEUED на последнем опросе; CircleCI `verify-connection` PENDING. Результатов exact-SHA пока нет. Не выдавать предыдущие SHA за проверку текущего.
+Это не закрывает M16: остаются другие оригинальные модели/ресурсы и специальные визуальные эффекты, которые не входят в эти узкие сценарии. Это также не закрывает M08: 29 GameTests не заменяют полный цикл генерации мира/ауры по всем биомам и реальную длительную прогрессию.
 
 ## Текущая оценка и следующий шаг
 
 - Общий индекс: **59/100**, без изменения.
 - Модели/звуки/частицы/локализация/UI: **4/6**, не закрыто.
 - Аура/кристаллы/мир: **5/9**, не закрыто.
-- PR #4 остаётся 367 файлов / 1,783 коммита впереди main на момент проверки; это крупный интеграционный риск, не готовность к merge.
+- PR #4 остаётся OPEN / DRAFT / UNMERGED; compare с main: 1,844 commits ahead, 0 behind, 367 changed files. Это интеграционный риск, не основание для merge.
 
-Следующее действие: получить exact-SHA Wisp client run на `7a84c0fd`; проверить offline contract, `bash -n`, same-ID real hit, camera tracking, payload, три FX кадра, expiry и pixel delta. Затем — exact-SHA full NeoForge build/server smoke. Если трекинг не удержит aimDot, инструментировать tick/event ordering; не ослаблять порог 0.99 и не синтезировать hit/payload/FX.
+Следующее действие: закрыть ещё один реальный M16 пробел — проверить в настоящем клиенте видимость исходных восьми OBJ shard groups `s014/s015/s016/s017/s018/s019/s024/s026` у кристаллов на шести support faces и семи вариантах. Текущий crystal outline smoke доказывает ray picking/half-cube bounds, а six-variant workflow — звук; ни один из них сам по себе не доказывает пиксельное наличие правильной seeded OBJ mesh. Сверить выбор/ориентацию с BETA26 `CrystalModel#getQuads`, добавить fail-closed before/after screenshot check в уже существующий crystal client workflow без изменения глобальных CI/регистров. Не менять баллы до фактической приёмки.
 
 ## 23.11.2026 — Wisp offline contract regression (run #45262255344)
 
@@ -368,3 +355,14 @@ At this checkpoint on code SHA a4cfbb774b68e87cc9204d1c1666220c253d38b9:
 - Score remains 59/100. M16 is not closed; no score increase.
 
 No production Java, AI, damage, payload, registries, Gradle, or workflow files changed. PR #4 remains DRAFT/OPEN/UNMERGED; do not merge.
+
+## 2026-11-24 — exact-SHA Wisp, jar audio and crystal outline acceptance
+
+- Fresh main inputs reread: `AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, `analysis/PROGRESS_AUDIT_2026_10_16.md`. Main HEAD: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- On exact code/test SHA [`a4cfbb774b68e87cc9204d1c1666220c253d38b9`](https://github.com/craftkot/tgaumcraft/commit/a4cfbb774b68e87cc9204d1c1666220c253d38b9), all **25/25** Actions runs completed SUCCESS. Full Port #45397820936 passed Core parity, NeoForge build and dedicated server; GameTests #45397821243 passed 29/29 in both persistence phases.
+- Real Wisp client #45397821366: Survival click on Wisp 102, accepted damage and target, matching zap source/target 102/24, FX ages 1/2/3, age-4 expiry, transient pixel diff 39022, visible Aer ROI 634 pixels, no Wisp/essentia texture-load errors.
+- Real jar client #45397821372: exact BETA26 jar1..jar4 asset/PCM checks and five SoundType hooks passed; real break/place/hit/step/fall, label removal, jar emptying and brace-key sound paths passed.
+- Real crystal outline client #45397821352: six single-support faces plus multi-face full-cube path passed in actual Minecraft; every miss retained the block and every hit removed it. Screenshots and client/server logs were uploaded as artifact [14922114365](https://github.com/craftkot/tgaumcraft/actions/runs/45397821352/artifacts/14922114365).
+- The remaining 22 exact-SHA workflows also completed SUCCESS, including Workbench RU/EN GUI, Salis two-client lifecycle, crystal audio, Nitor/Salis particles, Thaumometer, tube texture, pedestal rotation, jar renderers and readable GUI text.
+- Changed files in code commit: `tools/client_wisp_zap_smoke.py`, `tools/verify_wisp_zap_client.py`, `tools/test_wisp_zap_client_smoke.py`. No Java, registry, resource, Gradle, workflow, main or foreign branch changes in this iteration.
+- No score awarded: fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. Wisp, jar audio and crystal outline are narrow accepted scenarios; they do not prove the entire visual/audio/resource category or the full aura/world category. PR #4 remains OPEN/DRAFT/UNMERGED; no merge or force-push.
