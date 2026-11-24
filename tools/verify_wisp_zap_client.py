@@ -17,6 +17,7 @@ SCREENSHOTS = (
     "78-wisp-aim-check.png",
     "79-wisp-before-a.png",
     "79-wisp-before-b.png",
+    "79-wisp-third-person-before-zap.png",
     "80-wisp-zap-frame-a.png",
     "81-wisp-zap-frame-b.png",
     "82-wisp-zap-frame-c.png",
@@ -25,6 +26,7 @@ SCREENSHOTS = (
 
 AIM_SCREENSHOTS = SCREENSHOTS[:1]
 BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
+BOLT_BASELINE_SCREENSHOT = "79-wisp-third-person-before-zap.png"
 AIM_ROI = (128, 128, 448, 320)
 # The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
 # The Wisp billboard is centred ~16 px below the crosshair in this fixture.
@@ -79,6 +81,7 @@ REQUIRED_STATUS = (
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
     "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+    "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
     "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
     "WISP_ZAP_FRAME_OBSERVED=YES",
     "WISP_ZAP_VIDEO_STARTED=YES",
@@ -201,35 +204,46 @@ def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, i
     return errors, len(xs), bbox
 
 
-def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, float]]]:
-    """Find elongated Aer-yellow pixels outside the Wisp billboard itself."""
-    if not path.is_file() or path.stat().st_size < 128:
-        return [f"missing or empty FXBolt frame: {path.name}"], []
+def _bolt_segment_candidates(
+    path: Path, baseline_path: Path
+) -> tuple[list[str], list[dict[str, float]]]:
+    """Find an Aer-yellow bolt from its additive delta against a same-camera no-zap frame."""
+    for candidate_path in (path, baseline_path):
+        if not candidate_path.is_file() or candidate_path.stat().st_size < 128:
+            return [f"missing or empty FXBolt image: {candidate_path.name}"], []
 
     roi_width, roi_height, roi_left, roi_top = BOLT_ROI
-    try:
-        result = subprocess.run(
-            [
-                "convert", str(path),
-                "-crop", f"{roi_width}x{roi_height}+{roi_left}+{roi_top}",
-                "+repage", "-depth", "8", "RGB:-",
-            ],
-            capture_output=True,
-            check=False,
-        )
-    except FileNotFoundError:
-        return ["ImageMagick convert is required to inspect FXBolt frames"], []
-    if result.returncode != 0:
-        detail = result.stderr.decode("utf-8", errors="replace").strip()
-        return [f"cannot decode FXBolt frame {path.name}: {detail}"], []
-
-    pixels = result.stdout
     pixel_count = roi_width * roi_height
-    if len(pixels) != pixel_count * 3:
-        return [
-            f"unexpected FXBolt ROI byte count for {path.name}: "
-            f"{len(pixels)} != {pixel_count * 3}"
-        ], []
+    expected_bytes = pixel_count * 3
+
+    def read_roi(candidate_path: Path) -> tuple[list[str], bytes | None]:
+        try:
+            result = subprocess.run(
+                [
+                    "convert", str(candidate_path),
+                    "-crop", f"{roi_width}x{roi_height}+{roi_left}+{roi_top}",
+                    "+repage", "-depth", "8", "RGB:-",
+                ],
+                capture_output=True,
+                check=False,
+            )
+        except FileNotFoundError:
+            return ["ImageMagick convert is required to inspect FXBolt frames"], None
+        if result.returncode != 0:
+            detail = result.stderr.decode("utf-8", errors="replace").strip()
+            return [f"cannot decode FXBolt image {candidate_path.name}: {detail}"], None
+        if len(result.stdout) != expected_bytes:
+            return [
+                f"unexpected FXBolt ROI byte count for {candidate_path.name}: "
+                f"{len(result.stdout)} != {expected_bytes}"
+            ], None
+        return [], result.stdout
+
+    frame_errors, frame_pixels = read_roi(path)
+    baseline_errors, baseline_pixels = read_roi(baseline_path)
+    if frame_errors or baseline_errors:
+        return frame_errors + baseline_errors, []
+    assert frame_pixels is not None and baseline_pixels is not None
 
     source_x = BOLT_SOURCE_CENTER[0] - roi_left
     source_y = BOLT_SOURCE_CENTER[1] - roi_top
@@ -243,17 +257,30 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
         if dx * dx + dy * dy <= exclusion_squared:
             continue
         offset = index * 3
-        red, green, blue = pixels[offset], pixels[offset + 1], pixels[offset + 2]
-        # BETA26 Aer payload is #FFFF7E. Keep the warm channel relationship,
-        # but reject white stars, blue-only changes and the Wisp's own orb.
+        frame_r, frame_g, frame_b = frame_pixels[offset], frame_pixels[offset + 1], frame_pixels[offset + 2]
+        base_r, base_g, base_b = baseline_pixels[offset], baseline_pixels[offset + 1], baseline_pixels[offset + 2]
+        delta_r = frame_r - base_r
+        delta_g = frame_g - base_g
+        delta_b = frame_b - base_b
+
+        # BETA26 FXBolt alpha is clamp(1 - particleAge / 3, 0.1, 1):
+        # age 1/2/3 contributes 2/3, 1/3 and 0.1 of Aer (#FFFF7E)
+        # through SRC_ALPHA/ONE additive blending. Absolute RGB thresholds
+        # reject a correctly rendered age-3 beam on a dark scene. Compare
+        # against a third-person pre-payload frame and retain the yellow
+        # channel relationship rather than treating dim pixels as absent.
         if (
-            red >= 145
-            and green >= 130
-            and blue <= 205
-            and red - blue >= 28
-            and green - blue >= 16
+            delta_r >= 8
+            and delta_g >= 8
+            and delta_b >= 0
+            and delta_r - delta_b >= 4
+            and delta_g - delta_b >= 4
+            and delta_r >= delta_b * 1.25
+            and delta_g >= delta_b * 1.25
+            and abs(delta_r - delta_g) <= max(8, int(max(delta_r, delta_g) * 0.35))
         ):
             mask[index] = 1
+
 
     visited = bytearray(pixel_count)
     candidates: list[dict[str, float]] = []
@@ -351,9 +378,9 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
 
 
 def verify_bolt_segment(
-    path: Path, expected_visible: bool
+    path: Path, expected_visible: bool, baseline_path: Path
 ) -> tuple[list[str], dict[str, float] | None]:
-    errors, candidates = _bolt_segment_candidates(path)
+    errors, candidates = _bolt_segment_candidates(path, baseline_path)
     if errors:
         return errors, None
     if expected_visible and not candidates:
@@ -1208,8 +1235,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         aim_errors, _, _ = verify_aim_screenshot(screenshot_dir / name)
         errors.extend(aim_errors)
 
+    bolt_baseline = screenshot_dir / BOLT_BASELINE_SCREENSHOT
     for age, name in ((1, "80-wisp-zap-frame-a.png"), (2, "81-wisp-zap-frame-b.png"), (3, "82-wisp-zap-frame-c.png")):
-        bolt_errors, bolt_metrics = verify_bolt_segment(screenshot_dir / name, expected_visible=True)
+        bolt_errors, bolt_metrics = verify_bolt_segment(
+            screenshot_dir / name, expected_visible=True, baseline_path=bolt_baseline
+        )
         errors.extend(f"FXBolt age={age}: {error}" for error in bolt_errors)
         if bolt_metrics is not None:
             print(
@@ -1222,7 +1252,9 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 f"{bolt_metrics['right']:.0f},{bolt_metrics['bottom']:.0f}"
             )
     after_expiry_errors, after_expiry_metrics = verify_bolt_segment(
-        screenshot_dir / "83-wisp-zap-after-expiry.png", expected_visible=False
+        screenshot_dir / "83-wisp-zap-after-expiry.png",
+        expected_visible=False,
+        baseline_path=bolt_baseline,
     )
     errors.extend(after_expiry_errors)
     if not after_expiry_errors:
