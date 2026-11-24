@@ -214,3 +214,10 @@
 - Separate Aura/Crystal GameTests [#45320074840](https://github.com/craftkot/tgaumcraft/actions/runs/45320074840) failed on a remote GameTest Rift fixture: the chunk was loaded but the entity was never published/ticked (`entities=0`, `directPresent=false`, `entityTicks=0`). This is not yet classified as a production Rift-spawn defect; inspect fixture ticking semantics separately after the active Wisp acceptance attempt.
 - The previous overlap scan covered all 61 other open PRs (#1–#3 and #5–#62) for the Wisp tool paths; PR #9's M12 worldgen diff is confined to tree/worldgen/core files and does not overlap. PR #4 remains OPEN/DRAFT/UNMERGED; no merge or force-push.
 - No score awarded: **59/100** (M16 **4/6**, M08 **5/9**). Next: run exact-head Wisp offline contract and Bash syntax; only then launch the real client and require the same first zap to produce video-extracted ages 1/2/3, expiry, pixel delta, and matching payload.
+
+
+### M16 verifier hardening — all three FXBolt ages must be visible
+
+- During review of `tools/verify_wisp_zap_client.py`, found a fail-open gap: extracted video frames were required to have increasing indices, but only age 1 was required to differ from the post-expiry scene. Ages 2 and 3 could be blank and still satisfy that specific pixel-difference gate.
+- Updated the verifier to require `diff > 0` for every extracted age (1, 2, 3). Added three negative regression cases that zero each age's diff independently and require verification failure.
+- This is a stricter observation criterion, not a lowered threshold or a change to FXBolt rendering. It also changes a path explicitly included in `.github/workflows/closure-wisp-zap-client.yml` so the Wisp real-client workflow is eligible to run for the new head.
