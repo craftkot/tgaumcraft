@@ -2,6 +2,7 @@
 """Offline generator/verifier regressions for the real Wisp zap client smoke."""
 from pathlib import Path
 import os
+import shutil
 import time
 from unittest.mock import patch
 import subprocess
@@ -283,7 +284,9 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         harness = (
             "set -euo pipefail\n"
             "wisp_wait_for_marker() { grep -Fq -- \"$1\" client-smoke/client.log; }\n"
+            "wisp_stop_zap_video_capture() { echo VIDEO_STOP; }\n"
             "wisp_capture() { printf 'CAPTURE=%s\\n' \"$1\"; }\n"
+            "python() { printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=6 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'; }\n"
             + "".join(functions)
             + "wisp_capture_zap_frames 0 17\n"
         )
@@ -297,14 +300,12 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         )
         assert result.returncode == 0, result.stderr + result.stdout
         captures = [line for line in result.stdout.splitlines() if line.startswith("CAPTURE=")]
-        assert captures == [
-            "CAPTURE=80-wisp-zap-frame-a",
-            "CAPTURE=81-wisp-zap-frame-b",
-            "CAPTURE=82-wisp-zap-frame-c",
-            "CAPTURE=83-wisp-zap-after-expiry",
-        ], captures
+        assert captures == ["CAPTURE=83-wisp-zap-after-expiry"], captures
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
-        assert [f"ageTick={age} " in status for age in (1, 2, 3)] == [True, True, True], status
+        assert [f"WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick={age} " in status for age in (1, 2, 3)] == [True, True, True], status
+        assert "VIDEO_STOP" in result.stdout, result.stdout
+        assert "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24" in status, status
+        assert "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12" in status, status
         assert "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=100" in status, status
 
 
@@ -312,6 +313,45 @@ def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
     pitch = math.radians(pitch_degrees)
     length = math.hypot(delta_y, delta_z)
     return (-math.sin(pitch) * delta_y + math.cos(pitch) * delta_z) / length
+
+
+def _test_video_frame_extraction() -> None:
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-video-extraction-") as directory:
+        root = Path(directory)
+        screenshots = root / "screenshots"
+        screenshots.mkdir()
+        video = root / "wisp-zap-video.mp4"
+        after = screenshots / "83-wisp-zap-after-expiry.png"
+        write_png(after, None)
+        for command in ("ffmpeg", "ffprobe", "convert", "compare"):
+            if shutil.which(command) is None:
+                raise AssertionError(f"required video extraction tool is missing: {command}")
+        subprocess.run(
+            [
+                "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+                "-f", "lavfi", "-i", "testsrc=size=1280x800:rate=60:duration=1",
+                "-an", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+                "-pix_fmt", "yuv420p", str(video),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        status_file = root / "status.txt"
+        status_file.write_text("\n".join((
+            "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtNs=1100000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtNs=1200000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtNs=1300000000",
+            "WISP_ZAP_VIDEO_STOPPED=YES",
+        )) + "\n", encoding="utf-8")
+        errors = verify_wisp_zap_client.extract_video_frames(status_file, video, screenshots)
+        assert not errors, errors
+        for name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
+            assert (screenshots / name).is_file() and (screenshots / name).stat().st_size > 128, name
+        extracted = status_file.read_text(encoding="utf-8")
+        assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted
+        assert extracted.count("WISP_ZAP_VIDEO_FRAME_INDEX=YES") == 3, extracted
+        assert [f"ageTick={age} " in extracted for age in (1, 2, 3)] == [True, True, True], extracted
 
 
 def main() -> int:
@@ -332,6 +372,7 @@ def main() -> int:
     _test_first_frame_cursor_is_inclusive(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
+    _test_video_frame_extraction()
 
     required = (
         "wisp_send_chat()",
@@ -355,9 +396,17 @@ def main() -> int:
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
+        "wisp_start_zap_video_capture",
+        "wisp_stop_zap_video_capture",
         "wisp_capture_zap_frames",
         "wisp_wait_for_zap_frame",
         "wisp_wait_for_completed_wisp_frame",
+        "WISP_ZAP_VIDEO_STARTED=YES",
+        "WISP_ZAP_VIDEO_STOPPED=YES",
+        "WISP_ZAP_FRAME_OBSERVED=YES",
+        "WISP_ZAP_VIDEO_FRAME_INDEX=YES",
+        "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
+        "ffmpeg",
         "TC_SMOKE_WISP_ZAP_FRAME=YES",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES",
         "WISP_ZAP_FRAME_CAPTURE=YES",
@@ -441,6 +490,13 @@ def main() -> int:
     )
     for marker in required:
         assert marker in generated, marker
+    summon_position = generated.find("wisp_fast_command '/summon thaumcraft:wisp")
+    recorder_position = generated.find("wisp_start_zap_video_capture\n  aim_log_lines")
+    if summon_position < 0 or recorder_position < 0 or recorder_position > summon_position:
+        raise AssertionError("continuous Wisp video recorder must start before the test Wisp is summoned")
+    capture_function = generated.split("  wisp_capture_zap_frames() {", 1)[1].split("\n  }\n", 1)[0]
+    if 'wisp_capture "$frame_name"' in capture_function or "wisp_capture 83-wisp-zap-after-expiry" not in capture_function:
+        raise AssertionError("per-age desktop captures must be replaced by post-expiry video-frame extraction")
     stabilization_command = (
         "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' "
         "'Base value for attribute Knockback Resistance for entity Dev set to 1.0'"
@@ -695,9 +751,18 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
+        "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtNs=1100000000",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtNs=1200000000",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtNs=1300000000",
+        "WISP_ZAP_VIDEO_STOPPED=YES",
         "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24",
         "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25",
         "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26",
+        "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=6 diff=18",
+        "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15",
+        "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12",
+        "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
         "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=100",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REAIM=CLIENT_TRACKING",

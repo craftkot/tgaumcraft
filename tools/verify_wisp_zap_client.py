@@ -2,10 +2,14 @@
 """Fail-closed verifier for a real two-entity BETA26 Wisp zap client smoke."""
 from pathlib import Path
 import argparse
+import json
 import math
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
+from fractions import Fraction
 
 
 SCREENSHOTS = (
@@ -65,7 +69,12 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
+    "WISP_ZAP_FRAME_OBSERVED=YES",
+    "WISP_ZAP_VIDEO_STARTED=YES",
+    "WISP_ZAP_VIDEO_STOPPED=YES",
     "WISP_ZAP_FRAME_CAPTURE=YES",
+    "WISP_ZAP_VIDEO_FRAME_INDEX=YES",
+    "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
     "WISP_ZAP_EFFECT_EXPIRED=YES",
     "WISP_AIM_SCREENSHOT_VISIBLE=YES",
     "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -182,6 +191,168 @@ def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, i
 
 def _first(pattern: str, text: str):
     return re.search(pattern, text)
+
+
+def _crop_pixel_difference(left: Path, right: Path, temporary: Path) -> int:
+    left_crop = temporary / "left-roi.png"
+    right_crop = temporary / "right-roi.png"
+    for source, target in ((left, left_crop), (right, right_crop)):
+        result = subprocess.run(
+            ["convert", str(source), "-crop", "360x320+332+340", "+repage", str(target)],
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            detail = result.stderr.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"cannot crop video frame {source.name}: {detail}")
+    result = subprocess.run(
+        ["compare", "-metric", "AE", "-fuzz", "4%", str(left_crop), str(right_crop), "null:"],
+        capture_output=True,
+        check=False,
+    )
+    detail = (result.stderr or result.stdout).decode("utf-8", errors="replace")
+    match = re.search(r"\b(\d+)\b", detail)
+    if match is None:
+        raise RuntimeError(f"ImageMagick returned no AE metric for {left.name}: {detail.strip()}")
+    return int(match.group(1))
+
+
+def _extract_video_frame(video: Path, frame_index: int, output: Path) -> None:
+    result = subprocess.run(
+        [
+            "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
+            "-i", str(video), "-vf", f"select=eq(n\\,{frame_index})",
+            "-fps_mode", "passthrough", "-frames:v", "1", str(output),
+        ],
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0 or not output.is_file() or output.stat().st_size < 128:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"ffmpeg could not extract video frame {frame_index}: {detail}")
+
+
+def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Path) -> list[str]:
+    """Extract the three real render ages from the continuous X11 recording."""
+    errors: list[str] = []
+    status_text = status_file.read_text(encoding="utf-8", errors="replace")
+    started = _first(
+        r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=(\d+) frameRate=(\d+)$",
+        status_text,
+    )
+    observed = re.findall(
+        r"(?m)^WISP_ZAP_FRAME_OBSERVED=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) "
+        r"wispTick=(\d+) observedAtNs=(\d+)$",
+        status_text,
+    )
+    if started is None:
+        errors.append("missing first-frame timestamp for continuous Wisp video")
+    if "WISP_ZAP_VIDEO_STOPPED=YES" not in status_text:
+        errors.append("continuous Wisp video was not stopped cleanly before extraction")
+    if len(observed) != 3:
+        errors.append(f"expected three timestamped Wisp render observations, got {len(observed)}")
+    if started is None or len(observed) != 3 or errors:
+        return errors
+
+    if [int(frame[2]) for frame in observed] != [1, 2, 3]:
+        errors.append("timestamped Wisp render observations are not ages 1, 2, 3")
+    if len({(frame[0], frame[1]) for frame in observed}) != 1:
+        errors.append("timestamped Wisp observations do not belong to one source/createdAt event")
+    if len({frame[3] for frame in observed}) != 3:
+        errors.append("timestamped Wisp observations do not use three distinct Wisp ticks")
+    observed_ns = [int(frame[4]) for frame in observed]
+    if observed_ns != sorted(observed_ns) or len(set(observed_ns)) != 3:
+        errors.append("Wisp render observation timestamps are not strictly increasing")
+    if errors:
+        return errors
+
+    if not video_file.is_file() or video_file.stat().st_size < 1024:
+        return ["continuous Wisp video is missing or empty"]
+    after_expiry = screenshot_dir / "83-wisp-zap-after-expiry.png"
+    if not after_expiry.is_file() or after_expiry.stat().st_size < 128:
+        return ["after-expiry screenshot is required to select the closest transient video frames"]
+
+    try:
+        probe = subprocess.run(
+            [
+                "ffprobe", "-v", "error", "-select_streams", "v:0",
+                "-show_entries", "stream=avg_frame_rate,duration,nb_frames",
+                "-of", "json", str(video_file),
+            ],
+            capture_output=True,
+            check=False,
+        )
+        if probe.returncode != 0:
+            detail = probe.stderr.decode("utf-8", errors="replace").strip()
+            raise RuntimeError(f"ffprobe failed: {detail}")
+        streams = json.loads(probe.stdout.decode("utf-8", errors="replace")).get("streams", [])
+        if not streams:
+            raise RuntimeError("video contains no video stream")
+        stream = streams[0]
+        fps = float(Fraction(stream["avg_frame_rate"]))
+        duration = float(stream["duration"])
+        frame_count = int(stream.get("nb_frames") or round(duration * fps))
+        if fps < 30.0 or duration <= 0.0 or frame_count < 3:
+            raise RuntimeError(
+                f"video timing is insufficient: fps={fps:.3f} duration={duration:.3f} frames={frame_count}"
+            )
+        first_frame_ns = int(started.group(1))
+        requested_rate = int(started.group(2))
+        if requested_rate != 60:
+            raise RuntimeError(f"unexpected requested capture rate: {requested_rate}")
+        selected: list[tuple[int, int, int, int, int, int, str]] = []
+        frame_names = {
+            1: "80-wisp-zap-frame-a.png",
+            2: "81-wisp-zap-frame-b.png",
+            3: "82-wisp-zap-frame-c.png",
+        }
+        screenshot_dir.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-video-frames-") as directory:
+            temporary = Path(directory)
+            previous_index = -1
+            for source_id, created_at, age_tick, wisp_tick, observed_at in observed:
+                elapsed = (int(observed_at) - first_frame_ns) / 1_000_000_000.0
+                if elapsed < 0.0 or elapsed >= duration:
+                    raise RuntimeError(
+                        f"age={age_tick} observation lies outside the recorded video: elapsed={elapsed:.4f}s duration={duration:.4f}s"
+                    )
+                base_index = int(round(elapsed * fps))
+                candidates = sorted({
+                    index for index in (base_index - 1, base_index, base_index + 1)
+                    if previous_index < index < frame_count
+                })
+                if not candidates:
+                    raise RuntimeError(f"no video frame near Wisp age={age_tick}")
+                ranked: list[tuple[int, int, int, Path]] = []
+                for index in candidates:
+                    candidate = temporary / f"age-{age_tick}-{index}.png"
+                    _extract_video_frame(video_file, index, candidate)
+                    difference = _crop_pixel_difference(candidate, after_expiry, temporary)
+                    ranked.append((difference, -abs(index - base_index), index, candidate))
+                difference, _, selected_index, selected_path = max(ranked, key=lambda item: (item[0], item[1]))
+                selected.append(
+                    (int(source_id), int(created_at), int(age_tick), int(wisp_tick), selected_index, difference, str(selected_path))
+                )
+                previous_index = selected_index
+            frame_indices = [frame[4] for frame in selected]
+            if frame_indices != sorted(frame_indices) or len(set(frame_indices)) != 3:
+                raise RuntimeError(f"selected video frame indices are not distinct/increasing: {frame_indices}")
+            capture_markers: list[str] = []
+            for source_id, created_at, age_tick, wisp_tick, frame_index, difference, selected_path in selected:
+                shutil.copyfile(selected_path, screenshot_dir / frame_names[age_tick])
+                capture_markers.append(
+                    f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} "
+                    f"ageTick={age_tick} wispTick={wisp_tick}"
+                )
+                capture_markers.append(
+                    f"WISP_ZAP_VIDEO_FRAME_INDEX=YES source={source_id} createdAt={created_at} "
+                    f"ageTick={age_tick} frameIndex={frame_index} diff={difference}"
+                )
+        with status_file.open("a", encoding="utf-8") as status:
+            status.write("\n" + "\n".join(capture_markers) + "\n")
+        return []
+    except (FileNotFoundError, KeyError, ValueError, ZeroDivisionError, RuntimeError, json.JSONDecodeError) as error:
+        return [str(error)]
 
 
 def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
@@ -322,9 +493,41 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ZAP_FRAME_CAPTURE=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) wispTick=(\d+)$",
         status_text,
     )
+    observed_frames = re.findall(
+        r"(?m)^WISP_ZAP_FRAME_OBSERVED=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) wispTick=(\d+) observedAtNs=(\d+)$",
+        status_text,
+    )
+    video_indices = re.findall(
+        r"(?m)^WISP_ZAP_VIDEO_FRAME_INDEX=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) frameIndex=(\d+) diff=(\d+)$",
+        status_text,
+    )
     if len(captured_frames) != 3:
-        errors.append(f"expected exactly three distinct captured FXBolt frames, got {len(captured_frames)}")
-    else:
+        errors.append(f"expected exactly three extracted FXBolt video frames, got {len(captured_frames)}")
+    if len(observed_frames) != 3:
+        errors.append(f"expected exactly three timestamped FXBolt render observations, got {len(observed_frames)}")
+    if len(video_indices) != 3:
+        errors.append(f"expected exactly three video frame-index records, got {len(video_indices)}")
+    if len(captured_frames) == 3 and len(observed_frames) == 3:
+        if [frame[:4] for frame in captured_frames] != [frame[:4] for frame in observed_frames]:
+            errors.append("extracted FXBolt screenshots do not match the observed render ages/source/ticks")
+        if [int(frame[2]) for frame in observed_frames] != [1, 2, 3]:
+            errors.append("timestamped FXBolt observations are not consecutive ages 1, 2, 3")
+        if len({(frame[0], frame[1]) for frame in observed_frames}) != 1:
+            errors.append("timestamped FXBolt observations do not belong to one source/createdAt event")
+        if len({frame[3] for frame in observed_frames}) != 3:
+            errors.append("timestamped FXBolt observations do not use three distinct Wisp ticks")
+        observed_times = [int(frame[4]) for frame in observed_frames]
+        if observed_times != sorted(observed_times) or len(set(observed_times)) != 3:
+            errors.append("timestamped FXBolt observations are not strictly ordered")
+    if len(video_indices) == 3 and len(captured_frames) == 3:
+        if [frame[:3] for frame in video_indices] != [frame[:3] for frame in captured_frames]:
+            errors.append("video frame indices do not match the extracted FXBolt screenshots")
+        frame_numbers = [int(frame[3]) for frame in video_indices]
+        if frame_numbers != sorted(frame_numbers) or len(set(frame_numbers)) != 3:
+            errors.append("extracted FXBolt video frames are not distinct/increasing")
+        if int(video_indices[0][4]) <= 0:
+            errors.append("age-one video frame has no pixel difference from the post-expiry scene")
+    if len(captured_frames) == 3:
         expected_ages = [1, 2, 3]
         actual_ages = [int(frame[2]) for frame in captured_frames]
         if actual_ages != expected_ages:
@@ -707,6 +910,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--aim-only", type=Path, help="verify one crosshair-centered Aer Wisp screenshot")
     parser.add_argument("--baseline-only", type=Path, help="verify one empty pre-Wisp baseline screenshot")
+    parser.add_argument("--extract-video-frames-only", action="store_true")
+    parser.add_argument("--video-status", type=Path)
+    parser.add_argument("--video-file", type=Path)
+    parser.add_argument("--video-screenshots", type=Path)
     parser.add_argument("client_log", type=Path, nargs="?")
     parser.add_argument("status_file", type=Path, nargs="?")
     parser.add_argument("screenshots", type=Path, nargs="?")
@@ -728,6 +935,17 @@ def main() -> int:
                 print(f"WISP_BASELINE_SCREENSHOT_ERROR: {error}", file=sys.stderr)
             return 1
         print(f"WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels={count}")
+        return 0
+
+    if args.extract_video_frames_only:
+        if args.video_status is None or args.video_file is None or args.video_screenshots is None:
+            parser.error("--extract-video-frames-only requires --video-status, --video-file and --video-screenshots")
+        errors = extract_video_frames(args.video_status, args.video_file, args.video_screenshots)
+        if errors:
+            for error in errors:
+                print(f"WISP_ZAP_VIDEO_EXTRACTION_ERROR: {error}", file=sys.stderr)
+            return 1
+        print("WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES")
         return 0
 
     if args.client_log is None or args.status_file is None or args.screenshots is None:

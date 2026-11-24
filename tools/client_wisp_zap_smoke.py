@@ -53,32 +53,87 @@ def render() -> str:
     exit 1
   }
 
+  wisp_start_zap_video_capture() {
+    local progress="client-smoke/wisp-zap-video-progress.txt"
+    rm -f "$progress" client-smoke/wisp-zap-video.mp4
+    if ! command -v ffmpeg >/dev/null 2>&1 || ! command -v ffprobe >/dev/null 2>&1; then
+      echo 'WISP_ZAP_VIDEO_TOOLING_MISSING=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if [ -n "${VIDEO_PID:-}" ]; then
+      echo "WISP_ZAP_VIDEO_RECORDER_ALREADY_ACTIVE=$VIDEO_PID" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    ffmpeg -nostdin -hide_banner -loglevel error -y \
+      -f x11grab -draw_mouse 0 -framerate 60 -video_size 1280x800 -i :99.0 \
+      -an -c:v libx264 -preset ultrafast -crf 26 -pix_fmt yuv420p \
+      -movflags +faststart -stats_period 0.01 -progress "$progress" \
+      client-smoke/wisp-zap-video.mp4 > client-smoke/wisp-zap-video.log 2>&1 &
+    VIDEO_PID=$!
+    for _ in $(seq 1 200); do
+      if grep -q '^frame=1$' "$progress" 2>/dev/null; then
+        WISP_ZAP_VIDEO_FIRST_FRAME_NS="$(date +%s%N)"
+        echo "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=$WISP_ZAP_VIDEO_FIRST_FRAME_NS frameRate=60" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      if ! kill -0 "$VIDEO_PID" 2>/dev/null; then
+        echo 'WISP_ZAP_VIDEO_PROCESS_EXITED_BEFORE_FIRST_FRAME=YES' | tee -a client-smoke-status.txt
+        tail -80 client-smoke/wisp-zap-video.log >&2
+        return 1
+      fi
+      sleep 0.01
+    done
+    echo 'WISP_ZAP_VIDEO_FIRST_FRAME_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -80 client-smoke/wisp-zap-video.log >&2
+    return 1
+  }
+
+  wisp_stop_zap_video_capture() {
+    if [ -z "${VIDEO_PID:-}" ]; then
+      echo 'WISP_ZAP_VIDEO_PROCESS_MISSING=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if kill -0 "$VIDEO_PID" 2>/dev/null; then
+      kill -TERM "$VIDEO_PID" 2>/dev/null || true
+    fi
+    wait "$VIDEO_PID" 2>/dev/null || true
+    VIDEO_PID=''
+    if [ ! -s client-smoke/wisp-zap-video.mp4 ]; then
+      echo 'WISP_ZAP_VIDEO_OUTPUT_MISSING=YES' | tee -a client-smoke-status.txt
+      tail -80 client-smoke/wisp-zap-video.log >&2
+      return 1
+    fi
+    echo 'WISP_ZAP_VIDEO_STOPPED=YES' | tee -a client-smoke-status.txt
+  }
+
   wisp_wait_for_zap_frame() {
     local after_lines="$1" wisp_id="$2" created_at="${3:-}" expected_age="$4"
     local created_filter="" candidate marker_line
     if [ -n "$created_at" ]; then created_filter="createdAt=$created_at "; fi
-    for _ in $(seq 1 400); do
-      candidate="$(tail -n +"$((after_lines + 1))" client-smoke/client.log \
-        | grep -F "TC_SMOKE_WISP_ZAP_FRAME=YES source=$wisp_id " \
-        | grep -F "$created_filter" \
-        | grep -F "ageTick=$expected_age " | head -1 || true)"
-      if [ -n "$candidate" ]; then
-        marker_line="$(grep -n -F -- "$candidate" client-smoke/client.log | tail -1 | cut -d: -f1)"
-        if ! [[ "$marker_line" =~ ^[0-9]+$ ]]; then
-          echo "WISP_ZAP_FRAME_LINE_NUMBER_INVALID=$marker_line" | tee -a client-smoke-status.txt
-          return 1
-        fi
-        WISP_ZAP_FRAME_LINE="$candidate"
-        WISP_ZAP_FRAME_LINE_NUMBER="$marker_line"
-        WISP_ZAP_FRAME_CREATED_AT="$(sed -n 's/.* createdAt=\([0-9][0-9]*\) .*/\1/p' <<<"$candidate")"
-        WISP_ZAP_FRAME_AGE_TICK="$expected_age"
-        return 0
-      fi
-      sleep 0.025
-    done
-    echo "WISP_ZAP_FRAME_TIMEOUT=YES source=$wisp_id createdAt=${created_at:-next-cycle} ageTick=$expected_age" | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    return 1
+    candidate="$(timeout 5s bash -c '
+      after_lines="$1" wisp_id="$2" created_filter="$3" expected_age="$4" log="$5"
+      tail --sleep-interval=0.005 -n +"$((after_lines + 1))" -f "$log" \
+        | grep --line-buffered -F "TC_SMOKE_WISP_ZAP_FRAME=YES source=$wisp_id " \
+        | grep --line-buffered -F "$created_filter" \
+        | grep --line-buffered -F "ageTick=$expected_age " \
+        | head -n 1
+    ' _ "$after_lines" "$wisp_id" "$created_filter" "$expected_age" client-smoke/client.log || true)"
+    if [ -z "$candidate" ]; then
+      echo "WISP_ZAP_FRAME_TIMEOUT=YES source=$wisp_id createdAt=${created_at:-next-cycle} ageTick=$expected_age" | tee -a client-smoke-status.txt
+      tail -120 client-smoke/client.log >&2
+      return 1
+    fi
+    marker_line="$(grep -n -F -- "$candidate" client-smoke/client.log | tail -1 | cut -d: -f1)"
+    if ! [[ "$marker_line" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_FRAME_LINE_NUMBER_INVALID=$marker_line" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    WISP_ZAP_FRAME_LINE="$candidate"
+    WISP_ZAP_FRAME_LINE_NUMBER="$marker_line"
+    WISP_ZAP_FRAME_CREATED_AT="$(sed -n 's/.* createdAt=\([0-9][0-9]*\) .*/\1/p' <<<"$candidate")"
+    WISP_ZAP_FRAME_AGE_TICK="$expected_age"
+    WISP_ZAP_FRAME_OBSERVED_AT_NS="$(date +%s%N)"
+    return 0
   }
 
   wisp_wait_for_completed_wisp_frame() {
@@ -101,7 +156,7 @@ def render() -> str:
 
   wisp_capture_zap_frames() {
     local after_lines="$1" wisp_id="$2" cursor="$1" created_at="" target_id payload_line rendered_line
-    local expected_age wisp_tick frame_name
+    local expected_age wisp_tick observed_at_ns
     wisp_wait_for_zap_frame "$cursor" "$wisp_id" "" 1
     created_at="$WISP_ZAP_FRAME_CREATED_AT"
     payload_line="$(grep -F "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=$wisp_id " client-smoke/client.log \
@@ -133,18 +188,18 @@ def render() -> str:
         return 1
       fi
       wisp_wait_for_completed_wisp_frame "$WISP_ZAP_FRAME_LINE_NUMBER" "$wisp_id" "$wisp_tick"
-      case "$expected_age" in
-        1) frame_name="80-wisp-zap-frame-a" ;;
-        2) frame_name="81-wisp-zap-frame-b" ;;
-        3) frame_name="82-wisp-zap-frame-c" ;;
-      esac
-      wisp_capture "$frame_name"
-      echo "WISP_ZAP_FRAME_CAPTURE=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick" | tee -a client-smoke-status.txt
+      observed_at_ns="$WISP_ZAP_FRAME_OBSERVED_AT_NS"
+      echo "WISP_ZAP_FRAME_OBSERVED=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick observedAtNs=$observed_at_ns" | tee -a client-smoke-status.txt
       cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
     done
     wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at"
     echo "WISP_ZAP_EFFECT_EXPIRED=YES source=$wisp_id createdAt=$created_at" | tee -a client-smoke-status.txt
+    wisp_stop_zap_video_capture
     wisp_capture 83-wisp-zap-after-expiry
+    python tools/verify_wisp_zap_client.py --extract-video-frames-only \
+      --video-status client-smoke-status.txt \
+      --video-file client-smoke/wisp-zap-video.mp4 \
+      --video-screenshots client-smoke/screenshots | tee -a client-smoke-status.txt
   }
 
   wisp_send_chat() {
@@ -621,6 +676,7 @@ def render() -> str:
 
   # Pre-aim at the exact spawn AABB centre. The first completed level frame is
   # the trigger for the real click; no external screenshot is taken beforehand.
+  wisp_start_zap_video_capture
   aim_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_fast_command '/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:"aer",Tags:["tc_wisp_zap_smoke"]}'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
