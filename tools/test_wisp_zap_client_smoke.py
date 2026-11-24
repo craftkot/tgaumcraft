@@ -721,6 +721,7 @@ def write_bolt_png(
     line: tuple[int, int, int, int] | None = (512, 432, 548, 572),
     color: tuple[int, int, int] = (255, 255, 126),
     alpha: float = 1.0,
+    source_center: tuple[int, int] | None = (512, 400),
 ) -> None:
     """Write a real-size synthetic viewport with a Wisp orb and optional bolt."""
     width, height = 1280, 800
@@ -733,10 +734,12 @@ def write_bolt_png(
             offset = x * 3
             rows[y][offset:offset + 3] = pixel
 
-    for y in range(384, 417):
-        for x in range(496, 529):
-            if (x - 512) ** 2 + (y - 400) ** 2 <= 16 ** 2:
-                put(x, y, orb)
+    if source_center is not None:
+        source_x, source_y = source_center
+        for y in range(source_y - 16, source_y + 17):
+            for x in range(source_x - 16, source_x + 17):
+                if (x - source_x) ** 2 + (y - source_y) ** 2 <= 16 ** 2:
+                    put(x, y, orb)
 
     if line is not None:
         x0, y0, x1, y1 = line
@@ -781,6 +784,9 @@ def _test_fxbbolt_segment_detector() -> None:
         baseline = root / "third-person-before-zap.png"
         source_only = root / "source-only.png"
         age_one = root / "age-one.png"
+        side_baseline = root / "side-baseline.png"
+        side_age = root / "side-age.png"
+        missing_source = root / "missing-source.png"
         age_two = root / "age-two.png"
         age_three = root / "age-three.png"
         blue = root / "blue-line.png"
@@ -796,6 +802,21 @@ def _test_fxbbolt_segment_detector() -> None:
         write_bolt_png(misaligned, line=(412, 430, 612, 430))
         write_bolt_png(short, line=(512, 432, 515, 445))
         write_bolt_png(too_dim, alpha=0.005)
+        write_bolt_png(side_baseline, line=None, source_center=(700, 400))
+        write_bolt_png(side_age, line=(700, 432, 512, 572), alpha=0.1, source_center=(700, 400))
+        write_bolt_png(missing_source, line=None, source_center=None)
+
+        side_errors, side_metrics = verify_wisp_zap_client.verify_bolt_segment(
+            side_age, True, side_baseline
+        )
+        assert not side_errors and side_metrics is not None, (side_errors, side_metrics)
+        assert abs(side_metrics["source_x"] - 700.0) <= 2.0, side_metrics
+
+        missing_source_errors, missing_source_metrics = verify_wisp_zap_client.verify_bolt_segment(
+            age_one, True, missing_source
+        )
+        assert missing_source_errors and missing_source_metrics is None
+        assert any("no detectable Aer Wisp billboard" in error for error in missing_source_errors)
 
         for age_frame in (age_one, age_two, age_three):
             errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
@@ -887,15 +908,20 @@ def main() -> int:
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES",
+        "WISP_CAMERA_SIDE_VIEW=YES",
+        "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
+        "WISP_CAMERA_SIDE_VIEW=YES",
         "wisp_capture 79-wisp-third-person-before-zap",
-        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
+        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "wisp_start_zap_video_capture",
@@ -1032,11 +1058,17 @@ def main() -> int:
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
-    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", client_attack_index)
-    perspective_index = setup.index("xdotool key --clearmodifiers F5", client_attack_index)
-    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK", perspective_index)
+    camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
+    perspective_index = setup.index("xdotool key --clearmodifiers F5", camera_stopped_index)
+    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON", perspective_index)
+    side_view_command_index = setup.index("wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1", perspective_marker_index)
+    side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", side_view_command_index)
+    side_view_status_index = setup.index("WISP_CAMERA_SIDE_VIEW=YES", side_view_wait_index)
+    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', target_index)
+    baseline_capture_index = setup.index("wisp_capture 79-wisp-third-person-before-zap", target_index)
+    baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD", baseline_capture_index)
+    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", zap_cursor_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
@@ -1050,7 +1082,7 @@ def main() -> int:
     capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", restore_marker_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < perspective_index < perspective_marker_index < hurt_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < baseline_capture_index < baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
         "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
@@ -1247,6 +1279,8 @@ def main() -> int:
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 gameTime=520 blockPos=none tick=507",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
+        "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=17",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
@@ -1334,8 +1368,8 @@ def main() -> int:
             elif name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
                 write_bolt_png(target)
             elif name == verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT:
-                # This same-perspective control is decoded by the additive-delta verifier.
-                write_png(target, None)
+                # The same-perspective control must contain the actual Wisp billboard.
+                write_bolt_png(target, line=None)
             elif name == "83-wisp-zap-after-expiry.png":
                 write_bolt_png(target, line=None)
             else:
@@ -1382,6 +1416,10 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+        wrong_side_view_errors = verify_wisp_zap_client.verify(
+            log.replace("yaw=90.0", "yaw=0.0", 1), status, root
+        )
+        assert any("camera is not side-on" in error for error in wrong_side_view_errors), wrong_side_view_errors
         first_person_errors = verify_wisp_zap_client.verify(
             log.replace("cameraType=THIRD_PERSON_BACK", "cameraType=FIRST_PERSON"), status, root
         )
@@ -1722,6 +1760,9 @@ def main() -> int:
     assert "static Vec3 cameraAimPoint(WispEntity wisp)" in attack_probe
     assert "bounds.minY + (bounds.maxY - bounds.minY) * 0.25D" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_TRACK=YES id=" in attack_probe
+    assert "aimCameraAtWisp = false" in attack_probe
+    assert "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" in attack_probe
+    assert "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" in attack_probe
     assert "event.setCanceled" not in attack_probe
     renderer = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java"
