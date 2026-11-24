@@ -777,7 +777,7 @@ def _test_fxbbolt_segment_detector() -> None:
         write_bolt_png(positive)
         write_bolt_png(source_only, line=None)
         write_bolt_png(blue, color=(60, 160, 255))
-        write_bolt_png(misaligned, line=(700, 700, 750, 700))
+        write_bolt_png(misaligned, line=(412, 430, 612, 430))
         write_bolt_png(short, line=(512, 432, 515, 445))
 
         errors, metrics = verify_wisp_zap_client.verify_bolt_segment(positive, True)
