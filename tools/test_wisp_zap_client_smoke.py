@@ -273,6 +273,86 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
     assert clicks == ["click 1"], clicks
 
 
+
+
+def _test_attack_input_frame_correlation(generated: str) -> None:
+    """The actual click must bind to its same-tick AFTER_LEVEL frame, not an earlier Wisp hit."""
+    body = _bash_function_body(generated, "wisp_capture_attack_input_frame")
+    function = "  wisp_capture_attack_input_frame() {\n" + body + "\n  }\n"
+    attack_input = (
+        "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=106 "
+        "targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 "
+        "gameTime=553 blockPos=none tick=518"
+    )
+
+    def camera_line(tick: int) -> str:
+        return (
+            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 "
+            "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
+            "wispX=12.5 wispY=149.3 wispZ=11.5 "
+            "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+            "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+            "aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978"
+        )
+
+    def frame_line(tick: int, game_time: int, player_tick: int) -> str:
+        return (
+            f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=106 tick={tick} "
+            f"gameTime={game_time} playerTick={player_tick} "
+            "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
+        )
+
+    def run_case(lines: list[str]) -> tuple[int, str, str]:
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-input-frame-") as directory:
+            root = Path(directory)
+            client_dir = root / "client-smoke"
+            client_dir.mkdir()
+            (client_dir / "client.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+            status_path = root / "client-smoke-status.txt"
+            status_path.write_text("", encoding="utf-8")
+            env = os.environ.copy()
+            env["ATTACK_INPUT"] = attack_input
+            harness = (
+                "set -euo pipefail\n"
+                + function
+                + '\nwisp_capture_attack_input_frame "$ATTACK_INPUT" 106 PLATFORM\n'
+                + 'echo "CAPTURED_TICK=$WISP_ATTACK_CAMERA_TICK GAME_TIME=$WISP_ATTACK_CAMERA_GAME_TIME PLAYER_TICK=$WISP_ATTACK_CAMERA_PLAYER_TICK DISTANCE=$WISP_ATTACK_CAMERA_DISTANCE"\n'
+            )
+            result = subprocess.run(
+                ["bash", "-c", harness],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                env=env,
+                check=False,
+            )
+            status = status_path.read_text(encoding="utf-8")
+            return result.returncode, result.stdout + result.stderr, status
+
+    base_lines = [
+        camera_line(0),
+        frame_line(0, 546, 511),
+        camera_line(5),
+        frame_line(5, 551, 516),
+        camera_line(7),
+        frame_line(7, 553, 518),
+        attack_input,
+    ]
+    rc, output, status = run_case(base_lines)
+    assert rc == 0, (rc, output, status)
+    assert "CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518 DISTANCE=1.0440" in output, output
+
+    duplicate_lines = base_lines[:-1] + [frame_line(7, 553, 518), attack_input]
+    rc, output, status = run_case(duplicate_lines)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=2" in status, status
+
+    stale_only_lines = base_lines[:4] + [attack_input]
+    rc, output, status = run_case(stale_only_lines)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, status
+
 def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
     """The attack watcher must ignore the visibility frame it has already consumed."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
@@ -659,6 +739,7 @@ def main() -> int:
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
     _test_attack_frame_dot_tolerance(generated)
+    _test_attack_input_frame_correlation(generated)
     _test_first_frame_cursor_is_exclusive(generated)
     _test_first_frame_telemetry_uses_selected_frame(generated)
     _test_capture_reanchor_retry(generated)
@@ -874,7 +955,7 @@ def main() -> int:
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert "WISP_ATTACK_ATTEMPT_REJECTED=" in attack_body, "BLOCK hits must be rejected rather than accepted"
     assert 'attack_camera_source="PREAIMED_NEXT_FRAME"' in preaim_branch
-    assert 'attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"' in preaim_branch
+    assert 'attack_camera_detail="id=$wisp_id triggerTick=$WISP_ATTACK_CAMERA_TICK triggerGameTime=$WISP_ATTACK_CAMERA_GAME_TIME"' in preaim_branch
     assert 'attack_camera_source="LIVE_ENTITY_FACING"' in fallback_branch
     assert 'attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"' in fallback_branch
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' in fallback_branch
@@ -939,6 +1020,13 @@ def main() -> int:
     assert 'mode == "PLATFORM" ? on_platform : y >= 0.0' in wait_attack_body
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
     assert "WISP_ATTACKABLE_FRAME=YES" in wait_attack_body
+    capture_input_body = _bash_function_body(generated, "wisp_capture_attack_input_frame")
+    assert 'index($0, "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" id " ") == 1' in capture_input_body
+    assert 'index($0, "gameTime=" game_time " ") > 0' in capture_input_body
+    assert 'index($0, "playerTick=" player_tick " ") > 0' in capture_input_body
+    assert "NR < limit" in capture_input_body
+    assert 'WISP_ATTACK_INPUT_FRAME=YES id=$WISP_ATTACK_CAMERA_ID' in attack_body
+    assert attack_body.index("wisp_capture_attack_input_frame") < attack_body.index("WISP_ATTACK_INPUT_FRAME=YES") < attack_body.index("WISP_ATTACK_CAMERA_FRAME=YES")
     assert "for _ in $(seq 1 200)" not in wait_attack_body
     fast_command_body = _bash_function_body(generated, "wisp_fast_command")
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
@@ -1056,12 +1144,13 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=23",
         "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
-        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 tick=22 gameTime=520",
+        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
         "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
         "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
-        "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtNs=1100000000",
@@ -1258,7 +1347,7 @@ def main() -> int:
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
         fallback_status = status.replace(
-            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 tick=22 gameTime=520",
+            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
             "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\n"
             "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         )
@@ -1287,7 +1376,7 @@ def main() -> int:
         )
         low_dot_status = "\n".join(
             line.replace("aimDot=0.999", "aimDot=0.8")
-            if line.startswith(("WISP_ATTACK_CAMERA_FRAME=", "WISP_ATTACK_CAMERA_SAMPLE=", "WISP_ATTACKABLE_FRAME="))
+            if line.startswith(("WISP_ATTACK_CAMERA_FRAME=", "WISP_ATTACK_CAMERA_SAMPLE=", "WISP_ATTACKABLE_FRAME=", "WISP_ATTACK_INPUT_FRAME="))
             else line
             for line in status.splitlines()
         )
@@ -1324,9 +1413,30 @@ def main() -> int:
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
                         "tick=22 gameTime=520 playerTick=504 hitType=ENTITY", 1), status, root
         ), "a click more than one player tick after the actual hit-result frame must fail"
+        stale_hit_log = log.replace(
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(stale_hit_log, status, root) == [], (
+            "a stale pre-tracking Wisp hit frame must not shadow the unique frame at the actual click tick"
+        )
+        duplicate_input_frame_log = log.replace(
+            "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true",
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none\n"
+            "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true",
+            1,
+        )
+        duplicate_errors = verify_wisp_zap_client.verify(duplicate_input_frame_log, status, root)
+        assert any("no completed frame exposed the live Wisp" in error for error in duplicate_errors), (
+            "duplicate same-tick hit frames must fail closed"
+        )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACKABLE_FRAME=YES", "WISP_ATTACKABLE_FRAME=NO"), root
-        ), "missing attackable-frame status must fail"
+        ), "missing click-trigger frame status must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_ATTACK_INPUT_FRAME=YES", "WISP_ATTACK_INPUT_FRAME=NO"), root
+        ), "missing input-correlated frame status must fail"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_CAMERA=YES id=17", "TC_SMOKE_WISP_CAMERA=YES id=18"), status, root
         ), "camera sample from another Wisp must fail"

@@ -64,6 +64,7 @@ REQUIRED_STATUS = (
     "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
     "WISP_ATTACKABLE_FRAME=YES",
+    "WISP_ATTACK_INPUT_FRAME=YES",
     "WISP_ATTACK_CAMERA_REAIM=",
     "WISP_ATTACK_CAMERA_FRAME=YES",
     "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
@@ -357,6 +358,25 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         return [str(error)]
 
 
+def _attackable_frame_for_input(log_text: str, attack_input):
+    """Select the unique completed frame whose vanilla hit result was consumed by this click."""
+    if attack_input is None:
+        return None
+    pattern = re.compile(
+        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
+        r"hitType=ENTITY targetId=(\d+) targetType=thaumcraft:wisp blockPos=none"
+    )
+    candidates = [
+        frame
+        for frame in pattern.finditer(log_text)
+        if frame.group(1) == attack_input.group(1)
+        and frame.group(3) == attack_input.group(3)
+        and frame.group(4) == attack_input.group(4)
+        and frame.start() < attack_input.start()
+    ]
+    return candidates[0] if len(candidates) == 1 else None
+
+
 def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     errors: list[str] = []
 
@@ -400,11 +420,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+)",
         log_text,
     )
-    attackable_frame = _first(
-        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
-        r"hitType=ENTITY targetId=(\d+) targetType=thaumcraft:wisp blockPos=none",
-        log_text,
-    )
+    attackable_frame = _attackable_frame_for_input(log_text, attack_input)
     rendered = _first(
         r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -679,8 +695,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_NEXT_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
+    attack_trigger_frame_status = _first(
+        r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) position=(PLATFORM|LIVE_WISP) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        status_text,
+    )
     attackable_frame_status = _first(
-        r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
+        r"(?m)^WISP_ATTACK_INPUT_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
     if pre_attack_track is not None and pre_attack_track_status is not None:
@@ -770,10 +790,32 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("missing copied live camera sample used for the real attack")
     if attack_camera_reaim is None:
         errors.append("missing provenance for the camera sample used by the real attack")
+    if attack_trigger_frame_status is None:
+        errors.append("missing status for the AFTER_LEVEL frame that dispatched the real click")
+    elif attack_input is not None:
+        if attack_trigger_frame_status.group(1) != attack_input.group(1) or attack_trigger_frame_status.group(3) != attack_input.group(1):
+            errors.append("click-trigger frame and real input selected different Wisp IDs")
+        trigger_pattern = re.compile(
+            r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
+            r"hitType=ENTITY targetId=(\d+) targetType=thaumcraft:wisp blockPos=none"
+        )
+        trigger_matches = [
+            frame
+            for frame in trigger_pattern.finditer(log_text)
+            if frame.group(1) == attack_trigger_frame_status.group(1)
+            and frame.group(2) == attack_trigger_frame_status.group(2)
+            and frame.group(3) == attack_trigger_frame_status.group(5)
+            and frame.group(4) == attack_trigger_frame_status.group(6)
+            and frame.start() < attack_input.start()
+        ]
+        if len(trigger_matches) != 1:
+            errors.append("click-trigger status does not point to one real same-ID AFTER_LEVEL frame before input")
+        elif attackable_frame is not None and trigger_matches[0].start() > attackable_frame.start():
+            errors.append("click-trigger frame occurs after the frame correlated with the actual input")
     if attackable_frame_status is None:
-        errors.append("missing status for the actual attackable Wisp frame")
+        errors.append("missing status for the actual attackable Wisp input frame")
     elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 5):
-        errors.append("attackable-frame status does not match the real AFTER_LEVEL hit-result marker")
+        errors.append("input-frame status does not match the real AFTER_LEVEL hit-result marker")
     if first_frame_camera_sample is None:
         errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
