@@ -915,12 +915,32 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=", ""), root
         ), "missing exact first-frame camera sample must fail"
-        assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5", "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=6"), root
-        ), "first-frame cursor must identify the exact consumed completed frame"
-        assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=5", ""), root
-        ), "missing first-frame cursor must fail"
+        first_frame_line = next(
+            (
+                index
+                for index, line in enumerate(log.splitlines(), start=1)
+                if line.startswith("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 ")
+            ),
+            None,
+        )
+        assert first_frame_line is not None, "synthetic first completed frame is missing"
+        first_frame_cursor = f"WISP_RENDER_FIRST_FRAME_LINE_NUMBER={first_frame_line}"
+        assert status.count(first_frame_cursor) == 1, (
+            "synthetic first-frame cursor must point to exactly one completed frame",
+            first_frame_line,
+        )
+        wrong_first_frame_cursor = status.replace(
+            first_frame_cursor,
+            f"WISP_RENDER_FIRST_FRAME_LINE_NUMBER={first_frame_line + 1}",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(log, wrong_first_frame_cursor, root), (
+            "first-frame cursor must identify the exact consumed completed frame"
+        )
+        missing_first_frame_cursor = status.replace(first_frame_cursor, "", 1)
+        assert verify_wisp_zap_client.verify(log, missing_first_frame_cursor, root), (
+            "missing first-frame cursor must fail"
+        )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_CAMERA_REAIM=CLIENT_TRACKING", ""), root
         ), "missing post-hit client camera tracking must fail"
