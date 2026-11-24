@@ -265,8 +265,11 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         for name in names
     ]
     wait_body = _bash_function_body(generated, "wisp_wait_for_zap_frame")
-    assert "tail -f" not in wait_body, "the live marker watcher must not leave a follow process blocking command substitution"
-    assert "timeout 5s bash -c" not in wait_body, "the live marker watcher must not wait for a timeout after finding a frame"
+    executable_wait_body = "\n".join(
+        line.split("#", 1)[0] for line in wait_body.splitlines()
+    )
+    assert "tail -f" not in executable_wait_body, "the live marker watcher must not leave a follow process blocking command substitution"
+    assert "timeout 5s bash -c" not in executable_wait_body, "the live marker watcher must not wait for a timeout after finding a frame"
     assert "for attempt in $(seq 1 1000)" in wait_body, "the marker watcher must use bounded non-blocking polling"
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
