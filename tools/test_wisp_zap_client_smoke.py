@@ -23,6 +23,10 @@ def write_png(path: Path, patch: tuple[int, int, int, int] | None = (506, 378, 5
     width, height = 1280, 800
     background = bytes((96, 96, 96))
     aer = bytes((255, 255, 126))
+    crosshair = bytes((213, 213, 190))
+    roi_width, roi_height, roi_left, roi_top = verify_wisp_zap_client.AIM_ROI
+    crosshair_x = roi_left + roi_width // 2 - 1
+    crosshair_y = roi_top + roi_height // 2 - 1
     raw = bytearray()
     for y in range(height):
         raw.append(0)
@@ -33,6 +37,16 @@ def write_png(path: Path, patch: tuple[int, int, int, int] | None = (506, 378, 5
                 for x in range(x0, x1):
                     offset = x * 3
                     row[offset:offset + 3] = aer
+        # The real 1024x768 client capture draws this warm-tinted HUD crosshair
+        # over the scene. Keep it in every fixture so it cannot satisfy Aer tests.
+        if crosshair_y - 9 <= y <= crosshair_y + 8:
+            for x in range(crosshair_x - 1, crosshair_x + 1):
+                offset = x * 3
+                row[offset:offset + 3] = crosshair
+        if crosshair_y - 1 <= y <= crosshair_y:
+            for x in range(crosshair_x - 9, crosshair_x + 9):
+                offset = x * 3
+                row[offset:offset + 3] = crosshair
         raw.extend(row)
     header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
     path.write_bytes(
@@ -670,7 +684,7 @@ def main() -> int:
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
-        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=144 bbox=58,58,69,69",
+        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=76 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -693,7 +707,7 @@ def main() -> int:
         write_png(positive)
         aim_errors, count, bbox = verify_wisp_zap_client.verify_aim_screenshot(positive)
         assert aim_errors == [], aim_errors
-        assert count == 144 and bbox == (58, 58, 69, 69), (count, bbox)
+        assert count == 76 and bbox == (58, 58, 69, 69), (count, bbox)
 
         off_center = root / "aim-off-center.png"
         write_png(off_center, (448, 320, 460, 332))
@@ -703,7 +717,7 @@ def main() -> int:
         invisible = root / "aim-invisible.png"
         write_png(invisible, None)
         aim_errors, count, _ = verify_wisp_zap_client.verify_aim_screenshot(invisible)
-        assert aim_errors and count == 0, aim_errors
+        assert aim_errors and count == 0, ("vanilla crosshair alone must not satisfy Aer visibility", aim_errors)
 
         clean_baseline = root / "baseline-clean.png"
         write_png(clean_baseline, None)
@@ -712,7 +726,7 @@ def main() -> int:
         contaminated_baseline = root / "baseline-contaminated.png"
         write_png(contaminated_baseline)
         baseline_errors, baseline_count, _ = verify_wisp_zap_client.verify_baseline_screenshot(contaminated_baseline)
-        assert baseline_errors and baseline_count == 144, (baseline_errors, baseline_count)
+        assert baseline_errors and baseline_count == 76, (baseline_errors, baseline_count)
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
