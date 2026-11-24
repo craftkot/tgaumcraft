@@ -266,6 +266,8 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
         sum_x = sum_y = sum_xx = sum_yy = sum_xy = 0.0
         min_x = min_y = 1 << 30
         max_x = max_y = -1
+        min_source_distance = float("inf")
+        max_source_distance = 0.0
         while queue:
             current = queue.popleft()
             x = current % roi_width
@@ -280,6 +282,9 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
             min_y = min(min_y, y)
             max_x = max(max_x, x)
             max_y = max(max_y, y)
+            source_distance = math.hypot(x - source_x, y - source_y)
+            min_source_distance = min(min_source_distance, source_distance)
+            max_source_distance = max(max_source_distance, source_distance)
             for neighbour_y in range(max(0, y - 1), min(roi_height, y + 2)):
                 row = neighbour_y * roi_width
                 for neighbour_x in range(max(0, x - 1), min(roi_width, x + 2)):
@@ -296,6 +301,8 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
         dy = mean_y - source_y
         distance = math.hypot(dx, dy)
         if distance < 30.0 or distance > 300.0:
+            continue
+        if min_source_distance > 48.0 or max_source_distance < 60.0:
             continue
 
         variance_x = max(0.0, sum_xx / count - mean_x * mean_x)
@@ -331,6 +338,8 @@ def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, floa
                     "width": minor_width,
                     "distance": distance,
                     "alignment": alignment,
+                    "min_source_distance": min_source_distance,
+                    "max_source_distance": max_source_distance,
                     "left": float(min_x + roi_left),
                     "top": float(min_y + roi_top),
                     "right": float(max_x + roi_left),
@@ -1200,12 +1209,24 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.extend(aim_errors)
 
     for age, name in ((1, "80-wisp-zap-frame-a.png"), (2, "81-wisp-zap-frame-b.png"), (3, "82-wisp-zap-frame-c.png")):
-        bolt_errors, _ = verify_bolt_segment(screenshot_dir / name, expected_visible=True)
+        bolt_errors, bolt_metrics = verify_bolt_segment(screenshot_dir / name, expected_visible=True)
         errors.extend(f"FXBolt age={age}: {error}" for error in bolt_errors)
-    after_expiry_errors, _ = verify_bolt_segment(
+        if bolt_metrics is not None:
+            print(
+                f"WISP_FXBOLT_PIXEL_COMPONENT=YES age={age} screenshot={name} "
+                f"pixels={bolt_metrics['pixels']:.0f} length={bolt_metrics['length']:.1f} "
+                f"width={bolt_metrics['width']:.1f} "
+                f"sourceRange={bolt_metrics['min_source_distance']:.1f}..{bolt_metrics['max_source_distance']:.1f} "
+                f"alignment={bolt_metrics['alignment']:.3f} "
+                f"bbox={bolt_metrics['left']:.0f},{bolt_metrics['top']:.0f},"
+                f"{bolt_metrics['right']:.0f},{bolt_metrics['bottom']:.0f}"
+            )
+    after_expiry_errors, after_expiry_metrics = verify_bolt_segment(
         screenshot_dir / "83-wisp-zap-after-expiry.png", expected_visible=False
     )
     errors.extend(after_expiry_errors)
+    if not after_expiry_errors:
+        print("WISP_FXBOLT_AFTER_EXPIRY=PASS visibleComponents=0")
 
     for pattern in BAD_LOG_PATTERNS:
         if pattern.search(log_text):
