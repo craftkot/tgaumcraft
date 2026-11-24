@@ -10,6 +10,7 @@ import subprocess
 import sys
 import tempfile
 from fractions import Fraction
+from collections import deque
 
 
 SCREENSHOTS = (
@@ -25,6 +26,11 @@ SCREENSHOTS = (
 AIM_SCREENSHOTS = SCREENSHOTS[:1]
 BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
 AIM_ROI = (128, 128, 448, 320)
+# The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
+# The Wisp billboard is centred ~16 px below the crosshair in this fixture.
+BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
+BOLT_SOURCE_CENTER = (512, 400)
+BOLT_SOURCE_EXCLUSION_RADIUS = 28
 
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
@@ -72,6 +78,8 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
+    "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+    "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
     "WISP_ZAP_FRAME_OBSERVED=YES",
     "WISP_ZAP_VIDEO_STARTED=YES",
     "WISP_ZAP_VIDEO_STOPPED=YES",
@@ -191,6 +199,168 @@ def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, i
             "capture must happen before Wisp spawn"
         )
     return errors, len(xs), bbox
+
+
+def _bolt_segment_candidates(path: Path) -> tuple[list[str], list[dict[str, float]]]:
+    """Find elongated Aer-yellow pixels outside the Wisp billboard itself."""
+    if not path.is_file() or path.stat().st_size < 128:
+        return [f"missing or empty FXBolt frame: {path.name}"], []
+
+    roi_width, roi_height, roi_left, roi_top = BOLT_ROI
+    try:
+        result = subprocess.run(
+            [
+                "convert", str(path),
+                "-crop", f"{roi_width}x{roi_height}+{roi_left}+{roi_top}",
+                "+repage", "-depth", "8", "RGB:-",
+            ],
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        return ["ImageMagick convert is required to inspect FXBolt frames"], []
+    if result.returncode != 0:
+        detail = result.stderr.decode("utf-8", errors="replace").strip()
+        return [f"cannot decode FXBolt frame {path.name}: {detail}"], []
+
+    pixels = result.stdout
+    pixel_count = roi_width * roi_height
+    if len(pixels) != pixel_count * 3:
+        return [
+            f"unexpected FXBolt ROI byte count for {path.name}: "
+            f"{len(pixels)} != {pixel_count * 3}"
+        ], []
+
+    source_x = BOLT_SOURCE_CENTER[0] - roi_left
+    source_y = BOLT_SOURCE_CENTER[1] - roi_top
+    exclusion_squared = BOLT_SOURCE_EXCLUSION_RADIUS ** 2
+    mask = bytearray(pixel_count)
+    for index in range(pixel_count):
+        x = index % roi_width
+        y = index // roi_width
+        dx = x - source_x
+        dy = y - source_y
+        if dx * dx + dy * dy <= exclusion_squared:
+            continue
+        offset = index * 3
+        red, green, blue = pixels[offset], pixels[offset + 1], pixels[offset + 2]
+        # BETA26 Aer payload is #FFFF7E. Keep the warm channel relationship,
+        # but reject white stars, blue-only changes and the Wisp's own orb.
+        if (
+            red >= 145
+            and green >= 130
+            and blue <= 205
+            and red - blue >= 28
+            and green - blue >= 16
+        ):
+            mask[index] = 1
+
+    visited = bytearray(pixel_count)
+    candidates: list[dict[str, float]] = []
+    for first in range(pixel_count):
+        if not mask[first] or visited[first]:
+            continue
+        queue = deque([first])
+        visited[first] = 1
+        count = 0
+        sum_x = sum_y = sum_xx = sum_yy = sum_xy = 0.0
+        min_x = min_y = 1 << 30
+        max_x = max_y = -1
+        while queue:
+            current = queue.popleft()
+            x = current % roi_width
+            y = current // roi_width
+            count += 1
+            sum_x += x
+            sum_y += y
+            sum_xx += x * x
+            sum_yy += y * y
+            sum_xy += x * y
+            min_x = min(min_x, x)
+            min_y = min(min_y, y)
+            max_x = max(max_x, x)
+            max_y = max(max_y, y)
+            for neighbour_y in range(max(0, y - 1), min(roi_height, y + 2)):
+                row = neighbour_y * roi_width
+                for neighbour_x in range(max(0, x - 1), min(roi_width, x + 2)):
+                    neighbour = row + neighbour_x
+                    if mask[neighbour] and not visited[neighbour]:
+                        visited[neighbour] = 1
+                        queue.append(neighbour)
+
+        if count < 16:
+            continue
+        mean_x = sum_x / count
+        mean_y = sum_y / count
+        dx = mean_x - source_x
+        dy = mean_y - source_y
+        distance = math.hypot(dx, dy)
+        if distance < 30.0 or distance > 300.0:
+            continue
+
+        variance_x = max(0.0, sum_xx / count - mean_x * mean_x)
+        variance_y = max(0.0, sum_yy / count - mean_y * mean_y)
+        covariance = sum_xy / count - mean_x * mean_y
+        discriminant = math.sqrt(
+            max(0.0, (variance_x - variance_y) ** 2 + 4.0 * covariance ** 2)
+        )
+        major_eigenvalue = (variance_x + variance_y + discriminant) / 2.0
+        minor_eigenvalue = max(
+            0.0, (variance_x + variance_y - discriminant) / 2.0
+        )
+        major_length = math.sqrt(max(0.0, 12.0 * major_eigenvalue))
+        minor_width = math.sqrt(max(0.0, 12.0 * minor_eigenvalue))
+        elongation = major_eigenvalue / max(minor_eigenvalue, 0.5)
+        angle = 0.5 * math.atan2(2.0 * covariance, variance_x - variance_y)
+        alignment = abs(
+            (math.cos(angle) * dx + math.sin(angle) * dy) / distance
+        )
+
+        # A real bolt is a narrow, elongated component extending radially
+        # away from the Wisp source. A compact orb or isolated star cannot pass.
+        if (
+            major_length >= 24.0
+            and minor_width <= 16.0
+            and elongation >= 5.0
+            and alignment >= 0.65
+        ):
+            candidates.append(
+                {
+                    "pixels": float(count),
+                    "length": major_length,
+                    "width": minor_width,
+                    "distance": distance,
+                    "alignment": alignment,
+                    "left": float(min_x + roi_left),
+                    "top": float(min_y + roi_top),
+                    "right": float(max_x + roi_left),
+                    "bottom": float(max_y + roi_top),
+                }
+            )
+
+    return [], candidates
+
+
+def verify_bolt_segment(
+    path: Path, expected_visible: bool
+) -> tuple[list[str], dict[str, float] | None]:
+    errors, candidates = _bolt_segment_candidates(path)
+    if errors:
+        return errors, None
+    if expected_visible and not candidates:
+        return [
+            f"{path.name} has no elongated Aer-yellow FXBolt segment outside "
+            "the Wisp billboard ROI"
+        ], None
+    if not expected_visible and candidates:
+        candidate = max(candidates, key=lambda item: item["length"])
+        return [
+            f"{path.name} still contains a bolt-like segment after expiry: "
+            f"pixels={candidate['pixels']:.0f} length={candidate['length']:.1f}"
+        ], candidate
+    if not candidates:
+        return [], None
+    return [], max(candidates, key=lambda item: item["length"])
 
 def _first(pattern: str, text: str):
     return re.search(pattern, text)
@@ -509,7 +679,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
 
     zap_frame_pattern = re.compile(
         r"TC_SMOKE_WISP_ZAP_FRAME=YES source=(\d+) target=(\d+) createdAt=(\d+) "
-        r"gameTime=(\d+) wispTick=(\d+) ageTick=(\d+) age=([0-9.]+) points=(\d+)"
+        r"gameTime=(\d+) wispTick=(\d+) ageTick=(\d+) age=([0-9.]+) points=(\d+) "
+        r"cameraType=([A-Z_]+)"
     )
     zap_frames = list(zap_frame_pattern.finditer(log_text))
     captured_frames = re.findall(
@@ -580,6 +751,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 )
             elif int(matching_frame.group(8)) <= 2:
                 errors.append(f"FXBolt age={age_tick} frame has no interior polycone points")
+            elif matching_frame.group(9) != "THIRD_PERSON_BACK":
+                errors.append(
+                    f"FXBolt age={age_tick} was rendered in camera mode "
+                    f"{matching_frame.group(9)}, expected THIRD_PERSON_BACK"
+                )
 
         if sent is not None:
             source_id, target_id = captured_frames[0][0], sent.group(2)
@@ -1023,6 +1199,14 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         aim_errors, _, _ = verify_aim_screenshot(screenshot_dir / name)
         errors.extend(aim_errors)
 
+    for age, name in ((1, "80-wisp-zap-frame-a.png"), (2, "81-wisp-zap-frame-b.png"), (3, "82-wisp-zap-frame-c.png")):
+        bolt_errors, _ = verify_bolt_segment(screenshot_dir / name, expected_visible=True)
+        errors.extend(f"FXBolt age={age}: {error}" for error in bolt_errors)
+    after_expiry_errors, _ = verify_bolt_segment(
+        screenshot_dir / "83-wisp-zap-after-expiry.png", expected_visible=False
+    )
+    errors.extend(after_expiry_errors)
+
     for pattern in BAD_LOG_PATTERNS:
         if pattern.search(log_text):
             errors.append(f"client log contains a crash or essentia texture error: {pattern.pattern}")
@@ -1084,6 +1268,7 @@ def main() -> int:
         for error in errors:
             print(f"WISP_ZAP_CLIENT_EVIDENCE_ERROR: {error}", file=sys.stderr)
         return 1
+    print("WISP_FXBOLT_VISUAL_ACCEPTANCE=PASS ages=1,2,3 afterExpiry=clear")
     print("WISP_ZAP_REAL_CLIENT_EVIDENCE_OK")
     return 0
 
