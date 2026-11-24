@@ -452,7 +452,7 @@ def render() -> str:
       'BEGIN {
         on_platform = x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0;
         position_ok = mode == "PLATFORM" ? on_platform : y >= 0.0;
-        exit !(position_ok && d <= 3.0 && dot >= -1.0 && dot <= 1.0)
+        exit !(position_ok && d <= 3.0 && dot >= -1.0001 && dot <= 1.0001)
       }'; then
       echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       exit 1

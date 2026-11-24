@@ -203,6 +203,76 @@ printf '%s\n' "$frame_line"
 
 
 
+
+def _test_attack_frame_dot_tolerance(generated: str) -> None:
+    """The same-ID vanilla hit result is authoritative; tolerate cosine float roundoff."""
+    body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
+    function = "  wisp_wait_for_attack_frame() {\n" + body + "\n  }\n"
+
+    def run_case(dot: str) -> tuple[int, str, list[str], list[str]]:
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-attack-dot-") as directory:
+            root = Path(directory)
+            bin_dir = root / "bin"
+            bin_dir.mkdir()
+            clicker = bin_dir / "xdotool"
+            clicker.write_text(
+                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\nexit 0\n",
+                encoding="utf-8",
+            )
+            clicker.chmod(0o755)
+
+            client_dir = root / "client-smoke"
+            client_dir.mkdir()
+            camera_line = (
+                "TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick=1 "
+                "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.02326 "
+                "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
+                "wispX=12.5 wispY=149.3 wispZ=11.5 "
+                "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+                "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+                f"aimDot={dot} renderAimDot=0.9787588908782221 eyeAimDot=0.9781741874628976"
+            )
+            frame_line = (
+                "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=106 tick=1 gameTime=520 playerTick=507 "
+                "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
+            )
+            (client_dir / "client.log").write_text(
+                camera_line + "\n" + frame_line + "\n", encoding="utf-8"
+            )
+            status_path = root / "client-smoke-status.txt"
+            status_path.write_text("", encoding="utf-8")
+            click_log = root / "clicks.log"
+            env = os.environ.copy()
+            env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+            env["CLICK_LOG"] = str(click_log)
+            harness = (
+                "set -euo pipefail\n"
+                + function
+                + "\nwisp_wait_for_attack_frame 0 106 PLATFORM 1\n"
+            )
+            result = subprocess.run(
+                ["bash", "-c", harness],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                env=env,
+                check=False,
+            )
+            status = status_path.read_text(encoding="utf-8").splitlines()
+            clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
+            return result.returncode, result.stdout + result.stderr, status, clicks
+
+    rc, output, status, clicks = run_case("1.000000011613918")
+    assert rc == 0, (rc, output, status)
+    assert any(line.startswith("WISP_ATTACKABLE_FRAME=YES id=106") for line in status), status
+    assert clicks == ["click 1"], clicks
+
+    rc, output, status, clicks = run_case("1.0002")
+    assert rc != 0, (rc, output, status)
+    assert any("WISP_ATTACKABLE_FRAME_CAMERA_REJECTED" in line for line in status), status
+    assert clicks == ["click 1"], clicks
+
+
 def _test_first_frame_cursor_is_inclusive(generated: str) -> None:
     """The first AFTER_LEVEL hit frame must not be skipped by an exclusive tail cursor."""
     body = _bash_function_body(generated, "wisp_attack_live_wisp")
@@ -454,6 +524,7 @@ def main() -> int:
     )
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
+    _test_attack_frame_dot_tolerance(generated)
     _test_first_frame_cursor_is_inclusive(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
@@ -727,7 +798,7 @@ def main() -> int:
     assert 'position_mode="${3:-PLATFORM}"' in wait_attack_body
     assert '-v mode="$position_mode"' in wait_attack_body, "pass the requested position mode into the native frame guard"
     assert "dot >= 0.99" not in wait_attack_body, "the actual same-ID EntityHitResult is authoritative"
-    assert "dot >= -1.0 && dot <= 1.0" in wait_attack_body, "retain finite bounded aim-dot telemetry"
+    assert "dot >= -1.0001 && dot <= 1.0001" in wait_attack_body, "allow only small floating-point cosine roundoff"
     assert 'position=$position_mode' in wait_attack_body, "record the selected position mode in native diagnostics"
     assert 'mode == "PLATFORM" ? on_platform : y >= 0.0' in wait_attack_body
     assert "hitType=ENTITY targetId=$wisp_id targetType=thaumcraft:wisp blockPos=none" in wait_attack_body
