@@ -760,6 +760,16 @@ def write_bolt_png(
             )
             put(x, y, bytes(blended))
 
+    # Reproduce the warm-tinted vanilla crosshair overlay at the 1024x768 viewport centre.
+    crosshair = bytes((213, 213, 190))
+    crosshair_x, crosshair_y = 511, 383
+    for y in range(crosshair_y - 9, crosshair_y + 9):
+        for x in range(crosshair_x - 1, crosshair_x + 1):
+            put(x, y, crosshair)
+    for y in range(crosshair_y - 1, crosshair_y + 1):
+        for x in range(crosshair_x - 9, crosshair_x + 9):
+            put(x, y, crosshair)
+
     # A non-yellow player silhouette at the beam endpoint must not satisfy the mask.
     for y in range(580, 720):
         for x in range(492, 533):
@@ -918,8 +928,7 @@ def main() -> int:
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
-        "WISP_CAMERA_SIDE_VIEW=YES",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON_SIDE_ON",
         "wisp_capture 79-wisp-third-person-before-zap",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
@@ -1060,7 +1069,7 @@ def main() -> int:
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
     perspective_index = setup.index("xdotool key --clearmodifiers F5", camera_stopped_index)
-    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON", perspective_index)
+    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON_SIDE_ON", perspective_index)
     side_view_command_index = setup.index("wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1", perspective_marker_index)
     side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", side_view_command_index)
     side_view_status_index = setup.index("WISP_CAMERA_SIDE_VIEW=YES", side_view_wait_index)
@@ -1341,7 +1350,8 @@ def main() -> int:
         "WISP_CAMERA_REAIM=CLIENT_TRACKING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
+        "WISP_CAMERA_SIDE_VIEW=YES",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
@@ -1408,10 +1418,10 @@ def main() -> int:
         baseline_path.write_bytes(valid_baseline)
 
         missing_capture_status = status.replace(
-            "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD\n", "", 1
+            "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD\n", "", 1
         )
         missing_capture_errors = verify_wisp_zap_client.verify(log, missing_capture_status, root)
-        assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD" in error
+        assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD" in error
                    for error in missing_capture_errors), missing_capture_errors
 
         errors = verify_wisp_zap_client.verify(log, status, root)
