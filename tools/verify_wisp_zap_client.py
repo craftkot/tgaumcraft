@@ -525,8 +525,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         frame_numbers = [int(frame[3]) for frame in video_indices]
         if frame_numbers != sorted(frame_numbers) or len(set(frame_numbers)) != 3:
             errors.append("extracted FXBolt video frames are not distinct/increasing")
-        if int(video_indices[0][4]) <= 0:
-            errors.append("age-one video frame has no pixel difference from the post-expiry scene")
+        for _, _, age_tick, _, difference in video_indices:
+            if int(difference) <= 0:
+                errors.append(
+                    f"age-{age_tick} video frame has no pixel difference from the post-expiry scene"
+                )
     if len(captured_frames) == 3:
         expected_ages = [1, 2, 3]
         actual_ages = [int(frame[2]) for frame in captured_frames]
