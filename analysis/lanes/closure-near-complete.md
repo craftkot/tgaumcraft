@@ -3,7 +3,7 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Кодовый HEAD после follow-up cleanup: `98d2cfad75d83fc21498baf271ec20e525771652`
+- Последний production/code-test SHA: `0502031ef1088923b4195606cc0fdcc0f9ab4c6e`; текущий test-only follow-up: `2f2a80751cfc694b24afc6fb976b834bab8d3d94`
 - Фиксированный аудит: **59/100**. Баллы не начислять без игровых критериев и аудиторского доказательства.
 
 ## Границы lane
@@ -300,3 +300,16 @@
 - No exact-`0502031` test result is claimed yet. Parent Full Port CI [#45346017586](https://github.com/craftkot/tgaumcraft/actions/runs/45346017586) was queued at the last poll and cannot validate this verifier-only change. The failed Wisp run did not launch Minecraft.
 - PR #4 remains OPEN / DRAFT / UNMERGED; no merge or force-push. Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`. Fixed audit remains **59/100** (M16 **4/6**, M08 **5/9**); no points awarded.
 - Next: inspect the exact-`0502031` Wisp Client run. Require geometry, the full offline Python contract, generated Bash syntax, then the real Minecraft client. The client must still prove same-ID Survival hit/damage/target, matching zap payload, real FXBolt ages 1/2/3, age-4 expiry, positive per-age pixels, and no texture-load errors.
+
+
+## 2026-11-24 — исправить форматозависимую проверку поиска Wisp
+
+- Fresh main inputs re-read: `AGENTS.md`, `ROADMAP_RU.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, `analysis/PROGRESS_AUDIT_2026_10_16.md`; main HEAD остаётся `a4280834adc5a20b6951098af937d30ca4aeca56`. Фиксированный индекс — **59/100**, M16 **4/6**, M08 **5/9**.
+- Exact code/test SHA `0502031ef1088923b4195606cc0fdcc0f9ab4c6e`: Wisp Client [#45346337620](https://github.com/craftkot/tgaumcraft/actions/runs/45346337620) завершился FAILURE на offline contract, `tools/test_wisp_zap_client_smoke.py:1091`, assertion `getEntitiesOfClass(WispEntity.class`. Geometry прошла (37 assertions), atlas UV прошёл (24 assertions); generated Bash и запуск Minecraft были пропущены.
+- Причина — только форматирование Java: production probe корректно вызывает `minecraft.level.getEntitiesOfClass(` и переносит `WispEntity.class` на следующую строку. Тест требовал старую однострочную форму и ошибочно трактовал перенос как отсутствие поиска сущности. Проверка не отражала семантику кода.
+- Исправлен только `tools/test_wisp_zap_client_smoke.py`: проверка нормализует whitespace через `" ".join(attack_probe.split())` и требует соседство `getEntitiesOfClass( WispEntity.class,`. Смысловая проверка осталась точной: метод должен искать именно `WispEntity.class`.
+- Test-only commit: [`2f2a80751cfc694b24afc6fb976b834bab8d3d94`](https://github.com/craftkot/tgaumcraft/commit/2f2a80751cfc694b24afc6fb976b834bab8d3d94). Production Java и поведение Wisp не менялись.
+- На том же code/test SHA `0502031`: Full Port CI [#45346337641](https://github.com/craftkot/tgaumcraft/actions/runs/45346337641) — SUCCESS; Aura/Crystal GameTests [#45346337654](https://github.com/craftkot/tgaumcraft/actions/runs/45346337654) — SUCCESS. Эти результаты не исправляют и не заменяют провал offline Wisp contract.
+- Изменённые пути проверены по текущему владельцу PR #4 и по предыдущему полному changed-file scan всех 61 остальных открытых PR: `tools/test_wisp_zap_client_smoke.py` не пересекается; `analysis/lanes/closure-near-complete.md` принадлежит только PR #4. Чужие ветки и main не изменялись.
+- PR #4 остаётся OPEN / DRAFT / UNMERGED; merge/force-push не выполнялись. Следующий шаг — дождаться exact-head Wisp Client и проверить, проходит ли offline contract и generated Bash syntax. Только затем оценивать настоящий Survival hit, серверный damage/target, matching payload, FXBolt ages 1/2/3, expiry age 4, transient pixels и texture-load errors.
+- Баллы не начислять: **59/100**. Ни M16, ни M08 не закрыты.
