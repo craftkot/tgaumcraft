@@ -107,23 +107,31 @@ def render() -> str:
   }
 
   wisp_wait_for_zap_frame() {
-    local after_lines="$1" wisp_id="$2" created_at="${3:-}" expected_age="$4"
-    local created_filter="" candidate marker_line
+    local after_lines="$1" wisp_id="$2" created_at="$3" expected_age="$4"
+    local created_filter="" candidate marker_line attempt
+    local log="client-smoke/client.log"
     if [ -n "$created_at" ]; then created_filter="createdAt=$created_at "; fi
-    candidate="$(timeout 5s bash -c '
-      after_lines="$1" wisp_id="$2" created_filter="$3" expected_age="$4" log="$5"
-      tail --sleep-interval=0.005 -n +"$((after_lines + 1))" -f "$log" \
-        | grep --line-buffered -F "TC_SMOKE_WISP_ZAP_FRAME=YES source=$wisp_id " \
-        | grep --line-buffered -F "$created_filter" \
-        | grep --line-buffered -F "ageTick=$expected_age " \
-        | head -n 1
-    ' _ "$after_lines" "$wisp_id" "$created_filter" "$expected_age" client-smoke/client.log || true)"
+    # Poll finite snapshots instead of tail -f: a grep/head pipeline can find a
+    # matching line but leave the follow process waiting for a future append.
+    # Continuous video capture preserves the frame; this watcher only timestamps
+    # the marker and must return immediately after finding it.
+    for attempt in $(seq 1 1000); do
+      candidate="$(tail -n +"$((after_lines + 1))" "$log" \
+        | grep -F "TC_SMOKE_WISP_ZAP_FRAME=YES source=$wisp_id " \
+        | grep -F "$created_filter" \
+        | grep -F "ageTick=$expected_age " \
+        | head -n 1 || true)"
+      if [ -n "$candidate" ]; then
+        break
+      fi
+      sleep 0.005
+    done
     if [ -z "$candidate" ]; then
-      echo "WISP_ZAP_FRAME_TIMEOUT=YES source=$wisp_id createdAt=${created_at:-next-cycle} ageTick=$expected_age" | tee -a client-smoke-status.txt
-      tail -120 client-smoke/client.log >&2
+      echo "WISP_ZAP_FRAME_TIMEOUT=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age" | tee -a client-smoke-status.txt
+      tail -120 "$log" >&2
       return 1
     fi
-    marker_line="$(grep -n -F -- "$candidate" client-smoke/client.log | tail -1 | cut -d: -f1)"
+    marker_line="$(grep -n -F -- "$candidate" "$log" | tail -1 | cut -d: -f1)"
     if ! [[ "$marker_line" =~ ^[0-9]+$ ]]; then
       echo "WISP_ZAP_FRAME_LINE_NUMBER_INVALID=$marker_line" | tee -a client-smoke-status.txt
       return 1
@@ -135,7 +143,6 @@ def render() -> str:
     WISP_ZAP_FRAME_OBSERVED_AT_NS="$(date +%s%N)"
     return 0
   }
-
   wisp_wait_for_completed_wisp_frame() {
     local after_line="$1" wisp_id="$2" wisp_tick="$3" marker frame_line
     marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$wisp_tick"
