@@ -865,12 +865,26 @@ def render() -> str:
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'
 
-  # The click has been dispatched. Switch before the server's target/zap callbacks
-  # so even the first transient frame is captured from third-person-back.
+  # The real click is complete. Stop the smoke-only aim lock, switch to
+  # third-person-back, then rotate the player 90 degrees without moving them.
+  # This makes the Wisp-to-player bolt lie across the screen instead of behind
+  # the player's own model, while leaving Wisp AI, target and zap endpoints live.
   xdotool key --clearmodifiers F5
   sleep 0.1
-  echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK' | tee -a client-smoke-status.txt
+  echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON' | tee -a client-smoke-status.txt
+  wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1
+  wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'
+  echo 'WISP_CAMERA_SIDE_VIEW=YES' | tee -a client-smoke-status.txt
+
+  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
+  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
+  wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
+
+  # The baseline is captured only after the actual hit/target callbacks, but
+  # before the zap payload. The Wisp billboard must be visible in this same
+  # side-on camera so the pixel verifier can locate its true screen-space origin.
   if grep -Fq 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES' client-smoke/client.log; then
     echo 'WISP_ZAP_BASELINE_CAPTURE_TOO_LATE=YES' | tee -a client-smoke-status.txt
     exit 1
@@ -880,16 +894,9 @@ def render() -> str:
     echo 'WISP_ZAP_BASELINE_CAPTURE_RACED_PAYLOAD=YES' | tee -a client-smoke-status.txt
     exit 1
   fi
-  echo 'WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD' | tee -a client-smoke-status.txt
+  echo 'WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD' | tee -a client-smoke-status.txt
 
-  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
-  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
-  wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
-
-  # The real Survival hit and target acquisition are already complete. Keep
-  # the player on the verified platform; the client-only probe tracks the same
-  # attacked Wisp's AABB centre while its BETA26 flight and zap wind-up continue.
-  # No Wisp movement, target, damage or FX state is changed by the camera probe.
+  # Do not change the live Wisp or zap; only stabilize horizontal player knockback.
   wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
   zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
