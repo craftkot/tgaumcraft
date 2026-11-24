@@ -1088,7 +1088,7 @@ def main() -> int:
     assert 'private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));' in attack_probe
     assert 'private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";' in attack_probe
     assert "if (!ENABLED)" in attack_probe
-    assert "getEntitiesOfClass(WispEntity.class" in attack_probe
+    assert "getEntitiesOfClass( WispEntity.class," in " ".join(attack_probe.split())
     assert "candidate.hasCustomName()" in attack_probe
     assert "SMOKE_TARGET_NAME.equals(candidate.getCustomName().getString())" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=" in attack_probe
