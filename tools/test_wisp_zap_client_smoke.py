@@ -720,6 +720,7 @@ def write_bolt_png(
     path: Path,
     line: tuple[int, int, int, int] | None = (512, 432, 548, 572),
     color: tuple[int, int, int] = (255, 255, 126),
+    alpha: float = 1.0,
 ) -> None:
     """Write a real-size synthetic viewport with a Wisp orb and optional bolt."""
     width, height = 1280, 800
@@ -740,13 +741,21 @@ def write_bolt_png(
     if line is not None:
         x0, y0, x1, y1 = line
         steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+        line_pixels: set[tuple[int, int]] = set()
         for step in range(steps + 1):
             t = step / steps
             x = round(x0 + (x1 - x0) * t)
             y = round(y0 + (y1 - y0) * t)
             for offset_y in range(-1, 2):
                 for offset_x in range(-1, 2):
-                    put(x + offset_x, y + offset_y, bytes(color))
+                    line_pixels.add((x + offset_x, y + offset_y))
+        for x, y in line_pixels:
+            current = tuple(rows[y][x * 3:x * 3 + 3])
+            blended = tuple(
+                min(255, current[channel] + round(color[channel] * alpha))
+                for channel in range(3)
+            )
+            put(x, y, bytes(blended))
 
     # A non-yellow player silhouette at the beam endpoint must not satisfy the mask.
     for y in range(580, 720):
@@ -769,29 +778,50 @@ def write_bolt_png(
 def _test_fxbbolt_segment_detector() -> None:
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
-        positive = root / "bolt.png"
+        baseline = root / "third-person-before-zap.png"
         source_only = root / "source-only.png"
+        age_one = root / "age-one.png"
+        age_two = root / "age-two.png"
+        age_three = root / "age-three.png"
         blue = root / "blue-line.png"
         misaligned = root / "misaligned.png"
         short = root / "short.png"
-        write_bolt_png(positive)
+        too_dim = root / "below-visible-threshold.png"
+        write_bolt_png(baseline, line=None)
         write_bolt_png(source_only, line=None)
+        write_bolt_png(age_one, alpha=2.0 / 3.0)
+        write_bolt_png(age_two, alpha=1.0 / 3.0)
+        write_bolt_png(age_three, alpha=0.1)
         write_bolt_png(blue, color=(60, 160, 255))
         write_bolt_png(misaligned, line=(412, 430, 612, 430))
         write_bolt_png(short, line=(512, 432, 515, 445))
+        write_bolt_png(too_dim, alpha=0.005)
 
-        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(positive, True)
-        assert not errors, errors
-        assert metrics is not None and metrics["length"] >= 24 and metrics["alignment"] >= 0.65
+        for age_frame in (age_one, age_two, age_three):
+            errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
+                age_frame, True, baseline
+            )
+            assert not errors, (age_frame.name, errors)
+            assert metrics is not None and metrics["length"] >= 24 and metrics["alignment"] >= 0.65
 
-        for rejected in (source_only, blue, misaligned, short):
-            errors, metrics = verify_wisp_zap_client.verify_bolt_segment(rejected, True)
+        for rejected in (source_only, blue, misaligned, short, too_dim):
+            errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
+                rejected, True, baseline
+            )
             assert errors and metrics is None, (rejected.name, errors, metrics)
 
-        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(source_only, False)
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
+            source_only, False, baseline
+        )
         assert not errors and metrics is None, (errors, metrics)
-        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(positive, False)
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
+            age_three, False, baseline
+        )
         assert errors and metrics is not None, (errors, metrics)
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
+            age_one, True, root / "missing-baseline.png"
+        )
+        assert errors and metrics is None, (errors, metrics)
 
 def main() -> int:
     _test_bash_function_body_extraction()
@@ -864,6 +894,9 @@ def main() -> int:
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+        "wisp_capture 79-wisp-third-person-before-zap",
+        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
+        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "wisp_start_zap_video_capture",
         "wisp_stop_zap_video_capture",
