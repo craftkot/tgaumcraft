@@ -376,6 +376,61 @@ def _test_video_frame_extraction() -> None:
         assert [f"ageTick={age} " in extracted for age in (1, 2, 3)] == [True, True, True], extracted
 
 
+def _test_wisp_render_profile(generated: str) -> None:
+    expected = [
+        "renderDistance:2",
+        "simulationDistance:5",
+        "graphicsMode:0",
+        "particles:2",
+        "entityShadows:false",
+        "mipmapLevels:0",
+        "biomeBlendRadius:0",
+        "enableVsync:false",
+        "maxFps:260",
+        "renderClouds:false",
+        "ao:false",
+    ]
+    assert generated.count("  wisp_verify_render_profile() {") == 1
+    assert generated.count("  wisp_verify_render_profile\n") == 1
+    body = _bash_function_body(generated, "wisp_verify_render_profile")
+    bash = (
+        "set -euo pipefail\n"
+        "wisp_verify_render_profile() {\n"
+        + body
+        + "\n}\n"
+        "wisp_verify_render_profile\n"
+    )
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        run_dir = root / "run"
+        run_dir.mkdir()
+        options_file = run_dir / "options.txt"
+        status_file = root / "client-smoke-status.txt"
+
+        options_file.write_text("\n".join(expected) + "\n", encoding="utf-8")
+        passed = subprocess.run(
+            ["bash", "-c", bash],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert passed.returncode == 0, passed.stdout + passed.stderr
+        assert "WISP_CLIENT_RENDER_PROFILE_APPLIED=YES" in passed.stdout
+        assert status_file.is_file()
+
+        options_file.write_text("\n".join(expected[:-1]) + "\n", encoding="utf-8")
+        rejected = subprocess.run(
+            ["bash", "-c", bash],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert rejected.returncode != 0
+        assert "WISP_CLIENT_RENDER_OPTION_MISSING=ao:false" in rejected.stdout
+
+
 def main() -> int:
     _test_bash_function_body_extraction()
     _test_streaming_click_dispatch()
@@ -388,13 +443,22 @@ def main() -> int:
     )
 
     anchor = "  # The initial world is already creative + peaceful, as established"
-    fixture = "#!/usr/bin/env bash\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n" + anchor + "\n"
+    fixture = (
+        "#!/usr/bin/env bash\n"
+        "printf 'guiScale:2\\n' > run/options.txt\n"
+        "if grep -q ready; then\n"
+        "  send_chat() {\n"
+        "    true\n"
+        "  }\n"
+        + anchor + "\n"
+    )
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
     _test_first_frame_cursor_is_inclusive(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
     _test_video_frame_extraction()
+    _test_wisp_render_profile(generated)
 
     required = (
         "wisp_send_chat()",
