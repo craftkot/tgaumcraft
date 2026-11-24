@@ -1303,6 +1303,7 @@ def main() -> int:
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
@@ -1327,6 +1328,9 @@ def main() -> int:
                 write_png(target, None)
             elif name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
                 write_bolt_png(target)
+            elif name == verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT:
+                # This same-perspective control is decoded by the additive-delta verifier.
+                write_png(target, None)
             elif name == "83-wisp-zap-after-expiry.png":
                 write_bolt_png(target, line=None)
             else:
@@ -1355,6 +1359,21 @@ def main() -> int:
         write_png(contaminated_baseline)
         baseline_errors, baseline_count, _ = verify_wisp_zap_client.verify_baseline_screenshot(contaminated_baseline)
         assert baseline_errors and baseline_count == 100, (baseline_errors, baseline_count)
+
+        # The third-person control image is a real PNG, not merely a PNG signature.
+        baseline_path = root / verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT
+        valid_baseline = baseline_path.read_bytes()
+        baseline_path.write_bytes(b"\\x89PNG\\r\\n\\x1a\\n" + b"x" * 256)
+        invalid_baseline_errors = verify_wisp_zap_client.verify(log, status, root)
+        assert any("cannot decode FXBolt image" in error for error in invalid_baseline_errors), invalid_baseline_errors
+        baseline_path.write_bytes(valid_baseline)
+
+        missing_capture_status = status.replace(
+            "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD\\n", "", 1
+        )
+        missing_capture_errors = verify_wisp_zap_client.verify(log, missing_capture_status, root)
+        assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD" in error
+                   for error in missing_capture_errors), missing_capture_errors
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
