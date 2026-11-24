@@ -612,8 +612,25 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 errors.append("captured FXBolt cycle has no matching completed additive render batch")
             if expired_for_event is None or status_expired is None:
                 errors.append("captured FXBolt cycle has no matching three-tick expiry evidence")
-            elif int(expired_for_event.group(2)) != 4:
-                errors.append("FXBolt did not expire one tick after BETA26 particleMaxAge=3")
+            else:
+                expiry_game_time = int(expired_for_event.group(1))
+                expiry_age_ticks = int(expired_for_event.group(2))
+                event_frames = [
+                    frame for frame in zap_frames
+                    if frame.group(1) == source_id and frame.group(3) == created_at
+                ]
+                if expiry_age_ticks < 4:
+                    errors.append("FXBolt expired before the BETA26 particleMaxAge=3 boundary")
+                if expiry_game_time - int(created_at) != expiry_age_ticks:
+                    errors.append("FXBolt expiry gameTime and elapsed-age evidence disagree")
+                late_render_frames = [
+                    frame for frame in event_frames
+                    if int(frame.group(6)) > 3 or float(frame.group(7)) >= 4.0
+                ]
+                if late_render_frames:
+                    errors.append("FXBolt produced a render frame at or after its BETA26 expiry boundary")
+                if event_frames and expiry_game_time <= max(int(frame.group(4)) for frame in event_frames):
+                    errors.append("FXBolt cleanup was observed before its last visible render frame")
 
             if rendered_for_event is not None and int(rendered_for_event.group(1)) <= 2:
                 errors.append("captured FXBolt render batch has no interior polycone points")
