@@ -62,7 +62,7 @@ jobs:
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
             xvfb x11-utils xdotool openbox mesa-utils \
-            libgl1-mesa-dri libgl1 libxrender1 imagemagick
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
       - name: Verify BETA26 geometry and offline client-smoke contract
         run: |
           bash tools/test_wisp_zap_geometry.sh
