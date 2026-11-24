@@ -1024,6 +1024,9 @@ def main() -> int:
             log.replace("TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21", "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22"), status, root
         ), "camera and renderer ticks must match"
         assert verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21", ""), status, root
+        ), "missing selected-frame renderer callback must fail"
+        assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_CAPTURE_TICK=23", "WISP_RENDER_CAPTURE_TICK=24"), root
         ), "post-hit capture tick must match its copied camera sample"
         assert verify_wisp_zap_client.verify(

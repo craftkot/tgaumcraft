@@ -731,6 +731,37 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 "first-frame cursor does not point to the exact completed frame: "
                 f"expectedLine={actual_frame_line} actualLine={first_frame_line_number.group(1)}"
             )
+    if (
+        first_frame_id is not None
+        and first_frame_tick is not None
+        and pre_attack_track_status is not None
+        and first_frame_line_number is not None
+    ):
+        log_lines = log_text.splitlines()
+        track_line_number = int(pre_attack_track_status.group(3))
+        completed_frame_line_number = int(first_frame_line_number.group(1))
+        selected_render_prefix = (
+            f"TC_SMOKE_WISP_RENDERED=YES id={first_frame_id.group(1)} "
+            f"aspect=aer tick={first_frame_tick.group(1)}"
+        )
+        selected_render_lines = [
+            index
+            for index, line in enumerate(log_lines, start=1)
+            if track_line_number < index < completed_frame_line_number
+            and line.startswith(selected_render_prefix)
+        ]
+        if len(selected_render_lines) != 1:
+            errors.append(
+                "selected first tracked frame must have exactly one matching Wisp renderer callback: "
+                f"id={first_frame_id.group(1)} tick={first_frame_tick.group(1)} "
+                f"found={len(selected_render_lines)}"
+            )
+        if first_frame_camera_sample is not None:
+            if first_frame_camera_sample.group(2, 3) != (
+                first_frame_id.group(1),
+                first_frame_tick.group(1),
+            ):
+                errors.append("selected first-frame camera sample does not match the tracked Wisp renderer tick")
     if attack_camera_frame is None:
         errors.append("missing camera frame used for the real Wisp attack")
     if attack_camera_complete is None:
