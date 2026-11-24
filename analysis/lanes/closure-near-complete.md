@@ -414,3 +414,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - `tools/verify_crystal_mesh_screenshots.py` сохраняет прежние пять synthetic cases и добавляет три: реальный центр 1024×768 окна внутри 1280×800 desktop (reject без viewport / accept с viewport), desktop-only шум вне окна (reject), выходящий за PNG viewport (reject). Ожидается `CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=8`.
 - Изменённые файлы: `tools/verify_crystal_mesh_screenshots.py`, `tools/client_crystal_outline_smoke.py`, `tools/test_crystal_outline_smoke.py`, этот журнал. Производственный Java/OBJ/PNG-код, регистры, Gradle, workflow YAML, main и чужие ветки не менялись.
 - Кодовый коммит и новая точная CI-приёмка будут добавлены после публикации; до завершения нового клиента не считать шесть сторон принятыми. Индекс остаётся **59/100**, M16 **4/6**, M08 **5/9**. Следующее: повторить реальный client smoke; требовать шесть mesh pixel PASS, шесть ray miss/hit и multi-face full cube, не снижая пороги.
+
+
+### Follow-up on the first viewport-aware CI attempt
+
+- On code/test SHA `8f780dc08ddd08ec9192fe00db47f400d6aef2e6`, the new pixel logic's eight synthetic cases **passed** (`CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=8`), but both push and PR Crystal Outline jobs stopped in the smoke-contract step before NeoForge build/client launch.
+- Exact failure: `tools/test_crystal_outline_smoke.py:291` expected three `xdotool getwindowgeometry --shell "$WIN"` calls; the generated client body correctly contains four (miss ray, hit ray, mesh viewport, multi-face ray). This is only an outdated static count assertion; the viewport logic itself passed its synthetic regressions.
+- Corrected the expected count to four. No threshold, viewport math, camera, production Java, assets or workflow changed. The new SHA must still pass the real Minecraft client before the six-face visual check is accepted.
