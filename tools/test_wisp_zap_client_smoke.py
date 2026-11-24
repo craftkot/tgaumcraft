@@ -1052,8 +1052,8 @@ def main() -> int:
     baseline_a_index = setup.index("wisp_capture 79-wisp-before-a", support_index)
     assert night_index < baseline_a_index, "night lighting must be fixed before baseline screenshots"
     baseline_b_index = setup.index("wisp_capture 79-wisp-before-b", baseline_a_index)
-    baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
-    spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
+    pre_spawn_baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN", baseline_b_index)
+    spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', pre_spawn_baseline_marker_index)
     summon_index = setup.index('wisp_fast_command "/summon thaumcraft:wisp', spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
@@ -1067,8 +1067,8 @@ def main() -> int:
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
     baseline_capture_index = setup.index("wisp_capture 79-wisp-third-person-before-zap", target_index)
-    baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD", baseline_capture_index)
-    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', baseline_marker_index)
+    zap_baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD", baseline_capture_index)
+    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', zap_baseline_marker_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", zap_cursor_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
@@ -1082,7 +1082,7 @@ def main() -> int:
     capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", restore_marker_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < baseline_capture_index < baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < baseline_capture_index < zap_baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
         "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
@@ -1342,7 +1342,7 @@ def main() -> int:
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
-        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
+        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
