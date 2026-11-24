@@ -132,7 +132,9 @@ printf 'PARENT_AFTER_WATCHER\n' >> "$EVENT_LOG"
 printf '%s\n' "$frame_line"
 '''
 
-    def run_case(click_exit: int) -> tuple[int, str, list[str], list[str]]:
+    def run_case(
+        click_exit: int, after_lines: int = 1, append_second: bool = True
+    ) -> tuple[int, str, list[str], list[str]]:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             bin_dir = root / "bin"
@@ -146,7 +148,7 @@ printf '%s\n' "$frame_line"
             )
             clicker.chmod(0o755)
             log_path = root / "client.log"
-            # This matching frame predates the watcher cursor and must never trigger a click.
+            # The first matching frame is already present before the watcher starts.
             log_path.write_text(first + "\n", encoding="utf-8")
             click_log = root / "clicks.log"
             event_log = root / "events.log"
@@ -156,15 +158,16 @@ printf '%s\n' "$frame_line"
             env["EVENT_LOG"] = str(event_log)
             env["CLICK_EXIT"] = str(click_exit)
             process = subprocess.Popen(
-                ["bash", "-c", watcher, "_", str(log_path), pattern, "1"],
+                ["bash", "-c", watcher, "_", str(log_path), pattern, str(after_lines)],
                 text=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 env=env,
             )
-            time.sleep(0.1)
-            with log_path.open("a", encoding="utf-8") as log_file:
-                log_file.write(second + "\n")
+            if append_second:
+                time.sleep(0.1)
+                with log_path.open("a", encoding="utf-8") as log_file:
+                    log_file.write(second + "\n")
             try:
                 stdout, stderr = process.communicate(timeout=3)
             except subprocess.TimeoutExpired:
@@ -187,6 +190,23 @@ printf '%s\n' "$frame_line"
     assert clicks == ["click 1"], clicks
     assert events == [], events
 
+    # The first completed frame may already be attackable when the watcher starts.
+    # Cursor 0 is inclusive and must click that existing line without waiting for another tick.
+    rc, output, clicks, events = run_case(0, after_lines=0, append_second=False)
+    assert rc == 0, rc
+    assert output == first, output
+    assert clicks == ["click 1"], clicks
+    assert events == ["CLICK_DISPATCHED", "PARENT_AFTER_WATCHER"], events
+
+
+
+
+def _test_first_frame_cursor_is_inclusive(generated: str) -> None:
+    """The first AFTER_LEVEL hit frame must not be skipped by an exclusive tail cursor."""
+    body = _bash_function_body(generated, "wisp_attack_live_wisp")
+    expected = 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"'
+    assert expected in body, "first attack watcher must include the already-observed render frame"
+    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in body
 
 
 def _test_capture_reanchor_retry(generated: str) -> None:
@@ -309,6 +329,7 @@ def main() -> int:
     fixture = "#!/usr/bin/env bash\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n" + anchor + "\n"
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
+    _test_first_frame_cursor_is_inclusive(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
 

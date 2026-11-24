@@ -359,7 +359,10 @@ def render() -> str:
       if [ "$attempt" -eq 1 ]; then
         # Continue immediately after the exact frame already consumed by wisp_wait_for_fresh_render.
         # A later wc -l snapshot can skip a valid ENTITY frame written in this hand-off window.
-        frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"
+        # The watcher cursor is exclusive (tail starts at after_lines + 1).
+        # Include the already-observed first frame so an ENTITY hit in that
+        # exact AFTER_LEVEL frame can trigger the click before the Wisp flies away.
+        frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"
         if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
           echo "WISP_FIRST_FRAME_LINE_NUMBER_MISSING=$frame_log_lines" | tee -a client-smoke-status.txt
           exit 1
