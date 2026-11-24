@@ -85,8 +85,17 @@ BAD_LOG_PATTERNS = (
 
 
 
+def _is_crosshair_pixel(x: int, y: int, width: int, height: int) -> bool:
+    """Identify the fixed 2px-thick vanilla crosshair drawn over the scene."""
+    center_x = width // 2 - 1
+    center_y = height // 2 - 1
+    vertical = center_x - 1 <= x <= center_x and center_y - 9 <= y <= center_y + 8
+    horizontal = center_y - 1 <= y <= center_y and center_x - 9 <= x <= center_x + 8
+    return vertical or horizontal
+
+
 def _read_aer_pixels(path: Path) -> tuple[list[str], list[int], list[int]]:
-    """Read Aer-tinted pixels from the fixed crosshair ROI."""
+    """Read Aer-tinted scene pixels, excluding the HUD crosshair overlay."""
     if not path.is_file() or path.stat().st_size < 128:
         return [f"missing or empty aim screenshot: {path.name}"], [], []
 
@@ -115,14 +124,18 @@ def _read_aer_pixels(path: Path) -> tuple[list[str], list[int], list[int]]:
     xs: list[int] = []
     ys: list[int] = []
     for index in range(width * height):
+        x = index % width
+        y = index // width
+        if _is_crosshair_pixel(x, y, width, height):
+            continue
         red, green, blue = pixels[index * 3:index * 3 + 3]
-        # Aer is #FFFF7E. Permit normal alpha blending against sky/stone while
-        # rejecting grayscale crosshair, stone and blue sky pixels.
+        # Aer is #FFFF7E. Permit normal alpha blending against sky/stone;
+        # the warm-tinted vanilla crosshair is masked separately above.
         if red >= 160 and green >= 160 and blue <= 240 and (
             red - blue >= 12 or green - blue >= 18
         ):
-            xs.append(index % width)
-            ys.append(index // width)
+            xs.append(x)
+            ys.append(y)
     return [], xs, ys
 
 
