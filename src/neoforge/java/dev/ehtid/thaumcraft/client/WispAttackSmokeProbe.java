@@ -5,6 +5,7 @@ import dev.ehtid.thaumcraft.entity.WispEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -33,6 +34,8 @@ public final class WispAttackSmokeProbe {
     private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";
     private static int trackedWispId = -1;
+    private static boolean aimCameraAtWisp = true;
+    private static boolean sideViewLogged;
 
     private WispAttackSmokeProbe() {}
 
@@ -83,6 +86,8 @@ public final class WispAttackSmokeProbe {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
             trackedWispId = -1;
+            aimCameraAtWisp = true;
+            sideViewLogged = false;
             return;
         }
 
@@ -100,6 +105,8 @@ public final class WispAttackSmokeProbe {
             ).stream().findFirst().orElse(null);
             if (smokeTarget != null) {
                 trackedWispId = smokeTarget.getId();
+                aimCameraAtWisp = true;
+                sideViewLogged = false;
                 System.out.println("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=" + trackedWispId
                         + " tick=" + smokeTarget.tickCount
                         + " gameTime=" + minecraft.level.getGameTime());
@@ -112,6 +119,22 @@ public final class WispAttackSmokeProbe {
         Entity target = minecraft.level.getEntity(trackedWispId);
         if (!(target instanceof WispEntity wisp) || !wisp.isAlive()) {
             trackedWispId = -1;
+            aimCameraAtWisp = true;
+            sideViewLogged = false;
+            return;
+        }
+
+        if (!aimCameraAtWisp) {
+            float yaw = Mth.wrapDegrees(minecraft.player.getYRot());
+            float pitch = minecraft.player.getXRot();
+            if (!sideViewLogged
+                    && "THIRD_PERSON_BACK".equals(minecraft.options.getCameraType().name())
+                    && Math.abs(Math.abs(yaw) - 90.0F) <= 5.0F
+                    && Math.abs(pitch) <= 5.0F) {
+                sideViewLogged = true;
+                System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
+                        + " yaw=" + yaw + " pitch=" + pitch + " cameraType=THIRD_PERSON_BACK");
+            }
             return;
         }
 
@@ -135,7 +158,10 @@ public final class WispAttackSmokeProbe {
 
         if (event.getTarget() instanceof WispEntity wisp) {
             trackedWispId = wisp.getId();
+            aimCameraAtWisp = false;
+            sideViewLogged = false;
             System.out.println("TC_SMOKE_WISP_CAMERA_TRACK=YES id=" + trackedWispId);
+            System.out.println("TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" + trackedWispId);
             long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
             System.out.println("TC_SMOKE_WISP_CLIENT_ATTACK=YES player=" + minecraft.player.getId()
                     + " target=" + wisp.getId()
