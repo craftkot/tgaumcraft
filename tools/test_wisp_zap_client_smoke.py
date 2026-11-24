@@ -1363,13 +1363,13 @@ def main() -> int:
         # The third-person control image is a real PNG, not merely a PNG signature.
         baseline_path = root / verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT
         valid_baseline = baseline_path.read_bytes()
-        baseline_path.write_bytes(b"\\x89PNG\\r\\n\\x1a\\n" + b"x" * 256)
+        baseline_path.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 256)
         invalid_baseline_errors = verify_wisp_zap_client.verify(log, status, root)
         assert any("cannot decode FXBolt image" in error for error in invalid_baseline_errors), invalid_baseline_errors
         baseline_path.write_bytes(valid_baseline)
 
         missing_capture_status = status.replace(
-            "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD\\n", "", 1
+            "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD\n", "", 1
         )
         missing_capture_errors = verify_wisp_zap_client.verify(log, missing_capture_status, root)
         assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD" in error
