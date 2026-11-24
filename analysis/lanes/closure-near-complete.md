@@ -167,3 +167,10 @@
 - Fresh overlap spot-check for current open PRs #1–#3, #5–#9 and #58–#62 found no changes to the two Wisp driver/test paths. Earlier lane audit had checked the other open PR paths; PR #4 remains the owner of these files. Existing PR #3 overlaps in `SalisMundusItem.java` and `ArcaneWorkbenchMenu.java` are unrelated and unresolved.
 - On the pre-fix exact SHA `a0a7f7b`, Full Port CI [#45295103066](https://github.com/craftkot/tgaumcraft/actions/runs/45295103066) passed, including NeoForge build/dedicated server. Wisp client [#45295103283](https://github.com/craftkot/tgaumcraft/actions/runs/45295103283) failed at the skipped first-frame/attack stage; the three-frame payload/expiry/pixel verification was skipped. No Wisp gameplay acceptance is claimed.
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED. No merge or force-push. Next: run exact-head Wisp client and require same-ID Survival click/damage/target, matching payload, real FXBolt ages 0/1/2, expiry, visible Aer pixels outside HUD, transient pixel delta and no texture-load errors. Keep the score at **59/100** until full gameplay/visual acceptance passes.
+
+
+### Follow-up — exact-SHA offline contract caught a stale assertion
+
+- Wisp client [#45302958665](https://github.com/craftkot/tgaumcraft/actions/runs/45302958665) on `8ae914276cedbd5b3d62cd483593524b3f5bd564` passed geometry and atlas checks, then failed the offline Python contract before Bash generation or Minecraft startup. The remaining assertion at `tools/test_wisp_zap_client_smoke.py:494` still required the old direct frame-line cursor, although the driver now correctly subtracts one for the exclusive `tail -n +(after_lines + 1)` reader. This was a stale regression expectation; it did not test the runtime fix.
+- Updated the assertion to require `frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"` and explicitly reject the old expression. No production code changed in this follow-up.
+- No Python contract or real-client pass is claimed on `8ae914`. Next exact-SHA Wisp workflow must pass the complete offline contract and generated `bash -n` before gameplay is considered.

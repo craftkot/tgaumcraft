@@ -490,8 +490,11 @@ def main() -> int:
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reanchor_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
-    fresh_cursor = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
-    assert fresh_cursor in preaim_branch, "the attack must continue after the exact consumed pre-aim frame"
+    fresh_cursor = 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"'
+    assert fresh_cursor in preaim_branch, (
+        "the exclusive watcher cursor must include the already-observed pre-aim frame"
+    )
+    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in preaim_branch
     assert 'frame_log_lines="$(wc -l < client-smoke/client.log)"' not in preaim_branch, (
         "a new tail snapshot can skip an attackable frame written during the hand-off"
     )
