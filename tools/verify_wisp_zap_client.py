@@ -31,7 +31,6 @@ AIM_ROI = (128, 128, 448, 320)
 # The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
 # The Wisp billboard is centred ~16 px below the crosshair in this fixture.
 BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
-BOLT_SOURCE_CENTER = (512, 400)
 BOLT_SOURCE_EXCLUSION_RADIUS = 28
 
 REQUIRED_LOG_MARKERS = (
@@ -42,6 +41,8 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_ATTACK_INPUT=YES",
     "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
     "TC_SMOKE_WISP_CAMERA_TRACK=YES",
+    "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES",
+    "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES",
     "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -80,8 +81,9 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
-    "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
-    "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BEFORE_PAYLOAD",
+    "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
+    "WISP_CAMERA_SIDE_VIEW=YES",
+    "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
     "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
     "WISP_ZAP_FRAME_OBSERVED=YES",
     "WISP_ZAP_VIDEO_STARTED=YES",
@@ -204,8 +206,76 @@ def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, i
     return errors, len(xs), bbox
 
 
+def _find_wisp_source_center(
+    pixels: bytes, roi_width: int, roi_height: int, roi_left: int, roi_top: int
+) -> tuple[float, float] | None:
+    """Locate the compact Aer billboard in a real screenshot, excluding the HUD crosshair."""
+    mask = bytearray(roi_width * roi_height)
+    for index in range(roi_width * roi_height):
+        x = index % roi_width
+        y = index // roi_width
+        if _is_crosshair_pixel(roi_left + x, roi_top + y, 1280, 800):
+            continue
+        red, green, blue = pixels[index * 3:index * 3 + 3]
+        if red >= 160 and green >= 160 and blue <= 240 and (
+            red - blue >= 12 or green - blue >= 18
+        ):
+            mask[index] = 1
+
+    visited = bytearray(len(mask))
+    candidates: list[tuple[float, int, float, float]] = []
+    for first in range(len(mask)):
+        if not mask[first] or visited[first]:
+            continue
+        queue = deque([first])
+        visited[first] = 1
+        count = 0
+        sum_x = sum_y = 0.0
+        min_x = min_y = 1 << 30
+        max_x = max_y = -1
+        while queue:
+            current = queue.popleft()
+            x = current % roi_width
+            y = current // roi_width
+            count += 1
+            sum_x += x
+            sum_y += y
+            min_x = min(min_x, x)
+            min_y = min(min_y, y)
+            max_x = max(max_x, x)
+            max_y = max(max_y, y)
+            for neighbour_y in range(max(0, y - 1), min(roi_height, y + 2)):
+                row = neighbour_y * roi_width
+                for neighbour_x in range(max(0, x - 1), min(roi_width, x + 2)):
+                    neighbour = row + neighbour_x
+                    if mask[neighbour] and not visited[neighbour]:
+                        visited[neighbour] = 1
+                        queue.append(neighbour)
+
+        box_width = max_x - min_x + 1
+        box_height = max_y - min_y + 1
+        compactness = count / float(box_width * box_height)
+        if (
+            count >= 12
+            and min(box_width, box_height) >= 3
+            and max(box_width, box_height) <= 96
+            and compactness >= 0.08
+        ):
+            candidates.append((
+                count * compactness,
+                count,
+                sum_x / count,
+                sum_y / count,
+            ))
+
+    if not candidates:
+        return None
+    _, _, center_x, center_y = max(candidates, key=lambda item: item[0])
+    return roi_left + center_x, roi_top + center_y
+
+
 def _bolt_segment_candidates(
-    path: Path, baseline_path: Path
+    path: Path, baseline_path: Path, expected_visible: bool
 ) -> tuple[list[str], list[dict[str, float]]]:
     """Find an Aer-yellow bolt from its additive delta against a same-camera no-zap frame."""
     for candidate_path in (path, baseline_path):
@@ -245,16 +315,31 @@ def _bolt_segment_candidates(
         return frame_errors + baseline_errors, []
     assert frame_pixels is not None and baseline_pixels is not None
 
-    source_x = BOLT_SOURCE_CENTER[0] - roi_left
-    source_y = BOLT_SOURCE_CENTER[1] - roi_top
+    baseline_source = _find_wisp_source_center(
+        baseline_pixels, roi_width, roi_height, roi_left, roi_top
+    )
+    if baseline_source is None:
+        return [f"{baseline_path.name} has no detectable Aer Wisp billboard in the FXBolt ROI"], []
+    frame_source = _find_wisp_source_center(
+        frame_pixels, roi_width, roi_height, roi_left, roi_top
+    ) if not expected_visible else None
+    source_center = frame_source or baseline_source
+    exclusion_centers = [
+        (baseline_source[0] - roi_left, baseline_source[1] - roi_top)
+    ]
+    if frame_source is not None:
+        exclusion_centers.append((frame_source[0] - roi_left, frame_source[1] - roi_top))
+    source_x = source_center[0] - roi_left
+    source_y = source_center[1] - roi_top
     exclusion_squared = BOLT_SOURCE_EXCLUSION_RADIUS ** 2
     mask = bytearray(pixel_count)
     for index in range(pixel_count):
         x = index % roi_width
         y = index // roi_width
-        dx = x - source_x
-        dy = y - source_y
-        if dx * dx + dy * dy <= exclusion_squared:
+        if any(
+            (x - center_x) ** 2 + (y - center_y) ** 2 <= exclusion_squared
+            for center_x, center_y in exclusion_centers
+        ):
             continue
         offset = index * 3
         frame_r, frame_g, frame_b = frame_pixels[offset], frame_pixels[offset + 1], frame_pixels[offset + 2]
@@ -361,6 +446,8 @@ def _bolt_segment_candidates(
             candidates.append(
                 {
                     "pixels": float(count),
+                    "source_x": source_center[0],
+                    "source_y": source_center[1],
                     "length": major_length,
                     "width": minor_width,
                     "distance": distance,
@@ -380,7 +467,7 @@ def _bolt_segment_candidates(
 def verify_bolt_segment(
     path: Path, expected_visible: bool, baseline_path: Path
 ) -> tuple[list[str], dict[str, float] | None]:
-    errors, candidates = _bolt_segment_candidates(path, baseline_path)
+    errors, candidates = _bolt_segment_candidates(path, baseline_path, expected_visible)
     if errors:
         return errors, None
     if expected_visible and not candidates:
@@ -614,6 +701,13 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_CAMERA=YES id=(\d+) aimTarget=render_safe_quarter tick=(\d+)",
         log_text,
     )
+    camera_stopped = _first(
+        r"TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=(\d+)", log_text
+    )
+    side_view = _first(
+        r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) yaw=(-?[0-9.]+) "
+        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK", log_text
+    )
     pre_attack_track = _first(
         r"TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=(\d+) tick=(\d+) gameTime=(\d+)",
         log_text,
@@ -646,6 +740,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if match is None:
             errors.append(f"missing real gameplay/render evidence: {label}")
 
+    if client_attack and camera_stopped and camera_stopped.group(1) != client_attack.group(2):
+        errors.append("camera aim lock stopped for a different Wisp than the real client attack")
+    if camera_stopped and side_view and camera_stopped.group(1) != side_view.group(1):
+        errors.append("side-view camera sample belongs to a different Wisp than the stopped tracker")
+    if side_view:
+        yaw = float(side_view.group(2))
+        pitch = float(side_view.group(3))
+        if abs(abs(yaw) - 90.0) > 5.0 or abs(pitch) > 5.0:
+            errors.append(f"camera is not side-on: yaw={yaw:.2f} pitch={pitch:.2f}")
     if wisp_camera and wisp_rendered:
         if wisp_camera.group(1) != wisp_rendered.group(1):
             errors.append("camera sample and rendered Wisp use different entity IDs")
