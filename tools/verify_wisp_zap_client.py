@@ -32,6 +32,8 @@ AIM_ROI = (128, 128, 448, 320)
 # The same-camera baseline contains the Wisp billboard; its actual screen-space
 # centre is detected from pixels rather than assumed to be the crosshair.
 BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
+VIEWPORT_WIDTH = 1024
+VIEWPORT_HEIGHT = 768
 BOLT_SOURCE_EXCLUSION_RADIUS = 28
 
 REQUIRED_LOG_MARKERS = (
@@ -215,7 +217,7 @@ def _find_wisp_source_center(
     for index in range(roi_width * roi_height):
         x = index % roi_width
         y = index // roi_width
-        if _is_crosshair_pixel(roi_left + x, roi_top + y, 1280, 800):
+        if _is_crosshair_pixel(roi_left + x, roi_top + y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT):
             continue
         red, green, blue = pixels[index * 3:index * 3 + 3]
         if red >= 160 and green >= 160 and blue <= 240 and (
