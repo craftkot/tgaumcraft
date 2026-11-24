@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Fail-closed pixel evidence that the seeded BETA26 crystal mesh reached the real client framebuffer.
+"""Fail-closed pixel evidence that the seeded BETA26 crystal shards reached the real client framebuffer.
 
-This proves visibility, not visual identity against a reference screenshot.
+This proves visible aqua-tinted shard regions, not visual identity against a reference screenshot.
 Exact OBJ bytes, group names, seeded selection and face transforms are checked separately.
 """
 from __future__ import annotations
@@ -16,6 +16,9 @@ DIFF_THRESHOLD = 12
 MIN_CHANGED_PIXELS = 80
 MIN_COMPONENT_PIXELS = 40
 MIN_COMPONENT_EDGE = 6
+MIN_AQUA_PIXELS = 40
+MIN_AQUA_RATIO = 0.60
+MIN_VISIBLE_SHARD_COMPONENTS = 3
 MAX_COMPONENT_CENTER_OFFSET = 96.0
 
 
@@ -51,12 +54,14 @@ def analyze_rgb_pair(before: bytes, after: bytes, width: int, height: int,
     visited = bytearray(len(mask))
     largest = 0
     largest_box = None
+    components = []
     for start, active in enumerate(mask):
         if not active or visited[start]:
             continue
         stack = [start]
         visited[start] = 1
         count = 0
+        aqua_count = 0
         min_x = max_x = start % side
         min_y = max_y = start // side
         while stack:
@@ -68,6 +73,15 @@ def analyze_rgb_pair(before: bytes, after: bytes, width: int, height: int,
             max_x = max(max_x, x)
             min_y = min(min_y, y)
             max_y = max(max_y, y)
+
+            # This smoke deliberately places crystal_aqua. Require the actual
+            # aqua tint in changed pixels, not a larger unrelated lighting or
+            # skybox delta elsewhere in the ROI.
+            pixel_offset = ((y0 + y) * width + (x0 + x)) * 3
+            red, green, blue = after[pixel_offset:pixel_offset + 3]
+            if green >= red * 1.35 + 8 and blue >= green * 1.05 + 4:
+                aqua_count += 1
+
             for next_y in range(max(0, y - 1), min(side, y + 2)):
                 row = next_y * side
                 for next_x in range(max(0, x - 1), min(side, x + 2)):
@@ -75,34 +89,56 @@ def analyze_rgb_pair(before: bytes, after: bytes, width: int, height: int,
                     if mask[neighbour] and not visited[neighbour]:
                         visited[neighbour] = 1
                         stack.append(neighbour)
+
+        box = (x0 + min_x, y0 + min_y, x0 + max_x, y0 + max_y)
         if count > largest:
             largest = count
-            largest_box = (x0 + min_x, y0 + min_y, x0 + max_x, y0 + max_y)
+            largest_box = box
+        center_x = (box[0] + box[2]) / 2.0
+        center_y = (box[1] + box[3]) / 2.0
+        viewport_center_x = vx + viewport_width / 2.0
+        viewport_center_y = vy + viewport_height / 2.0
+        component_width = box[2] - box[0] + 1
+        component_height = box[3] - box[1] + 1
+        components.append({
+            "pixels": count,
+            "aqua_pixels": aqua_count,
+            "aqua_ratio": aqua_count / count,
+            "bbox": box,
+            "width": component_width,
+            "height": component_height,
+            "center_offset": math.hypot(
+                center_x - viewport_center_x,
+                center_y - viewport_center_y,
+            ),
+        })
 
+    # The source OBJ is eight separate shard groups; after seeded selection,
+    # its visible shards normally remain several disconnected screen regions.
+    # Do not let a larger non-aqua lighting delta mask those real shard regions.
+    visible_shards = [
+        component for component in components
+        if component["pixels"] >= MIN_COMPONENT_PIXELS
+        and component["width"] >= MIN_COMPONENT_EDGE
+        and component["height"] >= MIN_COMPONENT_EDGE
+        and component["center_offset"] <= MAX_COMPONENT_CENTER_OFFSET
+        and component["aqua_pixels"] >= MIN_AQUA_PIXELS
+        and component["aqua_ratio"] >= MIN_AQUA_RATIO
+    ]
     return {
         "changed": changed,
         "largest": largest,
         "bbox": largest_box,
+        "visible_shards": visible_shards,
         "viewport": (vx, vy, viewport_width, viewport_height),
     }
 
 
 def has_visible_mesh(metrics: dict, width: int, height: int) -> bool:
-    box = metrics["bbox"]
-    if metrics["changed"] < MIN_CHANGED_PIXELS or metrics["largest"] < MIN_COMPONENT_PIXELS or box is None:
-        return False
-    min_x, min_y, max_x, max_y = box
-    if max_x - min_x + 1 < MIN_COMPONENT_EDGE or max_y - min_y + 1 < MIN_COMPONENT_EDGE:
-        return False
-    center_x = (min_x + max_x) / 2.0
-    center_y = (min_y + max_y) / 2.0
-    vx, vy, viewport_width, viewport_height = metrics.get("viewport", (0, 0, width, height))
-    viewport_center_x = vx + viewport_width / 2.0
-    viewport_center_y = vy + viewport_height / 2.0
-    return math.hypot(
-        center_x - viewport_center_x,
-        center_y - viewport_center_y,
-    ) <= MAX_COMPONENT_CENTER_OFFSET
+    return (
+        metrics["changed"] >= MIN_CHANGED_PIXELS
+        and len(metrics.get("visible_shards", ())) >= MIN_VISIBLE_SHARD_COMPONENTS
+    )
 
 
 def load_rgb(path: Path) -> tuple[int, int, bytes]:
@@ -131,11 +167,14 @@ def verify_pair(label: str, before_path: Path, after_path: Path,
     if not has_visible_mesh(metrics, before_width, before_height):
         raise SystemExit(
             f"CRYSTAL_MESH_PIXELS=FAIL label={label} changed={metrics['changed']} "
+            f"visible_shards={len(metrics.get('visible_shards', ())) } "
             f"largest={metrics['largest']} bbox={metrics['bbox']}"
         )
     box = metrics["bbox"]
+    aqua_pixels = sum(component["aqua_pixels"] for component in metrics["visible_shards"])
     print(
         f"CRYSTAL_MESH_PIXELS=PASS label={label} changed={metrics['changed']} "
+        f"visible_shards={len(metrics['visible_shards'])} aqua_pixels={aqua_pixels} "
         f"largest={metrics['largest']} bbox={box[0]},{box[1]},{box[2]},{box[3]}"
     )
     return metrics
@@ -145,23 +184,33 @@ def run_synthetic_tests() -> None:
     width = height = 384
     base = bytes([80]) * (width * height * 3)
 
-    # Low-contrast but contiguous shard: this also covers the grey Ordo tint.
+    def paint(image: bytearray, image_width: int, x: int, y: int,
+              rect_width: int, rect_height: int,
+              color: tuple[int, int, int]) -> None:
+        row = bytes(color) * rect_width
+        for row_y in range(y, y + rect_height):
+            offset = (row_y * image_width + x) * 3
+            image[offset:offset + len(row)] = row
+
+    def add_three_shards(image: bytearray, image_width: int,
+                         center_x: int, center_y: int,
+                         color: tuple[int, int, int] = (50, 80, 95)) -> None:
+        for dx, dy in ((-22, -14), (0, 16), (22, -14)):
+            paint(image, image_width, center_x + dx - 6, center_y + dy - 6,
+                  12, 12, color)
+
+    # Three low-contrast, disconnected aqua shards are a valid source mesh.
     low_contrast = bytearray(base)
-    for y in range(180, 192):
-        for x in range(180, 192):
-            offset = (y * width + x) * 3
-            low_contrast[offset:offset + 3] = bytes((95, 95, 95))
+    add_three_shards(low_contrast, width, width // 2, height // 2)
     positive = analyze_rgb_pair(base, bytes(low_contrast), width, height)
     assert has_visible_mesh(positive, width, height), positive
+    assert len(positive["visible_shards"]) == 3, positive
 
     identical = analyze_rgb_pair(base, base, width, height)
     assert not has_visible_mesh(identical, width, height), identical
 
     outside = bytearray(base)
-    for y in range(8, 20):
-        for x in range(8, 20):
-            offset = (y * width + x) * 3
-            outside[offset:offset + 3] = bytes((255, 255, 255))
+    paint(outside, width, 8, 8, 12, 12, (255, 255, 255))
     outside_result = analyze_rgb_pair(base, bytes(outside), width, height)
     assert not has_visible_mesh(outside_result, width, height), outside_result
 
@@ -169,32 +218,44 @@ def run_synthetic_tests() -> None:
     for index in range(100):
         x = 80 + (index % 10) * 3
         y = 80 + (index // 10) * 3
-        offset = (y * width + x) * 3
-        scattered[offset:offset + 3] = bytes((120, 120, 120))
+        paint(scattered, width, x, y, 1, 1, (50, 80, 95))
     scattered_result = analyze_rgb_pair(base, bytes(scattered), width, height)
     assert not has_visible_mesh(scattered_result, width, height), scattered_result
 
     tiny = bytearray(base)
-    for y in range(190, 195):
-        for x in range(190, 195):
-            offset = (y * width + x) * 3
-            tiny[offset:offset + 3] = bytes((120, 120, 120))
+    paint(tiny, width, 190, 190, 5, 5, (50, 80, 95))
     tiny_result = analyze_rgb_pair(base, bytes(tiny), width, height)
     assert not has_visible_mesh(tiny_result, width, height), tiny_result
 
+    single_shard = bytearray(base)
+    paint(single_shard, width, 186, 186, 12, 12, (50, 80, 95))
+    single_result = analyze_rgb_pair(base, bytes(single_shard), width, height)
+    assert not has_visible_mesh(single_result, width, height), single_result
+
+    # Blue-only UI/background changes must not impersonate crystal_aqua tint.
+    blue_only = bytearray(base)
+    add_three_shards(blue_only, width, width // 2, height // 2, (50, 70, 120))
+    blue_result = analyze_rgb_pair(base, bytes(blue_only), width, height)
+    assert not has_visible_mesh(blue_result, width, height), blue_result
+
+    # A larger unrelated dark/light component must not mask three real shards.
+    background_noise = bytearray(base)
+    add_three_shards(background_noise, width, width // 2, height // 2)
+    paint(background_noise, width, 64, 64, 80, 20, (10, 10, 20))
+    background_result = analyze_rgb_pair(base, bytes(background_noise), width, height)
+    assert background_result["largest"] > max(
+        component["pixels"] for component in background_result["visible_shards"]
+    ), background_result
+    assert has_visible_mesh(background_result, width, height), background_result
+
     # Xvfb's root screenshot can be larger than the Minecraft client window.
-    # A mesh at the actual window centre must be judged relative to that viewport,
-    # not to unrelated desktop pixels outside the game window.
     desktop_width, desktop_height = 1280, 800
     desktop_base = bytes([80]) * (desktop_width * desktop_height * 3)
     viewport = (1, 20, 1024, 768)
     viewport_center_x = viewport[0] + viewport[2] // 2
     viewport_center_y = viewport[1] + viewport[3] // 2
     desktop_mesh = bytearray(desktop_base)
-    for y in range(viewport_center_y - 6, viewport_center_y + 6):
-        for x in range(viewport_center_x - 6, viewport_center_x + 6):
-            offset = (y * desktop_width + x) * 3
-            desktop_mesh[offset:offset + 3] = bytes((95, 95, 95))
+    add_three_shards(desktop_mesh, desktop_width, viewport_center_x, viewport_center_y)
     root_center_result = analyze_rgb_pair(
         desktop_base, bytes(desktop_mesh), desktop_width, desktop_height
     )
@@ -204,12 +265,8 @@ def run_synthetic_tests() -> None:
     )
     assert has_visible_mesh(viewport_result, desktop_width, desktop_height), viewport_result
 
-    # Desktop-only changes outside the game window must not count as a rendered mesh.
     desktop_overlay = bytearray(desktop_base)
-    for y in range(viewport_center_y - 6, viewport_center_y + 6):
-        for x in range(1094, 1106):
-            offset = (y * desktop_width + x) * 3
-            desktop_overlay[offset:offset + 3] = bytes((255, 255, 255))
+    add_three_shards(desktop_overlay, desktop_width, 1100, viewport_center_y)
     overlay_result = analyze_rgb_pair(
         desktop_base, bytes(desktop_overlay), desktop_width, desktop_height, viewport=viewport
     )
@@ -225,7 +282,7 @@ def run_synthetic_tests() -> None:
     else:
         raise AssertionError("out-of-bounds screenshot viewport was accepted")
 
-    print("CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=8")
+    print("CRYSTAL_MESH_PIXEL_LOGIC_TESTS=PASS cases=12")
 
 
 def main() -> None:
