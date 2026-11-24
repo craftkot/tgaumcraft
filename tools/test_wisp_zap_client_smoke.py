@@ -347,6 +347,74 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         assert clicks == ["click 1"], clicks
 
 
+def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
+    """Ignore the pre-render tracking sample and select the exact completed-frame camera tick."""
+    body = _bash_function_body(generated, "wisp_verify_aim_telemetry")
+    function = "  wisp_verify_aim_telemetry() {\n" + body + "\n  }\n"
+
+    def camera_line(tick: int) -> str:
+        return (
+            f"TC_SMOKE_WISP_CAMERA=YES id=157 aimTarget=hitbox_center tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 "
+            "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
+            "wispX=12.5 wispY=149.3 wispZ=11.5 "
+            "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+            "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+            "aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978"
+        )
+
+    def run_case(selected_samples: int) -> tuple[int, str, str]:
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-first-frame-telemetry-") as directory:
+            root = Path(directory)
+            client_dir = root / "client-smoke"
+            client_dir.mkdir()
+            log_lines = [
+                camera_line(0),
+                "TC_SMOKE_WISP_RENDERED=YES id=157 aspect=aer tick=3",
+            ]
+            if selected_samples >= 1:
+                log_lines.append(camera_line(3))
+            if selected_samples >= 2:
+                log_lines.append(camera_line(3))
+            log_lines.append(
+                "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=157 tick=3 "
+                "gameTime=514 playerTick=481 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12"
+            )
+            (client_dir / "client.log").write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+            status_lines = [
+                "WISP_RENDER_FIRST_FRAME_ID=157",
+                "WISP_RENDER_FIRST_FRAME_TICK=3",
+                f"WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE={camera_line(3)}",
+                "WISP_RENDER_CAPTURE_ID=157",
+                "WISP_RENDER_CAPTURE_TICK=124",
+                camera_line(124),
+            ]
+            (root / "client-smoke-status.txt").write_text("\n".join(status_lines) + "\n", encoding="utf-8")
+            result = subprocess.run(
+                ["bash", "-c", "set -euo pipefail\n" + function + "\nwisp_verify_aim_telemetry 0\n"],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                check=False,
+                timeout=3,
+            )
+            status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+            return result.returncode, result.stdout + result.stderr, status
+
+    rc, output, status = run_case(1)
+    assert rc == 0, (rc, output, status)
+    assert "WISP_CAMERA_TELEMETRY=PASS id=157 tick=3 " in status, status
+    assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
+
+    rc, output, status = run_case(0)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_CAMERA_FIRST_FRAME_SAMPLE_COUNT=0 expected=1 id=157 tick=3" in status, status
+
+    rc, output, status = run_case(2)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_CAMERA_FIRST_FRAME_SAMPLE_COUNT=2 expected=1 id=157 tick=3" in status, status
+
+
 def _test_capture_reanchor_retry(generated: str) -> None:
     """Post-hit capture retries while the client tracker follows the moving Wisp."""
     body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
@@ -592,6 +660,7 @@ def main() -> int:
         generated = client_wisp_zap_smoke.render()
     _test_attack_frame_dot_tolerance(generated)
     _test_first_frame_cursor_is_exclusive(generated)
+    _test_first_frame_telemetry_uses_selected_frame(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
     _test_video_frame_extraction()
@@ -660,7 +729,8 @@ def main() -> int:
         "sleep 0.5",
         'wisp_fast_command "/summon thaumcraft:wisp',
         "CustomNameVisible:0b",
-        "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
+        'grep -F -- "$frame_camera_marker" | head -1',
+        'grep -F -c -- "$frame_camera_marker" || true',
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=",
