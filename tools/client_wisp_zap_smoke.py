@@ -900,7 +900,11 @@ def render() -> str:
   # three-tick bolt entirely.
   wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"
 
-  # Restore first-person for the independent post-hit aim/camera telemetry check.
+  # Minecraft cycles FIRST_PERSON -> THIRD_PERSON_BACK -> THIRD_PERSON_FRONT -> FIRST_PERSON.
+  # We switched to THIRD_PERSON_BACK before the zap, so one F5 press would leave
+  # the camera in THIRD_PERSON_FRONT and hide the Wisp behind the player model.
+  xdotool key --clearmodifiers F5
+  sleep 0.1
   xdotool key --clearmodifiers F5
   sleep 0.1
   echo 'WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON' | tee -a client-smoke-status.txt
