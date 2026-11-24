@@ -560,11 +560,11 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=100 gameTime=524 ageTicks=4",
     ]
@@ -715,8 +715,87 @@ def _test_wisp_render_profile(generated: str) -> None:
         assert "WISP_CLIENT_RENDER_OPTION_MISSING=ao:false" in rejected.stdout
 
 
+
+def write_bolt_png(
+    path: Path,
+    line: tuple[int, int, int, int] | None = (512, 432, 548, 572),
+    color: tuple[int, int, int] = (255, 255, 126),
+) -> None:
+    """Write a real-size synthetic viewport with a Wisp orb and optional bolt."""
+    width, height = 1280, 800
+    background = bytes((8, 8, 16))
+    orb = bytes((255, 255, 126))
+    rows = [bytearray(background * width) for _ in range(height)]
+
+    def put(x: int, y: int, pixel: bytes) -> None:
+        if 0 <= x < width and 0 <= y < height:
+            offset = x * 3
+            rows[y][offset:offset + 3] = pixel
+
+    for y in range(384, 417):
+        for x in range(496, 529):
+            if (x - 512) ** 2 + (y - 400) ** 2 <= 16 ** 2:
+                put(x, y, orb)
+
+    if line is not None:
+        x0, y0, x1, y1 = line
+        steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+        for step in range(steps + 1):
+            t = step / steps
+            x = round(x0 + (x1 - x0) * t)
+            y = round(y0 + (y1 - y0) * t)
+            for offset_y in range(-1, 2):
+                for offset_x in range(-1, 2):
+                    put(x + offset_x, y + offset_y, bytes(color))
+
+    # A non-yellow player silhouette at the beam endpoint must not satisfy the mask.
+    for y in range(580, 720):
+        for x in range(492, 533):
+            put(x, y, bytes((70, 110, 180)))
+
+    raw = bytearray()
+    for row in rows:
+        raw.append(0)
+        raw.extend(row)
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    path.write_bytes(
+        b"\x89PNG\r\n\x1a\n"
+        + _chunk(b"IHDR", header)
+        + _chunk(b"IDAT", zlib.compress(bytes(raw), 6))
+        + _chunk(b"IEND", b"")
+    )
+
+
+def _test_fxbbolt_segment_detector() -> None:
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        positive = root / "bolt.png"
+        source_only = root / "source-only.png"
+        blue = root / "blue-line.png"
+        misaligned = root / "misaligned.png"
+        short = root / "short.png"
+        write_bolt_png(positive)
+        write_bolt_png(source_only, line=None)
+        write_bolt_png(blue, color=(60, 160, 255))
+        write_bolt_png(misaligned, line=(700, 700, 750, 700))
+        write_bolt_png(short, line=(512, 432, 515, 445))
+
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(positive, True)
+        assert not errors, errors
+        assert metrics is not None and metrics["length"] >= 24 and metrics["alignment"] >= 0.65
+
+        for rejected in (source_only, blue, misaligned, short):
+            errors, metrics = verify_wisp_zap_client.verify_bolt_segment(rejected, True)
+            assert errors and metrics is None, (rejected.name, errors, metrics)
+
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(source_only, False)
+        assert not errors and metrics is None, (errors, metrics)
+
 def main() -> int:
     _test_bash_function_body_extraction()
+    _test_fxbbolt_segment_detector()
+    render_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java").read_text(encoding="utf-8")
+    assert 'minecraft.options.getCameraType().name()' in render_source
     _test_streaming_click_dispatch()
     # BETA26 RenderWisp's billboard is centred at entity position. A point one
     # quarter up the 0.9-block hitbox stays inside the attack AABB while moving
@@ -782,6 +861,8 @@ def main() -> int:
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "wisp_start_zap_video_capture",
         "wisp_stop_zap_video_capture",
         "wisp_capture_zap_frames",
@@ -917,15 +998,19 @@ def main() -> int:
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", client_attack_index)
-    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
+    perspective_index = setup.index("xdotool key --clearmodifiers F5", hurt_index)
+    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK", perspective_index)
+    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", perspective_marker_index)
     zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', target_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", zap_cursor_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
-    capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", zap_capture_index)
+    perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", zap_capture_index)
+    restore_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_index)
+    capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", restore_marker_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < capture_retry_index < telemetry_index < aim_verify_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < hurt_index < perspective_index < perspective_marker_index < target_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
         "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
     )
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
@@ -1131,11 +1216,11 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=524 ageTicks=4",
     ))
