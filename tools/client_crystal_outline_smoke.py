@@ -39,6 +39,17 @@ FACE_CASES = (
                                   (250.5, 149, 251.75), (250.5, 151.5, 251.25)),
 )
 
+MESH_CAMERA_FEET = {
+    # Camera stands opposite the single support face and looks at the crystal cell centre.
+    "up": (250.5, 149.0, 247.5),
+    "down": (250.5, 154.0, 251.5),
+    "east": (246.5, 149.0, 251.5),
+    "west": (254.5, 149.0, 251.5),
+    "south": (250.5, 149.0, 247.5),
+    "north": (250.5, 149.0, 255.5),
+}
+MESH_AIM = (250.5, 151.5, 251.5)
+
 PLAYER_EYE_HEIGHT = 1.62
 CLIENT_BLOCK_PICK_REACH = 5.0
 
@@ -235,7 +246,8 @@ PY
 
   run_outline_case() {
     local face="$1" sx="$2" sy="$3" sz="$4"
-    shift 4
+    local mesh_x="$5" mesh_y="$6" mesh_z="$7" mesh_yaw="$8" mesh_pitch="$9"
+    shift 9
     local miss_x="$1" miss_y="$2" miss_z="$3"
     local miss_yaw="$4" miss_pitch="$5" miss_probe_distance="$6"
     shift 6
@@ -254,7 +266,25 @@ PY
     send_chat '/fill 247 148 248 253 148 254 minecraft:stone'
     send_chat "/setblock $sx $sy $sz $support_block"
     echo "CRYSTAL_OUTLINE_SUPPORT_$face=$support_block" | tee -a client-smoke-status.txt
-    send_chat '/setblock 250 151 251 thaumcraft:crystal_aqua'
+
+    # Capture an empty baseline and the real size-3 source mesh from a fixed,
+    # unobstructed view opposite this support face. Ray-picking below remains
+    # a separate real-client assertion.
+    send_chat '/gamemode spectator'
+    send_chat "/tp @p $mesh_x $mesh_y $mesh_z $mesh_yaw $mesh_pitch"
+    send_chat "/execute if block 250 151 251 minecraft:air run say CRYSTAL_MESH_TARGET_EMPTY_$face"
+    assert_outline_marker "CRYSTAL_MESH_TARGET_EMPTY_$face"
+    capture_outline "crystal-mesh-$face-before"
+    send_chat '/setblock 250 151 251 thaumcraft:crystal_aqua[size=3,gen=4]'
+    send_chat "/execute if block 250 151 251 thaumcraft:crystal_aqua[size=3,gen=4] run say CRYSTAL_MESH_SETUP_$face"
+    assert_outline_marker "CRYSTAL_MESH_SETUP_$face"
+    sleep 1
+    capture_outline "crystal-mesh-$face-after"
+    python3 tools/verify_crystal_mesh_screenshots.py --pair "$face" \
+      "client-smoke/screenshots/crystal-mesh-$face-before.png" \
+      "client-smoke/screenshots/crystal-mesh-$face-after.png" | tee -a client-smoke-status.txt
+    send_chat '/gamemode creative'
+
     if [ "$face" = "down" ]; then
       # Stable top-down origin; this platform is offset from the ray path.
       send_chat '/setblock 249 153 249 minecraft:stone'
@@ -295,7 +325,10 @@ PY
         hit_yaw, hit_pitch = rotation_for_ray(hit, hit_aim)
         miss_probe_distance = ray_probe_distance(miss, miss_aim)
         hit_probe_distance = ray_probe_distance(hit, hit_aim)
-        values = (face, *support, *miss, miss_yaw, miss_pitch, miss_probe_distance,
+        mesh_camera = MESH_CAMERA_FEET[face]
+        mesh_yaw, mesh_pitch = rotation_for_ray(mesh_camera, MESH_AIM)
+        values = (face, *support, *mesh_camera, mesh_yaw, mesh_pitch,
+                  *miss, miss_yaw, miss_pitch, miss_probe_distance,
                   *hit, hit_yaw, hit_pitch, hit_probe_distance)
         body += "  run_outline_case " + " ".join(shell_number(v) for v in values) + "\n"
 
@@ -325,6 +358,9 @@ PY
   test "$(grep -c '^CRYSTAL_OUTLINE_SUPPORT_south=minecraft:nether_bricks$' client-smoke-status.txt)" -eq 1
   echo 'CRYSTAL_OUTLINE_LEGACY_ROCK_SUPPORTS=PASS' | tee -a client-smoke-status.txt
   test "$(find client-smoke/screenshots -maxdepth 1 -name 'crystal-outline-*.png' | wc -l)" -eq 13
+  test "$(find client-smoke/screenshots -maxdepth 1 -name 'crystal-mesh-*.png' | wc -l)" -eq 12
+  test "$(grep -c '^CRYSTAL_MESH_PIXELS=PASS ' client-smoke-status.txt)" -eq 6
+  echo 'CRYSTAL_MESH_SIX_FACE_VISUAL=PASS' | tee -a client-smoke-status.txt
   if grep -Eiq 'Minecraft has crashed|Mod loading has failed|Exception in thread "Render thread"' client-smoke/client.log; then
     echo 'CRYSTAL_OUTLINE_CLIENT_CRASH=YES' | tee -a client-smoke-status.txt
     exit 1

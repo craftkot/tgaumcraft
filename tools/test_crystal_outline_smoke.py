@@ -6,6 +6,8 @@ from pathlib import Path
 
 from client_crystal_outline_smoke import (
     FACE_CASES,
+    MESH_CAMERA_FEET,
+    MESH_AIM,
     SUPPORT_BLOCK_FOR_FACE,
     MULTI_FACE_AIM,
     MULTI_FACE_PLAYER,
@@ -18,6 +20,9 @@ from client_crystal_outline_smoke import (
     rotation_for_ray,
     parse_block_interaction_range,
 )
+from verify_crystal_mesh_screenshots import run_synthetic_tests
+
+run_synthetic_tests()
 
 assert tuple(case[0] for case in FACE_CASES) == (
     "up", "down", "east", "west", "south", "north"
@@ -25,6 +30,10 @@ assert tuple(case[0] for case in FACE_CASES) == (
 assert SUPPORT_BLOCK_FOR_FACE["north"] == "minecraft:sandstone"
 assert SUPPORT_BLOCK_FOR_FACE["south"] == "minecraft:nether_bricks"
 assert all(SUPPORT_BLOCK_FOR_FACE[f] == "minecraft:stone" for f in ("up", "down", "east", "west"))
+assert set(MESH_CAMERA_FEET) == {case[0] for case in FACE_CASES}
+for face, feet in MESH_CAMERA_FEET.items():
+    eye = (feet[0], feet[1] + PLAYER_EYE_HEIGHT, feet[2])
+    assert 3.5 <= math.dist(eye, MESH_AIM) <= 5.0, (face, eye)
 
 
 # Minecraft 1.21.1's Brigadier output is "Value of attribute ... for entity Dev is 5.0",
@@ -268,7 +277,7 @@ assert "CRYSTAL_OUTLINE_RAY_PROBE_EXECUTED_${phase}_$face" in body
 assert "CRYSTAL_OUTLINE_RAY_CELL_${phase}_$face" in body
 assert body.count("xdotool click 1") == 3
 assert body.count(" facing ") == 0
-assert body.count('send_chat "/tp @p') == 2
+assert body.count('send_chat "/tp @p') == 3
 assert body.count("send_chat '/tp @p") == 1
 assert "miss_aim_x" not in body and "hit_aim_x" not in body
 assert "capture_outline" in body
@@ -276,9 +285,16 @@ assert "setblock 249 153 249 minecraft:stone" in body
 assert 'north) support_block=minecraft:sandstone ;;' in body
 assert 'south) support_block=minecraft:nether_bricks ;;' in body
 assert "CRYSTAL_OUTLINE_SUPPORT_$face=$support_block" in body
+assert "CRYSTAL_MESH_SETUP_$face" in body
+assert "CRYSTAL_MESH_TARGET_EMPTY_$face" in body
+assert "python3 tools/verify_crystal_mesh_screenshots.py --pair \"$face\"" in body
+assert "crystal-mesh-$face-before.png" in body
+assert "crystal-mesh-$face-after.png" in body
+assert "size=3,gen=4" in body
+assert "CRYSTAL_MESH_SIX_FACE_VISUAL=PASS" in body
 assert "CRYSTAL_OUTLINE_LEGACY_ROCK_SUPPORTS=PASS" in body
 assert 'if [ "$face" = "down" ]' in body
 assert "xdotool key --clearmodifiers space" not in body
 assert 'test "$(find client-smoke/screenshots' in body
 assert body.rstrip().endswith("fi")
-print("Crystal outline client-smoke contract: PASS (6 faces + multi-face; eye-origin yaw/pitch)")
+print("Crystal outline client-smoke contract: PASS (6 faces + multi-face; source-mesh pixels)")
