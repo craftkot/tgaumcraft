@@ -29,7 +29,8 @@ BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
 BOLT_BASELINE_SCREENSHOT = "79-wisp-third-person-before-zap.png"
 AIM_ROI = (128, 128, 448, 320)
 # The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
-# The Wisp billboard is centred ~16 px below the crosshair in this fixture.
+# The same-camera baseline contains the Wisp billboard; its actual screen-space
+# centre is detected from pixels rather than assumed to be the crosshair.
 BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
 BOLT_SOURCE_EXCLUSION_RADIUS = 28
 
@@ -729,6 +730,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
 
     for label, match in (("client Wisp camera sample", wisp_camera),
                          ("pre-attack Wisp camera tracking", pre_attack_track),
+                         ("camera aim lock stopped after real hit", camera_stopped),
+                         ("third-person-back side-view camera", side_view),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
                          ("same-frame Wisp EntityHitResult", attackable_frame),
