@@ -480,17 +480,15 @@ def render() -> str:
     # the real Wisp EntityHitResult, then issue the real mouse click immediately.
     for attempt in 1 2 3; do
       if [ "$attempt" -eq 1 ]; then
-        # Continue immediately after the exact frame already consumed by wisp_wait_for_fresh_render.
-        # A later wc -l snapshot can skip a valid ENTITY frame written in this hand-off window.
-        # The watcher cursor is exclusive (tail starts at after_lines + 1).
-        # Include the already-observed first frame so an ENTITY hit in that
-        # exact AFTER_LEVEL frame can trigger the click before the Wisp flies away.
-        frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"
+        # wisp_wait_for_fresh_render already consumed the first completed frame for visibility.
+        # Start after it and wait for a new AFTER_LEVEL frame while the click watcher is live.
+        # Reusing the old line makes tail replay a stale hit result before input reaches Minecraft.
+        frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"
         if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
           echo "WISP_FIRST_FRAME_LINE_NUMBER_MISSING=$frame_log_lines" | tee -a client-smoke-status.txt
           exit 1
         fi
-        attack_camera_source="PREAIMED_FIRST_FRAME"
+        attack_camera_source="PREAIMED_NEXT_FRAME"
         if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM "$attempt"; then
           echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
           continue

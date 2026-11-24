@@ -273,12 +273,78 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
     assert clicks == ["click 1"], clicks
 
 
-def _test_first_frame_cursor_is_inclusive(generated: str) -> None:
-    """The first AFTER_LEVEL hit frame must not be skipped by an exclusive tail cursor."""
-    body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    expected = 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"'
-    assert expected in body, "first attack watcher must include the already-observed render frame"
-    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in body
+def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
+    """The attack watcher must ignore the visibility frame it has already consumed."""
+    attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
+    expected = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
+    assert expected in attack_body, "attack watcher must start after the consumed visibility frame"
+    assert 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"' not in attack_body
+
+    wait_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
+    function = "  wisp_wait_for_attack_frame() {\n" + wait_body + "\n  }\n"
+
+    def camera_line(tick: int) -> str:
+        return (
+            f"TC_SMOKE_WISP_CAMERA=YES id=106 aimTarget=hitbox_center tick={tick} "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.02326 "
+            "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
+            "wispX=12.5 wispY=149.3 wispZ=11.5 "
+            "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+            "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+            "aimDot=1.000000011613918 renderAimDot=0.9787588908782221 eyeAimDot=0.9781741874628976"
+        )
+
+    def frame_line(tick: int) -> str:
+        return (
+            f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=106 tick={tick} "
+            f"gameTime={519 + tick} playerTick={506 + tick} "
+            "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
+        )
+
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-fresh-attack-frame-") as directory:
+        root = Path(directory)
+        bin_dir = root / "bin"
+        bin_dir.mkdir()
+        clicker = bin_dir / "xdotool"
+        clicker.write_text(
+            "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\nexit 0\n",
+            encoding="utf-8",
+        )
+        clicker.chmod(0o755)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        # The first completed frame is stale by the time the attack watcher starts.
+        # Only the later frame is eligible to dispatch the click.
+        (client_dir / "client.log").write_text(
+            "\n".join((camera_line(1), frame_line(1), camera_line(2), frame_line(2))) + "\n",
+            encoding="utf-8",
+        )
+        status_path = root / "client-smoke-status.txt"
+        status_path.write_text("", encoding="utf-8")
+        click_log = root / "clicks.log"
+        env = os.environ.copy()
+        env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
+        env["CLICK_LOG"] = str(click_log)
+        harness = (
+            "set -euo pipefail\n"
+            + function
+            + "\nwisp_wait_for_attack_frame 2 106 PLATFORM 1\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            env=env,
+            check=False,
+            timeout=3,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        status = status_path.read_text(encoding="utf-8")
+        assert "WISP_ATTACKABLE_FRAME=YES id=106 tick=2" in status, status
+        assert "WISP_ATTACKABLE_FRAME=YES id=106 tick=1" not in status, status
+        clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
+        assert clicks == ["click 1"], clicks
 
 
 def _test_capture_reanchor_retry(generated: str) -> None:
@@ -525,7 +591,7 @@ def main() -> int:
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
     _test_attack_frame_dot_tolerance(generated)
-    _test_first_frame_cursor_is_inclusive(generated)
+    _test_first_frame_cursor_is_exclusive(generated)
     _test_capture_reanchor_retry(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
     _test_video_frame_extraction()
@@ -633,7 +699,7 @@ def main() -> int:
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "WISP_RENDER_PREATTACK_TRACKING=YES",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
-        'attack_camera_source="PREAIMED_FIRST_FRAME"',
+        'attack_camera_source="PREAIMED_NEXT_FRAME"',
         'attack_camera_source="LIVE_ENTITY_FACING"',
         'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"',
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
@@ -712,11 +778,11 @@ def main() -> int:
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     preaim_branch = attack_body.split('if [ "$attempt" -eq 1 ]; then', 1)[1].split('\n      else\n        reanchor_log_lines=', 1)[0]
     assert "wisp_wait_for_attack_frame" in preaim_branch
-    fresh_cursor = 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"'
+    fresh_cursor = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
     assert fresh_cursor in preaim_branch, (
-        "the exclusive watcher cursor must include the already-observed pre-aim frame"
+        "the attack watcher must wait for a frame newer than the consumed visibility frame"
     )
-    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in preaim_branch
+    assert 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"' not in preaim_branch
     assert 'frame_log_lines="$(wc -l < client-smoke/client.log)"' not in preaim_branch, (
         "a new tail snapshot can skip an attackable frame written during the hand-off"
     )
@@ -737,7 +803,7 @@ def main() -> int:
     assert fallback_reaim_index < fallback_frame_index
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert "WISP_ATTACK_ATTEMPT_REJECTED=" in attack_body, "BLOCK hits must be rejected rather than accepted"
-    assert 'attack_camera_source="PREAIMED_FIRST_FRAME"' in preaim_branch
+    assert 'attack_camera_source="PREAIMED_NEXT_FRAME"' in preaim_branch
     assert 'attack_camera_detail="id=$wisp_id tick=$WISP_ATTACK_CAMERA_TICK gameTime=$WISP_ATTACK_CAMERA_GAME_TIME"' in preaim_branch
     assert 'attack_camera_source="LIVE_ENTITY_FACING"' in fallback_branch
     assert 'attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"' in fallback_branch
@@ -919,7 +985,7 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=23",
         "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
-        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
+        "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 tick=22 gameTime=520",
         "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
         "WISP_ATTACK_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
@@ -994,6 +1060,44 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+
+        same_first_frame_log = log.replace(
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21",
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22",
+            1,
+        ).replace(
+            "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
+            "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22",
+            1,
+        ).replace(
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK",
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=BLOCK",
+            1,
+        )
+        same_first_frame_status = status.replace(
+            "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
+            "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=22",
+            1,
+        ).replace(
+            "WISP_RENDER_FIRST_FRAME_TICK=21",
+            "WISP_RENDER_FIRST_FRAME_TICK=22",
+            1,
+        ).replace(
+            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21",
+            "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=22",
+            1,
+        ).replace(
+            "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
+            "WISP_RENDER_FIRST_FRAME=YES id=17 tick=22",
+            1,
+        )
+        same_frame_errors = verify_wisp_zap_client.verify(
+            same_first_frame_log, same_first_frame_status, root
+        )
+        assert any(
+            "pre-aimed attack sample must be later than the first completed Wisp frame" in error
+            for error in same_frame_errors
+        ), same_frame_errors
         for age, frame_index, difference in ((1, 6, 18), (2, 12, 15), (3, 18, 12)):
             frame_marker = (
                 f"WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 "
@@ -1083,7 +1187,7 @@ def main() -> int:
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
         fallback_status = status.replace(
-            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_FIRST_FRAME id=17 tick=22 gameTime=520",
+            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 tick=22 gameTime=520",
             "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\n"
             "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
         )

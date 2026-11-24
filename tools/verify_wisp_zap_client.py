@@ -676,7 +676,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     attack_camera_reaim = _first(
-        r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_FIRST_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
+        r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_NEXT_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
     attackable_frame_status = _first(
@@ -840,15 +840,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         frame_status_position = status_text.find(attack_camera_frame.group(0))
         if reaim_position < 0 or frame_status_position < reaim_position:
             errors.append("attack camera frame was not recorded after its declared camera source")
-        if attack_camera_reaim is not None and attack_camera_reaim.group(1) == "PREAIMED_FIRST_FRAME":
+        if attack_camera_reaim is not None and attack_camera_reaim.group(1) == "PREAIMED_NEXT_FRAME":
             first_frame_status_position = status_text.find("WISP_RENDER_FIRST_FRAME=YES")
             if first_frame_status_position < 0 or reaim_position < first_frame_status_position:
                 errors.append("pre-aimed attack camera was not sourced after the first completed Wisp frame")
             if first_frame_camera_sample is not None:
                 if attack_camera_sample.group(2) != first_frame_camera_sample.group(2):
                     errors.append("pre-aimed attack sample uses a different Wisp entity")
-                if int(attack_camera_sample.group(3)) < int(first_frame_camera_sample.group(3)):
-                    errors.append("pre-aimed attack sample predates the first completed Wisp frame")
+                if int(attack_camera_sample.group(3)) <= int(first_frame_camera_sample.group(3)):
+                    errors.append("pre-aimed attack sample must be later than the first completed Wisp frame")
         elif attack_camera_reaim is not None and status_text.find("WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION") < 0:
             errors.append("live-reposition attack sample lacks its server-confirmed player teleport marker")
 
