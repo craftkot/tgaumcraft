@@ -103,7 +103,7 @@ public final class WispZapClientEffects {
         ACTIVE.entrySet().removeIf(entry -> {
             Zap zap = entry.getValue();
             boolean wrongDimension = !zap.dimension().equals(level.dimension());
-            boolean expired = gameTime - zap.createdAt() >= 3L;
+            boolean expired = LegacyWispZapGeometry.isExpired(gameTime - zap.createdAt());
             if (wrongDimension || expired) {
                 forgetSmokeState(zap, gameTime, expired);
                 return true;
@@ -146,7 +146,7 @@ public final class WispZapClientEffects {
             if (age < 0.0D) {
                 continue;
             }
-            if (age >= 3.0D) {
+            if (LegacyWispZapGeometry.isExpired(age)) {
                 ACTIVE.remove(entry.getKey(), zap);
                 forgetSmokeState(zap, level.getGameTime(), true);
                 continue;
@@ -182,7 +182,7 @@ public final class WispZapClientEffects {
             );
             Matrix4f matrix = poseStack.last().pose();
             VertexConsumer vertices = buffers.getBuffer(BETA26_ADDITIVE_BOLT);
-            float alpha = Mth.clamp(1.0F - (float) age / 3.0F, 0.1F, 1.0F);
+            float alpha = LegacyWispZapGeometry.alpha(particleAge);
             drawTube(vertices, matrix, points, 1.0F, alpha, zap.rgb());
             drawTube(vertices, matrix, points, 1.0F / 3.0F, alpha, zap.rgb());
             poseStack.popPose();

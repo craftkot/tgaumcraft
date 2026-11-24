@@ -102,7 +102,7 @@ def render() -> str:
   wisp_capture_zap_frames() {
     local after_lines="$1" wisp_id="$2" cursor="$1" created_at="" target_id payload_line rendered_line
     local expected_age wisp_tick frame_name
-    wisp_wait_for_zap_frame "$cursor" "$wisp_id" "" 0
+    wisp_wait_for_zap_frame "$cursor" "$wisp_id" "" 1
     created_at="$WISP_ZAP_FRAME_CREATED_AT"
     payload_line="$(grep -F "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=$wisp_id " client-smoke/client.log \
       | grep -F "createdAt=$created_at " | tail -1 || true)"
@@ -122,8 +122,8 @@ def render() -> str:
       echo "WISP_ZAP_CAPTURE_RENDER_MISSING=YES source=$wisp_id target=$target_id createdAt=$created_at" | tee -a client-smoke-status.txt
       return 1
     fi
-    for expected_age in 0 1 2; do
-      if [ "$expected_age" -gt 0 ]; then
+    for expected_age in 1 2 3; do
+      if [ "$expected_age" -gt 1 ]; then
         cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
         wisp_wait_for_zap_frame "$cursor" "$wisp_id" "$created_at" "$expected_age"
       fi
@@ -134,9 +134,9 @@ def render() -> str:
       fi
       wisp_wait_for_completed_wisp_frame "$WISP_ZAP_FRAME_LINE_NUMBER" "$wisp_id" "$wisp_tick"
       case "$expected_age" in
-        0) frame_name="80-wisp-zap-frame-a" ;;
-        1) frame_name="81-wisp-zap-frame-b" ;;
-        2) frame_name="82-wisp-zap-frame-c" ;;
+        1) frame_name="80-wisp-zap-frame-a" ;;
+        2) frame_name="81-wisp-zap-frame-b" ;;
+        3) frame_name="82-wisp-zap-frame-c" ;;
       esac
       wisp_capture "$frame_name"
       echo "WISP_ZAP_FRAME_CAPTURE=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick" | tee -a client-smoke-status.txt

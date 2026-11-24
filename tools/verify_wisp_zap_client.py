@@ -310,7 +310,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if int(rendered.group(3)) <= 2:
             errors.append("rendered FXBolt has no interior polycone points")
         age = float(rendered.group(4))
-        if not 0.0 <= age < 3.0:
+        if not 0.0 <= age < 4.0:
             errors.append(f"FXBolt render age outside BETA26 three-tick lifetime: {age}")
 
     zap_frame_pattern = re.compile(
@@ -325,7 +325,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     if len(captured_frames) != 3:
         errors.append(f"expected exactly three distinct captured FXBolt frames, got {len(captured_frames)}")
     else:
-        expected_ages = [0, 1, 2]
+        expected_ages = [1, 2, 3]
         actual_ages = [int(frame[2]) for frame in captured_frames]
         if actual_ages != expected_ages:
             errors.append(f"captured FXBolt ages are not consecutive BETA26 ticks: {actual_ages}")
@@ -383,14 +383,14 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 errors.append("captured FXBolt cycle has no matching completed additive render batch")
             if expired_for_event is None or status_expired is None:
                 errors.append("captured FXBolt cycle has no matching three-tick expiry evidence")
-            elif int(expired_for_event.group(2)) < 3:
-                errors.append("FXBolt expired before the BETA26 three-tick lifetime")
+            elif int(expired_for_event.group(2)) != 4:
+                errors.append("FXBolt did not expire one tick after BETA26 particleMaxAge=3")
 
             if rendered_for_event is not None and int(rendered_for_event.group(1)) <= 2:
                 errors.append("captured FXBolt render batch has no interior polycone points")
 
             last_capture_position = status_text.find(
-                f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=2 "
+                f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=3 "
             )
             camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_AFTER_HIT=YES")
             if last_capture_position < 0 or camera_capture_position < 0 or last_capture_position > camera_capture_position:

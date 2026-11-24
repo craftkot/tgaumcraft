@@ -83,8 +83,29 @@ public final class LegacyWispZapGeometryTest {
             expect(validWidth, true, "BETA26 one-in-four interior width taper at point " + index);
         }
 
-        expectThrows(() -> LegacyWispZapGeometry.build(dx, dy, dz, width, 0.0F, 1, 3, 0.0F),
+        List<LegacyWispZapGeometry.Point> finalTick =
+                LegacyWispZapGeometry.build(dx, dy, dz, width, 3.25F, 734, 3, 0.25F);
+        expect(finalTick.size(), expectedSteps, "BETA26 renders the max-age tick before expiry");
+        expect(finalTick.equals(late), false, "age-three FXBolt geometry retains its final movement");
+        float finalTaperedWidth = width * 0.25F;
+        for (int index = 1; index < finalTick.size() - 1; index++) {
+            float actualWidth = finalTick.get(index).width();
+            boolean validWidth = Float.floatToIntBits(actualWidth) == Float.floatToIntBits(width)
+                    || Float.floatToIntBits(actualWidth) == Float.floatToIntBits(finalTaperedWidth);
+            expect(validWidth, true, "BETA26 age-three taper at point " + index);
+        }
+        expect(LegacyWispZapGeometry.isExpired(3L), false, "BETA26 max-age tick remains renderable");
+        expect(LegacyWispZapGeometry.isExpired(4L), true, "BETA26 expires on the tick after max age");
+        expect(LegacyWispZapGeometry.isExpired(3.999D), false, "final partial max-age tick remains visible");
+        expect(LegacyWispZapGeometry.isExpired(4.0D), true, "age four is the first expired render age");
+        close(LegacyWispZapGeometry.alpha(0), 1.0F, 0.0F, "BETA26 initial bolt alpha");
+        close(LegacyWispZapGeometry.alpha(1), 2.0F / 3.0F, 0.000001F, "BETA26 age-one alpha");
+        close(LegacyWispZapGeometry.alpha(2), 1.0F / 3.0F, 0.000001F, "BETA26 age-two alpha");
+        close(LegacyWispZapGeometry.alpha(3), 0.1F, 0.000001F, "BETA26 final-age alpha floor");
+
+        expectThrows(() -> LegacyWispZapGeometry.build(dx, dy, dz, width, 0.0F, 1, 4, 0.0F),
                 "expired particle age rejected");
+        expectThrows(() -> LegacyWispZapGeometry.alpha(4), "expired particle alpha rejected");
         expectThrows(() -> LegacyWispZapGeometry.build(dx, dy, dz, width, 0.0F, 1, 0, 1.1F),
                 "partial tick above one rejected");
         expectThrows(() -> LegacyWispZapGeometry.build(dx, dy, dz, -0.1F, 0.0F, 1, 0, 0.0F),

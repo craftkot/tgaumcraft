@@ -13,8 +13,30 @@ import java.util.Random;
  */
 public final class LegacyWispZapGeometry {
     private static final float[] SIN_TABLE = createSinTable();
+    public static final int MAX_AGE_TICKS = 3;
 
     private LegacyWispZapGeometry() {}
+
+    /**
+     * BETA26 FXBolt uses particleAge++ >= particleMaxAge. With maxAge=3,
+     * age 3 is rendered and age 4 is the first expired tick.
+     */
+    public static boolean isExpired(long elapsedTicks) {
+        return elapsedTicks > MAX_AGE_TICKS;
+    }
+
+    /** Render partial ages through 3.999; expire at the next whole tick. */
+    public static boolean isExpired(double age) {
+        return !Double.isFinite(age) || age >= MAX_AGE_TICKS + 1.0D;
+    }
+
+    /** BETA26 alpha is based on integer particleAge, not partial-tick age. */
+    public static float alpha(int particleAge) {
+        if (particleAge < 0 || particleAge > MAX_AGE_TICKS) {
+            throw new IllegalArgumentException("BETA26 FXBolt alpha age must be 0.." + MAX_AGE_TICKS);
+        }
+        return Math.max(0.1F, 1.0F - particleAge / (float) MAX_AGE_TICKS);
+    }
 
     public record Point(double x, double y, double z, float width) {}
 
@@ -37,8 +59,8 @@ public final class LegacyWispZapGeometry {
         if (!Float.isFinite(phaseOffset)) {
             throw new IllegalArgumentException("BETA26 FXBolt phase offset must be finite");
         }
-        if (particleAge < 0 || particleAge > 2) {
-            throw new IllegalArgumentException("BETA26 FXBolt render age must be 0..2");
+        if (particleAge < 0 || particleAge > MAX_AGE_TICKS) {
+            throw new IllegalArgumentException("BETA26 FXBolt render age must be 0.. + MAX_AGE_TICKS");
         }
         if (!Float.isFinite(partialTick) || partialTick < 0.0F || partialTick > 1.0F) {
             throw new IllegalArgumentException("BETA26 FXBolt partial tick must be in [0,1]");
