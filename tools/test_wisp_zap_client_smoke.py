@@ -823,6 +823,15 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+        for age, frame_index, difference in ((1, 6, 18), (2, 12, 15), (3, 18, 12)):
+            frame_marker = (
+                f"WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 "
+                f"ageTick={age} frameIndex={frame_index} diff={difference}"
+            )
+            blank_frame_status = status.replace(frame_marker, frame_marker.rsplit("=", 1)[0] + "=0")
+            assert verify_wisp_zap_client.verify(log, blank_frame_status, root), (
+                f"age-{age} video frame must visibly differ from the post-expiry scene"
+            )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_RENDER_AFTER_PREAIMED_SPAWN=YES", ""), root
         ), "stale pre-spawn renderer callback must fail"
