@@ -366,3 +366,24 @@ No production Java, AI, damage, payload, registries, Gradle, or workflow files c
 - The remaining 22 exact-SHA workflows also completed SUCCESS, including Workbench RU/EN GUI, Salis two-client lifecycle, crystal audio, Nitor/Salis particles, Thaumometer, tube texture, pedestal rotation, jar renderers and readable GUI text.
 - Changed files in code commit: `tools/client_wisp_zap_smoke.py`, `tools/verify_wisp_zap_client.py`, `tools/test_wisp_zap_client_smoke.py`. No Java, registry, resource, Gradle, workflow, main or foreign branch changes in this iteration.
 - No score awarded: fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. Wisp, jar audio and crystal outline are narrow accepted scenarios; they do not prove the entire visual/audio/resource category or the full aura/world category. PR #4 remains OPEN/DRAFT/UNMERGED; no merge or force-push.
+
+## 24.11.2026 — M16: стабилизация реального Wisp camera capture
+
+Fresh inputs before this iteration: main HEAD `a4280834adc5a20b6951098af937d30ca4aeca56`; lane/PR HEAD before the code change `3be16a241b6ac65136ec8b5dd6189bc5ba9ecb7c`. PR #4 was OPEN / DRAFT / UNMERGED. All other 61 open PRs (#1–#3 and #5–#62) were checked for the five code paths below; no path overlap was found.
+
+The prior code/test SHA `a4cfbb774b68e87cc9204d1c1666220c253d38b9` had 25/25 exact-SHA Actions SUCCESS, including Wisp client #45397821366 and Jar audio client #45397821372. A later PR-head-only documentation commit caused a fresh set of runs on `3be16a241b6ac65136ec8b5dd6189bc5ba9ecb7c`:
+- Wisp client #45401281000 reached the real Survival hit, server-accepted damage, target acquisition, payload and FX ages 1/2/3/age-4 expiry, then failed only the post-hit screenshot alignment gate: centroid `(64.6,115.4)` in a `128×128` ROI centred at `(64,64)`, outside the unchanged 48px radius.
+- Jar client #45401280045 did not reach Minecraft: Gradle configuration was blocked resolving Gson 2.10.1 by Maven Central HTTP 429. This is an external dependency-rate-limit failure, not a source regression.
+
+The Wisp failure was a real smoke-camera/renderer-coordinate mismatch, not evidence that the production Wisp hit or FX was broken. BETA26's Wisp billboard is rendered at entity position; the smoke tracker was aiming at the centre of the 0.9-block AABB, 0.45 blocks above that billboard origin. At the post-hit capture distance this left the visible Aer centroid just outside the screenshot gate. The threshold was not loosened.
+
+Code/test commit: [`126b572f16ed59f43e33dcb9070e5d67f336b845`](https://github.com/craftkot/tgaumcraft/commit/126b572f16ed59f43e33dcb9070e5d67f336b845).
+Changed files:
+- `src/neoforge/java/dev/ehtid/thaumcraft/client/WispAttackSmokeProbe.java` — add a shared camera aim point at 25% of the actual AABB height, still inside the hitbox.
+- `src/neoforge/java/dev/ehtid/thaumcraft/client/WispRendererRegistration.java` — compute `aimDot` against the same point and report `aimTarget=render_safe_quarter`; keep render-origin and hitbox-centre telemetry for diagnosis.
+- `tools/client_wisp_zap_smoke.py`, `tools/verify_wisp_zap_client.py`, `tools/test_wisp_zap_client_smoke.py` — correlate the new explicit aim-target label; update the geometric regression to prove the quarter-height ray remains aligned within the AABB and keep the screenshot radius unchanged.
+
+The actual click remains authorized only by a same-ID vanilla `EntityHitResult`; server accepted damage, target acquisition, matching payload IDs, FX ages 1/2/3 and age-4 expiry remain mandatory. No Wisp AI, damage, payload, production renderer geometry, FX lifetime, registries, Gradle or workflow files changed. The camera helper is active only under `THAUMCRAFT_SMOKE=1`.
+
+No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp and Jar workflows must complete before calling this iteration accepted. Next: verify the Wisp screenshot centroid is now within the unchanged 48px radius while preserving the same-ID hit and full FX lifecycle; retry the Jar client after Maven Central rate limiting clears.
+
