@@ -867,6 +867,13 @@ def render() -> str:
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
+
+  # First-person places the camera at the target endpoint and collapses the bolt
+  # onto the view ray. Capture only the transient effect in third-person-back;
+  # WispZapClientEffects records the actual Options camera type per rendered age.
+  xdotool key --clearmodifiers F5
+  sleep 0.1
+  echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
   # The real Survival hit and target acquisition are already complete. Keep
@@ -883,6 +890,10 @@ def render() -> str:
   # three-tick bolt entirely.
   wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"
 
+  # Restore first-person for the independent post-hit aim/camera telemetry check.
+  xdotool key --clearmodifiers F5
+  sleep 0.1
+  echo 'WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON' | tee -a client-smoke-status.txt
   wisp_capture_aim_after_hit_with_retries
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
