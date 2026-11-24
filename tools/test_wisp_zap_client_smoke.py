@@ -790,6 +790,8 @@ def _test_fxbbolt_segment_detector() -> None:
 
         errors, metrics = verify_wisp_zap_client.verify_bolt_segment(source_only, False)
         assert not errors and metrics is None, (errors, metrics)
+        errors, metrics = verify_wisp_zap_client.verify_bolt_segment(positive, False)
+        assert errors and metrics is not None, (errors, metrics)
 
 def main() -> int:
     _test_bash_function_body_extraction()
@@ -1261,6 +1263,7 @@ def main() -> int:
         "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=520 ageTick=2 frameIndex=12 diff=15",
         "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=520 ageTick=3 frameIndex=18 diff=12",
         "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=520",
         "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM Teleported Dev to 12.500000, 149.000000, 10.500000",
         "WISP_CAMERA_REAIM=CLIENT_TRACKING",
@@ -1268,6 +1271,7 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
@@ -1288,6 +1292,10 @@ def main() -> int:
                 write_png(target)
             elif name in verify_wisp_zap_client.BASELINE_SCREENSHOTS:
                 write_png(target, None)
+            elif name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
+                write_bolt_png(target)
+            elif name == "83-wisp-zap-after-expiry.png":
+                write_bolt_png(target, line=None)
             else:
                 target.write_bytes(b"\x89PNG\r\n\x1a\n" + b"x" * 256)
         positive = root / "aim-positive.png"
@@ -1317,6 +1325,10 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+        first_person_errors = verify_wisp_zap_client.verify(
+            log.replace("cameraType=THIRD_PERSON_BACK", "cameraType=FIRST_PERSON"), status, root
+        )
+        assert any("expected THIRD_PERSON_BACK" in error for error in first_person_errors), first_person_errors
 
         # A client may skip the first expiry tick while stalled. Cleanup may be
         # observed later, but no FXBolt frame may render at age >= 4.
@@ -1347,7 +1359,7 @@ def main() -> int:
         age_four_render_log = late_cleanup_log + "\n" + (
             "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 "
             "gameTime=524 wispTick=27 ageTick=4 age=4.0 points=9 "
-            "texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF"
+            "cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF"
         )
         age_four_errors = verify_wisp_zap_client.verify(age_four_render_log, status, root)
         assert any("render frame at or after its BETA26 expiry boundary" in error
