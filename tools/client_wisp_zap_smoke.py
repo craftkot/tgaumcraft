@@ -12,11 +12,46 @@ import sys
 def render() -> str:
     source = Path("tools/client_smoke.sh").read_text(encoding="utf-8")
     anchor = "  # The initial world is already creative + peaceful, as established"
+    options_line = "printf 'guiScale:2\\n' > run/options.txt"
     if source.count(anchor) != 1 or source.count("  send_chat() {") != 1:
         raise SystemExit("Client smoke world/command hook changed; refusing unsafe injection")
+    if source.count(options_line) != 1:
+        raise SystemExit("Client smoke options bootstrap changed; refusing Wisp render profile")
 
+    render_profile = (
+        "printf 'guiScale:2\\nrenderDistance:2\\nsimulationDistance:5\\n"
+        "graphicsMode:0\\nparticles:2\\nentityShadows:false\\n"
+        "mipmapLevels:0\\nbiomeBlendRadius:0\\nenableVsync:false\\n"
+        "maxFps:260\\nrenderClouds:false\\nao:false\\n' > run/options.txt"
+    )
+    source = source.replace(options_line, render_profile)
     head = source.split(anchor, 1)[0]
     body = r'''
+  wisp_verify_render_profile() {
+    local option
+    for option in \
+      'renderDistance:2' \
+      'simulationDistance:5' \
+      'graphicsMode:0' \
+      'particles:2' \
+      'entityShadows:false' \
+      'mipmapLevels:0' \
+      'biomeBlendRadius:0' \
+      'enableVsync:false' \
+      'maxFps:260' \
+      'renderClouds:false' \
+      'ao:false'
+    do
+      if ! grep -Fxq -- "$option" run/options.txt; then
+        echo "WISP_CLIENT_RENDER_OPTION_MISSING=$option" | tee -a client-smoke-status.txt
+        return 1
+      fi
+    done
+    echo 'WISP_CLIENT_RENDER_PROFILE=llvmpipe-fast' | tee -a client-smoke-status.txt
+    echo 'WISP_CLIENT_RENDER_PROFILE_APPLIED=YES' | tee -a client-smoke-status.txt
+  }
+  wisp_verify_render_profile
+
   echo 'WISP_ZAP_REAL_CLIENT_WORLD=YES' | tee -a client-smoke-status.txt
 
   wisp_command() {
