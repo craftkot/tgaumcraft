@@ -968,7 +968,8 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in generated
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in generated
     assert "wisp_verify_aim_telemetry" in generated
-    assert "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1" in generated
+    assert 'grep -F -- "$frame_camera_marker" | head -1' in generated
+    assert 'grep -F -c -- "$frame_camera_marker" || true' in generated
     assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in generated
     assert "d <= 3.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
