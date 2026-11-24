@@ -214,6 +214,7 @@ public final class WispZapClientEffects {
                                 + " gameTime=" + gameTime + " wispTick=" + wispTick
                                 + " ageTick=" + ageTick + " age=" + result.age()
                                 + " points=" + result.pointCount()
+                                + " cameraType=" + minecraft.options.getCameraType().name()
                                 + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF");
                     }
                 }
