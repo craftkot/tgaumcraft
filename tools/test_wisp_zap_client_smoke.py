@@ -3,6 +3,7 @@
 from pathlib import Path
 import os
 import shutil
+import sys
 import time
 from unittest.mock import patch
 import subprocess
@@ -351,8 +352,22 @@ def _test_video_frame_extraction() -> None:
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtNs=1300000000",
             "WISP_ZAP_VIDEO_STOPPED=YES",
         )) + "\n", encoding="utf-8")
-        errors = verify_wisp_zap_client.extract_video_frames(status_file, video, screenshots)
-        assert not errors, errors
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(Path(__file__).with_name("verify_wisp_zap_client.py")),
+                "--extract-video-frames-only",
+                "--video-status", str(status_file),
+                "--video-file", str(video),
+                "--video-screenshots", str(screenshots),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, result.stderr + result.stdout
+        assert result.stdout.strip() == "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES", result.stdout
         for name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
             assert (screenshots / name).is_file() and (screenshots / name).stat().st_size > 128, name
         extracted = status_file.read_text(encoding="utf-8")
@@ -411,8 +426,10 @@ def main() -> int:
         "WISP_ZAP_VIDEO_STARTED=YES",
         "WISP_ZAP_VIDEO_STOPPED=YES",
         "WISP_ZAP_FRAME_OBSERVED=YES",
-        "WISP_ZAP_VIDEO_FRAME_INDEX=YES",
-        "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
+        "--extract-video-frames-only",
+        "--video-status client-smoke-status.txt",
+        "--video-file client-smoke/wisp-zap-video.mp4",
+        "--video-screenshots client-smoke/screenshots",
         "ffmpeg",
         "TC_SMOKE_WISP_ZAP_FRAME=YES",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES",
@@ -504,6 +521,10 @@ def main() -> int:
     capture_function = generated.split("  wisp_capture_zap_frames() {", 1)[1].split("\n  }\n", 1)[0]
     if 'wisp_capture "$frame_name"' in capture_function or "wisp_capture 83-wisp-zap-after-expiry" not in capture_function:
         raise AssertionError("per-age desktop captures must be replaced by post-expiry video-frame extraction")
+    stop_index = capture_function.index("wisp_stop_zap_video_capture")
+    extract_index = capture_function.index("python tools/verify_wisp_zap_client.py --extract-video-frames-only")
+    if stop_index > extract_index:
+        raise AssertionError("video extraction must run only after the recorder has stopped")
     stabilization_command = (
         "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' "
         "'Base value for attribute Knockback Resistance for entity Dev set to 1.0'"
