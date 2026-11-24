@@ -684,7 +684,7 @@ def main() -> int:
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
-        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=76 bbox=58,58,69,69",
+        "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=100 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_ESSENTIA_TEXTURE_NO_LOAD_ERRORS=PASS",
@@ -707,7 +707,7 @@ def main() -> int:
         write_png(positive)
         aim_errors, count, bbox = verify_wisp_zap_client.verify_aim_screenshot(positive)
         assert aim_errors == [], aim_errors
-        assert count == 76 and bbox == (58, 58, 69, 69), (count, bbox)
+        assert count == 100 and bbox == (58, 58, 69, 69), (count, bbox)
 
         off_center = root / "aim-off-center.png"
         write_png(off_center, (448, 320, 460, 332))
@@ -726,7 +726,7 @@ def main() -> int:
         contaminated_baseline = root / "baseline-contaminated.png"
         write_png(contaminated_baseline)
         baseline_errors, baseline_count, _ = verify_wisp_zap_client.verify_baseline_screenshot(contaminated_baseline)
-        assert baseline_errors and baseline_count == 76, (baseline_errors, baseline_count)
+        assert baseline_errors and baseline_count == 100, (baseline_errors, baseline_count)
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
