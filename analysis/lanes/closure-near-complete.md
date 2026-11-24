@@ -352,3 +352,19 @@
 - Changed code paths are only `tools/client_wisp_zap_smoke.py` and `tools/test_wisp_zap_client_smoke.py`; no Java/AI/damage/payload/render/FX production code changed. A fresh changed-file scan of all 61 other open PRs (#1–#3 and #5–#62) found no overlap with either code path. This lane's journal is owned by PR #4. No shared registries, Gradle, workflow YAML, global localization, main, or foreign feature branch changed.
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED; no merge or force-push. Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`.
 - No points awarded: **59/100** (visual/audio/localization **4/6**, aura/world **5/9**). M16/category acceptance remains open. Next: wait for exact-head Wisp Client [#45392409133](https://github.com/craftkot/tgaumcraft/actions/runs/45392409133); require offline Python contract + generated `bash -n`, then repeat the real client and verify the selected-frame telemetry gate passes while preserving same-ID accepted hit, target, payload, FX ages 1/2/3, age-4 expiry, positive pixels and no texture-load errors.
+
+## 24.11.2026 — M16: click-frame correlation fix (code SHA a4cfbb774b68e87cc9204d1c1666220c253d38b9)
+
+Fresh main remains a4280834adc5a20b6951098af937d30ca4aeca56. The real client artifact from the preceding run showed the actual Survival Wisp hit, accepted server damage, target acquisition, payload delivery, FXBolt ages 1–3, expiry at age 4, transient pixel difference 5,310, and no Wisp/essentia texture-load errors. Its verifier had selected a pre-tracking hit frame at gameTime 546 instead of the frame at the actual click input tick (gameTime 553, playerTick 518).
+
+Committed a fail-closed correlation path in tools/client_wisp_zap_smoke.py, tools/verify_wisp_zap_client.py, and tools/test_wisp_zap_client_smoke.py: preserve the frame that dispatched the OS click as WISP_ATTACKABLE_FRAME; separately capture the unique same-ID AFTER_LEVEL frame and camera sample matching the actual TC_SMOKE_WISP_ATTACK_INPUT gameTime/playerTick as WISP_ATTACK_INPUT_FRAME. Duplicate, missing, mismatched, or out-of-order frames fail. The one-game-tick guard was not widened. Added offline Bash and verifier regressions for a stale pre-tracking hit, exact click-tick selection, duplicate frames, and missing frames.
+
+At this checkpoint on code SHA a4cfbb774b68e87cc9204d1c1666220c253d38b9:
+- Wisp offline contract + generated Bash syntax: PASS (workflow #45397811268 reached the real-client launch step).
+- Full Core parity / NeoForge build / dedicated-server smoke / JAR: PASS (#45397811531).
+- Aura/Crystal native GameTests: PASS (#45397821243).
+- Real Wisp client: IN PROGRESS (#45397811268); no result claimed yet.
+- Other M16 visual/audio client workflows: several still running; do not infer category completion from queued/in-progress jobs.
+- Score remains 59/100. M16 is not closed; no score increase.
+
+No production Java, AI, damage, payload, registries, Gradle, or workflow files changed. PR #4 remains DRAFT/OPEN/UNMERGED; do not merge.
