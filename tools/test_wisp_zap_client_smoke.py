@@ -1245,7 +1245,7 @@ def main() -> int:
 
         early_cleanup_log = log.replace(
             "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=524 ageTicks=4",
-            "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=523 gameTime=523 ageTicks=3",
+            "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=523 ageTicks=3",
             1,
         )
         early_cleanup_errors = verify_wisp_zap_client.verify(early_cleanup_log, status, root)
