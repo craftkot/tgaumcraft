@@ -516,3 +516,13 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - PR #4 remains OPEN / DRAFT / UNMERGED; head `568d25d`, base `a4280834`, 368 changed files, 1,877 commits ahead / 0 behind. It is not safe to merge as a unit. No merge or force-push.
 - Fixed audit remains **59/100**; M16 **4/6**, M08 **5/9**. No point awarded and no category closed.
 - Next: inspect exact-SHA Wisp run #45488283253. It must pass the offline contract and generated Bash syntax before Minecraft starts; then require the real Survival hit, same source/target payload, THIRD_PERSON_BACK frames 1/2/3, a separate Aer-yellow beam component in all three frames, and no beam after expiry. If that passes, the next M16 gap is real-client pixel proof of the eight original OBJ shard groups on six support faces; compare the seeded selection and rotations against BETA26 `CrystalModel#getQuads`.
+
+
+## 2026-11-24 — Wisp client rerun advanced past the repaired contract
+
+- Exact code/test SHA `568d25dba2ca9f8012df27e645bf179aed02b002`: [Wisp real-client run #45488283253](https://github.com/craftkot/tgaumcraft/actions/runs/45488283253) passed **Verify BETA26 geometry and offline client-smoke contract** and **Generate and syntax-check isolated real-client script**. The job advanced to **Launch real Minecraft client and execute a Wisp zap**, which remained IN_PROGRESS at the last poll.
+- No real-client completion, final PNG verification, or FXBolt visibility claim yet. The workflow's later verification and artifact-upload steps have not completed. The separate Wisp geometry, Aura/Crystal GameTests, and Crystal outline client runs were still queued.
+- Full Port CI #45488283336 remains SUCCESS on the exact code/test SHA: 10,054 Core parity assertions, source/asset checks, NeoForge build, dedicated-server readiness, and JAR upload.
+- The standalone PNG reproduction also confirmed the repository fixture's 1280×800 PNG decodes to a 512×480 RGB crop (737,280 bytes), while the intentionally malformed PNG is rejected; the missing-marker case removes the marker. This remains a narrow fixture reproduction, not a substitute for the running client.
+- Fixed audit remains **59/100** (M16 **4/6**, M08 **5/9**). No point awarded; no category closed.
+- Next: resume by checking #45488283253. If it completes, download and inspect the actual PNG artifact, then decide whether the FXBolt is visible. If it fails, inspect the exact client log and screenshots before touching production renderer code.
