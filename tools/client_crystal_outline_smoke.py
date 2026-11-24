@@ -286,6 +286,10 @@ PY
     # not on the unused desktop margin.
     geometry="$(xdotool getwindowgeometry --shell "$WIN")"
     eval "$geometry"
+    if [ "$WIDTH" -lt 1024 ] || [ "$HEIGHT" -lt 768 ]; then
+      echo "CRYSTAL_OUTLINE_BAD_VIEWPORT=$WIDTH x $HEIGHT" | tee -a client-smoke-status.txt
+      exit 1
+    fi
     echo "CRYSTAL_OUTLINE_VIEWPORT=$X,$Y,$WIDTH,$HEIGHT" | tee -a client-smoke-status.txt
     python3 tools/verify_crystal_mesh_screenshots.py \
       --viewport "$X" "$Y" "$WIDTH" "$HEIGHT" \
