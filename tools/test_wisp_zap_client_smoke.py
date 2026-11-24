@@ -413,6 +413,7 @@ def main() -> int:
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "minecraft:generic.knockback_resistance base set 1",
@@ -461,6 +462,7 @@ def main() -> int:
         "grep -F 'TC_SMOKE_WISP_CAMERA=YES' | head -1",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
+        "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "d <= 3.0",
         "wisp_verify_aim_telemetry",
@@ -494,6 +496,7 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_TICK=",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
+        "WISP_RENDER_PREATTACK_TRACKING=YES",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
         'attack_camera_source="PREAIMED_FIRST_FRAME"',
         'attack_camera_source="LIVE_ENTITY_FACING"',
@@ -734,6 +737,9 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=20",
+        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
@@ -768,11 +774,11 @@ def main() -> int:
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
-        "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=3",
+        "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=6",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
-        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=6",
+        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=9",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=hitbox_center tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=41.0 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_RENDER_CAPTURE_ID=17",
@@ -884,8 +890,11 @@ def main() -> int:
             log.replace("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518", ""), status, root
         ), "missing pre-attack camera tracking must fail"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=3", ""), root
+            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=6", ""), root
         ), "missing pre-attack tracking status must fail"
+        assert verify_wisp_zap_client.verify(
+            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=6", "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=9"), root
+        ), "first tracked frame must occur after the pre-attack marker"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21", ""), status, root
         ), "missing AFTER_LEVEL frame completion must fail"

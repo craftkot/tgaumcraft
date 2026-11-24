@@ -708,10 +708,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if pre_attack_track_status is not None and first_frame_line_number is not None:
             if int(pre_attack_track_status.group(3)) >= int(first_frame_line_number.group(1)):
                 errors.append("first completed render frame did not occur after pre-attack camera tracking")
-        if wisp_rendered and frame_status.group(1) != wisp_rendered.group(1):
-            errors.append("first completed-frame status and rendered Wisp use different entity IDs")
-        if wisp_rendered and frame_status.group(2) != wisp_rendered.group(2):
-            errors.append("first completed-frame status and rendered Wisp use different ticks")
+        if first_frame_id is not None and frame_status.group(1) != first_frame_id.group(1):
+            errors.append("first completed-frame status and selected first-frame status use different entity IDs")
+        if first_frame_tick is not None and frame_status.group(2) != first_frame_tick.group(1):
+            errors.append("first completed-frame status and selected first-frame status use different ticks")
+        if wisp_rendered and first_frame_id is not None and wisp_rendered.group(1) != first_frame_id.group(1):
+            errors.append("first rendered Wisp and selected tracked Wisp use different entity IDs")
     if first_frame_line_number is None:
         errors.append("missing exact first-frame client-log cursor")
     elif frame_status is not None:
