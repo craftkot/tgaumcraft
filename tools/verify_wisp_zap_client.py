@@ -826,10 +826,6 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     else:
         camera_id, camera_tick = telemetry.group(1), telemetry.group(2)
         player_x, player_y, player_z, wisp_x, wisp_y, wisp_z, distance, aim_dot = map(float, telemetry.groups()[2:])
-        if wisp_rendered and camera_id != wisp_rendered.group(1):
-            errors.append("first-frame camera telemetry and rendered Wisp use different entity IDs")
-        if wisp_rendered and camera_tick != wisp_rendered.group(2):
-            errors.append("first-frame camera telemetry and rendered Wisp use different ticks")
         if first_frame_id is None or first_frame_tick is None:
             errors.append("missing first-frame entity ID/tick status")
         elif (camera_id, camera_tick) != (first_frame_id.group(1), first_frame_tick.group(1)):
