@@ -1374,7 +1374,8 @@ def main() -> int:
     assert "wisp_reanchor_player_for_capture" not in generated
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
+    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in move_body
+    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is tied to the accepted-hit attack input frame"
