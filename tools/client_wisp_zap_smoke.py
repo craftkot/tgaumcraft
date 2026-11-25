@@ -107,8 +107,8 @@ def render() -> str:
     VIDEO_PID=$!
     for _ in $(seq 1 200); do
       if grep -q '^frame=1$' "$progress" 2>/dev/null; then
-        WISP_ZAP_VIDEO_FIRST_FRAME_NS="$(date +%s%N)"
-        echo "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=$WISP_ZAP_VIDEO_FIRST_FRAME_NS frameRate=60" | tee -a client-smoke-status.txt
+        WISP_ZAP_VIDEO_FIRST_FRAME_NS="$(python -c 'import time; print(time.monotonic_ns())')"
+        echo "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=$WISP_ZAP_VIDEO_FIRST_FRAME_NS frameRate=60" | tee -a client-smoke-status.txt
         return 0
       fi
       if ! kill -0 "$VIDEO_PID" 2>/dev/null; then
@@ -175,7 +175,7 @@ def render() -> str:
     WISP_ZAP_FRAME_LINE_NUMBER="$marker_line"
     WISP_ZAP_FRAME_CREATED_AT="$(sed -n 's/.* createdAt=\([0-9][0-9]*\) .*/\1/p' <<<"$candidate")"
     WISP_ZAP_FRAME_AGE_TICK="$expected_age"
-    WISP_ZAP_FRAME_OBSERVED_AT_NS="$(date +%s%N)"
+    WISP_ZAP_FRAME_OBSERVED_AT_NS="$(python -c 'import time; print(time.monotonic_ns())')"
     return 0
   }
   wisp_wait_for_completed_wisp_frame() {
@@ -208,10 +208,12 @@ def render() -> str:
       return 1
     fi
     target_id="$(sed -n 's/.* target=\([0-9][0-9]*\) .*/\1/p' <<<"$payload_line")"
-    if ! [[ "$target_id" =~ ^[0-9]+$ ]]; then
-      echo "WISP_ZAP_CAPTURE_TARGET_INVALID=$target_id" | tee -a client-smoke-status.txt
+    payload_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<<"$payload_line")"
+    if ! [[ "$target_id" =~ ^[0-9]+$ && "$payload_monotonic_ns" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_CAPTURE_PAYLOAD_FIELDS_INVALID=target:$target_id monotonicNs:$payload_monotonic_ns" | tee -a client-smoke-status.txt
       return 1
     fi
+    echo "WISP_ZAP_PAYLOAD_RECEIVED=YES source=$wisp_id target=$target_id createdAt=$created_at monotonicNs=$payload_monotonic_ns" | tee -a client-smoke-status.txt
     wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_SENT=YES source=$wisp_id target=$target_id"
     rendered_line="$(grep -F "TC_SMOKE_WISP_ZAP_RENDERED=YES source=$wisp_id target=$target_id " client-smoke/client.log \
       | grep -F "createdAt=$created_at " | tail -1 || true)"
@@ -231,7 +233,7 @@ def render() -> str:
       fi
       wisp_wait_for_completed_wisp_frame "$WISP_ZAP_FRAME_LINE_NUMBER" "$wisp_id" "$wisp_tick"
       observed_at_ns="$WISP_ZAP_FRAME_OBSERVED_AT_NS"
-      echo "WISP_ZAP_FRAME_OBSERVED=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick observedAtNs=$observed_at_ns" | tee -a client-smoke-status.txt
+      echo "WISP_ZAP_FRAME_OBSERVED=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick observedAtMonotonicNs=$observed_at_ns" | tee -a client-smoke-status.txt
       cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
     done
     wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at"
@@ -842,10 +844,21 @@ def render() -> str:
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 
+  zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'
+  side_view_line="$(grep -F 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=' client-smoke/client.log | tail -1)"
+  side_view_id="$(sed -n 's/.*TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=\([0-9][0-9]*\) .*/\1/p' <<<"$side_view_line")"
+  side_view_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<<"$side_view_line")"
+  wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+  if ! [[ "$side_view_id" =~ ^[0-9]+$ && "$side_view_monotonic_ns" =~ ^[0-9]+$ && "$side_view_id" == "$wisp_id" ]]; then
+    echo "WISP_CAMERA_SIDE_VIEW_FIELDS_INVALID=id:$side_view_id expected:$wisp_id monotonicNs:$side_view_monotonic_ns" | tee -a client-smoke-status.txt
+    exit 1
+  fi
+  echo "WISP_CAMERA_SIDE_VIEW=YES id=$side_view_id monotonicNs=$side_view_monotonic_ns" | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
@@ -857,33 +870,13 @@ def render() -> str:
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
-  # The real click and accepted hit are complete. Switch to third-person-back,
-  # then rotate the player 90 degrees without moving them. This makes the
-  # Wisp-to-player bolt lie across the screen instead of behind the player model.
-  xdotool key --clearmodifiers F5
-  sleep 0.1
-  echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON' | tee -a client-smoke-status.txt
-  wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1
-  wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'
-  echo 'WISP_CAMERA_SIDE_VIEW=YES' | tee -a client-smoke-status.txt
-
-  # The baseline is captured only after the actual hit/target callbacks, but
-  # before the zap payload. The Wisp billboard must be visible in this same
-  # side-on camera so the pixel verifier can locate its true screen-space origin.
-  if grep -Fq 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES' client-smoke/client.log; then
-    echo 'WISP_ZAP_BASELINE_CAPTURE_TOO_LATE=YES' | tee -a client-smoke-status.txt
-    exit 1
-  fi
-  wisp_capture 79-wisp-third-person-before-zap
-  if grep -Fq 'TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES' client-smoke/client.log; then
-    echo 'WISP_ZAP_BASELINE_CAPTURE_RACED_PAYLOAD=YES' | tee -a client-smoke-status.txt
-    exit 1
-  fi
-  echo 'WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD' | tee -a client-smoke-status.txt
+  # The smoke probe switches to the fixed side view inside AttackEntityEvent,
+  # after the real hit target has been selected and before the server zap arrives.
+  # The continuous video recorder supplies a same-camera pre-payload frame later.
+  # Do not re-aim or teleport the player after the real click.
 
   # Do not change the live Wisp or zap; only stabilize horizontal player knockback.
   wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
-  zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
@@ -892,9 +885,8 @@ def render() -> str:
   # three-tick bolt entirely.
   wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"
 
-  # Minecraft cycles FIRST_PERSON -> THIRD_PERSON_BACK -> THIRD_PERSON_FRONT -> FIRST_PERSON.
-  # We switched to THIRD_PERSON_BACK before the zap, so one F5 press would leave
-  # the camera in THIRD_PERSON_FRONT and hide the Wisp behind the player model.
+  # The smoke probe selected THIRD_PERSON_BACK at the attack event. Restore the
+  # normal first-person view only after the recorded zap has expired and been extracted.
   xdotool key --clearmodifiers F5
   sleep 0.1
   xdotool key --clearmodifiers F5
