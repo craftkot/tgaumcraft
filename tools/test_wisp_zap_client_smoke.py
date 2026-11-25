@@ -342,8 +342,8 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     rc, output, status = run_case(base_lines)
     assert rc == 0, (rc, output, status)
     captured = re.search(
-        r"(?m)^CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518 DISTANCE=([0-9]+\\.[0-9]+) "
-        r"HIT_DISTANCE=2\\.9 MONOTONIC_NS=2000000000$",
+        r"(?m)^CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518 DISTANCE=([0-9]+[.][0-9]+) "
+        r"HIT_DISTANCE=2[.]9 MONOTONIC_NS=2000000000$",
         output,
     )
     assert captured is not None, output
