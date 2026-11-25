@@ -697,7 +697,7 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     # Deliberately omit post-zap Wisp entity-frame markers; FXBolt markers are authoritative.
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -1532,7 +1532,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
         "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=17",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
@@ -1686,6 +1686,14 @@ def main() -> int:
             log.replace("yaw=90.0", "yaw=0.0", 1), status, root
         )
         assert any("camera is not side-on" in error for error in wrong_side_view_errors), wrong_side_view_errors
+        misaligned_side_view_errors = verify_wisp_zap_client.verify(
+            log.replace("beamYaw=0.0 yaw=90.0", "beamYaw=45.0 yaw=90.0", 1), status, root
+        )
+        assert any("camera is not side-on" in error for error in misaligned_side_view_errors), misaligned_side_view_errors
+        wrapped_side_view_errors = verify_wisp_zap_client.verify(
+            log.replace("beamYaw=0.0 yaw=90.0", "beamYaw=170.0 yaw=-100.0", 1), status, root
+        )
+        assert wrapped_side_view_errors == [], wrapped_side_view_errors
         first_person_errors = verify_wisp_zap_client.verify(
             log.replace("cameraType=THIRD_PERSON_BACK", "cameraType=FIRST_PERSON"), status, root
         )
@@ -2141,6 +2149,12 @@ def main() -> int:
     assert "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" in attack_probe
     assert "minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK)" in attack_probe
+    assert "Vec3 toWisp = wisp.position().subtract(minecraft.player.position());" in attack_probe
+    assert "Math.atan2(-toWisp.x, toWisp.z)" in attack_probe
+    assert "float sideViewYaw = Mth.wrapDegrees(beamYaw + 90.0F);" in attack_probe
+    assert "minecraft.player.setYRot(sideViewYaw)" in attack_probe
+    assert "minecraft.player.setYRot(90.0F)" not in attack_probe
+    assert ' + " beamYaw=" + beamYaw' in attack_probe
     assert "System.nanoTime()" in attack_probe
     assert "hitDistance=" in attack_probe
     assert "minecraft.player.getEyePosition().distanceTo(hit.getLocation())" in attack_probe
