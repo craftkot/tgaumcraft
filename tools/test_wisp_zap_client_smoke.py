@@ -1246,7 +1246,9 @@ def main() -> int:
     assert 'camera_line="${WISP_ATTACK_CAMERA_LINE:-}"' in capture_body
     assert 'grep -Fq "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter tick=$camera_tick "' in capture_body
     assert 'awk -v dot="$aim_dot"' in capture_body
-    assert "test -s client-smoke/screenshots/78-wisp-aim-check.png" in capture_body
+    assert "[ ! -s client-smoke/screenshots/78-wisp-aim-check.png ]" in capture_body, (
+        "the attack-aim verifier must fail closed when its captured PNG is absent"
+    )
     assert "wisp_capture 78-wisp-aim-check" not in capture_body
     assert 'WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME' in capture_body
     assert 'echo "$camera_line" | tee -a client-smoke-status.txt' in capture_body

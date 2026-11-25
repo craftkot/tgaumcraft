@@ -636,3 +636,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - The isolated first-frame test now supplies a successful wisp_capture stub, a valid synthetic aim PNG, and an event log. It asserts capture happens before the one real-click stub. Existing stale-frame exclusion and inclusive first-frame selection assertions remain unchanged; the production watcher and runtime capture path are not altered.
 - Only tools/test_wisp_zap_client_smoke.py and this lane journal changed. The previous all-61-open-PR path scan still applies to these same two paths; no overlapping PR was found. No Java, Gradle, workflow, registry, localization, or other feature branch changed.
 - Next: rerun the exact-SHA offline contract. If it passes, require generated Bash syntax, then a real Minecraft client. Full Port CI and Aura/Crystal GameTests for the preceding code SHA are still running and must be checked separately.
+
+## 2026-11-25 — align the capture guard assertion with its fail-closed shell condition
+
+- Exact Wisp push run [#45539494932](https://github.com/craftkot/tgaumcraft/actions/runs/45539494932) on SHA 890ef8b passed the two isolated capture-dependency tests and the first-frame watcher regression, then failed a later static contract assertion in main(): it expected the obsolete positive command text `test -s ...`, while the generated verifier correctly uses the fail-closed condition `[ ! -s ... ]` inside its rejection guard. The run stopped before Bash syntax generation and Minecraft launch.
+- Updated only the expected shell fragment to match the actual negative existence check and added an explanatory assertion message. The guard itself is unchanged; the verifier still rejects a missing PNG.
+- Only tools/test_wisp_zap_client_smoke.py and this lane journal changed. The 61-PR changed-path scan for these exact paths found no overlap. No production code, Gradle, workflow, registry, localization, or other feature branch changed.
+- Next: exact-SHA Wisp run must complete the entire Python contract, generated Bash syntax, then launch Minecraft. Do not infer a visual result from this test-only repair.
