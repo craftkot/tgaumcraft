@@ -205,18 +205,21 @@ printf '%s\n' "$frame_line"
 
 
 def _test_attack_frame_dot_tolerance(generated: str) -> None:
-    """The same-ID vanilla hit result is authoritative; tolerate cosine float roundoff."""
+    """The same-ID vanilla hit is authoritative; capture its frame before clicking and fail closed."""
     body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     function = "  wisp_wait_for_attack_frame() {\n" + body + "\n  }\n"
 
-    def run_case(dot: str) -> tuple[int, str, list[str], list[str]]:
+    def run_case(dot: str, capture_exit: int = 0) -> tuple[int, str, list[str], list[str], list[str]]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-attack-dot-") as directory:
             root = Path(directory)
             bin_dir = root / "bin"
             bin_dir.mkdir()
             clicker = bin_dir / "xdotool"
             clicker.write_text(
-                "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\nexit 0\n",
+                "#!/bin/sh\n"
+                "printf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\n"
+                "printf 'CLICK %s\\n' \"$*\" >> \"$EVENT_LOG\"\n"
+                "exit 0\n",
                 encoding="utf-8",
             )
             clicker.chmod(0o755)
@@ -228,7 +231,7 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
                 "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
                 "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
                 "wispX=12.5 wispY=149.3 wispZ=11.5 "
-                "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+                "wispEyeX=12.5 wispEyeY=150.065 wispZ=11.5 "
                 "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
                 f"aimDot={dot} renderAimDot=0.9957938147422856 eyeAimDot=0.9479570469041974"
             )
@@ -242,11 +245,18 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
             status_path = root / "client-smoke-status.txt"
             status_path.write_text("", encoding="utf-8")
             click_log = root / "clicks.log"
+            event_log = root / "events.log"
             env = os.environ.copy()
             env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
             env["CLICK_LOG"] = str(click_log)
+            env["EVENT_LOG"] = str(event_log)
+            env["CAPTURE_EXIT"] = str(capture_exit)
             harness = (
                 "set -euo pipefail\n"
+                "wisp_capture() {\n"
+                "  printf 'CAPTURE %s\\n' \"$1\" >> \"$EVENT_LOG\"\n"
+                "  return \"\${CAPTURE_EXIT:-0}\"\n"
+                "}\n"
                 + function
                 + "\nwisp_wait_for_attack_frame 0 106 PLATFORM 1\n"
             )
@@ -260,20 +270,28 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
             )
             status = status_path.read_text(encoding="utf-8").splitlines()
             clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
-            return result.returncode, result.stdout + result.stderr, status, clicks
+            events = event_log.read_text(encoding="utf-8").splitlines() if event_log.exists() else []
+            return result.returncode, result.stdout + result.stderr, status, clicks, events
 
-    rc, output, status, clicks = run_case("1.000000011613918")
+    rc, output, status, clicks, events = run_case("1.000000011613918")
     assert rc == 0, (rc, output, status)
     assert any(line.startswith("WISP_ATTACKABLE_FRAME=YES id=106") for line in status), status
+    assert "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES" in status, status
     assert clicks == ["click 1"], clicks
+    assert events == ["CAPTURE 78-wisp-aim-check", "CLICK click 1"], events
 
-    rc, output, status, clicks = run_case("1.0002")
+    rc, output, status, clicks, events = run_case("1.0002")
     assert rc != 0, (rc, output, status)
     assert any("WISP_ATTACKABLE_FRAME_CAMERA_REJECTED" in line for line in status), status
     assert clicks == ["click 1"], clicks
+    assert events == ["CAPTURE 78-wisp-aim-check", "CLICK click 1"], events
 
-
-
+    rc, output, status, clicks, events = run_case("1.000000011613918", capture_exit=1)
+    assert rc != 0, (rc, output, status)
+    assert any("WISP_ATTACK_INPUT_FRAME_CAPTURE_FAILED=YES id=106" in line for line in status), status
+    assert "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES" not in status, status
+    assert clicks == [], clicks
+    assert events == ["CAPTURE 78-wisp-aim-check"], events
 
 def _test_attack_input_frame_correlation(generated: str) -> None:
     """The actual click must bind to its same-tick AFTER_LEVEL frame, not an earlier Wisp hit."""
