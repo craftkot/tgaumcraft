@@ -905,7 +905,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("client AttackEntityEvent and server hurt callback use different player/Wisp IDs")
     if hurt and hit and hurt.group(1, 2) != hit.group(1, 2):
         errors.append("server accepted-damage callback and target acquisition use different IDs")
-    if attack_input and float(attack_input.group(4)) > 3.01:
+    if attack_input and float(attack_input.group(3)) > 3.01:
         errors.append("vanilla eye-to-hit-point distance exceeds the 3-block melee reach")
     if attack_input and side_view and int(attack_input.group(6)) >= int(side_view.group(4)):
         errors.append("attack-input timestamp must precede the smoke camera side-view switch")
@@ -915,7 +915,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         video_offset_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=([0-9.]+)$", status_text)
         if input_ns_status is None or input_ns_status.group(1) != attack_input.group(6):
             errors.append("video screenshot timestamp does not match the real attack InputEvent")
-        if hit_distance_status is None or abs(float(hit_distance_status.group(1)) - float(attack_input.group(4))) > 0.001:
+        if hit_distance_status is None or abs(float(hit_distance_status.group(1)) - float(attack_input.group(3))) > 0.001:
             errors.append("status hit distance does not match the real attack InputEvent")
         if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
             errors.append("video-derived attack frame has no valid non-negative offset")
