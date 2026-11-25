@@ -932,3 +932,9 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Before writing, all 61 other open PRs (#1–#3 and #5–#62) were compared against `main`; none changes these four paths. Main HEAD is `a4280834adc5a20b6951098af937d30ca4aeca56`. PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED; no merge or force-push.
 - Parent-SHA [Full Port CI #45703209717](https://github.com/craftkot/tgaumcraft/actions/runs/45703209717) succeeded (Core parity, NeoForge build and dedicated-server smoke); 24 of 25 M16 workflows succeeded on `6880462`, with Wisp client the sole failure at final visual verification. This does not validate the new commits.
 - No audit points awarded: fixed audit remains 59/100; M16 remains 4/6. Next: require the new exact-SHA Wisp run to pass offline contract, generated `bash -n`, real Survival hit/damage/payload, broadside FXBolt pixels at ages 1/2/3, and expiry before closing this subcriterion.
+
+
+### Follow-up correction — side-view timestamp capture group
+
+- A post-write audit of every `side_view.group(...)` use found one remaining ordering assertion still read group 4 after the marker regex gained `beamYaw`. Group 4 is now pitch; monotonic timestamp moved to group 5. Updated the attack-input-before-side-view comparison to use group 5. This is a verifier index correction, not a changed acceptance threshold.
+- Correction commit: `7fb1a8b7627a3e4609d8958da6f23a9aebbac6a2`. The previously queued workflows for head `6771d17` do not validate this correction; new exact-HEAD CI is required.
