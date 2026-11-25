@@ -1017,8 +1017,6 @@ def main() -> int:
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
-        "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
         "firstFrameMonotonicNs=",
@@ -1333,6 +1331,8 @@ def main() -> int:
 
     assert "WISP_ZAP_AIM=PREAIMED_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_TEST_TIME=MIDNIGHT" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_FRAME_CAPTURE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_EFFECT_EXPIRED=YES" in verify_wisp_zap_client.REQUIRED_STATUS
