@@ -1251,9 +1251,6 @@ def main() -> int:
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", camera_stopped_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", target_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
-    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
     zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', rendered_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", zap_cursor_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
@@ -1262,20 +1259,21 @@ def main() -> int:
     side_view_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW=YES id=$side_view_id monotonicNs=$side_view_monotonic_ns"', side_view_wait_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", target_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
-    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", aim_verify_index)
+    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", target_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
-    perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", zap_capture_index)
+    attack_frame_extract_index = setup.index("wisp_extract_attack_input_frame", zap_capture_index)
+    capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", attack_frame_extract_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
+    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
+    perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_restore_second_index = setup.index(
         "xdotool key --clearmodifiers F5", perspective_restore_index + 1
     )
     restore_marker_index = setup.index(
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index
     )
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < capture_aim_index < telemetry_index < aim_verify_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
         "select the side camera on the actual attack event before damage/payload, then extract the timestamped video frames"
     )
     assert "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1" not in setup
