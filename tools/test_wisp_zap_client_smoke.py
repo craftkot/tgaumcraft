@@ -1371,7 +1371,7 @@ def main() -> int:
         "WISP_ZAP_BASELINE_NOISE=3",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF=18",
     ))
-    with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-client-") as directory:    ))
+    ))
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-client-") as directory:
         root = Path(directory)
         for name in verify_wisp_zap_client.SCREENSHOTS:
