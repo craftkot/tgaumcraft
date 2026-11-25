@@ -3,8 +3,8 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`a4cfbb774b68e87cc9204d1c1666220c253d38b9`](https://github.com/craftkot/tgaumcraft/commit/a4cfbb774b68e87cc9204d1c1666220c253d38b9)
-- Exact-SHA Actions: **25/25 завершены SUCCESS**; см. доказательства ниже.
+- Последний code/test SHA: [`0a5236d64b15c98a6039c7d47a3eb8a37599dc61`](https://github.com/craftkot/tgaumcraft/commit/0a5236d64b15c98a6039c7d47a3eb8a37599dc61)
+- Предыдущий code/test SHA `a4cfbb7` имел 25/25 SUCCESS; новый SHA `0a5236d` ожидает exact-SHA Wisp/full-CI rerun.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
 ## Границы lane
@@ -606,3 +606,16 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Changed only tools/client_wisp_zap_smoke.py, tools/verify_wisp_zap_client.py, tools/test_wisp_zap_client_smoke.py, and this lane journal. No production renderer, Java gameplay, Gradle, workflow, registry or global localization files were changed.
 - All 61 other open PRs (#1-#3 and #5-#62) were checked via paginated changed-file lists; none overlaps these four paths. The PR #4 existing unrelated overlaps with PR #3 remain untouched.
 - Validation is pending on new exact-SHA runs. Do not claim real-client visual PASS until the new artifact shows the Aer billboard inside the unchanged aim ROI, all three FXBolt frames contain the separate yellow beam, and the post-expiry frame is clear.
+
+
+## 2026-11-25 — repair Wisp capture dependency in the isolated watcher test
+
+- Fresh main inputs and coordination rules were re-read. Main HEAD is still `a4280834adc5a20b6951098af937d30ca4aeca56`; PR #4 is OPEN / DRAFT / UNMERGED, base main, no merge or force-push. Current branch code/test HEAD is `0a5236d64b15c98a6039c7d47a3eb8a37599dc61`.
+- Exact-SHA Wisp client run [#45533239107](https://github.com/craftkot/tgaumcraft/actions/runs/45533239107) failed in the offline Python contract before Bash syntax generation and before Minecraft launch. Geometry 37/37 and Wisp atlas 24/24 passed. The traceback is `_test_attack_frame_dot_tolerance` → `wisp_wait_for_attack_frame`; Bash reported `wisp_capture: command not found`.
+- Root cause: the regression test extracts `wisp_wait_for_attack_frame` from the generated script, but omitted its helper dependency `wisp_capture`. The complete generated client script defines that helper; this failure does not establish a production client defect.
+- The extracted-function harness now supplies a deterministic `wisp_capture` stub and records ordered events. Positive and dot-roundoff cases require screenshot capture before the real-click stub. A capture-failure case requires fail-closed behavior with no click. The test does not weaken the authoritative same-ID EntityHitResult gate or pixel thresholds.
+- Changed paths: `tools/test_wisp_zap_client_smoke.py` and this lane journal only. No production Java, renderer, Wisp AI, damage, network payload, Gradle, workflow YAML, registry or global localization changed.
+- Fresh overlap scan checked all 61 other open PRs (#1–#3 and #5–#62) using paginated changed-file lists; none changes `tools/client_wisp_zap_smoke.py`, `tools/test_wisp_zap_client_smoke.py`, `tools/verify_wisp_zap_client.py`, or this lane journal. Existing PR #3 overlaps in unrelated Salis/workbench files remain untouched.
+- On the pre-fix exact SHA `1340739`, Full Port CI [#45533239014](https://github.com/craftkot/tgaumcraft/actions/runs/45533239014) **SUCCESS** (Core parity, source checks, NeoForge build, dedicated server, JAR); Aura/Crystal GameTests [#45533239068](https://github.com/craftkot/tgaumcraft/actions/runs/45533239068) **SUCCESS**; Wisp geometry [#45533238958](https://github.com/craftkot/tgaumcraft/actions/runs/45533238958) **SUCCESS**. These do not override the failed Wisp offline contract.
+- Exact-SHA checks for `0a5236d` must be inspected before any gameplay claim. The fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**; no point awarded.
+- Next: inspect the new Wisp run's offline contract and generated `bash -n`; only then require a real Survival hit, matching payload, three real FXBolt age frames, separate Aer-yellow beam pixels and a clear post-expiry frame.
