@@ -264,25 +264,25 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
     rc, output, status, clicks, events = run_case("1.000000011613918")
     assert rc == 0, (rc, output, status)
     assert any(line.startswith("WISP_ATTACKABLE_FRAME=YES id=106") for line in status), status
-    assert clicks == ["--delay 0 1"], clicks
-    assert events == ["CLICK --delay 0 1"], events
+    assert clicks == ["click --delay 0 1"], clicks
+    assert events == ["CLICK click --delay 0 1"], events
 
     rc, output, status, clicks, events = run_case("1.0002")
     assert rc != 0, (rc, output, status)
     assert any("WISP_ATTACKABLE_FRAME_CAMERA_REJECTED" in line for line in status), status
-    assert clicks == ["--delay 0 1"], clicks
-    assert events == ["CLICK --delay 0 1"], events
+    assert clicks == ["click --delay 0 1"], clicks
+    assert events == ["CLICK click --delay 0 1"], events
 
     rc, output, status, clicks, events = run_case("1.000000011613918", click_exit=1)
     assert rc != 0, (rc, output, status)
     assert any("WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=106" in line for line in status), status
     assert not any(line.startswith("WISP_ATTACKABLE_FRAME=YES") for line in status), status
-    assert events == ["CLICK --delay 0 1"], events
+    assert events == ["CLICK click --delay 0 1"], events
 
     rc, output, status, clicks, events = run_case("1.000000011613918", wisp_x="20.0")
     assert rc != 0, (rc, output, status)
     assert any("WISP_ATTACKABLE_FRAME_CAMERA_REJECTED" in line for line in status), status
-    assert events == ["CLICK --delay 0 1"], events
+    assert events == ["CLICK click --delay 0 1"], events
 
 
 def _test_attack_input_frame_correlation(generated: str) -> None:
@@ -439,9 +439,9 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         assert "WISP_ATTACKABLE_FRAME=YES id=106 tick=2" in status, status
         assert "WISP_ATTACKABLE_FRAME=YES id=106 tick=1" not in status, status
         clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
-        assert clicks == ["--delay 0 1"], clicks
+        assert clicks == ["click --delay 0 1"], clicks
         events = event_log.read_text(encoding="utf-8").splitlines() if event_log.exists() else []
-        assert events == ["CLICK --delay 0 1"], events
+        assert events == ["CLICK click --delay 0 1"], events
 
 
 def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
