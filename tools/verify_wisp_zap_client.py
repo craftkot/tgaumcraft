@@ -84,9 +84,10 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_HURT_ACCEPTED=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
-    "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
-    "WISP_CAMERA_SIDE_VIEW=YES",
+    "WISP_CAMERA_SIDE_VIEW=YES id=",
+    "WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
     "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
+    "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES",
     "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
     "WISP_ZAP_FRAME_OBSERVED=YES",
     "WISP_ZAP_VIDEO_STARTED=YES",
@@ -536,12 +537,20 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
     errors: list[str] = []
     status_text = status_file.read_text(encoding="utf-8", errors="replace")
     started = _first(
-        r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=(\d+) frameRate=(\d+)$",
+        r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\d+) frameRate=(\d+)$",
+        status_text,
+    )
+    side_view = _first(
+        r"(?m)^WISP_CAMERA_SIDE_VIEW=YES id=(\d+) monotonicNs=(\d+)$",
+        status_text,
+    )
+    payload = _first(
+        r"(?m)^WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) createdAt=(\d+) monotonicNs=(\d+)$",
         status_text,
     )
     observed = re.findall(
         r"(?m)^WISP_ZAP_FRAME_OBSERVED=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) "
-        r"wispTick=(\d+) observedAtNs=(\d+)$",
+        r"wispTick=(\d+) observedAtMonotonicNs=(\d+)$",
         status_text,
     )
     if started is None:
@@ -550,9 +559,17 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append("continuous Wisp video was not stopped cleanly before extraction")
     if len(observed) != 3:
         errors.append(f"expected three timestamped Wisp render observations, got {len(observed)}")
-    if started is None or len(observed) != 3 or errors:
+    if side_view is None:
+        errors.append("missing attack-event side-view monotonic timestamp")
+    if payload is None:
+        errors.append("missing client zap-payload monotonic timestamp")
+    if started is None or side_view is None or payload is None or len(observed) != 3 or errors:
         return errors
 
+    if side_view.group(1) != payload.group(1):
+        errors.append("side-view camera and zap payload belong to different Wisp source IDs")
+    if int(side_view.group(2)) >= int(payload.group(4)):
+        errors.append("side-view camera was not established before zap payload receipt")
     if [int(frame[2]) for frame in observed] != [1, 2, 3]:
         errors.append("timestamped Wisp render observations are not ages 1, 2, 3")
     if len({(frame[0], frame[1]) for frame in observed}) != 1:
@@ -599,6 +616,29 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         requested_rate = int(started.group(2))
         if requested_rate != 60:
             raise RuntimeError(f"unexpected requested capture rate: {requested_rate}")
+
+        side_view_ns = int(side_view.group(2))
+        payload_ns = int(payload.group(4))
+        frame_period_ns = 1_000_000_000.0 / fps
+        if side_view_ns <= first_frame_ns:
+            raise RuntimeError("side-view camera timestamp predates the first recorded video frame")
+        if payload_ns - side_view_ns < frame_period_ns * 3.0:
+            raise RuntimeError(
+                "no safe pre-payload video window: side-view-to-payload interval is shorter than three frames"
+            )
+        baseline_first = max(
+            0, int(math.floor((side_view_ns - first_frame_ns) * fps / 1_000_000_000.0)) + 1
+        )
+        baseline_last = min(
+            frame_count - 1,
+            int(math.floor((payload_ns - first_frame_ns) * fps / 1_000_000_000.0)) - 2,
+        )
+        if baseline_first > baseline_last:
+            raise RuntimeError(
+                f"no video frame between side-view setup and zap payload: "
+                f"first={baseline_first} last={baseline_last}"
+            )
+
         selected: list[tuple[int, int, int, int, int, int, str]] = []
         frame_names = {
             1: "80-wisp-zap-frame-a.png",
@@ -608,6 +648,43 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         screenshot_dir.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="tc-wisp-video-frames-") as directory:
             temporary = Path(directory)
+            baseline_path = temporary / BOLT_BASELINE_SCREENSHOT
+            baseline_index = None
+            roi_width, roi_height, roi_left, roi_top = BOLT_ROI
+            expected_roi_bytes = roi_width * roi_height * 3
+            for index in range(baseline_first, baseline_last + 1):
+                candidate = temporary / f"side-view-baseline-{index}.png"
+                _extract_video_frame(video_file, index, candidate)
+                roi = subprocess.run(
+                    [
+                        "convert", str(candidate),
+                        "-crop", f"{roi_width}x{roi_height}+{roi_left}+{roi_top}",
+                        "+repage", "-depth", "8", "RGB:-",
+                    ],
+                    capture_output=True,
+                    check=False,
+                )
+                if roi.returncode != 0:
+                    detail = roi.stderr.decode("utf-8", errors="replace").strip()
+                    raise RuntimeError(f"cannot inspect pre-payload side-view frame {index}: {detail}")
+                if len(roi.stdout) != expected_roi_bytes:
+                    raise RuntimeError(
+                        f"unexpected side-view baseline ROI byte count: {len(roi.stdout)} != {expected_roi_bytes}"
+                    )
+                if _find_wisp_source_center(roi.stdout, roi_width, roi_height, roi_left, roi_top) is not None:
+                    shutil.copyfile(candidate, baseline_path)
+                    baseline_index = index
+                    break
+            if baseline_index is None:
+                raise RuntimeError(
+                    "no pre-payload third-person frame contains a detectable Aer Wisp billboard"
+                )
+            baseline_monotonic_ns = first_frame_ns + int(round(baseline_index * 1_000_000_000.0 / fps))
+            if not side_view_ns < baseline_monotonic_ns < payload_ns:
+                raise RuntimeError(
+                    "selected Wisp baseline frame is not strictly between side-view setup and zap payload"
+                )
+
             previous_index = -1
             for source_id, created_at, age_tick, wisp_tick, observed_at in observed:
                 elapsed = (int(observed_at) - first_frame_ns) / 1_000_000_000.0
@@ -636,7 +713,15 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
             frame_indices = [frame[4] for frame in selected]
             if frame_indices != sorted(frame_indices) or len(set(frame_indices)) != 3:
                 raise RuntimeError(f"selected video frame indices are not distinct/increasing: {frame_indices}")
-            capture_markers: list[str] = []
+            capture_markers: list[str] = [
+                "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
+                f"WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source={payload.group(1)} "
+                f"frameIndex={baseline_index} monotonicNs={baseline_monotonic_ns}",
+            ]
+            if selected[0][4] <= baseline_index:
+                raise RuntimeError(
+                    f"pre-payload baseline frame {baseline_index} is not before age-1 frame {selected[0][4]}"
+                )
             for source_id, created_at, age_tick, wisp_tick, frame_index, difference, selected_path in selected:
                 shutil.copyfile(selected_path, screenshot_dir / frame_names[age_tick])
                 capture_markers.append(
@@ -697,7 +782,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         log_text,
     )
     received = _first(
-        r"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) color=#([0-9A-Fa-f]{6})",
+        r"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) color=#([0-9A-Fa-f]{6}) "
+        r"createdAt=(\d+) clientGameTime=(\d+) monotonicNs=(\d+)",
         log_text,
     )
     wisp_camera = _first(
@@ -709,7 +795,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     )
     side_view = _first(
         r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) yaw=(-?[0-9.]+) "
-        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK", log_text
+        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK monotonicNs=(\d+)", log_text
     )
     pre_attack_track = _first(
         r"TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=(\d+) tick=(\d+) gameTime=(\d+)",
@@ -906,7 +992,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             created_at = captured_frames[0][1]
             payload_for_event = re.search(
                 rf"TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source={re.escape(source_id)} "
-                rf"target={re.escape(target_id)} color=#FFFF7E createdAt={re.escape(created_at)} clientGameTime=\d+",
+                rf"target={re.escape(target_id)} color=#FFFF7E createdAt={re.escape(created_at)} "
+                rf"clientGameTime=\d+ monotonicNs=\d+",
                 log_text,
             )
             rendered_for_event = re.search(
@@ -969,22 +1056,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 errors.append(
                     "aim screenshot must be captured in the attackable frame before click, then validated after accepted damage"
                 )
-            side_view_position = status_text.find("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON")
+            side_view_position = status_text.find("WISP_CAMERA_SIDE_VIEW=YES id=")
             baseline_capture_position = status_text.find(
                 "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD"
             )
-            if (
-                camera_capture_position < 0
-                or side_view_position < 0
-                or camera_capture_position > side_view_position
+            if not (
+                0 <= capture_for_input_position < attack_target_position
+                < side_view_position < attack_hurt_position < camera_capture_position
             ):
-                errors.append("post-hit aim screenshot was not captured before switching to the side-view camera")
+                errors.append(
+                    "side-view camera must be selected by AttackEntityEvent after target selection and before accepted damage"
+                )
             if (
                 baseline_capture_position < 0
                 or last_capture_position < 0
                 or baseline_capture_position > last_capture_position
             ):
-                errors.append("FXBolt frames were not captured after the same-camera side-view baseline")
+                errors.append("FXBolt frames were not extracted after the same-camera pre-payload baseline")
 
             baseline_time_position = status_text.find("WISP_ZAP_TEST_TIME=MIDNIGHT")
             baseline_capture_position = status_text.find("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN")
