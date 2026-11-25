@@ -1449,6 +1449,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
+        "TC_SMOKE_WISP_SOURCE_ELEVATED=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
@@ -1576,6 +1577,14 @@ def main() -> int:
         missing_capture_errors = verify_wisp_zap_client.verify(log, missing_capture_status, root)
         assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD" in error
                    for error in missing_capture_errors), missing_capture_errors
+
+        missing_elevated_errors = verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_SOURCE_ELEVATED=YES\\n", "", 1), status, root
+        )
+        assert any(
+            "missing real server world marker: TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in error
+            for error in missing_elevated_errors
+        ), missing_elevated_errors
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
