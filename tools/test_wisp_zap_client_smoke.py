@@ -983,11 +983,11 @@ def _test_fxbbolt_segment_detector() -> None:
 def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     """Keep the real BETA26 base-to-base bolt above the smoke platform."""
     spawn = re.search(
-        r'wisp_fast_command "/summon thaumcraft:wisp 12\\.5 ([0-9.]+) 11\\.5 ',
+        r'wisp_fast_command "/summon thaumcraft:wisp 12\.5 ([0-9.]+) 11\.5 ',
         generated,
     )
     player = re.search(
-        r"wisp_fast_command '/tp @p 12\\.5 ([0-9.]+) 10\\.5 0 (-?[0-9.]+)'",
+        r"wisp_fast_command '/tp @p 12\.5 ([0-9.]+) 10\.5 0 (-?[0-9.]+)'",
         generated,
     )
     assert spawn is not None, "the tagged Wisp spawn must keep its elevated fixture coordinates"
