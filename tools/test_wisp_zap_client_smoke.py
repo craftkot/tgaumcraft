@@ -1579,7 +1579,7 @@ def main() -> int:
                    for error in missing_capture_errors), missing_capture_errors
 
         missing_elevated_errors = verify_wisp_zap_client.verify(
-            log.replace("TC_SMOKE_WISP_SOURCE_ELEVATED=YES\\n", "", 1), status, root
+            log.replace("TC_SMOKE_WISP_SOURCE_ELEVATED=YES\n", "", 1), status, root
         )
         assert any(
             "missing real server world marker: TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in error
