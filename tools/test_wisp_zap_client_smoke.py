@@ -781,13 +781,13 @@ def _test_video_frame_extraction(generated: str) -> None:
         client_status = root / "client-smoke-status.txt"
         client_status.write_text("", encoding="utf-8")
         attack_capture_body = _bash_function_body(generated, "wisp_extract_attack_input_frame")
-        attack_capture_function = "  wisp_extract_attack_input_frame() {\\n" + attack_capture_body + "\\n  }\\n"
+        attack_capture_function = "  wisp_extract_attack_input_frame() {\n" + attack_capture_body + "\n  }\n"
         attack_harness = (
-            "set -euo pipefail\\n"
-            "WISP_ATTACK_INPUT_MONOTONIC_NS=2000000000\\n"
-            "WISP_ZAP_VIDEO_FIRST_FRAME_NS=1000000000\\n"
+            "set -euo pipefail\n"
+            "WISP_ATTACK_INPUT_MONOTONIC_NS=2000000000\n"
+            "WISP_ZAP_VIDEO_FIRST_FRAME_NS=1000000000\n"
             + attack_capture_function
-            + "wisp_extract_attack_input_frame\\n"
+            + "wisp_extract_attack_input_frame\n"
         )
         attack_result = subprocess.run(
             ["bash", "-c", attack_harness], cwd=root, capture_output=True, text=True, check=False, timeout=30
@@ -801,11 +801,11 @@ def _test_video_frame_extraction(generated: str) -> None:
         assert "WISP_RENDER_CAPTURE_METHOD=VIDEO_PRE_ATTACK_FRAME" in attack_status, attack_status
 
         invalid_harness = (
-            "set -euo pipefail\\n"
-            "WISP_ATTACK_INPUT_MONOTONIC_NS=900000000\\n"
-            "WISP_ZAP_VIDEO_FIRST_FRAME_NS=1000000000\\n"
+            "set -euo pipefail\n"
+            "WISP_ATTACK_INPUT_MONOTONIC_NS=900000000\n"
+            "WISP_ZAP_VIDEO_FIRST_FRAME_NS=1000000000\n"
             + attack_capture_function
-            + "if wisp_extract_attack_input_frame; then exit 9; else test $? -eq 1; fi\\n"
+            + "if wisp_extract_attack_input_frame; then exit 9; else test $? -eq 1; fi\n"
         )
         invalid_result = subprocess.run(
             ["bash", "-c", invalid_harness], cwd=root, capture_output=True, text=True, check=False, timeout=10
