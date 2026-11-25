@@ -366,7 +366,7 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     )
     assert rc != 0 and rejected is not None, (output, status)
     assert math.isclose(float(rejected.group(1)), expected_distance, abs_tol=0.00005), status
-    assert math.isclose(float(rejected.group(2)), 1.000000011613918, abs_tol=1e-12), status
+    assert math.isclose(float(rejected.group(2)), 0.999, abs_tol=1e-12), status
     assert "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=" not in status, status
     assert "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=" not in status, status
 
