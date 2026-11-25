@@ -629,7 +629,6 @@ def _test_attack_aim_capture_is_taken_at_input_and_validated_after_hit(generated
 def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     names = (
         "wisp_wait_for_zap_frame",
-        "wisp_wait_for_completed_wisp_frame",
         "wisp_capture_zap_frames",
     )
     functions = [
@@ -637,23 +636,24 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         for name in names
     ]
     wait_body = _bash_function_body(generated, "wisp_wait_for_zap_frame")
+    assert "wisp_wait_for_completed_wisp_frame" not in generated
+    assert "WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER" not in generated
     executable_wait_body = "\n".join(
         line.split("#", 1)[0] for line in wait_body.splitlines()
     )
     assert "tail -f" not in executable_wait_body, "the live marker watcher must not leave a follow process blocking command substitution"
     assert "timeout 5s bash -c" not in executable_wait_body, "the live marker watcher must not wait for a timeout after finding a frame"
     assert "for attempt in $(seq 1 1000)" in wait_body, "the marker watcher must use bounded non-blocking polling"
+    # The bolt renderer remains visible even when the source Wisp is frustum-culled.
+    # Deliberately omit post-zap Wisp entity-frame markers; FXBolt markers are authoritative.
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
-        "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=100 gameTime=524 ageTicks=4",
     ]
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-frame-sequence-") as directory:
@@ -1027,7 +1027,6 @@ def main() -> int:
         "wisp_stop_zap_video_capture",
         "wisp_capture_zap_frames",
         "wisp_wait_for_zap_frame",
-        "wisp_wait_for_completed_wisp_frame",
         "WISP_ZAP_VIDEO_STARTED=YES",
         "WISP_ZAP_VIDEO_STOPPED=YES",
         "WISP_ZAP_FRAME_OBSERVED=YES",

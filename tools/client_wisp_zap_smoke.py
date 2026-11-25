@@ -178,24 +178,6 @@ def render() -> str:
     WISP_ZAP_FRAME_OBSERVED_AT_NS="$(python -c 'import time; print(time.monotonic_ns())')"
     return 0
   }
-  wisp_wait_for_completed_wisp_frame() {
-    local after_line="$1" wisp_id="$2" wisp_tick="$3" marker frame_line
-    marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$wisp_tick"
-    for _ in $(seq 1 200); do
-      frame_line="$(tail -n +"$((after_line + 1))" client-smoke/client.log | grep -F -- "$marker" | head -1 || true)"
-      if [ -n "$frame_line" ]; then
-        WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER="$(grep -n -F -- "$marker" client-smoke/client.log | tail -1 | cut -d: -f1)"
-        if [[ "$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER" =~ ^[0-9]+$ ]]; then return 0; fi
-        echo "WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER_INVALID=$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER" | tee -a client-smoke-status.txt
-        return 1
-      fi
-      sleep 0.005
-    done
-    echo "WISP_ZAP_FRAME_COMPLETE_TIMEOUT=YES id=$wisp_id tick=$wisp_tick" | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    return 1
-  }
-
   wisp_capture_zap_frames() {
     local after_lines="$1" wisp_id="$2" cursor="$1" created_at="" target_id payload_line rendered_line
     local expected_age wisp_tick observed_at_ns
@@ -223,7 +205,7 @@ def render() -> str:
     fi
     for expected_age in 1 2 3; do
       if [ "$expected_age" -gt 1 ]; then
-        cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
+        cursor="$WISP_ZAP_FRAME_LINE_NUMBER"
         wisp_wait_for_zap_frame "$cursor" "$wisp_id" "$created_at" "$expected_age"
       fi
       wisp_tick="$(sed -n 's/.* wispTick=\([0-9][0-9]*\) .*/\1/p' <<<"$WISP_ZAP_FRAME_LINE")"
@@ -231,10 +213,12 @@ def render() -> str:
         echo "WISP_ZAP_FRAME_WISP_TICK_INVALID=$wisp_tick" | tee -a client-smoke-status.txt
         return 1
       fi
-      wisp_wait_for_completed_wisp_frame "$WISP_ZAP_FRAME_LINE_NUMBER" "$wisp_id" "$wisp_tick"
+      # The AFTER_ENTITIES FXBolt callback is the authoritative render observation.
+      # The source Wisp may leave the camera frustum while the beam remains visible;
+      # waiting for a separate AFTER_LEVEL entity-frame marker rejects valid BETA26 FX.
       observed_at_ns="$WISP_ZAP_FRAME_OBSERVED_AT_NS"
       echo "WISP_ZAP_FRAME_OBSERVED=YES source=$wisp_id createdAt=$created_at ageTick=$expected_age wispTick=$wisp_tick observedAtMonotonicNs=$observed_at_ns" | tee -a client-smoke-status.txt
-      cursor="$WISP_ZAP_FRAME_COMPLETE_LINE_NUMBER"
+      cursor="$WISP_ZAP_FRAME_LINE_NUMBER"
     done
     wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at"
     echo "WISP_ZAP_EFFECT_EXPIRED=YES source=$wisp_id createdAt=$created_at" | tee -a client-smoke-status.txt
