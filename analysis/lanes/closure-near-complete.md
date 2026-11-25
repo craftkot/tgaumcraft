@@ -578,3 +578,11 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Свежая проверка пересечений: список 61 других открытых PR (#1–#3 и #5–#62), их changed-file lists просмотрены пакетами; `tools/test_wisp_zap_client_smoke.py` и этот lane journal не пересекаются ни с одним из них. Общие `build.gradle`, workflow YAML, registries и чужие source files в этой итерации не менялись.
 - На SHA `580f74221f31975c9ec5e739fb8ffbc046edaa29` GitHub Actions exact-SHA runs ещё не обнаружены; combined status пока показывает только CircleCI `verify-connection` pending. Исправление подтверждено повторным чтением опубликованного файла, но Python regression suite ещё не запускался на новом SHA.
 - Следующий шаг: получить/запустить Wisp offline contract на `580f742`, убедиться, что он проходит и что реальная client step больше не пропускается; затем inspect реальный PNG артефакт и маркеры. Не трактовать synthetic detector output как игровой PASS. Если run не триггерится автоматически, использовать доступный workflow-dispatch/re-run механизм либо зафиксировать конкретное ограничение доступа.
+
+
+### Follow-up: exact-SHA CI was triggered after the code push
+
+- GitHub Actions API subsequently showed Wisp push run [#45528420893](https://github.com/craftkot/tgaumcraft/actions/runs/45528420893) and PR run [#45528429113](https://github.com/craftkot/tgaumcraft/actions/runs/45528429113), both on code SHA `580f74221f31975c9ec5e739fb8ffbc046edaa29`. The push run is currently **IN_PROGRESS**; its offline geometry/client-contract step is still running. Script generation and real Minecraft launch have not started yet.
+- Full Port CI push run [#45528420749](https://github.com/craftkot/tgaumcraft/actions/runs/45528420749) is **IN_PROGRESS**; PR run [#45528429286](https://github.com/craftkot/tgaumcraft/actions/runs/45528429286) is **QUEUED**. Aura/Crystal GameTests [#45528429110](https://github.com/craftkot/tgaumcraft/actions/runs/45528429110) are queued.
+- CircleCI `verify-connection` for the journal-updated head `9c96987f0a6524dd1eb8415ecab51f31d6df6bcc` remains **PENDING**.
+- No local test result is claimed. Continue by inspecting the exact-SHA Wisp job until the offline contract either passes or provides a new precise failure; only then can the generated script and real Minecraft client be considered executed.
