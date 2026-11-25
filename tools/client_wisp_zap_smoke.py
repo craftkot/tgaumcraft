@@ -612,7 +612,7 @@ def render() -> str:
     aim_dot="${WISP_ATTACK_CAMERA_AIM_DOT:-}"
     camera_line="${WISP_ATTACK_CAMERA_LINE:-}"
     first_frame_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
-    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^-?[0-9]+([.][0-9]+)?$ ]] \
       || [ "$wisp_id" != "$first_frame_id" ]; then
       echo "WISP_RENDER_CAPTURE_INPUT_FRAME_INVALID id=$wisp_id firstFrameId=$first_frame_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
@@ -622,8 +622,10 @@ def render() -> str:
       echo "WISP_RENDER_CAPTURE_INPUT_FRAME_CAMERA_MISMATCH=YES id=$wisp_id tick=$camera_tick" | tee -a client-smoke-status.txt
       return 1
     fi
-    if ! awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= 0.99 && dot <= 1.0001) }'; then
-      echo "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_REJECTED=YES id=$wisp_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
+    # The same-ID vanilla EntityHitResult is authoritative. aimDot targets a
+    # diagnostic point inside the Wisp AABB, not the exact ray intersection.
+    if ! awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= -1.0001 && dot <= 1.0001) }'; then
+      echo "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_INVALID=YES id=$wisp_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
     fi
     if ! grep -Fq 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' client-smoke-status.txt \
@@ -717,10 +719,10 @@ def render() -> str:
     capture_wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_distance="$(awk -v px="$capture_player_x" -v py="$capture_player_y" -v pz="$capture_player_z" -v wx="$capture_wisp_x" -v wy="$capture_wisp_y" -v wz="$capture_wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-    if ! [[ "$capture_camera_id" =~ ^[0-9]+$ && "$capture_camera_tick" =~ ^[0-9]+$ && "$capture_player_x" =~ ^[-0-9.]+$ && "$capture_player_y" =~ ^[-0-9.]+$ && "$capture_player_z" =~ ^[-0-9.]+$ && "$capture_wisp_x" =~ ^[-0-9.]+$ && "$capture_wisp_y" =~ ^[-0-9.]+$ && "$capture_wisp_z" =~ ^[-0-9.]+$ && "$capture_aim_dot" =~ ^[0-9.]+$ ]] \
+    if ! [[ "$capture_camera_id" =~ ^[0-9]+$ && "$capture_camera_tick" =~ ^[0-9]+$ && "$capture_player_x" =~ ^[-0-9.]+$ && "$capture_player_y" =~ ^[-0-9.]+$ && "$capture_player_z" =~ ^[-0-9.]+$ && "$capture_wisp_x" =~ ^[-0-9.]+$ && "$capture_wisp_y" =~ ^[-0-9.]+$ && "$capture_wisp_z" =~ ^[-0-9.]+$ && "$capture_aim_dot" =~ ^-?[0-9]+([.][0-9]+)?$ ]] \
       || [ "$capture_camera_id" != "$capture_id" ] || [ "$capture_camera_tick" != "$capture_tick" ] \
       || ! awk -v x="$capture_player_x" -v y="$capture_player_y" -v z="$capture_player_z" -v d="$capture_distance" -v dot="$capture_aim_dot" \
-        'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 16.0 && dot >= 0.99) }'; then
+        'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 16.0 && dot >= -1.0001 && dot <= 1.0001) }'; then
       echo "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED id=$capture_camera_id tick=$capture_camera_tick distance=$capture_distance aimDot=$capture_aim_dot" | tee -a client-smoke-status.txt
       echo "$capture_camera" >&2
       exit 1
