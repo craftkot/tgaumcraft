@@ -84,7 +84,8 @@ public final class WispZapClientEffects {
                     + " target=" + target.getId() + " color=#"
                     + String.format("%06X", zap.rgb())
                     + " createdAt=" + zap.createdAt()
-                    + " clientGameTime=" + clientLevel.getGameTime());
+                    + " clientGameTime=" + clientLevel.getGameTime()
+                    + " monotonicNs=" + System.nanoTime());
         }
     }
 
