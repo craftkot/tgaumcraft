@@ -320,7 +320,7 @@ def render() -> str:
     # smoke entity; do not select an unrelated naturally spawned Wisp.
     # This moves only the Survival player. Wisp AI, motion and target remain live.
     # Resolve facing against the same tagged Wisp, rather than a relative point whose rotation stayed stale in the real client.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes'
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 149 ~ facing entity @s eyes'
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -805,7 +805,7 @@ def render() -> str:
   # Put the player on one known floor block and ask the server to prove that
   # exact block is stone before spawning or aiming at the Wisp.
   fixture_teleport_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command '/tp @p 12.5 149 10.5 0 41'
+  wisp_fast_command '/tp @p 12.5 149 10.5 0 -42'
   wisp_wait_for_teleport "$fixture_teleport_log_lines"
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
   wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
@@ -826,7 +826,10 @@ def render() -> str:
   # the trigger for the real click; no external screenshot is taken beforehand.
   wisp_start_zap_video_capture
   aim_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_fast_command "/summon thaumcraft:wisp 12.5 149.3 11.5 {Type:\"aer\",Tags:[\"tc_wisp_zap_smoke\"],CustomName:'{\"text\":\"tc_wisp_zap_smoke\"}',CustomNameVisible:0b}"
+  wisp_fast_command "/summon thaumcraft:wisp 12.5 151.3 11.5 {Type:\"aer\",Tags:[\"tc_wisp_zap_smoke\"],CustomName:'{\"text\":\"tc_wisp_zap_smoke\"}',CustomNameVisible:0b}"
+  # BETA26 FXBolt joins the source and target entity base positions. Keep the Wisp
+  # airborne so a depth-tested bolt is not buried in the platform surface.
+  wisp_send_chat '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s if block ~ ~-1 ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_ELEVATED=YES' 'TC_SMOKE_WISP_SOURCE_ELEVATED=YES'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 
