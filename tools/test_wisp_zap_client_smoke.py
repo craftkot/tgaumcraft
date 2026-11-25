@@ -750,11 +750,11 @@ def _test_video_frame_extraction() -> None:
         )
         extracted = status_file.read_text(encoding="utf-8")
         baseline_match = re.search(
-            r"(?m)^WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=(\\d+) monotonicNs=(\\d+)$",
+            r"(?m)^WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=(\d+) monotonicNs=(\d+)$",
             extracted,
         )
         age_one_match = re.search(
-            r"(?m)^WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=(\\d+) diff=\\d+$",
+            r"(?m)^WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=(\d+) diff=\d+$",
             extracted,
         )
         assert baseline_match is not None and age_one_match is not None, extracted
