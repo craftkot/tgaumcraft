@@ -744,7 +744,21 @@ def _test_video_frame_extraction() -> None:
         assert result.stdout.strip() == "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES", result.stdout
         for name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
             assert (screenshots / name).is_file() and (screenshots / name).stat().st_size > 128, name
+        baseline = screenshots / verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT
+        assert baseline.is_file() and baseline.stat().st_size > 128, (
+            "the selected third-person Wisp baseline must survive temporary-directory cleanup"
+        )
         extracted = status_file.read_text(encoding="utf-8")
+        baseline_match = re.search(
+            r"(?m)^WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=(\\d+) monotonicNs=(\\d+)$",
+            extracted,
+        )
+        age_one_match = re.search(
+            r"(?m)^WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=(\\d+) diff=\\d+$",
+            extracted,
+        )
+        assert baseline_match is not None and age_one_match is not None, extracted
+        assert int(baseline_match.group(1)) < int(age_one_match.group(1)), extracted
         assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted
         assert extracted.count("WISP_ZAP_VIDEO_FRAME_INDEX=YES") == 3, extracted
         assert [f"ageTick={age} " in extracted for age in (1, 2, 3)] == [True, True, True], extracted
