@@ -980,6 +980,30 @@ def _test_fxbbolt_segment_detector() -> None:
         )
         assert errors and metrics is None, (errors, metrics)
 
+def _test_wisp_zap_fixture_elevation(generated: str) -> None:
+    """Keep the real BETA26 base-to-base bolt above the smoke platform."""
+    spawn = re.search(
+        r'wisp_fast_command "/summon thaumcraft:wisp 12\\.5 ([0-9.]+) 11\\.5 ',
+        generated,
+    )
+    player = re.search(
+        r"wisp_fast_command '/tp @p 12\\.5 ([0-9.]+) 10\\.5 0 (-?[0-9.]+)'",
+        generated,
+    )
+    assert spawn is not None, "the tagged Wisp spawn must keep its elevated fixture coordinates"
+    assert player is not None, "the player must remain on the verified platform"
+    source_y = float(spawn.group(1))
+    player_y = float(player.group(1))
+    pitch = float(player.group(2))
+    platform_top = 149.0
+    assert source_y - platform_top >= 2.0, (source_y, platform_top)
+    assert player_y == platform_top, (player_y, platform_top)
+    expected_pitch = -math.degrees(math.atan2(source_y + 0.225 - (player_y + 1.62), 1.0))
+    assert abs(pitch - expected_pitch) <= 1.5, (pitch, expected_pitch)
+    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in generated
+    assert "TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in generated
+
+
 def main() -> int:
     _test_bash_function_body_extraction()
     _test_fxbbolt_segment_detector()
@@ -1026,6 +1050,7 @@ def main() -> int:
     _test_wisp_zap_frame_capture_sequence(generated)
     _test_video_frame_extraction()
     _test_wisp_render_profile(generated)
+    _test_wisp_zap_fixture_elevation(generated)
 
     required = (
         "wisp_send_chat()",
@@ -1037,9 +1062,12 @@ def main() -> int:
         "Successfully filled 81 block(s)",
         "WISP_FIXTURE_PLATFORM_FILL=YES",
         '/fill 6 148 6 14 148 14 minecraft:stone',
-        '/tp @p 12.5 149 10.5 0 41',
+        '/tp @p 12.5 149 10.5 0 -42',
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
+        "TC_SMOKE_WISP_SOURCE_ELEVATED=YES",
+        "run tp @p ~1.0 149 ~ facing entity @s eyes",
+        "summon thaumcraft:wisp 12.5 151.3 11.5",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
@@ -1175,7 +1203,7 @@ def main() -> int:
     loaded_index = setup.index("wisp_wait_for_loaded_chunk")
     fill_index = setup.index("wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:stone'")
     fill_wait_index = setup.index('wisp_wait_for_fill "$fill_log_lines"', fill_index)
-    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 41'", fill_wait_index)
+    fixture_teleport_index = setup.index("wisp_fast_command '/tp @p 12.5 149 10.5 0 -42'", fill_wait_index)
     fixture_wait_index = setup.index('wisp_wait_for_teleport "$fixture_teleport_log_lines"', fixture_teleport_index)
     support_index = setup.index("wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES'", fixture_wait_index)
     night_index = setup.index("wisp_send_chat '/time set midnight' 'Set the time to 18000'")
