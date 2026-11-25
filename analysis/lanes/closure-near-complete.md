@@ -3,8 +3,8 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467`](https://github.com/craftkot/tgaumcraft/commit/0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467)
-- На code/test SHA `0ec5a78` Wisp real client [#45607373838](https://github.com/craftkot/tgaumcraft/actions/runs/45607373838), geometry [#45607374114](https://github.com/craftkot/tgaumcraft/actions/runs/45607374114) и Full Port CI [#45607373934](https://github.com/craftkot/tgaumcraft/actions/runs/45607373934) поставлены в очередь; результаты ещё не получены. Предыдущий Wisp real-client [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802) дошёл до настоящего payload/render callbacks, но pixel verifier не нашёл видимый жёлтый сегмент.
+- Последний code/test SHA: [`c7d188ad1770f8e9f11c3a580a5b9c8db462efc7`](https://github.com/craftkot/tgaumcraft/commit/c7d188ad1770f8e9f11c3a580a5b9c8db462efc7)
+- На code/test SHA `c7d188ad` Wisp real client [#45607884751](https://github.com/craftkot/tgaumcraft/actions/runs/45607884751) и Full Port CI [#45607884715](https://github.com/craftkot/tgaumcraft/actions/runs/45607884715) созданы и остаются queued; геометрический контракт [#45607374114](https://github.com/craftkot/tgaumcraft/actions/runs/45607374114) был запущен на предыдущем SHA `0ec5a78`. Local clone/test blocked: `github.com` DNS не разрешается в контейнере.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
 ## Границы lane
@@ -13,7 +13,7 @@
 
 ## Последняя инженерная итерация
 
-На code/test SHA `0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467` устранена причина отсутствия видимого FXBolt в реальном Wisp smoke. Артефакт [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802/artifacts/15011764224) подтверждает Survival hit, серверный урон, source/target payload, render callbacks на age 1/2/3 и expiry на age 4; отказ произошёл только в pixel verifier. По телеметрии Wisp base Y был около 149.16, игрок base Y=149.0, верх платформы Y=149. Оригинальный PacketFXWispZap передаёт в FXBolt именно позиции сущностей, поэтому почти горизонтальный луч шёл по поверхности платформы и закрывался depth test. Это дефект геометрии smoke-фикстуры, не доказанный дефект production renderer.
+На code/test SHA `c7d188ad1770f8e9f11c3a580a5b9c8db462efc7` устранена причина отсутствия видимого FXBolt в реальном Wisp smoke. Артефакт [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802/artifacts/15011764224) подтверждает Survival hit, серверный урон, source/target payload, render callbacks на age 1/2/3 и expiry на age 4; отказ произошёл только в pixel verifier. По телеметрии Wisp base Y был около 149.16, игрок base Y=149.0, верх платформы Y=149. Оригинальный PacketFXWispZap передаёт в FXBolt именно позиции сущностей, поэтому почти горизонтальный луч шёл по поверхности платформы и закрывался depth test. Это дефект геометрии smoke-фикстуры, не доказанный дефект production renderer.
 
 Исправление поднимает smoke Wisp до Y=151.3 (2.3 блока над верхом платформы), оставляет Survival-игрока на Y=149.0, корректирует начальный pitch до -42°, а fallback teleport также фиксирует игрока на Y=149. Добавлена серверная проверка, что блок непосредственно под Wisp пуст, и offline regression на высоту источника, положение игрока, расчёт pitch, fallback и обязательный marker. Порог пиксельного детектора не ослаблялся. Production Java не менялся.
 
@@ -28,8 +28,9 @@
 - `663b614d3bffc1a25e1557628995afc39d99e451` — fixture regression;
 - `64ebb7bc14a7ae52e4867930c29e184f3ddd53ff` — require server-side elevation marker;
 - `0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467` — corrected coordinate-regex escaping.
+- `c7d188ad1770f8e9f11c3a580a5b9c8db462efc7` — assert that the elevation marker is mandatory in `REQUIRED_LOG_MARKERS`.
 
-На exact code/test SHA `0ec5a785` запуски Wisp client #45607373838, Wisp geometry #45607374114, Full Port CI #45607373934 и Aura/Crystal GameTests #45607373863 созданы, но на момент записи оставались queued. Offline contract, bash -n, NeoForge build и повторный настоящий Minecraft client пока не объявляются PASS. Следующий шаг — дождаться Wisp client artifact и подтвердить видимый сегмент на age 1/2/3 без ослабления pixel verifier.
+На exact code/test SHA `c7d188ad` Wisp client #45607884751 и Full Port CI #45607884715 созданы, но на момент записи оставались queued. Геометрический контракт #45607374114 и Aura/Crystal GameTests #45607373863 были запущены на предыдущем SHA `0ec5a78`. Offline contract, bash -n, NeoForge build и повторный настоящий Minecraft client пока не объявляются PASS. Следующий шаг — дождаться Wisp client artifact и подтвердить видимый сегмент на age 1/2/3 без ослабления pixel verifier.
 
 Оценка остаётся **59/100**, M16 **4/6**. Категория не закрыта.
  
@@ -765,3 +766,8 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 **Ограничения проверки:** новый exact-SHA Wisp run #45607373838 ещё queued; до его завершения нельзя утверждать, что beam стал видимым. Не запускались локальные Python/bash/NeoForge команды в этом окружении. PR #4 остаётся Draft/Open/Unmerged. Изменённые пути проверены против остальных открытых PR #1–#3 и #5–#62; пересечений не найдено. Main HEAD на момент итерации: `a4280834adc5a20b6951098af937d30ca4aeca56`.
 
 **Следующее действие:** получить артефакт #45607373838, проверить три настоящих кадра и pixel metrics; если тест пройдёт, продолжить закрытие M16 с оставшихся визуальных/аудио критериев. Не начислять баллы до полной приёмки категории.
+
+
+## Regression hardening after fixture change — 2026-11-25
+
+В test module добавлена отдельная проверка, что `TC_SMOKE_WISP_SOURCE_ELEVATED=YES` не только генерируется клиентским сценарием, но и включён в `verify_wisp_zap_client.REQUIRED_LOG_MARKERS`. Это не позволяет smoke пройти при наличии команды в сценарии, если финальный verifier перестанет требовать подтверждение от реального сервера. Коммит: `c7d188ad1770f8e9f11c3a580a5b9c8db462efc7`. Exact-SHA Wisp client #45607884751 и Full Port CI #45607884715 queued; local clone blocked by DNS. Баллы не меняются.
