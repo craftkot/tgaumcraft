@@ -1002,6 +1002,7 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert abs(pitch - expected_pitch) <= 1.5, (pitch, expected_pitch)
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in generated
     assert "TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in generated
+    assert "TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
 
 
 def main() -> int:
