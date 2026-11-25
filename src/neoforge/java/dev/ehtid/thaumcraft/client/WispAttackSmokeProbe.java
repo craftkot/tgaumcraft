@@ -3,6 +3,7 @@ package dev.ehtid.thaumcraft.client;
 import dev.ehtid.thaumcraft.ThaumcraftPort;
 import dev.ehtid.thaumcraft.entity.WispEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.CameraType;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.util.Mth;
@@ -22,8 +23,9 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
  * Smoke-only observation of the actual client attack pipeline.
  *
  * The input event records Minecraft.hitResult before target selection; the
- * AttackEntityEvent records the entity Player.attack actually selected. Neither
- * handler changes or cancels the normal interaction.
+ * AttackEntityEvent records the entity Player.attack actually selected. After
+ * selection, the smoke-only probe switches the camera to a fixed side view so
+ * the short BETA26 zap can be recorded without delaying the real attack.
  */
 @EventBusSubscriber(
         modid = ThaumcraftPort.MOD_ID,
@@ -168,6 +170,22 @@ public final class WispAttackSmokeProbe {
                     + " tick=" + wisp.tickCount
                     + " distance=" + minecraft.player.distanceTo(wisp)
                     + " gameTime=" + gameTime);
+
+            // AttackEntityEvent fires after the real hit result selected this Wisp.
+            // Change only the smoke camera now, before the server can deliver the
+            // three-tick zap payload. The click target and server damage are untouched.
+            minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+            minecraft.player.setYRot(90.0F);
+            minecraft.player.yRotO = 90.0F;
+            minecraft.player.setXRot(0.0F);
+            minecraft.player.xRotO = 0.0F;
+            sideViewLogged = true;
+            long monotonicNs = System.nanoTime();
+            System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
+                    + " yaw=" + Mth.wrapDegrees(minecraft.player.getYRot())
+                    + " pitch=" + minecraft.player.getXRot()
+                    + " cameraType=" + minecraft.options.getCameraType().name()
+                    + " monotonicNs=" + monotonicNs);
         }
     }
 }
