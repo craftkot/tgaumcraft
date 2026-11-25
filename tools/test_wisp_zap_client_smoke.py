@@ -1402,7 +1402,10 @@ def main() -> int:
     assert '-i client-smoke/wisp-zap-video.mp4 -ss "$offset_s"' in extract_body
     assert "WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=$offset_s" in extract_body
     assert "WISP_RENDER_CAPTURE_METHOD=VIDEO_PRE_ATTACK_FRAME" in extract_body
-    assert generated.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"') < generated.index("wisp_extract_attack_input_frame") < generated.index("wisp_verify_attack_input_aim_capture")
+    capture_call_index = generated.index('  wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"\n')
+    extract_call_index = generated.index("  wisp_extract_attack_input_frame\n", capture_call_index)
+    verify_call_index = generated.index("  wisp_verify_attack_input_aim_capture\n", extract_call_index)
+    assert capture_call_index < extract_call_index < verify_call_index
     assert attack_body.index("wisp_capture_attack_input_frame") < attack_body.index("WISP_ATTACK_INPUT_FRAME=YES") < attack_body.index("WISP_ATTACK_CAMERA_FRAME=YES")
     assert "for _ in $(seq 1 200)" not in wait_attack_body
     fast_command_body = _bash_function_body(generated, "wisp_fast_command")
