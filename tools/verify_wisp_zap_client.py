@@ -1349,7 +1349,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                     )
                     if reaim_position is None or any(
                         abs(actual - expected) > 0.05
-                        for actual, expected in zip(reaim_position.groups(), live_reposition.groups())
+                        for actual, expected in zip(
+                            map(float, reaim_position.groups()),
+                            map(float, live_reposition.groups()),
+                        )
                     ):
                         errors.append("live-reposition attack re-aim coordinates differ from the server-confirmed teleport")
                     if not (
