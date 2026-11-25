@@ -1528,10 +1528,10 @@ def main() -> int:
         assert any("side-view camera was selected after the client received the zap payload" in error
                    for error in late_side_view_errors), late_side_view_errors
         late_side_view_status = status.replace(
-            "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\\n", "", 1
+            "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\n", "", 1
         ).replace(
-            "WISP_ATTACK_HURT_ACCEPTED=YES\\n",
-            "WISP_ATTACK_HURT_ACCEPTED=YES\\nWISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\\n",
+            "WISP_ATTACK_HURT_ACCEPTED=YES\n",
+            "WISP_ATTACK_HURT_ACCEPTED=YES\nWISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\n",
             1,
         )
         late_side_view_status_errors = verify_wisp_zap_client.verify(
