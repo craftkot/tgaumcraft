@@ -315,10 +315,10 @@ def render() -> str:
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    # The first click can be delayed by client tick scheduling while the Wisp
-    # keeps flying. Retry from a melee position relative to the exact tagged
-    # smoke entity; do not select an unrelated naturally spawned Wisp.
-    # This moves only the Survival player. Wisp AI, motion and target remain live.
+    # Stage the player beside the exact tagged smoke entity while still Creative.
+    # WispEntity clears Creative targets before its 20-tick zap wind-up; the
+    # first Survival attack therefore establishes the target through hurt().
+    # This moves only the player. Wisp AI, motion and target remain live.
     # Resolve facing against the same tagged Wisp, rather than a relative point whose rotation stayed stale in the real client.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 149 ~ facing entity @s eyes'
     for _ in $(seq 1 200); do
@@ -573,36 +573,34 @@ def render() -> str:
       echo "WISP_ATTACK_WISP_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
       exit 1
     fi
-    # A geometric camera sample is not enough: wait for AFTER_LEVEL to report
-    # the real Wisp EntityHitResult, then issue the real mouse click immediately.
+    # Keep the player Creative through spawn/pre-aim and stage a live melee position
+    # before the first Survival attempt. This prevents an autonomous Wisp zap from
+    # being mistaken for the response to the player's real hit.
     for attempt in 1 2 3; do
-      if [ "$attempt" -eq 1 ]; then
-        # wisp_wait_for_fresh_render already consumed the first completed frame for visibility.
-        # Start after it and wait for a new AFTER_LEVEL frame while the click watcher is live.
-        # Reusing the old line makes tail replay a stale hit result before input reaches Minecraft.
-        frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"
-        if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
-          echo "WISP_FIRST_FRAME_LINE_NUMBER_MISSING=$frame_log_lines" | tee -a client-smoke-status.txt
-          exit 1
-        fi
-        attack_camera_source="PREAIMED_NEXT_FRAME"
-        attack_position_mode=PLATFORM
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" PLATFORM "$attempt"; then
-          echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
-          continue
-        fi
-        attack_camera_detail="id=$wisp_id triggerTick=$WISP_ATTACK_CAMERA_TICK triggerGameTime=$WISP_ATTACK_CAMERA_GAME_TIME"
-      else
+      if [ "$attempt" -gt 1 ]; then
+        # A rejected click must not leave a Survival target winding up a zap
+        # while the player is repositioned for the next attempt.
+        wisp_command '/gamemode creative'
+        wisp_send_chat '/execute if entity @p[gamemode=creative] run say TC_SMOKE_WISP_PLAYER_CREATIVE=YES' 'TC_SMOKE_WISP_PLAYER_CREATIVE=YES'
+        sleep 0.15
         reanchor_log_lines="$(wc -l < client-smoke/client.log)"
         wisp_move_player_to_live_wisp "$reanchor_log_lines"
-        attack_camera_source="LIVE_ENTITY_FACING"
-        attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
-        attack_position_mode=LIVE_WISP
-        frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
-        if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"; then
-          echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
-          continue
-        fi
+      fi
+      attack_camera_source="LIVE_ENTITY_FACING"
+      attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
+      attack_position_mode=LIVE_WISP
+      frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
+      if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
+        echo "WISP_ATTACK_REPOSITION_LINE_NUMBER_INVALID=$frame_log_lines" | tee -a client-smoke-status.txt
+        exit 1
+      fi
+      # Switch to Survival only after a fresh melee position exists; the click
+      # watcher sends input on the next same-ID EntityHitResult frame.
+      wisp_command '/gamemode survival'
+      wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
+      if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"; then
+        echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
+        continue
       fi
       attack_log_lines="$WISP_ATTACK_INPUT_LOG_LINES"
       attack_input_line="$(timeout 5s bash -c 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -F "TC_SMOKE_WISP_ATTACK_INPUT=YES"' _ "$((attack_log_lines + 1))" client-smoke/client.log || true)"
@@ -833,16 +831,16 @@ def render() -> str:
     echo "WISP_REAL_CLIENT_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
-  # The base fixture creates a safe creative/peaceful world. Switch only this
-  # isolated scenario to normal difficulty and survival so WispEntity.hurt()
-  # receives a real Player attacker and exercises its ordinary target path.
+  # Keep the player Creative while the Wisp spawns and the camera is staged.
+  # WispEntity may autonomously acquire a nearby player; Creative targets are
+  # cleared before the 20-tick wind-up. Switch to Survival only after staging
+  # the player beside the live Wisp, so the measured zap follows the real hit.
   wisp_command '/difficulty normal'
   wisp_command '/gamerule doMobSpawning false'
   wisp_command '/gamerule doDaylightCycle false'
   wisp_command '/gamerule doWeatherCycle false'
   wisp_send_chat '/time set midnight' 'Set the time to 18000'
   echo 'WISP_ZAP_TEST_TIME=MIDNIGHT' | tee -a client-smoke-status.txt
-  wisp_command '/gamemode survival'
   wisp_command '/effect give @p minecraft:resistance infinite 4 true'
   # The integrated-world bootstrap leaves the player at a random spawn
   # (currently around -327,-245). Teleport into the fixture area BEFORE
@@ -863,7 +861,7 @@ def render() -> str:
   wisp_fast_command '/tp @p 12.5 149 10.5 0 -42'
   wisp_wait_for_teleport "$fixture_teleport_log_lines"
   wisp_send_chat '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES' 'TC_SMOKE_WISP_SUPPORT_BLOCK=YES'
-  wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
+  wisp_send_chat '/execute if entity @p[gamemode=creative] run say TC_SMOKE_WISP_PLAYER_CREATIVE=YES' 'TC_SMOKE_WISP_PLAYER_CREATIVE=YES'
 
   # Capture stable animation-noise baselines BEFORE the Wisp exists. BETA26
   # autonomous flight starts immediately; post-spawn baseline delays let it
@@ -887,6 +885,13 @@ def render() -> str:
   wisp_send_chat '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s if block ~ ~-1 ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_ELEVATED=YES' 'TC_SMOKE_WISP_SOURCE_ELEVATED=YES'
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
+
+  # Reposition beside the exact live Wisp while the player is still Creative.
+  # The Survival transition happens inside the attack helper immediately before
+  # the next real same-ID EntityHitResult click.
+  reanchor_log_lines="$(wc -l < client-smoke/client.log)"
+  wisp_move_player_to_live_wisp "$reanchor_log_lines"
+  echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
 
   zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_attack_live_wisp
