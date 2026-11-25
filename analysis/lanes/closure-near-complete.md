@@ -3,7 +3,7 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467`](https://github.com/craftkot/tgaumcraft/commit/6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8)
+- Последний code/test SHA: [`0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467`](https://github.com/craftkot/tgaumcraft/commit/0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467)
 - На code/test SHA `0ec5a78` Wisp real client [#45607373838](https://github.com/craftkot/tgaumcraft/actions/runs/45607373838), geometry [#45607374114](https://github.com/craftkot/tgaumcraft/actions/runs/45607374114) и Full Port CI [#45607373934](https://github.com/craftkot/tgaumcraft/actions/runs/45607373934) поставлены в очередь; результаты ещё не получены. Предыдущий Wisp real-client [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802) дошёл до настоящего payload/render callbacks, но pixel verifier не нашёл видимый жёлтый сегмент.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
