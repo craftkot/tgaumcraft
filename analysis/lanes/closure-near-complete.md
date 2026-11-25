@@ -594,3 +594,15 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - [Wisp geometry #45528428859](https://github.com/craftkot/tgaumcraft/actions/runs/45528428859) завершился **SUCCESS**.
 - [Wisp real client push #45528420893](https://github.com/craftkot/tgaumcraft/actions/runs/45528420893): offline geometry/client contract **SUCCESS**, generated Bash syntax **SUCCESS**; шаг запуска настоящего Minecraft-клиента ещё **IN_PROGRESS**. Pixel gate и upload реальных скриншотов пока не завершены; артефактов пока нет.
 - Это подтверждает исправление no-op regression mutation на CI и компиляцию/сервер на точном кодовом SHA, но ещё не подтверждает FXBolt в настоящем игровом клиенте.
+
+
+## 2026-11-25 — Wisp aim screenshot aligned to the actual attackable frame
+
+- Fresh repository state rechecked: main remains a4280834adc5a20b6951098af937d30ca4aeca56; lane PR #4 head before this change was ec531421bac9284d5af5cc53e5ed8b6472cb0f8b, base main, OPEN/DRAFT/UNMERGED, 1,901 commits ahead and 368 changed files. No merge or force-push.
+- Re-read AGENTS.md, ROADMAP_RU.md, analysis/PARALLEL_WORKFLOW_RU.md and the fixed audit. The audit remains 59/100, visual/audio/resources 4/6, aura/crystals/world 5/9. The roadmap still reserves M16/M08; no score is awarded.
+- Inspected failed real-client PR run #45528429113, job 138917433856, and downloaded artifact 14984515853. The game launched and the script reached --aim-only; it failed because 78-wisp-aim-check.png had zero Aer pixels in the crosshair ROI.
+- The driver captured that screenshot only after accepted damage/target acquisition, although it reused the earlier attackable-frame camera sample (tick=8). By then the Wisp had moved along its hit/knockback path, so the screenshot and telemetry described different moments. The video frames show the Wisp moving across the viewport after the attack; this is a stale-capture problem, not evidence that the production FXBolt renderer is broken.
+- Corrected the evidence path: capture the root screenshot synchronously from the exact AFTER_LEVEL frame that authorizes the real click, immediately before dispatching that click. The later post-hit step now only validates the already-captured file and the matching entity/tick camera sample; it never recaptures a moving Wisp. The verifier requires explicit ordering: attackable frame capture -> real click/target -> accepted damage -> post-hit validation. The pixel threshold and ROI are unchanged.
+- Changed only tools/client_wisp_zap_smoke.py, tools/verify_wisp_zap_client.py, tools/test_wisp_zap_client_smoke.py, and this lane journal. No production renderer, Java gameplay, Gradle, workflow, registry or global localization files were changed.
+- All 61 other open PRs (#1-#3 and #5-#62) were checked via paginated changed-file lists; none overlaps these four paths. The PR #4 existing unrelated overlaps with PR #3 remain untouched.
+- Validation is pending on new exact-SHA runs. Do not claim real-client visual PASS until the new artifact shows the Aer billboard inside the unchanged aim ROI, all three FXBolt frames contain the separate yellow beam, and the post-expiry frame is clear.

@@ -71,8 +71,9 @@ REQUIRED_STATUS = (
     "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=",
     "WISP_RENDER_CAPTURE_ID=",
     "WISP_RENDER_CAPTURE_TICK=",
-    "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+    "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES",
     "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME",
+    "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
     "WISP_ATTACKABLE_FRAME=YES",
     "WISP_ATTACK_INPUT_FRAME=YES",
@@ -957,7 +958,17 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             last_capture_position = status_text.find(
                 f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=3 "
             )
-            camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_AFTER_HIT=YES")
+            camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES")
+            capture_for_input_position = status_text.find("WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES")
+            attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
+            attack_hurt_position = status_text.find("WISP_ATTACK_HURT_ACCEPTED=YES")
+            if not (
+                0 <= capture_for_input_position < attack_target_position
+                < attack_hurt_position < camera_capture_position
+            ):
+                errors.append(
+                    "aim screenshot must be captured in the attackable frame before click, then validated after accepted damage"
+                )
             side_view_position = status_text.find("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON")
             baseline_capture_position = status_text.find(
                 "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD"
@@ -1258,18 +1269,18 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         elif (camera_id, camera_tick) != (first_frame_id.group(1), first_frame_tick.group(1)):
             errors.append("first-frame camera telemetry and first-frame status use different ID/tick")
         if capture_id is None or capture_tick is None:
-            errors.append("missing post-hit screenshot entity ID/tick")
+            errors.append("missing attack-input screenshot entity ID/tick")
         elif camera_id != capture_id.group(1):
-            errors.append("post-hit screenshot and first-frame camera use different Wisp IDs")
+            errors.append("attack-input screenshot and first-frame camera use different Wisp IDs")
         if capture_camera is None:
-            errors.append("missing camera sample copied at post-hit screenshot capture")
+            errors.append("missing camera sample copied at attack-input screenshot capture")
         elif capture_id and capture_tick and capture_camera.group(1, 2) != (capture_id.group(1), capture_tick.group(1)):
-            errors.append("post-hit screenshot camera sample does not match capture ID/tick")
+            errors.append("attack-input screenshot camera sample does not match capture ID/tick")
         if capture_id is not None and capture_tick is not None and attack_camera_frame is not None:
             if (capture_id.group(1), capture_tick.group(1)) != (
                 attack_camera_frame.group(1), attack_camera_frame.group(2)
             ):
-                errors.append("post-hit aim capture does not reuse the exact attack-input camera frame")
+                errors.append("attack-input aim capture does not reuse the exact attack-input camera frame")
         if capture_camera is not None:
             capture_player_x, capture_player_y, capture_player_z, capture_wisp_x, capture_wisp_y, capture_wisp_z, capture_aim_dot = map(
                 float, capture_camera.groups()[2:]
@@ -1286,14 +1297,14 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 and capture_aim_dot >= 0.99
             ):
                 errors.append(
-                    "post-hit attack-camera sample was outside the verified platform/melee bounds: "
+                    "attack-input camera sample was outside the verified platform/melee bounds: "
                     f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
                     f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
                 )
         if capture_id and capture_tick:
             capture_frame = f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id={capture_id.group(1)} tick={capture_tick.group(1)}"
             if capture_frame not in log_text:
-                errors.append("post-hit screenshot was not taken after its matching completed level frame")
+                errors.append("attack-input screenshot was not taken after its matching completed level frame")
         if first_frame_camera_sample is not None:
             first_sample_id, first_sample_tick = first_frame_camera_sample.group(2, 3)
             if first_frame_id and first_frame_tick and (first_sample_id, first_sample_tick) != (first_frame_id.group(1), first_frame_tick.group(1)):

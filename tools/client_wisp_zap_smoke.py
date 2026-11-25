@@ -374,13 +374,23 @@ def render() -> str:
       fi
       if [[ "$candidate_line" =~ $frame_pattern ]]; then
         frame_line="$candidate_line"
-        # Dispatch the real OS click inside the streaming reader. Do not wait
-        # for tail/grep teardown or parse camera telemetry before sending input.
-        if ! xdotool click 1; then
-          echo "WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+        # Capture the exact completed frame that authorized this click. The
+        # camera still tracks the Wisp until the input event stops that lock.
+        if ! wisp_capture 78-wisp-aim-check; then
+          echo "WISP_ATTACK_INPUT_FRAME_CAPTURE_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
           watcher_status=1
         else
-          echo "WISP_ATTACK_CLICK_DISPATCHED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+          echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' | tee -a client-smoke-status.txt
+        fi
+        # Dispatch immediately after the capture; the verifier rejects a stale
+        # hit result if the screenshot operation crosses more than one tick.
+        if [ "$watcher_status" -eq 0 ]; then
+          if ! xdotool click 1; then
+            echo "WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+            watcher_status=1
+          else
+            echo "WISP_ATTACK_CLICK_DISPATCHED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+          fi
         fi
         break
       fi
@@ -450,6 +460,11 @@ def render() -> str:
     local frame_matches frame_count frame_line frame_line_number camera_matches camera_count camera_line camera_line_number
     local camera_tick game_time player_tick player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     local frame_re camera_re
+    if ! grep -Fq 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' client-smoke-status.txt \
+      || [ ! -s client-smoke/screenshots/78-wisp-aim-check.png ]; then
+      echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
     if [[ "$attack_input_line" =~ gameTime=([0-9]+).*tick=([0-9]+) ]]; then
       input_game_time="$(sed -E 's/.*gameTime=([0-9]+).*/\1/' <<< "$attack_input_line")"
       input_player_tick="$(sed -E 's/.*tick=([0-9]+).*/\1/' <<< "$attack_input_line")"
@@ -604,7 +619,7 @@ def render() -> str:
     exit 1
   }
 
-  wisp_capture_aim_after_hit() {
+  wisp_verify_attack_input_aim_capture() {
     local wisp_id camera_tick aim_dot camera_line first_frame_id
     wisp_id="${WISP_ATTACK_CAMERA_ID:-}"
     camera_tick="${WISP_ATTACK_CAMERA_TICK:-}"
@@ -625,12 +640,16 @@ def render() -> str:
       echo "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_REJECTED=YES id=$wisp_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
     fi
-    wisp_capture 78-wisp-aim-check
+    if ! grep -Fq 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' client-smoke-status.txt \
+      || [ ! -s client-smoke/screenshots/78-wisp-aim-check.png ]; then
+      echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
     echo "WISP_RENDER_CAPTURE_ID=$wisp_id" | tee -a client-smoke-status.txt
     echo "WISP_RENDER_CAPTURE_TICK=$camera_tick" | tee -a client-smoke-status.txt
     echo 'WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME' | tee -a client-smoke-status.txt
     echo "$camera_line" | tee -a client-smoke-status.txt
-    echo 'WISP_RENDER_CAPTURE_AFTER_HIT=YES' | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES' | tee -a client-smoke-status.txt
   }
 
   wisp_wait_for_teleport() {
@@ -760,8 +779,14 @@ def render() -> str:
 
   wisp_capture() {
     local name="$1"
-    import -display :99 -window root -silent "client-smoke/screenshots/$name.png"
-    test -s "client-smoke/screenshots/$name.png"
+    if ! import -display :99 -window root -silent "client-smoke/screenshots/$name.png"; then
+      echo "WISP_REAL_CLIENT_SCREEN_CAPTURE_FAILED=$name" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if [ ! -s "client-smoke/screenshots/$name.png" ]; then
+      echo "WISP_REAL_CLIENT_SCREEN_EMPTY=$name" | tee -a client-smoke-status.txt
+      return 1
+    fi
     echo "WISP_REAL_CLIENT_SCREEN=$name" | tee -a client-smoke-status.txt
   }
 
@@ -828,7 +853,7 @@ def render() -> str:
   # Reuse the exact same-ID AFTER_LEVEL camera sample that dispatched the real
   # click. Capture it now, while the Wisp is still near the melee platform;
   # never teleport/re-anchor after the three-tick FXBolt has already expired.
-  wisp_capture_aim_after_hit
+  wisp_verify_attack_input_aim_capture
   wisp_verify_aim_telemetry "$aim_log_lines"
   python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
