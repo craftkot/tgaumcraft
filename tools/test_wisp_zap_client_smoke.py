@@ -255,7 +255,7 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
                 "set -euo pipefail\n"
                 "wisp_capture() {\n"
                 "  printf 'CAPTURE %s\\n' \"$1\" >> \"$EVENT_LOG\"\n"
-                "  return \"\${CAPTURE_EXIT:-0}\"\n"
+                "  return \"$CAPTURE_EXIT\"\n"
                 "}\n"
                 + function
                 + "\nwisp_wait_for_attack_frame 0 106 PLATFORM 1\n"
