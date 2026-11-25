@@ -358,7 +358,17 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 
     out_of_reach = attack_input.replace("hitDistance=2.9", "hitDistance=3.02")
     rc, output, status = run_case(base_lines, attack_line=out_of_reach)
-    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_CAMERA_REJECTED=YES" in status, (output, status)
+    rejected = re.search(
+        r"(?m)^WISP_ATTACK_INPUT_FRAME_CAMERA_REJECTED=id=106 tick=7 "
+        r"position=PLATFORM distance=([0-9]+[.][0-9]+) "
+        r"aimDot=(-?[0-9]+[.][0-9]+)$",
+        status,
+    )
+    assert rc != 0 and rejected is not None, (output, status)
+    assert math.isclose(float(rejected.group(1)), expected_distance, abs_tol=0.00005), status
+    assert math.isclose(float(rejected.group(2)), 1.000000011613918, abs_tol=1e-12), status
+    assert "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=" not in status, status
+    assert "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=" not in status, status
 
     duplicate_lines = base_lines[:-1] + [frame_line(7, 553, 518), attack_input]
     rc, output, status = run_case(duplicate_lines)
