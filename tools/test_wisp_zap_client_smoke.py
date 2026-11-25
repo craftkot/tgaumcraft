@@ -645,7 +645,8 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     assert "for attempt in $(seq 1 1000)" in wait_body, "the marker watcher must use bounded non-blocking polling"
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
@@ -665,7 +666,7 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
             "wisp_wait_for_marker() { grep -Fq -- \"$1\" client-smoke/client.log; }\n"
             "wisp_stop_zap_video_capture() { echo VIDEO_STOP; }\n"
             "wisp_capture() { printf 'CAPTURE=%s\\n' \"$1\"; }\n"
-            "python() { printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=6 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'; }\n"
+            "python() { printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=30 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'; }\n"
             + "".join(functions)
             + "wisp_capture_zap_frames 0 17\n"
         )
@@ -717,10 +718,12 @@ def _test_video_frame_extraction() -> None:
         )
         status_file = root / "status.txt"
         status_file.write_text("\n".join((
-            "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtNs=1100000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtNs=1200000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtNs=1300000000",
+            "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=1000000000 frameRate=60",
+            "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
+            "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
             "WISP_ZAP_VIDEO_STOPPED=YES",
         )) + "\n", encoding="utf-8")
         result = subprocess.run(
@@ -1006,18 +1009,20 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES",
         "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES",
-        "WISP_CAMERA_SIDE_VIEW=YES",
-        "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=",
+        "WISP_CAMERA_SIDE_VIEW=YES id=",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=",
         "TC_SMOKE_WISP_HURT=YES accepted=true",
         "TC_SMOKE_WISP_TARGET_SET=YES",
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
-        "wisp_capture 79-wisp-third-person-before-zap",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
+        "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES",
+        "WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
+        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
+        "firstFrameMonotonicNs=",
+        "observedAtMonotonicNs=",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "wisp_start_zap_video_capture",
@@ -1156,15 +1161,18 @@ def main() -> int:
     capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", target_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
     aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    perspective_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
-    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON", perspective_index)
-    side_view_command_index = setup.index("wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1", perspective_marker_index)
-    side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", side_view_command_index)
-    side_view_status_index = setup.index("WISP_CAMERA_SIDE_VIEW=YES", side_view_wait_index)
-    baseline_capture_index = setup.index("wisp_capture 79-wisp-third-person-before-zap", side_view_status_index)
-    zap_baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD", baseline_capture_index)
-    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', zap_baseline_marker_index)
-    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", zap_cursor_index)
+    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', rendered_index)
+    attack_call_index = setup.index("wisp_attack_live_wisp", zap_cursor_index)
+    client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
+    camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
+    side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", camera_stopped_index)
+    side_view_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW=YES id=$side_view_id monotonicNs=$side_view_monotonic_ns"', side_view_wait_index)
+    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
+    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
+    capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", target_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
+    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
+    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", aim_verify_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
     perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", zap_capture_index)
@@ -1174,9 +1182,11 @@ def main() -> int:
     restore_marker_index = setup.index(
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index
     )
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < hurt_index < target_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < baseline_capture_index < zap_baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
-        "capture the accepted-hit aim frame before changing perspective, then capture FXBolt in side view"
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < capture_aim_index < telemetry_index < aim_verify_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+        "select the side camera on the actual attack event before damage/payload, then extract the timestamped video frames"
     )
+    assert "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1" not in setup
+    assert "wisp_capture 79-wisp-third-person-before-zap" not in setup
     assert "wisp_verify_attack_input_aim_capture" not in setup[restore_marker_index:]
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     assert "wisp_reanchor_player_for_capture" not in generated
@@ -1367,7 +1377,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
         "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=17",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
@@ -1375,7 +1385,7 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520",
+        "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
@@ -1416,14 +1426,15 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
-        "WISP_CAMERA_SIDE_VIEW=YES",
+        "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
+        "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
+        "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
-        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtNs=1100000000",
-        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=2 wispTick=25 observedAtNs=1200000000",
-        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=3 wispTick=26 observedAtNs=1300000000",
+        "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=900000000 frameRate=60",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
+        "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
         "WISP_ZAP_VIDEO_STOPPED=YES",
         "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=520 ageTick=1 wispTick=24",
         "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=520 ageTick=2 wispTick=25",
@@ -1511,6 +1522,17 @@ def main() -> int:
             log.replace("cameraType=THIRD_PERSON_BACK", "cameraType=FIRST_PERSON"), status, root
         )
         assert any("expected THIRD_PERSON_BACK" in error for error in first_person_errors), first_person_errors
+        late_side_view_errors = verify_wisp_zap_client.verify(
+            log.replace("monotonicNs=1000000000", "monotonicNs=1300000000", 1), status, root
+        )
+        assert any("side-view camera was selected after the client received the zap payload" in error
+                   for error in late_side_view_errors), late_side_view_errors
+        wrong_side_view_id_errors = verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17", "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=18", 1),
+            status, root
+        )
+        assert any("side-view camera and zap payload refer to different source entities" in error
+                   for error in wrong_side_view_id_errors), wrong_side_view_id_errors
 
         # A client may skip the first expiry tick while stalled. Cleanup may be
         # observed later, but no FXBolt frame may render at age >= 4.
@@ -1850,6 +1872,9 @@ def main() -> int:
     assert "aimCameraAtWisp = false" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" in attack_probe
+    assert "minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK)" in attack_probe
+    assert "System.nanoTime()" in attack_probe
+    assert "monotonicNs=" in attack_probe
     assert "event.setCanceled" not in attack_probe
     renderer = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java"
