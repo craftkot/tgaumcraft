@@ -180,14 +180,20 @@ public final class WispAttackSmokeProbe {
             // AttackEntityEvent fires after the real hit result selected this Wisp.
             // Change only the smoke camera now, before the server can deliver the
             // three-tick zap payload. The click target and server damage are untouched.
+            // The zap follows the horizontal source-to-target axis. Capture it broadside;
+            // a fixed world yaw can accidentally look almost straight down the bolt.
+            Vec3 toWisp = wisp.position().subtract(minecraft.player.position());
+            float beamYaw = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-toWisp.x, toWisp.z)));
+            float sideViewYaw = Mth.wrapDegrees(beamYaw + 90.0F);
             minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-            minecraft.player.setYRot(90.0F);
-            minecraft.player.yRotO = 90.0F;
+            minecraft.player.setYRot(sideViewYaw);
+            minecraft.player.yRotO = sideViewYaw;
             minecraft.player.setXRot(0.0F);
             minecraft.player.xRotO = 0.0F;
             sideViewLogged = true;
             long monotonicNs = System.nanoTime();
             System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
+                    + " beamYaw=" + beamYaw
                     + " yaw=" + Mth.wrapDegrees(minecraft.player.getYRot())
                     + " pitch=" + minecraft.player.getXRot()
                     + " cameraType=" + minecraft.options.getCameraType().name()
