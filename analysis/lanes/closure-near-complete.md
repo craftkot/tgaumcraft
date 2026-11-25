@@ -697,3 +697,8 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Path overlap review: the earlier scan covered all 61 other open PRs; current PR #61 and #62 changed-file lists were rechecked and do not touch these two code paths or this journal. No overlap found. Existing PR #4 / PR #3 overlaps in SalisMundusItem.java and ArcaneWorkbenchMenu.java remain untouched.
 - The fixed audit remains 59/100 (M16 4/6, M08 5/9); no point awarded. No local execution is claimed; the exact-SHA GitHub Actions run is the required validation.
 - Next: inspect the new exact-SHA Wisp run. Require the complete offline contract, generated bash -n, then an actual Minecraft client launch and inspect the real same-ID Survival hit/payload, pre-payload side-view video frame, three real FXBolt screenshots and post-expiry clear frame. Do not treat synthetic detector output as gameplay evidence.
+
+### Follow-up: keep the negative side-view fixture newline-aware
+
+- Reviewed the just-added regression source after writing it through the GitHub contents API. Its Python literals initially contained a double-escaped `\\n`, which would search for a literal backslash-n rather than the newline separator in the status fixture. Corrected the three literals to `\n` before accepting the new test result.
+- This is a test-only correction in `tools/test_wisp_zap_client_smoke.py`; no production source changed. The previous exact-SHA workflow result is not used as validation for this follow-up.
