@@ -586,3 +586,11 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Full Port CI push run [#45528420749](https://github.com/craftkot/tgaumcraft/actions/runs/45528420749) is **IN_PROGRESS**; PR run [#45528429286](https://github.com/craftkot/tgaumcraft/actions/runs/45528429286) is **QUEUED**. Aura/Crystal GameTests [#45528429110](https://github.com/craftkot/tgaumcraft/actions/runs/45528429110) are queued.
 - CircleCI `verify-connection` for the journal-updated head `9c96987f0a6524dd1eb8415ecab51f31d6df6bcc` remains **PENDING**.
 - No local test result is claimed. Continue by inspecting the exact-SHA Wisp job until the offline contract either passes or provides a new precise failure; only then can the generated script and real Minecraft client be considered executed.
+
+
+### CI update for code SHA `580f74221f31975c9ec5e739fb8ffbc046edaa29`
+
+- [Full Port CI push #45528420749](https://github.com/craftkot/tgaumcraft/actions/runs/45528420749) завершился **SUCCESS**: Core parity и source checks прошли, NeoForge build прошёл, dedicated-server smoke прошёл, JAR artifacts загружены.
+- [Wisp geometry #45528428859](https://github.com/craftkot/tgaumcraft/actions/runs/45528428859) завершился **SUCCESS**.
+- [Wisp real client push #45528420893](https://github.com/craftkot/tgaumcraft/actions/runs/45528420893): offline geometry/client contract **SUCCESS**, generated Bash syntax **SUCCESS**; шаг запуска настоящего Minecraft-клиента ещё **IN_PROGRESS**. Pixel gate и upload реальных скриншотов пока не завершены; артефактов пока нет.
+- Это подтверждает исправление no-op regression mutation на CI и компиляцию/сервер на точном кодовом SHA, но ещё не подтверждает FXBolt в настоящем игровом клиенте.
