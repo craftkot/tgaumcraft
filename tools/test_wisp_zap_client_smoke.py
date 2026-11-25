@@ -1285,9 +1285,10 @@ def main() -> int:
     assert 'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
     assert 'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then' in attack_frame_body
     assert 'if [[ "$candidate_line" =~ $frame_pattern ]]; then' in attack_frame_body
-    assert attack_frame_body.count("xdotool click 1") == 1
-    assert attack_frame_body.index('if [[ "$candidate_line" =~ $frame_pattern ]]') < attack_frame_body.index("xdotool click 1") < attack_frame_body.index('kill "$frame_tail_pid"')
-    assert attack_frame_body.index('WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"') < attack_frame_body.index("xdotool click 1")
+    click_command = "xdotool click --delay 0 1"
+    assert attack_frame_body.count(click_command) == 1
+    assert attack_frame_body.index('if [[ "$candidate_line" =~ $frame_pattern ]]') < attack_frame_body.index(click_command) < attack_frame_body.index('kill "$frame_tail_pid"')
+    assert attack_frame_body.index('WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"') < attack_frame_body.index(click_command)
     assert "timeout 5s bash -c" not in attack_frame_body
     assert 'if [ "$watcher_status" -ne 0 ]; then' in attack_frame_body
     assert 'exit 1' in attack_frame_body
