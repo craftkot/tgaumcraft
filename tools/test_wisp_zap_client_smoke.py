@@ -321,14 +321,25 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
             "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
         )
 
-    def run_case(lines: list[str]) -> tuple[int, str, str]:
+    def run_case(
+        lines: list[str], *, capture_marker: bool = True, capture_png: bool = True
+    ) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-input-frame-") as directory:
             root = Path(directory)
             client_dir = root / "client-smoke"
             client_dir.mkdir()
+            screenshots_dir = client_dir / "screenshots"
+            screenshots_dir.mkdir()
             (client_dir / "client.log").write_text("\n".join(lines) + "\n", encoding="utf-8")
+            if capture_png:
+                # The isolated helper validates an already-captured prerequisite;
+                # use a structurally valid synthetic PNG, not a missing file.
+                write_png(screenshots_dir / "78-wisp-aim-check.png")
             status_path = root / "client-smoke-status.txt"
-            status_path.write_text("", encoding="utf-8")
+            status_path.write_text(
+                "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES\n" if capture_marker else "",
+                encoding="utf-8",
+            )
             env = os.environ.copy()
             env["ATTACK_INPUT"] = attack_input
             harness = (
@@ -360,6 +371,16 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     rc, output, status = run_case(base_lines)
     assert rc == 0, (rc, output, status)
     assert "CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518 DISTANCE=1.0440" in output, output
+
+    # This function is downstream of wisp_wait_for_attack_frame: it must receive
+    # both the capture marker and the screenshot produced by that earlier step.
+    rc, output, status = run_case(base_lines, capture_marker=False)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES" in status, status
+
+    rc, output, status = run_case(base_lines, capture_png=False)
+    assert rc != 0, (rc, output, status)
+    assert "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES" in status, status
 
     duplicate_lines = base_lines[:-1] + [frame_line(7, 553, 518), attack_input]
     rc, output, status = run_case(duplicate_lines)
