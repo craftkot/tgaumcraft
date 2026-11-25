@@ -2,6 +2,7 @@
 """Offline generator/verifier regressions for the real Wisp zap client smoke."""
 from pathlib import Path
 import os
+import re
 import shutil
 import sys
 import time
