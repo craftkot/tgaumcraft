@@ -804,7 +804,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=(\d+)", log_text
     )
     side_view = _first(
-        r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) yaw=(-?[0-9.]+) "
+        r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) beamYaw=(-?[0-9.]+) yaw=(-?[0-9.]+) "
         r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK monotonicNs=(\d+)", log_text
     )
     pre_attack_track = _first(
@@ -848,13 +848,18 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     if side_view and received:
         if side_view.group(1) != received.group(1):
             errors.append("side-view camera and zap payload refer to different source entities")
-        if int(side_view.group(4)) >= int(received.group(6)):
+        if int(side_view.group(5)) >= int(received.group(6)):
             errors.append("side-view camera was selected after the client received the zap payload")
     if side_view:
-        yaw = float(side_view.group(2))
-        pitch = float(side_view.group(3))
-        if abs(abs(yaw) - 90.0) > 5.0 or abs(pitch) > 5.0:
-            errors.append(f"camera is not side-on: yaw={yaw:.2f} pitch={pitch:.2f}")
+        beam_yaw = float(side_view.group(2))
+        yaw = float(side_view.group(3))
+        pitch = float(side_view.group(4))
+        yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
+        if abs(abs(yaw_delta) - 90.0) > 5.0 or abs(pitch) > 5.0:
+            errors.append(
+                f"camera is not side-on to the zap: beamYaw={beam_yaw:.2f} "
+                f"yaw={yaw:.2f} pitch={pitch:.2f}"
+            )
     if wisp_camera and wisp_rendered:
         if wisp_camera.group(1) != wisp_rendered.group(1):
             errors.append("camera sample and rendered Wisp use different entity IDs")
