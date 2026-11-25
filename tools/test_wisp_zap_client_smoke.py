@@ -928,7 +928,7 @@ def main() -> int:
         "minecraft:generic.knockback_resistance base set 1",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON_SIDE_ON",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
         "wisp_capture 79-wisp-third-person-before-zap",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
@@ -1069,7 +1069,7 @@ def main() -> int:
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
     perspective_index = setup.index("xdotool key --clearmodifiers F5", camera_stopped_index)
-    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON_SIDE_ON", perspective_index)
+    perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON", perspective_index)
     side_view_command_index = setup.index("wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1", perspective_marker_index)
     side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", side_view_command_index)
     side_view_status_index = setup.index("WISP_CAMERA_SIDE_VIEW=YES", side_view_wait_index)
