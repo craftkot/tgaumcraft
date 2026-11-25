@@ -59,8 +59,6 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_TELEPORT=YES",
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
-    "WISP_CAMERA_REAIM=CLIENT_TRACKING",
-    "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
     "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
     "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
     "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
@@ -74,6 +72,7 @@ REQUIRED_STATUS = (
     "WISP_RENDER_CAPTURE_ID=",
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+    "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
     "WISP_ATTACKABLE_FRAME=YES",
     "WISP_ATTACK_INPUT_FRAME=YES",
@@ -959,8 +958,22 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=3 "
             )
             camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_AFTER_HIT=YES")
-            if last_capture_position < 0 or camera_capture_position < 0 or last_capture_position > camera_capture_position:
-                errors.append("transient FXBolt frames were not captured before the later Wisp camera re-anchor")
+            side_view_position = status_text.find("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON")
+            baseline_capture_position = status_text.find(
+                "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD"
+            )
+            if (
+                camera_capture_position < 0
+                or side_view_position < 0
+                or camera_capture_position > side_view_position
+            ):
+                errors.append("post-hit aim screenshot was not captured before switching to the side-view camera")
+            if (
+                baseline_capture_position < 0
+                or last_capture_position < 0
+                or baseline_capture_position > last_capture_position
+            ):
+                errors.append("FXBolt frames were not captured after the same-camera side-view baseline")
 
             baseline_time_position = status_text.find("WISP_ZAP_TEST_TIME=MIDNIGHT")
             baseline_capture_position = status_text.find("WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN")
@@ -980,11 +993,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0"
     )
     stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
-    camera_reaim_position = status_text.find("WISP_CAMERA_REAIM=CLIENT_TRACKING", stabilized_position + 1)
+    first_zap_capture_position = status_text.find("WISP_ZAP_FRAME_CAPTURE=YES")
     if target_set_position < 0 or knockback_set_position <= target_set_position:
         errors.append("player knockback resistance was not confirmed after the accepted Wisp hit")
-    if stabilized_position < 0 or camera_reaim_position < 0 or stabilized_position > camera_reaim_position:
-        errors.append("post-hit player stabilization was not confirmed before client camera tracking")
+    if (
+        stabilized_position < 0
+        or first_zap_capture_position < 0
+        or stabilized_position > first_zap_capture_position
+    ):
+        errors.append("post-hit player stabilization was not confirmed before FXBolt frame capture")
 
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
@@ -1248,6 +1265,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("missing camera sample copied at post-hit screenshot capture")
         elif capture_id and capture_tick and capture_camera.group(1, 2) != (capture_id.group(1), capture_tick.group(1)):
             errors.append("post-hit screenshot camera sample does not match capture ID/tick")
+        if capture_id is not None and capture_tick is not None and attack_camera_frame is not None:
+            if (capture_id.group(1), capture_tick.group(1)) != (
+                attack_camera_frame.group(1), attack_camera_frame.group(2)
+            ):
+                errors.append("post-hit aim capture does not reuse the exact attack-input camera frame")
         if capture_camera is not None:
             capture_player_x, capture_player_y, capture_player_z, capture_wisp_x, capture_wisp_y, capture_wisp_z, capture_aim_dot = map(
                 float, capture_camera.groups()[2:]
@@ -1264,7 +1286,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 and capture_aim_dot >= 0.99
             ):
                 errors.append(
-                    "post-hit camera re-aim moved the player off the verified platform or lost the live Wisp: "
+                    "post-hit attack-camera sample was outside the verified platform/melee bounds: "
                     f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
                     f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
                 )

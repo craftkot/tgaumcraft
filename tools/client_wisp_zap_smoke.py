@@ -327,31 +327,6 @@ def render() -> str:
     return 0
   }
 
-  wisp_reanchor_player_for_capture() {
-    local after_lines="$1" teleport_match relative_line
-    # Re-anchor only the test player on the verified platform. The client-only
-    # tick probe keeps the exact attacked Wisp centred; never move/freeze it.
-    # Return the server log line number so callers include the first fresh
-    # camera sample instead of skipping it with a later wc -l snapshot.
-    # Keep the default chat-open/type pacing used by the native client.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'
-    for _ in $(seq 1 200); do
-      teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to 12.500000, 149.000000, 10.500000' | head -1 || true)"
-      if [ -n "$teleport_match" ]; then
-        relative_line="$(cut -d: -f1 <<<"$teleport_match")"
-        WISP_CAMERA_REANCHOR_LINE="$(cut -d: -f2- <<<"$teleport_match")"
-        WISP_CAMERA_REANCHOR_LINE_NUMBER="$((after_lines + relative_line))"
-        echo "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM $WISP_CAMERA_REANCHOR_LINE" | tee -a client-smoke-status.txt
-        echo "WISP_CAMERA_REAIM=CLIENT_TRACKING" | tee -a client-smoke-status.txt
-        return 0
-      fi
-      sleep 0.025
-    done
-    echo 'WISP_CAMERA_REANCHOR_TIMEOUT=YES' | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    exit 1
-  }
-
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
     # The first click can be delayed by client tick scheduling while the Wisp
@@ -630,52 +605,32 @@ def render() -> str:
   }
 
   wisp_capture_aim_after_hit() {
-    local after_lines="$1" wisp_id camera_line camera_tick aim_dot frame_marker
-    wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
-    if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
-      echo "WISP_RENDER_FIRST_FRAME_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
-      exit 1
+    local wisp_id camera_tick aim_dot camera_line first_frame_id
+    wisp_id="${WISP_ATTACK_CAMERA_ID:-}"
+    camera_tick="${WISP_ATTACK_CAMERA_TICK:-}"
+    aim_dot="${WISP_ATTACK_CAMERA_AIM_DOT:-}"
+    camera_line="${WISP_ATTACK_CAMERA_LINE:-}"
+    first_frame_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
+    if ! [[ "$wisp_id" =~ ^[0-9]+$ && "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
+      || [ "$wisp_id" != "$first_frame_id" ]; then
+      echo "WISP_RENDER_CAPTURE_INPUT_FRAME_INVALID id=$wisp_id firstFrameId=$first_frame_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
+      return 1
     fi
-    for _ in $(seq 1 200); do
-      camera_line="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id " | tail -1 || true)"
-      if [ -n "$camera_line" ]; then
-        camera_tick="$(sed -n 's/.* aimTarget=render_safe_quarter tick=\([0-9][0-9]*\) playerX=.*/\1/p' <<<"$camera_line")"
-        aim_dot="$(sed -n 's/.* aimDot=\([0-9.][0-9.]*\).*/\1/p' <<<"$camera_line")"
-        if [[ "$camera_tick" =~ ^[0-9]+$ && "$aim_dot" =~ ^[0-9.]+$ ]] \
-          && awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= 0.99) }'; then
-          frame_marker="TC_SMOKE_WISP_FRAME_COMPLETE=YES id=$wisp_id tick=$camera_tick"
-          if tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -Fq -- "$frame_marker"; then
-            wisp_capture 78-wisp-aim-check
-            echo "WISP_RENDER_CAPTURE_ID=$wisp_id" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_CAPTURE_TICK=$camera_tick" | tee -a client-smoke-status.txt
-            echo "WISP_RENDER_CAPTURE_AIM_DOT=$aim_dot" | tee -a client-smoke-status.txt
-            echo "$camera_line" | tee -a client-smoke-status.txt
-            echo 'WISP_RENDER_CAPTURE_AFTER_HIT=YES' | tee -a client-smoke-status.txt
-            return 0
-          fi
-        fi
-      fi
-      sleep 0.005
-    done
-    echo 'WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES' | tee -a client-smoke-status.txt
-    return 1
-  }
-
-  wisp_capture_aim_after_hit_with_retries() {
-    local attempt reanchor_log_lines after_hit_log_lines
-    for attempt in 1 2 3; do
-      reanchor_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_reanchor_player_for_capture "$reanchor_log_lines"
-      after_hit_log_lines="$WISP_CAMERA_REANCHOR_LINE_NUMBER"
-      if wisp_capture_aim_after_hit "$after_hit_log_lines"; then
-        echo "WISP_RENDER_CAPTURE_REANCHOR_ATTEMPT=$attempt" | tee -a client-smoke-status.txt
-        return 0
-      fi
-      echo "WISP_RENDER_CAPTURE_RETRY=$attempt" | tee -a client-smoke-status.txt
-    done
-    echo 'WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES' | tee -a client-smoke-status.txt
-    tail -120 client-smoke/client.log >&2
-    return 1
+    if ! grep -Fq "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter tick=$camera_tick " <<<"$camera_line" \
+      || ! grep -Fq "aimDot=$aim_dot" <<<"$camera_line"; then
+      echo "WISP_RENDER_CAPTURE_INPUT_FRAME_CAMERA_MISMATCH=YES id=$wisp_id tick=$camera_tick" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if ! awk -v dot="$aim_dot" 'BEGIN { exit !(dot >= 0.99 && dot <= 1.0001) }'; then
+      echo "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_REJECTED=YES id=$wisp_id tick=$camera_tick aimDot=$aim_dot" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    wisp_capture 78-wisp-aim-check
+    echo "WISP_RENDER_CAPTURE_ID=$wisp_id" | tee -a client-smoke-status.txt
+    echo "WISP_RENDER_CAPTURE_TICK=$camera_tick" | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME' | tee -a client-smoke-status.txt
+    echo "$camera_line" | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_CAPTURE_AFTER_HIT=YES' | tee -a client-smoke-status.txt
   }
 
   wisp_wait_for_teleport() {
@@ -866,21 +821,26 @@ def render() -> str:
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACK=YES'
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'
+  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
+  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
+  wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
-  # The real click is complete. Stop the smoke-only aim lock, switch to
-  # third-person-back, then rotate the player 90 degrees without moving them.
-  # This makes the Wisp-to-player bolt lie across the screen instead of behind
-  # the player's own model, while leaving Wisp AI, target and zap endpoints live.
+  # Reuse the exact same-ID AFTER_LEVEL camera sample that dispatched the real
+  # click. Capture it now, while the Wisp is still near the melee platform;
+  # never teleport/re-anchor after the three-tick FXBolt has already expired.
+  wisp_capture_aim_after_hit
+  wisp_verify_aim_telemetry "$aim_log_lines"
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
+
+  # The real click and accepted hit are complete. Switch to third-person-back,
+  # then rotate the player 90 degrees without moving them. This makes the
+  # Wisp-to-player bolt lie across the screen instead of behind the player model.
   xdotool key --clearmodifiers F5
   sleep 0.1
   echo 'WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON' | tee -a client-smoke-status.txt
   wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1
   wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'
   echo 'WISP_CAMERA_SIDE_VIEW=YES' | tee -a client-smoke-status.txt
-
-  wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
-  echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
-  wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
   # The baseline is captured only after the actual hit/target callbacks, but
   # before the zap payload. The Wisp billboard must be visible in this same
@@ -915,9 +875,6 @@ def render() -> str:
   xdotool key --clearmodifiers F5
   sleep 0.1
   echo 'WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON' | tee -a client-smoke-status.txt
-  wisp_capture_aim_after_hit_with_retries
-  wisp_verify_aim_telemetry "$aim_log_lines"
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
   wisp_crop_metric() {
     local left="$1" right="$2" temporary metric

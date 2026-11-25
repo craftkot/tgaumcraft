@@ -495,28 +495,32 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     assert "WISP_CAMERA_FIRST_FRAME_SAMPLE_COUNT=2 expected=1 id=157 tick=3" in status, status
 
 
-def _test_capture_reanchor_retry(generated: str) -> None:
-    """Post-hit capture retries while the client tracker follows the moving Wisp."""
-    body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
-    function = "  wisp_capture_aim_after_hit_with_retries() {\n" + body + "\n  }\n"
+def _test_attack_aim_capture_uses_input_frame(generated: str) -> None:
+    """The post-hit aim screenshot must reuse the exact same-ID attack camera sample."""
+    body = _bash_function_body(generated, "wisp_capture_aim_after_hit")
+    function = "  wisp_capture_aim_after_hit() {\n" + body + "\n  }\n"
 
-    def run_case(success_on: int) -> tuple[int, str, str]:
-        with tempfile.TemporaryDirectory(prefix="tc-wisp-reaim-retry-") as temporary:
+    def run_case(attack_id: int, camera_id: int, camera_tick: int, line_tick: int, aim_dot: str) -> tuple[int, str, str]:
+        with tempfile.TemporaryDirectory(prefix="tc-wisp-attack-aim-") as temporary:
             root = Path(temporary)
-            (root / "client-smoke").mkdir()
-            (root / "client-smoke" / "client.log").write_text("", encoding="utf-8")
+            status_path = root / "client-smoke-status.txt"
+            status_path.write_text(f"WISP_RENDER_FIRST_FRAME_ID={camera_id}\n", encoding="utf-8")
+            camera_line = (
+                f"TC_SMOKE_WISP_CAMERA=YES id={camera_id} aimTarget=render_safe_quarter tick={line_tick} "
+                "playerX=12.5 playerY=149.0 playerZ=10.5 "
+                "wispX=12.5 wispY=149.3 wispZ=11.5 "
+                f"aimDot={aim_dot}"
+            )
             script = (
                 "set -euo pipefail\n"
-                'WISP_CAMERA_REANCHOR_LINE_NUMBER=""\n'
-                "reanchor_calls=0\n"
-                "capture_calls=0\n"
-                "wisp_reanchor_player_for_capture() { reanchor_calls=$((reanchor_calls + 1)); WISP_CAMERA_REANCHOR_LINE_NUMBER=$((100 + reanchor_calls)); }\n"
-                'wisp_capture_aim_after_hit() { capture_calls=$((capture_calls + 1)); [ "$1" = "$WISP_CAMERA_REANCHOR_LINE_NUMBER" ] || return 90; if [ "$capture_calls" -ge '
-                + str(success_on)
-                + ' ]; then return 0; fi; return 1; }\n'
+                f"WISP_ATTACK_CAMERA_ID={attack_id}\n"
+                f"WISP_ATTACK_CAMERA_TICK={camera_tick}\n"
+                f"WISP_ATTACK_CAMERA_AIM_DOT={aim_dot}\n"
+                f"WISP_ATTACK_CAMERA_LINE='{camera_line}'\n"
+                "wisp_capture() { echo \"CAPTURE=$1\" >> client-smoke-status.txt; }\n"
                 + function
-                + "if wisp_capture_aim_after_hit_with_retries; then result=0; else result=$?; fi\n"
-                + 'echo "RESULT=$result REANCHORS=$reanchor_calls CAPTURES=$capture_calls"\n'
+                + "if wisp_capture_aim_after_hit; then result=0; else result=$?; fi\n"
+                + 'echo "RESULT=$result"\n'
             )
             process = subprocess.run(
                 ["bash", "-c", script],
@@ -525,20 +529,37 @@ def _test_capture_reanchor_retry(generated: str) -> None:
                 text=True,
                 check=False,
             )
-            status_path = root / "client-smoke-status.txt"
-            status = status_path.read_text(encoding="utf-8") if status_path.exists() else ""
-            return process.returncode, process.stdout, status
+            status = status_path.read_text(encoding="utf-8")
+            return process.returncode, process.stdout + process.stderr, status
 
-    rc, output, status = run_case(2)
+    rc, output, status = run_case(157, 157, 124, 124, "0.999")
     assert rc == 0, (rc, output)
-    assert "RESULT=0 REANCHORS=2 CAPTURES=2" in output, output
-    assert "WISP_RENDER_CAPTURE_RETRY=1" in status, status
-    assert "WISP_RENDER_CAPTURE_REANCHOR_ATTEMPT=2" in status, status
+    assert "RESULT=0" in output, output
+    assert "CAPTURE=78-wisp-aim-check" in status, status
+    assert "WISP_RENDER_CAPTURE_ID=157" in status, status
+    assert "WISP_RENDER_CAPTURE_TICK=124" in status, status
+    assert "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME" in status, status
+    assert "WISP_RENDER_CAPTURE_AFTER_HIT=YES" in status, status
 
-    rc, output, status = run_case(99)
+    rc, output, status = run_case(157, 157, 124, 124, "0.989")
     assert rc == 0, (rc, output)
-    assert "RESULT=1 REANCHORS=3 CAPTURES=3" in output, output
-    assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in status, status
+    assert "RESULT=1" in output, output
+    assert "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_REJECTED=YES" in status, status
+    assert "CAPTURE=78-wisp-aim-check" not in status, status
+
+    rc, output, status = run_case(158, 157, 124, 124, "0.999")
+    assert rc == 0, (rc, output)
+    assert "RESULT=1" in output, output
+    assert "WISP_RENDER_CAPTURE_INPUT_FRAME_INVALID" in status, status
+    assert "CAPTURE=78-wisp-aim-check" not in status, status
+
+    rc, output, status = run_case(157, 157, 124, 125, "0.999")
+    assert rc == 0, (rc, output)
+    assert "RESULT=1" in output, output
+    assert "WISP_RENDER_CAPTURE_INPUT_FRAME_CAMERA_MISMATCH=YES" in status, status
+    assert "CAPTURE=78-wisp-aim-check" not in status, status
+
+
 def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     names = (
         "wisp_wait_for_zap_frame",
@@ -896,7 +917,7 @@ def main() -> int:
     _test_attack_input_frame_correlation(generated)
     _test_first_frame_cursor_is_exclusive(generated)
     _test_first_frame_telemetry_uses_selected_frame(generated)
-    _test_capture_reanchor_retry(generated)
+    _test_attack_aim_capture_uses_input_frame(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
     _test_video_frame_extraction()
     _test_wisp_render_profile(generated)
@@ -954,6 +975,7 @@ def main() -> int:
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+        "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME",
         "TC_SMOKE_WISP_ZAP_SENT=YES",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES",
@@ -988,10 +1010,6 @@ def main() -> int:
         "wisp_wait_for_teleport",
         'wisp_wait_for_fresh_render "$aim_log_lines"',
         "wisp_capture_aim_after_hit",
-        "wisp_capture_aim_after_hit_with_retries",
-        "WISP_RENDER_CAPTURE_RETRY=",
-        "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES",
-        "wisp_reanchor_player_for_capture()",
         "wisp_wait_for_attack_frame()",
         "wisp_attack_live_wisp()",
         "for attempt in 1 2 3",
@@ -1005,7 +1023,6 @@ def main() -> int:
         'sleep "$open_delay"',
         'xdotool type --clearmodifiers --delay "$type_delay" "$command"',
         "open_delay=\"0.5\"",
-        "WISP_CAMERA_REAIM=CLIENT_TRACKING",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS",
         "targetWisp=true",
         "WISP_RENDER_CAPTURE_TICK=",
@@ -1016,7 +1033,6 @@ def main() -> int:
         'attack_camera_source="PREAIMED_NEXT_FRAME"',
         'attack_camera_source="LIVE_ENTITY_FACING"',
         'echo "WISP_ATTACK_CAMERA_REAIM=$attack_camera_source $attack_camera_detail"',
-        "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM",
         "WISP_FIXTURE_TELEPORT=YES",
         "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png",
         "python tools/verify_wisp_zap_client.py --baseline-only client-smoke/screenshots/79-wisp-before-a.png",
@@ -1068,14 +1084,17 @@ def main() -> int:
     attack_call_index = setup.index("wisp_attack_live_wisp", rendered_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
-    perspective_index = setup.index("xdotool key --clearmodifiers F5", camera_stopped_index)
+    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", camera_stopped_index)
+    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
+    capture_aim_index = setup.index("wisp_capture_aim_after_hit", target_index)
+    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
+    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
+    perspective_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON", perspective_index)
     side_view_command_index = setup.index("wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1", perspective_marker_index)
     side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", side_view_command_index)
     side_view_status_index = setup.index("WISP_CAMERA_SIDE_VIEW=YES", side_view_wait_index)
-    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
-    target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    baseline_capture_index = setup.index("wisp_capture 79-wisp-third-person-before-zap", target_index)
+    baseline_capture_index = setup.index("wisp_capture 79-wisp-third-person-before-zap", side_view_status_index)
     zap_baseline_marker_index = setup.index("WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD", baseline_capture_index)
     zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', zap_baseline_marker_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", zap_cursor_index)
@@ -1088,12 +1107,12 @@ def main() -> int:
     restore_marker_index = setup.index(
         "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index
     )
-    capture_retry_index = setup.index("wisp_capture_aim_after_hit_with_retries", restore_marker_index)
-    telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_retry_index)
-    aim_verify_index = setup.index("python tools/verify_wisp_zap_client.py --aim-only", telemetry_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < baseline_capture_index < zap_baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index < capture_retry_index < telemetry_index < aim_verify_index, (
-        "after the real hit, capture all three FXBolt ages before the later Wisp camera re-anchor"
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < attack_call_index < client_attack_index < camera_stopped_index < hurt_index < target_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_index < perspective_marker_index < side_view_command_index < side_view_wait_index < side_view_status_index < baseline_capture_index < zap_baseline_marker_index < zap_cursor_index < stabilize_index < stabilize_marker_index < zap_capture_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+        "capture the accepted-hit aim frame before changing perspective, then capture FXBolt in side view"
     )
+    assert "wisp_capture_aim_after_hit" not in setup[restore_marker_index:]
+    assert "wisp_capture_aim_after_hit_with_retries" not in generated
+    assert "wisp_reanchor_player_for_capture" not in generated
     attack_frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     assert 'exec {frame_fd}< <(tail --sleep-interval=0.01 -n +"$((after_lines + 1))" -f client-smoke/client.log)' in attack_frame_body
     assert 'if ! IFS= read -r -t "$remaining" -u "$frame_fd" candidate_line; then' in attack_frame_body
@@ -1155,22 +1174,16 @@ def main() -> int:
     assert track_marker_index < track_line_number_index < render_after_track_index < camera_after_track_index < frame_after_track_index < cursor_capture_index < fresh_render_body.index("WISP_RENDER_FRAME_COMPLETE=YES") < first_frame_status_index
     assert 'wisp_capture "$capture_name"' not in fresh_render_body, "the first-frame wait must not capture before the attack"
     capture_body = _bash_function_body(generated, "wisp_capture_aim_after_hit")
-    capture_frame_index = capture_body.index("TC_SMOKE_WISP_FRAME_COMPLETE=YES")
-    capture_aim_guard_index = capture_body.index('awk -v dot="$aim_dot"')
-    capture_image_index = capture_body.index("wisp_capture 78-wisp-aim-check")
-    assert capture_aim_guard_index < capture_frame_index < capture_image_index < capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT=YES"), (
-        "the visual screenshot must follow an AFTER_LEVEL frame after accepted damage"
-    )
-    timeout_index = capture_body.index("WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES")
-    assert "return 1" in capture_body[timeout_index:] and "exit 1" not in capture_body[timeout_index:], (
-        "a missed camera alignment must return to the bounded re-aim loop, not abort immediately"
-    )
-    retry_body = _bash_function_body(generated, "wisp_capture_aim_after_hit_with_retries")
-    assert "for attempt in 1 2 3" in retry_body
-    assert 'wisp_reanchor_player_for_capture "$reanchor_log_lines"' in retry_body
-    assert 'wisp_capture_aim_after_hit "$after_hit_log_lines"' in retry_body
-    assert "WISP_RENDER_CAPTURE_RETRY=$attempt" in retry_body
-    assert "WISP_RENDER_CAPTURE_RETRIES_EXHAUSTED=YES" in retry_body
+    assert 'wisp_id="${WISP_ATTACK_CAMERA_ID:-}"' in capture_body
+    assert 'camera_tick="${WISP_ATTACK_CAMERA_TICK:-}"' in capture_body
+    assert 'camera_line="${WISP_ATTACK_CAMERA_LINE:-}"' in capture_body
+    assert 'grep -Fq "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter tick=$camera_tick "' in capture_body
+    assert 'awk -v dot="$aim_dot"' in capture_body
+    assert "wisp_capture 78-wisp-aim-check" in capture_body
+    assert 'WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME' in capture_body
+    assert 'echo "$camera_line" | tee -a client-smoke-status.txt' in capture_body
+    assert "WISP_RENDER_CAPTURE_AFTER_HIT=YES" in capture_body
+    assert "WISP_RENDER_CAPTURE_AFTER_HIT_TIMEOUT=YES" not in capture_body
     wait_attack_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     click_log_snapshot_index = wait_attack_body.index('click_log_lines="$(wc -l < client-smoke/client.log)"')
     frame_wait_index = wait_attack_body.index('exec {frame_fd}< <(tail --sleep-interval=0.01 -n +')
@@ -1212,21 +1225,15 @@ def main() -> int:
     assert 'sleep "$open_delay"' in fast_command_body
     assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
-    reanchor_body = _bash_function_body(generated, "wisp_reanchor_player_for_capture")
-    assert " 0.1 1" not in reanchor_body, "capture re-anchor must keep the reliable default chat-open/type pacing"
-    assert "wisp_fast_command '/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'" in reanchor_body
-    assert "facing " not in reanchor_body, "client tick tracking, not a one-shot command, owns capture aim"
-    assert "tag=tc_wisp_zap_smoke" in reanchor_body
+    assert "wisp_reanchor_player_for_capture" not in generated
+    assert "wisp_capture_aim_after_hit_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
     assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5" in reanchor_body
     assert "facing entity @s eyes" not in reanchor_body, "post-hit aim must remain client-tracked"
-    assert "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM" in reanchor_body
-    assert reanchor_body.count("WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM") == 1
-    assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in reanchor_body
-    assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is intentionally deferred until after accepted damage"
+    assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is tied to the accepted-hit attack input frame"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
     assert "CustomName:'" in generated and "CustomNameVisible:0b" in generated
@@ -1236,7 +1243,6 @@ def main() -> int:
     assert "wisp_verify_aim_telemetry" in generated
     assert 'grep -F -- "$frame_camera_marker" | head -1' in generated
     assert 'grep -F -c -- "$frame_camera_marker" || true' in generated
-    assert "WISP_CAMERA_REAIM=CLIENT_TRACKING" in generated
     assert "d <= 3.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
@@ -1321,9 +1327,6 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=9",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
-        "WISP_RENDER_CAPTURE_ID=17",
-        "WISP_RENDER_CAPTURE_TICK=23",
-        "WISP_RENDER_CAPTURE_AIM_DOT=0.999",
         "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
         "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
@@ -1331,6 +1334,18 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_TARGET_CONFIRMED=YES",
+        "WISP_ATTACK_HURT_ACCEPTED=YES",
+        "WISP_RENDER_CAPTURE_ID=17",
+        "WISP_RENDER_CAPTURE_TICK=22",
+        "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME",
+        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
+        "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
+        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
+        "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
+        "WISP_CAMERA_SIDE_VIEW=YES",
+        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ZAP_VIDEO_STARTED=YES firstFrameEpochNs=1000000000 frameRate=60",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtNs=1100000000",
@@ -1344,20 +1359,9 @@ def main() -> int:
         "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=520 ageTick=2 frameIndex=12 diff=15",
         "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=520 ageTick=3 frameIndex=18 diff=12",
         "WISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=520",
-        "WISP_CAMERA_REANCHORED=FIXTURE_PLATFORM Teleported Dev to 12.500000, 149.000000, 10.500000",
-        "WISP_CAMERA_REAIM=CLIENT_TRACKING",
-        "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=23 distance=1.0440 aimDot=0.999",
-        "WISP_RENDER_CAPTURE_AFTER_HIT=YES",
-        "WISP_ZAP_CAMERA_PERSPECTIVE_REQUESTED=THIRD_PERSON_BACK_SIDE_ON",
-        "WISP_CAMERA_SIDE_VIEW=YES",
-        "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
-        "WISP_ATTACK_TARGET_CONFIRMED=YES",
-        "WISP_ATTACK_HURT_ACCEPTED=YES",
+        "WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON",
         "WISP_RENDER_AFTER_PREAIMED_SPAWN=YES",
-        "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
-        "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_AIM_SCREENSHOT_VISIBLE=YES pixels=100 bbox=58,58,69,69",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
         "WISP_BASELINE_SCREENSHOT_CLEAR=YES pixels=0",
@@ -1367,6 +1371,7 @@ def main() -> int:
         "WISP_ZAP_BASELINE_NOISE=3",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF=18",
     ))
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-client-") as directory:    ))
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-client-") as directory:
         root = Path(directory)
         for name in verify_wisp_zap_client.SCREENSHOTS:
@@ -1590,8 +1595,8 @@ def main() -> int:
             "missing first-frame cursor must fail"
         )
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_CAMERA_REAIM=CLIENT_TRACKING", ""), root
-        ), "missing post-hit client camera tracking must fail"
+            log, status.replace("WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME", ""), root
+        ), "missing attack-input provenance for the post-hit aim capture must fail"
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
