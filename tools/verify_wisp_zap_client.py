@@ -905,7 +905,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("client AttackEntityEvent and server hurt callback use different player/Wisp IDs")
     if hurt and hit and hurt.group(1, 2) != hit.group(1, 2):
         errors.append("server accepted-damage callback and target acquisition use different IDs")
-    if attack_input and float(attack_input.group(3)) > 3.01:
+    if attack_input and float(attack_input.group(4)) > 3.01:
         errors.append("vanilla eye-to-hit-point distance exceeds the 3-block melee reach")
     if attack_input and side_view and int(attack_input.group(6)) >= int(side_view.group(4)):
         errors.append("attack-input timestamp must precede the smoke camera side-view switch")
@@ -915,7 +915,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         video_offset_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=([0-9.]+)$", status_text)
         if input_ns_status is None or input_ns_status.group(1) != attack_input.group(6):
             errors.append("video screenshot timestamp does not match the real attack InputEvent")
-        if hit_distance_status is None or abs(float(hit_distance_status.group(1)) - float(attack_input.group(3))) > 0.001:
+        if hit_distance_status is None or abs(float(hit_distance_status.group(1)) - float(attack_input.group(4))) > 0.001:
             errors.append("status hit distance does not match the real attack InputEvent")
         if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
             errors.append("video-derived attack frame has no valid non-negative offset")
@@ -1175,6 +1175,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_NEXT_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
+    live_reposition = _first(
+        r"(?m)^WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION .*?Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+)",
+        status_text,
+    )
     attack_trigger_frame_status = _first(
         r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) position=(PLATFORM|LIVE_WISP) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
@@ -1334,7 +1338,35 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 (attack_px, attack_py, attack_pz),
                 (attack_wx, attack_wy, attack_wz),
             )
-            if not (
+            if attack_camera_reaim is not None and attack_camera_reaim.group(1) == "LIVE_ENTITY_FACING":
+                if live_reposition is None:
+                    errors.append("live-reposition attack sample lacks a parseable server-confirmed teleport position")
+                else:
+                    reposition_x, reposition_y, reposition_z = map(float, live_reposition.groups())
+                    reaim_position = _first(
+                        r"Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+)",
+                        attack_camera_reaim.group(2) or "",
+                    )
+                    if reaim_position is None or any(
+                        abs(actual - expected) > 0.05
+                        for actual, expected in zip(reaim_position.groups(), live_reposition.groups())
+                    ):
+                        errors.append("live-reposition attack re-aim coordinates differ from the server-confirmed teleport")
+                    if not (
+                        abs(attack_px - reposition_x) <= 0.05
+                        and abs(attack_py - reposition_y) <= 0.05
+                        and abs(attack_pz - reposition_z) <= 0.05
+                        and attack_distance <= 6.0
+                        and abs(attack_distance - measured_attack_distance) <= 0.1
+                        and math.isfinite(attack_aim_dot)
+                        and -1.0001 <= attack_aim_dot <= 1.0001
+                    ):
+                        errors.append(
+                            "live-reposition attack camera sample did not match the server-confirmed melee teleport: "
+                            f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
+                            f"distance={attack_distance:.3f} aimDot={attack_aim_dot:.4f}"
+                        )
+            elif not (
                 12.0 <= attack_px <= 13.0
                 and 148.5 <= attack_py <= 149.5
                 and 10.0 <= attack_pz <= 11.0
@@ -1404,12 +1436,31 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 (capture_player_x, capture_player_y, capture_player_z),
                 (capture_wisp_x, capture_wisp_y, capture_wisp_z),
             )
-            if not (
+            if attack_camera_reaim is not None and attack_camera_reaim.group(1) == "LIVE_ENTITY_FACING":
+                if live_reposition is None:
+                    errors.append("live attack-input camera sample lacks a server-confirmed teleport position")
+                else:
+                    reposition_x, reposition_y, reposition_z = map(float, live_reposition.groups())
+                    if not (
+                        abs(capture_player_x - reposition_x) <= 0.05
+                        and abs(capture_player_y - reposition_y) <= 0.05
+                        and abs(capture_player_z - reposition_z) <= 0.05
+                        and capture_distance <= 6.0
+                        and math.isfinite(capture_aim_dot)
+                        and -1.0001 <= capture_aim_dot <= 1.0001
+                    ):
+                        errors.append(
+                            "live attack-input camera sample did not match the server-confirmed melee teleport: "
+                            f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
+                            f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
+                        )
+            elif not (
                 12.0 <= capture_player_x <= 13.0
                 and 148.5 <= capture_player_y <= 149.5
                 and 10.0 <= capture_player_z <= 11.0
                 and capture_distance <= 16.0
-                and capture_aim_dot >= 0.99
+                and math.isfinite(capture_aim_dot)
+                and -1.0001 <= capture_aim_dot <= 1.0001
             ):
                 errors.append(
                     "attack-input camera sample was outside the verified platform/melee bounds: "

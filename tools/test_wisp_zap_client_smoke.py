@@ -466,14 +466,21 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     body = _bash_function_body(generated, "wisp_verify_aim_telemetry")
     function = "  wisp_verify_aim_telemetry() {\n" + body + "\n  }\n"
 
-    def camera_line(tick: int, aim_dot: str = "0.999") -> str:
+    def camera_line(
+        tick: int,
+        aim_dot: str = "0.999",
+        player: tuple[float, float, float] = (12.5, 149.0, 10.5),
+        wisp: tuple[float, float, float] = (12.5, 149.3, 11.5),
+    ) -> str:
+        px, py, pz = player
+        wx, wy, wz = wisp
         return (
             f"TC_SMOKE_WISP_CAMERA=YES id=157 aimTarget=render_safe_quarter tick={tick} "
-            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
-            "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
-            "wispX=12.5 wispY=149.3 wispZ=11.5 "
-            "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
-            "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+            f"playerX={px} playerY={py} playerZ={pz} playerYaw=0.0 playerPitch=47.59636 "
+            f"playerEyeX={px} playerEyeY={py + 1.62} playerEyeZ={pz} "
+            f"wispX={wx} wispY={wy} wispZ={wz} "
+            f"wispEyeX={wx} wispEyeY={wy + 0.765} wispEyeZ={wz} "
+            f"wispHitboxCenterX={wx} wispHitboxCenterY={wy + 0.45} wispHitboxCenterZ={wz} "
             f"aimDot={aim_dot} renderAimDot=0.978 eyeAimDot=0.978"
         )
 
@@ -481,6 +488,9 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
         selected_samples: int,
         capture_aim_dot: str = "0.999",
         first_frame_aim_dot: str = "0.999",
+        capture_player: tuple[float, float, float] = (12.5, 149.0, 10.5),
+        capture_wisp: tuple[float, float, float] = (12.5, 149.3, 11.5),
+        live_reposition: tuple[float, float, float] | None = None,
     ) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-first-frame-telemetry-") as directory:
             root = Path(directory)
@@ -505,8 +515,15 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
                 f"WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE={camera_line(3)}",
                 "WISP_RENDER_CAPTURE_ID=157",
                 "WISP_RENDER_CAPTURE_TICK=124",
-                camera_line(124, capture_aim_dot),
             ]
+            if live_reposition is not None:
+                rx, ry, rz = live_reposition
+                teleport = f"Teleported Dev to {rx:.6f}, {ry:.6f}, {rz:.6f}"
+                status_lines.extend((
+                    f"WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION {teleport}",
+                    f"WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING {teleport}",
+                ))
+            status_lines.append(camera_line(124, capture_aim_dot, capture_player, capture_wisp))
             (root / "client-smoke-status.txt").write_text("\n".join(status_lines) + "\n", encoding="utf-8")
             result = subprocess.run(
                 ["bash", "-c", "set -euo pipefail\n" + function + "\nwisp_verify_aim_telemetry 0\n"],
@@ -523,6 +540,28 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     assert rc == 0, (rc, output, status)
     assert "WISP_CAMERA_TELEMETRY=PASS id=157 tick=3 " in status, status
     assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
+
+    live_player = (14.361148, 149.0, 11.954202)
+    live_wisp = (13.531006, 152.136149, 11.861735)
+    rc, output, status = run_case(
+        1,
+        capture_aim_dot="0.9932838195434261",
+        capture_player=live_player,
+        capture_wisp=live_wisp,
+        live_reposition=live_player,
+    )
+    assert rc == 0, (rc, output, status)
+    assert "WISP_CAMERA_CAPTURE_POSITION_MODE=LIVE_WISP" in status, status
+    assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
+
+    rc, output, status = run_case(
+        1,
+        capture_aim_dot="0.9932838195434261",
+        capture_player=live_player,
+        capture_wisp=live_wisp,
+        live_reposition=(14.5, 149.0, 11.954202),
+    )
+    assert rc != 0 and "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED mode=LIVE_WISP" in status, (output, status)
 
     rc, output, status = run_case(1, capture_aim_dot="0.989224")
     assert rc == 0, (rc, output, status)
@@ -1437,6 +1476,9 @@ def main() -> int:
     assert 'grep -F -- "$frame_camera_marker" | head -1' in generated
     assert 'grep -F -c -- "$frame_camera_marker" || true' in generated
     assert "d <= 3.0" in generated
+    assert "capture_position_mode=LIVE_WISP" in generated
+    assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION" in generated
+    assert "d <= 6.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
     assert "run tp @p ~1.5" not in generated
@@ -1846,16 +1888,83 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_USED=YES attempt=1", ""), root
         ), "missing live attack camera frame must fail"
+        live_camera_line = (
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 "
+            "playerX=14.361148 playerY=149.0 playerZ=11.954202 playerYaw=0.0 playerPitch=47.59636 "
+            "playerEyeX=14.361148 playerEyeY=150.62 playerEyeZ=11.954202 "
+            "wispX=13.531006 wispY=152.136149 wispZ=11.861735 "
+            "wispEyeX=13.531006 wispEyeY=152.901149 wispEyeZ=11.861735 "
+            "wispHitboxCenterX=13.531006 wispHitboxCenterY=152.586149 wispHitboxCenterZ=11.861735 "
+            "aimDot=0.9932838195434261 renderAimDot=0.9860156895460689 eyeAimDot=0.9976360381532536"
+        )
+        original_attack_camera_line = (
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 "
+            "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
+            "playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 "
+            "wispX=12.5 wispY=149.3 wispZ=11.5 "
+            "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
+            "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
+            "aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978"
+        )
+        live_log = log.replace(original_attack_camera_line, live_camera_line, 1)
+        live_log = live_log.replace(
+            "distance=1.0440 hitDistance=2.9",
+            "distance=3.2455 hitDistance=1.6816",
+            1,
+        ).replace(
+            "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
+            "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=3.2455 gameTime=520",
+            1,
+        )
         fallback_status = status.replace(
             "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
-            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000\n"
-            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202\n"
+            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 14.361148, 149.000000, 11.954202",
+        ).replace(original_attack_camera_line, live_camera_line)
+        fallback_status = fallback_status.replace(
+            "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
+            "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=3.2455 aimDot=0.9932838195434261",
+        ).replace(
+            "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+            "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=LIVE_WISP gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
+        ).replace(
+            "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+            "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
+        ).replace(
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=1.6816",
+        ).replace(
+            "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
+            "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=3.2455 aimDot=0.9932838195434261",
         )
-        assert not verify_wisp_zap_client.verify(log, fallback_status, root), (
-            "live-reposition attack path with its server teleport marker must remain valid"
+        assert verify_wisp_zap_client.verify(live_log, fallback_status, root) == [], (
+            "a server-confirmed live-Wisp re-anchor and a 1.68-block eye-to-hit point must pass "
+            "even though the Wisp entity origin is 3.25 blocks away",
+            verify_wisp_zap_client.verify(live_log, fallback_status, root),
         )
+        mismatched_reposition = fallback_status.replace(
+            "Teleported Dev to 14.361148, 149.000000, 11.954202",
+            "Teleported Dev to 14.500000, 149.000000, 11.954202",
+            1,
+        )
+        mismatch_errors = verify_wisp_zap_client.verify(live_log, mismatched_reposition, root)
+        assert any("did not match the server-confirmed melee teleport" in error for error in mismatch_errors), mismatch_errors
+        out_of_reach_live_log = live_log.replace(
+            "hitDistance=1.6816",
+            "hitDistance=3.02",
+            1,
+        )
+        out_of_reach_live_status = fallback_status.replace(
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=1.6816",
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=3.02",
+            1,
+        )
+        out_of_reach_errors = verify_wisp_zap_client.verify(
+            out_of_reach_live_log, out_of_reach_live_status, root
+        )
+        assert any("vanilla eye-to-hit-point distance exceeds the 3-block melee reach" in error for error in out_of_reach_errors), out_of_reach_errors
         missing_attack_reaim_status = fallback_status.replace(
-            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 12.500000, 149.000000, 10.500000",
+            "WISP_ATTACK_CAMERA_REAIM=LIVE_ENTITY_FACING Teleported Dev to 14.361148, 149.000000, 11.954202",
             "",
         )
         missing_attack_reaim_errors = verify_wisp_zap_client.verify(
@@ -1880,8 +1989,9 @@ def main() -> int:
             else line
             for line in status.splitlines()
         )
-        assert not verify_wisp_zap_client.verify(low_dot_log, low_dot_status, root), (
-            "same-ID ENTITY hit must remain authoritative when the render-safe aim-point dot is below 0.99"
+        assert verify_wisp_zap_client.verify(low_dot_log, low_dot_status, root) == [], (
+            "the same-ID vanilla EntityHitResult and captured PNG, not the diagnostic aim-point dot, "
+            "decide whether the attack frame is valid"
         )
         assert verify_wisp_zap_client.verify(
             log, status.replace("WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
