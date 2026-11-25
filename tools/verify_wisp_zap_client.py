@@ -912,7 +912,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("server accepted-damage callback and target acquisition use different IDs")
     if attack_input and float(attack_input.group(3)) > 3.01:
         errors.append("vanilla eye-to-hit-point distance exceeds the 3-block melee reach")
-    if attack_input and side_view and int(attack_input.group(6)) >= int(side_view.group(4)):
+    if attack_input and side_view and int(attack_input.group(6)) >= int(side_view.group(5)):
         errors.append("attack-input timestamp must precede the smoke camera side-view switch")
     if attack_input:
         input_ns_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=(\d+)$", status_text)
