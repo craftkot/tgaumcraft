@@ -794,3 +794,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Previous exact-SHA Full Port CI [#45621129359](https://github.com/craftkot/tgaumcraft/actions/runs/45621129359) had passed Core parity and source/asset checks; NeoForge build was green and dedicated-server smoke was running when last inspected. The Wisp job did not reach generated Bash or Minecraft.
 - This fixture correction still needs exact-SHA offline contract + generated Bash syntax + real Minecraft-client execution. No Wisp visual acceptance or score increase is claimed. PR #4 remains Draft/Open/Unmerged; no merge or force-push.
 - Next: inspect the next Wisp exact-SHA run. If the offline contract passes, require generated `bash -n`, real Survival hit/damage/target, matching source/target payload, third-person FXBolt ages 1/2/3, expiry, elevated-source marker, and real PNG/video pixel evidence.
+
+
+## 2026-11-25 — correct newline escaping in the elevated-marker negative fixture
+
+- Review of the newly added negative regression found that its Python source contained a double-escaped `\\n`, which would search for a literal backslash-plus-n rather than remove the marker line. Corrected the source literal to `\n`, so the fixture now removes the actual newline-terminated marker exactly once.
+- Code commit: [74fba5f](https://github.com/craftkot/tgaumcraft/commit/74fba5f751aef7f952ec02f93f6caebbb876b47d). This is still a test-only correction; no gameplay/production code changed. Exact-SHA CI is not yet confirmed.
+- Next: inspect Wisp offline contract and Bash syntax on the new branch head before any visual/gameplay claims.
