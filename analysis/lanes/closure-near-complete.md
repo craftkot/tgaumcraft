@@ -3,8 +3,8 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8`](https://github.com/craftkot/tgaumcraft/commit/6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8)
-- На code/test SHA `6034d3a` exact-SHA Wisp client [#45539689202](https://github.com/craftkot/tgaumcraft/actions/runs/45539689202) и Full Port CI [#45539688979](https://github.com/craftkot/tgaumcraft/actions/runs/45539688979) созданы и находятся в очереди; более ранние Wisp контракты падали до запуска Minecraft и не являются gameplay results.
+- Последний code/test SHA: [`0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467`](https://github.com/craftkot/tgaumcraft/commit/6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8)
+- На code/test SHA `0ec5a78` Wisp real client [#45607373838](https://github.com/craftkot/tgaumcraft/actions/runs/45607373838), geometry [#45607374114](https://github.com/craftkot/tgaumcraft/actions/runs/45607374114) и Full Port CI [#45607373934](https://github.com/craftkot/tgaumcraft/actions/runs/45607373934) поставлены в очередь; результаты ещё не получены. Предыдущий Wisp real-client [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802) дошёл до настоящего payload/render callbacks, но pixel verifier не нашёл видимый жёлтый сегмент.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
 ## Границы lane
@@ -13,13 +13,26 @@
 
 ## Последняя инженерная итерация
 
-На code/test SHA `a4cfbb774b68e87cc9204d1c1666220c253d38b9` устранена ошибка корреляции реального клика по Wisp: verifier теперь выбирает единственный AFTER_LEVEL кадр и camera sample того же Wisp ID, совпадающие с фактическими `gameTime/playerTick` события атаки. Ранний визуальный/доприцеленный кадр больше не может подменить кадр реального input. Добавлены positive/negative offline regressions на missing/duplicate/stale frame. Изменены только:
+На code/test SHA `0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467` устранена причина отсутствия видимого FXBolt в реальном Wisp smoke. Артефакт [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802/artifacts/15011764224) подтверждает Survival hit, серверный урон, source/target payload, render callbacks на age 1/2/3 и expiry на age 4; отказ произошёл только в pixel verifier. По телеметрии Wisp base Y был около 149.16, игрок base Y=149.0, верх платформы Y=149. Оригинальный PacketFXWispZap передаёт в FXBolt именно позиции сущностей, поэтому почти горизонтальный луч шёл по поверхности платформы и закрывался depth test. Это дефект геометрии smoke-фикстуры, не доказанный дефект production renderer.
+
+Исправление поднимает smoke Wisp до Y=151.3 (2.3 блока над верхом платформы), оставляет Survival-игрока на Y=149.0, корректирует начальный pitch до -42°, а fallback teleport также фиксирует игрока на Y=149. Добавлена серверная проверка, что блок непосредственно под Wisp пуст, и offline regression на высоту источника, положение игрока, расчёт pitch, fallback и обязательный marker. Порог пиксельного детектора не ослаблялся. Production Java не менялся.
+
+Изменены:
 - `tools/client_wisp_zap_smoke.py`
-- `tools/verify_wisp_zap_client.py`
 - `tools/test_wisp_zap_client_smoke.py`
+- `tools/verify_wisp_zap_client.py`
+- `analysis/lanes/closure-near-complete.md`
 
-Реальный Wisp client теперь завершился SUCCESS: Survival click по Wisp `id=102`, сервер принял урон и назначил цель; source/target payload `102/24`; FXBolt наблюдался на возрастах 1/2/3 и истёк на возрасте 4; transient pixel diff `39022`; aim ROI содержал 634 Aer-пикселя; ошибок загрузки Wisp/essentia textures нет. Это подтверждает именно узкий Wisp hit→payload→FX сценарий, не всю M16.
+Коммиты code/test:
+- `a08f7a7bc038de5bfacae7f54f032c444eacb2b7` — elevated Wisp fixture;
+- `663b614d3bffc1a25e1557628995afc39d99e451` — fixture regression;
+- `64ebb7bc14a7ae52e4867930c29e184f3ddd53ff` — require server-side elevation marker;
+- `0ec5a785ff4a47f8d12d5d0c7bcc88bba13a1467` — corrected coordinate-regex escaping.
 
+На exact code/test SHA `0ec5a785` запуски Wisp client #45607373838, Wisp geometry #45607374114, Full Port CI #45607373934 и Aura/Crystal GameTests #45607373863 созданы, но на момент записи оставались queued. Offline contract, bash -n, NeoForge build и повторный настоящий Minecraft client пока не объявляются PASS. Следующий шаг — дождаться Wisp client artifact и подтвердить видимый сегмент на age 1/2/3 без ослабления pixel verifier.
+
+Оценка остаётся **59/100**, M16 **4/6**. Категория не закрыта.
+ 
 ## CI evidence и ограничения
 
 На том же SHA:
@@ -738,3 +751,17 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Exact code/test SHA `430c195dab76cdd76af483f7559e8416ae26dcd7` validation is **partially complete**: Wisp client [#45593092802](https://github.com/craftkot/tgaumcraft/actions/runs/45593092802) passed the offline contract and generated `bash -n`, and is still in the real Minecraft launch/zap step; Full Port CI [#45593093156](https://github.com/craftkot/tgaumcraft/actions/runs/45593093156) passed Core parity, source/asset checks, NeoForge build and dedicated-server smoke; Aura/Crystal GameTests [#45593091991](https://github.com/craftkot/tgaumcraft/actions/runs/45593091991) passed. Several separate M16 client workflows on this SHA are still running; pedestal rotation [#45593093013], jar interaction audio [#45593093094], Thaumonomicon page sound [#45593092156], and six-variant crystal placement audio [#45593092066] currently fail and require their own exact-log diagnosis. No new Wisp gameplay/visual PASS is claimed yet, and no local full-repository execution was available.
 - No score awarded: **59/100**, M16 **4/6**, M08 **5/9**. PR #4 remains OPEN / DRAFT / UNMERGED; no merge or force-push.
 - Next: inspect exact-SHA Wisp #45593092802. Require the complete offline contract, generated Bash syntax, real Survival hit/damage/target, matching source/target payload, actual additive FXBolt ages 1/2/3, expiry, saved third-person baseline and real PNG/video pixel evidence. Only then continue the remaining M16 acceptance.
+
+## Итерация: Wisp FXBolt smoke fixture elevation — 2026-11-25
+
+**Наблюдение из реального клиента:** Wisp client #45593092802 достиг `WISP_ZAP_REAL_CLIENT=PASS`, payload `source=108 target=7`, render callbacks на возрастах 1, 2 и 3, expiry на возрасте 4 и корректную загрузку текстур. Финальный pixel verifier отверг все три кадра: `no elongated Aer-yellow FXBolt segment outside the Wisp billboard ROI`. В артефакте кадры действительно показывали Wisp и игрока почти на одном уровне платформы. Точные телеметрические координаты: Wisp base Y≈149.16, player base Y=149.0; платформа построена блоками Y=148, её верхняя поверхность Y=149.
+
+**Сверка с исходником:** оригинальный `PacketFXWispZap` создаёт FXBolt от `source.posX/Y/Z` до `target.posX/Y/Z`; FXBolt сохраняет depth test, отключая только depth write, и рисует additive polycone. Поэтому почти горизонтальная линия на Y≈149 была скрыта поверхностью платформы. Это подтверждённая ошибка тестовой геометрии; доказательств дефекта производственного WispZap renderer пока нет.
+
+**Исправление:** Wisp smoke spawn перенесён на Y=151.3; Survival игрок остаётся на Y=149.0. Начальный pitch выставлен в -42° под нижнюю четверть Wisp hitbox; fallback teleport больше не переносит игрока на высоту Wisp. Перед атакой сервер обязан подтвердить, что блок непосредственно под источником — воздух (`TC_SMOKE_WISP_SOURCE_ELEVATED=YES`). Верификатор требует этот marker.
+
+**Регрессии:** offline test проверяет минимум 2 блока вертикального зазора между base Wisp и верхом платформы, player Y на поверхности, pitch из геометрии cameraAimPoint, фиксированную высоту fallback и наличие server marker. Детектор пикселей не ослаблялся.
+
+**Ограничения проверки:** новый exact-SHA Wisp run #45607373838 ещё queued; до его завершения нельзя утверждать, что beam стал видимым. Не запускались локальные Python/bash/NeoForge команды в этом окружении. PR #4 остаётся Draft/Open/Unmerged. Изменённые пути проверены против остальных открытых PR #1–#3 и #5–#62; пересечений не найдено. Main HEAD на момент итерации: `a4280834adc5a20b6951098af937d30ca4aeca56`.
+
+**Следующее действие:** получить артефакт #45607373838, проверить три настоящих кадра и pixel metrics; если тест пройдёт, продолжить закрытие M16 с оставшихся визуальных/аудио критериев. Не начислять баллы до полной приёмки категории.
