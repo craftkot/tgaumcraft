@@ -426,12 +426,15 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         bin_dir.mkdir()
         clicker = bin_dir / "xdotool"
         clicker.write_text(
-            "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\nexit 0\n",
+            "#!/bin/sh\nprintf '%s\\n' \"$*\" >> \"$CLICK_LOG\"\nprintf 'CLICK %s\\n' \"$*\" >> \"$EVENT_LOG\"\nexit 0\n",
             encoding="utf-8",
         )
         clicker.chmod(0o755)
         client_dir = root / "client-smoke"
         client_dir.mkdir()
+        screenshots_dir = client_dir / "screenshots"
+        screenshots_dir.mkdir()
+        write_png(screenshots_dir / "78-wisp-aim-check.png")
         # The first completed frame is stale by the time the attack watcher starts.
         # Only the later frame is eligible to dispatch the click.
         (client_dir / "client.log").write_text(
@@ -441,11 +444,14 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         status_path = root / "client-smoke-status.txt"
         status_path.write_text("", encoding="utf-8")
         click_log = root / "clicks.log"
+        event_log = root / "events.log"
         env = os.environ.copy()
         env["PATH"] = str(bin_dir) + os.pathsep + env.get("PATH", "")
         env["CLICK_LOG"] = str(click_log)
+        env["EVENT_LOG"] = str(event_log)
         harness = (
             "set -euo pipefail\n"
+            "wisp_capture() { printf 'CAPTURE %s\\n' \"$1\" >> \"$EVENT_LOG\"; return 0; }\n"
             + function
             + "\nwisp_wait_for_attack_frame 2 106 PLATFORM 1\n"
         )
@@ -464,6 +470,8 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         assert "WISP_ATTACKABLE_FRAME=YES id=106 tick=1" not in status, status
         clicks = click_log.read_text(encoding="utf-8").splitlines() if click_log.exists() else []
         assert clicks == ["click 1"], clicks
+        events = event_log.read_text(encoding="utf-8").splitlines() if event_log.exists() else []
+        assert events == ["CAPTURE 78-wisp-aim-check", "CLICK click 1"], events
 
 
 def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
