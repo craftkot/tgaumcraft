@@ -1421,7 +1421,12 @@ def main() -> int:
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
-    assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is tied to the accepted-hit attack input frame"
+    assert 'output="client-smoke/screenshots/78-wisp-aim-check.png"' in extract_body
+    assert ' "$output"; then' in extract_body
+    assert "wisp_capture 78-wisp-aim-check" not in generated
+    assert "python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png" in generated, (
+        "the extracted pre-attack video frame is the image checked by the aim verifier"
+    )
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
     assert "CustomName:'" in generated and "CustomNameVisible:0b" in generated
