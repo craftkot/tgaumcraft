@@ -835,6 +835,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("camera aim lock stopped for a different Wisp than the real client attack")
     if camera_stopped and side_view and camera_stopped.group(1) != side_view.group(1):
         errors.append("side-view camera sample belongs to a different Wisp than the stopped tracker")
+    if side_view and received:
+        if side_view.group(1) != received.group(1):
+            errors.append("side-view camera and zap payload refer to different source entities")
+        if int(side_view.group(4)) >= int(received.group(6)):
+            errors.append("side-view camera was selected after the client received the zap payload")
     if side_view:
         yaw = float(side_view.group(2))
         pitch = float(side_view.group(3))
