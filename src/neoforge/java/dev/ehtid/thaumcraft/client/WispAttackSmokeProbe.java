@@ -68,15 +68,21 @@ public final class WispAttackSmokeProbe {
                 ? -1.0D
                 : minecraft.player.distanceTo(target);
         long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
+        double hitDistance = minecraft.player == null || hit == null
+                ? -1.0D
+                : minecraft.player.getEyePosition().distanceTo(hit.getLocation());
+        long monotonicNs = System.nanoTime();
 
         System.out.println("TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=" + targetWisp
                 + " targetId=" + (target == null ? -1 : target.getId())
                 + " targetType=" + targetType
                 + " hitType=" + hitType
                 + " distance=" + distance
+                + " hitDistance=" + hitDistance
                 + " gameTime=" + gameTime
                 + " blockPos=" + blockPos
-                + " tick=" + (minecraft.player == null ? -1 : minecraft.player.tickCount));
+                + " tick=" + (minecraft.player == null ? -1 : minecraft.player.tickCount)
+                + " monotonicNs=" + monotonicNs);
     }
 
     @SubscribeEvent

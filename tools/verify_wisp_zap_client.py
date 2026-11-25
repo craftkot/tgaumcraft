@@ -74,6 +74,10 @@ REQUIRED_STATUS = (
     "WISP_RENDER_CAPTURE_TICK=",
     "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES",
     "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME",
+    "WISP_RENDER_CAPTURE_METHOD=VIDEO_PRE_ATTACK_FRAME",
+    "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=",
+    "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=",
+    "WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=",
     "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES",
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
     "WISP_ATTACKABLE_FRAME=YES",
@@ -757,8 +761,8 @@ def _attackable_frame_for_input(log_text: str, attack_input):
         frame
         for frame in pattern.finditer(log_text)
         if frame.group(1) == attack_input.group(1)
-        and frame.group(3) == attack_input.group(3)
-        and frame.group(4) == attack_input.group(4)
+        and frame.group(3) == attack_input.group(4)
+        and frame.group(4) == attack_input.group(5)
         and frame.start() < attack_input.start()
     ]
     return candidates[0] if len(candidates) == 1 else None
@@ -768,7 +772,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     errors: list[str] = []
 
     attack_input = _first(
-        r"TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=(\d+) targetType=thaumcraft:wisp hitType=ENTITY distance=([0-9.]+) gameTime=(\d+) blockPos=none tick=(\d+)",
+        r"TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=(\d+) targetType=thaumcraft:wisp hitType=ENTITY distance=([0-9.]+) hitDistance=([0-9.]+) gameTime=(\d+) blockPos=none tick=(\d+) monotonicNs=(\d+)",
         log_text,
     )
     client_attack = _first(
@@ -873,17 +877,17 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if attack_input:
             if attackable_frame.group(1) != attack_input.group(1):
                 errors.append("attackable AFTER_LEVEL frame and real click selected different Wisps")
-            game_time_delta = int(attack_input.group(3)) - int(attackable_frame.group(3))
+            game_time_delta = int(attack_input.group(4)) - int(attackable_frame.group(3))
             if game_time_delta < 0 or game_time_delta > 1:
                 errors.append(
                     "real click did not follow its actual Wisp EntityHitResult within one game tick: "
-                    f"frameGameTime={attackable_frame.group(3)} clickGameTime={attack_input.group(3)}"
+                    f"frameGameTime={attackable_frame.group(3)} clickGameTime={attack_input.group(4)}"
                 )
-            player_tick_delta = int(attack_input.group(4)) - int(attackable_frame.group(4))
+            player_tick_delta = int(attack_input.group(5)) - int(attackable_frame.group(4))
             if player_tick_delta < 0 or player_tick_delta > 1:
                 errors.append(
                     "real click did not follow its attackable Wisp frame within one player tick: "
-                    f"framePlayerTick={attackable_frame.group(4)} clickPlayerTick={attack_input.group(4)}"
+                    f"framePlayerTick={attackable_frame.group(4)} clickPlayerTick={attack_input.group(5)}"
                 )
             frame_position = log_text.find(attackable_frame.group(0))
             input_position = log_text.find(attack_input.group(0))
@@ -894,15 +898,27 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     if attack_input and client_attack and attack_input.group(1) != client_attack.group(2):
         errors.append("client hit result and AttackEntityEvent selected different entities")
     if attack_input and client_attack:
-        client_game_time_delta = int(client_attack.group(5)) - int(attack_input.group(3))
+        client_game_time_delta = int(client_attack.group(5)) - int(attack_input.group(4))
         if client_game_time_delta < 0 or client_game_time_delta > 1:
             errors.append("AttackEntityEvent was not emitted in the same or immediately following game tick")
     if client_attack and hurt and client_attack.group(1, 2) != hurt.group(2, 1):
         errors.append("client AttackEntityEvent and server hurt callback use different player/Wisp IDs")
     if hurt and hit and hurt.group(1, 2) != hit.group(1, 2):
         errors.append("server accepted-damage callback and target acquisition use different IDs")
-    if attack_input and float(attack_input.group(2)) > 3.0:
-        errors.append("client-selected Wisp is outside the configured melee reach")
+    if attack_input and float(attack_input.group(3)) > 3.01:
+        errors.append("vanilla eye-to-hit-point distance exceeds the 3-block melee reach")
+    if attack_input and side_view and int(attack_input.group(6)) >= int(side_view.group(4)):
+        errors.append("attack-input timestamp must precede the smoke camera side-view switch")
+    if attack_input:
+        input_ns_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=(\d+)$", status_text)
+        hit_distance_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=([0-9.]+)$", status_text)
+        video_offset_status = _first(r"(?m)^WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=([0-9.]+)$", status_text)
+        if input_ns_status is None or input_ns_status.group(1) != attack_input.group(6):
+            errors.append("video screenshot timestamp does not match the real attack InputEvent")
+        if hit_distance_status is None or abs(float(hit_distance_status.group(1)) - float(attack_input.group(3))) > 0.001:
+            errors.append("status hit distance does not match the real attack InputEvent")
+        if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
+            errors.append("video-derived attack frame has no valid non-negative offset")
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
         errors.append("server hit and zap payload use different source/target entity IDs")
     if sent and received and sent.group(1, 2) != received.group(1, 2):

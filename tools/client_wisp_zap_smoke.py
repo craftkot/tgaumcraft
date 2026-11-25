@@ -360,23 +360,14 @@ def render() -> str:
       fi
       if [[ "$candidate_line" =~ $frame_pattern ]]; then
         frame_line="$candidate_line"
-        # Capture the exact completed frame that authorized this click. The
-        # camera still tracks the Wisp until the input event stops that lock.
-        if ! wisp_capture 78-wisp-aim-check; then
-          echo "WISP_ATTACK_INPUT_FRAME_CAPTURE_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
+        # The continuous x11 recorder already captures the framebuffer. Do not
+        # block between the same-ID hit result and the real click: BETA26 Wisps
+        # continue flying while an external ImageMagick screenshot is taken.
+        if ! xdotool click --delay 0 1; then
+          echo "WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
           watcher_status=1
         else
-          echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' | tee -a client-smoke-status.txt
-        fi
-        # Dispatch immediately after the capture; the verifier rejects a stale
-        # hit result if the screenshot operation crosses more than one tick.
-        if [ "$watcher_status" -eq 0 ]; then
-          if ! xdotool click 1; then
-            echo "WISP_ATTACK_CLICK_DISPATCH_FAILED=YES id=$wisp_id" | tee -a client-smoke-status.txt
-            watcher_status=1
-          else
-            echo "WISP_ATTACK_CLICK_DISPATCHED=YES id=$wisp_id" | tee -a client-smoke-status.txt
-          fi
+          echo "WISP_ATTACK_CLICK_DISPATCHED=YES id=$wisp_id" | tee -a client-smoke-status.txt
         fi
         break
       fi
@@ -423,7 +414,7 @@ def render() -> str:
       'BEGIN {
         on_platform = x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0;
         position_ok = mode == "PLATFORM" ? on_platform : y >= 0.0;
-        exit !(position_ok && d <= 3.0 && dot >= -1.0001 && dot <= 1.0001)
+        exit !(position_ok && d <= 6.0 && dot >= -1.0001 && dot <= 1.0001)
       }'; then
       echo "WISP_ATTACKABLE_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       exit 1
@@ -442,13 +433,14 @@ def render() -> str:
 
   wisp_capture_attack_input_frame() {
     local attack_input_line="$1" wisp_id="$2" position_mode="$3"
-    local input_game_time input_player_tick input_line_matches input_line_count input_line_number
+    local input_game_time input_player_tick input_hit_distance input_monotonic_ns input_line_matches input_line_count input_line_number
     local frame_matches frame_count frame_line frame_line_number camera_matches camera_count camera_line camera_line_number
     local camera_tick game_time player_tick player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     local frame_re camera_re
-    if ! grep -Fq 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' client-smoke-status.txt \
-      || [ ! -s client-smoke/screenshots/78-wisp-aim-check.png ]; then
-      echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES' | tee -a client-smoke-status.txt
+    input_hit_distance="$(sed -n 's/.* hitDistance=\([-0-9.]*\).*/\1/p' <<< "$attack_input_line")"
+    input_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<< "$attack_input_line")"
+    if ! [[ "$input_hit_distance" =~ ^[0-9]+([.][0-9]+)?$ && "$input_monotonic_ns" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ATTACK_INPUT_FRAME_TELEMETRY_INVALID=YES hitDistance=$input_hit_distance monotonicNs=$input_monotonic_ns" | tee -a client-smoke-status.txt
       return 1
     fi
     if [[ "$attack_input_line" =~ gameTime=([0-9]+).*tick=([0-9]+) ]]; then
@@ -519,11 +511,11 @@ def render() -> str:
       return 1
     fi
     distance="$(awk -v px="$player_x" -v py="$player_y" -v pz="$player_z" -v wx="$wisp_x" -v wy="$wisp_y" -v wz="$wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-    if ! awk -v mode="$position_mode" -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v dot="$aim_dot" \
+    if ! awk -v mode="$position_mode" -v x="$player_x" -v y="$player_y" -v z="$player_z" -v d="$distance" -v hit_d="$input_hit_distance" -v dot="$aim_dot" \
       'BEGIN {
         on_platform = x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0;
         position_ok = mode == "PLATFORM" ? on_platform : y >= 0.0;
-        exit !(position_ok && d <= 3.0 && dot >= -1.0001 && dot <= 1.0001)
+        exit !(position_ok && d <= 6.0 && hit_d >= 0.0 && hit_d <= 3.01 && dot >= -1.0001 && dot <= 1.0001)
       }'; then
       echo "WISP_ATTACK_INPUT_FRAME_CAMERA_REJECTED=id=$wisp_id tick=$camera_tick position=$position_mode distance=$distance aimDot=$aim_dot" | tee -a client-smoke-status.txt
       return 1
@@ -535,6 +527,41 @@ def render() -> str:
     WISP_ATTACK_CAMERA_DISTANCE="$distance"
     WISP_ATTACK_CAMERA_AIM_DOT="$aim_dot"
     WISP_ATTACK_CAMERA_LINE="$camera_line"
+    WISP_ATTACK_INPUT_MONOTONIC_NS="$input_monotonic_ns"
+    WISP_ATTACK_INPUT_HIT_DISTANCE="$input_hit_distance"
+    echo "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=$input_monotonic_ns" | tee -a client-smoke-status.txt
+    echo "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=$input_hit_distance" | tee -a client-smoke-status.txt
+    return 0
+  }
+
+  wisp_extract_attack_input_frame() {
+    local event_ns="${WISP_ATTACK_INPUT_MONOTONIC_NS:-}" first_ns="${WISP_ZAP_VIDEO_FIRST_FRAME_NS:-}"
+    local offset_ns offset_s output="client-smoke/screenshots/78-wisp-aim-check.png"
+    if ! [[ "$event_ns" =~ ^[0-9]+$ && "$first_ns" =~ ^[0-9]+$ ]] || [ "$event_ns" -lt "$first_ns" ]; then
+      echo "WISP_ATTACK_INPUT_VIDEO_TIMESTAMP_INVALID=YES eventNs=$event_ns firstFrameNs=$first_ns" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    # Extract the last recorded frame before the InputEvent. This does not
+    # delay the live hit-to-click path because the video recorder is continuous.
+    offset_ns=$((event_ns - first_ns - 16666667))
+    if [ "$offset_ns" -lt 0 ]; then offset_ns=0; fi
+    offset_s="$(awk -v ns="$offset_ns" 'BEGIN { printf "%.6f", ns / 1000000000 }')"
+    if [ ! -s client-smoke/wisp-zap-video.mp4 ]; then
+      echo 'WISP_ATTACK_INPUT_VIDEO_MISSING=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if ! ffmpeg -nostdin -hide_banner -loglevel error -y \
+      -i client-smoke/wisp-zap-video.mp4 -ss "$offset_s" -frames:v 1 -update 1 "$output"; then
+      echo "WISP_ATTACK_INPUT_VIDEO_EXTRACTION_FAILED=YES offset=$offset_s" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if [ ! -s "$output" ]; then
+      echo "WISP_ATTACK_INPUT_VIDEO_FRAME_EMPTY=YES offset=$offset_s" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    echo "WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=$offset_s" | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' | tee -a client-smoke-status.txt
+    echo 'WISP_RENDER_CAPTURE_METHOD=VIDEO_PRE_ATTACK_FRAME' | tee -a client-smoke-status.txt
     return 0
   }
 
@@ -629,6 +656,7 @@ def render() -> str:
       return 1
     fi
     if ! grep -Fq 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES' client-smoke-status.txt \
+      || ! grep -Fq 'WISP_RENDER_CAPTURE_METHOD=VIDEO_PRE_ATTACK_FRAME' client-smoke-status.txt \
       || [ ! -s client-smoke/screenshots/78-wisp-aim-check.png ]; then
       echo 'WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT_MISSING=YES' | tee -a client-smoke-status.txt
       return 1
@@ -852,13 +880,6 @@ def render() -> str:
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
-  # Reuse the exact same-ID AFTER_LEVEL camera sample that dispatched the real
-  # click. Capture it now, while the Wisp is still near the melee platform;
-  # never teleport/re-anchor after the three-tick FXBolt has already expired.
-  wisp_verify_attack_input_aim_capture
-  wisp_verify_aim_telemetry "$aim_log_lines"
-  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
-
   # The smoke probe switches to the fixed side view inside AttackEntityEvent,
   # after the real hit target has been selected and before the server zap arrives.
   # The continuous video recorder supplies a same-camera pre-payload frame later.
@@ -873,6 +894,10 @@ def render() -> str:
   # matching AFTER_LEVEL frame. A later camera re-anchor would miss the
   # three-tick bolt entirely.
   wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"
+  wisp_extract_attack_input_frame
+  wisp_verify_attack_input_aim_capture
+  wisp_verify_aim_telemetry "$aim_log_lines"
+  python tools/verify_wisp_zap_client.py --aim-only client-smoke/screenshots/78-wisp-aim-check.png | tee -a client-smoke-status.txt
 
   # The smoke probe selected THIRD_PERSON_BACK at the attack event. Restore the
   # normal first-person view only after the recorded zap has expired and been extracted.
