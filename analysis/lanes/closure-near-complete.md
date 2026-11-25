@@ -3,8 +3,8 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`0a5236d64b15c98a6039c7d47a3eb8a37599dc61`](https://github.com/craftkot/tgaumcraft/commit/0a5236d64b15c98a6039c7d47a3eb8a37599dc61)
-- Предыдущий code/test SHA `a4cfbb7` имел 25/25 SUCCESS; новый SHA `0a5236d` ожидает exact-SHA Wisp/full-CI rerun.
+- Последний code/test SHA: [`6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8`](https://github.com/craftkot/tgaumcraft/commit/6034d3aaf4cd9abcaa64b3f1a358a02a0ed8dbd8)
+- На code/test SHA `6034d3a` exact-SHA Wisp client [#45539689202](https://github.com/craftkot/tgaumcraft/actions/runs/45539689202) и Full Port CI [#45539688979](https://github.com/craftkot/tgaumcraft/actions/runs/45539688979) созданы и находятся в очереди; более ранние Wisp контракты падали до запуска Minecraft и не являются gameplay results.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
 ## Границы lane
@@ -643,3 +643,11 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Updated only the expected shell fragment to match the actual negative existence check and added an explanatory assertion message. The guard itself is unchanged; the verifier still rejects a missing PNG.
 - Only tools/test_wisp_zap_client_smoke.py and this lane journal changed. The 61-PR changed-path scan for these exact paths found no overlap. No production code, Gradle, workflow, registry, localization, or other feature branch changed.
 - Next: exact-SHA Wisp run must complete the entire Python contract, generated Bash syntax, then launch Minecraft. Do not infer a visual result from this test-only repair.
+
+## 2026-11-25 — correct exact-SHA CI state after Wisp harness retries
+
+- Full Port CI [#45539166236](https://github.com/craftkot/tgaumcraft/actions/runs/45539166236) on prior code/test SHA e837ba0 completed SUCCESS: Core parity, BETA26 source/asset checks, NeoForge build, dedicated-server smoke and JAR upload all passed. This is not a build result for the newer test-only SHA 6034d3a.
+- Aura/Crystal GameTests [#45539166272](https://github.com/craftkot/tgaumcraft/actions/runs/45539166272) on e837ba0 failed in a real GameTest assertion: a Flux Rift at approximately (-10,928,167, -59.5, -3,251,687.5) did not appear in the ticking entity manager within 20 ticks (entities=0, directPresent=false, chunkLoaded=true). This is an M08 test/runtime issue, separate from the Wisp Python harness; investigate coordinate/border validity and entity registration before claiming aura acceptance.
+- Crystal placement audio [#45539166077](https://github.com/craftkot/tgaumcraft/actions/runs/45539166077) on e837ba0 failed during Gradle configuration because Maven Central returned HTTP 429 for Gson 2.10.1; Minecraft never launched. Treat as dependency rate limiting, not a sound defect.
+- The exact current code/test SHA is 6034d3a. Its Wisp client [#45539689202](https://github.com/craftkot/tgaumcraft/actions/runs/45539689202) and Full Port CI [#45539688979](https://github.com/craftkot/tgaumcraft/actions/runs/45539688979) are QUEUED at this journal update. No exact-6034 Python, Bash, NeoForge or Minecraft PASS is claimed.
+- The 100-point audit remains 59/100 (M16 4/6, M08 5/9). No point is awarded. Next: finish exact-6034 Wisp offline contract and Bash syntax, then obtain actual Minecraft hit/payload/FXBolt/expiry/pixel evidence. Keep the M08 Flux Rift failure as a separate blocker for the later aura lane.
