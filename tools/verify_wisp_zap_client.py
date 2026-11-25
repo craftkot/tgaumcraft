@@ -923,7 +923,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     observed_frames = re.findall(
-        r"(?m)^WISP_ZAP_FRAME_OBSERVED=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) wispTick=(\d+) observedAtNs=(\d+)$",
+        r"(?m)^WISP_ZAP_FRAME_OBSERVED=YES source=(\d+) createdAt=(\d+) ageTick=(\d+) wispTick=(\d+) observedAtMonotonicNs=(\d+)$",
         status_text,
     )
     video_indices = re.findall(
