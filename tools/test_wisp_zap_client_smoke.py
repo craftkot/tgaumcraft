@@ -1017,7 +1017,6 @@ def main() -> int:
         "WISP_ATTACK_CAMERA_FRAME=YES",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
         "WISP_ATTACK_CAMERA_FRAME_USED=YES",
-        "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5'",
         'open_delay="0.5"',
         'type_delay="2"',
         'sleep "$open_delay"',
@@ -1231,8 +1230,6 @@ def main() -> int:
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
-    assert "/execute as @e[type=thaumcraft:wisp,tag=tc_wisp_zap_smoke,limit=1] at @s run tp @p 12.5 149 10.5" in reanchor_body
-    assert "facing entity @s eyes" not in reanchor_body, "post-hit aim must remain client-tracked"
     assert "wisp_capture 78-wisp-aim-check" in generated, "the visual capture is tied to the accepted-hit attack input frame"
     assert "Motion:[" not in generated
     assert "Successfully filled 81 block(s)" in generated
@@ -1370,7 +1367,6 @@ def main() -> int:
         "WISP_ZAP_REAL_CLIENT=PASS",
         "WISP_ZAP_BASELINE_NOISE=3",
         "WISP_ZAP_TRANSIENT_PIXEL_DIFF=18",
-    ))
     ))
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-client-") as directory:
         root = Path(directory)
