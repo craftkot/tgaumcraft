@@ -684,6 +684,11 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                 raise RuntimeError(
                     "selected Wisp baseline frame is not strictly between side-view setup and zap payload"
                 )
+            # Persist the selected same-camera baseline before the temporary
+            # extraction directory is removed. The later pixel verifier needs
+            # this exact frame to locate the Wisp source and reject player/HUD
+            # pixels that merely resemble the short-lived FXBolt.
+            shutil.copyfile(baseline_path, screenshot_dir / BOLT_BASELINE_SCREENSHOT)
 
             previous_index = -1
             for source_id, created_at, age_tick, wisp_tick, observed_at in observed:
