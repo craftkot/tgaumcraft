@@ -1418,6 +1418,7 @@ def main() -> int:
         "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
+        "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=22",
@@ -1426,7 +1427,6 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES",
         "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=17 tick=22 distance=1.0440 aimDot=0.999",
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
-        "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
         "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000",
@@ -1527,6 +1527,32 @@ def main() -> int:
         )
         assert any("side-view camera was selected after the client received the zap payload" in error
                    for error in late_side_view_errors), late_side_view_errors
+        late_side_view_status = status.replace(
+            "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\\n", "", 1
+        ).replace(
+            "WISP_ATTACK_HURT_ACCEPTED=YES\\n",
+            "WISP_ATTACK_HURT_ACCEPTED=YES\\nWISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000\\n",
+            1,
+        )
+        late_side_view_status_errors = verify_wisp_zap_client.verify(
+            log, late_side_view_status, root
+        )
+        assert any(
+            "side-view camera must be selected by AttackEntityEvent after target selection and before accepted damage"
+            in error
+            for error in late_side_view_status_errors
+        ), late_side_view_status_errors
+
+        legacy_timestamp_status = status.replace(
+            "observedAtMonotonicNs=", "observedAtNs="
+        )
+        legacy_timestamp_errors = verify_wisp_zap_client.verify(
+            log, legacy_timestamp_status, root
+        )
+        assert any(
+            "expected exactly three timestamped FXBolt render observations, got 0" in error
+            for error in legacy_timestamp_errors
+        ), legacy_timestamp_errors
         wrong_side_view_id_errors = verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17", "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=18", 1),
             status, root
