@@ -480,7 +480,7 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     body = _bash_function_body(generated, "wisp_verify_aim_telemetry")
     function = "  wisp_verify_aim_telemetry() {\n" + body + "\n  }\n"
 
-    def camera_line(tick: int) -> str:
+    def camera_line(tick: int, aim_dot: str = "0.999") -> str:
         return (
             f"TC_SMOKE_WISP_CAMERA=YES id=157 aimTarget=render_safe_quarter tick={tick} "
             "playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 "
@@ -488,22 +488,26 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
             "wispX=12.5 wispY=149.3 wispZ=11.5 "
             "wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 "
             "wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 "
-            "aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978"
+            f"aimDot={aim_dot} renderAimDot=0.978 eyeAimDot=0.978"
         )
 
-    def run_case(selected_samples: int) -> tuple[int, str, str]:
+    def run_case(
+        selected_samples: int,
+        capture_aim_dot: str = "0.999",
+        first_frame_aim_dot: str = "0.999",
+    ) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-first-frame-telemetry-") as directory:
             root = Path(directory)
             client_dir = root / "client-smoke"
             client_dir.mkdir()
             log_lines = [
-                camera_line(0),
+                camera_line(0, first_frame_aim_dot),
                 "TC_SMOKE_WISP_RENDERED=YES id=157 aspect=aer tick=3",
             ]
             if selected_samples >= 1:
-                log_lines.append(camera_line(3))
+                log_lines.append(camera_line(3, first_frame_aim_dot))
             if selected_samples >= 2:
-                log_lines.append(camera_line(3))
+                log_lines.append(camera_line(3, first_frame_aim_dot))
             log_lines.append(
                 "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=157 tick=3 "
                 "gameTime=514 playerTick=481 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12"
@@ -515,7 +519,7 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
                 f"WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE={camera_line(3)}",
                 "WISP_RENDER_CAPTURE_ID=157",
                 "WISP_RENDER_CAPTURE_TICK=124",
-                camera_line(124),
+                camera_line(124, capture_aim_dot),
             ]
             (root / "client-smoke-status.txt").write_text("\n".join(status_lines) + "\n", encoding="utf-8")
             result = subprocess.run(
@@ -533,6 +537,18 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     assert rc == 0, (rc, output, status)
     assert "WISP_CAMERA_TELEMETRY=PASS id=157 tick=3 " in status, status
     assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
+
+    rc, output, status = run_case(1, capture_aim_dot="0.989224")
+    assert rc == 0, (rc, output, status)
+    assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
+
+    rc, output, status = run_case(1, capture_aim_dot="1.001")
+    assert rc != 0, (rc, output, status)
+    assert "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED" in status, status
+
+    rc, output, status = run_case(1, first_frame_aim_dot="0.989")
+    assert rc != 0, (rc, output, status)
+    assert "WISP_CAMERA_TELEMETRY_FAILED" in status, status
 
     rc, output, status = run_case(0)
     assert rc != 0, (rc, output, status)
@@ -598,10 +614,15 @@ def _test_attack_aim_capture_is_taken_at_input_and_validated_after_hit(generated
     assert "WISP_RENDER_CAPTURE_SOURCE=ATTACK_INPUT_FRAME" in status, status
     assert "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES" in status, status
 
-    rc, output, status = run_case(157, 157, 124, 124, "0.989")
+    rc, output, status = run_case(157, 157, 124, 124, "0.989224")
+    assert rc == 0, (rc, output)
+    assert "RESULT=0" in output, output
+    assert "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES" in status, status
+
+    rc, output, status = run_case(157, 157, 124, 124, "1.001")
     assert rc == 0, (rc, output)
     assert "RESULT=1" in output, output
-    assert "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_REJECTED=YES" in status, status
+    assert "WISP_RENDER_CAPTURE_INPUT_FRAME_AIM_INVALID=YES" in status, status
     assert "WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES" not in status, status
 
     rc, output, status = run_case(158, 157, 124, 124, "0.999")
