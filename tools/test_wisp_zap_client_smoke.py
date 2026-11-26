@@ -1037,7 +1037,9 @@ def _test_fxbbolt_segment_detector() -> None:
         age_two = root / "age-two.png"
         age_three = root / "age-three.png"
         blue = root / "blue-line.png"
-        misaligned = root / "misaligned.png"
+        too_steep = root / "too-steep.png"
+        horizontal_offscreen = root / "horizontal-offscreen.png"
+        horizontal_outside_roi = root / "horizontal-outside-roi.png"
         short = root / "short.png"
         too_dim = root / "below-visible-threshold.png"
         write_bolt_png(baseline, line=None)
@@ -1046,7 +1048,9 @@ def _test_fxbbolt_segment_detector() -> None:
         write_bolt_png(age_two, alpha=1.0 / 3.0)
         write_bolt_png(age_three, alpha=0.1)
         write_bolt_png(blue, color=(60, 160, 255))
-        write_bolt_png(misaligned, line=(412, 430, 612, 430))
+        write_bolt_png(too_steep, line=(512, 400, 512, 600))
+        write_bolt_png(horizontal_offscreen, line=(0, 700, 470, 700), alpha=2.0 / 3.0, source_center=None)
+        write_bolt_png(horizontal_outside_roi, line=(0, 100, 470, 100), alpha=2.0 / 3.0, source_center=None)
         write_bolt_png(short, line=(512, 432, 515, 445))
         write_bolt_png(too_dim, alpha=0.005)
         write_bolt_png(side_baseline, line=None, source_center=(700, 400))
@@ -1064,13 +1068,29 @@ def _test_fxbbolt_segment_detector() -> None:
         )
         assert not no_orb_errors and no_orb_metrics is not None, (no_orb_errors, no_orb_metrics)
 
+        # A broadside camera can project the BETA26 bolt almost horizontally.
+        # It remains a valid long, thin additive component even when its source
+        # is off-screen; the same line outside the effect ROI must be rejected.
+        horizontal_errors, horizontal_metrics = verify_wisp_zap_client.verify_bolt_segment(
+            horizontal_offscreen, True, no_orb_baseline
+        )
+        assert not horizontal_errors and horizontal_metrics is not None, (
+            horizontal_errors, horizontal_metrics
+        )
+        assert horizontal_metrics["length"] >= 100
+        assert abs(horizontal_metrics["angle_degrees"]) <= 5.0, horizontal_metrics
+        outside_errors, outside_metrics = verify_wisp_zap_client.verify_bolt_segment(
+            horizontal_outside_roi, True, no_orb_baseline
+        )
+        assert outside_errors and outside_metrics is None, (outside_errors, outside_metrics)
+
         for age_frame in (age_one, age_two, age_three):
             errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
                 age_frame, True, baseline
             )
             assert not errors, (age_frame.name, errors)
             assert metrics is not None and metrics["length"] >= 40 and metrics["elongation"] >= 8
-            assert 12 <= abs(metrics["angle_degrees"]) <= 78, metrics
+            assert abs(metrics["angle_degrees"]) <= 78, metrics
 
 
         # The Wisp can leave its original screen position during the 20-tick
@@ -1109,7 +1129,7 @@ def _test_fxbbolt_segment_detector() -> None:
         )
         assert any("after expiry" in error for error in expiry_cycle_errors), expiry_cycle_errors
 
-        for rejected in (source_only, blue, misaligned, short, too_dim):
+        for rejected in (source_only, blue, too_steep, short, too_dim):
             errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
                 rejected, True, baseline
             )
