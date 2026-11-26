@@ -914,7 +914,16 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
             "wisp_wait_for_marker() { grep -Fq -- \"$1\" client-smoke/client.log; }\n"
             "wisp_stop_zap_video_capture() { echo VIDEO_STOP; }\n"
             "wisp_capture() { printf 'CAPTURE=%s\\n' \"$1\"; }\n"
-            "python() { printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=30 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'; }\n"
+            "clock_file=\"$PWD/clock-counter.txt\"\\n"
+            "python() {\\n"
+            "  if [ \"$1\" = \"-c\" ]; then\\n"
+            "    count=0; [ -f \"$clock_file\" ] && count=\"$(cat \"$clock_file\")\"\\n"
+            "    count=$((count + 1)); printf '%s\\n' \"$count\" > \"$clock_file\"\\n"
+            "    case \"$count\" in 1) printf '1400000000\\n';; 2) printf '1500000000\\n';; 3) printf '1600000000\\n';; 4) printf '1650000000\\n';; *) exit 9;; esac\\n"
+            "  else\\n"
+            "    printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=30 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'\\n"
+            "  fi\\n"
+            "}\\n"
             + "".join(functions)
             + "wisp_capture_zap_frames 0 17\n"
         )
@@ -934,7 +943,7 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         assert "VIDEO_STOP" in result.stdout, result.stdout
         assert "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24" in status, status
         assert "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12" in status, status
-        assert "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=100" in status, status
+        assert "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=100 monotonicNs=1650000000" in status, status
 
 
 def _aim_dot(pitch_degrees: float, delta_y: float, delta_z: float) -> float:
@@ -992,6 +1001,7 @@ def _test_video_frame_extraction(generated: str) -> None:
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
+            "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=100 monotonicNs=1650000000",
             "WISP_ZAP_VIDEO_STOPPED=YES",
         )) + "\n", encoding="utf-8")
         result = subprocess.run(
@@ -1028,6 +1038,16 @@ def _test_video_frame_extraction(generated: str) -> None:
         assert baseline_match is not None and age_one_match is not None, extracted
         assert int(baseline_match.group(1)) == 13, extracted
         assert int(baseline_match.group(1)) < int(age_one_match.group(1)), extracted
+        frame_indices = {
+            int(age): int(index)
+            for age, index in re.findall(
+                r"(?m)^WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=(1|2|3) frameIndex=(\d+) diff=\d+$",
+                extracted,
+            )
+        }
+        assert 24 <= frame_indices[1] < 30, frame_indices
+        assert 30 <= frame_indices[2] < 36, frame_indices
+        assert 36 <= frame_indices[3] < 39, frame_indices
         rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
         assert rendered_view is not None and int(baseline_match.group(2)) > int(rendered_view.group(1)), extracted
         assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted
@@ -1044,6 +1064,37 @@ def _test_video_frame_extraction(generated: str) -> None:
         assert not cycle_errors and [age for age, _ in visible_ages] == [1, 2, 3], (
             cycle_errors, [age for age, _ in visible_ages]
         )
+        mislabeled_age_one = root / "mislabeled-age-one.png"
+        shutil.copyfile(age_frames[1][1], mislabeled_age_one)
+        fade_errors, _, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, mislabeled_age_one), age_frames[1], age_frames[2]), after, baseline
+        )
+        assert any("BETA26 age-1 > age-2 > age-3 fade" in error for error in fade_errors), fade_errors
+
+        missing_expiry_status = root / "status-missing-expiry.txt"
+        missing_expiry_status.write_text(
+            "\n".join(
+                line for line in status_file.read_text(encoding="utf-8").splitlines()
+                if not line.startswith("WISP_ZAP_EFFECT_EXPIRED=YES ")
+            ) + "\n",
+            encoding="utf-8",
+        )
+        missing_expiry = subprocess.run(
+            [
+                sys.executable,
+                str(Path(__file__).with_name("verify_wisp_zap_client.py")),
+                "--extract-video-frames-only",
+                "--video-status", str(missing_expiry_status),
+                "--video-file", str(video),
+                "--video-screenshots", str(screenshots),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert missing_expiry.returncode != 0, missing_expiry.stdout
+        assert "missing monotonic Wisp expiry timestamp" in missing_expiry.stderr, missing_expiry.stderr
         # The same continuous video must also provide the pre-click aim frame
         # after the live attack has completed; this extraction cannot delay input.
         client_dir = root / "client-smoke"

@@ -197,7 +197,7 @@ def render() -> str:
   }
   wisp_capture_zap_frames() {
     local after_lines="$1" wisp_id="$2" cursor="$1" created_at="" target_id payload_line rendered_line
-    local expected_age wisp_tick observed_at_ns
+    local expected_age wisp_tick observed_at_ns expired_observed_ns
     wisp_wait_for_zap_frame "$cursor" "$wisp_id" "" 1
     created_at="$WISP_ZAP_FRAME_CREATED_AT"
     payload_line="$(grep -F "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=$wisp_id " client-smoke/client.log \
@@ -238,7 +238,12 @@ def render() -> str:
       cursor="$WISP_ZAP_FRAME_LINE_NUMBER"
     done
     wisp_wait_for_marker "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at"
-    echo "WISP_ZAP_EFFECT_EXPIRED=YES source=$wisp_id createdAt=$created_at" | tee -a client-smoke-status.txt
+    expired_observed_ns="$(python -c 'import time; print(time.monotonic_ns())')"
+    if ! [[ "$expired_observed_ns" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_EXPIRED_TIMESTAMP_INVALID=$expired_observed_ns" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    echo "WISP_ZAP_EFFECT_EXPIRED=YES source=$wisp_id target=$target_id createdAt=$created_at monotonicNs=$expired_observed_ns" | tee -a client-smoke-status.txt
     wisp_stop_zap_video_capture
     wisp_capture 83-wisp-zap-after-expiry
     python tools/verify_wisp_zap_client.py --extract-video-frames-only \

@@ -294,6 +294,7 @@ def _bolt_segment_candidates(
         visited[first] = 1
         count = 0
         sum_x = sum_y = sum_xx = sum_yy = sum_xy = 0.0
+        sum_aer_delta = 0.0
         min_x = min_y = 1 << 30
         max_x = max_y = -1
         while queue:
@@ -301,6 +302,11 @@ def _bolt_segment_candidates(
             x = current % roi_width
             y = current // roi_width
             count += 1
+            offset = current * 3
+            sum_aer_delta += (
+                (frame_pixels[offset] - baseline_pixels[offset])
+                + (frame_pixels[offset + 1] - baseline_pixels[offset + 1])
+            ) / 2.0
             sum_x += x
             sum_y += y
             sum_xx += x * x
@@ -352,6 +358,7 @@ def _bolt_segment_candidates(
             candidates.append(
                 {
                     "pixels": float(count),
+                    "mean_aer_delta": sum_aer_delta / count,
                     "length": major_length,
                     "width": minor_width,
                     "elongation": elongation,
@@ -407,6 +414,16 @@ def verify_bolt_cycle(
     visible_ages = [age for age, _ in visible]
     if visible_ages != expected_ages:
         errors.append(f"pixel-confirmed FXBolt ages are {visible_ages}; expected {expected_ages}")
+    if visible_ages == expected_ages:
+        brightness = [candidate["mean_aer_delta"] for _, candidate in visible]
+        if not (
+            brightness[0] >= brightness[1] * 1.2
+            and brightness[1] >= brightness[2] * 1.2
+        ):
+            errors.append(
+                "FXBolt additive brightness does not follow the BETA26 age-1 > age-2 > age-3 fade: "
+                + ", ".join(f"age {age}={value:.1f}" for age, value in zip(expected_ages, brightness))
+            )
     expiry_errors, expiry_metrics = verify_bolt_segment(expiry_path, False, baseline_path)
     errors.extend(expiry_errors)
     return errors, visible, expiry_metrics
@@ -480,6 +497,10 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         r"wispTick=(\d+) observedAtMonotonicNs=(\d+)$",
         status_text,
     )
+    expired = _first(
+        r"(?m)^WISP_ZAP_EFFECT_EXPIRED=YES source=(\d+) target=(\d+) createdAt=(\d+) monotonicNs=(\d+)$",
+        status_text,
+    )
     if started is None:
         errors.append("missing first-frame timestamp for continuous Wisp video")
     if "WISP_ZAP_VIDEO_STOPPED=YES" not in status_text:
@@ -492,7 +513,9 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append("missing AFTER_ENTITIES third-person side-view confirmation")
     if payload is None:
         errors.append("missing client zap-payload monotonic timestamp")
-    if started is None or side_view is None or side_view_rendered is None or payload is None or len(observed) != 3 or errors:
+    if expired is None:
+        errors.append("missing monotonic Wisp expiry timestamp")
+    if started is None or side_view is None or side_view_rendered is None or payload is None or expired is None or len(observed) != 3 or errors:
         return errors
 
     if side_view.group(1) != payload.group(1) or side_view_rendered.group(1) != payload.group(1):
@@ -500,6 +523,9 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
     side_view_ns = int(side_view.group(2))
     side_view_rendered_ns = int(side_view_rendered.group(6))
     payload_ns = int(payload.group(4))
+    expired_ns = int(expired.group(4))
+    if expired.group(1) != payload.group(1) or expired.group(2) != payload.group(2) or expired.group(3) != payload.group(3):
+        errors.append("Wisp expiry timestamp belongs to a different source/target/createdAt event")
     if side_view_ns >= side_view_rendered_ns:
         errors.append("AFTER_ENTITIES side-view confirmation did not follow the AttackEntityEvent camera switch")
     if side_view_rendered_ns >= payload_ns:
@@ -521,6 +547,8 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
     observed_ns = [int(frame[4]) for frame in observed]
     if observed_ns != sorted(observed_ns) or len(set(observed_ns)) != 3:
         errors.append("Wisp render observation timestamps are not strictly increasing")
+    if expired_ns <= observed_ns[-1] or expired_ns <= payload_ns:
+        errors.append("Wisp expiry timestamp does not follow the payload and all three render ages")
     if errors:
         return errors
 
@@ -605,19 +633,34 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
             shutil.copyfile(baseline_path, screenshot_dir / BOLT_BASELINE_SCREENSHOT)
 
             previous_index = -1
-            for source_id, created_at, age_tick, wisp_tick, observed_at in observed:
+            window_bounds: list[tuple[int, int, int]] = []
+            event_times = [int(frame[4]) for frame in observed]
+            event_ends = event_times[1:] + [expired_ns]
+            for event_index, (source_id, created_at, age_tick, wisp_tick, observed_at) in enumerate(observed):
                 elapsed = (int(observed_at) - first_frame_ns) / 1_000_000_000.0
-                if elapsed < 0.0 or elapsed >= duration:
+                end_elapsed = (event_ends[event_index] - first_frame_ns) / 1_000_000_000.0
+                if elapsed < 0.0 or elapsed >= duration or end_elapsed <= elapsed or end_elapsed > duration:
                     raise RuntimeError(
-                        f"age={age_tick} observation lies outside the recorded video: elapsed={elapsed:.4f}s duration={duration:.4f}s"
+                        f"age={age_tick} observation window lies outside the recorded video: "
+                        f"start={elapsed:.4f}s end={end_elapsed:.4f}s duration={duration:.4f}s"
                     )
                 base_index = int(round(elapsed * fps))
-                candidates = sorted({
-                    index for index in (base_index - 1, base_index, base_index + 1)
-                    if previous_index < index < frame_count
-                })
-                if not candidates:
-                    raise RuntimeError(f"no video frame near Wisp age={age_tick}")
+                first_index = max(0, int(math.floor(elapsed * fps)))
+                end_index_exclusive = min(frame_count, int(math.ceil(end_elapsed * fps)))
+                candidate_start = max(previous_index + 1, first_index)
+                window_size = end_index_exclusive - candidate_start
+                if window_size <= 0:
+                    raise RuntimeError(
+                        f"no video frame in Wisp age={age_tick} interval "
+                        f"[{candidate_start},{end_index_exclusive})"
+                    )
+                if window_size > 12:
+                    raise RuntimeError(
+                        f"Wisp age={age_tick} video interval is too broad: "
+                        f"[{candidate_start},{end_index_exclusive}) spans {window_size} frames"
+                    )
+                candidates = range(candidate_start, end_index_exclusive)
+                window_bounds.append((int(age_tick), candidate_start, end_index_exclusive))
                 ranked: list[tuple[float, float, int, int, int, Path]] = []
                 for index in candidates:
                     candidate = temporary / f"age-{age_tick}-{index}.png"
@@ -637,7 +680,8 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                     ))
                 if not ranked:
                     raise RuntimeError(
-                        f"no pixel-confirmed additive Aer FXBolt at age={age_tick} in video frame candidates {candidates}"
+                        f"no pixel-confirmed additive Aer FXBolt at age={age_tick} "
+                        f"in video frame window [{candidate_start},{end_index_exclusive})"
                     )
                 _, _, difference, _, selected_index, selected_path = max(
                     ranked, key=lambda item: (item[0], item[1], item[2], item[3])
@@ -654,6 +698,11 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                 f"WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source={payload.group(1)} "
                 f"frameIndex={baseline_index} monotonicNs={baseline_monotonic_ns}",
             ]
+            for age_tick, first_index, end_index_exclusive in window_bounds:
+                capture_markers.append(
+                    f"WISP_ZAP_VIDEO_AGE_WINDOW=YES source={payload.group(1)} createdAt={payload.group(3)} "
+                    f"ageTick={age_tick} firstFrame={first_index} endExclusive={end_index_exclusive}"
+                )
             if selected[0][4] <= baseline_index:
                 raise RuntimeError(
                     f"pre-payload baseline frame {baseline_index} is not before age-1 frame {selected[0][4]}"
