@@ -893,6 +893,12 @@ def render() -> str:
   wisp_move_player_to_live_wisp "$reanchor_log_lines"
   echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
 
+  # Stabilize only horizontal knockback before Survival. The Wisp may already have
+  # acquired the nearby player; applying this after the hit lets its first attack
+  # move the player away from the server-confirmed melee anchor.
+  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
+  echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
+
   zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
@@ -934,10 +940,7 @@ def render() -> str:
   # The continuous video recorder supplies a same-camera pre-payload frame later.
   # Do not re-aim or teleport the player after the real click.
 
-  # Do not change the live Wisp or zap; only stabilize horizontal player knockback.
-  wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
-  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
-  echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
+  # Knockback resistance was confirmed while Creative, before the Survival attack.
 
   # Capture three distinct BETA26 effect ages immediately, each after its
   # matching AFTER_LEVEL frame. A later camera re-anchor would miss the

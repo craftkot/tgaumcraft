@@ -1334,9 +1334,9 @@ def main() -> int:
     side_view_rendered_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id', side_view_rendered_wait_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_rendered_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", target_index)
+    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", preposition_marker_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
-    zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', stabilize_marker_index)
+    zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', target_index)
     attack_frame_extract_index = setup.index("wisp_extract_attack_input_frame", zap_capture_index)
     capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", attack_frame_extract_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
@@ -1350,6 +1350,8 @@ def main() -> int:
     main_before_attack = setup[rendered_index:attack_call_index]
     assert "wisp_command '/gamemode survival'" not in main_before_attack, "Survival must not begin before the live melee position is staged"
     assert "wisp_move_player_to_live_wisp" in main_before_attack
+    assert "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'" in main_before_attack
+    assert "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL" in main_before_attack
     assert "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1" not in setup
     assert "wisp_capture 79-wisp-third-person-before-zap" not in setup
     assert "wisp_verify_attack_input_aim_capture" not in setup[restore_marker_index:]
