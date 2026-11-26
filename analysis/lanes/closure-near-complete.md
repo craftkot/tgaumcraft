@@ -1251,3 +1251,13 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Local repository clone/test execution is blocked by container DNS (`github.com` did not resolve). No local full Python-suite or Bash-generation PASS is claimed. Exact-SHA remote Wisp client and Full Port CI must validate this test-only correction.
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED; no merge or force-push. No audit points awarded: **59/100**, M16 **4/6**, M08 **5/9**.
 - Next: inspect the exact-new-SHA Wisp client workflow. Require geometry + atlas + offline contract + generated `bash -n` before Minecraft launch, then same-ID Survival hit, accepted server damage, matching payload, visible FXBolt at ages 1/2/3, and clean expiry. If that passes, stop iterating on Wisp smoke and move to the remaining M16 crystal-shard mesh visibility acceptance.
+
+
+### Follow-up — exact-SHA Wisp contract exposed a second stale assertion
+
+- Wisp client [#45846610071](https://github.com/craftkot/tgaumcraft/actions/runs/45846610071) on branch head `8170f6917781f241d66fe4c4c13d6ba70ca89a8d` passed FXBolt geometry (37 assertions), atlas parity (24 assertions), and the revised live-reposition cursor test, then failed at test line 1686 before Bash generation/Minecraft launch.
+- The remaining assertion required exact `playerTick` equality in the AWK source. The production smoke matcher intentionally accepts only same-`gameTime` frames with `input_player_tick - frame_player_tick` in the bounded interval 0..1, because AFTER_LEVEL and InputEvent can straddle one client player tick. This is documented in the script and covered by positive one-tick and negative two-tick fixtures; the source implementation was correct, the static assertion was stale.
+- Updated `tools/test_wisp_zap_client_smoke.py` to assert the actual AWK extraction and bounded delta predicate (`match(playerTick)`, numeric extraction, `tick_delta`, and 0..1 bound). No production source changed.
+- This is a second offline-contract failure on the same smoke harness. The real Minecraft stage has still not run on this head; no gameplay, damage, payload, or pixel result is claimed.
+- The only changed source path remains the Wisp smoke test; the previous overlap scan covered it, and PR #62 remains documentation-only. Local execution is still blocked by container DNS.
+- New test commit: pending lane-journal update and exact-SHA Actions verification. Fixed audit stays **59/100**, M16 **4/6**, M08 **5/9**; no points awarded.
