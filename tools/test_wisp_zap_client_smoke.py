@@ -414,6 +414,16 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert attack_body.index(survival_confirmation) < attack_body.index(survival_status) < attack_body.index(frame_snapshot)
     assert wait_for_frame in attack_body
     assert input_cursor_read in attack_body
+    reposition_cursor = 'reanchor_log_lines="$(wc -l < client-smoke/client.log)"'
+    reposition_call = 'wisp_move_player_to_live_wisp "$reanchor_log_lines"'
+    retry_branch = attack_body.index('if [ "$attempt" -gt 1 ]; then')
+    retry_branch_end = attack_body.index("\\n      fi\\n", retry_branch)
+    assert reposition_cursor in attack_body and reposition_call in attack_body
+    assert attack_body.count(reposition_call) == 1
+    assert retry_branch_end < attack_body.index(reposition_cursor) < attack_body.index(reposition_call)
+    assert attack_body.index(reposition_call) < attack_body.index(survival_confirmation), (
+        "the first real Survival attempt must be staged beside the live Wisp"
+    )
     assert attack_body.index(wait_for_frame) < attack_body.index(input_cursor_read)
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
     assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in attack_body
@@ -926,16 +936,35 @@ def _test_video_frame_extraction(generated: str) -> None:
         screenshots.mkdir()
         video = root / "wisp-zap-video.mp4"
         after = screenshots / "83-wisp-zap-after-expiry.png"
+        frame_dir = root / "video-frames"
+        frame_dir.mkdir()
         write_png(after, None)
         for command in ("ffmpeg", "ffprobe", "convert", "compare"):
             if shutil.which(command) is None:
                 raise AssertionError(f"required video extraction tool is missing: {command}")
+        # Produce a real 60-fps video with independently visible BETA26 alpha
+        # levels at the three observed render ages. The extractor must select
+        # pixel-confirmed bolt frames, not merely frames with generic scene change.
+        for index in range(60):
+            alpha = None
+            if 23 <= index <= 25:
+                alpha = 2.0 / 3.0
+            elif 29 <= index <= 31:
+                alpha = 1.0 / 3.0
+            elif 35 <= index <= 37:
+                alpha = 0.1
+            write_bolt_png(
+                frame_dir / f"frame-{index:03d}.png",
+                line=(0, 300, 480, 600) if alpha is not None else None,
+                alpha=alpha if alpha is not None else 1.0,
+                source_center=None,
+            )
         subprocess.run(
             [
                 "ffmpeg", "-nostdin", "-hide_banner", "-loglevel", "error", "-y",
-                "-f", "lavfi", "-i", "testsrc=size=1280x800:rate=60:duration=1",
-                "-an", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
-                "-pix_fmt", "yuv420p", str(video),
+                "-framerate", "60", "-i", str(frame_dir / "frame-%03d.png"),
+                "-frames:v", "60", "-an", "-c:v", "libx264", "-preset", "ultrafast",
+                "-crf", "0", "-pix_fmt", "yuv444p", str(video),
             ],
             check=True,
             capture_output=True,
@@ -990,6 +1019,17 @@ def _test_video_frame_extraction(generated: str) -> None:
         assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted
         assert extracted.count("WISP_ZAP_VIDEO_FRAME_INDEX=YES") == 3, extracted
         assert [f"ageTick={age} " in extracted for age in (1, 2, 3)] == [True, True, True], extracted
+        age_frames = (
+            (1, screenshots / "80-wisp-zap-frame-a.png"),
+            (2, screenshots / "81-wisp-zap-frame-b.png"),
+            (3, screenshots / "82-wisp-zap-frame-c.png"),
+        )
+        cycle_errors, visible_ages, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            age_frames, after, baseline
+        )
+        assert not cycle_errors and [age for age, _ in visible_ages] == [1, 2, 3], (
+            cycle_errors, [age for age, _ in visible_ages]
+        )
         # The same continuous video must also provide the pre-click aim frame
         # after the live attack has completed; this extraction cannot delay input.
         client_dir = root / "client-smoke"
@@ -1234,19 +1274,20 @@ def _test_fxbbolt_segment_detector() -> None:
             assert abs(metrics["angle_degrees"]) <= 78, metrics
 
 
-        # The Wisp can leave its original screen position during the 20-tick
-        # wind-up. The latest same-camera baseline may contain only the player;
-        # a low-FPS capture may also miss age 1 while still showing ages 2 and 3.
+        # The smoke acceptance is per-age: all three real BETA26 render ages
+        # must contain the additive beam, and the post-expiry frame must be clear.
         moved_baseline = root / "moved-source-baseline.png"
         moved_age_one = root / "moved-source-age-one.png"
         moved_age_two = root / "moved-source-age-two.png"
         moved_age_three = root / "moved-source-age-three.png"
+        moved_empty = root / "moved-source-empty.png"
         moved_expiry = root / "moved-source-expiry.png"
         moved_expiry_bolt = root / "moved-source-expiry-bolt.png"
         write_bolt_png(moved_baseline, line=None, source_center=None)
-        write_bolt_png(moved_age_one, line=None, source_center=None)
+        write_bolt_png(moved_age_one, line=(0, 300, 480, 600), alpha=2.0 / 3.0, source_center=None)
         write_bolt_png(moved_age_two, line=(0, 300, 480, 600), alpha=1.0 / 3.0, source_center=None)
         write_bolt_png(moved_age_three, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
+        write_bolt_png(moved_empty, line=None, source_center=None)
         write_bolt_png(moved_expiry, line=None, source_center=None)
         write_bolt_png(moved_expiry_bolt, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
         cycle_errors, visible_ages, _ = verify_wisp_zap_client.verify_bolt_cycle(
@@ -1254,15 +1295,32 @@ def _test_fxbbolt_segment_detector() -> None:
             moved_expiry,
             moved_baseline,
         )
-        assert not cycle_errors and [age for age, _ in visible_ages] == [2, 3], (
+        assert not cycle_errors and [age for age, _ in visible_ages] == [1, 2, 3], (
             cycle_errors, [age for age, _ in visible_ages]
         )
+        for missing_age, frames in (
+            (1, ((1, moved_empty), (2, moved_age_two), (3, moved_age_three))),
+            (2, ((1, moved_age_one), (2, moved_empty), (3, moved_age_three))),
+            (3, ((1, moved_age_one), (2, moved_age_two), (3, moved_empty))),
+        ):
+            missing_errors, _, _ = verify_wisp_zap_client.verify_bolt_cycle(
+                frames, moved_expiry, moved_baseline
+            )
+            assert any(f"FXBolt age={missing_age}" in error for error in missing_errors), (
+                missing_age, missing_errors
+            )
         empty_cycle_errors, empty_visible, _ = verify_wisp_zap_client.verify_bolt_cycle(
-            ((1, moved_age_one), (2, moved_age_one), (3, moved_age_one)),
+            ((1, moved_empty), (2, moved_empty), (3, moved_empty)),
             moved_expiry,
             moved_baseline,
         )
         assert empty_cycle_errors and not empty_visible, empty_cycle_errors
+        duplicate_age_errors, _, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, moved_age_one), (2, moved_age_two), (2, moved_age_three)),
+            moved_expiry,
+            moved_baseline,
+        )
+        assert any("expected exactly FXBolt frames" in error for error in duplicate_age_errors), duplicate_age_errors
         expiry_cycle_errors, _, _ = verify_wisp_zap_client.verify_bolt_cycle(
             ((1, moved_age_one), (2, moved_age_two), (3, moved_age_three)),
             moved_expiry_bolt,

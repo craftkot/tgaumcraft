@@ -646,9 +646,12 @@ def render() -> str:
         wisp_command '/gamemode creative'
         wisp_send_chat '/execute if entity @p[gamemode=creative] run say TC_SMOKE_WISP_PLAYER_CREATIVE=YES' 'TC_SMOKE_WISP_PLAYER_CREATIVE=YES'
         sleep 0.15
-        reanchor_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_move_player_to_live_wisp "$reanchor_log_lines"
       fi
+      # The first attempt must use the same live melee staging as retries.
+      # Otherwise the player remains on the low spawn platform and the
+      # three-tick FXBolt can be occluded at age 1 by the platform.
+      reanchor_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_move_player_to_live_wisp "$reanchor_log_lines"
       attack_camera_source="LIVE_ENTITY_FACING"
       attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
       attack_position_mode=LIVE_WISP

@@ -390,22 +390,23 @@ def verify_bolt_segment(
 def verify_bolt_cycle(
     frames: tuple[tuple[int, Path], ...], expiry_path: Path, baseline_path: Path
 ) -> tuple[list[str], list[tuple[int, dict[str, float]]], dict[str, float] | None]:
-    """Require visible pixels in the three-tick cycle, not a display frame for every game tick.
-
-    A 3-tick BETA26 particle can be rendered on all three client ticks while a
-    low-FPS X11 capture only presents one or two of those frames. The render
-    callbacks are checked separately; at least one actual framebuffer must
-    contain the additive bolt, and the post-expiry frame must be clear.
-    """
+    """Require pixel-confirmed FXBolt geometry at each BETA26 particle age 1, 2 and 3."""
     errors: list[str] = []
     visible: list[tuple[int, dict[str, float]]] = []
+    frame_ages = [age for age, _ in frames]
+    expected_ages = [1, 2, 3]
+    if frame_ages != expected_ages:
+        errors.append(f"expected exactly FXBolt frames for ages {expected_ages}, got {frame_ages}")
     for age, path in frames:
         frame_errors, candidates = _bolt_segment_candidates(path, baseline_path, True)
         errors.extend(f"FXBolt age={age}: {error}" for error in frame_errors)
         if candidates:
             visible.append((age, max(candidates, key=lambda item: item["length"])))
-    if not visible:
-        errors.append("no captured BETA26 age 1-3 framebuffer contains an elongated Aer-yellow FXBolt")
+        else:
+            errors.append(f"FXBolt age={age}: no captured framebuffer contains an elongated Aer-yellow segment")
+    visible_ages = [age for age, _ in visible]
+    if visible_ages != expected_ages:
+        errors.append(f"pixel-confirmed FXBolt ages are {visible_ages}; expected {expected_ages}")
     expiry_errors, expiry_metrics = verify_bolt_segment(expiry_path, False, baseline_path)
     errors.extend(expiry_errors)
     return errors, visible, expiry_metrics
@@ -617,13 +618,30 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                 })
                 if not candidates:
                     raise RuntimeError(f"no video frame near Wisp age={age_tick}")
-                ranked: list[tuple[int, int, int, Path]] = []
+                ranked: list[tuple[float, float, int, int, int, Path]] = []
                 for index in candidates:
                     candidate = temporary / f"age-{age_tick}-{index}.png"
                     _extract_video_frame(video_file, index, candidate)
+                    frame_errors, bolt_candidates = _bolt_segment_candidates(candidate, baseline_path, True)
+                    if frame_errors:
+                        raise RuntimeError(
+                            f"cannot inspect Wisp age={age_tick} video frame {index}: {'; '.join(frame_errors)}"
+                        )
+                    if not bolt_candidates:
+                        continue
+                    bolt = max(bolt_candidates, key=lambda item: (item["length"], item["pixels"]))
                     difference = _crop_pixel_difference(candidate, after_expiry, temporary)
-                    ranked.append((difference, -abs(index - base_index), index, candidate))
-                difference, _, selected_index, selected_path = max(ranked, key=lambda item: (item[0], item[1]))
+                    ranked.append((
+                        bolt["length"], bolt["pixels"], difference,
+                        -abs(index - base_index), index, candidate
+                    ))
+                if not ranked:
+                    raise RuntimeError(
+                        f"no pixel-confirmed additive Aer FXBolt at age={age_tick} in video frame candidates {candidates}"
+                    )
+                _, _, difference, _, selected_index, selected_path = max(
+                    ranked, key=lambda item: (item[0], item[1], item[2], item[3])
+                )
                 selected.append(
                     (int(source_id), int(created_at), int(age_tick), int(wisp_tick), selected_index, difference, str(selected_path))
                 )
