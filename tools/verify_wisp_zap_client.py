@@ -924,7 +924,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
             errors.append("video-derived attack frame has no valid non-negative offset")
         video_started = _first(
-            r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\\d+) frameRate=(\\d+)$",
+            r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\d+) frameRate=(\d+)$",
             status_text,
         )
         if input_ns_status is not None and video_offset_status is not None and video_started is not None:
