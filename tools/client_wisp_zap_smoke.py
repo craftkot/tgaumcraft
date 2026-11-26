@@ -506,14 +506,28 @@ def render() -> str:
       return 1
     fi
     input_line_number="$(printf '%s\n' "$input_line_matches" | cut -d: -f1)"
-    frame_matches="$(awk -v limit="$input_line_number" -v id="$wisp_id" -v game_time="$input_game_time" -v player_tick="$input_player_tick" '
+    click_cursor="${WISP_ATTACK_INPUT_LOG_LINES:-0}"
+    if ! [[ "$click_cursor" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ATTACK_INPUT_FRAME_CURSOR_INVALID=$click_cursor" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    # AFTER_LEVEL and InputEvent can straddle one client player tick while
+    # remaining in the same level gameTime. Accept only the unique same-game-time
+    # frame at playerTick N or N-1, after the click cursor and before the input.
+    frame_matches="$(awk -v click_cursor="$click_cursor" -v limit="$input_line_number" -v id="$wisp_id" -v game_time="$input_game_time" -v input_player_tick="$input_player_tick" '
+      NR > click_cursor &&
       NR < limit &&
       index($0, "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" id " ") == 1 &&
       index($0, "gameTime=" game_time " ") > 0 &&
-      index($0, "playerTick=" player_tick " ") > 0 &&
       index($0, "hitType=ENTITY targetId=" id " targetType=thaumcraft:wisp blockPos=none") > 0 {
-        print
-        count++
+        if (match($0, /playerTick=[0-9]+/)) {
+          frame_player_tick = substr($0, RSTART + 11, RLENGTH - 11) + 0
+          tick_delta = input_player_tick - frame_player_tick
+          if (tick_delta >= 0 && tick_delta <= 1) {
+            print
+            count++
+          }
+        }
       }
       END { if (count != 1) exit 1 }
     ' client-smoke/client.log 2>/dev/null || true)"
