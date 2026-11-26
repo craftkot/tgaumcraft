@@ -485,7 +485,7 @@ def render() -> str:
     local input_game_time input_player_tick input_hit_distance input_monotonic_ns input_line_matches input_line_count input_line_number
     local frame_matches frame_count frame_line frame_line_number camera_matches camera_count camera_line camera_line_number
     local camera_tick game_time player_tick player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
-    local frame_re camera_re
+    local frame_re camera_re click_cursor
     input_hit_distance="$(sed -n 's/.* hitDistance=\([-0-9.]*\).*/\1/p' <<< "$attack_input_line")"
     input_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<< "$attack_input_line")"
     if ! [[ "$input_hit_distance" =~ ^[0-9]+([.][0-9]+)?$ && "$input_monotonic_ns" =~ ^[0-9]+$ ]]; then
