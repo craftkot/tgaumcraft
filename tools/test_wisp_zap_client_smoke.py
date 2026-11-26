@@ -403,11 +403,30 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     """The attack watcher must start after the server-confirmed Survival transition, not stale pre-Survival frames."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in attack_body
-    expected = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
-    assert expected in attack_body, "attack watcher must snapshot the log after Survival is server-confirmed"
+    survival_confirmation = 'wisp_wait_for_fresh_log_marker "$survival_log_lines" \'Set own game mode to Survival Mode\''
+    survival_status = "echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'"
+    frame_snapshot = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
+    wait_for_frame = 'wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"'
+    input_cursor_read = 'attack_log_lines="$WISP_ATTACK_INPUT_LOG_LINES"'
+    assert survival_confirmation in attack_body
+    assert survival_status in attack_body
+    assert frame_snapshot in attack_body, "attack watcher must snapshot the log after Survival is server-confirmed"
+    assert attack_body.index(survival_confirmation) < attack_body.index(survival_status) < attack_body.index(frame_snapshot)
+    assert wait_for_frame in attack_body
+    assert input_cursor_read in attack_body
+    assert attack_body.index(wait_for_frame) < attack_body.index(input_cursor_read)
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
     assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in attack_body
+
+    frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
+    click_cursor_snapshot = 'click_log_lines="$(wc -l < client-smoke/client.log)"'
+    input_cursor_capture = 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"'
+    click_dispatch = "xdotool click --delay 0 1"
+    assert click_cursor_snapshot in frame_body
+    assert input_cursor_capture in frame_body
+    assert frame_body.index(click_cursor_snapshot) < frame_body.index(input_cursor_capture) < frame_body.index(click_dispatch)
+    assert 'tail -n +"$1" -f "$2" | grep --line-buffered -m1 -F "TC_SMOKE_WISP_ATTACK_INPUT=YES"' in attack_body
+    assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" in reposition_body
