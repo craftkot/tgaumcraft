@@ -417,7 +417,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     reposition_cursor = 'reanchor_log_lines="$(wc -l < client-smoke/client.log)"'
     reposition_call = 'wisp_move_player_to_live_wisp "$reanchor_log_lines"'
     retry_branch = attack_body.index('if [ "$attempt" -gt 1 ]; then')
-    retry_branch_end = attack_body.index("\\n      fi\\n", retry_branch)
+    retry_branch_end = attack_body.index("\n      fi\n", retry_branch)
     assert reposition_cursor in attack_body and reposition_call in attack_body
     assert attack_body.count(reposition_call) == 1
     assert retry_branch_end < attack_body.index(reposition_cursor) < attack_body.index(reposition_call)

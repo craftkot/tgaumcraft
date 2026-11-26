@@ -1272,3 +1272,9 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Changed files: `tools/client_wisp_zap_smoke.py`, `tools/verify_wisp_zap_client.py`, `tools/test_wisp_zap_client_smoke.py`, and this journal. No production Java, renderer, Wisp AI, networking, registry, Gradle, workflow YAML, global localization, shared roadmap, main, or foreign feature branch changed. The previous open-PR path audit covered these tool paths; the current open-PR set is unchanged (62 open PRs including this PR #4), with no new PR since that scan.
 - Exact-SHA Python regression, generated Bash syntax, real Survival attack, accepted server damage, payload, per-age FXBolt pixels, and expiry are **pending** on the new commit. No PASS is claimed for this iteration. Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**; no point awarded.
 - Next: inspect the new Wisp client push/PR workflow and exact artifact. If all three age screenshots show the bolt and expiry is clear, stop Wisp harness work and move to the next independent M16 content gap. If any age is still invisible, inspect that exact PNG and camera/world occlusion before changing production renderer code.
+
+
+### Follow-up — static fixture assertion delimiter correction
+
+- The first commit `9d92492f8a40d2a848437b3cebdd89241d0f5ed7` exposed one test-source delimiter issue during post-commit inspection: the new static assertion searched for the literal characters `\\n` instead of newline characters around the retry branch's closing `fi`. Corrected the Python string to use `"\n      fi\n"`; no production or smoke-script behavior changed.
+- This correction is included in the next commit; CI remains pending and no local suite PASS is claimed.
