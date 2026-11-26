@@ -84,6 +84,7 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_TARGET_CONFIRMED=YES",
     "WISP_ATTACKABLE_FRAME=YES",
     "WISP_ATTACK_INPUT_FRAME=YES",
+    "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent",
     "WISP_ATTACK_CAMERA_REAIM=",
     "WISP_ATTACK_CAMERA_FRAME=YES",
     "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
@@ -725,12 +726,41 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
 
 
 def _attackable_frame_for_input(log_text: str, attack_input):
-    """Select the unique same-game-time completed frame immediately preceding this click."""
+    """Select the latest same-ID AFTER_LEVEL EntityHitResult within two ticks before the click."""
     if attack_input is None:
         return None
     pattern = re.compile(
         r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
         r"hitType=ENTITY targetId=(\d+) targetType=thaumcraft:wisp blockPos=none"
+    )
+    candidates = [
+        frame
+        for frame in pattern.finditer(log_text)
+        if frame.group(1) == attack_input.group(1)
+        and 0 <= int(attack_input.group(4)) - int(frame.group(3)) <= 2
+        and 0 <= int(attack_input.group(5)) - int(frame.group(4)) <= 2
+        and frame.start() < attack_input.start()
+    ]
+    if not candidates:
+        return None
+    latest_key = max(
+        (int(frame.group(3)), int(frame.group(4)), int(frame.group(2)))
+        for frame in candidates
+    )
+    latest = [
+        frame
+        for frame in candidates
+        if (int(frame.group(3)), int(frame.group(4)), int(frame.group(2))) == latest_key
+    ]
+    return latest[0] if len(latest) == 1 else None
+
+
+def _input_correlated_frame_for_input(log_text: str, attack_input):
+    """Select the unique completed camera frame at the actual InputEvent gameTime/playerTick."""
+    if attack_input is None:
+        return None
+    pattern = re.compile(
+        r"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+) "
     )
     candidates = [
         frame
@@ -799,6 +829,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         log_text,
     )
     attackable_frame = _attackable_frame_for_input(log_text, attack_input)
+    input_correlated_frame = _input_correlated_frame_for_input(log_text, attack_input)
     rendered = _first(
         r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -812,7 +843,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                          ("rendered third-person side-view frame", side_view_rendered),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
-                         ("same-game-time pre-input Wisp EntityHitResult frame", attackable_frame),
+                         ("recent pre-input Wisp EntityHitResult frame", attackable_frame),
+                         ("completed camera frame correlated to the exact InputEvent", input_correlated_frame),
                          ("client attack input/hit result", attack_input),
                          ("client selected attack target", client_attack),
                          ("server accepted damage", hurt),
@@ -878,25 +910,44 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("attackable AFTER_LEVEL frame belongs to a different Wisp")
         if attack_input:
             if attackable_frame.group(1) != attack_input.group(1):
-                errors.append("attackable AFTER_LEVEL frame and real click selected different Wisps")
+                errors.append("pre-click AFTER_LEVEL frame and real InputEvent selected different Wisps")
             game_time_delta = int(attack_input.group(4)) - int(attackable_frame.group(3))
-            if game_time_delta < 0 or game_time_delta > 1:
+            if game_time_delta < 0 or game_time_delta > 2:
                 errors.append(
-                    "real click did not follow its actual Wisp EntityHitResult within one game tick: "
+                    "real InputEvent did not follow a same-ID Wisp EntityHitResult within two game ticks: "
                     f"frameGameTime={attackable_frame.group(3)} clickGameTime={attack_input.group(4)}"
                 )
             player_tick_delta = int(attack_input.group(5)) - int(attackable_frame.group(4))
-            if player_tick_delta < 0 or player_tick_delta > 1:
+            if player_tick_delta < 0 or player_tick_delta > 2:
                 errors.append(
-                    "real click did not follow its attackable Wisp frame within one player tick: "
+                    "real InputEvent did not follow its attackable Wisp frame within two player ticks: "
                     f"framePlayerTick={attackable_frame.group(4)} clickPlayerTick={attack_input.group(5)}"
                 )
             frame_position = log_text.find(attackable_frame.group(0))
             input_position = log_text.find(attack_input.group(0))
             if frame_position < 0 or input_position < frame_position:
-                errors.append("real click occurred before the matching attackable AFTER_LEVEL frame")
+                errors.append("real click occurred before the matching pre-click attackable AFTER_LEVEL frame")
     if attackable_frame is None:
-        errors.append("no completed frame exposed the live Wisp as Minecraft.hitResult")
+        errors.append("no recent completed frame exposed the live Wisp before the real click")
+    if input_correlated_frame is None:
+        errors.append("no completed camera frame correlated to the exact attack InputEvent")
+    elif attack_input:
+        if input_correlated_frame.group(1) != attack_input.group(1):
+            errors.append("InputEvent-correlated camera frame belongs to a different Wisp")
+        if input_correlated_frame.group(3) != attack_input.group(4):
+            errors.append("InputEvent-correlated camera frame has a different level gameTime")
+        input_frame_tick_delta = int(attack_input.group(5)) - int(input_correlated_frame.group(4))
+        if input_frame_tick_delta < 0 or input_frame_tick_delta > 1:
+            errors.append("InputEvent-correlated camera frame is more than one player tick away")
+        frame_position = log_text.find(input_correlated_frame.group(0))
+        input_position = log_text.find(attack_input.group(0))
+        if frame_position < 0 or input_position < frame_position:
+            errors.append("real InputEvent occurred before its correlated completed camera frame")
+        if client_attack and (
+            input_correlated_frame.group(2) != client_attack.group(3)
+            or input_correlated_frame.group(3) != client_attack.group(5)
+        ):
+            errors.append("completed camera frame and AttackEntityEvent use different Wisp ticks/gameTime")
     if attack_input and client_attack and attack_input.group(1) != client_attack.group(2):
         errors.append("client hit result and AttackEntityEvent selected different entities")
     if attack_input and client_attack:
@@ -1235,6 +1286,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACK_INPUT_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,
     )
+    input_correlation_status = _first(
+        r"(?m)^WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent[+]AttackEntityEvent id=(\d+) tick=(\d+) gameTime=(\d+) playerTick=(\d+)$",
+        status_text,
+    )
     if pre_attack_track is not None and pre_attack_track_status is not None:
         if pre_attack_track.group(1) != pre_attack_track_status.group(1):
             errors.append("pre-attack tracker log and status use different Wisp IDs")
@@ -1344,12 +1399,24 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("click-trigger status does not point to one real same-ID AFTER_LEVEL frame before input")
         elif attackable_frame is not None and trigger_matches[0].start() > attackable_frame.start():
             errors.append("click-trigger frame occurs after the frame correlated with the actual input")
+    if input_correlation_status is None:
+        errors.append("missing explicit InputEvent/AttackEntityEvent correlation status")
+    elif attack_input and client_attack and input_correlation_status.group(1, 2, 3, 4) != (
+        attack_input.group(1), client_attack.group(3), attack_input.group(4), attack_input.group(5)
+    ):
+        errors.append("explicit InputEvent/AttackEntityEvent correlation status does not match the real events")
     if attackable_frame_status is None:
-        errors.append("missing status for the actual attackable Wisp input frame")
-    elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 5):
-        errors.append("input-frame status does not match the real AFTER_LEVEL hit-result marker")
-    elif attackable_frame_status.group(4, 5) != attackable_frame.group(3, 4):
-        errors.append("input-frame status gameTime/playerTick do not match the selected pre-input frame")
+        errors.append("missing status for the actual InputEvent-correlated Wisp camera frame")
+    elif input_correlated_frame is None or attackable_frame_status.group(1, 2) != input_correlated_frame.group(1, 2):
+        errors.append("input-frame status does not match the completed camera frame correlated to InputEvent")
+    elif attackable_frame_status.group(4, 5) != input_correlated_frame.group(3, 4):
+        errors.append("input-frame status gameTime/playerTick do not match the InputEvent-correlated frame")
+    elif attack_input and (
+        attackable_frame_status.group(3) != attack_input.group(1)
+        or attackable_frame_status.group(4) != attack_input.group(4)
+        or abs(int(attackable_frame_status.group(5)) - int(attack_input.group(5))) > 1
+    ):
+        errors.append("input-frame status does not match the exact same-ID InputEvent")
     if first_frame_camera_sample is None:
         errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
@@ -1365,10 +1432,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("attack camera and completed-frame status use different ID/tick")
         if (attack_id, attack_tick) != (sample_id, sample_tick):
             errors.append("attack camera status and copied camera sample use different ID/tick")
-        if attackable_frame and (attack_id, attack_tick) != (attackable_frame.group(1), attackable_frame.group(2)):
-            errors.append("attack camera sample does not match the AFTER_LEVEL frame that exposed the Wisp hit result")
+        if input_correlated_frame and (attack_id, attack_tick) != (input_correlated_frame.group(1), input_correlated_frame.group(2)):
+            errors.append("attack camera sample does not match the completed frame correlated to InputEvent")
         if attackable_frame_status and (attack_id, attack_tick) != attackable_frame_status.group(1, 2):
-            errors.append("attack camera status does not match the attackable-frame status")
+            errors.append("attack camera status does not match the InputEvent-correlated camera-frame status")
+        if client_attack and (attack_id, attack_tick) != (client_attack.group(2), client_attack.group(3)):
+            errors.append("attack camera frame and AttackEntityEvent use different target/tick")
         if attack_input and attack_id != attack_input.group(1):
             errors.append("real attack selected a Wisp different from the attack camera sample")
         if wisp_rendered and attack_id != wisp_rendered.group(1):
@@ -1418,7 +1487,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                         and -1.0001 <= attack_aim_dot <= 1.0001
                     ):
                         errors.append(
-                            "live-reposition attack camera sample is not backed by a same-game-time pre-input in-reach EntityHitResult: "
+                            "live-reposition attack camera sample is not backed by the exact same-ID in-reach InputEvent and AttackEntityEvent: "
                             f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
                             f"distance={attack_distance:.3f} hitDistance={attack_hit_distance:.3f} "
                             f"aimDot={attack_aim_dot:.4f}"
@@ -1510,7 +1579,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                         and -1.0001 <= capture_aim_dot <= 1.0001
                     ):
                         errors.append(
-                            "live attack-input camera sample is not tied to a same-frame in-reach EntityHitResult: "
+                            "live attack-input camera sample is not tied to a same-tick camera frame and in-reach InputEvent EntityHitResult: "
                             f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
                             f"distance={capture_distance:.3f} hitDistance={capture_hit_distance:.3f} "
                             f"aimDot={capture_aim_dot:.4f}"

@@ -492,12 +492,17 @@ def render() -> str:
     local attack_input_line="$1" wisp_id="$2" position_mode="$3"
     local input_game_time input_player_tick input_hit_distance input_monotonic_ns input_line_matches input_line_count input_line_number
     local frame_matches frame_count frame_line frame_line_number camera_matches camera_count camera_line camera_line_number
+    local client_attack_line client_attack_line_number client_attack_matches client_attack_count client_attack_tick client_attack_game_time
     local camera_tick game_time player_tick player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
     local frame_re camera_re click_cursor
     input_hit_distance="$(sed -n 's/.* hitDistance=\([-0-9.]*\).*/\1/p' <<< "$attack_input_line")"
     input_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<< "$attack_input_line")"
     if ! [[ "$input_hit_distance" =~ ^[0-9]+([.][0-9]+)?$ && "$input_monotonic_ns" =~ ^[0-9]+$ ]]; then
       echo "WISP_ATTACK_INPUT_FRAME_TELEMETRY_INVALID=YES hitDistance=$input_hit_distance monotonicNs=$input_monotonic_ns" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if ! grep -Fq "targetWisp=true targetId=$wisp_id targetType=thaumcraft:wisp hitType=ENTITY" <<< "$attack_input_line"; then
+      echo "WISP_ATTACK_INPUT_FRAME_TARGET_MISMATCH=YES expected=$wisp_id input=$attack_input_line" | tee -a client-smoke-status.txt
       return 1
     fi
     if [[ "$attack_input_line" =~ gameTime=([0-9]+).*tick=([0-9]+) ]]; then
@@ -514,20 +519,21 @@ def render() -> str:
       return 1
     fi
     input_line_number="$(printf '%s\n' "$input_line_matches" | cut -d: -f1)"
-    click_cursor="${WISP_ATTACK_INPUT_LOG_LINES:-0}"
+    click_cursor="$WISP_ATTACK_INPUT_LOG_LINES"
     if ! [[ "$click_cursor" =~ ^[0-9]+$ ]]; then
       echo "WISP_ATTACK_INPUT_FRAME_CURSOR_INVALID=$click_cursor" | tee -a client-smoke-status.txt
       return 1
     fi
-    # AFTER_LEVEL and InputEvent can straddle one client player tick while
-    # remaining in the same level gameTime. Accept only the unique same-game-time
-    # frame at playerTick N or N-1, after the click cursor and before the input.
+
+    # AFTER_LEVEL's cached HitResult can differ from the actual InputEvent at
+    # the interaction boundary. The InputEvent is the vanilla click result;
+    # correlate its completed camera frame and the subsequent AttackEntityEvent
+    # instead of requiring AFTER_LEVEL to repeat the same HitResult.
     frame_matches="$(awk -v click_cursor="$click_cursor" -v limit="$input_line_number" -v id="$wisp_id" -v game_time="$input_game_time" -v input_player_tick="$input_player_tick" '
       NR > click_cursor &&
       NR < limit &&
       index($0, "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" id " ") == 1 &&
-      index($0, "gameTime=" game_time " ") > 0 &&
-      index($0, "hitType=ENTITY targetId=" id " targetType=thaumcraft:wisp blockPos=none") > 0 {
+      index($0, "gameTime=" game_time " ") > 0 {
         if (match($0, /playerTick=[0-9]+/)) {
           frame_player_tick = substr($0, RSTART + 11, RLENGTH - 11) + 0
           tick_delta = input_player_tick - frame_player_tick
@@ -561,11 +567,51 @@ def render() -> str:
       return 1
     fi
     camera_line="$camera_matches"
+
+    # AttackEntityEvent is emitted by the same vanilla click after InputEvent.
+    # Require the exact target and Wisp tick represented by the completed camera
+    # frame; this prevents a nearby entity or later autonomous hit from passing.
+    client_attack_line="$(timeout 3s bash -c 'tail --sleep-interval=0.01 -n +"$1" -f "$2" | grep --line-buffered -m1 -F "TC_SMOKE_WISP_CLIENT_ATTACK=YES "' _ "$((input_line_number + 1))" client-smoke/client.log || true)"
+    if [ -z "$client_attack_line" ]; then
+      echo "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_TIMEOUT=YES id=$wisp_id gameTime=$input_game_time" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    client_attack_matches="$(awk -v start="$input_line_number" -v id="$wisp_id" -v game_time="$input_game_time" '
+      NR > start &&
+      index($0, "TC_SMOKE_WISP_CLIENT_ATTACK=YES ") == 1 &&
+      index($0, " target=" id " ") > 0 &&
+      index($0, " gameTime=" game_time) > 0 {
+        print
+        count++
+      }
+      END { if (count != 1) exit 1 }
+    ' client-smoke/client.log 2>/dev/null || true)"
+    client_attack_count="$(printf '%s\n' "$client_attack_matches" | grep -c '^TC_SMOKE_WISP_CLIENT_ATTACK=' || true)"
+    if [ "$client_attack_count" -ne 1 ] || [ "$client_attack_line" != "$client_attack_matches" ]; then
+      echo "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_COUNT=$client_attack_count id=$wisp_id gameTime=$input_game_time" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if [[ "$client_attack_line" =~ tick=([0-9]+)\ distance=([0-9.]+)\ gameTime=([0-9]+)$ ]]; then
+      client_attack_tick="${BASH_REMATCH[1]}"
+      client_attack_game_time="${BASH_REMATCH[3]}"
+    else
+      echo "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_PARSE_FAILED=$client_attack_line" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    if [ "$client_attack_tick" != "$camera_tick" ] || [ "$client_attack_game_time" != "$input_game_time" ]; then
+      echo "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_MISMATCH=YES cameraTick=$camera_tick attackTick=$client_attack_tick inputGameTime=$input_game_time attackGameTime=$client_attack_game_time" | tee -a client-smoke-status.txt
+      return 1
+    fi
+
     camera_line_number="$(grep -n -F -- "$camera_line" client-smoke/client.log | head -1 | cut -d: -f1)"
     frame_line_number="$(grep -n -F -- "$frame_line" client-smoke/client.log | head -1 | cut -d: -f1)"
-    if ! [[ "$camera_line_number" =~ ^[0-9]+$ && "$frame_line_number" =~ ^[0-9]+$ ]] \
-      || [ "$camera_line_number" -ge "$frame_line_number" ] || [ "$frame_line_number" -ge "$input_line_number" ]; then
-      echo "WISP_ATTACK_INPUT_FRAME_ORDER_INVALID cameraLine=$camera_line_number frameLine=$frame_line_number inputLine=$input_line_number" | tee -a client-smoke-status.txt
+    client_attack_line_number="$(grep -n -F -- "$client_attack_line" client-smoke/client.log | head -1 | cut -d: -f1)"
+    if ! [[ "$camera_line_number" =~ ^[0-9]+$ && "$frame_line_number" =~ ^[0-9]+$ && "$client_attack_line_number" =~ ^[0-9]+$ ]] \
+      || [ "$camera_line_number" -le "$click_cursor" ] \
+      || [ "$camera_line_number" -ge "$frame_line_number" ] \
+      || [ "$frame_line_number" -ge "$input_line_number" ] \
+      || [ "$input_line_number" -ge "$client_attack_line_number" ]; then
+      echo "WISP_ATTACK_INPUT_FRAME_ORDER_INVALID cameraLine=$camera_line_number frameLine=$frame_line_number inputLine=$input_line_number attackLine=$client_attack_line_number" | tee -a client-smoke-status.txt
       return 1
     fi
     camera_re='playerX=([-0-9.]+) playerY=([-0-9.]+) playerZ=([-0-9.]+).*wispX=([-0-9.]+) wispY=([-0-9.]+) wispZ=([-0-9.]+).*aimDot=(-?[0-9.]+)'
@@ -600,6 +646,7 @@ def render() -> str:
     WISP_ATTACK_CAMERA_LINE="$camera_line"
     WISP_ATTACK_INPUT_MONOTONIC_NS="$input_monotonic_ns"
     WISP_ATTACK_INPUT_HIT_DISTANCE="$input_hit_distance"
+    echo "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=$wisp_id tick=$camera_tick gameTime=$input_game_time playerTick=$input_player_tick" | tee -a client-smoke-status.txt
     echo "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=$input_monotonic_ns" | tee -a client-smoke-status.txt
     echo "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=$input_hit_distance" | tee -a client-smoke-status.txt
     return 0

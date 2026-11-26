@@ -286,13 +286,16 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
 
 
 def _test_attack_input_frame_correlation(generated: str) -> None:
-    """Correlate InputEvent with the unique same-game-time frame no more than one player tick behind."""
+    """Bind the actual InputEvent hit to its completed camera frame and AttackEntityEvent."""
     body = _bash_function_body(generated, "wisp_capture_attack_input_frame")
     function = "  wisp_capture_attack_input_frame() {\n" + body + "\n  }\n"
     attack_input = (
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=106 "
         "targetType=thaumcraft:wisp hitType=ENTITY distance=3.78 hitDistance=2.9 "
         "gameTime=553 blockPos=none tick=518 monotonicNs=2000000000"
+    )
+    client_attack = (
+        "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=106 tick=7 distance=3.78 gameTime=553"
     )
 
     def camera_line(tick: int) -> str:
@@ -306,19 +309,31 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
             "aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978"
         )
 
-    def frame_line(tick: int, game_time: int, player_tick: int) -> str:
+    def frame_line(tick: int, game_time: int, player_tick: int, hit_type: str = "MISS") -> str:
+        if hit_type == "ENTITY":
+            hit = "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
+        else:
+            hit = "hitType=MISS targetId=-1 targetType=none blockPos=13,156,10"
         return (
             f"TC_SMOKE_WISP_FRAME_COMPLETE=YES id=106 tick={tick} "
-            f"gameTime={game_time} playerTick={player_tick} "
-            "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
+            f"gameTime={game_time} playerTick={player_tick} {hit}"
         )
 
-    def run_case(lines: list[str], *, attack_line: str = attack_input, click_cursor: int = 0) -> tuple[int, str, str]:
+    def run_case(
+        lines: list[str],
+        *,
+        attack_line: str = attack_input,
+        client_attack_line: str | None = client_attack,
+        click_cursor: int = 0,
+    ) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-input-frame-") as directory:
             root = Path(directory)
             client_dir = root / "client-smoke"
             client_dir.mkdir()
-            (client_dir / "client.log").write_text("\n".join(lines[:-1] + [attack_line]) + "\n", encoding="utf-8")
+            output_lines = list(lines[:-1]) + [attack_line]
+            if client_attack_line is not None:
+                output_lines.append(client_attack_line)
+            (client_dir / "client.log").write_text("\n".join(output_lines) + "\n", encoding="utf-8")
             status_path = root / "client-smoke-status.txt"
             status_path.write_text("", encoding="utf-8")
             env = os.environ.copy()
@@ -332,13 +347,21 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
                 + 'PLAYER_TICK=$WISP_ATTACK_CAMERA_PLAYER_TICK DISTANCE=$WISP_ATTACK_CAMERA_DISTANCE '
                 + 'HIT_DISTANCE=$WISP_ATTACK_INPUT_HIT_DISTANCE MONOTONIC_NS=$WISP_ATTACK_INPUT_MONOTONIC_NS"\n'
             )
-            result = subprocess.run(["bash", "-c", harness], cwd=root, text=True, capture_output=True, env=env, check=False)
+            result = subprocess.run(
+                ["bash", "-c", harness],
+                cwd=root,
+                text=True,
+                capture_output=True,
+                env=env,
+                check=False,
+                timeout=5,
+            )
             return result.returncode, result.stdout + result.stderr, status_path.read_text(encoding="utf-8")
 
     base_lines = [
         camera_line(0), frame_line(0, 546, 511),
         camera_line(5), frame_line(5, 551, 516),
-        camera_line(7), frame_line(7, 553, 518), attack_input,
+        camera_line(7), frame_line(7, 553, 518, "MISS"), attack_input,
     ]
     rc, output, status = run_case(base_lines)
     assert rc == 0, (rc, output, status)
@@ -350,23 +373,24 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     assert captured is not None, output
     expected_distance = math.sqrt(3.0 ** 2 + 2.3 ** 2)
     assert math.isclose(float(captured.group(1)), expected_distance, abs_tol=0.00005), output
+    assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=106 tick=7 gameTime=553 playerTick=518" in status, status
     assert "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=2000000000" in status, status
     assert "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9" in status, status
 
-    # The render-stage sample may be one client player tick behind InputEvent
-    # while both still observe the same level gameTime. It remains valid only
-    # when it is after the click cursor and before the InputEvent line.
+    # AFTER_LEVEL can report MISS at the render boundary while the exact
+    # InputEvent still carries the same-ID vanilla EntityHitResult. The
+    # subsequent AttackEntityEvent must confirm that exact target and tick.
     one_tick_behind = attack_input.replace(" tick=518 monotonicNs=", " tick=519 monotonicNs=")
-    rc, output, status = run_case(base_lines, attack_line=one_tick_behind, click_cursor=5)
+    rc, output, status = run_case(base_lines, attack_line=one_tick_behind, click_cursor=4)
     assert rc == 0, (rc, output, status)
     assert "CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518" in output, output
 
     two_ticks_behind = attack_input.replace(" tick=518 monotonicNs=", " tick=520 monotonicNs=")
-    rc, output, status = run_case(base_lines, attack_line=two_ticks_behind, click_cursor=5)
+    rc, output, status = run_case(base_lines, attack_line=two_ticks_behind, click_cursor=4)
     assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
 
     future_frame = attack_input.replace(" tick=518 monotonicNs=", " tick=517 monotonicNs=")
-    rc, output, status = run_case(base_lines, attack_line=future_frame, click_cursor=5)
+    rc, output, status = run_case(base_lines, attack_line=future_frame, click_cursor=4)
     assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
 
     frame_before_click_cursor = 6
@@ -391,13 +415,28 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     assert "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=" not in status, status
     assert "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=" not in status, status
 
-    duplicate_lines = base_lines[:-1] + [frame_line(7, 553, 518), attack_input]
+    duplicate_lines = base_lines[:-1] + [frame_line(7, 553, 518, "MISS"), attack_input]
     rc, output, status = run_case(duplicate_lines)
     assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=2" in status, (output, status)
 
     stale_only_lines = base_lines[:4] + [attack_input]
     rc, output, status = run_case(stale_only_lines)
     assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
+
+    rc, output, status = run_case(base_lines, client_attack_line=None)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_TIMEOUT=YES" in status, (output, status)
+
+    wrong_target = attack_input.replace("targetId=106", "targetId=107")
+    rc, output, status = run_case(base_lines, attack_line=wrong_target)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_TARGET_MISMATCH=YES" in status, (output, status)
+
+    wrong_attack_target = client_attack.replace("target=106", "target=107")
+    rc, output, status = run_case(base_lines, client_attack_line=wrong_attack_target)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_COUNT=0" in status, (output, status)
+
+    wrong_attack_tick = client_attack.replace("tick=7", "tick=8")
+    rc, output, status = run_case(base_lines, client_attack_line=wrong_attack_tick)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_ATTACK_EVENT_MISMATCH=YES" in status, (output, status)
 
 
 def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
@@ -1817,6 +1856,9 @@ def main() -> int:
     assert 'tick_delta = input_player_tick - frame_player_tick' in capture_input_body
     assert 'if (tick_delta >= 0 && tick_delta <= 1)' in capture_input_body
     assert "NR < limit" in capture_input_body
+    assert 'targetWisp=true targetId=$wisp_id targetType=thaumcraft:wisp hitType=ENTITY' in capture_input_body
+    assert 'TC_SMOKE_WISP_CLIENT_ATTACK=YES ' in capture_input_body
+    assert 'WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent' in capture_input_body
     assert 'WISP_ATTACK_INPUT_FRAME=YES id=$WISP_ATTACK_CAMERA_ID' in attack_body
     assert "hit_d <= 3.01" in capture_input_body
     extract_body = _bash_function_body(generated, "wisp_extract_attack_input_frame")
@@ -1883,6 +1925,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=LIVE_ENTITY_RELATIVE" not in verify_wisp_zap_client.REQUIRED_STATUS
@@ -1968,6 +2011,7 @@ def main() -> int:
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=17 tick=22 gameTime=520 playerTick=507",
         "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=900000000",
         "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
@@ -2155,6 +2199,27 @@ def main() -> int:
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
+        render_stage_miss_log = log.replace(
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+            1,
+        ).replace(
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+            "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=MISS targetId=-1 targetType=none blockPos=13,156,10",
+            1,
+        )
+        render_stage_miss_status = status.replace(
+            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
+            "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=21 triggerGameTime=519 inputTick=22 inputGameTime=520",
+            1,
+        ).replace(
+            "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=PLATFORM gameTime=520 playerTick=507",
+            "WISP_ATTACKABLE_FRAME=YES id=17 tick=21 hitType=ENTITY targetId=17 position=PLATFORM gameTime=519 playerTick=506",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(render_stage_miss_log, render_stage_miss_status, root) == [], (
+            "the exact InputEvent and AttackEntityEvent must remain authoritative when AFTER_LEVEL reports MISS"
+        )
         wrong_side_view_errors = verify_wisp_zap_client.verify(
             log.replace("yaw=50.0", "yaw=0.0", 1), status, root
         )
@@ -2432,6 +2497,7 @@ def main() -> int:
             "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=LIVE_WISP gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
         ).replace(
             "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
+        "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=17 tick=22 gameTime=520 playerTick=507",
             "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
         ).replace(
             "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
@@ -2574,7 +2640,7 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
                         "tick=22 gameTime=517 playerTick=504 hitType=ENTITY", 1), status, root
-        ), "a click more than one game tick after the actual hit-result frame must fail"
+        ), "a click more than two game ticks after the actual hit-result frame must fail"
         one_player_tick_lag = log.replace(
             "hitDistance=2.9 gameTime=520 blockPos=none tick=507 monotonicNs=900000000",
             "hitDistance=2.9 gameTime=520 blockPos=none tick=508 monotonicNs=900000000",
@@ -2583,13 +2649,13 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(one_player_tick_lag, status, root) == [], (
             "the immediately preceding same-game-time frame must be accepted when one client player tick behind"
         )
-        two_player_ticks_lag = log.replace(
+        three_player_ticks_lag = log.replace(
             "hitDistance=2.9 gameTime=520 blockPos=none tick=507 monotonicNs=900000000",
-            "hitDistance=2.9 gameTime=520 blockPos=none tick=509 monotonicNs=900000000",
+            "hitDistance=2.9 gameTime=520 blockPos=none tick=510 monotonicNs=900000000",
             1,
         )
-        assert verify_wisp_zap_client.verify(two_player_ticks_lag, status, root), (
-            "a completed frame two player ticks behind the InputEvent must fail closed"
+        assert verify_wisp_zap_client.verify(three_player_ticks_lag, status, root), (
+            "a completed frame three player ticks behind the InputEvent must fail closed"
         )
         assert verify_wisp_zap_client.verify(
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
@@ -2610,7 +2676,7 @@ def main() -> int:
             1,
         )
         duplicate_errors = verify_wisp_zap_client.verify(duplicate_input_frame_log, status, root)
-        assert any("no completed frame exposed the live Wisp" in error for error in duplicate_errors), (
+        assert any("no recent completed frame exposed the live Wisp before the real click" in error for error in duplicate_errors), (
             "duplicate same-tick hit frames must fail closed"
         )
         assert verify_wisp_zap_client.verify(
