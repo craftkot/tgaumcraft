@@ -2645,7 +2645,12 @@ def main() -> int:
             "hitDistance=2.9 gameTime=520 blockPos=none tick=508 monotonicNs=900000000",
             1,
         )
-        assert verify_wisp_zap_client.verify(one_player_tick_lag, status, root) == [], (
+        one_player_tick_lag_status = status.replace(
+            "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=17 tick=22 gameTime=520 playerTick=507",
+            "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=17 tick=22 gameTime=520 playerTick=508",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(one_player_tick_lag, one_player_tick_lag_status, root) == [], (
             "the immediately preceding same-game-time frame must be accepted when one client player tick behind"
         )
         three_player_ticks_lag = log.replace(
