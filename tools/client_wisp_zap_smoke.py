@@ -740,8 +740,8 @@ def render() -> str:
     local player_x player_y player_z wisp_x wisp_y wisp_z distance aim_dot
     local wisp_id camera_tick first_frame_id first_frame_tick capture_id capture_tick
     local capture_camera_id capture_camera_tick capture_player_x capture_player_y capture_player_z
-    local capture_wisp_x capture_wisp_y capture_wisp_z capture_distance capture_aim_dot
-    local capture_position_mode capture_reposition_line capture_reposition_x capture_reposition_y capture_reposition_z capture_position_valid
+    local capture_wisp_x capture_wisp_y capture_wisp_z capture_distance capture_aim_dot capture_hit_distance
+    local capture_position_mode capture_position_valid
 
     first_frame_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
     first_frame_tick="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_TICK=//p' client-smoke-status.txt | tail -1)"
@@ -799,7 +799,8 @@ def render() -> str:
     capture_wisp_z="$(sed -n 's/.* wispZ=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_aim_dot="$(sed -n 's/.* aimDot=\([^ ]*\).*/\1/p' <<<"$capture_camera")"
     capture_distance="$(awk -v px="$capture_player_x" -v py="$capture_player_y" -v pz="$capture_player_z" -v wx="$capture_wisp_x" -v wy="$capture_wisp_y" -v wz="$capture_wisp_z" 'BEGIN { dx=px-wx; dy=py-wy; dz=pz-wz; printf "%.4f", sqrt(dx*dx+dy*dy+dz*dz) }')"
-    if ! [[ "$capture_camera_id" =~ ^[0-9]+$ && "$capture_camera_tick" =~ ^[0-9]+$ && "$capture_player_x" =~ ^[-0-9.]+$ && "$capture_player_y" =~ ^[-0-9.]+$ && "$capture_player_z" =~ ^[-0-9.]+$ && "$capture_wisp_x" =~ ^[-0-9.]+$ && "$capture_wisp_y" =~ ^[-0-9.]+$ && "$capture_wisp_z" =~ ^[-0-9.]+$ && "$capture_aim_dot" =~ ^-?[0-9]+([.][0-9]+)?$ ]] \
+    capture_hit_distance="$(sed -n 's/^WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=//p' client-smoke-status.txt | tail -1)"
+    if ! [[ "$capture_camera_id" =~ ^[0-9]+$ && "$capture_camera_tick" =~ ^[0-9]+$ && "$capture_player_x" =~ ^[-0-9.]+$ && "$capture_player_y" =~ ^[-0-9.]+$ && "$capture_player_z" =~ ^[-0-9.]+$ && "$capture_wisp_x" =~ ^[-0-9.]+$ && "$capture_wisp_y" =~ ^[-0-9.]+$ && "$capture_wisp_z" =~ ^[-0-9.]+$ && "$capture_aim_dot" =~ ^-?[0-9]+([.][0-9]+)?$ && "$capture_hit_distance" =~ ^[0-9]+([.][0-9]+)?$ ]] \
       || [ "$capture_camera_id" != "$capture_id" ] || [ "$capture_camera_tick" != "$capture_tick" ]; then
       echo "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED id=$capture_camera_id tick=$capture_camera_tick distance=$capture_distance aimDot=$capture_aim_dot" | tee -a client-smoke-status.txt
       echo "$capture_camera" >&2
@@ -812,19 +813,16 @@ def render() -> str:
     fi
     capture_position_valid=0
     if [ "$capture_position_mode" = "LIVE_WISP" ]; then
-      capture_reposition_line="$(grep -F 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' client-smoke-status.txt | tail -1 || true)"
-      capture_reposition_x="$(sed -nE 's/.*Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+).*/\1/p' <<<"$capture_reposition_line")"
-      capture_reposition_y="$(sed -nE 's/.*Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+).*/\2/p' <<<"$capture_reposition_line")"
-      capture_reposition_z="$(sed -nE 's/.*Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+).*/\3/p' <<<"$capture_reposition_line")"
-      if [[ "$capture_reposition_x" =~ ^[-0-9.]+$ && "$capture_reposition_y" =~ ^[-0-9.]+$ && "$capture_reposition_z" =~ ^[-0-9.]+$ ]] \
-        && awk -v x="$capture_player_x" -v y="$capture_player_y" -v z="$capture_player_z" \
-          -v rx="$capture_reposition_x" -v ry="$capture_reposition_y" -v rz="$capture_reposition_z" \
-          -v d="$capture_distance" -v dot="$capture_aim_dot" \
-          'BEGIN { dx=x-rx; if (dx<0) dx=-dx; dy=y-ry; if (dy<0) dy=-dy; dz=z-rz; if (dz<0) dz=-dz; exit !(dx <= 0.05 && dy <= 0.05 && dz <= 0.05 && d <= 6.0 && dot >= -1.0001 && dot <= 1.0001) }'; then
+      # The same-ID EntityHitResult and its eye-to-hit-point distance are the
+      # authoritative Survival reach check. The Wisp can move between the
+      # staging teleport and this exact attack frame, so entity-origin distance
+      # and equality with the old teleport coordinates are not reach tests.
+      if awk -v d="$capture_distance" -v hit_d="$capture_hit_distance" -v dot="$capture_aim_dot" \
+        'BEGIN { exit !(d >= 0.0 && d <= 6.0 && hit_d >= 0.0 && hit_d <= 3.01 && dot >= -1.0001 && dot <= 1.0001) }'; then
         capture_position_valid=1
       fi
-    elif awk -v x="$capture_player_x" -v y="$capture_player_y" -v z="$capture_player_z" -v d="$capture_distance" -v dot="$capture_aim_dot" \
-      'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 16.0 && dot >= -1.0001 && dot <= 1.0001) }'; then
+    elif awk -v x="$capture_player_x" -v y="$capture_player_y" -v z="$capture_player_z" -v d="$capture_distance" -v hit_d="$capture_hit_distance" -v dot="$capture_aim_dot" \
+      'BEGIN { exit !(x >= 12.0 && x <= 13.0 && y >= 148.5 && y <= 149.5 && z >= 10.0 && z <= 11.0 && d <= 16.0 && hit_d >= 0.0 && hit_d <= 3.01 && dot >= -1.0001 && dot <= 1.0001) }'; then
       capture_position_valid=1
     fi
     if [ "$capture_position_valid" -ne 1 ]; then

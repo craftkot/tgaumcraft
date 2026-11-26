@@ -608,6 +608,7 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
         capture_player: tuple[float, float, float] = (12.5, 149.0, 10.5),
         capture_wisp: tuple[float, float, float] = (12.5, 149.3, 11.5),
         live_reposition: tuple[float, float, float] | None = None,
+        capture_hit_distance: str = "2.9",
     ) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-first-frame-telemetry-") as directory:
             root = Path(directory)
@@ -632,6 +633,7 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
                 f"WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE={camera_line(3)}",
                 "WISP_RENDER_CAPTURE_ID=157",
                 "WISP_RENDER_CAPTURE_TICK=124",
+                f"WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE={capture_hit_distance}",
             ]
             if live_reposition is not None:
                 rx, ry, rz = live_reposition
@@ -671,12 +673,26 @@ def _test_first_frame_telemetry_uses_selected_frame(generated: str) -> None:
     assert "WISP_CAMERA_CAPTURE_POSITION_MODE=LIVE_WISP" in status, status
     assert "WISP_CAMERA_CAPTURE_TELEMETRY=PASS id=157 tick=124 " in status, status
 
+    drifted_player = (8.373697, 149.0, 9.370661)
+    drifted_wisp = (7.451660, 150.489421, 12.449951)
+    rc, output, status = run_case(
+        1,
+        capture_aim_dot="0.9978064321315476",
+        capture_player=drifted_player,
+        capture_wisp=drifted_wisp,
+        live_reposition=(9.272854, 152.138287, 9.370661),
+        capture_hit_distance="2.745773807242083",
+    )
+    assert rc == 0, (rc, output, status)
+    assert "WISP_CAMERA_CAPTURE_POSITION_MODE=LIVE_WISP" in status, status
+
     rc, output, status = run_case(
         1,
         capture_aim_dot="0.9932838195434261",
         capture_player=live_player,
         capture_wisp=live_wisp,
-        live_reposition=(14.5, 149.0, 11.954202),
+        live_reposition=live_player,
+        capture_hit_distance="3.02",
     )
     assert rc != 0 and "WISP_CAMERA_CAPTURE_TELEMETRY_FAILED mode=LIVE_WISP" in status, (output, status)
 
@@ -1675,6 +1691,7 @@ def main() -> int:
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES'" in generated
     assert "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id" in generated
     assert "d <= 6.0" in generated
+    assert "hit_d <= 3.01" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
     assert "run tp @p ~1.5" not in generated
@@ -2211,6 +2228,40 @@ def main() -> int:
             "even though the Wisp entity origin is 3.25 blocks away",
             verify_wisp_zap_client.verify(live_log, fallback_status, root),
         )
+
+        drifted_camera_line = (
+            "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 "
+            "playerX=8.373697 playerY=149.0 playerZ=9.370661 playerYaw=19.60189 playerPitch=-4.050436 "
+            "playerEyeX=8.373697 playerEyeY=150.62 playerEyeZ=9.370661 "
+            "wispX=7.451660 wispY=150.489421 wispZ=12.449951 "
+            "wispEyeX=7.294556 wispEyeY=151.377760 wispEyeZ=12.449951 "
+            "wispHitboxCenterX=7.451660 wispHitboxCenterY=150.939421 wispHitboxCenterZ=12.449951 "
+            "aimDot=0.9978064321315476 renderAimDot=0.9924763453707298 eyeAimDot=0.9875694611221074"
+        )
+        drifted_log = live_log.replace(live_camera_line, drifted_camera_line, 1)
+        drifted_log = drifted_log.replace(
+            "distance=3.2455 hitDistance=1.6816",
+            "distance=3.5427 hitDistance=2.7458",
+            1,
+        ).replace(
+            "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=3.2455 gameTime=520",
+            "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=3.5427 gameTime=520",
+            1,
+        )
+        drifted_status = fallback_status.replace(live_camera_line, drifted_camera_line)
+        drifted_status = drifted_status.replace(
+            "distance=3.2455 aimDot=0.9932838195434261",
+            "distance=3.5427 aimDot=0.9978064321315476",
+        ).replace(
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=1.6816",
+            "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.7458",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(drifted_log, drifted_status, root) == [], (
+            "the attack-frame camera may drift from the staging teleport; the same-ID hit point "
+            "within 3.01 blocks, not entity-origin distance to the old teleport, proves reach",
+            verify_wisp_zap_client.verify(drifted_log, drifted_status, root),
+        )
         multi_reposition_status = fallback_status.replace(
             "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202",
             "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 10.249775, 149.000000, 9.106951\n"
@@ -2236,7 +2287,7 @@ def main() -> int:
             1,
         )
         mismatch_errors = verify_wisp_zap_client.verify(live_log, mismatched_reposition, root)
-        assert any("did not match the server-confirmed melee teleport" in error for error in mismatch_errors), mismatch_errors
+        assert any("live-reposition attack re-aim coordinates differ from the server-confirmed teleport" in error for error in mismatch_errors), mismatch_errors
         out_of_reach_live_log = live_log.replace(
             "hitDistance=1.6816",
             "hitDistance=3.02",

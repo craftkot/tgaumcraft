@@ -1318,19 +1318,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                         )
                     ):
                         errors.append("live-reposition attack re-aim coordinates differ from the server-confirmed teleport")
+                    attack_hit_distance = float(attack_input.group(3)) if attack_input is not None else math.inf
+                    # The vanilla ray can intersect the Wisp AABB within 3 blocks
+                    # even when the entity-origin distance is greater than 3.
+                    # Validate the actual hit point, not the earlier staging teleport.
                     if not (
-                        abs(attack_px - reposition_x) <= 0.05
-                        and abs(attack_py - reposition_y) <= 0.05
-                        and abs(attack_pz - reposition_z) <= 0.05
-                        and attack_distance <= 6.0
+                        attack_distance <= 6.0
                         and abs(attack_distance - measured_attack_distance) <= 0.1
+                        and attack_input is not None
+                        and 0.0 <= attack_hit_distance <= 3.01
                         and math.isfinite(attack_aim_dot)
                         and -1.0001 <= attack_aim_dot <= 1.0001
                     ):
                         errors.append(
-                            "live-reposition attack camera sample did not match the server-confirmed melee teleport: "
+                            "live-reposition attack camera sample is not backed by a same-frame in-reach EntityHitResult: "
                             f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
-                            f"distance={attack_distance:.3f} aimDot={attack_aim_dot:.4f}"
+                            f"distance={attack_distance:.3f} hitDistance={attack_hit_distance:.3f} "
+                            f"aimDot={attack_aim_dot:.4f}"
                         )
             elif not (
                 12.0 <= attack_px <= 13.0
@@ -1406,19 +1410,22 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 if live_reposition is None:
                     errors.append("live attack-input camera sample lacks a server-confirmed teleport position")
                 else:
-                    reposition_x, reposition_y, reposition_z = map(float, live_reposition.groups())
+                    capture_hit_distance = float(attack_input.group(3)) if attack_input is not None else math.inf
+                    # This is the exact ID/tick already tied to the real InputEvent.
+                    # A moving Wisp may no longer be at the original staging point.
                     if not (
-                        abs(capture_player_x - reposition_x) <= 0.05
-                        and abs(capture_player_y - reposition_y) <= 0.05
-                        and abs(capture_player_z - reposition_z) <= 0.05
-                        and capture_distance <= 6.0
+                        capture_distance <= 6.0
+                        and attack_input is not None
+                        and 0.0 <= capture_hit_distance <= 3.01
+                        and abs(capture_distance - attack_distance) <= 0.1
                         and math.isfinite(capture_aim_dot)
                         and -1.0001 <= capture_aim_dot <= 1.0001
                     ):
                         errors.append(
-                            "live attack-input camera sample did not match the server-confirmed melee teleport: "
+                            "live attack-input camera sample is not tied to a same-frame in-reach EntityHitResult: "
                             f"player=({capture_player_x:.3f},{capture_player_y:.3f},{capture_player_z:.3f}) "
-                            f"distance={capture_distance:.3f} aimDot={capture_aim_dot:.4f}"
+                            f"distance={capture_distance:.3f} hitDistance={capture_hit_distance:.3f} "
+                            f"aimDot={capture_aim_dot:.4f}"
                         )
             elif not (
                 12.0 <= capture_player_x <= 13.0
