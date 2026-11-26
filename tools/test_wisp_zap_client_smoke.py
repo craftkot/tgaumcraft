@@ -286,7 +286,7 @@ def _test_attack_frame_dot_tolerance(generated: str) -> None:
 
 
 def _test_attack_input_frame_correlation(generated: str) -> None:
-    """Correlate the real InputEvent hit point/timestamp with its same-tick rendered frame."""
+    """Correlate InputEvent with the unique same-game-time frame no more than one player tick behind."""
     body = _bash_function_body(generated, "wisp_capture_attack_input_frame")
     function = "  wisp_capture_attack_input_frame() {\n" + body + "\n  }\n"
     attack_input = (
@@ -313,7 +313,7 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
             "hitType=ENTITY targetId=106 targetType=thaumcraft:wisp blockPos=none"
         )
 
-    def run_case(lines: list[str], *, attack_line: str = attack_input) -> tuple[int, str, str]:
+    def run_case(lines: list[str], *, attack_line: str = attack_input, click_cursor: int = 0) -> tuple[int, str, str]:
         with tempfile.TemporaryDirectory(prefix="tc-wisp-input-frame-") as directory:
             root = Path(directory)
             client_dir = root / "client-smoke"
@@ -323,6 +323,7 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
             status_path.write_text("", encoding="utf-8")
             env = os.environ.copy()
             env["ATTACK_INPUT"] = attack_line
+            env["WISP_ATTACK_INPUT_LOG_LINES"] = str(click_cursor)
             harness = (
                 "set -euo pipefail\n"
                 + function
@@ -351,6 +352,26 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     assert math.isclose(float(captured.group(1)), expected_distance, abs_tol=0.00005), output
     assert "WISP_ATTACK_INPUT_FRAME_MONOTONIC_NS=2000000000" in status, status
     assert "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9" in status, status
+
+    # The render-stage sample may be one client player tick behind InputEvent
+    # while both still observe the same level gameTime. It remains valid only
+    # when it is after the click cursor and before the InputEvent line.
+    one_tick_behind = attack_input.replace(" tick=518 monotonicNs=", " tick=519 monotonicNs=")
+    rc, output, status = run_case(base_lines, attack_line=one_tick_behind, click_cursor=5)
+    assert rc == 0, (rc, output, status)
+    assert "CAPTURED_TICK=7 GAME_TIME=553 PLAYER_TICK=518" in output, output
+
+    two_ticks_behind = attack_input.replace(" tick=518 monotonicNs=", " tick=520 monotonicNs=")
+    rc, output, status = run_case(base_lines, attack_line=two_ticks_behind, click_cursor=5)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
+
+    future_frame = attack_input.replace(" tick=518 monotonicNs=", " tick=517 monotonicNs=")
+    rc, output, status = run_case(base_lines, attack_line=future_frame, click_cursor=5)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
+
+    frame_before_click_cursor = 6
+    rc, output, status = run_case(base_lines, click_cursor=frame_before_click_cursor)
+    assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
 
     missing_timestamp = attack_input.replace(" monotonicNs=2000000000", "")
     rc, output, status = run_case(base_lines, attack_line=missing_timestamp)
@@ -2398,6 +2419,22 @@ def main() -> int:
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
                         "tick=22 gameTime=517 playerTick=504 hitType=ENTITY", 1), status, root
         ), "a click more than one game tick after the actual hit-result frame must fail"
+        one_player_tick_lag = log.replace(
+            "hitDistance=2.9 gameTime=520 blockPos=none tick=507 monotonicNs=900000000",
+            "hitDistance=2.9 gameTime=520 blockPos=none tick=508 monotonicNs=900000000",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(one_player_tick_lag, status, root) == [], (
+            "the immediately preceding same-game-time frame must be accepted when one client player tick behind"
+        )
+        two_player_ticks_lag = log.replace(
+            "hitDistance=2.9 gameTime=520 blockPos=none tick=507 monotonicNs=900000000",
+            "hitDistance=2.9 gameTime=520 blockPos=none tick=509 monotonicNs=900000000",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(two_player_ticks_lag, status, root), (
+            "a completed frame two player ticks behind the InputEvent must fail closed"
+        )
         assert verify_wisp_zap_client.verify(
             log.replace("tick=22 gameTime=520 playerTick=507 hitType=ENTITY",
                         "tick=22 gameTime=520 playerTick=504 hitType=ENTITY", 1), status, root
