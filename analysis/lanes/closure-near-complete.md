@@ -1212,3 +1212,9 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Production Java, registries, Gradle, CI workflows, global localization, and other lanes were not changed.
 - The previous full overlap scan for the same three paths covered all 61 other open PRs (#1–#3 and #5–#62) and found no intersections; the current open-PR count remains 62.
 - Next: inspect the exact-`0c5440a` Wisp client run and Full Port CI. Require offline Python contract, generated Bash syntax, real same-ID Survival hit/damage/target/payload, visible FXBolt frame evidence, and clean expiry. If accepted, stop iterating on Wisp harness and move to the next independent M16 visual asset/gameplay gap, beginning with crystal mesh/outline acceptance.
+### 2026-11-26 14:03 CET — exact-SHA CI poll
+
+- Full Port CI PR run [#45827184119](https://github.com/craftkot/tgaumcraft/actions/runs/45827184119) moved to **IN_PROGRESS** on code/test SHA `0c5440a`. Core parity and all listed source/resource checks completed successfully; NeoForge build is currently running; dedicated-server smoke and JAR upload are still pending.
+- Wisp real-client PR run [#45827184383](https://github.com/craftkot/tgaumcraft/actions/runs/45827184383) and Wisp geometry PR run [#45827184512](https://github.com/craftkot/tgaumcraft/actions/runs/45827184512) remain **QUEUED**.
+- Fetching the live Full Port job log returned GitHub `BlobNotFound` while the job was still running; no compile result is inferred from that response.
+- No exact-SHA `0c5440a` NeoForge build, dedicated-server, or real-client PASS is claimed yet.
