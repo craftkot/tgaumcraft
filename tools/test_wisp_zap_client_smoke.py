@@ -842,6 +842,7 @@ def _test_video_frame_extraction(generated: str) -> None:
             extracted,
         )
         assert baseline_match is not None and age_one_match is not None, extracted
+        assert int(baseline_match.group(1)) == 13, extracted
         assert int(baseline_match.group(1)) < int(age_one_match.group(1)), extracted
         rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
         assert rendered_view is not None and int(baseline_match.group(2)) > int(rendered_view.group(1)), extracted
@@ -1050,20 +1051,57 @@ def _test_fxbbolt_segment_detector() -> None:
             side_age, True, side_baseline
         )
         assert not side_errors and side_metrics is not None, (side_errors, side_metrics)
-        assert abs(side_metrics["source_x"] - 700.0) <= 2.0, side_metrics
+        assert 30.0 <= abs(side_metrics["angle_degrees"]) <= 45.0, side_metrics
 
-        missing_source_errors, missing_source_metrics = verify_wisp_zap_client.verify_bolt_segment(
+        no_orb_errors, no_orb_metrics = verify_wisp_zap_client.verify_bolt_segment(
             age_one, True, missing_source
         )
-        assert missing_source_errors and missing_source_metrics is None
-        assert any("no detectable Aer Wisp billboard" in error for error in missing_source_errors)
+        assert not no_orb_errors and no_orb_metrics is not None, (no_orb_errors, no_orb_metrics)
 
         for age_frame in (age_one, age_two, age_three):
             errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
                 age_frame, True, baseline
             )
             assert not errors, (age_frame.name, errors)
-            assert metrics is not None and metrics["length"] >= 24 and metrics["alignment"] >= 0.65
+            assert metrics is not None and metrics["length"] >= 40 and metrics["elongation"] >= 8
+            assert 12 <= abs(metrics["angle_degrees"]) <= 78, metrics
+
+
+        # The Wisp can leave its original screen position during the 20-tick
+        # wind-up. The latest same-camera baseline may contain only the player;
+        # a low-FPS capture may also miss age 1 while still showing ages 2 and 3.
+        moved_baseline = root / "moved-source-baseline.png"
+        moved_age_one = root / "moved-source-age-one.png"
+        moved_age_two = root / "moved-source-age-two.png"
+        moved_age_three = root / "moved-source-age-three.png"
+        moved_expiry = root / "moved-source-expiry.png"
+        moved_expiry_bolt = root / "moved-source-expiry-bolt.png"
+        write_bolt_png(moved_baseline, line=None, source_center=None)
+        write_bolt_png(moved_age_one, line=None, source_center=None)
+        write_bolt_png(moved_age_two, line=(0, 300, 480, 600), alpha=1.0 / 3.0, source_center=None)
+        write_bolt_png(moved_age_three, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
+        write_bolt_png(moved_expiry, line=None, source_center=None)
+        write_bolt_png(moved_expiry_bolt, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
+        cycle_errors, visible_ages, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, moved_age_one), (2, moved_age_two), (3, moved_age_three)),
+            moved_expiry,
+            moved_baseline,
+        )
+        assert not cycle_errors and [age for age, _ in visible_ages] == [2, 3], (
+            cycle_errors, [age for age, _ in visible_ages]
+        )
+        empty_cycle_errors, empty_visible, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, moved_age_one), (2, moved_age_one), (3, moved_age_one)),
+            moved_expiry,
+            moved_baseline,
+        )
+        assert empty_cycle_errors and not empty_visible, empty_cycle_errors
+        expiry_cycle_errors, _, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, moved_age_one), (2, moved_age_two), (3, moved_age_three)),
+            moved_expiry_bolt,
+            moved_baseline,
+        )
+        assert any("after expiry" in error for error in expiry_cycle_errors), expiry_cycle_errors
 
         for rejected in (source_only, blue, misaligned, short, too_dim):
             errors, metrics = verify_wisp_zap_client.verify_bolt_segment(
@@ -1564,6 +1602,7 @@ def main() -> int:
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=22 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=22",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=22 gameTime=520 playerTick=507 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
+        "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES targetWisp=true targetId=17 targetType=thaumcraft:wisp hitType=ENTITY distance=1.0440 hitDistance=2.9 gameTime=520 blockPos=none tick=507 monotonicNs=900000000",
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
@@ -1615,6 +1654,7 @@ def main() -> int:
         "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
         "WISP_ATTACK_INPUT_FRAME_VIDEO_OFFSET=0.083333",
         "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES",
+        "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
         "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
@@ -1630,7 +1670,6 @@ def main() -> int:
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
         "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=19 monotonicNs=1116666667",
-        "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=800000000 frameRate=60",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
