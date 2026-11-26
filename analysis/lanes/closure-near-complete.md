@@ -1176,3 +1176,39 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Exact-SHA validation on df579852c9b5954e612d4579779379570432f5c4: Wisp client push run [#45822575687](https://github.com/craftkot/tgaumcraft/actions/runs/45822575687) passed the BETA26 geometry/offline client-smoke contract and generated Bash syntax; its real Minecraft client step is still **in progress**. PR Wisp client [#45822586261](https://github.com/craftkot/tgaumcraft/actions/runs/45822586261), Wisp geometry [#45822586518](https://github.com/craftkot/tgaumcraft/actions/runs/45822586518), and Full Port CI push/PR [#45822575782](https://github.com/craftkot/tgaumcraft/actions/runs/45822575782) / [#45822586244](https://github.com/craftkot/tgaumcraft/actions/runs/45822586244) are queued. No exact-SHA real-client or full-build PASS is claimed yet.
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED; it is a large 368-file integration set and must not be merged on this evidence. No force-push or merge.
 - No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. Next action: inspect the exact-SHA Wisp client artifact/log after [#45822575687](https://github.com/craftkot/tgaumcraft/actions/runs/45822575687) completes; require same-ID Survival hit, accepted damage, matching payload, age 1–3 visible FXBolt pixel deltas, and a clean expiry frame. Only after that choose the next independent M16 item.
+
+## 2026-11-26 — Wisp Survival evidence stream corrected
+
+**Scope:** M16 visual/sound/resource verification. This iteration fixes a false-negative in the real-client Wisp acceptance verifier; it does not change production Java or award audit points.
+
+- Fresh main remains `a4280834adc5a20b6951098af937d30ca4aeca56`; `ROADMAP_RU.md`, `AGENTS.md`, `analysis/PARALLEL_WORKFLOW_RU.md`, and this fixed audit were reread. M04.1 remains the main roadmap stage; this is isolated closure work on the user-requested branch.
+- The exact-SHA PR client run `45822586261` on `df579852` executed a real Survival click on Wisp ID 180, same-ID EntityHitResult, accepted server damage, target assignment, zap payload `source=180 target=28`, FXBolt age ticks 1/2/3, and expiry. `WISP_ZAP_REAL_CLIENT=PASS`, aim screenshot had 3435 Aer pixels, transient diff 644, and expiry detector found zero visible components.
+- That run failed only in the final verifier because `TC_SMOKE_WISP_PLAYER_SURVIVAL=YES` is written by the shell harness to `client-smoke-status.txt`, not to `client.log`. The verifier incorrectly included it in `REQUIRED_LOG_MARKERS`. The fresh server confirmation (`WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=...`) is also in the status file.
+- The push-triggered client run `45822575687` on the same SHA failed earlier: it did not obtain an EntityHitResult after the live-Wisp reposition and exhausted retries. The PR-triggered run on that SHA did obtain the real hit and completed the effect. This is recorded as a nondeterministic smoke-driver failure, not a production renderer failure.
+
+### Changes
+
+- `tools/verify_wisp_zap_client.py`: moved Survival evidence from `REQUIRED_LOG_MARKERS` to `REQUIRED_STATUS`; now requires the fresh server-confirmation marker, the Survival status marker, the actual click-dispatched marker, and the EntityHitResult status in that order.
+- `tools/test_wisp_zap_client_smoke.py`: moved the synthetic Survival marker into the status fixture and added negative cases for log-only evidence, missing fresh server confirmation, and reversed transition/click order.
+- The first test commit `66f20ce` had a fixture defect: the new test strings contained escaped backslash-n instead of newline delimiters; exact-SHA run `45826579814` caught it. Commit `0ac51676` corrected the delimiters. Removing the Survival line from the synthetic log also shifted two absolute line references; commit `0c5440a` corrected the camera-track and first-frame line numbers from 8/11 to 7/10.
+
+### Commits
+
+- Verifier fix: [`6feca3f`](https://github.com/craftkot/tgaumcraft/commit/6feca3fb3b8b5783445b8a0012aa425a0df9fb76).
+- Regression tests: [`66f20ce`](https://github.com/craftkot/tgaumcraft/commit/66f20ceada549b32898964286883c6bb31d1fda6).
+- Test newline correction: [`0ac51676`](https://github.com/craftkot/tgaumcraft/commit/0ac51676ce878cc995d42ec6bc4e3f8e8632edad).
+- Synthetic frame-line correction: [`0c5440a`](https://github.com/craftkot/tgaumcraft/commit/0c5440ab81c801288768e0a00e41be1ceeba4fcd).
+
+### Exact-SHA CI state at 2026-11-26 14:02 CET
+
+- Wisp real-client PR run [`45827184383`](https://github.com/craftkot/tgaumcraft/actions/runs/45827184383): QUEUED on `0c5440a`.
+- Full Port CI PR run [`45827184119`](https://github.com/craftkot/tgaumcraft/actions/runs/45827184119): QUEUED on `0c5440a`.
+- Wisp geometry PR run [`45827184512`](https://github.com/craftkot/tgaumcraft/actions/runs/45827184512): QUEUED on `0c5440a`.
+- Earlier Wisp run [`45826579814`](https://github.com/craftkot/tgaumcraft/actions/runs/45826579814) failed in the offline test because of the fixture newline bug and shifted line numbers; both were corrected in later commits. No PASS is claimed for `0c5440a` yet.
+
+### Audit and next action
+
+- Fixed audit remains **59/100**; M16 remains **4/6**. No point awarded: this is verifier/test-harness correction, not new gameplay functionality.
+- Production Java, registries, Gradle, CI workflows, global localization, and other lanes were not changed.
+- The previous full overlap scan for the same three paths covered all 61 other open PRs (#1–#3 and #5–#62) and found no intersections; the current open-PR count remains 62.
+- Next: inspect the exact-`0c5440a` Wisp client run and Full Port CI. Require offline Python contract, generated Bash syntax, real same-ID Survival hit/damage/target/payload, visible FXBolt frame evidence, and clean expiry. If accepted, stop iterating on Wisp harness and move to the next independent M16 visual asset/gameplay gap, beginning with crystal mesh/outline acceptance.
