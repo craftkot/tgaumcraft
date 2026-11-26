@@ -1914,10 +1914,10 @@ def main() -> int:
                    for error in missing_rendered_errors), missing_rendered_errors
 
         missing_survival_status = status.replace(
-            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n", "", 1
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\n", "", 1
         )
         log_only_survival_errors = verify_wisp_zap_client.verify(
-            log + "\\nTC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n", missing_survival_status, root
+            log + "\nTC_SMOKE_WISP_PLAYER_SURVIVAL=YES\n", missing_survival_status, root
         )
         assert any(
             "missing real-client status marker: TC_SMOKE_WISP_PLAYER_SURVIVAL=YES" in error
@@ -1925,7 +1925,7 @@ def main() -> int:
         ), log_only_survival_errors
 
         missing_survival_confirmation = status.replace(
-            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n",
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\n",
             "",
             1,
         )
@@ -1938,11 +1938,11 @@ def main() -> int:
         ), missing_confirmation_errors
 
         reversed_survival_status = status.replace(
-            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n"
-            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n"
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\n"
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\n"
             "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
-            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n"
-            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n"
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\n"
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\n"
             "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
             1,
         )
