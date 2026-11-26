@@ -3,7 +3,7 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`74398a598e0a9dfb56d039a46876f9102b640ba8`](https://github.com/craftkot/tgaumcraft/commit/74398a598e0a9dfb56d039a46876f9102b640ba8)
+- Последний code/test SHA: [`bec22826f2c3d208abe2e64c5268176c4bb6a130`](https://github.com/craftkot/tgaumcraft/commit/bec22826f2c3d208abe2e64c5268176c4bb6a130)
 - Предыдущий exact-HEAD Wisp real client [#45743371918](https://github.com/craftkot/tgaumcraft/actions/runs/45743371918) на SHA `78dab469` прошёл offline contract и `bash -n`, запустил настоящий Minecraft, подтвердил same-ID Survival hit, принятый урон, target, payload, FXBolt ages 1/2/3 и expiry, но завершился FAILURE на проверке live-position anchor. Серверный teleport был `(7.330369,149,7.859301)`, а камера на том же attack-input frame — `(7.242381,149,7.635615)`: горизонтальный дрейф около 0.241 блока. При этом `hitDistance=2.39717` (в пределах 3.01) и `aimDot=0.99949`. PNG pixel verifier не запускался; на кадрах 80–82 нет однозначно видимого луча, поэтому визуальная приёмка не доказана.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
@@ -1007,3 +1007,12 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Wisp real-client [#45733958574](https://github.com/craftkot/tgaumcraft/actions/runs/45733958574) and Full Port CI [#45733958578](https://github.com/craftkot/tgaumcraft/actions/runs/45733958578) remain **QUEUED** at the latest poll. The Wisp job has not started; therefore no exact-`ab28420` offline Python, generated Bash, NeoForge build, dedicated-server, or Minecraft-client PASS is claimed.
 - Current PR #4 head after the lane update will be recorded by GitHub; PR remains OPEN / DRAFT / UNMERGED. The code/test change is [`ab28420`](https://github.com/craftkot/tgaumcraft/commit/ab2842099990c05495ae79a7c1f6668abd7e99ee). Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`.
 - No audit change: **59/100**. Next action remains to inspect the exact-SHA Wisp client job and only proceed to gameplay if the offline contract and generated Bash syntax pass.
+
+
+## 2026-11-26 — исправлен порядок offline-регрессии pre-Survival knockback
+
+- Exact-SHA Wisp client [#45744911090](https://github.com/craftkot/tgaumcraft/actions/runs/45744911090) на code SHA `74398a5` завершился FAILURE до генерации Bash и запуска Minecraft. Geometry (37 assertions) и atlas (24 assertions) прошли; Python contract упал на sequence assertion: она всё ещё требовала `target_index < stabilize_index`, хотя команда knockback resistance уже была перенесена до attack helper.
+- Это дефект тестового порядка, а не игровой код. Исправлен коммитом [`bec2282`](https://github.com/craftkot/tgaumcraft/commit/bec22826f2c3d208abe2e64c5268176c4bb6a130): теперь контракт требует `preposition → knockback resistance confirmation → attack helper/Survival → accepted hit/target → zap capture`. Файл: `tools/test_wisp_zap_client_smoke.py`.
+- Code commit [`74398a5`](https://github.com/craftkot/tgaumcraft/commit/74398a598e0a9dfb56d039a46876f9102b640ba8) остаётся неизменным: knockback resistance устанавливается и подтверждается в Creative до Survival, а строгая позиционная проверка 0.05 блока не ослаблена.
+- Full Port CI [#45744911015](https://github.com/craftkot/tgaumcraft/actions/runs/45744911015) и Wisp geometry [#45744911106](https://github.com/craftkot/tgaumcraft/actions/runs/45744911106) — SUCCESS на `74398a5`. Exact-current-head Wisp client [#45745101792](https://github.com/craftkot/tgaumcraft/actions/runs/45745101792), Full Port CI [#45745101732](https://github.com/craftkot/tgaumcraft/actions/runs/45745101732), Wisp geometry [#45745101765](https://github.com/craftkot/tgaumcraft/actions/runs/45745101765) и Aura/Crystal GameTests [#45745101795](https://github.com/craftkot/tgaumcraft/actions/runs/45745101795) были QUEUED на последнем опросе.
+- Фиксированный аудит остаётся **59/100**, M16 **4/6**, M08 **5/9**. Следующий шаг: дождаться exact-current-head Wisp run; если он пройдёт telemetry, проверить PNG pixel delta и наличие луча, не засчитывая только renderer callbacks.
