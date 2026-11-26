@@ -1027,7 +1027,7 @@ def _test_fxbbolt_segment_detector() -> None:
         age_one = root / "age-one.png"
         side_baseline = root / "side-baseline.png"
         side_age = root / "side-age.png"
-        missing_source = root / "missing-source.png"
+        no_orb_baseline = root / "no-orb-baseline.png"
         age_two = root / "age-two.png"
         age_three = root / "age-three.png"
         blue = root / "blue-line.png"
@@ -1045,7 +1045,7 @@ def _test_fxbbolt_segment_detector() -> None:
         write_bolt_png(too_dim, alpha=0.005)
         write_bolt_png(side_baseline, line=None, source_center=(700, 400))
         write_bolt_png(side_age, line=(700, 432, 512, 572), alpha=0.1, source_center=(700, 400))
-        write_bolt_png(missing_source, line=None, source_center=None)
+        write_bolt_png(no_orb_baseline, line=None, source_center=None)
 
         side_errors, side_metrics = verify_wisp_zap_client.verify_bolt_segment(
             side_age, True, side_baseline
@@ -1054,7 +1054,7 @@ def _test_fxbbolt_segment_detector() -> None:
         assert 30.0 <= abs(side_metrics["angle_degrees"]) <= 45.0, side_metrics
 
         no_orb_errors, no_orb_metrics = verify_wisp_zap_client.verify_bolt_segment(
-            age_one, True, missing_source
+            age_one, True, no_orb_baseline
         )
         assert not no_orb_errors and no_orb_metrics is not None, (no_orb_errors, no_orb_metrics)
 
@@ -1704,8 +1704,8 @@ def main() -> int:
             elif name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
                 write_bolt_png(target)
             elif name == verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT:
-                # The same-perspective control must contain the actual Wisp billboard.
-                write_bolt_png(target, line=None)
+                # The latest pre-payload control can be off the moving Wisp; it must match the camera/scene.
+                write_bolt_png(target, line=None, source_center=None)
             elif name == "83-wisp-zap-after-expiry.png":
                 write_bolt_png(target, line=None)
             else:
