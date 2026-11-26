@@ -46,6 +46,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CAMERA_TRACK=YES",
     "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES",
     "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES",
+    "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES",
     "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -90,6 +91,7 @@ REQUIRED_STATUS = (
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
     "WISP_CAMERA_SIDE_VIEW=YES id=",
+    "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=",
     "WISP_ZAP_PAYLOAD_RECEIVED=YES source=",
     "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
     "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES",
@@ -549,6 +551,11 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         r"(?m)^WISP_CAMERA_SIDE_VIEW=YES id=(\d+) monotonicNs=(\d+)$",
         status_text,
     )
+    side_view_rendered = _first(
+        r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=([-0-9.]+) yaw=([-0-9.]+) "
+        r"pitch=([-0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)$",
+        status_text,
+    )
     payload = _first(
         r"(?m)^WISP_ZAP_PAYLOAD_RECEIVED=YES source=(\d+) target=(\d+) createdAt=(\d+) monotonicNs=(\d+)$",
         status_text,
@@ -566,15 +573,30 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append(f"expected three timestamped Wisp render observations, got {len(observed)}")
     if side_view is None:
         errors.append("missing attack-event side-view monotonic timestamp")
+    if side_view_rendered is None:
+        errors.append("missing AFTER_ENTITIES third-person side-view confirmation")
     if payload is None:
         errors.append("missing client zap-payload monotonic timestamp")
-    if started is None or side_view is None or payload is None or len(observed) != 3 or errors:
+    if started is None or side_view is None or side_view_rendered is None or payload is None or len(observed) != 3 or errors:
         return errors
 
-    if side_view.group(1) != payload.group(1):
+    if side_view.group(1) != payload.group(1) or side_view_rendered.group(1) != payload.group(1):
         errors.append("side-view camera and zap payload belong to different Wisp source IDs")
-    if int(side_view.group(2)) >= int(payload.group(4)):
-        errors.append("side-view camera was not established before zap payload receipt")
+    side_view_ns = int(side_view.group(2))
+    side_view_rendered_ns = int(side_view_rendered.group(6))
+    payload_ns = int(payload.group(4))
+    if side_view_ns >= side_view_rendered_ns:
+        errors.append("AFTER_ENTITIES side-view confirmation did not follow the AttackEntityEvent camera switch")
+    if side_view_rendered_ns >= payload_ns:
+        errors.append("third-person side-view frame was not confirmed before zap payload receipt")
+    beam_yaw, rendered_yaw, rendered_pitch, camera_distance = map(float, side_view_rendered.groups()[1:5])
+    yaw_delta = (rendered_yaw - beam_yaw + 180.0) % 360.0 - 180.0
+    if abs(yaw_delta - 50.0) > 1.0:
+        errors.append(f"rendered side-view yaw is not 50 degrees from the zap axis: {yaw_delta:.2f}")
+    if abs(rendered_pitch) > 1.0:
+        errors.append(f"rendered side-view camera pitch is not horizontal: {rendered_pitch:.2f}")
+    if camera_distance < 3.0:
+        errors.append(f"third-person side-view camera was obstructed/too close: {camera_distance:.2f} blocks")
     if [int(frame[2]) for frame in observed] != [1, 2, 3]:
         errors.append("timestamped Wisp render observations are not ages 1, 2, 3")
     if len({(frame[0], frame[1]) for frame in observed}) != 1:
@@ -625,14 +647,14 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         side_view_ns = int(side_view.group(2))
         payload_ns = int(payload.group(4))
         frame_period_ns = 1_000_000_000.0 / fps
-        if side_view_ns <= first_frame_ns:
-            raise RuntimeError("side-view camera timestamp predates the first recorded video frame")
-        if payload_ns - side_view_ns < frame_period_ns * 3.0:
+        if side_view_rendered_ns <= first_frame_ns:
+            raise RuntimeError("render-stage side-view timestamp predates the first recorded video frame")
+        if payload_ns - side_view_rendered_ns < frame_period_ns * 3.0:
             raise RuntimeError(
-                "no safe pre-payload video window: side-view-to-payload interval is shorter than three frames"
+                "no safe pre-payload video window after the actual third-person camera frame"
             )
         baseline_first = max(
-            0, int(math.floor((side_view_ns - first_frame_ns) * fps / 1_000_000_000.0)) + 1
+            0, int(math.floor((side_view_rendered_ns - first_frame_ns) * fps / 1_000_000_000.0)) + 1
         )
         baseline_last = min(
             frame_count - 1,
@@ -685,9 +707,9 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                     "no pre-payload third-person frame contains a detectable Aer Wisp billboard"
                 )
             baseline_monotonic_ns = first_frame_ns + int(round(baseline_index * 1_000_000_000.0 / fps))
-            if not side_view_ns < baseline_monotonic_ns < payload_ns:
+            if not side_view_rendered_ns < baseline_monotonic_ns < payload_ns:
                 raise RuntimeError(
-                    "selected Wisp baseline frame is not strictly between side-view setup and zap payload"
+                    "selected Wisp baseline frame is not strictly after the rendered third-person side view and before zap payload"
                 )
             # Persist the selected same-camera baseline before the temporary
             # extraction directory is removed. The later pixel verifier needs
@@ -807,6 +829,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) beamYaw=(-?[0-9.]+) yaw=(-?[0-9.]+) "
         r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK monotonicNs=(\d+)", log_text
     )
+    side_view_rendered = _first(
+        r"TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=(-?[0-9.]+) yaw=(-?[0-9.]+) "
+        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)", log_text
+    )
     pre_attack_track = _first(
         r"TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=(\d+) tick=(\d+) gameTime=(\d+)",
         log_text,
@@ -830,6 +856,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                          ("pre-attack Wisp camera tracking", pre_attack_track),
                          ("camera aim lock stopped after real hit", camera_stopped),
                          ("third-person-back side-view camera", side_view),
+                         ("rendered third-person side-view frame", side_view_rendered),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
                          ("same-frame Wisp EntityHitResult", attackable_frame),
@@ -850,16 +877,33 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("side-view camera and zap payload refer to different source entities")
         if int(side_view.group(5)) >= int(received.group(6)):
             errors.append("side-view camera was selected after the client received the zap payload")
+    if side_view and side_view_rendered:
+        if side_view.group(1) != side_view_rendered.group(1):
+            errors.append("rendered side-view frame belongs to a different Wisp than the attack camera switch")
+        if int(side_view.group(5)) >= int(side_view_rendered.group(6)):
+            errors.append("rendered third-person side-view frame predates the attack camera switch")
+    if side_view_rendered and received and int(side_view_rendered.group(6)) >= int(received.group(6)):
+        errors.append("rendered third-person side-view frame was selected after the client received the zap payload")
     if side_view:
         beam_yaw = float(side_view.group(2))
         yaw = float(side_view.group(3))
         pitch = float(side_view.group(4))
         yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
-        if abs(abs(yaw_delta) - 90.0) > 5.0 or abs(pitch) > 5.0:
+        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch) > 1.0:
             errors.append(
                 f"camera is not side-on to the zap: beamYaw={beam_yaw:.2f} "
                 f"yaw={yaw:.2f} pitch={pitch:.2f}"
             )
+    if side_view_rendered:
+        rendered_beam_yaw = float(side_view_rendered.group(2))
+        rendered_yaw = float(side_view_rendered.group(3))
+        rendered_pitch = float(side_view_rendered.group(4))
+        rendered_distance = float(side_view_rendered.group(5))
+        rendered_delta = (rendered_yaw - rendered_beam_yaw + 180.0) % 360.0 - 180.0
+        if abs(rendered_delta - 50.0) > 1.0 or abs(rendered_pitch) > 1.0:
+            errors.append("render-stage camera did not preserve the 50-degree horizontal side view")
+        if rendered_distance < 3.0:
+            errors.append(f"render-stage third-person camera distance is too short: {rendered_distance:.2f}")
     if wisp_camera and wisp_rendered:
         if wisp_camera.group(1) != wisp_rendered.group(1):
             errors.append("camera sample and rendered Wisp use different entity IDs")
@@ -1180,10 +1224,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"(?m)^WISP_ATTACK_CAMERA_REAIM=(PREAIMED_NEXT_FRAME|LIVE_ENTITY_FACING)(?: (.+))?$",
         status_text,
     )
-    live_reposition = _first(
-        r"(?m)^WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION .*?Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+)",
-        status_text,
+    live_reposition_pattern = re.compile(
+        r"(?m)^WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION .*?Teleported Dev to ([0-9.+-]+), ([0-9.+-]+), ([0-9.+-]+)"
     )
+    live_reposition_matches = list(live_reposition_pattern.finditer(status_text))
+    prior_live_repositions = [
+        match for match in live_reposition_matches
+        if attack_camera_reaim is not None and match.start() < attack_camera_reaim.start()
+    ]
+    live_reposition = prior_live_repositions[-1] if prior_live_repositions else None
     attack_trigger_frame_status = _first(
         r"(?m)^WISP_ATTACKABLE_FRAME=YES id=(\d+) tick=(\d+) hitType=ENTITY targetId=(\d+) position=(PLATFORM|LIVE_WISP) gameTime=(\d+) playerTick=(\d+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
         status_text,

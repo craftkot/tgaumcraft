@@ -730,7 +730,8 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     # Deliberately omit post-zap Wisp entity-frame markers; FXBolt markers are authoritative.
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
@@ -802,6 +803,7 @@ def _test_video_frame_extraction(generated: str) -> None:
         status_file.write_text("\n".join((
             "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=1000000000 frameRate=60",
             "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
+            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
             "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
@@ -841,6 +843,8 @@ def _test_video_frame_extraction(generated: str) -> None:
         )
         assert baseline_match is not None and age_one_match is not None, extracted
         assert int(baseline_match.group(1)) < int(age_one_match.group(1)), extracted
+        rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
+        assert rendered_view is not None and int(baseline_match.group(2)) > int(rendered_view.group(1)), extracted
         assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted
         assert extracted.count("WISP_ZAP_VIDEO_FRAME_INDEX=YES") == 3, extracted
         assert [f"ageTick={age} " in extracted for age in (1, 2, 3)] == [True, True, True], extracted
@@ -1326,7 +1330,9 @@ def main() -> int:
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
     side_view_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES'", camera_stopped_index)
     side_view_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW=YES id=$side_view_id monotonicNs=$side_view_monotonic_ns"', side_view_wait_index)
-    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_status_index)
+    side_view_rendered_wait_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES'", side_view_status_index)
+    side_view_rendered_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id', side_view_rendered_wait_index)
+    hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_rendered_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", target_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
@@ -1338,7 +1344,7 @@ def main() -> int:
     perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_restore_second_index = setup.index("xdotool key --clearmodifiers F5", perspective_restore_index + 1)
     restore_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < preposition_index < preposition_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < preposition_index < preposition_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < stabilize_index < stabilize_marker_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
         "keep the player Creative through Wisp spawn, preposition at the live entity, then enter Survival for the real hit before the zap payload"
     )
     main_before_attack = setup[rendered_index:attack_call_index]
@@ -1500,6 +1506,8 @@ def main() -> int:
     assert "d <= 3.0" in generated
     assert "capture_position_mode=LIVE_WISP" in generated
     assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION" in generated
+    assert "wisp_wait_for_marker 'TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES'" in generated
+    assert "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id" in generated
     assert "d <= 6.0" in generated
     assert "wisp_wait_for_marker 'TC_SMOKE_WISP_PRESENT_FOR_AIM=YES'" not in generated
     assert "execute as @p at @s anchored eyes facing entity" not in generated
@@ -1556,7 +1564,8 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
         "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=17",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=90.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0",
@@ -1604,6 +1613,7 @@ def main() -> int:
         "WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
+        "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_RENDER_CAPTURE_ID=17",
         "WISP_RENDER_CAPTURE_TICK=22",
@@ -1615,7 +1625,7 @@ def main() -> int:
         "WISP_CAMERA_TELEMETRY=PASS id=17 tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 distance=1.0440 aimDot=0.999",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
-        "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000",
+        "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=19 monotonicNs=1116666667",
         "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
         "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=800000000 frameRate=60",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
@@ -1698,6 +1708,15 @@ def main() -> int:
         assert any("missing real-client status marker: WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD" in error
                    for error in missing_capture_errors), missing_capture_errors
 
+        missing_rendered_side_view = status.replace(
+            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000\n",
+            "",
+            1,
+        )
+        missing_rendered_errors = verify_wisp_zap_client.verify(log, missing_rendered_side_view, root)
+        assert any("missing real-client status marker: WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=" in error
+                   for error in missing_rendered_errors), missing_rendered_errors
+
         missing_elevated_errors = verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_SOURCE_ELEVATED=YES\n", "", 1), status, root
         )
@@ -1709,15 +1728,15 @@ def main() -> int:
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
         wrong_side_view_errors = verify_wisp_zap_client.verify(
-            log.replace("yaw=90.0", "yaw=0.0", 1), status, root
+            log.replace("yaw=50.0", "yaw=0.0", 1), status, root
         )
         assert any("camera is not side-on" in error for error in wrong_side_view_errors), wrong_side_view_errors
         misaligned_side_view_errors = verify_wisp_zap_client.verify(
-            log.replace("beamYaw=0.0 yaw=90.0", "beamYaw=45.0 yaw=90.0", 1), status, root
+            log.replace("beamYaw=0.0 yaw=50.0", "beamYaw=45.0 yaw=50.0", 1), status, root
         )
         assert any("camera is not side-on" in error for error in misaligned_side_view_errors), misaligned_side_view_errors
         wrapped_side_view_errors = verify_wisp_zap_client.verify(
-            log.replace("beamYaw=0.0 yaw=90.0", "beamYaw=170.0 yaw=-100.0", 1), status, root
+            log.replace("beamYaw=0.0 yaw=50.0", "beamYaw=170.0 yaw=-140.0", 1), status, root
         )
         assert wrapped_side_view_errors == [], wrapped_side_view_errors
         first_person_errors = verify_wisp_zap_client.verify(
@@ -1998,6 +2017,25 @@ def main() -> int:
             "even though the Wisp entity origin is 3.25 blocks away",
             verify_wisp_zap_client.verify(live_log, fallback_status, root),
         )
+        multi_reposition_status = fallback_status.replace(
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202",
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 10.249775, 149.000000, 9.106951\n"
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202",
+            1,
+        )
+        assert verify_wisp_zap_client.verify(live_log, multi_reposition_status, root) == [], (
+            "the verifier must associate a successful attack with the latest of multiple live repositions",
+            verify_wisp_zap_client.verify(live_log, multi_reposition_status, root),
+        )
+        stale_first_match_latest_mismatch = fallback_status.replace(
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202",
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.361148, 149.000000, 11.954202\n"
+            "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 14.500000, 149.000000, 11.954202",
+            1,
+        )
+        latest_mismatch_errors = verify_wisp_zap_client.verify(live_log, stale_first_match_latest_mismatch, root)
+        assert any("live-reposition attack re-aim coordinates differ from the server-confirmed teleport" in error
+                   for error in latest_mismatch_errors), latest_mismatch_errors
         mismatched_reposition = fallback_status.replace(
             "Teleported Dev to 14.361148, 149.000000, 11.954202",
             "Teleported Dev to 14.500000, 149.000000, 11.954202",
@@ -2196,14 +2234,29 @@ def main() -> int:
     assert "aimCameraAtWisp = false" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" in attack_probe
     assert "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" in attack_probe
+    assert "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=" in attack_probe
     assert "minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK)" in attack_probe
     assert "Vec3 toWisp = wisp.position().subtract(minecraft.player.position());" in attack_probe
     assert "Math.atan2(-toWisp.x, toWisp.z)" in attack_probe
-    assert "float sideViewYaw = Mth.wrapDegrees(beamYaw + 90.0F);" in attack_probe
+    assert "SIDE_VIEW_OFFSET_DEGREES = 50.0F" in attack_probe
+    assert "sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);" in attack_probe
+    assert "RenderLevelStageEvent.Stage.AFTER_ENTITIES" in attack_probe
+    assert "MIN_SIDE_VIEW_CAMERA_DISTANCE = 3.0D" in attack_probe
+    assert "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES" in attack_probe
     assert "minecraft.player.setYRot(sideViewYaw)" in attack_probe
     assert "minecraft.player.setYRot(90.0F)" not in attack_probe
-    assert ' + " beamYaw=" + beamYaw' in attack_probe
+    assert ' + " beamYaw=" + beamYawForSideView' in attack_probe
     assert "System.nanoTime()" in attack_probe
+    beam_offset = math.radians(50.0)
+    camera_distance = 3.0
+    source_distance = 2.8
+    horizontal_fov = 2.0 * math.degrees(math.atan(math.tan(math.radians(70.0 / 2.0)) * 4.0 / 3.0))
+    apparent_source_angle = math.degrees(math.atan2(source_distance * math.sin(beam_offset), camera_distance + source_distance * math.cos(beam_offset)))
+    source_x = verify_wisp_zap_client.VIEWPORT_WIDTH / 2.0 - math.tan(math.radians(apparent_source_angle)) / math.tan(math.radians(horizontal_fov / 2.0)) * verify_wisp_zap_client.VIEWPORT_WIDTH / 2.0
+    roi_width, _, roi_left, _ = verify_wisp_zap_client.BOLT_ROI
+    assert roi_left <= source_x <= roi_left + roi_width, (source_x, horizontal_fov)
+    assert roi_left <= verify_wisp_zap_client.VIEWPORT_WIDTH - source_x <= roi_left + roi_width
+    assert math.sin(beam_offset) >= 0.65, math.sin(beam_offset)
     assert "hitDistance=" in attack_probe
     assert "minecraft.player.getEyePosition().distanceTo(hit.getLocation())" in attack_probe
     assert "monotonicNs=" in attack_probe

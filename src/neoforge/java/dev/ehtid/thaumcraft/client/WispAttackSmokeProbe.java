@@ -17,6 +17,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 
 /**
@@ -35,9 +36,13 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 public final class WispAttackSmokeProbe {
     private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";
+    private static final float SIDE_VIEW_OFFSET_DEGREES = 50.0F;
+    private static final double MIN_SIDE_VIEW_CAMERA_DISTANCE = 3.0D;
     private static int trackedWispId = -1;
     private static boolean aimCameraAtWisp = true;
-    private static boolean sideViewLogged;
+    private static boolean sideViewFrameLogged;
+    private static float beamYawForSideView;
+    private static float sideViewYaw;
 
     private WispAttackSmokeProbe() {}
 
@@ -95,7 +100,7 @@ public final class WispAttackSmokeProbe {
         if (minecraft.level == null || minecraft.player == null) {
             trackedWispId = -1;
             aimCameraAtWisp = true;
-            sideViewLogged = false;
+            sideViewFrameLogged = false;
             return;
         }
 
@@ -114,7 +119,7 @@ public final class WispAttackSmokeProbe {
             if (smokeTarget != null) {
                 trackedWispId = smokeTarget.getId();
                 aimCameraAtWisp = true;
-                sideViewLogged = false;
+                sideViewFrameLogged = false;
                 System.out.println("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=" + trackedWispId
                         + " tick=" + smokeTarget.tickCount
                         + " gameTime=" + minecraft.level.getGameTime());
@@ -128,21 +133,11 @@ public final class WispAttackSmokeProbe {
         if (!(target instanceof WispEntity wisp) || !wisp.isAlive()) {
             trackedWispId = -1;
             aimCameraAtWisp = true;
-            sideViewLogged = false;
+            sideViewFrameLogged = false;
             return;
         }
 
         if (!aimCameraAtWisp) {
-            float yaw = Mth.wrapDegrees(minecraft.player.getYRot());
-            float pitch = minecraft.player.getXRot();
-            if (!sideViewLogged
-                    && "THIRD_PERSON_BACK".equals(minecraft.options.getCameraType().name())
-                    && Math.abs(Math.abs(yaw) - 90.0F) <= 5.0F
-                    && Math.abs(pitch) <= 5.0F) {
-                sideViewLogged = true;
-                System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
-                        + " yaw=" + yaw + " pitch=" + pitch + " cameraType=THIRD_PERSON_BACK");
-            }
             return;
         }
 
@@ -167,7 +162,7 @@ public final class WispAttackSmokeProbe {
         if (event.getTarget() instanceof WispEntity wisp) {
             trackedWispId = wisp.getId();
             aimCameraAtWisp = false;
-            sideViewLogged = false;
+            sideViewFrameLogged = false;
             System.out.println("TC_SMOKE_WISP_CAMERA_TRACK=YES id=" + trackedWispId);
             System.out.println("TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" + trackedWispId);
             long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
@@ -184,13 +179,13 @@ public final class WispAttackSmokeProbe {
             // a fixed world yaw can accidentally look almost straight down the bolt.
             Vec3 toWisp = wisp.position().subtract(minecraft.player.position());
             float beamYaw = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-toWisp.x, toWisp.z)));
-            float sideViewYaw = Mth.wrapDegrees(beamYaw + 90.0F);
+            beamYawForSideView = beamYaw;
+            sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);
             minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
             minecraft.player.setYRot(sideViewYaw);
             minecraft.player.yRotO = sideViewYaw;
             minecraft.player.setXRot(0.0F);
             minecraft.player.xRotO = 0.0F;
-            sideViewLogged = true;
             long monotonicNs = System.nanoTime();
             System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
                     + " beamYaw=" + beamYaw
@@ -199,5 +194,49 @@ public final class WispAttackSmokeProbe {
                     + " cameraType=" + minecraft.options.getCameraType().name()
                     + " monotonicNs=" + monotonicNs);
         }
+    }
+
+    @SubscribeEvent
+    public static void onRenderLevelStage(RenderLevelStageEvent event) {
+        if (!ENABLED
+                || event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES
+                || trackedWispId < 0
+                || aimCameraAtWisp
+                || sideViewFrameLogged) {
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null
+                || minecraft.options.getCameraType() != CameraType.THIRD_PERSON_BACK) {
+            return;
+        }
+
+        Entity target = minecraft.level.getEntity(trackedWispId);
+        if (!(target instanceof WispEntity wisp) || !wisp.isAlive()) {
+            return;
+        }
+
+        float yaw = Mth.wrapDegrees(minecraft.player.getYRot());
+        float pitch = minecraft.player.getXRot();
+        if (Math.abs(Mth.wrapDegrees(yaw - sideViewYaw)) > 1.0F
+                || Math.abs(pitch) > 1.0F) {
+            return;
+        }
+
+        Vec3 cameraPosition = event.getCamera().getPosition();
+        double cameraDistance = cameraPosition.distanceTo(minecraft.player.getEyePosition());
+        if (cameraDistance < MIN_SIDE_VIEW_CAMERA_DISTANCE) {
+            return;
+        }
+
+        sideViewFrameLogged = true;
+        System.out.println("TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=" + trackedWispId
+                + " beamYaw=" + beamYawForSideView
+                + " yaw=" + yaw
+                + " pitch=" + pitch
+                + " cameraType=" + minecraft.options.getCameraType().name()
+                + " cameraDistance=" + cameraDistance
+                + " monotonicNs=" + System.nanoTime());
     }
 }
