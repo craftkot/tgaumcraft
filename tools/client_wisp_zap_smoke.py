@@ -332,19 +332,23 @@ def render() -> str:
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    local player_x player_y player_z player_block_x player_block_y player_block_z support_log_lines
+    local player_x player_y player_z support_log_lines support_match support_relative_line support_line_number support_attempt
+    local support_marker='TC_SMOKE_WISP_MELEE_SUPPORT=YES'
     # Stage the player beside the exact tagged smoke entity while still Creative.
     # WispEntity clears Creative targets before its 20-tick zap wind-up; the
-    # first Survival attack therefore establishes the target through hurt().
-    # This moves only the player. Wisp AI, motion and target remain live.
-    # Build the support surface before teleporting: placing it afterwards lets
-    # the falling player pass the intended floor and leaves an overhead blocker.
+    # first Survival attack therefore establishes the target through hurt(). This
+    # moves only the player. Wisp AI, motion and target remain live.
+    # A Wisp can bob vertically between the fill and teleport chat round-trips.
+    # Keep a wider floor at the Wisp's -2 Y level, teleport at its current Y,
+    # then query the block under the player's actual post-teleport feet. Do not
+    # infer footing from the earlier teleport response: the entity may have moved.
     support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone' 0.1 1
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.1 1
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2' | tee -a client-smoke-status.txt
-    # Resolve facing against the same tagged Wisp, rather than a relative point whose rotation stayed stale in the real client.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes' 0.1 1
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2 radius=3' | tee -a client-smoke-status.txt
+    # Match the Wisp's current height. A one-block fall onto the prebuilt floor
+    # is safe; the support probe below waits for the server to resolve that fall.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.1 1
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -356,29 +360,29 @@ def render() -> str:
           echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
           exit 1
         fi
-        read -r player_block_x player_block_y player_block_z < <(
-          awk -v x="$player_x" -v y="$player_y" -v z="$player_z" '
-            function floor_value(value, integer) {
-              integer = int(value)
-              return value < integer ? integer - 1 : integer
-            }
-            BEGIN {
-              printf "%d %d %d\n", floor_value(x), floor_value(y) - 1, floor_value(z)
-            }'
-        )
-        if ! [[ "$player_block_x" =~ ^-?[0-9]+$ && "$player_block_y" =~ ^-?[0-9]+$ && "$player_block_z" =~ ^-?[0-9]+$ ]]; then
-          echo "WISP_CAMERA_SUPPORT_COORDINATES_INVALID=$player_block_x,$player_block_y,$player_block_z" | tee -a client-smoke-status.txt
-          exit 1
-        fi
-        # Confirm the prebuilt Wisp-relative floor is actually beneath the
-        # server-confirmed teleport destination before switching to Survival.
-        support_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_fast_command "/execute if block $player_block_x $player_block_y $player_block_z minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES" 0.1 1
-        wisp_wait_for_fresh_log_marker "$support_log_lines" "TC_SMOKE_WISP_MELEE_SUPPORT=YES"
-        echo "WISP_CAMERA_SUPPORT_PLATFORM=YES x=$player_block_x y=$player_block_y z=$player_block_z" | tee -a client-smoke-status.txt
-        echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
-        echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
-        return 0
+        # The player may still be falling when the teleport response arrives.
+        # Re-query the live block below the player's feet until the floor is
+        # actually supporting them; fail closed if no fresh marker is observed.
+        for support_attempt in $(seq 1 8); do
+          support_log_lines="$(wc -l < client-smoke/client.log)"
+          wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.1 1
+          for _ in $(seq 1 20); do
+            support_match="$(tail -n +"$((support_log_lines + 1))" client-smoke/client.log | grep -n -F -- "$support_marker" | head -1 || true)"
+            if [ -n "$support_match" ]; then
+              support_relative_line="${support_match%%:*}"
+              support_line_number="$((support_log_lines + support_relative_line))"
+              echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$support_marker line=$support_line_number" | tee -a client-smoke-status.txt
+              echo "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=actual_player_feet attempt=$support_attempt" | tee -a client-smoke-status.txt
+              echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
+              echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
+              return 0
+            fi
+            sleep 0.025
+          done
+        done
+        echo 'WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES afterAttempts=8' | tee -a client-smoke-status.txt
+        tail -120 client-smoke/client.log >&2
+        exit 1
       fi
       sleep 0.025
     done
