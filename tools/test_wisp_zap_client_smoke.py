@@ -1334,7 +1334,7 @@ def main() -> int:
     side_view_rendered_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id', side_view_rendered_wait_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_rendered_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
-    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", preposition_marker_index)
+    stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", rendered_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
     zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', target_index)
     attack_frame_extract_index = setup.index("wisp_extract_attack_input_frame", zap_capture_index)
@@ -1344,14 +1344,16 @@ def main() -> int:
     perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_restore_second_index = setup.index("xdotool key --clearmodifiers F5", perspective_restore_index + 1)
     restore_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < preposition_index < preposition_marker_index < stabilize_index < stabilize_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < stabilize_index < stabilize_marker_index < preposition_index < preposition_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
         "keep the player Creative through Wisp spawn, preposition at the live entity, then enter Survival for the real hit before the zap payload"
     )
     main_before_attack = setup[rendered_index:attack_call_index]
     assert "wisp_command '/gamemode survival'" not in main_before_attack, "Survival must not begin before the live melee position is staged"
     assert "wisp_move_player_to_live_wisp" in main_before_attack
     assert "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'" in main_before_attack
+    assert main_before_attack.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'") < main_before_attack.index("wisp_move_player_to_live_wisp"), "knockback setup must finish before the final live-Wisp teleport"
     assert "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL" in main_before_attack
+    assert "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'" not in setup[preposition_marker_index:attack_call_index], "no slow setup command may follow the final live-Wisp reposition"
     assert "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1" not in setup
     assert "wisp_capture 79-wisp-third-person-before-zap" not in setup
     assert "wisp_verify_attack_input_aim_capture" not in setup[restore_marker_index:]

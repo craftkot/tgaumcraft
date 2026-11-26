@@ -886,18 +886,19 @@ def render() -> str:
   echo 'WISP_ZAP_AIM=PREAIMED_SPAWN' | tee -a client-smoke-status.txt
   wisp_wait_for_fresh_render "$aim_log_lines"
 
-  # Reposition beside the exact live Wisp while the player is still Creative.
-  # The Survival transition happens inside the attack helper immediately before
-  # the next real same-ID EntityHitResult click.
+  # Set knockback resistance while the player is still safely Creative and
+  # BEFORE the final live-Wisp reposition. The attribute command has a chat
+  # round-trip; placing it after teleport lets the moving Wisp leave the melee
+  # acquisition window before the real Survival click is dispatched.
+  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
+  echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
+
+  # Reposition beside the exact live Wisp as the last setup operation while
+  # Creative. The attack helper switches to Survival and clicks the next fresh
+  # same-ID EntityHitResult without another slow setup command in between.
   reanchor_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_move_player_to_live_wisp "$reanchor_log_lines"
   echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
-
-  # Stabilize only horizontal knockback before Survival. The Wisp may already have
-  # acquired the nearby player; applying this after the hit lets its first attack
-  # move the player away from the server-confirmed melee anchor.
-  wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
-  echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
   zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_attack_live_wisp
