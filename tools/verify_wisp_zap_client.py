@@ -340,14 +340,15 @@ def _bolt_segment_candidates(
         angle = 0.5 * math.atan2(2.0 * covariance, variance_x - variance_y)
         angle_degrees = math.degrees(angle)
 
-        # Reject compact Wisp billboards, short stars and horizontal HUD/text
-        # changes. The BETA26 beam is a long, thin, oblique Aer-yellow segment;
-        # its screen-space source may be off-screen after the Wisp moves.
+        # Reject compact billboards, short stars and out-of-ROI HUD/text changes.
+        # The smoke camera is broadside to the beam, so a valid BETA26 FXBolt can
+        # project nearly horizontally. Same-camera additive delta, component
+        # size/elongation and the effect ROI distinguish it from static UI.
         if (
             major_length >= 40.0
             and minor_width <= 28.0
             and elongation >= 8.0
-            and 12.0 <= abs(angle_degrees) <= 78.0
+            and abs(angle_degrees) <= 78.0
         ):
             candidates.append(
                 {
@@ -374,7 +375,7 @@ def verify_bolt_segment(
         return errors, None
     if expected_visible and not candidates:
         return [
-            f"{path.name} has no elongated oblique Aer-yellow FXBolt segment in the effect ROI"
+            f"{path.name} has no elongated Aer-yellow FXBolt segment in the effect ROI"
         ], None
     if not expected_visible and candidates:
         candidate = max(candidates, key=lambda item: item["length"])
