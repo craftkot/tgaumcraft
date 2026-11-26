@@ -2018,8 +2018,12 @@ def main() -> int:
                 write_png(target)
             elif name in verify_wisp_zap_client.BASELINE_SCREENSHOTS:
                 write_png(target, None)
-            elif name in ("80-wisp-zap-frame-a.png", "81-wisp-zap-frame-b.png", "82-wisp-zap-frame-c.png"):
-                write_bolt_png(target)
+            elif name == "80-wisp-zap-frame-a.png":
+                write_bolt_png(target, alpha=2.0 / 3.0)
+            elif name == "81-wisp-zap-frame-b.png":
+                write_bolt_png(target, alpha=1.0 / 3.0)
+            elif name == "82-wisp-zap-frame-c.png":
+                write_bolt_png(target, alpha=0.1)
             elif name == verify_wisp_zap_client.BOLT_BASELINE_SCREENSHOT:
                 # The latest pre-payload control can be off the moving Wisp; it must match the camera/scene.
                 write_bolt_png(target, line=None, source_center=None)
