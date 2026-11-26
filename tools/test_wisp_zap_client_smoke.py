@@ -1683,7 +1683,10 @@ def main() -> int:
     capture_input_body = _bash_function_body(generated, "wisp_capture_attack_input_frame")
     assert 'index($0, "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=" id " ") == 1' in capture_input_body
     assert 'index($0, "gameTime=" game_time " ") > 0' in capture_input_body
-    assert 'index($0, "playerTick=" player_tick " ") > 0' in capture_input_body
+    assert 'match($0, /playerTick=[0-9]+/)' in capture_input_body
+    assert 'frame_player_tick = substr($0, RSTART + 11, RLENGTH - 11) + 0' in capture_input_body
+    assert 'tick_delta = input_player_tick - frame_player_tick' in capture_input_body
+    assert 'if (tick_delta >= 0 && tick_delta <= 1)' in capture_input_body
     assert "NR < limit" in capture_input_body
     assert 'WISP_ATTACK_INPUT_FRAME=YES id=$WISP_ATTACK_CAMERA_ID' in attack_body
     assert "hit_d <= 3.01" in capture_input_body
