@@ -29,12 +29,10 @@ BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
 BOLT_BASELINE_SCREENSHOT = "79-wisp-third-person-before-zap.png"
 AIM_ROI = (128, 128, 448, 320)
 # The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
-# The same-camera baseline contains the Wisp billboard; its actual screen-space
-# centre is detected from pixels rather than assumed to be the crosshair.
+# FXBolt is compared with the latest same-camera frame immediately before payload.
 BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
 VIEWPORT_WIDTH = 1024
 VIEWPORT_HEIGHT = 768
-BOLT_SOURCE_EXCLUSION_RADIUS = 28
 
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
@@ -215,74 +213,6 @@ def verify_baseline_screenshot(path: Path) -> tuple[list[str], int, tuple[int, i
             "capture must happen before Wisp spawn"
         )
     return errors, len(xs), bbox
-
-
-def _find_wisp_source_center(
-    pixels: bytes, roi_width: int, roi_height: int, roi_left: int, roi_top: int
-) -> tuple[float, float] | None:
-    """Locate the compact Aer billboard in a real screenshot, excluding the HUD crosshair."""
-    mask = bytearray(roi_width * roi_height)
-    for index in range(roi_width * roi_height):
-        x = index % roi_width
-        y = index // roi_width
-        if _is_crosshair_pixel(roi_left + x, roi_top + y, VIEWPORT_WIDTH, VIEWPORT_HEIGHT):
-            continue
-        red, green, blue = pixels[index * 3:index * 3 + 3]
-        if red >= 160 and green >= 160 and blue <= 240 and (
-            red - blue >= 12 or green - blue >= 18
-        ):
-            mask[index] = 1
-
-    visited = bytearray(len(mask))
-    candidates: list[tuple[float, int, float, float]] = []
-    for first in range(len(mask)):
-        if not mask[first] or visited[first]:
-            continue
-        queue = deque([first])
-        visited[first] = 1
-        count = 0
-        sum_x = sum_y = 0.0
-        min_x = min_y = 1 << 30
-        max_x = max_y = -1
-        while queue:
-            current = queue.popleft()
-            x = current % roi_width
-            y = current // roi_width
-            count += 1
-            sum_x += x
-            sum_y += y
-            min_x = min(min_x, x)
-            min_y = min(min_y, y)
-            max_x = max(max_x, x)
-            max_y = max(max_y, y)
-            for neighbour_y in range(max(0, y - 1), min(roi_height, y + 2)):
-                row = neighbour_y * roi_width
-                for neighbour_x in range(max(0, x - 1), min(roi_width, x + 2)):
-                    neighbour = row + neighbour_x
-                    if mask[neighbour] and not visited[neighbour]:
-                        visited[neighbour] = 1
-                        queue.append(neighbour)
-
-        box_width = max_x - min_x + 1
-        box_height = max_y - min_y + 1
-        compactness = count / float(box_width * box_height)
-        if (
-            count >= 12
-            and min(box_width, box_height) >= 3
-            and max(box_width, box_height) <= 96
-            and compactness >= 0.08
-        ):
-            candidates.append((
-                count * compactness,
-                count,
-                sum_x / count,
-                sum_y / count,
-            ))
-
-    if not candidates:
-        return None
-    _, _, center_x, center_y = max(candidates, key=lambda item: item[0])
-    return roi_left + center_x, roi_top + center_y
 
 
 def _bolt_segment_candidates(
@@ -1090,7 +1020,6 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=3 "
             )
             camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES")
-            capture_for_input_position = status_text.find("WISP_RENDER_CAPTURE_FOR_ATTACK_INPUT=YES")
             attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
             attack_hurt_position = status_text.find("WISP_ATTACK_HURT_ACCEPTED=YES")
             if not (
