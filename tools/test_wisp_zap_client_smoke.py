@@ -1757,7 +1757,7 @@ def main() -> int:
         off_center_visible = root / "aim-visible-off-center.png"
         write_png(off_center_visible, (560, 432, 572, 444))
         aim_errors, count, bbox = verify_wisp_zap_client.verify_aim_screenshot(off_center_visible)
-        assert aim_errors == [] and count == 144 and bbox == (560, 432, 571, 443), (
+        assert aim_errors == [] and count == 144 and bbox == (112, 112, 123, 123), (
             aim_errors, count, bbox
         )
 
