@@ -439,7 +439,18 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" in reposition_body
+    fill_command = "run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone"
+    teleport_command = "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes"
+    support_check = "/execute if block $player_block_x $player_block_y $player_block_z minecraft:stone"
+    assert fill_command in reposition_body
+    assert teleport_command in reposition_body
+    assert support_check in reposition_body
+    assert reposition_body.index(fill_command) < reposition_body.index(teleport_command), (
+        "the support floor must exist before the player is teleported"
+    )
+    assert reposition_body.index(teleport_command) < reposition_body.index(support_check)
+    assert reposition_body.count("run fill") == 1
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES" in reposition_body
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
     assert "wisp_fast_command" in reposition_body and "0.1 1" in reposition_body
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
@@ -462,7 +473,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "  printf '%s\\n' \"$1\" >> commands.log\n"
             "  case \"$1\" in\n"
             "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    /fill\\ *) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone\"*) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    /execute\\ if\\ block\\ *) printf 'TC_SMOKE_WISP_MELEE_SUPPORT=YES\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
@@ -483,10 +494,11 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "REPOSITION_LINE=2" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes",
-            "/fill 11 152 8 15 152 12 minecraft:stone",
             "/execute if block 13 152 10 minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES",
         ], commands
+        assert commands.index(next(c for c in commands if "run fill " in c)) < commands.index(next(c for c in commands if "run tp @p " in c))
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES x=13 y=152 z=10" in status, status
@@ -505,7 +517,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
             "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    /fill\\ *) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone\"*) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
