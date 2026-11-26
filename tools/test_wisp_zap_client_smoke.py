@@ -1731,7 +1731,6 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_PLAYER_CREATIVE=YES",
-        "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=20",
@@ -1785,6 +1784,9 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=11",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
+        "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
+        "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+        "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
         "WISP_ATTACK_CAMERA_REAIM=PREAIMED_NEXT_FRAME id=17 triggerTick=22 triggerGameTime=520 inputTick=22 inputGameTime=520",
         "WISP_ATTACK_CAMERA_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 distance=1.0440 aimDot=0.999",
         "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES id=17 tick=22",
@@ -1911,6 +1913,44 @@ def main() -> int:
         assert any("missing real-client status marker: WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=" in error
                    for error in missing_rendered_errors), missing_rendered_errors
 
+        missing_survival_status = status.replace(
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n", "", 1
+        )
+        log_only_survival_errors = verify_wisp_zap_client.verify(
+            log + "\\nTC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n", missing_survival_status, root
+        )
+        assert any(
+            "missing real-client status marker: TC_SMOKE_WISP_PLAYER_SURVIVAL=YES" in error
+            for error in log_only_survival_errors
+        ), log_only_survival_errors
+
+        missing_survival_confirmation = status.replace(
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n",
+            "",
+            1,
+        )
+        missing_confirmation_errors = verify_wisp_zap_client.verify(
+            log, missing_survival_confirmation, root
+        )
+        assert any(
+            "missing real-client status marker: WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=" in error
+            for error in missing_confirmation_errors
+        ), missing_confirmation_errors
+
+        reversed_survival_status = status.replace(
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n"
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n"
+            "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
+            "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES\\n"
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950\\n"
+            "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
+            1,
+        )
+        reversed_survival_errors = verify_wisp_zap_client.verify(log, reversed_survival_status, root)
+        assert any(
+            "fresh server-confirmed Survival transition must precede the real click" in error
+            for error in reversed_survival_errors
+        ), reversed_survival_errors
         missing_named_source_errors = verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_NAMED_SOURCE=YES\n", "", 1), status, root
         )
