@@ -658,7 +658,7 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
 
 
 def _attackable_frame_for_input(log_text: str, attack_input):
-    """Select the unique completed frame whose vanilla hit result was consumed by this click."""
+    """Select the unique same-game-time completed frame immediately preceding this click."""
     if attack_input is None:
         return None
     pattern = re.compile(
@@ -670,7 +670,7 @@ def _attackable_frame_for_input(log_text: str, attack_input):
         for frame in pattern.finditer(log_text)
         if frame.group(1) == attack_input.group(1)
         and frame.group(3) == attack_input.group(4)
-        and frame.group(4) == attack_input.group(5)
+        and 0 <= int(attack_input.group(5)) - int(frame.group(4)) <= 1
         and frame.start() < attack_input.start()
     ]
     return candidates[0] if len(candidates) == 1 else None
@@ -745,7 +745,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                          ("rendered third-person side-view frame", side_view_rendered),
                          ("client Wisp entity renderer", wisp_rendered),
                          ("completed level render frame", wisp_frame_complete),
-                         ("same-frame Wisp EntityHitResult", attackable_frame),
+                         ("same-game-time pre-input Wisp EntityHitResult frame", attackable_frame),
                          ("client attack input/hit result", attack_input),
                          ("client selected attack target", client_attack),
                          ("server accepted damage", hurt),
@@ -1281,6 +1281,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.append("missing status for the actual attackable Wisp input frame")
     elif attackable_frame is None or attackable_frame_status.group(1, 2, 3) != attackable_frame.group(1, 2, 5):
         errors.append("input-frame status does not match the real AFTER_LEVEL hit-result marker")
+    elif attackable_frame_status.group(4, 5) != attackable_frame.group(3, 4):
+        errors.append("input-frame status gameTime/playerTick do not match the selected pre-input frame")
     if first_frame_camera_sample is None:
         errors.append("missing camera sample copied from the first completed Wisp frame")
     if attack_camera_frame and attack_camera_complete and attack_camera_sample:
@@ -1349,7 +1351,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                         and -1.0001 <= attack_aim_dot <= 1.0001
                     ):
                         errors.append(
-                            "live-reposition attack camera sample is not backed by a same-frame in-reach EntityHitResult: "
+                            "live-reposition attack camera sample is not backed by a same-game-time pre-input in-reach EntityHitResult: "
                             f"player=({attack_px:.3f},{attack_py:.3f},{attack_pz:.3f}) "
                             f"distance={attack_distance:.3f} hitDistance={attack_hit_distance:.3f} "
                             f"aimDot={attack_aim_dot:.4f}"
