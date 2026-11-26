@@ -379,12 +379,44 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
     assert rc != 0 and "WISP_ATTACK_INPUT_FRAME_MATCH_COUNT=0" in status, (output, status)
 
 
-def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
-    """The attack watcher must ignore the visibility frame it has already consumed."""
+def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
+    """The attack watcher must start after the server-confirmed live reposition, not the stale render frame."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    expected = 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"'
-    assert expected in attack_body, "attack watcher must start after the consumed visibility frame"
-    assert 'frame_log_lines="$((WISP_RENDER_FIRST_FRAME_LINE_NUMBER - 1))"' not in attack_body
+    expected = 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"'
+    assert expected in attack_body, "attack watcher must start after the fresh live-entity reposition"
+    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in attack_body
+
+    reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
+    assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
+    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
+    assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
+
+    reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-cursor-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\n"
+            "wisp_fast_command() { printf 'Teleported Dev to 12.500000, 149.000000, 10.500000\\n' >> client-smoke/client.log; }\n"
+            + reposition_function
+            + "\nwisp_move_player_to_live_wisp 1\n"
+            + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=3,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert "REPOSITION_LINE=2" in result.stdout, result.stdout
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000" in status, status
 
     wait_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     function = "  wisp_wait_for_attack_frame() {\n" + wait_body + "\n  }\n"
@@ -422,10 +454,11 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
         screenshots_dir = client_dir / "screenshots"
         screenshots_dir.mkdir()
         write_png(screenshots_dir / "78-wisp-aim-check.png")
-        # The first completed frame is stale by the time the attack watcher starts.
-        # Only the later frame is eligible to dispatch the click.
+        # The first completed frame predates the server-confirmed live reposition.
+        # Only a same-ID EntityHitResult logged after that teleport may dispatch the click.
+        reposition_line = "Teleported Dev to 12.500000, 149.000000, 10.500000"
         (client_dir / "client.log").write_text(
-            "\n".join((camera_line(1), frame_line(1), camera_line(2), frame_line(2))) + "\n",
+            "\n".join((camera_line(1), frame_line(1), reposition_line, camera_line(2), frame_line(2))) + "\n",
             encoding="utf-8",
         )
         status_path = root / "client-smoke-status.txt"
@@ -440,7 +473,7 @@ def _test_first_frame_cursor_is_exclusive(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_capture() { printf 'CAPTURE %s\\n' \"$1\" >> \"$EVENT_LOG\"; return 0; }\n"
             + function
-            + "\nwisp_wait_for_attack_frame 2 106 PLATFORM 1\n"
+            + "\nwisp_wait_for_attack_frame 3 106 LIVE_WISP 1\n"
         )
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -1112,7 +1145,7 @@ def main() -> int:
         generated = client_wisp_zap_smoke.render()
     _test_attack_frame_dot_tolerance(generated)
     _test_attack_input_frame_correlation(generated)
-    _test_first_frame_cursor_is_exclusive(generated)
+    _test_attack_cursor_starts_after_live_reposition(generated)
     _test_first_frame_telemetry_uses_selected_frame(generated)
     _test_attack_aim_capture_is_taken_at_input_and_validated_after_hit(generated)
     _test_wisp_zap_frame_capture_sequence(generated)
