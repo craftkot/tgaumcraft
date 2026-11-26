@@ -1751,10 +1751,20 @@ def main() -> int:
         assert aim_errors == [], aim_errors
         assert count == 100 and bbox == (58, 58, 69, 69), (count, bbox)
 
-        off_center = root / "aim-off-center.png"
-        write_png(off_center, (448, 320, 460, 332))
-        aim_errors, count, _ = verify_wisp_zap_client.verify_aim_screenshot(off_center)
-        assert aim_errors and "not near the crosshair" in aim_errors[0], aim_errors
+        # The billboard is not the entity hitbox. A visible source near the edge
+        # of the central ROI is valid when the same-ID EntityHitResult and camera
+        # telemetry prove the actual Survival click separately.
+        off_center_visible = root / "aim-visible-off-center.png"
+        write_png(off_center_visible, (560, 432, 572, 444))
+        aim_errors, count, bbox = verify_wisp_zap_client.verify_aim_screenshot(off_center_visible)
+        assert aim_errors == [] and count == 144 and bbox == (560, 432, 571, 443), (
+            aim_errors, count, bbox
+        )
+
+        outside_roi = root / "aim-outside-roi.png"
+        write_png(outside_roi, (432, 304, 444, 316))
+        aim_errors, count, _ = verify_wisp_zap_client.verify_aim_screenshot(outside_roi)
+        assert aim_errors and count == 0, ("off-ROI pixels must not satisfy attack-frame visibility", aim_errors)
 
         invisible = root / "aim-invisible.png"
         write_png(invisible, None)
