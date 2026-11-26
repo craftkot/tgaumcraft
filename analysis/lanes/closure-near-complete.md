@@ -991,3 +991,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Independent jar interaction/audio client run [#45726915377](https://github.com/craftkot/tgaumcraft/actions/runs/45726915377) failed during Ubuntu package installation because `mirrors.edge.kernel.org` was unreachable; Minecraft and audio capture did not start. This is an infrastructure/network failure, not evidence of a jar audio defect.
 - PR #4 remains OPEN / DRAFT / UNMERGED. Its current code/test head is `ab2842099990c05495ae79a7c1f6668abd7e99ee`; it remains a 368-file / 1,989-commit candidate and must not be merged as a unit. Main HEAD is unchanged. No merge or force-push.
 - No audit points awarded: **59/100**, M16 **4/6**, M08 **5/9**. Next: inspect exact-SHA Actions for `ab28420`; require the complete offline Wisp contract and generated `bash -n` to pass before any Minecraft launch, then validate real same-ID Survival hit/damage/target/payload, FXBolt ages 1/2/3, and expiry.
+
+### Exact-SHA follow-up — 2026-11-26, code/test SHA `ab28420`
+
+- Wisp geometry regression [#45733958667](https://github.com/craftkot/tgaumcraft/actions/runs/45733958667) completed **SUCCESS** after the fixture correction; this is the scoped 37-assertion geometry/atlas contract, not a real-client result.
+- Wisp real-client [#45733958574](https://github.com/craftkot/tgaumcraft/actions/runs/45733958574) and Full Port CI [#45733958578](https://github.com/craftkot/tgaumcraft/actions/runs/45733958578) remain **QUEUED** at the latest poll. The Wisp job has not started; therefore no exact-`ab28420` offline Python, generated Bash, NeoForge build, dedicated-server, or Minecraft-client PASS is claimed.
+- Current PR #4 head after the lane update will be recorded by GitHub; PR remains OPEN / DRAFT / UNMERGED. The code/test change is [`ab28420`](https://github.com/craftkot/tgaumcraft/commit/ab2842099990c05495ae79a7c1f6668abd7e99ee). Main HEAD remains `a4280834adc5a20b6951098af937d30ca4aeca56`.
+- No audit change: **59/100**. Next action remains to inspect the exact-SHA Wisp client job and only proceed to gameplay if the offline contract and generated Bash syntax pass.
