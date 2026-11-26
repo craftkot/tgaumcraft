@@ -403,6 +403,7 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     """The attack watcher must start after the server-confirmed Survival transition, not stale pre-Survival frames."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
+    assert 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"' in attack_body
     expected = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
     assert expected in attack_body, "attack watcher must snapshot the log after Survival is server-confirmed"
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
