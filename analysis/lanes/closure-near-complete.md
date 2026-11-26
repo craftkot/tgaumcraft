@@ -3,7 +3,7 @@
 - Рабочая ветка: `feature/closure-near-complete`
 - PR: [#4](https://github.com/craftkot/tgaumcraft/pull/4) — **Draft / Open / Unmerged**
 - База последней проверки: `main` = `a4280834adc5a20b6951098af937d30ca4aeca56`
-- Последний code/test SHA: [`bec22826f2c3d208abe2e64c5268176c4bb6a130`](https://github.com/craftkot/tgaumcraft/commit/bec22826f2c3d208abe2e64c5268176c4bb6a130)
+- Последний code/test SHA: [`939311626439da113fa5c8c7f91776c68bc1f698`](https://github.com/craftkot/tgaumcraft/commit/939311626439da113fa5c8c7f91776c68bc1f698)
 - Предыдущий exact-HEAD Wisp real client [#45743371918](https://github.com/craftkot/tgaumcraft/actions/runs/45743371918) на SHA `78dab469` прошёл offline contract и `bash -n`, запустил настоящий Minecraft, подтвердил same-ID Survival hit, принятый урон, target, payload, FXBolt ages 1/2/3 и expiry, но завершился FAILURE на проверке live-position anchor. Серверный teleport был `(7.330369,149,7.859301)`, а камера на том же attack-input frame — `(7.242381,149,7.635615)`: горизонтальный дрейф около 0.241 блока. При этом `hitDistance=2.39717` (в пределах 3.01) и `aimDot=0.99949`. PNG pixel verifier не запускался; на кадрах 80–82 нет однозначно видимого луча, поэтому визуальная приёмка не доказана.
 - Фиксированный аудит: **59/100**. M16 **4/6**, M08 **5/9**; баллы не начислять без закрытия критериев категории.
 
