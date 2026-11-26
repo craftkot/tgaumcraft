@@ -1417,6 +1417,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                         capture_distance <= 6.0
                         and attack_input is not None
                         and 0.0 <= capture_hit_distance <= 3.01
+                        and attack_camera_frame is not None
                         and abs(capture_distance - attack_distance) <= 0.1
                         and math.isfinite(capture_aim_dot)
                         and -1.0001 <= capture_aim_dot <= 1.0001
