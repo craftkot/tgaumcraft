@@ -2497,7 +2497,6 @@ def main() -> int:
             "WISP_ATTACKABLE_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 position=LIVE_WISP gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
         ).replace(
             "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=1.0440 aimDot=0.999",
-        "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent id=17 tick=22 gameTime=520 playerTick=507",
             "WISP_ATTACK_INPUT_FRAME=YES id=17 tick=22 hitType=ENTITY targetId=17 gameTime=520 playerTick=507 distance=3.2455 aimDot=0.9932838195434261",
         ).replace(
             "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
