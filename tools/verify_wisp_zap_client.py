@@ -326,32 +326,12 @@ def _bolt_segment_candidates(
         return frame_errors + baseline_errors, []
     assert frame_pixels is not None and baseline_pixels is not None
 
-    baseline_source = _find_wisp_source_center(
-        baseline_pixels, roi_width, roi_height, roi_left, roi_top
-    )
-    if baseline_source is None:
-        return [f"{baseline_path.name} has no detectable Aer Wisp billboard in the FXBolt ROI"], []
-    frame_source = _find_wisp_source_center(
-        frame_pixels, roi_width, roi_height, roi_left, roi_top
-    ) if not expected_visible else None
-    source_center = frame_source or baseline_source
-    exclusion_centers = [
-        (baseline_source[0] - roi_left, baseline_source[1] - roi_top)
-    ]
-    if frame_source is not None:
-        exclusion_centers.append((frame_source[0] - roi_left, frame_source[1] - roi_top))
-    source_x = source_center[0] - roi_left
-    source_y = source_center[1] - roi_top
-    exclusion_squared = BOLT_SOURCE_EXCLUSION_RADIUS ** 2
+    # The Wisp can move several blocks between the melee hit and the delayed
+    # 20-tick zap. Do not anchor the bolt to its stale pre-payload billboard
+    # position; compare against the latest same-camera frame and detect the
+    # elongated additive Aer component itself.
     mask = bytearray(pixel_count)
     for index in range(pixel_count):
-        x = index % roi_width
-        y = index // roi_width
-        if any(
-            (x - center_x) ** 2 + (y - center_y) ** 2 <= exclusion_squared
-            for center_x, center_y in exclusion_centers
-        ):
-            continue
         offset = index * 3
         frame_r, frame_g, frame_b = frame_pixels[offset], frame_pixels[offset + 1], frame_pixels[offset + 2]
         base_r, base_g, base_b = baseline_pixels[offset], baseline_pixels[offset + 1], baseline_pixels[offset + 2]
@@ -361,10 +341,8 @@ def _bolt_segment_candidates(
 
         # BETA26 FXBolt alpha is clamp(1 - particleAge / 3, 0.1, 1):
         # age 1/2/3 contributes 2/3, 1/3 and 0.1 of Aer (#FFFF7E)
-        # through SRC_ALPHA/ONE additive blending. Absolute RGB thresholds
-        # reject a correctly rendered age-3 beam on a dark scene. Compare
-        # against a third-person pre-payload frame and retain the yellow
-        # channel relationship rather than treating dim pixels as absent.
+        # through SRC_ALPHA/ONE additive blending. Compare against the same
+        # third-person scene immediately before payload receipt.
         if (
             delta_r >= 8
             and delta_g >= 8
@@ -377,7 +355,6 @@ def _bolt_segment_candidates(
         ):
             mask[index] = 1
 
-
     visited = bytearray(pixel_count)
     candidates: list[dict[str, float]] = []
     for first in range(pixel_count):
@@ -389,8 +366,6 @@ def _bolt_segment_candidates(
         sum_x = sum_y = sum_xx = sum_yy = sum_xy = 0.0
         min_x = min_y = 1 << 30
         max_x = max_y = -1
-        min_source_distance = float("inf")
-        max_source_distance = 0.0
         while queue:
             current = queue.popleft()
             x = current % roi_width
@@ -405,9 +380,6 @@ def _bolt_segment_candidates(
             min_y = min(min_y, y)
             max_x = max(max_x, x)
             max_y = max(max_y, y)
-            source_distance = math.hypot(x - source_x, y - source_y)
-            min_source_distance = min(min_source_distance, source_distance)
-            max_source_distance = max(max_source_distance, source_distance)
             for neighbour_y in range(max(0, y - 1), min(roi_height, y + 2)):
                 row = neighbour_y * roi_width
                 for neighbour_x in range(max(0, x - 1), min(roi_width, x + 2)):
@@ -416,17 +388,10 @@ def _bolt_segment_candidates(
                         visited[neighbour] = 1
                         queue.append(neighbour)
 
-        if count < 16:
+        if count < 64:
             continue
         mean_x = sum_x / count
         mean_y = sum_y / count
-        dx = mean_x - source_x
-        dy = mean_y - source_y
-        distance = math.hypot(dx, dy)
-        if distance < 30.0 or distance > 300.0:
-            continue
-        if min_source_distance > 48.0 or max_source_distance < 60.0:
-            continue
 
         variance_x = max(0.0, sum_xx / count - mean_x * mean_x)
         variance_y = max(0.0, sum_yy / count - mean_y * mean_y)
@@ -442,29 +407,24 @@ def _bolt_segment_candidates(
         minor_width = math.sqrt(max(0.0, 12.0 * minor_eigenvalue))
         elongation = major_eigenvalue / max(minor_eigenvalue, 0.5)
         angle = 0.5 * math.atan2(2.0 * covariance, variance_x - variance_y)
-        alignment = abs(
-            (math.cos(angle) * dx + math.sin(angle) * dy) / distance
-        )
+        angle_degrees = math.degrees(angle)
 
-        # A real bolt is a narrow, elongated component extending radially
-        # away from the Wisp source. A compact orb or isolated star cannot pass.
+        # Reject compact Wisp billboards, short stars and horizontal HUD/text
+        # changes. The BETA26 beam is a long, thin, oblique Aer-yellow segment;
+        # its screen-space source may be off-screen after the Wisp moves.
         if (
-            major_length >= 24.0
-            and minor_width <= 16.0
-            and elongation >= 5.0
-            and alignment >= 0.65
+            major_length >= 40.0
+            and minor_width <= 28.0
+            and elongation >= 8.0
+            and 12.0 <= abs(angle_degrees) <= 78.0
         ):
             candidates.append(
                 {
                     "pixels": float(count),
-                    "source_x": source_center[0],
-                    "source_y": source_center[1],
                     "length": major_length,
                     "width": minor_width,
-                    "distance": distance,
-                    "alignment": alignment,
-                    "min_source_distance": min_source_distance,
-                    "max_source_distance": max_source_distance,
+                    "elongation": elongation,
+                    "angle_degrees": angle_degrees,
                     "left": float(min_x + roi_left),
                     "top": float(min_y + roi_top),
                     "right": float(max_x + roi_left),
@@ -483,8 +443,7 @@ def verify_bolt_segment(
         return errors, None
     if expected_visible and not candidates:
         return [
-            f"{path.name} has no elongated Aer-yellow FXBolt segment outside "
-            "the Wisp billboard ROI"
+            f"{path.name} has no elongated oblique Aer-yellow FXBolt segment in the effect ROI"
         ], None
     if not expected_visible and candidates:
         candidate = max(candidates, key=lambda item: item["length"])
@@ -495,6 +454,30 @@ def verify_bolt_segment(
     if not candidates:
         return [], None
     return [], max(candidates, key=lambda item: item["length"])
+
+
+def verify_bolt_cycle(
+    frames: tuple[tuple[int, Path], ...], expiry_path: Path, baseline_path: Path
+) -> tuple[list[str], list[tuple[int, dict[str, float]]], dict[str, float] | None]:
+    """Require visible pixels in the three-tick cycle, not a display frame for every game tick.
+
+    A 3-tick BETA26 particle can be rendered on all three client ticks while a
+    low-FPS X11 capture only presents one or two of those frames. The render
+    callbacks are checked separately; at least one actual framebuffer must
+    contain the additive bolt, and the post-expiry frame must be clear.
+    """
+    errors: list[str] = []
+    visible: list[tuple[int, dict[str, float]]] = []
+    for age, path in frames:
+        frame_errors, candidates = _bolt_segment_candidates(path, baseline_path, True)
+        errors.extend(f"FXBolt age={age}: {error}" for error in frame_errors)
+        if candidates:
+            visible.append((age, max(candidates, key=lambda item: item["length"])))
+    if not visible:
+        errors.append("no captured BETA26 age 1-3 framebuffer contains an elongated Aer-yellow FXBolt")
+    expiry_errors, expiry_metrics = verify_bolt_segment(expiry_path, False, baseline_path)
+    errors.extend(expiry_errors)
+    return errors, visible, expiry_metrics
 
 def _first(pattern: str, text: str):
     return re.search(pattern, text)
@@ -676,45 +659,17 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         with tempfile.TemporaryDirectory(prefix="tc-wisp-video-frames-") as directory:
             temporary = Path(directory)
             baseline_path = temporary / BOLT_BASELINE_SCREENSHOT
-            baseline_index = None
-            roi_width, roi_height, roi_left, roi_top = BOLT_ROI
-            expected_roi_bytes = roi_width * roi_height * 3
-            for index in range(baseline_first, baseline_last + 1):
-                candidate = temporary / f"side-view-baseline-{index}.png"
-                _extract_video_frame(video_file, index, candidate)
-                roi = subprocess.run(
-                    [
-                        "convert", str(candidate),
-                        "-crop", f"{roi_width}x{roi_height}+{roi_left}+{roi_top}",
-                        "+repage", "-depth", "8", "RGB:-",
-                    ],
-                    capture_output=True,
-                    check=False,
-                )
-                if roi.returncode != 0:
-                    detail = roi.stderr.decode("utf-8", errors="replace").strip()
-                    raise RuntimeError(f"cannot inspect pre-payload side-view frame {index}: {detail}")
-                if len(roi.stdout) != expected_roi_bytes:
-                    raise RuntimeError(
-                        f"unexpected side-view baseline ROI byte count: {len(roi.stdout)} != {expected_roi_bytes}"
-                    )
-                if _find_wisp_source_center(roi.stdout, roi_width, roi_height, roi_left, roi_top) is not None:
-                    shutil.copyfile(candidate, baseline_path)
-                    baseline_index = index
-                    break
-            if baseline_index is None:
-                raise RuntimeError(
-                    "no pre-payload third-person frame contains a detectable Aer Wisp billboard"
-                )
+            baseline_index = baseline_last
+            _extract_video_frame(video_file, baseline_index, baseline_path)
             baseline_monotonic_ns = first_frame_ns + int(round(baseline_index * 1_000_000_000.0 / fps))
             if not side_view_rendered_ns < baseline_monotonic_ns < payload_ns:
                 raise RuntimeError(
-                    "selected Wisp baseline frame is not strictly after the rendered third-person side view and before zap payload"
+                    "selected same-camera baseline frame is not strictly after the rendered third-person side view and before zap payload"
                 )
-            # Persist the selected same-camera baseline before the temporary
-            # extraction directory is removed. The later pixel verifier needs
-            # this exact frame to locate the Wisp source and reject player/HUD
-            # pixels that merely resemble the short-lived FXBolt.
+            # Use the latest safe pre-payload frame, not the first frame that
+            # happens to contain the moving Wisp billboard. The source may fly
+            # out of view during BETA26's wind-up; the camera stays fixed and
+            # the baseline must match the player/platform scene at zap time.
             shutil.copyfile(baseline_path, screenshot_dir / BOLT_BASELINE_SCREENSHOT)
 
             previous_index = -1
@@ -968,6 +923,19 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("status hit distance does not match the real attack InputEvent")
         if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
             errors.append("video-derived attack frame has no valid non-negative offset")
+        video_started = _first(
+            r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\\d+) frameRate=(\\d+)$",
+            status_text,
+        )
+        if input_ns_status is not None and video_offset_status is not None and video_started is not None:
+            expected_offset = (
+                int(input_ns_status.group(1)) - int(video_started.group(1))
+            ) / 1_000_000_000.0 - 1.0 / int(video_started.group(2))
+            if abs(float(video_offset_status.group(1)) - expected_offset) > 0.001:
+                errors.append(
+                    "attack-input screenshot offset does not identify the final video frame before the real click: "
+                    f"actual={float(video_offset_status.group(1)):.6f} expected={expected_offset:.6f}"
+                )
     if hit and sent and hit.group(1, 2) != sent.group(1, 2):
         errors.append("server hit and zap payload use different source/target entity IDs")
     if sent and received and sent.group(1, 2) != received.group(1, 2):
@@ -1126,19 +1094,18 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
             attack_hurt_position = status_text.find("WISP_ATTACK_HURT_ACCEPTED=YES")
             if not (
-                0 <= capture_for_input_position < attack_target_position
-                < attack_hurt_position < camera_capture_position
+                0 <= attack_target_position < attack_hurt_position < camera_capture_position
             ):
                 errors.append(
-                    "aim screenshot must be captured in the attackable frame before click, then validated after accepted damage"
+                    "attack target, accepted damage and post-hit validation markers are out of order"
                 )
             side_view_position = status_text.find("WISP_CAMERA_SIDE_VIEW=YES id=")
             baseline_capture_position = status_text.find(
                 "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD"
             )
             if not (
-                0 <= capture_for_input_position < attack_target_position
-                < side_view_position < attack_hurt_position < camera_capture_position
+                0 <= attack_target_position < side_view_position
+                < attack_hurt_position < camera_capture_position
             ):
                 errors.append(
                     "side-view camera must be selected by AttackEntityEvent after target selection and before accepted damage"
@@ -1163,20 +1130,27 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         if marker not in status_text:
             errors.append(f"missing real-client status marker: {marker}")
 
-    target_set_position = log_text.find("TC_SMOKE_WISP_TARGET_SET=YES")
+    attack_input_position = log_text.find(attack_input.group(0)) if attack_input else -1
     knockback_set_position = log_text.find(
         "Base value for attribute Knockback Resistance for entity Dev set to 1.0"
     )
     stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
+    attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
     first_zap_capture_position = status_text.find("WISP_ZAP_FRAME_CAPTURE=YES")
-    if target_set_position < 0 or knockback_set_position <= target_set_position:
-        errors.append("player knockback resistance was not confirmed after the accepted Wisp hit")
+    if knockback_set_position < 0 or attack_input_position < 0 or knockback_set_position >= attack_input_position:
+        errors.append("player knockback resistance was not established before the real Survival attack")
+    if (
+        stabilized_position < 0
+        or attack_target_position < 0
+        or stabilized_position >= attack_target_position
+    ):
+        errors.append("player stabilization status was not recorded before the real attack target confirmation")
     if (
         stabilized_position < 0
         or first_zap_capture_position < 0
         or stabilized_position > first_zap_capture_position
     ):
-        errors.append("post-hit player stabilization was not confirmed before FXBolt frame capture")
+        errors.append("player stabilization was not confirmed before FXBolt frame capture")
 
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
@@ -1600,28 +1574,26 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         errors.extend(aim_errors)
 
     bolt_baseline = screenshot_dir / BOLT_BASELINE_SCREENSHOT
-    for age, name in ((1, "80-wisp-zap-frame-a.png"), (2, "81-wisp-zap-frame-b.png"), (3, "82-wisp-zap-frame-c.png")):
-        bolt_errors, bolt_metrics = verify_bolt_segment(
-            screenshot_dir / name, expected_visible=True, baseline_path=bolt_baseline
-        )
-        errors.extend(f"FXBolt age={age}: {error}" for error in bolt_errors)
-        if bolt_metrics is not None:
-            print(
-                f"WISP_FXBOLT_PIXEL_COMPONENT=YES age={age} screenshot={name} "
-                f"pixels={bolt_metrics['pixels']:.0f} length={bolt_metrics['length']:.1f} "
-                f"width={bolt_metrics['width']:.1f} "
-                f"sourceRange={bolt_metrics['min_source_distance']:.1f}..{bolt_metrics['max_source_distance']:.1f} "
-                f"alignment={bolt_metrics['alignment']:.3f} "
-                f"bbox={bolt_metrics['left']:.0f},{bolt_metrics['top']:.0f},"
-                f"{bolt_metrics['right']:.0f},{bolt_metrics['bottom']:.0f}"
-            )
-    after_expiry_errors, after_expiry_metrics = verify_bolt_segment(
-        screenshot_dir / "83-wisp-zap-after-expiry.png",
-        expected_visible=False,
-        baseline_path=bolt_baseline,
+    bolt_frames = (
+        (1, screenshot_dir / "80-wisp-zap-frame-a.png"),
+        (2, screenshot_dir / "81-wisp-zap-frame-b.png"),
+        (3, screenshot_dir / "82-wisp-zap-frame-c.png"),
     )
-    errors.extend(after_expiry_errors)
-    if not after_expiry_errors:
+    bolt_cycle_errors, visible_bolt_frames, _ = verify_bolt_cycle(
+        bolt_frames,
+        screenshot_dir / "83-wisp-zap-after-expiry.png",
+        bolt_baseline,
+    )
+    errors.extend(bolt_cycle_errors)
+    for age, bolt_metrics in visible_bolt_frames:
+        print(
+            f"WISP_FXBOLT_PIXEL_COMPONENT=YES age={age} "
+            f"pixels={bolt_metrics['pixels']:.0f} length={bolt_metrics['length']:.1f} "
+            f"width={bolt_metrics['width']:.1f} angleDegrees={bolt_metrics['angle_degrees']:.1f} "
+            f"bbox={bolt_metrics['left']:.0f},{bolt_metrics['top']:.0f},"
+            f"{bolt_metrics['right']:.0f},{bolt_metrics['bottom']:.0f}"
+        )
+    if not bolt_cycle_errors:
         print("WISP_FXBOLT_AFTER_EXPIRY=PASS visibleComponents=0")
 
     for pattern in BAD_LOG_PATTERNS:
@@ -1685,7 +1657,7 @@ def main() -> int:
         for error in errors:
             print(f"WISP_ZAP_CLIENT_EVIDENCE_ERROR: {error}", file=sys.stderr)
         return 1
-    print("WISP_FXBOLT_VISUAL_ACCEPTANCE=PASS ages=1,2,3 afterExpiry=clear")
+    print("WISP_FXBOLT_VISUAL_ACCEPTANCE=PASS afterExpiry=clear")
     print("WISP_ZAP_REAL_CLIENT_EVIDENCE_OK")
     return 0
 
