@@ -1201,7 +1201,7 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert player_y == platform_top, (player_y, platform_top)
     expected_pitch = -math.degrees(math.atan2(source_y + 0.225 - (player_y + 1.62), 1.0))
     assert abs(pitch - expected_pitch) <= 1.5, (pitch, expected_pitch)
-    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in generated
+    assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in generated
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
@@ -1276,7 +1276,7 @@ def main() -> int:
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_NAMED_SOURCE=YES",
         "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
-        "run tp @p ~1.0 149 ~ facing entity @s eyes",
+        "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes",
         "summon thaumcraft:wisp 12.5 151.3 11.5",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
