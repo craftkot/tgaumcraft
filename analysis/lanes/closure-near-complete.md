@@ -1397,3 +1397,12 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Exact-SHA workflows [Wisp client #45911035936](https://github.com/craftkot/tgaumcraft/actions/runs/45911035936) and [Full Port CI #45911035933](https://github.com/craftkot/tgaumcraft/actions/runs/45911035933) were queued after commit `926fb94`. No new PASS is claimed until these runs complete.
 - No score awarded: fixed audit **59/100**, M16 **4/6**, M08 **5/9**. No category closed.
 - Next: inspect exact-SHA offline contract, generated Bash syntax, then the new real-client artifact. Require same-ID Survival input/AttackEntityEvent, accepted server damage/target, matching zap payload, pixel-confirmed FXBolt ages 1/2/3, and clean expiry before moving to the independent crystal-shard OBJ visibility acceptance.
+
+### Offline harness follow-up — 2026-11-27
+
+- Exact-SHA Wisp client [#45911035936](https://github.com/craftkot/tgaumcraft/actions/runs/45911035936), job `140219184258`, failed in `tools/test_wisp_zap_client_smoke.py` before generated Bash or Minecraft launch. The failure was a Python `TypeError: 'str' object cannot be interpreted as an integer` in the live-reposition fallback fixture.
+- Cause: the new correlation status marker was inserted into two matching source strings. One occurrence correctly belongs in the synthetic status list; the other was accidentally inserted as an extra positional argument in a `str.replace(old, new, count)` call used to build the fallback status.
+- Fixed only `tools/test_wisp_zap_client_smoke.py` in [`b3c3c1b`](https://github.com/craftkot/tgaumcraft/commit/b3c3c1ba16397f3c83ad6c29487576b7f8519cb4): keep the correlation marker in the base status fixture (the fallback inherits it) and restore the three-argument replacement. No driver/verifier or gameplay code changed in this follow-up.
+- Exact-SHA Wisp client [#45911246147](https://github.com/craftkot/tgaumcraft/actions/runs/45911246147) and Full Port CI [#45911246138](https://github.com/craftkot/tgaumcraft/actions/runs/45911246138) are queued. The earlier Full Port CI [#45911035933](https://github.com/craftkot/tgaumcraft/actions/runs/45911035933) was still building NeoForge at the last poll; its result must be checked separately.
+- No score awarded. Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**. No category closed.
+- Next: require the corrected exact-SHA offline Python contract and generated `bash -n` to pass before accepting any real-client result.
