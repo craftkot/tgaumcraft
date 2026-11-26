@@ -1864,11 +1864,33 @@ def main() -> int:
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518", ""), status, root
         ), "missing pre-attack camera tracking must fail"
+        pre_attack_status_lines = [
+            line for line in status.splitlines()
+            if line.startswith("WISP_RENDER_PREATTACK_TRACKING=YES ")
+        ]
+        first_frame_line_values = [
+            line.split("=", 1)[1]
+            for line in status.splitlines()
+            if line.startswith("WISP_RENDER_FIRST_FRAME_LINE_NUMBER=")
+        ]
+        assert len(pre_attack_status_lines) == 1, pre_attack_status_lines
+        assert len(first_frame_line_values) == 1, first_frame_line_values
+        pre_attack_status = pre_attack_status_lines[0]
+        first_frame_line_number = first_frame_line_values[0]
+
+        missing_pre_attack_status = status.replace(pre_attack_status, "", 1)
+        assert missing_pre_attack_status != status, "fixture mutation must remove the tracking marker"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=6", ""), root
+            log, missing_pre_attack_status, root
         ), "missing pre-attack tracking status must fail"
+
+        late_pre_attack_status = (
+            pre_attack_status.rsplit(" line=", 1)[0] + f" line={first_frame_line_number}"
+        )
+        late_tracking_status = status.replace(pre_attack_status, late_pre_attack_status, 1)
+        assert late_tracking_status != status, "fixture mutation must move the tracking marker"
         assert verify_wisp_zap_client.verify(
-            log, status.replace("WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=6", "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=9"), root
+            log, late_tracking_status, root
         ), "first tracked frame must occur after the pre-attack marker"
         assert verify_wisp_zap_client.verify(
             log.replace("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21", ""), status, root
