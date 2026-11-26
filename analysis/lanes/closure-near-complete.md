@@ -972,3 +972,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - The exact-`161741b` Wisp run failed before game launch as above. Its Full Port CI [#45726666000](https://github.com/craftkot/tgaumcraft/actions/runs/45726666000) was still building NeoForge at the last poll; Wisp geometry [#45726666005](https://github.com/craftkot/tgaumcraft/actions/runs/45726666005) completed SUCCESS. Neither result validates the new fixture correction.
 - The new commit's workflow/status lookup returned no runs/status at the immediate poll. No offline contract PASS, generated Bash PASS, NeoForge build, dedicated-server result, or new Minecraft-client result is claimed for `e54bb14`.
 - Next: poll exact-SHA workflows for `e54bb14`. Require the complete offline Python contract and generated Bash syntax to pass before allowing the Minecraft client to launch; then inspect the actual Survival hit, same-ID server damage/target/payload, three distinct visible FXBolt age frames, and expiry. Do not touch production renderer code unless the new real-client pixels still fail.
+
+
+### Follow-up status — 2026-11-26, exact SHA `e54bb14`
+
+- GitHub Actions now lists 25 exact-SHA runs for `e54bb142316f36e0e26484eb0065f6cb7f051f2c`, including Wisp real client [#45726915479](https://github.com/craftkot/tgaumcraft/actions/runs/45726915479), Full Port CI [#45726915402](https://github.com/craftkot/tgaumcraft/actions/runs/45726915402), and Wisp geometry [#45726915357](https://github.com/craftkot/tgaumcraft/actions/runs/45726915357). All were QUEUED at the latest poll. CircleCI `verify-connection` is SUCCESS; it is only a connection/status check, not a test result.
+- PR #4 description was refreshed with the exact failure/correction chronology and queued run links. PR remains OPEN / DRAFT / UNMERGED, base `main`, head `feature/closure-near-complete`, current journal HEAD `8d15fe96e0ccf85ccf3f57f307636b9737f26cc4`, 368 changed files, 1,987 commits ahead / 0 behind. It remains too broad to merge as a unit.
+- No new gameplay or visual acceptance is claimed. Fixed audit remains **59/100**, M16 **4/6**, M08 **5/9**.
