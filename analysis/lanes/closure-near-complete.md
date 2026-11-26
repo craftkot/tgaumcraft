@@ -1308,3 +1308,11 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Fresh path-overlap check against every currently open PR targeting main (#1, #2, #3, #9) found no changes to either Wisp tool or this lane journal. PR #4 is the owning PR. No main, foreign feature branch, shared registry, Gradle, workflow YAML, or global resource changed.
 - This is a smoke-fixture correction, not a gameplay feature completion. No local checkout or local Python suite was available in this run. Exact-SHA Python regression, generated bash -n, NeoForge, and real-client Wisp retry remain pending after the commit. No score awarded; remain 59/100.
 - Next: inspect the new exact-SHA Wisp push/PR runs. Require the prebuilt support marker, a same-ID Survival EntityHitResult, accepted server damage, correct two-entity zap payload, three visible FXBolt age frames, and clean expiry before moving to the next M16 gap.
+
+
+### Wisp staging test cursor follow-up — 2026-11-26
+
+- Exact-SHA Wisp push run [#45873702288](https://github.com/craftkot/tgaumcraft/actions/runs/45873702288), job 140095329770, passed BETA26 geometry (37 assertions) and atlas frame/UV parity (24 assertions), then failed the offline Python contract at the existing fixture assertion expecting REPOSITION_LINE=2.
+- The new positive harness correctly emits the pre-teleport fill success line before the teleport line. With PREEXISTING_FRAME as line 1, fill is line 2 and the teleport is now line 3. The command-order test and support verification both completed; only the expected absolute log line was stale.
+- Updated tools/test_wisp_zap_client_smoke.py to expect REPOSITION_LINE=3. No driver, Java, renderer, or game behavior changed in this follow-up.
+- Exact-SHA real Minecraft was not launched because the offline test stopped first. The PR-triggered run for the same candidate must be checked separately. No gameplay or visual acceptance is claimed; fixed audit remains 59/100.

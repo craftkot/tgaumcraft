@@ -491,7 +491,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             timeout=5,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "REPOSITION_LINE=2" in result.stdout, result.stdout
+        assert "REPOSITION_LINE=3" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-2 ~-2 ~-2 ~2 ~-2 ~2 minecraft:stone",
