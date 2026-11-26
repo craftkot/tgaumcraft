@@ -332,6 +332,7 @@ def render() -> str:
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
+    local player_x player_y player_z player_block_x player_block_y player_block_z support_log_lines
     # Stage the player beside the exact tagged smoke entity while still Creative.
     # WispEntity clears Creative targets before its 20-tick zap wind-up; the
     # first Survival attack therefore establishes the target through hurt().
@@ -344,6 +345,37 @@ def render() -> str:
         relative_line="$(cut -d: -f1 <<<"$teleport_match")"
         WISP_ATTACK_REPOSITION_LINE="$(cut -d: -f2- <<<"$teleport_match")"
         WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"
+        read -r player_x player_y player_z <<<"$(sed -n 's/.*Teleported Dev to \([-0-9.]*\), \([-0-9.]*\), \([-0-9.]*\).*/\1 \2 \3/p' <<<"$WISP_ATTACK_REPOSITION_LINE")"
+        if ! [[ "$player_x" =~ ^-?[0-9]+([.][0-9]+)?$ && "$player_y" =~ ^-?[0-9]+([.][0-9]+)?$ && "$player_z" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; then
+          echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
+          exit 1
+        fi
+        read -r player_block_x player_block_y player_block_z < <(
+          awk -v x="$player_x" -v y="$player_y" -v z="$player_z" '
+            function floor_value(value, integer) {
+              integer = int(value)
+              return value < integer ? integer - 1 : integer
+            }
+            BEGIN {
+              printf "%d %d %d\n", floor_value(x), floor_value(y) - 1, floor_value(z)
+            }'
+        )
+        if ! [[ "$player_block_x" =~ ^-?[0-9]+$ && "$player_block_y" =~ ^-?[0-9]+$ && "$player_block_z" =~ ^-?[0-9]+$ ]]; then
+          echo "WISP_CAMERA_SUPPORT_COORDINATES_INVALID=$player_block_x,$player_block_y,$player_block_z" | tee -a client-smoke-status.txt
+          exit 1
+        fi
+        # The Wisp remains airborne and moves under its original AI. The player
+        # must not fall several blocks between the live teleport and the next
+        # client InputEvent, or the real Survival hit becomes out of reach.
+        # Build a small temporary floor below the actual teleport destination;
+        # this stabilizes only the smoke fixture, not Wisp movement or hit logic.
+        support_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_fast_command "/fill $((player_block_x - 2)) $player_block_y $((player_block_z - 2)) $((player_block_x + 2)) $player_block_y $((player_block_z + 2)) minecraft:stone" 0.1 1
+        wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
+        support_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_fast_command "/execute if block $player_block_x $player_block_y $player_block_z minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES" 0.1 1
+        wisp_wait_for_fresh_log_marker "$support_log_lines" "TC_SMOKE_WISP_MELEE_SUPPORT=YES"
+        echo "WISP_CAMERA_SUPPORT_PLATFORM=YES x=$player_block_x y=$player_block_y z=$player_block_z" | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
         return 0

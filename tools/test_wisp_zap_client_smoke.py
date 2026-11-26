@@ -396,15 +396,26 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
 
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
+    fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
+    fresh_marker_function = "  wisp_wait_for_fresh_log_marker() {\n" + fresh_marker_body + "\n  }\n"
     with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-cursor-") as directory:
         root = Path(directory)
         client_dir = root / "client-smoke"
         client_dir.mkdir()
         (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
         (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        commands_path = root / "commands.log"
         harness = (
             "set -euo pipefail\n"
-            "wisp_fast_command() { printf 'Teleported Dev to 12.500000, 149.000000, 10.500000\\n' >> client-smoke/client.log; }\n"
+            "wisp_fast_command() {\n"
+            "  printf '%s\\n' \"$1\" >> commands.log\n"
+            "  case \"$1\" in\n"
+            "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
+            "    /fill\\ *) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    /execute\\ if\\ block\\ *) printf 'TC_SMOKE_WISP_MELEE_SUPPORT=YES\\n' >> client-smoke/client.log ;;\n"
+            "  esac\n"
+            "}\n"
+            + fresh_marker_function
             + reposition_function
             + "\nwisp_move_player_to_live_wisp 1\n"
             + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
@@ -415,12 +426,52 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             text=True,
             capture_output=True,
             check=False,
-            timeout=3,
+            timeout=5,
         )
         assert result.returncode == 0, result.stdout + result.stderr
         assert "REPOSITION_LINE=2" in result.stdout, result.stdout
+        commands = commands_path.read_text(encoding="utf-8").splitlines()
+        assert commands == [
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes",
+            "/fill 11 152 8 15 152 12 minecraft:stone",
+            "/execute if block 13 152 10 minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES",
+        ], commands
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
-        assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000" in status, status
+        assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
+        assert "WISP_CAMERA_SUPPORT_PLATFORM=YES x=13 y=152 z=10" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_MELEE_SUPPORT=YES" in status, status
+
+    # A successful fill response is insufficient if the expected support block
+    # cannot be confirmed at the exact player footing; the smoke must fail closed.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-no-support-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\n"
+            "wisp_fast_command() {\n"
+            "  case \"$1\" in\n"
+            "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
+            "    /fill\\ *) printf 'Successfully filled 25 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "  esac\n"
+            "}\n"
+            + fresh_marker_function
+            + reposition_function
+            + "\nwisp_move_player_to_live_wisp 1\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=5,
+        )
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "WISP_FRESH_MARKER_TIMEOUT=TC_SMOKE_WISP_MELEE_SUPPORT=YES" in status, status
 
     fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
     fresh_marker_function = "  wisp_wait_for_fresh_log_marker() {\n" + fresh_marker_body + "\n  }\n"
