@@ -984,7 +984,13 @@ def write_bolt_png(
                 for offset_x in range(-1, 2):
                     line_pixels.add((x + offset_x, y + offset_y))
         for x, y in line_pixels:
-            current = tuple(rows[y][x * 3:x * 3 + 3])
+            # Clip the synthetic beam to the viewport before reading the
+            # destination pixel. A beam entering from x=0 creates x=-1
+            # thickness pixels; Python's negative slice is empty here.
+            if not (0 <= x < width and 0 <= y < height):
+                continue
+            offset = x * 3
+            current = tuple(rows[y][offset:offset + 3])
             blended = tuple(
                 min(255, current[channel] + round(color[channel] * alpha))
                 for channel in range(3)
