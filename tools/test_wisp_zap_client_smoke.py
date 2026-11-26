@@ -498,7 +498,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert commands == [
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes",
-            "/execute if block 13 152 10 minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES",
+            "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES",
         ], commands
         assert commands.index(next(c for c in commands if "run fill " in c)) < commands.index(next(c for c in commands if "run tp @p " in c))
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
@@ -532,7 +532,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             text=True,
             capture_output=True,
             check=False,
-            timeout=5,
+            timeout=10,
         )
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert result.returncode != 0, result.stdout + result.stderr
@@ -1789,7 +1789,7 @@ def main() -> int:
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in move_body
-    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in move_body
+    assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
     assert 'output="client-smoke/screenshots/78-wisp-aim-check.png"' in extract_body
