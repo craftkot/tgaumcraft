@@ -1644,13 +1644,17 @@ def main() -> int:
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
     assert 'if [ "$attempt" -gt 1 ]; then' in attack_body
-    retry_branch = attack_body.split('if [ "$attempt" -gt 1 ]; then', 1)[1].split("\n      fi", 1)[0]
+    retry_block_start = attack_body.index('if [ "$attempt" -gt 1 ]; then')
+    retry_block_end = attack_body.index("\n      fi", retry_block_start)
+    retry_branch = attack_body[retry_block_start:retry_block_end]
     creative_command_index = retry_branch.index("wisp_command '/gamemode creative'")
     creative_marker_index = retry_branch.index("TC_SMOKE_WISP_PLAYER_CREATIVE=YES")
     retry_sleep_index = retry_branch.index("sleep 0.15")
-    retry_reposition_index = retry_branch.index("wisp_move_player_to_live_wisp")
-    assert creative_command_index < creative_marker_index < retry_sleep_index < retry_reposition_index, (
-        "a rejected attempt must return to Creative and clear autonomous targeting before repositioning"
+    assert creative_command_index < creative_marker_index < retry_sleep_index, (
+        "a rejected attempt must return to Creative and clear autonomous targeting before the shared reposition"
+    )
+    assert "wisp_move_player_to_live_wisp" not in retry_branch, (
+        "live-Wisp reposition is shared by the first attempt and retries, not nested inside the retry-only branch"
     )
     survival_cursor_index = attack_body.index('survival_log_lines="$(wc -l < client-smoke/client.log)"')
     survival_command_index = attack_body.index("wisp_fast_command '/gamemode survival' 0.1 1")
