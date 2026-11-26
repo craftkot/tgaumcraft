@@ -1020,24 +1020,26 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 f"WISP_ZAP_FRAME_CAPTURE=YES source={source_id} createdAt={created_at} ageTick=3 "
             )
             camera_capture_position = status_text.find("WISP_RENDER_CAPTURE_VALIDATED_AFTER_HIT=YES")
+            attack_input_frame_position = status_text.find("WISP_ATTACK_INPUT_FRAME=YES")
             attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
             attack_hurt_position = status_text.find("WISP_ATTACK_HURT_ACCEPTED=YES")
             if not (
-                0 <= attack_target_position < attack_hurt_position < camera_capture_position
+                0 <= attack_input_frame_position < attack_target_position
+                < attack_hurt_position < camera_capture_position
             ):
                 errors.append(
-                    "attack target, accepted damage and post-hit validation markers are out of order"
+                    "real attackable-frame input must precede target/damage, and post-hoc screenshot validation must follow damage"
                 )
             side_view_position = status_text.find("WISP_CAMERA_SIDE_VIEW=YES id=")
             baseline_capture_position = status_text.find(
                 "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD"
             )
             if not (
-                0 <= attack_target_position < side_view_position
-                < attack_hurt_position < camera_capture_position
+                0 <= attack_input_frame_position < attack_target_position
+                < side_view_position < attack_hurt_position < camera_capture_position
             ):
                 errors.append(
-                    "side-view camera must be selected by AttackEntityEvent after target selection and before accepted damage"
+                    "side-view camera must be selected after the real attack target and before accepted damage"
                 )
             if (
                 baseline_capture_position < 0
