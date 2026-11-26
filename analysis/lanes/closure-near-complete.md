@@ -1120,3 +1120,10 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Exact-SHA checks for `5a5ac741743bb3da2526e2d6c95c5c9e9007c7a9` were created: Wisp real client [#45782212821](https://github.com/craftkot/tgaumcraft/actions/runs/45782212821), Full Port CI [#45782212583](https://github.com/craftkot/tgaumcraft/actions/runs/45782212583), and Wisp geometry regression [#45782212586](https://github.com/craftkot/tgaumcraft/actions/runs/45782212586). All were **QUEUED** at the last status read; no result is claimed yet. Parent SHA `fe9f62d` Full Port CI [#45774433711](https://github.com/craftkot/tgaumcraft/actions/runs/45774433711) was **SUCCESS** (Core parity, NeoForge build, dedicated-server smoke and JAR upload).
 - PR [#4](https://github.com/craftkot/tgaumcraft/pull/4) remains OPEN / DRAFT / UNMERGED; branch head is `5a5ac741743bb3da2526e2d6c95c5c9e9007c7a9`, base main `a4280834`, 368 changed files. No merge, force-push or edits to other branches.
 - No audit points awarded: **59/100**, M16 **4/6**, M08 **5/9**. Next action: inspect the three exact-SHA workflows above; require the horizontal real-client frame to be accepted by the revised detector and the post-expiry frame to remain clear before considering this Wisp acceptance evidence complete.
+
+
+### Follow-up exact-SHA status — `5a5ac741743bb3da2526e2d6c95c5c9e9007c7a9`
+
+- Wisp geometry regression [#45782212586](https://github.com/craftkot/tgaumcraft/actions/runs/45782212586) completed **SUCCESS**; job `wisp-zap-geometry` and its BETA26 FXBolt path / three-tick envelope step passed. This workflow does not exercise the real framebuffer pixel verifier.
+- Wisp real Minecraft client [#45782212821](https://github.com/craftkot/tgaumcraft/actions/runs/45782212821) remained **QUEUED** at this status read. Full Port CI [#45782212583](https://github.com/craftkot/tgaumcraft/actions/runs/45782212583) also remained **QUEUED**. The revised offline smoke contract and actual Minecraft run are therefore not yet confirmed on this SHA.
+- No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. Keep PR #4 OPEN / DRAFT / UNMERGED.
