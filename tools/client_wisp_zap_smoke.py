@@ -88,6 +88,23 @@ def render() -> str:
     exit 1
   }
 
+  wisp_wait_for_fresh_log_marker() {
+    local after_lines="$1" marker="$2" match relative_line line_number
+    for _ in $(seq 1 200); do
+      match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F -- "$marker" | head -1 || true)"
+      if [ -n "$match" ]; then
+        relative_line="${match%%:*}"
+        line_number="$((after_lines + relative_line))"
+        echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$marker line=$line_number" | tee -a client-smoke-status.txt
+        return 0
+      fi
+      sleep 0.01
+    done
+    echo "WISP_FRESH_MARKER_TIMEOUT=$marker afterLine=$after_lines" | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
+  }
+
   wisp_start_zap_video_capture() {
     local progress="client-smoke/wisp-zap-video-progress.txt"
     rm -f "$progress" client-smoke/wisp-zap-video.mp4
@@ -320,7 +337,7 @@ def render() -> str:
     # first Survival attack therefore establishes the target through hurt().
     # This moves only the player. Wisp AI, motion and target remain live.
     # Resolve facing against the same tagged Wisp, rather than a relative point whose rotation stayed stale in the real client.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 149 ~ facing entity @s eyes'
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes' 0.1 1
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -566,7 +583,7 @@ def render() -> str:
   }
 
   wisp_attack_live_wisp() {
-    local wisp_id attempt reanchor_log_lines frame_log_lines attack_log_lines attack_input_line attack_position_mode
+    local wisp_id attempt reanchor_log_lines frame_log_lines attack_log_lines attack_input_line attack_position_mode survival_log_lines
     local attack_camera_source attack_camera_detail
     wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
     if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
@@ -589,15 +606,19 @@ def render() -> str:
       attack_camera_source="LIVE_ENTITY_FACING"
       attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
       attack_position_mode=LIVE_WISP
-      frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"
+      # Switch quickly after the live reposition, then start the frame cursor
+      # only after the server confirms Survival. Frames rendered before this
+      # transition are stale and must never trigger the real attack click.
+      survival_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_fast_command '/gamemode survival' 0.1 1
+      wisp_wait_for_fresh_log_marker "$survival_log_lines" 'Set own game mode to Survival Mode'
+      echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' | tee -a client-smoke-status.txt
+      frame_log_lines="$(wc -l < client-smoke/client.log)"
       if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
-        echo "WISP_ATTACK_REPOSITION_LINE_NUMBER_INVALID=$frame_log_lines" | tee -a client-smoke-status.txt
+        echo "WISP_ATTACK_FRAME_CURSOR_INVALID=$frame_log_lines" | tee -a client-smoke-status.txt
         exit 1
       fi
-      # Switch to Survival only after a fresh melee position exists; the click
-      # watcher sends input on the next same-ID EntityHitResult frame.
-      wisp_command '/gamemode survival'
-      wisp_send_chat '/execute if entity @p[gamemode=survival] run say TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'
+      # The watcher now consumes only a post-transition same-ID EntityHitResult.
       if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"; then
         echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
         continue

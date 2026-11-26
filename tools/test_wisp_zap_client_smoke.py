@@ -380,13 +380,17 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 
 
 def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
-    """The attack watcher must start after the server-confirmed live reposition, not the stale render frame."""
+    """The attack watcher must start after the server-confirmed Survival transition, not stale pre-Survival frames."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    expected = 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"'
-    assert expected in attack_body, "attack watcher must start after the fresh live-entity reposition"
+    expected = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
+    assert expected in attack_body, "attack watcher must snapshot the log after Survival is server-confirmed"
+    assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
     assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
+    assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" in reposition_body
+    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
+    assert "wisp_fast_command" in reposition_body and "0.1 1" in reposition_body
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
     assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
@@ -417,6 +421,35 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "REPOSITION_LINE=2" in result.stdout, result.stdout
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 12.500000, 149.000000, 10.500000" in status, status
+
+    fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
+    fresh_marker_function = "  wisp_wait_for_fresh_log_marker() {\n" + fresh_marker_body + "\n  }\n"
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-fresh-survival-marker-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text(
+            "BOOT=YES\nSet own game mode to Survival Mode\nSet own game mode to Survival Mode\n",
+            encoding="utf-8",
+        )
+        status_path = root / "client-smoke-status.txt"
+        status_path.write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\n"
+            + fresh_marker_function
+            + "\nwisp_wait_for_fresh_log_marker 2 'Set own game mode to Survival Mode'\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=3,
+        )
+        assert result.returncode == 0, result.stdout + result.stderr
+        status = status_path.read_text(encoding="utf-8")
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=3" in status, status
 
     wait_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     function = "  wisp_wait_for_attack_frame() {\n" + wait_body + "\n  }\n"
@@ -1453,13 +1486,18 @@ def main() -> int:
     assert creative_command_index < creative_marker_index < retry_sleep_index < retry_reposition_index, (
         "a rejected attempt must return to Creative and clear autonomous targeting before repositioning"
     )
-    survival_command_index = attack_body.index("wisp_command '/gamemode survival'")
-    survival_marker_index = attack_body.index("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
+    survival_cursor_index = attack_body.index('survival_log_lines="$(wc -l < client-smoke/client.log)"')
+    survival_command_index = attack_body.index("wisp_fast_command '/gamemode survival' 0.1 1")
+    survival_marker_index = attack_body.index("wisp_wait_for_fresh_log_marker")
+    survival_status_index = attack_body.index("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
+    frame_cursor_index = attack_body.index('frame_log_lines="$(wc -l < client-smoke/client.log)"')
     attack_frame_index = attack_body.index("wisp_wait_for_attack_frame")
-    assert survival_command_index < survival_marker_index < attack_frame_index, (
-        "the real Survival hit must be attempted only after the live melee position is staged"
+    assert survival_cursor_index < survival_command_index < survival_marker_index < survival_status_index < frame_cursor_index < attack_frame_index, (
+        "the real attack cursor must begin after the fresh server-confirmed Survival transition"
     )
-    assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' in attack_body
+    assert "wisp_command '/gamemode survival'" not in attack_body
+    assert "wisp_send_chat '/execute if entity @p[gamemode=survival]" not in attack_body
+    assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
     assert "attack_position_mode=LIVE_WISP" in attack_body
     assert 'attack_camera_source="LIVE_ENTITY_FACING"' in attack_body
     assert 'attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"' in attack_body
@@ -1560,7 +1598,8 @@ def main() -> int:
     assert "wisp_reanchor_player_for_capture" not in generated
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in move_body
+    assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" in move_body
+    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in move_body
     assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body
     assert "WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION" in move_body
