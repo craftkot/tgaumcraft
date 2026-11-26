@@ -36,7 +36,6 @@ VIEWPORT_HEIGHT = 768
 
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
-    "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
     "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
     "TC_SMOKE_WISP_ATTACK_INPUT=YES",
@@ -58,6 +57,9 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_PLATFORM_FILL=YES",
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
     "WISP_FIXTURE_TELEPORT=YES",
+    "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=",
+    "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
+    "WISP_ATTACK_CLICK_DISPATCHED=YES",
     "WISP_ZAP_AIM=PREAIMED_SPAWN",
     "WISP_CAMERA_TELEMETRY=PASS",
     "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL",
@@ -1064,6 +1066,22 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     for marker in REQUIRED_STATUS:
         if marker not in status_text:
             errors.append(f"missing real-client status marker: {marker}")
+
+    survival_confirmation_position = status_text.find(
+        "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line="
+    )
+    survival_status_position = status_text.find("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
+    attack_click_position = status_text.find("WISP_ATTACK_CLICK_DISPATCHED=YES")
+    attack_input_status_position = status_text.find("WISP_ATTACK_INPUT_FRAME=YES")
+    if not (
+        0 <= survival_confirmation_position
+        < survival_status_position
+        < attack_click_position
+        < attack_input_status_position
+    ):
+        errors.append(
+            "fresh server-confirmed Survival transition must precede the real click and its EntityHitResult"
+        )
 
     attack_input_position = log_text.find(attack_input.group(0)) if attack_input else -1
     knockback_set_position = log_text.find(
