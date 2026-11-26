@@ -1807,7 +1807,7 @@ def main() -> int:
             log, late_side_view_status, root
         )
         assert any(
-            "side-view camera must be selected by AttackEntityEvent after target selection and before accepted damage"
+            "side-view camera must be selected after the real attack target and before accepted damage"
             in error
             for error in late_side_view_status_errors
         ), late_side_view_status_errors
