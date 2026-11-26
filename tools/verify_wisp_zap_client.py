@@ -48,7 +48,8 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
-    "TC_SMOKE_WISP_SOURCE_ELEVATED=YES",
+    "TC_SMOKE_WISP_NAMED_SOURCE=YES",
+    "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
     "TC_SMOKE_WISP_ZAP_FRAME=YES",
     "TC_SMOKE_WISP_ZAP_EXPIRED=YES",
 )
@@ -1056,6 +1057,11 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     for marker in REQUIRED_LOG_MARKERS:
         if marker not in log_text:
             errors.append(f"missing real server world marker: {marker}")
+
+    named_source_position = log_text.find("TC_SMOKE_WISP_NAMED_SOURCE=YES")
+    base_clear_position = log_text.find("TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES")
+    if named_source_position < 0 or base_clear_position < named_source_position:
+        errors.append("Wisp named source was not resolved before base-cell clearance check")
 
     for marker in REQUIRED_STATUS:
         if marker not in status_text:

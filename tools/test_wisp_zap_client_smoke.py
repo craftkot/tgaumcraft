@@ -1149,8 +1149,15 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     expected_pitch = -math.degrees(math.atan2(source_y + 0.225 - (player_y + 1.62), 1.0))
     assert abs(pitch - expected_pitch) <= 1.5, (pitch, expected_pitch)
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" in generated
-    assert "TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in generated
-    assert "TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
+    assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
+    assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in generated
+    assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
+    assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
+    assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 3
+    assert "tag=tc_wisp_zap_smoke" not in generated
+    assert "if block ~ ~ ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
+    assert "if block ~ ~-1 ~ minecraft:air" not in generated
 
 
 def main() -> int:
@@ -1214,7 +1221,8 @@ def main() -> int:
         '/tp @p 12.5 149 10.5 0 -42',
         '/execute if block 12 148 10 minecraft:stone run say TC_SMOKE_WISP_SUPPORT_BLOCK=YES',
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
-        "TC_SMOKE_WISP_SOURCE_ELEVATED=YES",
+        "TC_SMOKE_WISP_NAMED_SOURCE=YES",
+        "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
         "run tp @p ~1.0 149 ~ facing entity @s eyes",
         "summon thaumcraft:wisp 12.5 151.3 11.5",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
@@ -1620,7 +1628,8 @@ def main() -> int:
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
-        "TC_SMOKE_WISP_SOURCE_ELEVATED=YES",
+        "TC_SMOKE_WISP_NAMED_SOURCE=YES",
+        "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
@@ -1765,13 +1774,30 @@ def main() -> int:
         assert any("missing real-client status marker: WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=" in error
                    for error in missing_rendered_errors), missing_rendered_errors
 
-        missing_elevated_errors = verify_wisp_zap_client.verify(
-            log.replace("TC_SMOKE_WISP_SOURCE_ELEVATED=YES\n", "", 1), status, root
+        missing_named_source_errors = verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_NAMED_SOURCE=YES\n", "", 1), status, root
         )
         assert any(
-            "missing real server world marker: TC_SMOKE_WISP_SOURCE_ELEVATED=YES" in error
-            for error in missing_elevated_errors
-        ), missing_elevated_errors
+            "missing real server world marker: TC_SMOKE_WISP_NAMED_SOURCE=YES" in error
+            for error in missing_named_source_errors
+        ), missing_named_source_errors
+
+        missing_base_clear_errors = verify_wisp_zap_client.verify(
+            log.replace("TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES\n", "", 1), status, root
+        )
+        assert any(
+            "missing real server world marker: TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in error
+            for error in missing_base_clear_errors
+        ), missing_base_clear_errors
+
+        reversed_source_checks = log.replace(
+            "TC_SMOKE_WISP_NAMED_SOURCE=YES\nTC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
+            "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES\nTC_SMOKE_WISP_NAMED_SOURCE=YES",
+            1,
+        )
+        reversed_source_errors = verify_wisp_zap_client.verify(reversed_source_checks, status, root)
+        assert any("Wisp named source was not resolved before base-cell clearance check" in error
+                   for error in reversed_source_errors), reversed_source_errors
 
         errors = verify_wisp_zap_client.verify(log, status, root)
         assert errors == [], errors
