@@ -1098,3 +1098,11 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Exact-SHA проверка на `fe9f62d`: Wisp client [#45774433634](https://github.com/craftkot/tgaumcraft/actions/runs/45774433634) прошёл geometry, offline Python contract и Bash syntax; на момент записи шаг запуска реального Minecraft ещё выполнялся. Full Port CI [#45774433711](https://github.com/craftkot/tgaumcraft/actions/runs/45774433711) прошёл Core parity и NeoForge build; dedicated-server smoke выполнялся, JAR upload ещё ожидал. Эти in-progress шаги не записываются как PASS.
 - PR #4 остаётся OPEN / DRAFT / UNMERGED; HEAD на момент записи — code SHA `fe9f62d`, после этого journal-only commit. PR по-прежнему содержит 368 файлов и 2016 коммитов относительно main; не объединять его целиком. Merge и force-push не выполнялись.
 - Оценка без изменений: **59/100**, M16 **4/6**, M08 **5/9**. Следующее действие: получить результат [Wisp client #45774433634](https://github.com/craftkot/tgaumcraft/actions/runs/45774433634). Требуются отдельные source/base-clear markers, настоящий Survival click по тому же Wisp ID, accepted server damage, matching target/payload, реальные FXBolt pixels и чистый кадр после expiry. Если снова остановится на marker gate, новый двухступенчатый контракт должен показать, какое из двух условий не прошло.
+
+
+### Follow-up exact-SHA CI status — `fe9f62d`
+
+- Full Port CI [#45774433711](https://github.com/craftkot/tgaumcraft/actions/runs/45774433711) completed **SUCCESS**: Core parity, source/resource checks, NeoForge build, dedicated-server smoke and JAR upload all completed.
+- Wisp geometry [#45774433821](https://github.com/craftkot/tgaumcraft/actions/runs/45774433821) completed **SUCCESS**.
+- Wisp real client [#45774433634](https://github.com/craftkot/tgaumcraft/actions/runs/45774433634): offline contract and generated Bash syntax completed **SUCCESS**; the actual Minecraft execution step was still **IN_PROGRESS** at this journal update. No accepted Survival hit, damage, payload, visible beam or expiry PASS is claimed yet.
+- PR #4 was updated with the exact-SHA status in comment [#7185388142](https://github.com/craftkot/tgaumcraft/pull/4#issuecomment-7185388142). PR remains OPEN / DRAFT / UNMERGED.
