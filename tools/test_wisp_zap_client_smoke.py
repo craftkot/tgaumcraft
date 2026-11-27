@@ -1011,15 +1011,21 @@ def _test_video_frame_extraction(generated: str) -> None:
         # pixel-confirmed bolt frames, not merely frames with generic scene change.
         for index in range(60):
             alpha = None
+            line = None
             if 23 <= index <= 25:
                 alpha = 2.0 / 3.0
+                # The later candidate is deliberately longer. Frame selection
+                # must still prefer index 24, nearest to the age-1 timestamp.
+                line = (0, 300, 380 if index == 24 else 480, 600)
             elif 29 <= index <= 31:
                 alpha = 1.0 / 3.0
+                line = (0, 300, 380 if index == 30 else 480, 600)
             elif 35 <= index <= 37:
                 alpha = 0.1
+                line = (0, 300, 380 if index == 36 else 480, 600)
             write_bolt_png(
                 frame_dir / f"frame-{index:03d}.png",
-                line=(0, 300, 480, 600) if alpha is not None else None,
+                line=line,
                 alpha=alpha if alpha is not None else 1.0,
                 source_center=None,
             )
@@ -1086,9 +1092,11 @@ def _test_video_frame_extraction(generated: str) -> None:
                 extracted,
             )
         }
-        assert 24 <= frame_indices[1] < 30, frame_indices
-        assert 30 <= frame_indices[2] < 36, frame_indices
-        assert 36 <= frame_indices[3] < 39, frame_indices
+        assert frame_indices == {1: 24, 2: 30, 3: 36}, (
+            "the extractor must choose the pixel-confirmed frame nearest each observed age timestamp, "
+            "even when a later frame has a longer beam",
+            frame_indices,
+        )
         rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
         assert rendered_view is not None and int(baseline_match.group(2)) > int(rendered_view.group(1)), extracted
         assert extracted.count("WISP_ZAP_FRAME_CAPTURE=YES") == 3, extracted

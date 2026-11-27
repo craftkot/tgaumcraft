@@ -667,7 +667,10 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                     )
                 candidates = range(candidate_start, end_index_exclusive)
                 window_bounds.append((int(age_tick), candidate_start, end_index_exclusive))
-                ranked: list[tuple[float, float, int, int, int, Path]] = []
+                # Select the pixel-confirmed frame nearest the observed render-age timestamp.
+                # Ranking geometry first can pick a later, longer frame at the tail of this
+                # interval and label age 2 pixels as age 1.
+                ranked: list[tuple[int, float, float, int, int, Path]] = []
                 for index in candidates:
                     candidate = temporary / f"age-{age_tick}-{index}.png"
                     _extract_video_frame(video_file, index, candidate)
@@ -681,16 +684,16 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                     bolt = max(bolt_candidates, key=lambda item: (item["length"], item["pixels"]))
                     difference = _crop_pixel_difference(candidate, after_expiry, temporary)
                     ranked.append((
-                        bolt["length"], bolt["pixels"], difference,
-                        -abs(index - base_index), index, candidate
+                        abs(index - base_index), bolt["length"], bolt["pixels"],
+                        difference, index, candidate
                     ))
                 if not ranked:
                     raise RuntimeError(
                         f"no pixel-confirmed additive Aer FXBolt at age={age_tick} "
                         f"in video frame window [{candidate_start},{end_index_exclusive})"
                     )
-                _, _, difference, _, selected_index, selected_path = max(
-                    ranked, key=lambda item: (item[0], item[1], item[2], item[3])
+                _, _, _, difference, selected_index, selected_path = min(
+                    ranked, key=lambda item: (item[0], -item[1], -item[2], -item[3], item[4])
                 )
                 selected.append(
                     (int(source_id), int(created_at), int(age_tick), int(wisp_tick), selected_index, difference, str(selected_path))
