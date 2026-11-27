@@ -1560,3 +1560,9 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - The first repair commit 6e6781db2b10c99723c75719fa47787c703c9147 did not yield a clean smoke-source blob: the fetched blob was 129155 bytes and included a trailing source fragment after the original module. The test-source blob from that commit is clean (175141 bytes, 2976 lines) and contains the nonzero-frame regression.
 - Rebuilt tools/client_wisp_zap_smoke.py from immutable original blob 2ea8941b7480b07079ed7e234f0fc4258e1f4644, applied only the positive-frame predicate change, and created the Git blob using base64-encoded UTF-8. The next verification checks exact source length/line count and Python syntax through the branch workflow.
 - No result from the malformed intermediate smoke-source blob is accepted. The fixed audit remains 59/100, M16 4/6, M08 5/9.
+
+## 2026-11-27 — final Wisp source correction
+
+- The remaining malformed smoke blob came from JavaScript String.replace replacement-string semantics: the literal dollar-apostrophe in the anchored grep expression was interpreted as the entire suffix after the match. This duplicated the rest of the module. The final correction uses a replacement callback, preserving the literal regex anchor.
+- The clean Wisp smoke source is now reconstructed from immutable original blob 2ea8941b7480b07079ed7e234f0fc4258e1f4644 and contains exactly one module entry point plus the single positive-frame matcher. The offline test blob from 6e6781d remains intact and checks both frame=2 acceptance and zero-only rejection.
+- No workflow result from the malformed intermediate commits is counted. New exact-SHA validation is required.
