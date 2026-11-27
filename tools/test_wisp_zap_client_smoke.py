@@ -93,19 +93,19 @@ def _test_client_screen_state_wait_contract(generated: str) -> None:
         root = Path(directory)
         (root / "client-smoke").mkdir()
         (root / "client-smoke" / "client.log").write_text(
-            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\\n"
-            "TC_SMOKE_CLIENT_SCREEN_STATE=chat monotonicNs=2\\n"
-            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=3\\n",
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=chat monotonicNs=2\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=3\n",
             encoding="utf-8",
         )
         script = (
-            "wisp_wait_for_client_screen_state() {\\n" + wait_body + "\\n}\\n"
-            "wisp_wait_for_client_screen_state none latest\\n"
-            "printf 'LATEST=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
-            "wisp_wait_for_client_screen_state chat 1\\n"
-            "printf 'CHAT=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
-            "wisp_wait_for_client_screen_state none 2\\n"
-            "printf 'CLOSED=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
+            "wisp_wait_for_client_screen_state() {\n" + wait_body + "\n}\n"
+            "wisp_wait_for_client_screen_state none latest\n"
+            "printf 'LATEST=%s\\n' \"$WISP_CLIENT_SCREEN_STATE_LINE\"\n"
+            "wisp_wait_for_client_screen_state chat 1\n"
+            "printf 'CHAT=%s\\n' \"$WISP_CLIENT_SCREEN_STATE_LINE\"\n"
+            "wisp_wait_for_client_screen_state none 2\n"
+            "printf 'CLOSED=%s\\n' \"$WISP_CLIENT_SCREEN_STATE_LINE\"\n"
         )
         result = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, timeout=5)
         assert result.returncode == 0, result.stderr
@@ -117,17 +117,18 @@ def _test_client_screen_state_wait_contract(generated: str) -> None:
         root = Path(directory)
         (root / "client-smoke").mkdir()
         (root / "client-smoke" / "client.log").write_text(
-            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\\n"
-            "TC_SMOKE_CLIENT_SCREEN_STATE=other:PauseScreen monotonicNs=2\\n",
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=other:PauseScreen monotonicNs=2\n",
             encoding="utf-8",
         )
         script = (
-            "wisp_wait_for_client_screen_state() {\\n" + wait_body + "\\n}\\n"
-            "wisp_wait_for_client_screen_state none latest\\n"
+            "wisp_wait_for_client_screen_state() {\n" + wait_body + "\n}\n"
+            "wisp_wait_for_client_screen_state none latest\n"
         )
         result = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, timeout=5)
         assert result.returncode != 0
         assert "WISP_CLIENT_SCREEN_UNEXPECTED=other:PauseScreen" in result.stdout, result.stdout
+
 
 def _test_bash_function_body_extraction() -> None:
     nested = (
