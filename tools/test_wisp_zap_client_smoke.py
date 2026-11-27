@@ -1403,14 +1403,14 @@ def _test_fxbbolt_segment_detector() -> None:
             cycle_errors, [age for age, _ in visible_ages]
         )
 
-        # Real-client run 45912108230 measured mean Aer deltas 171.0, 147.5,
-        # and 23.9. The component mean includes changing texture/raster coverage,
-        # so a 10% monotonic margin is realistic while equal-age frames still fail.
+        # Real-client run 45912108230 has component means 171.0/147.5/23.9,
+        # but robust medians 197.75/153.0/23.5. Texture/edge pixels dilute the
+        # mean; the median preserves a >20% first-to-second-age separation.
         weak_age_one = root / "weak-age-one.png"
         weak_age_two = root / "weak-age-two.png"
         weak_age_three = root / "weak-age-three.png"
         write_bolt_png(weak_age_one, line=(0, 300, 480, 600), alpha=0.67, source_center=None)
-        write_bolt_png(weak_age_two, line=(0, 300, 480, 600), alpha=0.58, source_center=None)
+        write_bolt_png(weak_age_two, line=(0, 300, 480, 600), alpha=0.52, source_center=None)
         write_bolt_png(weak_age_three, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
         weak_fade_errors, weak_fade_visible, _ = verify_wisp_zap_client.verify_bolt_cycle(
             ((1, weak_age_one), (2, weak_age_two), (3, weak_age_three)),
@@ -1420,6 +1420,9 @@ def _test_fxbbolt_segment_detector() -> None:
         assert not weak_fade_errors and [age for age, _ in weak_fade_visible] == [1, 2, 3], (
             weak_fade_errors, [age for age, _ in weak_fade_visible]
         )
+        weak_medians = [candidate["median_aer_delta"] for _, candidate in weak_fade_visible]
+        assert weak_medians[0] >= weak_medians[1] * 1.2
+        assert weak_medians[1] >= weak_medians[2] * 1.2
         for missing_age, frames in (
             (1, ((1, moved_empty), (2, moved_age_two), (3, moved_age_three))),
             (2, ((1, moved_age_one), (2, moved_empty), (3, moved_age_three))),
