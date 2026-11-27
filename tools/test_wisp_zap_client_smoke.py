@@ -1611,16 +1611,17 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert player_y == platform_top, (player_y, platform_top)
     expected_pitch = -math.degrees(math.atan2(source_y + 0.225 - (player_y + 1.62), 1.0))
     assert abs(pitch - expected_pitch) <= 1.5, (pitch, expected_pitch)
-    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in generated
+    assert "run tp @p ~1.0 ~-1 ~ facing entity @s eyes" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in generated
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
-    # Three exact Wisp lookups are intentional: live-player teleport,
-    # named-source validation, and source-base clearance. The support floor is
-    # built from the player position after the server confirms the teleport.
-    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 3
+    # Four exact Wisp lookups are intentional: named-source validation,
+    # source-base clearance, pre-teleport live-Wisp floor, and live-Wisp teleport.
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
+    assert "run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone" in generated
+    assert generated.index("run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone") < generated.index("run tp @p ~1.0 ~-1 ~ facing entity @s eyes")
     assert "tag=tc_wisp_zap_smoke" not in generated
     assert "if block ~ ~ ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
@@ -1739,7 +1740,7 @@ def main() -> int:
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
         "TC_SMOKE_WISP_NAMED_SOURCE=YES",
         "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
-        "run tp @p ~1.0 ~ ~ facing entity @s eyes",
+        "run tp @p ~1.0 ~-1 ~ facing entity @s eyes",
         "summon thaumcraft:wisp 12.5 151.3 11.5",
         "/execute if loaded 10 148 10 run say TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "TC_SMOKE_WISP_ATTACK_INPUT=YES",
@@ -2069,7 +2070,9 @@ def main() -> int:
     assert "wisp_reanchor_player_for_capture" not in generated
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" in move_body
+    assert "run tp @p ~1.0 ~-1 ~ facing entity @s eyes" in move_body
+    assert "run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone" in move_body
+    assert move_body.index("run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone") < move_body.index("run tp @p ~1.0 ~-1 ~ facing entity @s eyes")
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in move_body
     assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body

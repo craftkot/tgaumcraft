@@ -1782,3 +1782,11 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Crystal Outline run #46052339394 упал до запуска клиента из-за Maven Central HTTP 429 при скачивании gson-2.10.1.pom; это временный dependency rate limit, не результат визуальной проверки.
 - На 2c466a9 локальный checkout отсутствовал, поэтому локальный Python/Bash прогон не заявляется. Следующий exact-SHA Actions обязан выполнить offline contract, generated Bash syntax, NeoForge build и настоящий Wisp client. Для M16 дополнительно требуется получить реальный Survival hit того же Wisp ID, accepted damage/target/payload, видимые FXBolt ages 1/2/3 с BETA26 fade и чистый expiry.
 - Фиксированный аудит остаётся 59/100 (M16 4/6, M08 5/9); баллы не начислять, категорию не закрывать.
+
+## 2026-11-27 — исправлены устаревшие fixture-assertions после переноса пола перед телепортацией
+
+- Exact-SHA Wisp run #46054965416 прошёл BETA26 geometry (37) и atlas/UV (24), затем остановился в offline Python contract до генерации Bash и до запуска Minecraft. Traceback указывает на tools/test_wisp_zap_client_smoke.py:_test_wisp_zap_fixture_elevation: ожидалась прежняя телепортация на ~1.0 ~, тогда как новый smoke использует ~1.0 ~-1 ~; рядом оставались устаревшие ожидания трёх Wisp lookups вместо четырёх и старый комментарий о player-relative fill.
+- Это stale test fixture, а не отказ новой платформы или игрового кода. Исправлены ожидания координат, количество именованных Wisp lookups, проверка порядка live-Wisp fill → teleport и дополнительная проверка support marker.
+- Full Port CI #46054965365 на d2bebfc прошёл Core/source parity и NeoForge build; dedicated-server smoke ещё выполнялся на момент записи.
+- Следующий точный SHA должен сначала пройти весь offline contract и generated Bash syntax, затем NeoForge/dedicated server и реальный Wisp client. До фактического Survival hit и визуальной приёмки Wisp никакие баллы не начислять.
+- Аудит остаётся 59/100 (M16 4/6, M08 5/9); категория не закрыта.
