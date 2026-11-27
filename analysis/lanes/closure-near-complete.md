@@ -1861,3 +1861,10 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Локальный checkout отсутствует; локальные Python/Bash результаты не заявляются. Новый exact-SHA CI должен подтвердить offline contract, Bash syntax, затем реальную Survival-атаку, same-ID accepted damage/target/payload, FXBolt ages 1/2/3 и expiry. Индекс остаётся **59/100**, M16 **4/6**, M08 **5/9**; баллы не начисляются.
 - Следующее действие: получить новые exact-SHA Wisp и Full Port CI результаты; если staging проходит, довести реальный hit/payload/pixels. После этого отдельно расследовать M08 Rift registration failure.
 
+
+
+### Follow-up source audit — preserved Bash parameter expansion
+
+- Before relying on the newly queued CI, source inspection caught one quoting defect in the generated smoke function: the literal Bash guard had been emitted as `\${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}`, which would suppress parameter expansion and rebuild the 289-block platform on every retry.
+- Corrected the generated source to use the actual Bash expansion `${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}`. The offline contract already asserts this exact guard, so the next run will fail before Minecraft if the quoting regresses.
+- This is a follow-up to commit `23452ad`; no gameplay code or acceptance threshold changed. Local Python/Bash results remain unclaimed until a real runner executes the updated SHA.

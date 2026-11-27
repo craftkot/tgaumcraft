@@ -417,7 +417,7 @@ PY
     # Prebuild a broad temporary floor around the live Wisp. Its altitude may
     # change while chat commands round-trip, so this floor is not the final
     # support proof for the player's eventual position.
-    if [[ "\${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
+    if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
       support_log_lines="$(wc -l < client-smoke/client.log)"
       wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
       wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
