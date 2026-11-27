@@ -6,6 +6,7 @@ import json
 import math
 import re
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -271,10 +272,9 @@ def _bolt_segment_candidates(
         delta_b = frame_b - base_b
 
         # BETA26's exact alpha values (2/3, 1/3, 0.1 at ages 1/2/3)
-        # are asserted by LegacyWispZapGeometryTest. A screen-space component
-        # mean is not a direct alpha measurement: textured UVs and the changing
-        # polycone raster coverage vary between ages. Require a clear monotonic
-        # pixel-level drop (at least 10%) rather than an arbitrary 20% ratio.
+        # are asserted by LegacyWispZapGeometryTest. The component mean is
+        # diluted by textured/anti-aliased edge pixels; its median is a more
+        # stable measure of the beam's interior. Keep a 20% separation margin.
         if (
             delta_r >= 8
             and delta_g >= 8
@@ -297,6 +297,7 @@ def _bolt_segment_candidates(
         count = 0
         sum_x = sum_y = sum_xx = sum_yy = sum_xy = 0.0
         sum_aer_delta = 0.0
+        aer_deltas: list[float] = []
         min_x = min_y = 1 << 30
         max_x = max_y = -1
         while queue:
@@ -305,10 +306,12 @@ def _bolt_segment_candidates(
             y = current // roi_width
             count += 1
             offset = current * 3
-            sum_aer_delta += (
+            aer_delta = (
                 (frame_pixels[offset] - baseline_pixels[offset])
                 + (frame_pixels[offset + 1] - baseline_pixels[offset + 1])
             ) / 2.0
+            sum_aer_delta += aer_delta
+            aer_deltas.append(aer_delta)
             sum_x += x
             sum_y += y
             sum_xx += x * x
@@ -361,6 +364,7 @@ def _bolt_segment_candidates(
                 {
                     "pixels": float(count),
                     "mean_aer_delta": sum_aer_delta / count,
+                    "median_aer_delta": statistics.median(aer_deltas),
                     "length": major_length,
                     "width": minor_width,
                     "elongation": elongation,
@@ -417,13 +421,13 @@ def verify_bolt_cycle(
     if visible_ages != expected_ages:
         errors.append(f"pixel-confirmed FXBolt ages are {visible_ages}; expected {expected_ages}")
     if visible_ages == expected_ages:
-        brightness = [candidate["mean_aer_delta"] for _, candidate in visible]
+        brightness = [candidate["median_aer_delta"] for _, candidate in visible]
         if not (
-            brightness[0] >= brightness[1] * 1.1
-            and brightness[1] >= brightness[2] * 1.1
+            brightness[0] >= brightness[1] * 1.2
+            and brightness[1] >= brightness[2] * 1.2
         ):
             errors.append(
-                "FXBolt additive brightness does not show the required 10% BETA26 age-1 > age-2 > age-3 fade: "
+                "FXBolt median Aer pixel brightness does not show the required 20% BETA26 age-1 > age-2 > age-3 fade: "
                 + ", ".join(f"age {age}={value:.1f}" for age, value in zip(expected_ages, brightness))
             )
     expiry_errors, expiry_metrics = verify_bolt_segment(expiry_path, False, baseline_path)
