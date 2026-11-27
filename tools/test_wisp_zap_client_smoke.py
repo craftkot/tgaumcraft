@@ -1519,10 +1519,10 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
-    # Three exact Wisp lookups are intentional: live-player teleport,
-    # named-source validation, and source-base clearance. The support-floor
-    # fill is relative to @p and must not select the moving Wisp.
-    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 3
+    # Four exact Wisp lookups are intentional: live-Wisp support fill,
+    # live-player teleport, named-source validation, and source-base clearance.
+    # The support floor must be anchored to the moving Wisp before repositioning.
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
     assert "tag=tc_wisp_zap_smoke" not in generated
     assert "if block ~ ~ ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
