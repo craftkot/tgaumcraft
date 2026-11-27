@@ -503,7 +503,14 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
     assert reposition_body.count("0.5 2") == 4, "live teleport, grounded re-sync, player-relative fill and support probe need the established chat-open/type delays"
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
-    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((sync_log_lines + sync_relative_line))"' in reposition_body
+    sync_relative_assignment = 'sync_relative_line="${sync_match%%:*}"'
+    sync_line_number_calculation = 'sync_line_number="$((sync_log_lines + sync_relative_line))"'
+    reposition_line_publication = 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$sync_line_number"'
+    assert sync_relative_assignment in reposition_body
+    assert sync_line_number_calculation in reposition_body
+    assert reposition_line_publication in reposition_body
+    assert reposition_body.index(sync_relative_assignment) < reposition_body.index(sync_line_number_calculation) < reposition_body.index(reposition_line_publication)
+    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((sync_log_lines + sync_relative_line))"' not in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
 
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
