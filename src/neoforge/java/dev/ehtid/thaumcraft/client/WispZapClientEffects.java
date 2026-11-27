@@ -194,6 +194,7 @@ public final class WispZapClientEffects {
             buffers.endBatch(BETA26_ADDITIVE_BOLT);
             if (SMOKE_PROBE) {
                 long gameTime = level.getGameTime();
+                long renderMonotonicNs = System.nanoTime();
                 for (ZapRender result : rendered) {
                     Zap zap = result.zap();
                     long key = smokeKey(zap);
@@ -216,7 +217,8 @@ public final class WispZapClientEffects {
                                 + " ageTick=" + ageTick + " age=" + result.age()
                                 + " points=" + result.pointCount()
                                 + " cameraType=" + minecraft.options.getCameraType().name()
-                                + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF");
+                                + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
+                                + " monotonicNs=" + renderMonotonicNs);
                     }
                 }
             }
