@@ -460,8 +460,10 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert reposition_cursor in attack_body and reposition_call in attack_body
     assert attack_body.count(reposition_call) == 1
     assert retry_branch_end < attack_body.index(reposition_cursor) < attack_body.index(reposition_call)
-    assert attack_body.index(reposition_call) < attack_body.index(survival_confirmation), (
-        "the first real Survival attempt must be staged beside the live Wisp"
+    preposition_marker = "echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES'"
+    assert preposition_marker in attack_body
+    assert attack_body.index(reposition_call) < attack_body.index(preposition_marker) < attack_body.index(survival_confirmation), (
+        "each attempt must confirm its single live-Wisp reposition before switching to Survival"
     )
     assert attack_body.index(wait_for_frame) < attack_body.index(input_cursor_read)
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
@@ -478,20 +480,20 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    fill_command = "run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone"
+    fill_command = "run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone"
     teleport_command = "run tp @p ~1.0 ~ ~ facing entity @s eyes"
     support_check = "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone"
     assert fill_command in reposition_body
     assert teleport_command in reposition_body
     assert support_check in reposition_body
-    assert reposition_body.index(fill_command) < reposition_body.index(teleport_command), (
-        "the support floor must exist before the player is teleported"
+    assert reposition_body.index(teleport_command) < reposition_body.index(fill_command) < reposition_body.index(support_check), (
+        "teleport first, then anchor the support floor to the player's actual feet before checking it"
     )
-    assert reposition_body.index(teleport_command) < reposition_body.index(support_check)
     assert reposition_body.count("run fill") == 1
     assert "for support_attempt in $(seq 1 8)" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES" in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES" in reposition_body
+    assert "WISP_CAMERA_SUPPORT_BUILT=YES relativeTo=ACTUAL_PLAYER_FEET yOffset=-1 radius=3" in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES" not in reposition_body
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
     assert "wisp_fast_command" in reposition_body
     assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
@@ -516,7 +518,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "  printf '%s\\n' \"$1\" >> commands.log\n"
             "  case \"$1\" in\n"
             "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    *\"run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone\"*) printf 'Successfully filled 49 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone\"*) printf 'Successfully filled 49 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *TC_SMOKE_WISP_MELEE_SUPPORT=YES*) printf 'TC_SMOKE_WISP_MELEE_SUPPORT=YES\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
@@ -537,14 +539,15 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "REPOSITION_LINE=3" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
-            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes",
+            "/execute as @p at @s run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone",
             "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_MELEE_SUPPORT=YES",
         ], commands
-        assert commands.index(next(c for c in commands if "run fill " in c)) < commands.index(next(c for c in commands if "run tp @p " in c))
+        assert commands.index(next(c for c in commands if "run tp @p " in c)) < commands.index(next(c for c in commands if "run fill " in c))
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=actual_player_feet attempt=1" in status, status
+        assert "WISP_CAMERA_SUPPORT_BUILT=YES relativeTo=ACTUAL_PLAYER_FEET yOffset=-1 radius=3" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_MELEE_SUPPORT=YES" in status, status
 
     # A successful fill response is insufficient if the expected support block
@@ -560,7 +563,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
             "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    *\"run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone\"*) printf 'Successfully filled 49 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone\"*) printf 'Successfully filled 49 block(s)\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
@@ -1748,9 +1751,7 @@ def main() -> int:
     spawn_snapshot_index = setup.index('aim_log_lines="$(wc -l < client-smoke/client.log)"', pre_spawn_baseline_marker_index)
     summon_index = setup.index('wisp_fast_command "/summon thaumcraft:wisp', spawn_snapshot_index)
     rendered_index = setup.index('wisp_wait_for_fresh_render "$aim_log_lines"', summon_index)
-    preposition_index = setup.index('wisp_move_player_to_live_wisp "$reanchor_log_lines"', rendered_index)
-    preposition_marker_index = setup.index("WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES", preposition_index)
-    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', preposition_marker_index)
+    zap_cursor_index = setup.index('zap_log_lines="$(wc -l < client-smoke/client.log)"', rendered_index)
     attack_call_index = setup.index("wisp_attack_live_wisp", zap_cursor_index)
     client_attack_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'", attack_call_index)
     camera_stopped_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES'", client_attack_index)
@@ -1770,16 +1771,15 @@ def main() -> int:
     perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_restore_second_index = setup.index("xdotool key --clearmodifiers F5", perspective_restore_index + 1)
     restore_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < stabilize_index < stabilize_marker_index < preposition_index < preposition_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
-        "keep the player Creative through Wisp spawn, preposition at the live entity, then enter Survival for the real hit before the zap payload"
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < stabilize_index < stabilize_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+        "keep the player Creative through Wisp spawn, finish knockback setup, then let each bounded attempt reposition once before Survival"
     )
     main_before_attack = setup[rendered_index:attack_call_index]
     assert "wisp_command '/gamemode survival'" not in main_before_attack, "Survival must not begin before the live melee position is staged"
-    assert "wisp_move_player_to_live_wisp" in main_before_attack
+    assert "wisp_move_player_to_live_wisp" not in main_before_attack, "the attack helper owns the single live-Wisp reposition for each attempt"
+    assert "WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES" not in main_before_attack
     assert "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'" in main_before_attack
-    assert main_before_attack.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'") < main_before_attack.index("wisp_move_player_to_live_wisp"), "knockback setup must finish before the final live-Wisp teleport"
     assert "WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL" in main_before_attack
-    assert "wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'" not in setup[preposition_marker_index:attack_call_index], "no slow setup command may follow the final live-Wisp reposition"
     assert "wisp_fast_command '/tp @p ~ ~ ~ 90 0' 0.1 1" not in setup
     assert "wisp_capture 79-wisp-third-person-before-zap" not in setup
     assert "wisp_verify_attack_input_aim_capture" not in setup[restore_marker_index:]

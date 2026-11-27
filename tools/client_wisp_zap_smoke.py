@@ -344,16 +344,8 @@ def render() -> str:
     # WispEntity clears Creative targets before its 20-tick zap wind-up; the
     # first Survival attack therefore establishes the target through hurt(). This
     # moves only the player. Wisp AI, motion and target remain live.
-    # A Wisp can bob vertically between the fill and teleport chat round-trips.
-    # Keep a wider floor at the Wisp's -2 Y level, teleport at its current Y,
-    # then query the block under the player's actual post-teleport feet. Do not
-    # infer footing from the earlier teleport response: the entity may have moved.
-    support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.5 2
-    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2 radius=3' | tee -a client-smoke-status.txt
-    # Match the Wisp's current height. A one-block fall onto the prebuilt floor
-    # is safe; the support probe below waits for the server to resolve that fall.
+    # Teleport beside the live Wisp first. It can move while the chat
+    # round-trip completes, so a floor built at its earlier position can be stale.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
@@ -366,9 +358,15 @@ def render() -> str:
           echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
           exit 1
         fi
-        # The player may still be falling when the teleport response arrives.
-        # Re-query the live block below the player's feet until the floor is
-        # actually supporting them; fail closed if no fresh marker is observed.
+        # Build the floor from the server-confirmed player position, not the
+        # moving Wisp's earlier coordinates. This keeps support under the player
+        # even when the Wisp flies during the chat round-trip.
+        support_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_fast_command '/execute as @p at @s run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone' 0.5 2
+        wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
+        echo 'WISP_CAMERA_SUPPORT_BUILT=YES relativeTo=ACTUAL_PLAYER_FEET yOffset=-1 radius=3' | tee -a client-smoke-status.txt
+        # Verify the exact block below the player's feet rather than trusting
+        # the fill count alone; fail closed if no fresh support marker appears.
         for support_attempt in $(seq 1 8); do
           support_log_lines="$(wc -l < client-smoke/client.log)"
           wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.5 2
@@ -708,6 +706,7 @@ def render() -> str:
       # three-tick FXBolt can be occluded at age 1 by the platform.
       reanchor_log_lines="$(wc -l < client-smoke/client.log)"
       wisp_move_player_to_live_wisp "$reanchor_log_lines"
+      echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
       attack_camera_source="LIVE_ENTITY_FACING"
       attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
       attack_position_mode=LIVE_WISP
@@ -1021,10 +1020,8 @@ def render() -> str:
   # Reposition beside the exact live Wisp as the last setup operation while
   # Creative. The attack helper switches to Survival and clicks the next fresh
   # same-ID EntityHitResult without another slow setup command in between.
-  reanchor_log_lines="$(wc -l < client-smoke/client.log)"
-  wisp_move_player_to_live_wisp "$reanchor_log_lines"
-  echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
-
+  # The bounded attack helper performs one fresh live-Wisp reposition per attempt,
+  # immediately before Survival; avoid a duplicate setup teleport.
   zap_log_lines="$(wc -l < client-smoke/client.log)"
   wisp_attack_live_wisp
   wisp_wait_for_marker 'TC_SMOKE_WISP_CLIENT_ATTACK=YES'
