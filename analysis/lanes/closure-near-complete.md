@@ -1456,3 +1456,22 @@ Downloaded and inspected the actual ZIP artifact 15160936895 from [run #45912108
 - client-smoke/client.log contains the matching source/target/createdAt event: payload at gameTime 818, render ages 1/2/3 at gameTime 819/820/821, and server-side expiry at gameTime 822 with ageTicks=4. The expiry follows the last rendered age and no age>3 frame is logged for that event.
 - Opened all four extracted PNGs from the artifact: age 1 and 2 show the additive Aer beam, age 3 shows the weaker final beam, and the after-expiry image has no bolt. This confirms the game produced the required visual sequence; the old final failure was in the verifier's stale status regex and overly strict screen-space mean threshold.
 - The new code has not yet been validated by its own fresh CI: PR Wisp client #45915575776 and push Wisp client #45915570434 are still QUEUED at the last poll. Do not mark the new verifier PASS until one of these completes.
+
+
+### Pixel metric refinement after direct artifact analysis
+
+The first correction temporarily lowered the screen-space mean threshold to 10%. Before accepting that calibration, I inspected the actual selected PNGs with the same 256×280 BOLT_ROI and connected-component mask used by the verifier. The selected component metrics are:
+
+| Age | Pixels | Mean Aer delta | Median Aer delta |
+|---|---:|---:|---:|
+| 1 | 1,190 | 170.98 | 197.75 |
+| 2 | 1,245 | 147.46 | 153.00 |
+| 3 | 783 | 23.88 | 23.50 |
+
+The mean is diluted by textured/anti-aliased edge pixels and changing raster coverage; the median of the same connected Aer component gives a stable interior-pixel measure. Replaced the temporary 10% mean rule with a **20% median** separation rule. Actual artifact ratios are 197.75/153.00 = 1.293 and 153.00/23.50 = 6.51, so the real frame sequence satisfies the stricter criterion. Exact source alpha remains independently asserted as 2/3, 1/3 and 0.1 in LegacyWispZapGeometryTest.
+
+Additional code commits:
+- [61ab987](https://github.com/craftkot/tgaumcraft/commit/61ab98759271087991ffed3ce7ff6a494af741b1) adds median Aer delta to each detected component and restores the 20% threshold against that median.
+- [49aaa49](https://github.com/craftkot/tgaumcraft/commit/49aaa491811cb4f794345f4023843a409844e031) updates the synthetic near-threshold regression to preserve the 20% median margin and assert it directly.
+
+This refinement supersedes the earlier temporary 10% mean-threshold note; no production Java or renderer changed. Fresh Wisp client CI is still required to validate the final median-based verifier.
