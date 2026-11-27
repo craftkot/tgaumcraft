@@ -493,7 +493,9 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert "WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES" in reposition_body
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
-    assert "wisp_fast_command" in reposition_body and "0.1 1" in reposition_body
+    assert "wisp_fast_command" in reposition_body
+    assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
+    assert reposition_body.count("0.5 2") == 3, "fill, live teleport and support probe need the established chat-open/type delays"
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
     assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
@@ -1784,7 +1786,7 @@ def main() -> int:
         "live-Wisp reposition is shared by the first attempt and retries, not nested inside the retry-only branch"
     )
     survival_cursor_index = attack_body.index('survival_log_lines="$(wc -l < client-smoke/client.log)"')
-    survival_command_index = attack_body.index("wisp_fast_command '/gamemode survival' 0.1 1")
+    survival_command_index = attack_body.index("wisp_fast_command '/gamemode survival' 0.5 2")
     survival_marker_index = attack_body.index("wisp_wait_for_fresh_log_marker")
     survival_status_index = attack_body.index("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
     frame_cursor_index = attack_body.index('frame_log_lines="$(wc -l < client-smoke/client.log)"')

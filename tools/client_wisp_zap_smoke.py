@@ -348,12 +348,12 @@ def render() -> str:
     # then query the block under the player's actual post-teleport feet. Do not
     # infer footing from the earlier teleport response: the entity may have moved.
     support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.1 1
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.5 2
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
     echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2 radius=3' | tee -a client-smoke-status.txt
     # Match the Wisp's current height. A one-block fall onto the prebuilt floor
     # is safe; the support probe below waits for the server to resolve that fall.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.1 1
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -370,7 +370,7 @@ def render() -> str:
         # actually supporting them; fail closed if no fresh marker is observed.
         for support_attempt in $(seq 1 8); do
           support_log_lines="$(wc -l < client-smoke/client.log)"
-          wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.1 1
+          wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.5 2
           for _ in $(seq 1 20); do
             support_match="$(tail -n +"$((support_log_lines + 1))" client-smoke/client.log | grep -n -F -- "$support_marker" | head -1 || true)"
             if [ -n "$support_match" ]; then
@@ -714,7 +714,7 @@ def render() -> str:
       # only after the server confirms Survival. Frames rendered before this
       # transition are stale and must never trigger the real attack click.
       survival_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_fast_command '/gamemode survival' 0.1 1
+      wisp_fast_command '/gamemode survival' 0.5 2
       wisp_wait_for_fresh_log_marker "$survival_log_lines" 'Set own game mode to Survival Mode'
       echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' | tee -a client-smoke-status.txt
       frame_log_lines="$(wc -l < client-smoke/client.log)"
