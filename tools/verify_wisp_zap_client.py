@@ -851,7 +851,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     attackable_frame = _attackable_frame_for_input(log_text, attack_input)
     input_correlated_frame = _input_correlated_frame_for_input(log_text, attack_input)
     rendered = _first(
-        r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+)"
+        r"TC_SMOKE_WISP_ZAP_RENDERED=YES source=(\d+) target=(\d+) points=(\d+) age=([0-9.]+) stage=AFTER_PARTICLES"
         r" texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF",
         log_text,
     )
