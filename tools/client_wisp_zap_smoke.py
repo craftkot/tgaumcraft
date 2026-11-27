@@ -67,6 +67,11 @@ def render() -> str:
     local command="$1" open_delay="0.5" type_delay="2"
     if [ "$#" -ge 2 ]; then open_delay="$2"; fi
     if [ "$#" -ge 3 ]; then type_delay="$3"; fi
+    # A previous command's server response can arrive before the chat screen
+    # finishes closing. Escape first so the next T always opens a fresh chat
+    # instead of toggling the still-open chat closed and dropping the command.
+    xdotool key --clearmodifiers Escape
+    sleep 0.05
     xdotool key --clearmodifiers t
     # Delay only before sending. Callers wait for authoritative markers after Return.
     sleep "$open_delay"
