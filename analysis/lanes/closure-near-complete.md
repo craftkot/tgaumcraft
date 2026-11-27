@@ -1798,3 +1798,8 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Updated the exact command, markers, offline fixtures and verifier. This is still test-fixture work only; no production Java or Wisp AI change. The queued Wisp run for the preceding Y-3 SHA is obsolete for final acceptance.
 - No local checkout/test result is claimed. Exact-SHA validation is required on the corrected commit.
 - Audit remains 59/100 (M16 4/6, M08 5/9); no point awarded.
+
+### Follow-up correction — emitted support marker matches the fixed Y=147 plane
+
+- A post-commit source audit found the script's emitted WISP_CAMERA_SUPPORT_PREBUILT marker still said relative Y-3 while the command and verifier had moved to absolute Y=147. Corrected the emitted marker to LIVE_WISP_XZ / absoluteY=147 so the real-client status can satisfy the verifier without contradictory telemetry.
+- Exact-SHA client runs on cd4bb12 are not final acceptance because this marker mismatch would fail the offline contract; the corrected run must use the next commit.

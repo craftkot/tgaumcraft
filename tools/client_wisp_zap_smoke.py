@@ -421,7 +421,7 @@ PY
     support_log_lines="$(wc -l < client-smoke/client.log)"
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 147 ~-8 ~8 147 ~8 minecraft:stone' 0.5 2
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ absoluteY=147 radius=8' | tee -a client-smoke-status.txt
     echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
 
     # Teleport only the player to the current Wisp position. The one-block
