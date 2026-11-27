@@ -376,22 +376,14 @@ PY
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    local player_x player_y player_z support_log_lines support_match support_relative_line support_line_number support_attempt
-    local support_marker='TC_SMOKE_WISP_MELEE_SUPPORT=YES'
+    local player_x player_y player_z support_log_lines
     # Stage the player beside the exact tagged smoke entity while still Creative.
     # WispEntity clears Creative targets before its 20-tick zap wind-up; the
     # first Survival attack therefore establishes the target through hurt(). This
     # moves only the player. Wisp AI, motion and target remain live.
-    # A Wisp can bob vertically between the fill and teleport chat round-trips.
-    # Keep a wider floor at the Wisp's -2 Y level, teleport at its current Y,
-    # then query the block under the player's actual post-teleport feet. Do not
-    # infer footing from the earlier teleport response: the entity may have moved.
-    support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.5 2
-    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2 radius=3' | tee -a client-smoke-status.txt
-    # Match the Wisp's current height. A one-block fall onto the prebuilt floor
-    # is safe; the support probe below waits for the server to resolve that fall.
+    # Teleport to the live Wisp first, then build support from the server-confirmed
+    # player position. A Wisp-relative floor at Y-2 can be offset from the player's
+    # final block Y after the entity bobs between fill and teleport.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
@@ -404,29 +396,18 @@ PY
           echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
           exit 1
         fi
-        # The player may still be falling when the teleport response arrives.
-        # Re-query the live block below the player's feet until the floor is
-        # actually supporting them; fail closed if no fresh marker is observed.
-        for support_attempt in $(seq 1 8); do
-          support_log_lines="$(wc -l < client-smoke/client.log)"
-          wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.5 2
-          for _ in $(seq 1 20); do
-            support_match="$(tail -n +"$((support_log_lines + 1))" client-smoke/client.log | grep -n -F -- "$support_marker" | head -1 || true)"
-            if [ -n "$support_match" ]; then
-              support_relative_line="${support_match%%:*}"
-              support_line_number="$((support_log_lines + support_relative_line))"
-              echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$support_marker line=$support_line_number" | tee -a client-smoke-status.txt
-              echo "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=actual_player_feet attempt=$support_attempt" | tee -a client-smoke-status.txt
-              echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
-              echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
-              return 0
-            fi
-            sleep 0.025
-          done
-        done
-        echo 'WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES afterAttempts=8' | tee -a client-smoke-status.txt
-        tail -120 client-smoke/client.log >&2
-        exit 1
+        # The 7x7 fill is anchored to the player's actual server position,
+        # with its top face exactly at the player's feet. The successful fill
+        # response proves all 49 support blocks were placed below this position;
+        # no gravity delay or repeated speculative block probes are needed.
+        support_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_fast_command '/execute as @p at @s run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone' 0.5 2
+        wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 49 block(s)"
+        echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=ACTUAL_PLAYER yOffset=-1 radius=3' | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=player_relative_fill blocks=49' | tee -a client-smoke-status.txt
+        echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
+        return 0
       fi
       sleep 0.025
     done
