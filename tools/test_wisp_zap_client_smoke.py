@@ -546,9 +546,9 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=player_relative_fill blocks=49" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 49 block(s) line=3" in status, status
 
-    # A successful fill response is insufficient if the expected support block
-    # cannot be confirmed at the exact player footing; the smoke must fail closed.
-    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-no-support-") as directory:
+    # A partial fill response is insufficient: the smoke must require all 49
+    # player-relative support blocks before the Survival attack.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-partial-fill-") as directory:
         root = Path(directory)
         client_dir = root / "client-smoke"
         client_dir.mkdir()
@@ -1519,10 +1519,10 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
-    # Four exact Wisp lookups are intentional: live-Wisp support fill,
-    # live-player teleport, named-source validation, and source-base clearance.
-    # The support floor must be anchored to the moving Wisp before repositioning.
-    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
+    # Three exact Wisp lookups are intentional: live-player teleport,
+    # named-source validation, and source-base clearance. The support floor is
+    # built from the player position after the server confirms the teleport.
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 3
     assert "tag=tc_wisp_zap_smoke" not in generated
     assert "if block ~ ~ ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
