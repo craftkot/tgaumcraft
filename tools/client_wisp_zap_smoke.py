@@ -1017,9 +1017,6 @@ def render() -> str:
   wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1' 'Base value for attribute Knockback Resistance for entity Dev set to 1.0'
   echo 'WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL' | tee -a client-smoke-status.txt
 
-  # Reposition beside the exact live Wisp as the last setup operation while
-  # Creative. The attack helper switches to Survival and clicks the next fresh
-  # same-ID EntityHitResult without another slow setup command in between.
   # The bounded attack helper performs one fresh live-Wisp reposition per attempt,
   # immediately before Survival; avoid a duplicate setup teleport.
   zap_log_lines="$(wc -l < client-smoke/client.log)"

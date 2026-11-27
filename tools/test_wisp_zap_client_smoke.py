@@ -497,7 +497,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
     assert "wisp_fast_command" in reposition_body
     assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
-    assert reposition_body.count("0.5 2") == 3, "fill, live teleport and support probe need the established chat-open/type delays"
+    assert reposition_body.count("0.5 2") == 3, "live teleport, player-relative fill and support probe need the established chat-open/type delays"
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
     assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
@@ -536,7 +536,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             timeout=5,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "REPOSITION_LINE=3" in result.stdout, result.stdout
+        assert "REPOSITION_LINE=2" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes",
