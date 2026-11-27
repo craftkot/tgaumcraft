@@ -9,6 +9,7 @@ import dev.ehtid.thaumcraft.entity.WispEntity;
 import dev.ehtid.thaumcraft.port.core.visual.LegacyWispZapGeometry;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -51,6 +52,7 @@ public final class WispZapClientEffects {
     private static final ResourceLocation ESSENTIA_TEXTURE =
             ResourceLocation.fromNamespaceAndPath(ThaumcraftPort.MOD_ID, "textures/misc/essentia.png");
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private static String lastSmokeScreenState = "unknown";
     private static final Map<Integer, Zap> ACTIVE = new ConcurrentHashMap<>();
     private static final Set<Long> SMOKE_RENDERED = ConcurrentHashMap.newKeySet();
     private static final Map<Long, Integer> SMOKE_FRAME_AGE = new ConcurrentHashMap<>();
@@ -93,6 +95,16 @@ public final class WispZapClientEffects {
     @SubscribeEvent
     public static void expire(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (SMOKE_PROBE) {
+            String screenState = minecraft.screen == null ? "none"
+                    : minecraft.screen instanceof ChatScreen ? "chat"
+                    : "other:" + minecraft.screen.getClass().getSimpleName();
+            if (!screenState.equals(lastSmokeScreenState)) {
+                lastSmokeScreenState = screenState;
+                System.out.println("TC_SMOKE_CLIENT_SCREEN_STATE=" + screenState
+                        + " monotonicNs=" + System.nanoTime());
+            }
+        }
         net.minecraft.client.multiplayer.ClientLevel level = minecraft.level;
         if (level == null) {
             ACTIVE.clear();

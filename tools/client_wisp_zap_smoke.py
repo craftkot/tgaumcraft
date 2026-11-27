@@ -63,19 +63,52 @@ def render() -> str:
     sleep 0.2
   }
 
+  wisp_wait_for_client_screen_state() {
+    local desired="$1" after_lines="$2" match relative_line line_number screen_state
+    for _ in $(seq 1 200); do
+      if [ "$after_lines" = "latest" ]; then
+        match="$(grep -n -F 'TC_SMOKE_CLIENT_SCREEN_STATE=' client-smoke/client.log | tail -1 || true)"
+      else
+        match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'TC_SMOKE_CLIENT_SCREEN_STATE=' | head -1 || true)"
+      fi
+      if [ -n "$match" ]; then
+        relative_line="${match%%:*}"
+        line_number="$relative_line"
+        if [ "$after_lines" != "latest" ]; then
+          line_number="$((after_lines + relative_line))"
+        fi
+        match="${match#*:}"
+        screen_state="${match#*TC_SMOKE_CLIENT_SCREEN_STATE=}"
+        screen_state="${screen_state%% *}"
+        if [ "$screen_state" = "$desired" ]; then
+          WISP_CLIENT_SCREEN_STATE_LINE="$line_number"
+          return 0
+        fi
+        if [[ "$screen_state" == other:* ]]; then
+          echo "WISP_CLIENT_SCREEN_UNEXPECTED=$screen_state desired=$desired" | tee -a client-smoke-status.txt
+          return 1
+        fi
+      fi
+      sleep 0.01
+    done
+    echo "WISP_CLIENT_SCREEN_STATE_TIMEOUT=desired:$desired afterLine:$after_lines" | tee -a client-smoke-status.txt
+    tail -40 client-smoke/client.log >&2
+    return 1
+  }
+
   wisp_fast_command() {
-    local command="$1" open_delay="0.5" type_delay="2"
+    local command="$1" open_delay="0.5" type_delay="2" before_lines chat_line_number
     if [ "$#" -ge 2 ]; then open_delay="$2"; fi
     if [ "$#" -ge 3 ]; then type_delay="$3"; fi
-    # The server marker can arrive just before the previous chat screen closes.
-    # Let the client process Return before opening the next command chat; do not
-    # send Escape here because Escape from the world opens the pause menu.
-    sleep 0.15
+    wisp_wait_for_client_screen_state none latest || return 1
+    before_lines="$(wc -l < client-smoke/client.log)"
     xdotool key --clearmodifiers t
-    # Delay only before sending. Callers wait for authoritative markers after Return.
+    wisp_wait_for_client_screen_state chat "$before_lines" || return 1
+    chat_line_number="$WISP_CLIENT_SCREEN_STATE_LINE"
     sleep "$open_delay"
     xdotool type --clearmodifiers --delay "$type_delay" "$command"
     xdotool key --clearmodifiers Return
+    wisp_wait_for_client_screen_state none "$chat_line_number" || return 1
   }
 
   wisp_wait_for_marker() {

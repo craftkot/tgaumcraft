@@ -73,6 +73,62 @@ def _bash_function_body(script: str, name: str) -> str:
     return remainder.split(closing, 1)[0]
 
 
+def _test_client_screen_state_wait_contract(generated: str) -> None:
+    wait_body = _bash_function_body(generated, "wisp_wait_for_client_screen_state")
+    fast_body = _bash_function_body(generated, "wisp_fast_command")
+    assert "TC_SMOKE_CLIENT_SCREEN_STATE=" in wait_body
+    assert "WISP_CLIENT_SCREEN_UNEXPECTED=" in wait_body
+    none_latest = fast_body.index("wisp_wait_for_client_screen_state none latest")
+    before_lines = fast_body.index('before_lines="$(wc -l < client-smoke/client.log)"')
+    open_chat = fast_body.index("xdotool key --clearmodifiers t")
+    wait_chat = fast_body.index('wisp_wait_for_client_screen_state chat "$before_lines"')
+    type_command = fast_body.index('xdotool type --clearmodifiers --delay "$type_delay" "$command"')
+    submit = fast_body.index("xdotool key --clearmodifiers Return")
+    wait_closed = fast_body.index('wisp_wait_for_client_screen_state none "$chat_line_number"')
+    assert none_latest < before_lines < open_chat < wait_chat < type_command < submit < wait_closed
+    assert 'sleep "$open_delay"' in fast_body
+    assert "sleep 0.15" not in fast_body and "xdotool key --clearmodifiers Escape" not in fast_body
+
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-screen-state-") as directory:
+        root = Path(directory)
+        (root / "client-smoke").mkdir()
+        (root / "client-smoke" / "client.log").write_text(
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=chat monotonicNs=2\\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=3\\n",
+            encoding="utf-8",
+        )
+        script = (
+            "wisp_wait_for_client_screen_state() {\\n" + wait_body + "\\n}\\n"
+            "wisp_wait_for_client_screen_state none latest\\n"
+            "printf 'LATEST=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
+            "wisp_wait_for_client_screen_state chat 1\\n"
+            "printf 'CHAT=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
+            "wisp_wait_for_client_screen_state none 2\\n"
+            "printf 'CLOSED=%s\\n' \\"$WISP_CLIENT_SCREEN_STATE_LINE\\"\\n"
+        )
+        result = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, timeout=5)
+        assert result.returncode == 0, result.stderr
+        assert "LATEST=3" in result.stdout, result.stdout
+        assert "CHAT=2" in result.stdout, result.stdout
+        assert "CLOSED=3" in result.stdout, result.stdout
+
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-screen-unexpected-") as directory:
+        root = Path(directory)
+        (root / "client-smoke").mkdir()
+        (root / "client-smoke" / "client.log").write_text(
+            "TC_SMOKE_CLIENT_SCREEN_STATE=none monotonicNs=1\\n"
+            "TC_SMOKE_CLIENT_SCREEN_STATE=other:PauseScreen monotonicNs=2\\n",
+            encoding="utf-8",
+        )
+        script = (
+            "wisp_wait_for_client_screen_state() {\\n" + wait_body + "\\n}\\n"
+            "wisp_wait_for_client_screen_state none latest\\n"
+        )
+        result = subprocess.run(["bash", "-c", script], cwd=root, capture_output=True, text=True, timeout=5)
+        assert result.returncode != 0
+        assert "WISP_CLIENT_SCREEN_UNEXPECTED=other:PauseScreen" in result.stdout, result.stdout
+
 def _test_bash_function_body_extraction() -> None:
     nested = (
         "  probe() {\n"
@@ -1962,15 +2018,12 @@ def main() -> int:
     assert attack_body.index("wisp_capture_attack_input_frame") < attack_body.index("WISP_ATTACK_INPUT_FRAME=YES") < attack_body.index("WISP_ATTACK_CAMERA_FRAME=YES")
     assert "for _ in $(seq 1 200)" not in wait_attack_body
     fast_command_body = _bash_function_body(generated, "wisp_fast_command")
-    settle_index = fast_command_body.index("sleep 0.15")
-    open_index = fast_command_body.index("xdotool key --clearmodifiers t")
-    type_index = fast_command_body.index('xdotool type --clearmodifiers --delay "$type_delay" "$command"')
-    return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
+    _test_client_screen_state_wait_contract(generated)
     assert 'open_delay="0.5"' in fast_command_body and 'type_delay="2"' in fast_command_body
-    assert settle_index < open_index < type_index < return_index, "allow the previous chat to close before opening and typing the next command"
+    return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert 'sleep "$open_delay"' in fast_command_body
     assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
-    assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
+    assert "sleep " not in fast_command_body[return_index:], "fast commands must wait on the observed screen transition rather than a fixed post-submit delay"
     assert "wisp_reanchor_player_for_capture" not in generated
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
@@ -2933,6 +2986,10 @@ def main() -> int:
     assert "TC_SMOKE_WISP_HURT=YES accepted=" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_SENT=YES" in wisp_entity
     assert "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES" in renderer
+    assert "import net.minecraft.client.gui.screens.ChatScreen;" in renderer
+    assert "TC_SMOKE_CLIENT_SCREEN_STATE=" in renderer
+    assert "minecraft.screen instanceof ChatScreen" in renderer
+    assert "lastSmokeScreenState" in renderer
     assert "TC_SMOKE_WISP_ZAP_RENDERED=YES" in renderer
     renderer_registration = Path(
         "src/neoforge/java/dev/ehtid/thaumcraft/client/WispRendererRegistration.java"
