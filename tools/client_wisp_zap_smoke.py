@@ -419,11 +419,14 @@ PY
     # is teleported to Wisp Y-1 and falls one block onto the floor; the resulting
     # two-block source/target height gap keeps the BETA26 base-to-base bolt above it.
     # Obsidian also makes the full 17x17 fill count deterministic over the old stone pad.
-    support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
-    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
-    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
+    if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
+      support_log_lines="$(wc -l < client-smoke/client.log)"
+      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
+      wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
+      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
+      echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
+      WISP_CAMERA_SUPPORT_PLATFORM_READY=YES
+    fi
 
     # Teleport only the player to the current Wisp position. The one-block
     # vertical offset leaves one block for the player to settle onto the prebuilt floor.

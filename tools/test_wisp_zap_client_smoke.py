@@ -547,6 +547,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         "the live-Wisp floor must exist before teleport, and player support must be verified afterwards"
     )
     assert reposition_body.count("run fill") == 1
+    assert 'if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then' in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PLATFORM_READY=YES" in reposition_body
     assert "for support_attempt in" not in reposition_body
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289" in reposition_body
@@ -588,6 +590,9 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             + reposition_function
             + "\nwisp_move_player_to_live_wisp 1\n"
             + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
+            + 'second_after_lines="$(wc -l < client-smoke/client.log)"\\n'
+            + 'wisp_move_player_to_live_wisp "$second_after_lines"\\n'
+            + 'printf "REPOSITION_LINE_SECOND=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\\n'
         )
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -599,9 +604,12 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         )
         assert result.returncode == 0, result.stdout + result.stderr
         assert "REPOSITION_LINE=3" in result.stdout, result.stdout
+        assert "REPOSITION_LINE_SECOND=5" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s if entity @p[distance=..2.75] run execute as @p[distance=..2.75] at @s if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s if entity @p[distance=..2.75] run execute as @p[distance=..2.75] at @s if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
         ], commands
@@ -609,6 +617,9 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289" in status, status
         assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=2.75 block=minecraft:obsidian" in status, status
+        assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 1, status
+        assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 1, status
+        assert status.count("WISP_CAMERA_LIVE_SUPPORT=YES") == 2, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 289 block(s) line=2" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=4" in status, status
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
