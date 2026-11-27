@@ -341,124 +341,64 @@ def render() -> str:
   }
 
   wisp_move_player_to_live_wisp() {
-    local after_lines="$1" teleport_match relative_line first_teleport_line
-    local player_x player_y player_z ground_y sync_log_lines sync_match sync_relative_line sync_line_number
-    local synced_x synced_y synced_z wisp_id ack_log_lines camera_line camera_player_x camera_player_y camera_player_z
-    local client_position_ack support_log_lines support_match support_relative_line support_line_number
+    local after_lines="$1" teleport_match relative_line
+    local player_x player_y player_z support_log_lines support_match support_relative_line support_line_number support_attempt
     local support_marker='TC_SMOKE_WISP_MELEE_SUPPORT=YES'
-    # Creative mode does not suspend gravity unless the player is actually flying.
-    # Build support at the intended destination before the final teleport; otherwise
-    # the player falls to the old floor before a client-side position acknowledgement.
+    # Stage the player beside the exact tagged smoke entity while still Creative.
+    # WispEntity clears Creative targets before its 20-tick zap wind-up; the
+    # first Survival attack therefore establishes the target through hurt(). This
+    # moves only the player. Wisp AI, motion and target remain live.
+    # A Wisp can bob vertically between the fill and teleport chat round-trips.
+    # Keep a wider floor at the Wisp's -2 Y level, teleport at its current Y,
+    # then query the block under the player's actual post-teleport feet. Do not
+    # infer footing from the earlier teleport response: the entity may have moved.
+    support_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-3 ~-2 ~-3 ~3 ~-2 ~3 minecraft:stone' 0.5 2
+    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled "
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-2 radius=3' | tee -a client-smoke-status.txt
+    # Match the Wisp's current height. A one-block fall onto the prebuilt floor
+    # is safe; the support probe below waits for the server to resolve that fall.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.5 2
-    first_teleport_line=""
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
         relative_line="${teleport_match%%:*}"
-        first_teleport_line="$(cut -d: -f2- <<<"$teleport_match")"
-        read -r player_x player_y player_z <<<"$(sed -n 's/.*Teleported Dev to \([-0-9.]*\), \([-0-9.]*\), \([-0-9.]*\).*/\1 \2 \3/p' <<<"$first_teleport_line")"
+        WISP_ATTACK_REPOSITION_LINE="$(cut -d: -f2- <<<"$teleport_match")"
+        WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"
+        read -r player_x player_y player_z <<<"$(sed -n 's/.*Teleported Dev to \([-0-9.]*\), \([-0-9.]*\), \([-0-9.]*\).*/\1 \2 \3/p' <<<"$WISP_ATTACK_REPOSITION_LINE")"
         if ! [[ "$player_x" =~ ^-?[0-9]+([.][0-9]+)?$ && "$player_y" =~ ^-?[0-9]+([.][0-9]+)?$ && "$player_z" =~ ^-?[0-9]+([.][0-9]+)?$ ]]; then
-          echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$first_teleport_line" | tee -a client-smoke-status.txt
+          echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
           exit 1
         fi
-        ground_y="$(awk -v y="$player_y" 'BEGIN { printf "%d", int(y) }')"
-        if ! [[ "$ground_y" =~ ^[0-9]+$ ]]; then
-          echo "WISP_CAMERA_GROUNDED_Y_INVALID=$ground_y sourceY=$player_y" | tee -a client-smoke-status.txt
-          exit 1
-        fi
-        break
+        # The player may still be falling when the teleport response arrives.
+        # Re-query the live block below the player's feet until the floor is
+        # actually supporting them; fail closed if no fresh marker is observed.
+        for support_attempt in $(seq 1 8); do
+          support_log_lines="$(wc -l < client-smoke/client.log)"
+          wisp_fast_command "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.5 2
+          for _ in $(seq 1 20); do
+            support_match="$(tail -n +"$((support_log_lines + 1))" client-smoke/client.log | grep -n -F -- "$support_marker" | head -1 || true)"
+            if [ -n "$support_match" ]; then
+              support_relative_line="${support_match%%:*}"
+              support_line_number="$((support_log_lines + support_relative_line))"
+              echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$support_marker line=$support_line_number" | tee -a client-smoke-status.txt
+              echo "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=actual_player_feet attempt=$support_attempt" | tee -a client-smoke-status.txt
+              echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
+              echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
+              return 0
+            fi
+            sleep 0.025
+          done
+        done
+        echo 'WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES afterAttempts=8' | tee -a client-smoke-status.txt
+        tail -120 client-smoke/client.log >&2
+        exit 1
       fi
       sleep 0.025
     done
-    if [ -z "$first_teleport_line" ]; then
-      echo 'WISP_CAMERA_REPOSITION_TIMEOUT=YES' | tee -a client-smoke-status.txt
-      tail -120 client-smoke/client.log >&2
-      exit 1
-    fi
-
-    # Prebuild a 7x7 platform one block below the exact server-reported destination.
-    # This is deliberately before the absolute teleport and client acknowledgement:
-    # Creative without active flight still falls, so building after the ack is circular.
-    support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command "/execute positioned $player_x $ground_y $player_z run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone" 0.5 2
-    wisp_wait_for_fresh_log_marker "$support_log_lines" 'Successfully filled '
-    echo 'WISP_CAMERA_SUPPORT_BUILT=YES relativeTo=DESTINATION yOffset=-1 radius=3' | tee -a client-smoke-status.txt
-
-    support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command "/execute positioned $player_x $ground_y $player_z if block ~ ~-1 ~ minecraft:stone run say $support_marker" 0.5 2
-    support_match=""
-    for _ in $(seq 1 200); do
-      support_match="$(tail -n +"$((support_log_lines + 1))" client-smoke/client.log | grep -n -F -- "$support_marker" | head -1 || true)"
-      if [ -n "$support_match" ]; then
-        break
-      fi
-      sleep 0.025
-    done
-    if [ -z "$support_match" ]; then
-      echo "WISP_CAMERA_SUPPORT_DESTINATION_TIMEOUT=YES expected=$player_x,$ground_y,$player_z" | tee -a client-smoke-status.txt
-      tail -120 client-smoke/client.log >&2
-      exit 1
-    fi
-    support_relative_line="${support_match%%:*}"
-    support_line_number="$((support_log_lines + support_relative_line))"
-    echo "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=$support_marker line=$support_line_number" | tee -a client-smoke-status.txt
-    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=destination_below_player attempt=1' | tee -a client-smoke-status.txt
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES' | tee -a client-smoke-status.txt
-
-    # The player now has a real support block at the destination. Snap to the
-    # integer block-top Y and require a fresh same-Wisp client camera acknowledgement.
-    sync_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command "/tp @p $player_x $ground_y $player_z" 0.5 2
-    wisp_wait_for_fresh_log_marker "$sync_log_lines" 'Teleported Dev to '
-    sync_match="$(tail -n +"$((sync_log_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
-    if [ -z "$sync_match" ]; then
-      echo 'WISP_CAMERA_GROUNDED_TELEPORT_RESPONSE_MISSING=YES' | tee -a client-smoke-status.txt
-      tail -120 client-smoke/client.log >&2
-      exit 1
-    fi
-    sync_relative_line="${sync_match%%:*}"
-    sync_line_number="$((sync_log_lines + sync_relative_line))"
-    WISP_ATTACK_REPOSITION_LINE="$(cut -d: -f2- <<<"$sync_match")"
-    WISP_ATTACK_REPOSITION_LINE_NUMBER="$sync_line_number"
-    read -r synced_x synced_y synced_z <<<"$(sed -n 's/.*Teleported Dev to \([-0-9.]*\), \([-0-9.]*\), \([-0-9.]*\).*/\1 \2 \3/p' <<<"$WISP_ATTACK_REPOSITION_LINE")"
-    if ! [[ "$synced_x" =~ ^-?[0-9]+([.][0-9]+)?$ && "$synced_y" =~ ^-?[0-9]+([.][0-9]+)?$ && "$synced_z" =~ ^-?[0-9]+([.][0-9]+)?$ ]] \
-      || ! awk -v x="$synced_x" -v ex="$player_x" -v y="$synced_y" -v ey="$ground_y" -v z="$synced_z" -v ez="$player_z" \
-        'BEGIN { dx=x-ex; if (dx<0) dx=-dx; dy=y-ey; if (dy<0) dy=-dy; dz=z-ez; if (dz<0) dz=-dz; exit !(dx<=0.05 && dy<=0.05 && dz<=0.05) }'; then
-      echo "WISP_CAMERA_GROUNDED_TELEPORT_MISMATCH=YES expected=$player_x,$ground_y,$player_z actual=$synced_x,$synced_y,$synced_z" | tee -a client-smoke-status.txt
-      exit 1
-    fi
-    echo "WISP_CAMERA_CLIENT_POSITION_SYNC=YES method=absolute_grounded_teleport target=$synced_x,$synced_y,$synced_z" | tee -a client-smoke-status.txt
-    wisp_id="$(sed -n 's/^WISP_RENDER_FIRST_FRAME_ID=//p' client-smoke-status.txt | tail -1)"
-    if ! [[ "$wisp_id" =~ ^[0-9]+$ ]]; then
-      echo "WISP_CAMERA_CLIENT_POSITION_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
-      exit 1
-    fi
-    ack_log_lines="$(wc -l < client-smoke/client.log)"
-    client_position_ack=0
-    for _ in $(seq 1 200); do
-      camera_line="$(tail -n +"$((ack_log_lines + 1))" client-smoke/client.log | grep -F "TC_SMOKE_WISP_CAMERA=YES id=$wisp_id aimTarget=render_safe_quarter " | tail -1 || true)"
-      if [ -n "$camera_line" ] && [[ "$camera_line" =~ playerX=([-0-9.]+)\ playerY=([-0-9.]+)\ playerZ=([-0-9.]+) ]]; then
-        camera_player_x="${BASH_REMATCH[1]}"
-        camera_player_y="${BASH_REMATCH[2]}"
-        camera_player_z="${BASH_REMATCH[3]}"
-        if awk -v x="$camera_player_x" -v ex="$synced_x" -v y="$camera_player_y" -v ey="$synced_y" -v z="$camera_player_z" -v ez="$synced_z" \
-          'BEGIN { dx=x-ex; if (dx<0) dx=-dx; dy=y-ey; if (dy<0) dy=-dy; dz=z-ez; if (dz<0) dz=-dz; exit !(dx<=0.05 && dy<=0.05 && dz<=0.05) }'; then
-          client_position_ack=1
-          echo "WISP_CAMERA_CLIENT_POSITION_ACK=YES id=$wisp_id x=$camera_player_x y=$camera_player_y z=$camera_player_z" | tee -a client-smoke-status.txt
-          break
-        fi
-      fi
-      sleep 0.025
-    done
-    if [ "$client_position_ack" -ne 1 ]; then
-      echo "WISP_CAMERA_CLIENT_POSITION_ACK_TIMEOUT=YES id=$wisp_id expected=$synced_x,$synced_y,$synced_z" | tee -a client-smoke-status.txt
-      tail -120 client-smoke/client.log >&2
-      exit 1
-    fi
-
-    echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
-    echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
-    return 0
+    echo 'WISP_CAMERA_REPOSITION_TIMEOUT=YES' | tee -a client-smoke-status.txt
+    tail -120 client-smoke/client.log >&2
+    exit 1
   }
   wisp_wait_for_attack_frame() {
     local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" attempt="${4:-1}" frame_pattern frame_line camera_tick game_time player_tick camera_line click_log_lines frame_fd frame_tail_pid candidate_line watcher_status deadline remaining
