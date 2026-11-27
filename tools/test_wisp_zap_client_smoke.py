@@ -1517,7 +1517,9 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
 
 
 def _test_video_capture_accepts_first_nonzero_frame_counter() -> None:
-    generated = client_wisp_zap_smoke.render()
+    fixture = "#!/usr/bin/env bash\nprintf 'guiScale:2\\n' > run/options.txt\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n  # The initial world is already creative + peaceful, as established"
+    with patch.object(Path, "read_text", return_value=fixture):
+        generated = client_wisp_zap_smoke.render()
     dollar = chr(36)
     positive_frame_pattern = "^frame=[1-9][0-9]*" + dollar
     expected_command = "grep -Eq '" + positive_frame_pattern + "' \"" + dollar + "progress\""
@@ -1531,7 +1533,6 @@ def _test_video_capture_accepts_first_nonzero_frame_counter() -> None:
         progress.write_text("frame=0\nprogress=continue\n", encoding="utf-8")
         result = subprocess.run(["grep", "-Eq", positive_frame_pattern, str(progress)], check=False)
         assert result.returncode == 1
-
 def main() -> int:
     _test_video_capture_accepts_first_nonzero_frame_counter()
     _test_bash_function_body_extraction()

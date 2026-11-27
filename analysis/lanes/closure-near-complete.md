@@ -1566,3 +1566,8 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - The remaining malformed smoke blob came from JavaScript String.replace replacement-string semantics: the literal dollar-apostrophe in the anchored grep expression was interpreted as the entire suffix after the match. This duplicated the rest of the module. The final correction uses a replacement callback, preserving the literal regex anchor.
 - The clean Wisp smoke source is now reconstructed from immutable original blob 2ea8941b7480b07079ed7e234f0fc4258e1f4644 and contains exactly one module entry point plus the single positive-frame matcher. The offline test blob from 6e6781d remains intact and checks both frame=2 acceptance and zero-only rejection.
 - No workflow result from the malformed intermediate commits is counted. New exact-SHA validation is required.
+
+## 2026-11-27 — Wisp regression now uses the existing generator fixture
+
+- Corrected the new offline regression so it invokes client_wisp_zap_smoke.render() under the same Path.read_text fixture used by the existing suite. This avoids an unpatched read of run/options.txt in clean CI workspaces.
+- The test asserts the generated recorder command, accepts a progress file whose first positive counter is frame=2, and rejects a zero-only progress file. The local shell predicate check passed; the repository-level Python contract and real client remain pending on the exact new SHA.
