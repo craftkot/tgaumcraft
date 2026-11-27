@@ -657,11 +657,14 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
                         f"start={elapsed:.4f}s end={end_elapsed:.4f}s duration={duration:.4f}s"
                     )
                 base_index = int(round(elapsed * fps))
-                # Frame i is sampled at first_frame_ns + i/fps. Floor can
-                # include the previous frame when an age marker falls between
-                # two captures; only consider frames at or after the marker.
-                first_index = max(0, int(math.ceil(elapsed * fps)))
-                end_index_exclusive = min(frame_count, int(math.ceil(end_elapsed * fps)))
+                # The marker is timestamped inside AFTER_ENTITIES after the FXBolt
+                # batch is flushed. The X11 grab can sample that rendered frame
+                # at or just before the callback timestamp, so assign the last
+                # frame at/before each age boundary. Floor both boundaries to
+                # keep the adjacent age windows disjoint (and not push age 3
+                # into the already-expired frame).
+                first_index = max(0, int(math.floor(elapsed * fps + 1e-9)))
+                end_index_exclusive = min(frame_count, int(math.floor(end_elapsed * fps + 1e-9)))
                 candidate_start = max(previous_index + 1, first_index)
                 window_size = end_index_exclusive - candidate_start
                 if window_size <= 0:
@@ -1020,7 +1023,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     zap_frame_pattern = re.compile(
         r"TC_SMOKE_WISP_ZAP_FRAME=YES source=(\d+) target=(\d+) createdAt=(\d+) "
         r"gameTime=(\d+) wispTick=(\d+) ageTick=(\d+) age=([0-9.]+) points=(\d+) "
-        r"cameraType=([A-Z_]+)"
+        r"cameraType=([A-Z_]+) monotonicNs=(\d+)"
     )
     zap_frames = list(zap_frame_pattern.finditer(log_text))
     captured_frames = re.findall(
@@ -1089,13 +1092,26 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                     f"captured FXBolt screenshot has no matching rendered age={age_tick} frame "
                     f"for source={source_id} createdAt={created_at} wispTick={wisp_tick}"
                 )
-            elif int(matching_frame.group(8)) <= 2:
-                errors.append(f"FXBolt age={age_tick} frame has no interior polycone points")
-            elif matching_frame.group(9) != "THIRD_PERSON_BACK":
-                errors.append(
-                    f"FXBolt age={age_tick} was rendered in camera mode "
-                    f"{matching_frame.group(9)}, expected THIRD_PERSON_BACK"
+            else:
+                if int(matching_frame.group(8)) <= 2:
+                    errors.append(f"FXBolt age={age_tick} frame has no interior polycone points")
+                elif matching_frame.group(9) != "THIRD_PERSON_BACK":
+                    errors.append(
+                        f"FXBolt age={age_tick} was rendered in camera mode "
+                        f"{matching_frame.group(9)}, expected THIRD_PERSON_BACK"
+                    )
+                matching_observation = next(
+                    (
+                        frame for frame in observed_frames
+                        if frame[0] == source_id and frame[1] == created_at
+                        and frame[2] == age_tick and frame[3] == wisp_tick
+                    ),
+                    None,
                 )
+                if matching_observation is None or int(matching_frame.group(10)) != int(matching_observation[4]):
+                    errors.append(
+                        f"FXBolt age={age_tick} status timestamp does not match its AFTER_ENTITIES render callback"
+                    )
 
         if sent is not None:
             source_id, target_id = captured_frames[0][0], sent.group(2)
