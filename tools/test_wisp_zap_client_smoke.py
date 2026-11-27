@@ -1630,9 +1630,10 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert "TC_SMOKE_WISP_NAMED_SOURCE=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
-    # Four exact Wisp lookups are intentional: named-source validation,
-    # source-base clearance, pre-teleport live-Wisp floor, and live-Wisp teleport.
-    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
+    # Five exact Wisp lookups are intentional: named-source validation,
+    # source-base clearance, live-Wisp floor, live-Wisp teleport, and the
+    # live-support proximity check performed after repositioning.
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 5
     assert "run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian" in generated
     assert generated.index("run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian") < generated.index("run tp @p ~1.0 ~-1 ~ facing entity @s eyes")
     assert "tag=tc_wisp_zap_smoke" not in generated
