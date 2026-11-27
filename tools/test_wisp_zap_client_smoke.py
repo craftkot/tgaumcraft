@@ -1962,13 +1962,12 @@ def main() -> int:
     assert attack_body.index("wisp_capture_attack_input_frame") < attack_body.index("WISP_ATTACK_INPUT_FRAME=YES") < attack_body.index("WISP_ATTACK_CAMERA_FRAME=YES")
     assert "for _ in $(seq 1 200)" not in wait_attack_body
     fast_command_body = _bash_function_body(generated, "wisp_fast_command")
-    escape_index = fast_command_body.index("xdotool key --clearmodifiers Escape")
+    settle_index = fast_command_body.index("sleep 0.15")
     open_index = fast_command_body.index("xdotool key --clearmodifiers t")
     type_index = fast_command_body.index('xdotool type --clearmodifiers --delay "$type_delay" "$command"')
     return_index = fast_command_body.index("xdotool key --clearmodifiers Return")
     assert 'open_delay="0.5"' in fast_command_body and 'type_delay="2"' in fast_command_body
-    assert escape_index < open_index < type_index < return_index, "each fast command must reset chat state before opening and typing"
-    assert "sleep 0.05" in fast_command_body[escape_index:open_index]
+    assert settle_index < open_index < type_index < return_index, "allow the previous chat to close before opening and typing the next command"
     assert 'sleep "$open_delay"' in fast_command_body
     assert 'xdotool type --clearmodifiers --delay "$type_delay" "$command"' in fast_command_body
     assert "sleep " not in fast_command_body[return_index:], "fast commands must return immediately; callers wait for authoritative markers"
