@@ -43,7 +43,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * The original FXBolt lives for three ticks, uses a five-sided seeded polycone,
  * draws two nested widths, binds essentia.png and uses SRC_ALPHA/ONE with depth
  * writes disabled. The event renderer keeps the bolt independent of the Wisp's
- * own billboard and entity-frustum visibility.
+ * own billboard and entity-frustum visibility. It is submitted after the vanilla particle pass
+ * into the particle target so the later target composite cannot discard the bolt.
  */
 @EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, value = Dist.CLIENT)
 public final class WispZapClientEffects {
@@ -115,7 +116,7 @@ public final class WispZapClientEffects {
 
     @SubscribeEvent
     public static void render(RenderLevelStageEvent event) {
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES || ACTIVE.isEmpty()) {
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES || ACTIVE.isEmpty()) {
             return;
         }
 
@@ -205,7 +206,7 @@ public final class WispZapClientEffects {
                         System.out.println("TC_SMOKE_WISP_ZAP_RENDERED=YES source="
                                 + zap.sourceId() + " target=" + zap.targetId()
                                 + " points=" + result.pointCount() + " age=" + result.age()
-                                + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
+                                + " stage=AFTER_PARTICLES texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
                                 + " createdAt=" + zap.createdAt() + " gameTime=" + gameTime
                                 + " ageTick=" + ageTick);
                     }
@@ -217,7 +218,7 @@ public final class WispZapClientEffects {
                                 + " ageTick=" + ageTick + " age=" + result.age()
                                 + " points=" + result.pointCount()
                                 + " cameraType=" + minecraft.options.getCameraType().name()
-                                + " texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
+                                + " stage=AFTER_PARTICLES texture=" + ESSENTIA_TEXTURE + " blend=SRC_ALPHA_ONE depthWrite=OFF"
                                 + " monotonicNs=" + renderMonotonicNs);
                     }
                 }
@@ -398,7 +399,7 @@ public final class WispZapClientEffects {
                         .setWriteMaskState(COLOR_WRITE)
                         .setLightmapState(LIGHTMAP)
                         .setOverlayState(OVERLAY)
-                        .setOutputState(MAIN_TARGET)
+                        .setOutputState(PARTICLES_TARGET)
                         .createCompositeState(false)
         );
 

@@ -1009,10 +1009,10 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
         "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
-        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
+        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=100 gameTime=524 ageTicks=4",
     ]
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-frame-sequence-") as directory:
@@ -1171,7 +1171,7 @@ def _test_video_frame_extraction(generated: str) -> None:
             )
         }
         assert frame_indices == {1: 24, 2: 30, 3: 36}, (
-            "the extractor must choose the frame rendered by each AFTER_ENTITIES callback; "
+            "the extractor must choose the frame rendered by each AFTER_PARTICLES callback; "
             "the next capture frame may already belong to the following age/expiry boundary",
             frame_indices,
         )
@@ -2103,12 +2103,12 @@ def main() -> int:
         "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520 monotonicNs=1200000000",
-        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
+        "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=524 ageTicks=4",
     ))
@@ -2455,7 +2455,7 @@ def main() -> int:
         age_four_render_log = late_cleanup_log + "\n" + (
             "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 "
             "gameTime=524 wispTick=27 ageTick=4 age=4.0 points=9 "
-            "cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1625000000"
+            "cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1625000000"
         )
         age_four_errors = verify_wisp_zap_client.verify(age_four_render_log, status, root)
         assert any("render frame at or after its BETA26 expiry boundary" in error
@@ -3031,6 +3031,11 @@ def main() -> int:
     assert ".setDepthTestState(LEQUAL_DEPTH_TEST)" in renderer_registration
     assert ".setTransparencyState(LIGHTNING_TRANSPARENCY)" in renderer
     assert ".setWriteMaskState(COLOR_WRITE)" in renderer
+    assert "RenderLevelStageEvent.Stage.AFTER_PARTICLES" in renderer
+    assert "event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES" in renderer
+    assert ".setOutputState(PARTICLES_TARGET)" in renderer
+    assert ".setOutputState(MAIN_TARGET)" not in renderer
+    assert "stage=AFTER_PARTICLES" in renderer
     assert "buffers.endBatch(BETA26_ADDITIVE_BOLT)" in renderer
 
     # Verify the committed node atlas is the exact pinned BETA26 Git blob.

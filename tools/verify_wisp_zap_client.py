@@ -1023,7 +1023,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     zap_frame_pattern = re.compile(
         r"TC_SMOKE_WISP_ZAP_FRAME=YES source=(\d+) target=(\d+) createdAt=(\d+) "
         r"gameTime=(\d+) wispTick=(\d+) ageTick=(\d+) age=([0-9.]+) points=(\d+) "
-        r"cameraType=([A-Z_]+).*?monotonicNs=(\d+)"
+        r"cameraType=([A-Z_]+) stage=AFTER_PARTICLES .*?monotonicNs=(\d+)"
     )
     zap_frames = list(zap_frame_pattern.finditer(log_text))
     captured_frames = re.findall(
@@ -1125,7 +1125,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             rendered_for_event = re.search(
                 rf"TC_SMOKE_WISP_ZAP_RENDERED=YES source={re.escape(source_id)} "
                 rf"target={re.escape(target_id)} points=(\d+) age=([0-9.]+) "
-                rf"texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF "
+                rf"stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia\.png blend=SRC_ALPHA_ONE depthWrite=OFF "
                 rf"createdAt={re.escape(created_at)} gameTime=\d+ ageTick=\d+",
                 log_text,
             )
