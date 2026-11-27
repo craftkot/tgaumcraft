@@ -1446,3 +1446,13 @@ No points awarded: **59/100**, M16 **4/6**, M08 **5/9**. The new exact-SHA Wisp 
 - Before editing, checked the three touched paths (tools/verify_wisp_zap_client.py, tools/test_wisp_zap_client_smoke.py, this lane journal) against all **61 other open PRs** (#1–#3 and #5–#62); no filename overlap. PR #4 remains the only owner of these paths, OPEN / DRAFT / UNMERGED. Its current 368-file / 2077-commit diff is still too broad for an unreviewed merge. No force-push.
 - No local full Python run is claimed; this environment has no checked-out repository/runtime. The exact-SHA GitHub Wisp workflow must validate the changed contract before any PASS is recorded. No score awarded; audit remains **59/100**, M16 **4/6**, M08 **5/9**; no category closed.
 - Next: inspect the new exact-SHA Wisp client workflow. Require offline contract + generated Bash syntax, then a fresh real-client artifact proving same-ID Survival hit, accepted damage, payload, three pixel-confirmed fade frames, matching three-tick expiry and clear after-expiry frame. Separately rerun the scan-sound job after the 429 and the Workbench RU scale-2 job after the apt 403; do not alter production sound/GUI code unless a fresh client run demonstrates a game defect.
+
+
+### Additional artifact forensics — previous Wisp run
+
+Downloaded and inspected the actual ZIP artifact 15160936895 from [run #45912108230](https://github.com/craftkot/tgaumcraft/actions/runs/45912108230), not just the Actions console summary.
+
+- client-smoke-status.txt records the real Survival hit input, same Wisp ID 75, accepted hurt, target ID 25, payload createdAt=818, three observed render ages, expiry monotonicNs=505183340378, selected video frames 926/928/937, and WISP_ZAP_REAL_CLIENT=PASS from the earlier extraction stage.
+- client-smoke/client.log contains the matching source/target/createdAt event: payload at gameTime 818, render ages 1/2/3 at gameTime 819/820/821, and server-side expiry at gameTime 822 with ageTicks=4. The expiry follows the last rendered age and no age>3 frame is logged for that event.
+- Opened all four extracted PNGs from the artifact: age 1 and 2 show the additive Aer beam, age 3 shows the weaker final beam, and the after-expiry image has no bolt. This confirms the game produced the required visual sequence; the old final failure was in the verifier's stale status regex and overly strict screen-space mean threshold.
+- The new code has not yet been validated by its own fresh CI: PR Wisp client #45915575776 and push Wisp client #45915570434 are still QUEUED at the last poll. Do not mark the new verifier PASS until one of these completes.
