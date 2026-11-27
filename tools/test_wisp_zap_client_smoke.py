@@ -503,7 +503,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
     assert reposition_body.count("0.5 2") == 4, "live teleport, grounded re-sync, player-relative fill and support probe need the established chat-open/type delays"
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
-    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
+    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((sync_log_lines + sync_relative_line))"' in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
 
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
@@ -514,7 +514,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         client_dir = root / "client-smoke"
         client_dir.mkdir()
         (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
-        (root / "client-smoke-status.txt").write_text("WISP_RENDER_FIRST_FRAME_ID=106\\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("WISP_RENDER_FIRST_FRAME_ID=106\n", encoding="utf-8")
         commands_path = root / "commands.log"
         harness = (
             "set -euo pipefail\n"
