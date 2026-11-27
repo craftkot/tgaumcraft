@@ -1015,17 +1015,29 @@ def _test_video_frame_extraction(generated: str) -> None:
         for index in range(60):
             alpha = None
             line = None
-            if 23 <= index <= 25:
+            if index == 24:
+                # This bright frame begins before the fractional age-1 marker.
+                alpha = 1.0
+                line = (0, 300, 480, 600)
+            elif 25 <= index <= 26:
                 alpha = 2.0 / 3.0
-                # The later candidate is deliberately longer. Frame selection
-                # must still prefer index 24, nearest to the age-1 timestamp.
-                line = (0, 300, 380 if index == 24 else 480, 600)
-            elif 29 <= index <= 31:
+                # A later candidate is longer; choose the nearest valid frame 25.
+                line = (0, 300, 380 if index == 25 else 480, 600)
+            elif index == 30:
+                # The last age-1 frame must not be relabeled as age 2.
+                alpha = 2.0 / 3.0
+                line = (0, 300, 480, 600)
+            elif 31 <= index <= 32:
                 alpha = 1.0 / 3.0
-                line = (0, 300, 380 if index == 30 else 480, 600)
-            elif 35 <= index <= 37:
+                # Vary projected length to exercise length-normalized signal.
+                line = (0, 300, 480 if index == 31 else 380, 600)
+            elif index == 36:
+                # The last age-2 frame must not be relabeled as age 3.
+                alpha = 1.0 / 3.0
+                line = (0, 300, 480, 600)
+            elif 37 <= index <= 38:
                 alpha = 0.1
-                line = (0, 300, 380 if index == 36 else 480, 600)
+                line = (0, 300, 380 if index == 37 else 480, 600)
             write_bolt_png(
                 frame_dir / f"frame-{index:03d}.png",
                 line=line,
@@ -1048,9 +1060,9 @@ def _test_video_frame_extraction(generated: str) -> None:
             "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
             "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
             "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1405000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1505000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1605000000",
             "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=100 monotonicNs=1650000000",
             "WISP_ZAP_VIDEO_STOPPED=YES",
         )) + "\n", encoding="utf-8")
@@ -1095,9 +1107,9 @@ def _test_video_frame_extraction(generated: str) -> None:
                 extracted,
             )
         }
-        assert frame_indices == {1: 24, 2: 30, 3: 36}, (
-            "the extractor must choose the pixel-confirmed frame nearest each observed age timestamp, "
-            "even when a later frame has a longer beam",
+        assert frame_indices == {1: 25, 2: 31, 3: 37}, (
+            "the extractor must choose the nearest pixel-confirmed frame at or after each age marker; "
+            "pre-marker frames 24/30/36 belong to the previous age and must never be relabeled",
             frame_indices,
         )
         rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
@@ -1416,9 +1428,9 @@ def _test_fxbbolt_segment_detector() -> None:
             cycle_errors, [age for age, _ in visible_ages]
         )
 
-        # Real-client run 45912108230 has component means 171.0/147.5/23.9,
-        # but robust medians 197.75/153.0/23.5. Texture/edge pixels dilute the
-        # mean; the median preserves a >20% first-to-second-age separation.
+        # A thresholded component median can remain high as dimmer edge pixels
+        # disappear from the mask. Integrated Aer signal per projected length
+        # preserves the BETA26 alpha ordering while tolerating geometry changes.
         weak_age_one = root / "weak-age-one.png"
         weak_age_two = root / "weak-age-two.png"
         weak_age_three = root / "weak-age-three.png"
@@ -1433,9 +1445,12 @@ def _test_fxbbolt_segment_detector() -> None:
         assert not weak_fade_errors and [age for age, _ in weak_fade_visible] == [1, 2, 3], (
             weak_fade_errors, [age for age, _ in weak_fade_visible]
         )
-        weak_medians = [candidate["median_aer_delta"] for _, candidate in weak_fade_visible]
-        assert weak_medians[0] >= weak_medians[1] * 1.2
-        assert weak_medians[1] >= weak_medians[2] * 1.2
+        weak_signals = [
+            candidate["integrated_aer_signal_per_length"]
+            for _, candidate in weak_fade_visible
+        ]
+        assert weak_signals[0] >= weak_signals[1] * 1.2
+        assert weak_signals[1] >= weak_signals[2] * 1.2
         for missing_age, frames in (
             (1, ((1, moved_empty), (2, moved_age_two), (3, moved_age_three))),
             (2, ((1, moved_age_one), (2, moved_empty), (3, moved_age_three))),
