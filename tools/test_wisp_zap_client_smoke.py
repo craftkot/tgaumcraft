@@ -1010,9 +1010,9 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=100 gameTime=524 ageTicks=4",
     ]
     with tempfile.TemporaryDirectory(prefix="tc-wisp-zap-frame-sequence-") as directory:
@@ -1030,8 +1030,8 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
             "  if [ \"$1\" = \"-c\" ]; then\n"
             "    count=0; [ -f \"$clock_file\" ] && count=\"$(cat \"$clock_file\")\"\n"
             "    count=$((count + 1)); printf '%s\\n' \"$count\" > \"$clock_file\"\n"
-            "    case \"$count\" in 1) printf '1400000000\\n';; 2) printf '1500000000\\n';; 3) printf '1600000000\\n';; 4) printf '1650000000\\n';; *) exit 9;; esac\n"
-            "  else\n"
+            "    case \"$count\" in 1) printf '1650000000\\n';; *) exit 9;; esac\n"
+                        "  else\n"
             "    printf 'WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=2 wispTick=25\\nWISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=3 wispTick=26\\nWISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=9 monotonicNs=1050000000\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=1 frameIndex=30 diff=18\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=2 frameIndex=12 diff=15\\nWISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12\\nWISP_ZAP_VIDEO_FRAMES_EXTRACTED=YES\\n'\n"
             "  fi\n"
             "}\n"
@@ -1051,6 +1051,9 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
         assert captures == ["CAPTURE=83-wisp-zap-after-expiry"], captures
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert [f"WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick={age} " in status for age in (1, 2, 3)] == [True, True, True], status
+        assert "ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000" in status, status
+        assert "ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000" in status, status
+        assert "ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000" in status, status
         assert "VIDEO_STOP" in result.stdout, result.stdout
         assert "WISP_ZAP_FRAME_CAPTURE=YES source=17 createdAt=100 ageTick=1 wispTick=24" in status, status
         assert "WISP_ZAP_VIDEO_FRAME_INDEX=YES source=17 createdAt=100 ageTick=3 frameIndex=18 diff=12" in status, status
@@ -1082,28 +1085,21 @@ def _test_video_frame_extraction(generated: str) -> None:
         for index in range(60):
             alpha = None
             line = None
-            if index == 24:
-                # This bright frame begins before the fractional age-1 marker.
+            if index == 23:
+                # A pre-marker beam must not be assigned to age 1.
                 alpha = 1.0
                 line = (0, 300, 480, 600)
-            elif 25 <= index <= 26:
-                alpha = 2.0 / 3.0
-                # A later candidate is longer; choose the nearest valid frame 25.
+            elif 24 <= index <= 29:
+                # The callback timestamp follows the draw, so frame 24 belongs
+                # to age 1 even though its sample time precedes the log timestamp.
+                alpha = 1.0
                 line = (0, 300, 380 if index == 25 else 480, 600)
-            elif index == 30:
-                # The last age-1 frame must not be relabeled as age 2.
+            elif 30 <= index <= 35:
                 alpha = 2.0 / 3.0
-                line = (0, 300, 480, 600)
-            elif 31 <= index <= 32:
+                line = (0, 300, 380 if index == 31 else 480, 600)
+            elif 36 <= index <= 38:
                 alpha = 1.0 / 3.0
-                # Vary projected length to exercise length-normalized signal.
-                line = (0, 300, 480 if index == 31 else 380, 600)
-            elif index == 36:
-                # The last age-2 frame must not be relabeled as age 3.
-                alpha = 1.0 / 3.0
-                line = (0, 300, 480, 600)
-            elif 37 <= index <= 38:
-                alpha = 0.1
+                # Keep the age-3 beam visible until the expiry boundary.
                 line = (0, 300, 380 if index == 37 else 480, 600)
             write_bolt_png(
                 frame_dir / f"frame-{index:03d}.png",
@@ -1127,9 +1123,9 @@ def _test_video_frame_extraction(generated: str) -> None:
             "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
             "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
             "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1405000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1505000000",
-            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1605000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
+            "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
             "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=100 monotonicNs=1650000000",
             "WISP_ZAP_VIDEO_STOPPED=YES",
         )) + "\n", encoding="utf-8")
@@ -1174,9 +1170,9 @@ def _test_video_frame_extraction(generated: str) -> None:
                 extracted,
             )
         }
-        assert frame_indices == {1: 25, 2: 31, 3: 37}, (
-            "the extractor must choose the nearest pixel-confirmed frame at or after each age marker; "
-            "pre-marker frames 24/30/36 belong to the previous age and must never be relabeled",
+        assert frame_indices == {1: 24, 2: 30, 3: 36}, (
+            "the extractor must choose the frame rendered by each AFTER_ENTITIES callback; "
+            "the next capture frame may already belong to the following age/expiry boundary",
             frame_indices,
         )
         rendered_view = re.search(r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 .* monotonicNs=(\d+)$", status_file.read_text(encoding="utf-8"))
@@ -1625,6 +1621,7 @@ def main() -> int:
     _test_fxbbolt_segment_detector()
     render_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java").read_text(encoding="utf-8")
     assert 'minecraft.options.getCameraType().name()' in render_source
+    assert '" monotonicNs=" + renderMonotonicNs' in render_source
     _test_streaming_click_dispatch()
     # BETA26 RenderWisp's billboard is centred at entity position. A point one
     # quarter up the 0.9-block hitbox stays inside the attack AABB while moving
@@ -2107,11 +2104,11 @@ def main() -> int:
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=520 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=520 gameTime=521 ageTick=1",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=24 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=522 wispTick=25 ageTick=2 age=2.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1500000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=25 gameTime=522 playerTick=509 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
-        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF",
+        "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 gameTime=523 wispTick=26 ageTick=3 age=3.25 points=9 cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1600000000",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=524 ageTicks=4",
     ))
@@ -2458,7 +2455,7 @@ def main() -> int:
         age_four_render_log = late_cleanup_log + "\n" + (
             "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=520 "
             "gameTime=524 wispTick=27 ageTick=4 age=4.0 points=9 "
-            "cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF"
+            "cameraType=THIRD_PERSON_BACK texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1625000000"
         )
         age_four_errors = verify_wisp_zap_client.verify(age_four_render_log, status, root)
         assert any("render frame at or after its BETA26 expiry boundary" in error
