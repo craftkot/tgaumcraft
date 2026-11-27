@@ -193,7 +193,11 @@ def render() -> str:
     WISP_ZAP_FRAME_LINE_NUMBER="$marker_line"
     WISP_ZAP_FRAME_CREATED_AT="$(sed -n 's/.* createdAt=\([0-9][0-9]*\) .*/\1/p' <<<"$candidate")"
     WISP_ZAP_FRAME_AGE_TICK="$expected_age"
-    WISP_ZAP_FRAME_OBSERVED_AT_NS="$(python -c 'import time; print(time.monotonic_ns())')"
+    WISP_ZAP_FRAME_OBSERVED_AT_NS="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<<"$candidate")"
+    if ! [[ "$WISP_ZAP_FRAME_OBSERVED_AT_NS" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_FRAME_MONOTONIC_TIMESTAMP_INVALID=YES source=$wisp_id ageTick=$expected_age" | tee -a client-smoke-status.txt
+      return 1
+    fi
     return 0
   }
   wisp_capture_zap_frames() {
