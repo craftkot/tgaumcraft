@@ -1105,7 +1105,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             )
             status_expired = re.search(
                 rf"(?m)^WISP_ZAP_EFFECT_EXPIRED=YES source={re.escape(source_id)} "
-                rf"target={re.escape(target_id)} createdAt={re.escape(created_at)} monotonicNs=(\\d+)$",
+                rf"target={re.escape(target_id)} createdAt={re.escape(created_at)} monotonicNs=(\d+)$",
                 status_text,
             )
             if payload_for_event is None:
@@ -1118,7 +1118,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
                 expiry_game_time = int(expired_for_event.group(1))
                 expiry_age_ticks = int(expired_for_event.group(2))
                 status_expiry_ns = int(status_expired.group(1))
-                if status_expiry_ns <= int(received.group(6)) if received is not None else True:
+                if received is None or status_expiry_ns <= int(received.group(6)):
                     errors.append("client-observed expiry timestamp does not follow the matching payload receipt")
                 event_frames = [
                     frame for frame in zap_frames
