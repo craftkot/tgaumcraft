@@ -1628,3 +1628,14 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - No Java or production renderer change was made. PR #4 remains OPEN / DRAFT / UNMERGED; no force-push or merge.
 - Fixed audit remains **59/100** (visual/audio/resources **4/6**, aura/world **5/9**); no point awarded and no category closed.
 - Next: wait for Wisp run #45974239430 to finish, inspect its final artifact and require the same-ID Survival hit, accepted damage, matching payload, age 1/2/3 pixel fade and clear post-expiry frame. Only then choose the next M16 gap from the remaining real-client evidence.
+
+
+## 2026-11-27 — Wisp client/server position acknowledgement
+
+- Fresh main remained a4280834adc5a20b6951098af937d30ca4aeca56; lane started from 340353e2c9eb34f5afc07ca361d54ae3a4359141. PR #4 remains open/draft; no merge or force-push.
+- Fresh Wisp Real Minecraft run #45974770924 reached the real client and failed at WISP_ATTACKABLE_FRAME_TIMEOUT. The client produced same-ID Wisp render/completed-frame telemetry, but all post-Survival frames were hitType=MISS. The server chat reported the staging teleport to Y=155.734879 while the client renderer still reported playerY=149.0. This is a fixture position disagreement, not evidence of a production Wisp attack defect.
+- The old helper trusted the server teleport chat and switched to Survival without confirming that the client camera had accepted the position. The new helper snaps the player to the integer top-of-block Y, performs an absolute grounded teleport, waits for a fresh same-Wisp client camera sample matching the server coordinates, and only then builds/verifies the support floor.
+- Added offline regression coverage for command ordering, the positive client-position acknowledgement path, and fail-closed behavior when the client never acknowledges the grounded position. Existing exact same-ID EntityHitResult and <=3.01-block InputEvent hit-distance acceptance remain unchanged.
+- The separate Jar/Tube Texture workflow #45974770649 failed during Maven Central dependency resolution with HTTP 429 before its client scenario; this is a transient dependency-service block, not a passed or code-level failure.
+- No progress point is awarded. M16 remains 4/6 pending successful real Wisp hit/zap/expiry evidence and the remaining shard OBJ acceptance.
+- Next: run the offline Wisp contract and new real-client smoke on this exact SHA; if position acknowledgement fails, inspect fresh client/server coordinates before changing production code.
