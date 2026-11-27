@@ -240,6 +240,17 @@ assert "thaumcraft.crystalOutlineDebug" not in crystal_source
 assert "CRYSTAL_OUTLINE_SHAPE_DEBUG" not in crystal_source
 assert "support.is(CRYSTAL_SUPPORTS)" in crystal_source
 assert "support.is(BlockTags.BASE_STONE_OVERWORLD)" not in crystal_source
+seeded_model_source = (
+    Path(__file__).resolve().parents[1]
+    / "src/neoforge/java/dev/ehtid/thaumcraft/client/SeededCrystalBakedModel.java"
+).read_text(encoding="utf-8")
+assert "ModelProperty<List<Face>> SUPPORT_FACES" in seeded_model_source
+assert "for (Face face : LegacyCrystalMeshSelection.sourceFaceOrder())" in seeded_model_source
+assert "List<Face> supports = data.get(SUPPORT_FACES)" in seeded_model_source
+assert "for (Face face : supports)" in seeded_model_source
+assert "Direction.values()" not in seeded_model_source, (
+    "modern direction enum order must not replace the original BETA26 face emission order"
+)
 support_tag_path = (
     Path(__file__).resolve().parents[1]
     / "src/main/resources/data/thaumcraft/tags/block/crystal_supports.json"

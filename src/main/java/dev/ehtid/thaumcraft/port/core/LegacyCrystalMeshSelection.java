@@ -26,8 +26,12 @@ public final class LegacyCrystalMeshSelection {
         public long seedOffset() { return seedOffset; }
     }
 
+    private static final List<Face> SOURCE_FACE_ORDER = List.of(
+            Face.UP, Face.DOWN, Face.EAST, Face.WEST, Face.NORTH, Face.SOUTH);
+
     public record Point(double x, double y, double z) {}
 
+    public static List<Face> sourceFaceOrder() { return SOURCE_FACE_ORDER; }
     public static List<String> originalGroups() { return PARTS; }
 
     /** Keep legacy single-seed selection for existing callers/parity tests. */

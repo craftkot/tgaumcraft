@@ -33,7 +33,7 @@ import java.util.Map;
  */
 public final class SeededCrystalBakedModel extends BakedModelWrapper<BakedModel> {
     private static final ModelProperty<Long> POSITION_SEED = new ModelProperty<>();
-    private static final ModelProperty<List<Direction>> SUPPORT_FACES = new ModelProperty<>();
+    private static final ModelProperty<List<Face>> SUPPORT_FACES = new ModelProperty<>();
     private final Map<String, BakedModel> shards;
 
     public SeededCrystalBakedModel(BakedModel fallback, Map<String, BakedModel> shards) {
@@ -47,24 +47,28 @@ public final class SeededCrystalBakedModel extends BakedModelWrapper<BakedModel>
     public ModelData getModelData(BlockAndTintGetter level, BlockPos pos,
                                   BlockState state, ModelData existing) {
         ModelData delegated = originalModel.getModelData(level, pos, state, existing);
-        ArrayList<Direction> attachments = new ArrayList<>();
-        for (Direction direction : Direction.values())
-            if (CrystalClusterBlock.hasCrystalSupport(level, pos, direction))
-                attachments.add(direction);
+        ArrayList<Face> attachments = new ArrayList<>();
+        // BETA26 CrystalModel#getQuads appends UP, DOWN, EAST, WEST, NORTH,
+        // SOUTH. The modern direction enum has a different order; do not let
+        // it silently reorder the translucent source shard batch.
+        for (Face face : LegacyCrystalMeshSelection.sourceFaceOrder()) {
+            if (CrystalClusterBlock.hasCrystalSupport(level, pos, modernDirection(face)))
+                attachments.add(face);
+        }
         return delegated.derive()
                 .with(POSITION_SEED, state.getSeed(pos))
                 .with(SUPPORT_FACES, List.copyOf(attachments))
                 .build();
     }
 
-    private static Face originalFace(Direction dir) {
-        return switch (dir) {
-            case UP -> Face.UP;
-            case DOWN -> Face.DOWN;
-            case EAST -> Face.EAST;
-            case WEST -> Face.WEST;
-            case NORTH -> Face.NORTH;
-            case SOUTH -> Face.SOUTH;
+    private static Direction modernDirection(Face face) {
+        return switch (face) {
+            case UP -> Direction.UP;
+            case DOWN -> Direction.DOWN;
+            case EAST -> Direction.EAST;
+            case WEST -> Direction.WEST;
+            case NORTH -> Direction.NORTH;
+            case SOUTH -> Direction.SOUTH;
         };
     }
 
@@ -73,7 +77,7 @@ public final class SeededCrystalBakedModel extends BakedModelWrapper<BakedModel>
                                     RandomSource random, ModelData data,
                                     @Nullable RenderType renderType) {
         Long seed = data.get(POSITION_SEED);
-        List<Direction> supports = data.get(SUPPORT_FACES);
+        List<Face> supports = data.get(SUPPORT_FACES);
         if (state == null || !state.hasProperty(CrystalClusterBlock.SIZE)
                 || seed == null || supports == null)
             return originalModel.getQuads(state, side, random, data, renderType);
@@ -82,8 +86,7 @@ public final class SeededCrystalBakedModel extends BakedModelWrapper<BakedModel>
 
         int size = state.getValue(CrystalClusterBlock.SIZE);
         ArrayList<BakedQuad> quads = new ArrayList<>();
-        for (Direction direction : supports) {
-            Face face = originalFace(direction);
+        for (Face face : supports) {
             for (String group : LegacyCrystalMeshSelection.selectForFace(size, seed, face)) {
                 BakedModel shard = shards.get(group);
                 for (BakedQuad quad : shard.getQuads(state, null, random, data, renderType))

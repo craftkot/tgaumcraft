@@ -23,7 +23,16 @@ public final class CrystalMeshParityTest {
         }
 
         long[] sourceOffsets = {0L, 5L, 10L, 15L, 20L, 25L};
-        var faces = LegacyCrystalMeshSelection.Face.values();
+        eq(List.of(
+                LegacyCrystalMeshSelection.Face.UP,
+                LegacyCrystalMeshSelection.Face.DOWN,
+                LegacyCrystalMeshSelection.Face.EAST,
+                LegacyCrystalMeshSelection.Face.WEST,
+                LegacyCrystalMeshSelection.Face.NORTH,
+                LegacyCrystalMeshSelection.Face.SOUTH),
+                LegacyCrystalMeshSelection.sourceFaceOrder());
+        var faces = LegacyCrystalMeshSelection.sourceFaceOrder()
+                .toArray(LegacyCrystalMeshSelection.Face[]::new);
         eq(6, faces.length);
         for (int faceIndex = 0; faceIndex < faces.length; faceIndex++) {
             var face = faces[faceIndex];
