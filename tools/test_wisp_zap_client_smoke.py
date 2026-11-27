@@ -2410,7 +2410,7 @@ def main() -> int:
         ), missing_base_clear_errors
 
         missing_live_support_status = status.replace(
-            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n", "", 1
+            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\n", "", 1
         )
         missing_live_support_errors = verify_wisp_zap_client.verify(
             log, missing_live_support_status, root
@@ -2421,8 +2421,8 @@ def main() -> int:
         ), missing_live_support_errors
 
         late_live_support_status = status.replace(
-            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n", "", 1
-        ) + "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n"
+            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\n", "", 1
+        ) + "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\n"
         late_live_support_errors = verify_wisp_zap_client.verify(
             log, late_live_support_status, root
         )
