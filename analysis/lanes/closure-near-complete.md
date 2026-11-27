@@ -1547,3 +1547,10 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Exact-SHA validation for the new commit is pending; do not claim the Wisp client passed until a fresh run completes the same-ID Survival hit, accepted damage, matching payload, age 1/2/3 pixels and post-expiry disappearance.
 - Fixed audit remains 59/100 (M16 4/6, M08 5/9); no point awarded and no category closed.
 - Next: verify the new offline progress-parser regression and exact-SHA Wisp real-client run. Once Wisp is accepted, continue the next remaining M16 source-asset parity item (the eight BETA26 crystal OBJ shard groups s014/s015/s016/s017/s018/s019/s024/s026) without changing shared CI or registries.
+
+## 2026-11-27 — corrective follow-up: restore and reapply the FFmpeg progress fix
+
+- The first attempt, commit 557323d8ced7fe5c4284222967e071f1d7ac6274, produced malformed Wisp smoke/test source because the source-writing payload split shell variable text. Its checks are superseded and are not counted.
+- Restored both Python files from the clean parent 1613cb9bdd482a503d76e754f0aba8b86ca31a4c, then reapplied the minimal positive-frame matcher and a compact regression that executes the exact grep expression against frame=0/frame=2 and frame=0-only progress files.
+- The branch update is a normal fast-forward from the malformed follow-up commit; no force update. New exact-SHA Actions must pass before this fix is accepted.
+- Production Java remains unchanged. Fixed audit remains 59/100; M16 4/6 and M08 5/9.
