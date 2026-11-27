@@ -590,8 +590,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             + reposition_function
             + "\nwisp_move_player_to_live_wisp 1\n"
             + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
-            + 'second_after_lines="$(wc -l < client-smoke/client.log)"\\n'
-            + 'wisp_move_player_to_live_wisp "$second_after_lines"\\n'
+            + 'second_after_lines="$(wc -l < client-smoke/client.log)"\n'
+            + 'wisp_move_player_to_live_wisp "$second_after_lines"\n'
             + 'printf "REPOSITION_LINE_SECOND=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\\n'
         )
         result = subprocess.run(
