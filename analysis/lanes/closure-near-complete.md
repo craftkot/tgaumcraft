@@ -1554,3 +1554,9 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Restored both Python files from the clean parent 1613cb9bdd482a503d76e754f0aba8b86ca31a4c, then reapplied the minimal positive-frame matcher and a compact regression that executes the exact grep expression against frame=0/frame=2 and frame=0-only progress files.
 - The branch update is a normal fast-forward from the malformed follow-up commit; no force update. New exact-SHA Actions must pass before this fix is accepted.
 - Production Java remains unchanged. Fixed audit remains 59/100; M16 4/6 and M08 5/9.
+
+## 2026-11-27 — clean-source correction for the Wisp FFmpeg matcher
+
+- The first repair commit 6e6781db2b10c99723c75719fa47787c703c9147 did not yield a clean smoke-source blob: the fetched blob was 129155 bytes and included a trailing source fragment after the original module. The test-source blob from that commit is clean (175141 bytes, 2976 lines) and contains the nonzero-frame regression.
+- Rebuilt tools/client_wisp_zap_smoke.py from immutable original blob 2ea8941b7480b07079ed7e234f0fc4258e1f4644, applied only the positive-frame predicate change, and created the Git blob using base64-encoded UTF-8. The next verification checks exact source length/line count and Python syntax through the branch workflow.
+- No result from the malformed intermediate smoke-source blob is accepted. The fixed audit remains 59/100, M16 4/6, M08 5/9.
