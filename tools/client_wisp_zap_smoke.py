@@ -415,18 +415,19 @@ PY
     local after_lines="$1" teleport_match relative_line
     local player_x player_y player_z support_log_lines live_support_log_lines
     # Keep the Wisp's original AI and motion live. Build a wide temporary floor
-    # at the live Wisp's current X/Z and Y-2 BEFORE moving the player. The player
-    # is teleported to Wisp Y-1, so the floor's top is exactly at the player's feet;
-    # this avoids a fall to the old spawn pad while chat commands are processed.
+    # at the live Wisp's current X/Z and Y-3 BEFORE moving the player. The player
+    # is teleported to Wisp Y-1 and falls one block onto the floor; the resulting
+    # two-block source/target height gap keeps the BETA26 base-to-base bolt above it.
+    # Obsidian also makes the full 17x17 fill count deterministic over the old stone pad.
     support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-2 ~-8 ~8 ~-2 ~8 minecraft:stone' 0.5 2
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-2 radius=8' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
     echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
 
     # Teleport only the player to the current Wisp position. The one-block
-    # vertical offset places the player's feet on the Wisp-relative floor.
-    # The server check also requires the player to remain within two blocks of the Wisp.
+    # vertical offset leaves one block for the player to settle onto the prebuilt floor.
+    # The server check requires the player to remain within melee reach of the Wisp.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
@@ -443,9 +444,9 @@ PY
         # Allow the player to settle, then verify the block directly beneath it.
         sleep 0.25
         live_support_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s if entity @p[distance=..2] run execute as @p[distance=..2] at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
+        wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s if entity @p[distance=..2.75] run execute as @p[distance=..2.75] at @s if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
         wisp_wait_for_fresh_log_marker "$live_support_log_lines" 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES'
-        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=2' | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=2.75 block=minecraft:obsidian' | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
         return 0
