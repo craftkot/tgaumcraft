@@ -1535,7 +1535,7 @@ def _test_video_capture_uses_ffmpeg_progress_timestamp() -> None:
     assert "progressFrameCount=" in generated
     assert "progressOutTimeUs=" in generated
     assert "progressObservedMonotonicNs=" in generated
-    assert "out_time_us" in generated and "progress=continue" in generated
+    assert "out_time_us" in generated and "progress=(?:continue|end)" in generated
     assert "firstFrameMonotonicNs=" in generated
     heredoc_start = "progress_sample=\"$(python - \"$progress\" <<'PY'\n"
     start = generated.index(heredoc_start) + len(heredoc_start)
