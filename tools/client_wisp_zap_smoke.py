@@ -415,10 +415,11 @@ PY
     local after_lines="$1" teleport_match relative_line
     local player_x player_y player_z support_log_lines live_support_log_lines
     # Keep the Wisp's original AI and motion live. Build a wide temporary floor
-    # below the current entity BEFORE moving the player: a player-relative fill
-    # after teleport races gravity while the client opens chat/types the command.
+    # around the live Wisp X/Z at fixed Y=147 BEFORE moving the player: a player-relative fill
+    # after teleport races gravity while the client opens chat/types the command. Y=147
+    # stays below the original Y=148 pad regardless of the Wisp's vertical bob.
     support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone' 0.5 2
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 147 ~-8 ~8 147 ~8 minecraft:stone' 0.5 2
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
     echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8' | tee -a client-smoke-status.txt
     echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt

@@ -1790,3 +1790,11 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Full Port CI #46054965365 на d2bebfc прошёл Core/source parity и NeoForge build; dedicated-server smoke ещё выполнялся на момент записи.
 - Следующий точный SHA должен сначала пройти весь offline contract и generated Bash syntax, затем NeoForge/dedicated server и реальный Wisp client. До фактического Survival hit и визуальной приёмки Wisp никакие баллы не начислять.
 - Аудит остаётся 59/100 (M16 4/6, M08 5/9); категория не закрыта.
+
+## 2026-11-27 — fixed the live support plane to avoid overlap with the original pad
+
+- Review of the new Y-3 relative plane exposed a deterministic coordinate collision: the smoke Wisp is summoned at Y=151.3 and the original 9×9 player pad is at Y=148. A Y-3 fill can therefore land on that same block layer when the Wisp has not yet risen, making the expected 289-block fill count impossible.
+- Corrected the floor to use the live Wisp's X/Z but absolute Y=147: 17×17 (289) blocks, one layer below the original Y=148 pad. This avoids dependence on Wisp vertical bob and prevents overlap with the original pad. The player still teleports to the current Wisp position at Y-1; it can land on the original pad when within it or on the wider Y=147 floor outside it. The fresh server-side block-below check remains mandatory.
+- Updated the exact command, markers, offline fixtures and verifier. This is still test-fixture work only; no production Java or Wisp AI change. The queued Wisp run for the preceding Y-3 SHA is obsolete for final acceptance.
+- No local checkout/test result is claimed. Exact-SHA validation is required on the corrected commit.
+- Audit remains 59/100 (M16 4/6, M08 5/9); no point awarded.
