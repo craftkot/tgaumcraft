@@ -1049,7 +1049,7 @@ def _test_video_frame_extraction(generated: str) -> None:
         )
         status_file = root / "status.txt"
         status_file.write_text("\n".join((
-            "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=1000000000 frameRate=60",
+            "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=1000000000 progressFrameCount=9 progressOutTimeUs=150000 progressObservedMonotonicNs=1150000000 frameRate=60",
             "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
             "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
             "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
@@ -1528,25 +1528,56 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
 
 
-def _test_video_capture_accepts_first_nonzero_frame_counter() -> None:
+def _test_video_capture_uses_ffmpeg_progress_timestamp() -> None:
     fixture = "#!/usr/bin/env bash\nprintf 'guiScale:2\\n' > run/options.txt\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n  # The initial world is already creative + peaceful, as established"
     with patch.object(Path, "read_text", return_value=fixture):
         generated = client_wisp_zap_smoke.render()
-    dollar = chr(36)
-    positive_frame_pattern = "^frame=[1-9][0-9]*" + dollar
-    expected_command = "grep -Eq '" + positive_frame_pattern + "' \"" + dollar + "progress\""
-    assert expected_command in generated
-    assert "grep -q '^frame=1" + dollar + "'" not in generated
+    assert "progressFrameCount=" in generated
+    assert "progressOutTimeUs=" in generated
+    assert "progressObservedMonotonicNs=" in generated
+    assert "out_time_us" in generated and "progress=continue" in generated
+    assert "firstFrameMonotonicNs=" in generated
+    heredoc_start = "progress_sample=\"$(python - \"$progress\" <<'PY'\n"
+    start = generated.index(heredoc_start) + len(heredoc_start)
+    end = generated.index("\nPY\n    )", start)
+    progress_reader = generated[start:end]
     with tempfile.TemporaryDirectory() as temp:
         progress = Path(temp) / "progress.txt"
-        progress.write_text("frame=0\nprogress=continue\nframe=2\nprogress=continue\n", encoding="utf-8")
-        result = subprocess.run(["grep", "-Eq", positive_frame_pattern, str(progress)], check=False)
-        assert result.returncode == 0
-        progress.write_text("frame=0\nprogress=continue\n", encoding="utf-8")
-        result = subprocess.run(["grep", "-Eq", positive_frame_pattern, str(progress)], check=False)
-        assert result.returncode == 1
+        progress.write_text(
+            "frame=0\nfps=0.00\nout_time_us=N/A\nprogress=continue\n"
+            "frame=9\nfps=60.00\nout_time_us=150000\nprogress=continue\n",
+            encoding="utf-8",
+        )
+        result = subprocess.run(
+            [sys.executable, "-", str(progress)],
+            input=progress_reader,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        frame_count, out_time_us, observed_ns = map(int, result.stdout.split())
+        assert (frame_count, out_time_us) == (9, 150000)
+        assert observed_ns > 0
+        assert verify_wisp_zap_client.video_first_frame_monotonic_ns(
+            observed_ns, frame_count, out_time_us, 60
+        ) > 0
+    assert verify_wisp_zap_client.video_first_frame_monotonic_ns(
+        1_150_000_000, 9, 150_000, 60
+    ) == 1_000_000_000
+    assert verify_wisp_zap_client.video_first_frame_monotonic_ns(
+        1_133_333_333, 9, 133_333, 60
+    ) == 1_000_000_333
+    try:
+        verify_wisp_zap_client.video_first_frame_monotonic_ns(
+            1_150_000_000, 9, 50_000, 60
+        )
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("inconsistent FFmpeg frame/out_time progress must fail closed")
 def main() -> int:
-    _test_video_capture_accepts_first_nonzero_frame_counter()
+    _test_video_capture_uses_ffmpeg_progress_timestamp()
     _test_bash_function_body_extraction()
     _test_fxbbolt_segment_detector()
     render_source = Path("src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java").read_text(encoding="utf-8")
@@ -2051,7 +2082,7 @@ def main() -> int:
         "WISP_ZAP_AIM=PREAIMED_SPAWN",
         "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
-        "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=800000000 frameRate=60",
+        "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=800000000 progressFrameCount=9 progressOutTimeUs=150000 progressObservedMonotonicNs=950000000 frameRate=60",
         "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=7",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",

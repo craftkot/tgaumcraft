@@ -483,14 +483,60 @@ def _extract_video_frame(video: Path, frame_index: int, output: Path) -> None:
         raise RuntimeError(f"ffmpeg could not extract video frame {frame_index}: {detail}")
 
 
+def video_first_frame_monotonic_ns(
+    progress_observed_ns: int,
+    progress_frame_count: int,
+    progress_out_time_us: int,
+    frame_rate: int,
+) -> int:
+    """Map an FFmpeg progress sample back to the first X11 frame timestamp."""
+    if progress_observed_ns <= 0 or progress_frame_count < 5 or progress_out_time_us < 0 or frame_rate != 60:
+        raise ValueError("invalid FFmpeg first-frame progress timing fields")
+    expected_duration_us = round(progress_frame_count * 1_000_000 / frame_rate)
+    expected_pts_us = round((progress_frame_count - 1) * 1_000_000 / frame_rate)
+    if min(
+        abs(progress_out_time_us - expected_duration_us),
+        abs(progress_out_time_us - expected_pts_us),
+    ) > 1_000:
+        raise ValueError(
+            "FFmpeg progress frame count and out_time_us disagree: "
+            f"frame={progress_frame_count} out_time_us={progress_out_time_us} fps={frame_rate}"
+        )
+    first_frame_ns = progress_observed_ns - progress_out_time_us * 1_000
+    if first_frame_ns <= 0:
+        raise ValueError("derived FFmpeg first-frame monotonic timestamp is not positive")
+    return first_frame_ns
+
+
+def _video_start_fields(status_text: str) -> tuple[tuple[int, int] | None, str | None]:
+    started = _first(
+        r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\d+) "
+        r"progressFrameCount=(\d+) progressOutTimeUs=(\d+) "
+        r"progressObservedMonotonicNs=(\d+) frameRate=(\d+)$",
+        status_text,
+    )
+    if started is None:
+        return None, "missing FFmpeg progress-derived first-frame timestamp"
+    first_frame_ns, frame_count, out_time_us, observed_ns, frame_rate = map(int, started.groups())
+    try:
+        derived_first_frame_ns = video_first_frame_monotonic_ns(
+            observed_ns, frame_count, out_time_us, frame_rate
+        )
+    except ValueError as error:
+        return None, str(error)
+    if derived_first_frame_ns != first_frame_ns:
+        return None, (
+            "FFmpeg first-frame timestamp does not match its progress sample: "
+            f"stored={first_frame_ns} derived={derived_first_frame_ns}"
+        )
+    return (first_frame_ns, frame_rate), None
+
+
 def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Path) -> list[str]:
     """Extract the three real render ages from the continuous X11 recording."""
     errors: list[str] = []
     status_text = status_file.read_text(encoding="utf-8", errors="replace")
-    started = _first(
-        r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\d+) frameRate=(\d+)$",
-        status_text,
-    )
+    started, started_error = _video_start_fields(status_text)
     side_view = _first(
         r"(?m)^WISP_CAMERA_SIDE_VIEW=YES id=(\d+) monotonicNs=(\d+)$",
         status_text,
@@ -513,8 +559,8 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         r"(?m)^WISP_ZAP_EFFECT_EXPIRED=YES source=(\d+) target=(\d+) createdAt=(\d+) monotonicNs=(\d+)$",
         status_text,
     )
-    if started is None:
-        errors.append("missing first-frame timestamp for continuous Wisp video")
+    if started_error is not None:
+        errors.append(started_error)
     if "WISP_ZAP_VIDEO_STOPPED=YES" not in status_text:
         errors.append("continuous Wisp video was not stopped cleanly before extraction")
     if len(observed) != 3:
@@ -594,8 +640,7 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
             raise RuntimeError(
                 f"video timing is insufficient: fps={fps:.3f} duration={duration:.3f} frames={frame_count}"
             )
-        first_frame_ns = int(started.group(1))
-        requested_rate = int(started.group(2))
+        first_frame_ns, requested_rate = started
         if requested_rate != 60:
             raise RuntimeError(f"unexpected requested capture rate: {requested_rate}")
 
@@ -992,14 +1037,13 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             errors.append("status hit distance does not match the real attack InputEvent")
         if video_offset_status is None or float(video_offset_status.group(1)) < 0.0:
             errors.append("video-derived attack frame has no valid non-negative offset")
-        video_started = _first(
-            r"(?m)^WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=(\d+) frameRate=(\d+)$",
-            status_text,
-        )
+        video_started, video_started_error = _video_start_fields(status_text)
+        if video_started_error is not None:
+            errors.append(video_started_error)
         if input_ns_status is not None and video_offset_status is not None and video_started is not None:
             expected_offset = (
-                int(input_ns_status.group(1)) - int(video_started.group(1))
-            ) / 1_000_000_000.0 - 1.0 / int(video_started.group(2))
+                int(input_ns_status.group(1)) - video_started[0]
+            ) / 1_000_000_000.0 - 1.0 / video_started[1]
             if abs(float(video_offset_status.group(1)) - expected_offset) > 0.001:
                 errors.append(
                     "attack-input screenshot offset does not identify the final video frame before the real click: "

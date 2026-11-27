@@ -122,23 +122,57 @@ def render() -> str:
       -movflags +faststart -stats_period 0.01 -progress "$progress" \
       client-smoke/wisp-zap-video.mp4 > client-smoke/wisp-zap-video.log 2>&1 &
     VIDEO_PID=$!
-    for _ in $(seq 1 200); do
-      # FFmpeg progress is periodic; the first nonzero report may skip frame=1.
-      if grep -Eq '^frame=[1-9][0-9]*$' "$progress" 2>/dev/null; then
-        WISP_ZAP_VIDEO_FIRST_FRAME_NS="$(python -c 'import time; print(time.monotonic_ns())')"
-        echo "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=$WISP_ZAP_VIDEO_FIRST_FRAME_NS frameRate=60" | tee -a client-smoke-status.txt
-        return 0
-      fi
-      if ! kill -0 "$VIDEO_PID" 2>/dev/null; then
-        echo 'WISP_ZAP_VIDEO_PROCESS_EXITED_BEFORE_FIRST_FRAME=YES' | tee -a client-smoke-status.txt
-        tail -80 client-smoke/wisp-zap-video.log >&2
-        return 1
-      fi
-      sleep 0.01
-    done
-    echo 'WISP_ZAP_VIDEO_FIRST_FRAME_TIMEOUT=YES' | tee -a client-smoke-status.txt
-    tail -80 client-smoke/wisp-zap-video.log >&2
-    return 1
+    local progress_sample progress_frame_count progress_out_time_us progress_observed_ns
+    progress_sample="$(python - "$progress" <<'PY'
+import re
+import sys
+import time
+from pathlib import Path
+
+path = Path(sys.argv[1])
+deadline = time.monotonic() + 2.0
+while time.monotonic() < deadline:
+    try:
+        raw = path.read_text(encoding="ascii", errors="ignore")
+    except OSError:
+        raw = ""
+    blocks = re.split(r"(?m)(?=^frame=)", raw)
+    block = blocks[-1] if blocks else ""
+    frame_match = re.search(r"(?m)^frame=(\d+)$", block)
+    out_time_match = re.search(r"(?m)^out_time_us=(\d+)$", block)
+    progress_match = re.search(r"(?m)^progress=(?:continue|end)$", block)
+    if frame_match and out_time_match and progress_match:
+        frame_count = int(frame_match.group(1))
+        out_time_us = int(out_time_match.group(1))
+        expected_duration_us = round(frame_count * 1_000_000 / 60)
+        expected_pts_us = round((frame_count - 1) * 1_000_000 / 60)
+        if frame_count >= 5 and min(
+            abs(out_time_us - expected_duration_us),
+            abs(out_time_us - expected_pts_us),
+        ) <= 1_000:
+            observed_ns = time.monotonic_ns()
+            print(f"{frame_count} {out_time_us} {observed_ns}")
+            sys.exit(0)
+    time.sleep(0.001)
+sys.exit(1)
+PY
+    )" || {
+      echo 'WISP_ZAP_VIDEO_FIRST_FRAME_TIMEOUT=YES' | tee -a client-smoke-status.txt
+      tail -80 client-smoke/wisp-zap-video.log >&2
+      return 1
+    }
+    read -r progress_frame_count progress_out_time_us progress_observed_ns <<< "$progress_sample"
+    if ! [[ "$progress_frame_count" =~ ^[0-9]+$ && "$progress_out_time_us" =~ ^[0-9]+$ && "$progress_observed_ns" =~ ^[0-9]+$ ]]; then
+      echo "WISP_ZAP_VIDEO_PROGRESS_INVALID=YES sample=$progress_sample" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    WISP_ZAP_VIDEO_FIRST_FRAME_NS="$((progress_observed_ns - progress_out_time_us * 1000))"
+    if [ "$WISP_ZAP_VIDEO_FIRST_FRAME_NS" -le 0 ]; then
+      echo "WISP_ZAP_VIDEO_FIRST_FRAME_TIMESTAMP_INVALID=YES observed=$progress_observed_ns outTimeUs=$progress_out_time_us" | tee -a client-smoke-status.txt
+      return 1
+    fi
+    echo "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=$WISP_ZAP_VIDEO_FIRST_FRAME_NS progressFrameCount=$progress_frame_count progressOutTimeUs=$progress_out_time_us progressObservedMonotonicNs=$progress_observed_ns frameRate=60" | tee -a client-smoke-status.txt
+    return 0
   }
 
   wisp_stop_zap_video_capture() {
