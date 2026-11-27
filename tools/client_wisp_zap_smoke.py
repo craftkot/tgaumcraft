@@ -414,12 +414,10 @@ PY
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
     local player_x player_y player_z support_log_lines live_support_log_lines
-    # Keep the Wisp's original AI and motion live. Build a wide temporary floor
-    # at the live Wisp's current X/Z and Y-3 BEFORE moving the player. The player
-    # is teleported to Wisp Y-1 and falls one block onto the floor; the resulting
-    # two-block source/target height gap keeps the BETA26 base-to-base bolt above it.
-    # Obsidian also makes the full 17x17 fill count deterministic over the old stone pad.
-    if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
+    # Prebuild a broad temporary floor around the live Wisp. Its altitude may
+    # change while chat commands round-trip, so this floor is not the final
+    # support proof for the player's eventual position.
+    if [[ "\${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
       support_log_lines="$(wc -l < client-smoke/client.log)"
       wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
       wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
@@ -428,10 +426,12 @@ PY
       WISP_CAMERA_SUPPORT_PLATFORM_READY=YES
     fi
 
-    # Teleport only the player to the current Wisp position. The one-block
-    # vertical offset leaves one block for the player to settle onto the prebuilt floor.
-    # The server check requires the player to remain within melee reach of the Wisp.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes' 0.5 2
+    # Teleport two blocks below the Wisp base. Immediately place one obsidian
+    # block under the player's actual post-teleport position: the Wisp can bob
+    # upward between the broad fill and this command, leaving the old floor
+    # below the player. The two-block base gap keeps the BETA26 bolt above the
+    # support surface; the later same-ID EntityHitResult proves actual melee reach.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
@@ -444,12 +444,13 @@ PY
           exit 1
         fi
 
-        # Allow the player to settle, then verify the block directly beneath it.
-        sleep 0.25
+        # Anchor support to the player's current feet, not to the Wisp's
+        # earlier Y coordinate. This remains correct when the Wisp has moved.
+        wisp_fast_command '/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian' 0.5 2
         live_support_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s if entity @p[distance=..2.75] run execute as @p[distance=..2.75] at @s if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
+        wisp_fast_command '/execute at @p if block ~ ~-1 ~ minecraft:obsidian if entity @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1,distance=..6] run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
         wisp_wait_for_fresh_log_marker "$live_support_log_lines" 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES'
-        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=2.75 block=minecraft:obsidian' | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=6 block=minecraft:obsidian' | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
         return 0
