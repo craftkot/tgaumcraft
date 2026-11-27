@@ -58,6 +58,9 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_PLATFORM_FILL=YES",
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
     "WISP_FIXTURE_TELEPORT=YES",
+    "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8",
+    "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289",
+    "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below",
     "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=",
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "WISP_ATTACK_CLICK_DISPATCHED=YES",
@@ -1270,6 +1273,16 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line="
     )
     survival_status_position = status_text.find("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
+    support_prebuilt_position = status_text.find("WISP_CAMERA_SUPPORT_PREBUILT=YES")
+    support_platform_position = status_text.find("WISP_CAMERA_SUPPORT_PLATFORM=YES")
+    live_support_position = status_text.find("WISP_CAMERA_LIVE_SUPPORT=YES")
+    if not (
+        0 <= support_prebuilt_position
+        < support_platform_position
+        < live_support_position
+        < survival_confirmation_position
+    ):
+        errors.append("live Wisp support floor must be built and confirmed before Survival")
     attack_click_position = status_text.find("WISP_ATTACK_CLICK_DISPATCHED=YES")
     attack_input_status_position = status_text.find("WISP_ATTACK_INPUT_FRAME=YES")
     if not (

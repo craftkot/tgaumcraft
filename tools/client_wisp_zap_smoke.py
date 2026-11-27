@@ -413,19 +413,24 @@ PY
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    local player_x player_y player_z support_log_lines
-    # Stage the player beside the exact tagged smoke entity while still Creative.
-    # WispEntity clears Creative targets before its 20-tick zap wind-up; the
-    # first Survival attack therefore establishes the target through hurt(). This
-    # moves only the player. Wisp AI, motion and target remain live.
-    # Teleport to the live Wisp first, then build support from the server-confirmed
-    # player position. A Wisp-relative floor at Y-2 can be offset from the player's
-    # final block Y after the entity bobs between fill and teleport.
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes' 0.5 2
+    local player_x player_y player_z support_log_lines live_support_log_lines
+    # Keep the Wisp's original AI and motion live. Build a wide temporary floor
+    # below the current entity BEFORE moving the player: a player-relative fill
+    # after teleport races gravity while the client opens chat/types the command.
+    support_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone' 0.5 2
+    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
+
+    # Teleport only the player to the current Wisp position. The one-block
+    # vertical offset lets the player settle onto the prebuilt floor; the
+    # following server check proves that the player is actually supported.
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
       if [ -n "$teleport_match" ]; then
-        relative_line="${teleport_match%%:*}"
+        relative_line="$(cut -d: -f1 <<<"$teleport_match")"
         WISP_ATTACK_REPOSITION_LINE="$(cut -d: -f2- <<<"$teleport_match")"
         WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"
         read -r player_x player_y player_z <<<"$(sed -n 's/.*Teleported Dev to \([-0-9.]*\), \([-0-9.]*\), \([-0-9.]*\).*/\1 \2 \3/p' <<<"$WISP_ATTACK_REPOSITION_LINE")"
@@ -433,15 +438,13 @@ PY
           echo "WISP_CAMERA_REPOSITION_COORDINATES_INVALID=$WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
           exit 1
         fi
-        # The 7x7 fill is anchored to the player's actual server position,
-        # with its top face exactly at the player's feet. The successful fill
-        # response proves all 49 support blocks were placed below this position;
-        # no gravity delay or repeated speculative block probes are needed.
-        support_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_fast_command '/execute as @p at @s run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone' 0.5 2
-        wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 49 block(s)"
-        echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=ACTUAL_PLAYER yOffset=-1 radius=3' | tee -a client-smoke-status.txt
-        echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=player_relative_fill blocks=49' | tee -a client-smoke-status.txt
+
+        # Allow the player to settle, then verify the block directly beneath it.
+        sleep 0.25
+        live_support_log_lines="$(wc -l < client-smoke/client.log)"
+        wisp_fast_command '/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
+        wisp_wait_for_fresh_log_marker "$live_support_log_lines" 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES'
+        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below' | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
         return 0

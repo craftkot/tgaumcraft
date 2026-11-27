@@ -535,27 +535,32 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    fill_command = "run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone"
-    teleport_command = "run tp @p ~1.0 ~ ~ facing entity @s eyes"
+    fill_command = "run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone"
+    teleport_command = "run tp @p ~1.0 ~-1 ~ facing entity @s eyes"
+    support_check_command = "if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES"
     assert fill_command in reposition_body
     assert teleport_command in reposition_body
-    assert reposition_body.index(teleport_command) < reposition_body.index(fill_command), (
-        "the support floor must be built from the server-confirmed player position"
+    assert support_check_command in reposition_body
+    assert reposition_body.index(fill_command) < reposition_body.index(teleport_command) < reposition_body.index(support_check_command), (
+        "the live-Wisp floor must exist before teleport, and player support must be verified afterwards"
     )
     assert reposition_body.count("run fill") == 1
     assert "for support_attempt in" not in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=player_relative_fill blocks=49" in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=ACTUAL_PLAYER yOffset=-1 radius=3" in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8" in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289" in reposition_body
+    assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES" not in reposition_body
-    assert "if block ~ ~-1 ~ minecraft:stone" not in reposition_body
-    assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in reposition_body
+    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in reposition_body
+    assert "player_relative_fill" not in reposition_body
     assert "wisp_fast_command" in reposition_body
     assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
-    assert reposition_body.count("0.5 2") == 2, "live teleport and player-relative support fill need the established chat-open/type delays"
+    assert reposition_body.count("0.5 2") == 3, "floor, teleport and support check need established chat delays"
     assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
     assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
     assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
-    assert 'wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 49 block(s)"' in reposition_body
+    assert 'wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"' in reposition_body
+    assert 'live_support_log_lines' in reposition_body
+    assert 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' in reposition_body
 
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
     fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
@@ -572,8 +577,9 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "wisp_fast_command() {\n"
             "  printf '%s\\n' \"$1\" >> commands.log\n"
             "  case \"$1\" in\n"
-            "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    *\"run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone\"*) printf 'Successfully filled 49 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone\"*) printf 'Successfully filled 289 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run tp @p ~1.0 ~-1 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
+            "    *\"if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\"*) printf 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
@@ -587,24 +593,25 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             text=True,
             capture_output=True,
             check=False,
-            timeout=5,
+            timeout=10,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "REPOSITION_LINE=2" in result.stdout, result.stdout
+        assert "REPOSITION_LINE=3" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
-            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~ ~ facing entity @s eyes",
-            "/execute as @p at @s run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-1 ~ facing entity @s eyes",
+            "/execute as @p at @s if block ~ ~-1 ~ minecraft:stone run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
         ], commands
-        assert commands.index(next(c for c in commands if "run tp @p " in c)) < commands.index(next(c for c in commands if "run fill " in c))
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8" in status, status
+        assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289" in status, status
+        assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 289 block(s) line=2" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=4" in status, status
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
-        assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=ACTUAL_PLAYER yOffset=-1 radius=3" in status, status
-        assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=player_relative_fill blocks=49" in status, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 49 block(s) line=3" in status, status
 
-    # A partial fill response is insufficient: the smoke must require all 49
-    # player-relative support blocks before the Survival attack.
+    # A partial Wisp-relative floor fill must stop before teleporting the player.
     with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-partial-fill-") as directory:
         root = Path(directory)
         client_dir = root / "client-smoke"
@@ -615,8 +622,42 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
-            "    *\"run tp @p\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
-            "    *\"run fill ~-3 ~-1 ~-3 ~3 ~-1 ~3 minecraft:stone\"*) printf 'Successfully filled 48 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone\"*) printf 'Successfully filled 288 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "  esac\n"
+            "}\n"
+            + fresh_marker_function
+            + reposition_function
+            + "\nwisp_move_player_to_live_wisp 1\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        client_log = (client_dir / "client.log").read_text(encoding="utf-8")
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "WISP_FRESH_MARKER_TIMEOUT=Successfully filled 289 block(s)" in status, status
+        assert "WISP_CAMERA_SUPPORT_PLATFORM=YES" not in status, status
+        assert "Teleported Dev to " not in client_log, client_log
+
+    # A successful fill is not enough: the server must confirm the player's
+    # actual block below after the teleport and gravity settle.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-no-support-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\n"
+            "wisp_fast_command() {\n"
+            "  case \"$1\" in\n"
+            "    *\"run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:stone\"*) printf 'Successfully filled 289 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run tp @p ~1.0 ~-1 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
@@ -633,8 +674,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         )
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert result.returncode != 0, result.stdout + result.stderr
-        assert "WISP_FRESH_MARKER_TIMEOUT=Successfully filled 49 block(s)" in status, status
-        assert "WISP_CAMERA_SUPPORT_PLATFORM=YES" not in status, status
+        assert "WISP_FRESH_MARKER_TIMEOUT=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES" in status, status
+        assert "WISP_CAMERA_LIVE_SUPPORT=YES" not in status, status
 
     fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
     fresh_marker_function = "  wisp_wait_for_fresh_log_marker() {\n" + fresh_marker_body + "\n  }\n"
@@ -2073,6 +2114,9 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=" in verify_wisp_zap_client.REQUIRED_STATUS
@@ -2148,6 +2192,9 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=10",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
+        "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP yOffset=-3 radius=8",
+        "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289",
+        "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below",
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
@@ -2358,6 +2405,28 @@ def main() -> int:
             "missing real server world marker: TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in error
             for error in missing_base_clear_errors
         ), missing_base_clear_errors
+
+        missing_live_support_status = status.replace(
+            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n", "", 1
+        )
+        missing_live_support_errors = verify_wisp_zap_client.verify(
+            log, missing_live_support_status, root
+        )
+        assert any(
+            "missing real-client status marker: WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below"
+            in error for error in missing_live_support_errors
+        ), missing_live_support_errors
+
+        late_live_support_status = status.replace(
+            "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n", "", 1
+        ) + "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below\\n"
+        late_live_support_errors = verify_wisp_zap_client.verify(
+            log, late_live_support_status, root
+        )
+        assert any(
+            "live Wisp support floor must be built and confirmed before Survival" in error
+            for error in late_live_support_errors
+        ), late_live_support_errors
 
         reversed_source_checks = log.replace(
             "TC_SMOKE_WISP_NAMED_SOURCE=YES\nTC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
