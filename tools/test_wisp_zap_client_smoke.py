@@ -1402,6 +1402,24 @@ def _test_fxbbolt_segment_detector() -> None:
         assert not cycle_errors and [age for age, _ in visible_ages] == [1, 2, 3], (
             cycle_errors, [age for age, _ in visible_ages]
         )
+
+        # Real-client run 45912108230 measured mean Aer deltas 171.0, 147.5,
+        # and 23.9. The component mean includes changing texture/raster coverage,
+        # so a 10% monotonic margin is realistic while equal-age frames still fail.
+        weak_age_one = root / "weak-age-one.png"
+        weak_age_two = root / "weak-age-two.png"
+        weak_age_three = root / "weak-age-three.png"
+        write_bolt_png(weak_age_one, line=(0, 300, 480, 600), alpha=0.67, source_center=None)
+        write_bolt_png(weak_age_two, line=(0, 300, 480, 600), alpha=0.58, source_center=None)
+        write_bolt_png(weak_age_three, line=(0, 300, 480, 600), alpha=0.1, source_center=None)
+        weak_fade_errors, weak_fade_visible, _ = verify_wisp_zap_client.verify_bolt_cycle(
+            ((1, weak_age_one), (2, weak_age_two), (3, weak_age_three)),
+            moved_expiry,
+            moved_baseline,
+        )
+        assert not weak_fade_errors and [age for age, _ in weak_fade_visible] == [1, 2, 3], (
+            weak_fade_errors, [age for age, _ in weak_fade_visible]
+        )
         for missing_age, frames in (
             (1, ((1, moved_empty), (2, moved_age_two), (3, moved_age_three))),
             (2, ((1, moved_age_one), (2, moved_empty), (3, moved_age_three))),
@@ -2022,7 +2040,7 @@ def main() -> int:
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=3 wispTick=26 observedAtMonotonicNs=1600000000",
-        "WISP_ZAP_EFFECT_EXPIRED=YES source=17 createdAt=520",
+        "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=520 monotonicNs=1650000000",
         "WISP_ZAP_VIDEO_STOPPED=YES",
         "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD",
         "WISP_ZAP_BASELINE_FRAME_FROM_VIDEO=YES source=17 frameIndex=19 monotonicNs=1116666667",
@@ -2117,6 +2135,29 @@ def main() -> int:
         invalid_baseline_errors = verify_wisp_zap_client.verify(log, status, root)
         assert any("cannot decode FXBolt image" in error for error in invalid_baseline_errors), invalid_baseline_errors
         baseline_path.write_bytes(valid_baseline)
+
+        wrong_expiry_target_status = status.replace(
+            "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=520 monotonicNs=1650000000",
+            "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=999 createdAt=520 monotonicNs=1650000000",
+            1,
+        )
+        wrong_expiry_target_errors = verify_wisp_zap_client.verify(log, wrong_expiry_target_status, root)
+        assert any("no matching three-tick expiry evidence" in error for error in wrong_expiry_target_errors), (
+            wrong_expiry_target_errors
+        )
+
+        missing_expiry_monotonic_status = status.replace(
+            "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=520 monotonicNs=1650000000",
+            "WISP_ZAP_EFFECT_EXPIRED=YES source=17 target=1 createdAt=520",
+            1,
+        )
+        missing_expiry_monotonic_errors = verify_wisp_zap_client.verify(
+            log, missing_expiry_monotonic_status, root
+        )
+        assert any(
+            "no matching three-tick expiry evidence" in error
+            for error in missing_expiry_monotonic_errors
+        ), missing_expiry_monotonic_errors
 
         missing_capture_status = status.replace(
             "WISP_ZAP_BASELINE_CAPTURE=THIRD_PERSON_BACK_SIDE_ON_BEFORE_PAYLOAD\n", "", 1
