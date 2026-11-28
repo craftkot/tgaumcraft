@@ -517,8 +517,10 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert reposition_cursor in attack_body and reposition_call in attack_body
     assert attack_body.count(reposition_call) == 1
     assert retry_branch_end < attack_body.index(reposition_cursor) < attack_body.index(reposition_call)
-    assert attack_body.index(reposition_call) < attack_body.index(survival_confirmation), (
-        "the first real Survival attempt must be staged beside the live Wisp"
+    release_call = "wisp_release_staging_wisp"
+    assert release_call in attack_body
+    assert attack_body.index(reposition_call) < attack_body.index(release_call) < attack_body.index(survival_confirmation), (
+        "the Wisp must be released while the player is still Creative"
     )
     assert attack_body.index(wait_for_frame) < attack_body.index(input_cursor_read)
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
@@ -535,41 +537,33 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    # Four layers (Y-8..Y-5) put the pad's top face at Y-4, one block below the Y-2 teleport.
+    staging_tag_add = "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging"
     fill_command = "run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian"
     teleport_command = "run tp @p ~1.0 ~-2 ~ facing entity @s eyes"
     setblock_command = "run setblock ~ ~-1 ~ minecraft:obsidian"
     support_check_command = "if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES"
-    assert fill_command in reposition_body
-    assert teleport_command in reposition_body
-    assert setblock_command in reposition_body
-    assert support_check_command in reposition_body
-    assert "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES" in reposition_body
-    assert "distance=..6" not in support_check_command
-    assert reposition_body.index(fill_command) < reposition_body.index(teleport_command) < reposition_body.index(setblock_command) < reposition_body.index(support_check_command), (
-        "the live-Wisp floor must exist before teleport, and player support must be verified afterwards"
-    )
+    assert staging_tag_add in reposition_body
+    assert "TC_SMOKE_WISP_STAGING_FROZEN=YES" in reposition_body
+    assert fill_command in reposition_body and teleport_command in reposition_body
+    assert setblock_command in reposition_body and support_check_command in reposition_body
+    assert reposition_body.index(staging_tag_add) < reposition_body.index(fill_command) < reposition_body.index(teleport_command) < reposition_body.index(setblock_command) < reposition_body.index(support_check_command)
     assert reposition_body.count("run fill") == 1
-    assert 'if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then' in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PLATFORM_READY=YES" in reposition_body
-    assert "for support_attempt in" not in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PLATFORM_READY" not in reposition_body
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in reposition_body
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES" not in reposition_body
-    assert "run tp @p ~1.0 ~ ~ facing entity @s eyes" not in reposition_body
-    assert "player_relative_fill" not in reposition_body
-    assert "wisp_fast_command" in reposition_body
-    assert "0.1 1" not in reposition_body, "live-Wisp chat commands must not use the 100ms open delay"
-    assert reposition_body.count("0.5 2") == 4, "floor, teleport, player support and support check need established chat delays"
-    assert 'tail -n +"$((after_lines + 1))" client-smoke/client.log' in reposition_body
-    assert 'WISP_ATTACK_REPOSITION_LINE_NUMBER="$((after_lines + relative_line))"' in reposition_body
-    assert 'WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION' in reposition_body
+    assert "WISP_CAMERA_STAGING_FREEZE=YES" in reposition_body
+    assert "0.1 1" not in reposition_body
+    assert reposition_body.count("0.5 2") == 5
     assert 'wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"' in reposition_body
-    assert 'live_support_log_lines' in reposition_body
-    assert 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' in reposition_body
 
+    release_body = _bash_function_body(generated, "wisp_release_staging_wisp")
+    release_tag = "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging"
+    assert release_tag in release_body
+    assert "TC_SMOKE_WISP_STAGING_RELEASED=YES" in release_body
+    assert release_body.index("wisp_fast_command") < release_body.index("wisp_wait_for_fresh_log_marker") < release_body.index("WISP_CAMERA_STAGING_RELEASE=YES")
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
+    release_function = "  wisp_release_staging_wisp() {\n" + release_body + "\n  }\n"
     fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
     fresh_marker_function = "  wisp_wait_for_fresh_log_marker() {\n" + fresh_marker_body + "\n  }\n"
     with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-cursor-") as directory:
@@ -584,18 +578,23 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "wisp_fast_command() {\n"
             "  printf '%s\\n' \"$1\" >> commands.log\n"
             "  case \"$1\" in\n"
+            "    *\"add tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "    *\"if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\"*) printf 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\\n' >> client-smoke/client.log ;;\n"
+            "    *\"remove tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_RELEASED=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
             + reposition_function
+            + release_function
             + "\nwisp_move_player_to_live_wisp 1\n"
             + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
+            + "wisp_release_staging_wisp\n"
             + 'second_after_lines="$(wc -l < client-smoke/client.log)"\n'
             + 'wisp_move_player_to_live_wisp "$second_after_lines"\n'
             + 'echo "REPOSITION_LINE_SECOND=$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
+            + "wisp_release_staging_wisp\n"
         )
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -606,28 +605,66 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             timeout=10,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "REPOSITION_LINE=3" in result.stdout, result.stdout
-        assert "REPOSITION_LINE_SECOND=5" in result.stdout, result.stdout
+        assert "REPOSITION_LINE=4" in result.stdout, result.stdout
+        assert "REPOSITION_LINE_SECOND=9" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
+            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
             "/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian",
             "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
+            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging",
+            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
             "/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian",
             "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
+            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging",
         ], commands
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in status, status
         assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in status, status
-        assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 1, status
-        assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 1, status
+        assert status.count("WISP_CAMERA_STAGING_FREEZE=YES") == 2, status
+        assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 2, status
+        assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 2, status
         assert status.count("WISP_CAMERA_LIVE_SUPPORT=YES") == 2, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 1156 block(s) line=2" in status, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=4" in status, status
+        assert status.count("WISP_CAMERA_STAGING_RELEASE=YES") == 2, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_FROZEN=YES line=2" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 1156 block(s) line=3" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=5" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_RELEASED=YES line=6" in status, status
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
+
+    # Without a server-confirmed staging freeze, do not build a floor or teleport.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-no-freeze-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        commands_path = root / "commands.log"
+        harness = (
+            "set -euo pipefail\n"
+            "wisp_fast_command() { printf '%s\\n' \"$1\" >> commands.log; }\n"
+            + fresh_marker_function
+            + reposition_function
+            + "\nwisp_move_player_to_live_wisp 1\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        commands = commands_path.read_text(encoding="utf-8").splitlines()
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "WISP_FRESH_MARKER_TIMEOUT=TC_SMOKE_WISP_STAGING_FROZEN=YES" in status, status
+        assert len(commands) == 1 and "add tc_wisp_zap_smoke_staging" in commands[0], commands
 
     # A partial Wisp-relative floor fill must stop before teleporting the player.
     with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-partial-fill-") as directory:
@@ -640,6 +677,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
+            "    *\"add tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1155 block(s)\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
@@ -676,6 +714,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
+            "    *\"add tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
@@ -1676,6 +1715,21 @@ def _test_side_view_tracks_live_wisp() -> None:
     assert max(-35.0, min(35.0, steep_pitch * 0.5)) == -35.0
 
 
+def _test_wisp_smoke_staging_gate() -> None:
+    """The staging hold is smoke-only and brackets the custom BETA26 Wisp tick."""
+    root = Path(__file__).resolve().parents[1]
+    source = (root / "src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntity.java").read_text(encoding="utf-8")
+    assert 'private static final String SMOKE_STAGING_TAG = "tc_wisp_zap_smoke_staging";' in source
+    assert "boolean smokeStaging = !level().isClientSide" in source
+    assert "&& SMOKE_PROBE" in source
+    assert "&& getTags().contains(SMOKE_STAGING_TAG);" in source
+    tick_body = source.split("public void tick()", 1)[1].split("static Vec3 applyBETA26VerticalDamping", 1)[0]
+    assert tick_body.index("setDeltaMovement(Vec3.ZERO)") < tick_body.index("super.tick()")
+    assert tick_body.index("super.tick()") < tick_body.rindex("setDeltaMovement(Vec3.ZERO)")
+    assert "TC_SMOKE_WISP_STAGING_FROZEN=YES id=" in tick_body
+    assert "TC_SMOKE_WISP_STAGING_RELEASED=YES id=" in tick_body
+    assert tick_body.index("TC_SMOKE_WISP_STAGING_RELEASED=YES") < tick_body.index("tickServer();")
+
 def _test_video_capture_uses_ffmpeg_progress_timestamp() -> None:
     fixture = "#!/usr/bin/env bash\nprintf 'guiScale:2\\n' > run/options.txt\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n  # The initial world is already creative + peaceful, as established"
     with patch.object(Path, "read_text", return_value=fixture):
@@ -1774,6 +1828,7 @@ def main() -> int:
     _test_wisp_render_profile(generated)
     _test_wisp_zap_fixture_elevation(generated)
     _test_side_view_tracks_live_wisp()
+    _test_wisp_smoke_staging_gate()
 
     required = (
         "wisp_send_chat()",
@@ -2171,6 +2226,8 @@ def main() -> int:
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_STAGING_FREEZE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_STAGING_RELEASE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=" in verify_wisp_zap_client.REQUIRED_STATUS
@@ -2192,12 +2249,20 @@ def main() -> int:
 
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
+        "tc_wisp_zap_smoke_staging",
+        "TC_SMOKE_WISP_STAGING_FROZEN=YES",
+        "TC_SMOKE_WISP_STAGING_RELEASED=YES",
+        "WISP_CAMERA_STAGING_FREEZE=YES",
+        "WISP_CAMERA_STAGING_RELEASE=YES",
+        "wisp_release_staging_wisp()",
         "TC_SMOKE_WISP_PLAYER_CREATIVE=YES",
         "WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=20",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518",
+        "TC_SMOKE_WISP_STAGING_FROZEN=YES id=17",
+        "TC_SMOKE_WISP_STAGING_RELEASED=YES id=17",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
@@ -2246,9 +2311,11 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=10",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
+        "WISP_CAMERA_STAGING_FREEZE=YES",
         "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8",
         "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156",
         "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
+        "WISP_CAMERA_STAGING_RELEASE=YES",
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",

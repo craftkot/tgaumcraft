@@ -51,6 +51,8 @@ public final class WispEntity extends FlyingMob implements Enemy {
     private static final double BETA26_MOVING_TARGET_THRESHOLD = 0.10000000149011612D;
     private static final int BETA26_THUNDER_SKYLIGHT_SUBTRACTION = 10;
     private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    /** Scoreboard tag for the smoke-only staging hold; ignored in ordinary gameplay. */
+    private static final String SMOKE_STAGING_TAG = "tc_wisp_zap_smoke_staging";
 
     private static final AspectRegistry ASPECTS = new AspectRegistry();
     private static final EntityDataAccessor<String> ASPECT_TYPE =
@@ -60,6 +62,7 @@ public final class WispEntity extends FlyingMob implements Enemy {
     private int attackCounter;
     private BlockPos currentFlightTarget;
     private boolean crystalDropped;
+    private boolean smokeStagingLastTick;
 
     public WispEntity(EntityType<? extends WispEntity> type, Level level) {
         super(type, level);
@@ -172,7 +175,27 @@ public final class WispEntity extends FlyingMob implements Enemy {
 
     @Override
     public void tick() {
+        boolean smokeStaging = !level().isClientSide
+                && SMOKE_PROBE
+                && getTags().contains(SMOKE_STAGING_TAG);
+        if (smokeStaging) {
+            setDeltaMovement(Vec3.ZERO);
+        }
+
         super.tick();
+        if (smokeStaging) {
+            setDeltaMovement(Vec3.ZERO);
+            if (!smokeStagingLastTick) {
+                smokeStagingLastTick = true;
+                System.out.println("TC_SMOKE_WISP_STAGING_FROZEN=YES id=" + getId());
+            }
+            return;
+        }
+        if (smokeStagingLastTick) {
+            smokeStagingLastTick = false;
+            System.out.println("TC_SMOKE_WISP_STAGING_RELEASED=YES id=" + getId());
+        }
+
         // BETA26 EntityWisp.onUpdate damps vertical motion on both logical sides
         // before its server-only onLivingUpdate movement/attack logic.
         setDeltaMovement(applyBETA26VerticalDamping(getDeltaMovement()));

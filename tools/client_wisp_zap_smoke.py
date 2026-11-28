@@ -413,24 +413,26 @@ PY
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    local player_x player_y player_z support_log_lines live_support_log_lines
-    # Prebuild a four-layer floor around the live Wisp. The top block is Y-5
-    # (top face Y-4), one block below the Y-2 teleport. This leaves a controlled
-    # landing gap after the measured vertical bob and gives the player a stable
-    # pad before Survival; the player-relative check below remains authoritative.
-    if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
-      support_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian' 0.5 2
-      wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"
-      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
-      echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156' | tee -a client-smoke-status.txt
-      WISP_CAMERA_SUPPORT_PLATFORM_READY=YES
-    fi
+    local player_x player_y player_z staging_log_lines support_log_lines live_support_log_lines
 
-    # Teleport two blocks below the Wisp base. The four-layer floor keeps the
-    # player supported across the observed vertical bob while chat commands
-    # round-trip. A player-relative setblock/check remains the final guard before
-    # Survival; it does not infer proximity to the moving Wisp.
+    # BETA26 Wisp flight is implemented in this entity's custom server tick;
+    # vanilla NoAI does not stop it. Freeze this exact Wisp only in smoke mode.
+    staging_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging' 0.5 2
+    wisp_wait_for_fresh_log_marker "$staging_log_lines" 'TC_SMOKE_WISP_STAGING_FROZEN=YES'
+    echo 'WISP_CAMERA_STAGING_FREEZE=YES' | tee -a client-smoke-status.txt
+
+    # Build the support pad only after the server confirms the Wisp is stationary.
+    # This prevents the pad and the later live-Wisp teleport using different
+    # flight positions while chat commands round-trip.
+    support_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian' 0.5 2
+    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156' | tee -a client-smoke-status.txt
+
+    # Teleport two blocks below the frozen Wisp. The player-relative setblock/check
+    # remains authoritative; the same-ID hit and <=3.01 hitDistance prove actual reach.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
@@ -444,10 +446,6 @@ PY
           exit 1
         fi
 
-        # Anchor support to the player's current feet, not to the Wisp's
-        # earlier Y coordinate. The Wisp can move beyond any coarse radius while
-        # chat commands round-trip, so this proof checks only the actual support
-        # block. The later same-ID EntityHitResult and <=3.01 hit distance prove reach.
         wisp_fast_command '/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian' 0.5 2
         live_support_log_lines="$(wc -l < client-smoke/client.log)"
         wisp_fast_command '/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
@@ -463,6 +461,15 @@ PY
     tail -120 client-smoke/client.log >&2
     exit 1
   }
+
+  wisp_release_staging_wisp() {
+    local release_log_lines
+    release_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging' 0.5 2
+    wisp_wait_for_fresh_log_marker "$release_log_lines" 'TC_SMOKE_WISP_STAGING_RELEASED=YES'
+    echo 'WISP_CAMERA_STAGING_RELEASE=YES' | tee -a client-smoke-status.txt
+  }
+
   wisp_wait_for_attack_frame() {
     local after_lines="$1" wisp_id="$2" position_mode="${3:-PLATFORM}" attempt="${4:-1}" frame_pattern frame_line camera_tick game_time player_tick camera_line click_log_lines frame_fd frame_tail_pid candidate_line watcher_status deadline remaining
     local player_x player_y player_z wisp_x wisp_y wisp_z aim_dot distance
@@ -776,6 +783,9 @@ PY
       reanchor_log_lines="$(wc -l < client-smoke/client.log)"
       wisp_move_player_to_live_wisp "$reanchor_log_lines"
       echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
+      # Release the held Wisp while the player is still Creative, then switch to
+      # Survival and consume only fresh post-transition same-ID hit frames.
+      wisp_release_staging_wisp
       attack_camera_source="LIVE_ENTITY_FACING"
       attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
       attack_position_mode=LIVE_WISP

@@ -37,6 +37,8 @@ VIEWPORT_HEIGHT = 768
 
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
+    "TC_SMOKE_WISP_STAGING_FROZEN=YES",
+    "TC_SMOKE_WISP_STAGING_RELEASED=YES",
     "TC_SMOKE_WISP_RENDERED=YES",
     "TC_SMOKE_WISP_FRAME_COMPLETE=YES",
     "TC_SMOKE_WISP_ATTACK_INPUT=YES",
@@ -61,6 +63,8 @@ REQUIRED_STATUS = (
     "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8",
     "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156",
     "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
+    "WISP_CAMERA_STAGING_FREEZE=YES",
+    "WISP_CAMERA_STAGING_RELEASE=YES",
     "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=",
     "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
     "WISP_ATTACK_CLICK_DISPATCHED=YES",
@@ -1282,16 +1286,43 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line="
     )
     survival_status_position = status_text.find("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
-    support_prebuilt_position = status_text.find("WISP_CAMERA_SUPPORT_PREBUILT=YES")
-    support_platform_position = status_text.find("WISP_CAMERA_SUPPORT_PLATFORM=YES")
-    live_support_position = status_text.find("WISP_CAMERA_LIVE_SUPPORT=YES")
-    if not (
-        0 <= support_prebuilt_position
-        < support_platform_position
-        < live_support_position
-        < survival_confirmation_position
-    ):
-        errors.append("live Wisp support floor must be built and confirmed before Survival")
+    staging_freeze_positions = [m.start() for m in re.finditer("WISP_CAMERA_STAGING_FREEZE=YES", status_text)]
+    support_prebuilt_positions = [m.start() for m in re.finditer("WISP_CAMERA_SUPPORT_PREBUILT=YES", status_text)]
+    support_platform_positions = [m.start() for m in re.finditer("WISP_CAMERA_SUPPORT_PLATFORM=YES", status_text)]
+    live_support_positions = [m.start() for m in re.finditer("WISP_CAMERA_LIVE_SUPPORT=YES", status_text)]
+    staging_release_positions = [m.start() for m in re.finditer("WISP_CAMERA_STAGING_RELEASE=YES", status_text)]
+    survival_confirmation_positions = [
+        m.start() for m in re.finditer(
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=",
+            status_text,
+        )
+    ]
+    survival_status_positions = [m.start() for m in re.finditer("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES", status_text)]
+    attempt_counts = {
+        len(staging_freeze_positions),
+        len(support_prebuilt_positions),
+        len(support_platform_positions),
+        len(live_support_positions),
+        len(staging_release_positions),
+        len(survival_confirmation_positions),
+        len(survival_status_positions),
+    }
+    if len(attempt_counts) != 1 or not staging_freeze_positions:
+        errors.append("each Wisp staging attempt must freeze, build/verify support, release, then enter Survival")
+    else:
+        for attempt_index, positions in enumerate(zip(
+            staging_freeze_positions,
+            support_prebuilt_positions,
+            support_platform_positions,
+            live_support_positions,
+            staging_release_positions,
+            survival_confirmation_positions,
+            survival_status_positions,
+        ), start=1):
+            if not all(left < right for left, right in zip(positions, positions[1:])):
+                errors.append(f"Wisp staging/support/release/Survival order is invalid on attempt {attempt_index}")
+                break
+
     attack_click_position = status_text.find("WISP_ATTACK_CLICK_DISPATCHED=YES")
     attack_input_status_position = status_text.find("WISP_ATTACK_INPUT_FRAME=YES")
     if not (
@@ -1331,6 +1362,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         status_text,
     )
     first_frame_id = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_ID=(\d+)$", status_text)
+    staging_frozen_logs = list(re.finditer(
+        r"(?m)^TC_SMOKE_WISP_STAGING_FROZEN=YES id=(\d+)$", log_text
+    ))
+    staging_released_logs = list(re.finditer(
+        r"(?m)^TC_SMOKE_WISP_STAGING_RELEASED=YES id=(\d+)$", log_text
+    ))
+    if len(staging_frozen_logs) != len(staging_released_logs) or not staging_frozen_logs:
+        errors.append("Wisp staging freeze/release server markers are missing or unpaired")
+    else:
+        for freeze_marker, release_marker in zip(staging_frozen_logs, staging_released_logs):
+            if (
+                freeze_marker.group(1) != release_marker.group(1)
+                or freeze_marker.start() >= release_marker.start()
+                or (first_frame_id is not None and freeze_marker.group(1) != first_frame_id.group(1))
+            ):
+                errors.append("Wisp staging freeze/release must bracket the same rendered Wisp entity")
+                break
     first_frame_tick = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_TICK=(\d+)$", status_text)
     pre_attack_track_status = _first(
         r"(?m)^WISP_RENDER_PREATTACK_TRACKING=YES id=(\d+) tick=(\d+) line=(\d+)$",
