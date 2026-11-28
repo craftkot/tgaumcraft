@@ -545,8 +545,8 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         status_text,
     )
     side_view_rendered = _first(
-        r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=([-0-9.]+) yaw=([-0-9.]+) "
-        r"pitch=([-0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)$",
+        r"(?m)^WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=([-0-9.]+) beamPitch=([-0-9.]+) "
+        r"yaw=([-0-9.]+) pitch=([-0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)$",
         status_text,
     )
     payload = _first(
@@ -582,7 +582,7 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
     if side_view.group(1) != payload.group(1) or side_view_rendered.group(1) != payload.group(1):
         errors.append("side-view camera and zap payload belong to different Wisp source IDs")
     side_view_ns = int(side_view.group(2))
-    side_view_rendered_ns = int(side_view_rendered.group(6))
+    side_view_rendered_ns = int(side_view_rendered.group(7))
     payload_ns = int(payload.group(4))
     expired_ns = int(expired.group(4))
     if expired.group(1) != payload.group(1) or expired.group(2) != payload.group(2) or expired.group(3) != payload.group(3):
@@ -591,12 +591,16 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append("AFTER_ENTITIES side-view confirmation did not follow the AttackEntityEvent camera switch")
     if side_view_rendered_ns >= payload_ns:
         errors.append("third-person side-view frame was not confirmed before zap payload receipt")
-    beam_yaw, rendered_yaw, rendered_pitch, camera_distance = map(float, side_view_rendered.groups()[1:5])
+    beam_yaw, beam_pitch, rendered_yaw, rendered_pitch, camera_distance = map(float, side_view_rendered.groups()[1:6])
     yaw_delta = (rendered_yaw - beam_yaw + 180.0) % 360.0 - 180.0
+    expected_pitch = max(-35.0, min(35.0, beam_pitch * 0.5))
     if abs(yaw_delta - 50.0) > 1.0:
         errors.append(f"rendered side-view yaw is not 50 degrees from the zap axis: {yaw_delta:.2f}")
-    if abs(rendered_pitch) > 1.0:
-        errors.append(f"rendered side-view camera pitch is not horizontal: {rendered_pitch:.2f}")
+    if abs(rendered_pitch - expected_pitch) > 1.0:
+        errors.append(
+            f"rendered side-view pitch does not match half the live beam elevation: "
+            f"actual={rendered_pitch:.2f} expected={expected_pitch:.2f}"
+        )
     if camera_distance < 3.0:
         errors.append(f"third-person side-view camera was obstructed/too close: {camera_distance:.2f} blocks")
     if [int(frame[2]) for frame in observed] != [1, 2, 3]:
@@ -877,12 +881,12 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         r"TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=(\d+)", log_text
     )
     side_view = _first(
-        r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) beamYaw=(-?[0-9.]+) yaw=(-?[0-9.]+) "
-        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK monotonicNs=(\d+)", log_text
+        r"TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=(\d+) beamYaw=(-?[0-9.]+) beamPitch=(-?[0-9.]+) "
+        r"yaw=(-?[0-9.]+) pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK monotonicNs=(\d+)", log_text
     )
     side_view_rendered = _first(
-        r"TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=(-?[0-9.]+) yaw=(-?[0-9.]+) "
-        r"pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)", log_text
+        r"TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=(\d+) beamYaw=(-?[0-9.]+) beamPitch=(-?[0-9.]+) "
+        r"yaw=(-?[0-9.]+) pitch=(-?[0-9.]+) cameraType=THIRD_PERSON_BACK cameraDistance=([0-9.]+) monotonicNs=(\d+)", log_text
     )
     pre_attack_track = _first(
         r"TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=(\d+) tick=(\d+) gameTime=(\d+)",
@@ -928,33 +932,38 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     if side_view and received:
         if side_view.group(1) != received.group(1):
             errors.append("side-view camera and zap payload refer to different source entities")
-        if int(side_view.group(5)) >= int(received.group(6)):
+        if int(side_view.group(6)) >= int(received.group(6)):
             errors.append("side-view camera was selected after the client received the zap payload")
     if side_view and side_view_rendered:
         if side_view.group(1) != side_view_rendered.group(1):
             errors.append("rendered side-view frame belongs to a different Wisp than the attack camera switch")
-        if int(side_view.group(5)) >= int(side_view_rendered.group(6)):
+        if int(side_view.group(6)) >= int(side_view_rendered.group(7)):
             errors.append("rendered third-person side-view frame predates the attack camera switch")
-    if side_view_rendered and received and int(side_view_rendered.group(6)) >= int(received.group(6)):
+    if side_view_rendered and received and int(side_view_rendered.group(7)) >= int(received.group(6)):
         errors.append("rendered third-person side-view frame was selected after the client received the zap payload")
     if side_view:
         beam_yaw = float(side_view.group(2))
-        yaw = float(side_view.group(3))
-        pitch = float(side_view.group(4))
+        beam_pitch = float(side_view.group(3))
+        yaw = float(side_view.group(4))
+        pitch = float(side_view.group(5))
         yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
-        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch) > 1.0:
+        expected_pitch = max(-35.0, min(35.0, beam_pitch * 0.5))
+        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch - expected_pitch) > 1.0:
             errors.append(
                 f"camera is not side-on to the zap: beamYaw={beam_yaw:.2f} "
-                f"yaw={yaw:.2f} pitch={pitch:.2f}"
+                f"beamPitch={beam_pitch:.2f} yaw={yaw:.2f} pitch={pitch:.2f} "
+                f"expectedPitch={expected_pitch:.2f}"
             )
     if side_view_rendered:
         rendered_beam_yaw = float(side_view_rendered.group(2))
-        rendered_yaw = float(side_view_rendered.group(3))
-        rendered_pitch = float(side_view_rendered.group(4))
-        rendered_distance = float(side_view_rendered.group(5))
+        rendered_beam_pitch = float(side_view_rendered.group(3))
+        rendered_yaw = float(side_view_rendered.group(4))
+        rendered_pitch = float(side_view_rendered.group(5))
+        rendered_distance = float(side_view_rendered.group(6))
+        expected_rendered_pitch = max(-35.0, min(35.0, rendered_beam_pitch * 0.5))
         rendered_delta = (rendered_yaw - rendered_beam_yaw + 180.0) % 360.0 - 180.0
-        if abs(rendered_delta - 50.0) > 1.0 or abs(rendered_pitch) > 1.0:
-            errors.append("render-stage camera did not preserve the 50-degree horizontal side view")
+        if abs(rendered_delta - 50.0) > 1.0 or abs(rendered_pitch - expected_rendered_pitch) > 1.0:
+            errors.append("render-stage camera did not preserve the broadside yaw and live elevation pitch")
         if rendered_distance < 3.0:
             errors.append(f"render-stage third-person camera distance is too short: {rendered_distance:.2f}")
     if wisp_camera and wisp_rendered:

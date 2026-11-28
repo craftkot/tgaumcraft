@@ -1110,16 +1110,17 @@ PY
   side_view_rendered_line="$(grep -F 'TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=' client-smoke/client.log | tail -1)"
   side_view_rendered_id="$(sed -n 's/.*TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=\([0-9][0-9]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_beam_yaw="$(sed -n 's/.* beamYaw=\([-0-9.]*\) .*/\1/p' <<<"$side_view_rendered_line")"
+  side_view_rendered_beam_pitch="$(sed -n 's/.* beamPitch=\([-0-9.]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_yaw="$(sed -n 's/.* yaw=\([-0-9.]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_pitch="$(sed -n 's/.* pitch=\([-0-9.]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_camera_type="$(sed -n 's/.* cameraType=\([A-Z_]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_camera_distance="$(sed -n 's/.* cameraDistance=\([-0-9.]*\) .*/\1/p' <<<"$side_view_rendered_line")"
   side_view_rendered_monotonic_ns="$(sed -n 's/.* monotonicNs=\([0-9][0-9]*\)$/\1/p' <<<"$side_view_rendered_line")"
-  if ! [[ "$side_view_rendered_id" =~ ^[0-9]+$ && "$side_view_rendered_beam_yaw" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_yaw" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_pitch" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_camera_distance" =~ ^[0-9]+([.][0-9]+)?$ && "$side_view_rendered_monotonic_ns" =~ ^[0-9]+$ ]] || [ "$side_view_rendered_id" != "$wisp_id" ] || [ "$side_view_rendered_camera_type" != "THIRD_PERSON_BACK" ]; then
+  if ! [[ "$side_view_rendered_id" =~ ^[0-9]+$ && "$side_view_rendered_beam_yaw" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_beam_pitch" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_yaw" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_pitch" =~ ^-?[0-9]+([.][0-9]+)?$ && "$side_view_rendered_camera_distance" =~ ^[0-9]+([.][0-9]+)?$ && "$side_view_rendered_monotonic_ns" =~ ^[0-9]+$ ]] || [ "$side_view_rendered_id" != "$wisp_id" ] || [ "$side_view_rendered_camera_type" != "THIRD_PERSON_BACK" ]; then
     echo "WISP_CAMERA_SIDE_VIEW_RENDERED_FIELDS_INVALID=id:$side_view_rendered_id expected:$wisp_id cameraType:$side_view_rendered_camera_type cameraDistance:$side_view_rendered_camera_distance monotonicNs:$side_view_rendered_monotonic_ns" | tee -a client-smoke-status.txt
     exit 1
   fi
-  echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id beamYaw=$side_view_rendered_beam_yaw yaw=$side_view_rendered_yaw pitch=$side_view_rendered_pitch cameraType=$side_view_rendered_camera_type cameraDistance=$side_view_rendered_camera_distance monotonicNs=$side_view_rendered_monotonic_ns" | tee -a client-smoke-status.txt
+  echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id beamYaw=$side_view_rendered_beam_yaw beamPitch=$side_view_rendered_beam_pitch yaw=$side_view_rendered_yaw pitch=$side_view_rendered_pitch cameraType=$side_view_rendered_camera_type cameraDistance=$side_view_rendered_camera_distance monotonicNs=$side_view_rendered_monotonic_ns" | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'

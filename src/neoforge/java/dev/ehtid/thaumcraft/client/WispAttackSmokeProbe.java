@@ -25,8 +25,8 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
  *
  * The input event records Minecraft.hitResult before target selection; the
  * AttackEntityEvent records the entity Player.attack actually selected. After
- * selection, the smoke-only probe switches the camera to a fixed side view so
- * the short BETA26 zap can be recorded without delaying the real attack.
+ * selection, the smoke-only probe follows the live source in a broadside view so
+ * the short BETA26 zap remains inside the recorded camera frustum.
  */
 @EventBusSubscriber(
         modid = ThaumcraftPort.MOD_ID,
@@ -41,8 +41,12 @@ public final class WispAttackSmokeProbe {
     private static int trackedWispId = -1;
     private static boolean aimCameraAtWisp = true;
     private static boolean sideViewFrameLogged;
+    private static boolean sideViewTracking;
+    private static int sideViewTrackingTicksRemaining;
     private static float beamYawForSideView;
+    private static float beamPitchForSideView;
     private static float sideViewYaw;
+    private static float sideViewPitch;
 
     private WispAttackSmokeProbe() {}
 
@@ -101,6 +105,8 @@ public final class WispAttackSmokeProbe {
             trackedWispId = -1;
             aimCameraAtWisp = true;
             sideViewFrameLogged = false;
+            sideViewTracking = false;
+            sideViewTrackingTicksRemaining = 0;
             return;
         }
 
@@ -134,6 +140,18 @@ public final class WispAttackSmokeProbe {
             trackedWispId = -1;
             aimCameraAtWisp = true;
             sideViewFrameLogged = false;
+            sideViewTracking = false;
+            sideViewTrackingTicksRemaining = 0;
+            return;
+        }
+
+        if (sideViewTracking) {
+            if (sideViewTrackingTicksRemaining <= 0) {
+                sideViewTracking = false;
+                return;
+            }
+            sideViewTrackingTicksRemaining--;
+            updateSideView(minecraft, wisp);
             return;
         }
 
@@ -162,9 +180,12 @@ public final class WispAttackSmokeProbe {
         if (event.getTarget() instanceof WispEntity wisp) {
             trackedWispId = wisp.getId();
             aimCameraAtWisp = false;
+            sideViewTracking = true;
+            sideViewTrackingTicksRemaining = 40;
             sideViewFrameLogged = false;
             System.out.println("TC_SMOKE_WISP_CAMERA_TRACK=YES id=" + trackedWispId);
-            System.out.println("TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" + trackedWispId);
+            System.out.println("TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=" + trackedWispId
+                    + " mode=pre_attack_aim sideViewTracking=active");
             long gameTime = minecraft.level == null ? -1L : minecraft.level.getGameTime();
             System.out.println("TC_SMOKE_WISP_CLIENT_ATTACK=YES player=" + minecraft.player.getId()
                     + " target=" + wisp.getId()
@@ -172,28 +193,37 @@ public final class WispAttackSmokeProbe {
                     + " distance=" + minecraft.player.distanceTo(wisp)
                     + " gameTime=" + gameTime);
 
-            // AttackEntityEvent fires after the real hit result selected this Wisp.
-            // Change only the smoke camera now, before the server can deliver the
-            // three-tick zap payload. The click target and server damage are untouched.
-            // The zap follows the horizontal source-to-target axis. Capture it broadside;
-            // a fixed world yaw can accidentally look almost straight down the bolt.
-            Vec3 toWisp = wisp.position().subtract(minecraft.player.position());
-            float beamYaw = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-toWisp.x, toWisp.z)));
-            beamYawForSideView = beamYaw;
-            sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);
-            minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
-            minecraft.player.setYRot(sideViewYaw);
-            minecraft.player.yRotO = sideViewYaw;
-            minecraft.player.setXRot(0.0F);
-            minecraft.player.xRotO = 0.0F;
+            // The real hit has already selected this Wisp. Keep only the smoke camera
+            // in a broadside view while BETA26 completes its wind-up and three-tick bolt.
+            // Tracking is client-only: attack selection, Wisp AI, damage and payload stay real.
+            updateSideView(minecraft, wisp);
             long monotonicNs = System.nanoTime();
             System.out.println("TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=" + trackedWispId
-                    + " beamYaw=" + beamYaw
+                    + " beamYaw=" + beamYawForSideView
+                    + " beamPitch=" + beamPitchForSideView
                     + " yaw=" + Mth.wrapDegrees(minecraft.player.getYRot())
                     + " pitch=" + minecraft.player.getXRot()
                     + " cameraType=" + minecraft.options.getCameraType().name()
                     + " monotonicNs=" + monotonicNs);
         }
+    }
+
+    private static void updateSideView(Minecraft minecraft, WispEntity wisp) {
+        Vec3 toWisp = wisp.position().subtract(minecraft.player.position());
+        double horizontalDistance = Math.sqrt(toWisp.x * toWisp.x + toWisp.z * toWisp.z);
+        float beamYaw = Mth.wrapDegrees((float) Math.toDegrees(Math.atan2(-toWisp.x, toWisp.z)));
+        float beamPitch = (float) -Math.toDegrees(
+                Math.atan2(toWisp.y, Math.max(horizontalDistance, 1.0E-6D)));
+        beamYawForSideView = beamYaw;
+        beamPitchForSideView = beamPitch;
+        sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);
+        // Half the beam elevation keeps the source in frame without looking directly down the bolt.
+        sideViewPitch = Mth.clamp(beamPitch * 0.5F, -35.0F, 35.0F);
+        minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
+        minecraft.player.setYRot(sideViewYaw);
+        minecraft.player.yRotO = sideViewYaw;
+        minecraft.player.setXRot(sideViewPitch);
+        minecraft.player.xRotO = sideViewPitch;
     }
 
     @SubscribeEvent
@@ -220,7 +250,7 @@ public final class WispAttackSmokeProbe {
         float yaw = Mth.wrapDegrees(minecraft.player.getYRot());
         float pitch = minecraft.player.getXRot();
         if (Math.abs(Mth.wrapDegrees(yaw - sideViewYaw)) > 1.0F
-                || Math.abs(pitch) > 1.0F) {
+                || Math.abs(pitch - sideViewPitch) > 1.0F) {
             return;
         }
 
@@ -233,6 +263,7 @@ public final class WispAttackSmokeProbe {
         sideViewFrameLogged = true;
         System.out.println("TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=" + trackedWispId
                 + " beamYaw=" + beamYawForSideView
+                + " beamPitch=" + beamPitchForSideView
                 + " yaw=" + yaw
                 + " pitch=" + pitch
                 + " cameraType=" + minecraft.options.getCameraType().name()

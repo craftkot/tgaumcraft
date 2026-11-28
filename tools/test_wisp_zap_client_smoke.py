@@ -1053,8 +1053,8 @@ def _test_wisp_zap_frame_capture_sequence(generated: str) -> None:
     # Deliberately omit post-zap Wisp entity-frame markers; FXBolt markers are authoritative.
     log_lines = [
         "TC_SMOKE_WISP_ZAP_SENT=YES source=17 target=1 aspect=aer",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
-        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 color=#FFFF7E createdAt=100 clientGameTime=520 monotonicNs=1200000000",
         "TC_SMOKE_WISP_ZAP_RENDERED=YES source=17 target=1 points=9 age=1.25 stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF createdAt=100 gameTime=521 ageTick=1",
         "TC_SMOKE_WISP_ZAP_FRAME=YES source=17 target=1 createdAt=100 gameTime=521 wispTick=24 ageTick=1 age=1.25 points=9 cameraType=THIRD_PERSON_BACK stage=AFTER_PARTICLES texture=thaumcraft:textures/misc/essentia.png blend=SRC_ALPHA_ONE depthWrite=OFF monotonicNs=1400000000",
@@ -1168,7 +1168,7 @@ def _test_video_frame_extraction(generated: str) -> None:
         status_file.write_text("\n".join((
             "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=1000000000 progressFrameCount=9 progressOutTimeUs=150000 progressObservedMonotonicNs=1150000000 frameRate=60",
             "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1050000000",
-            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
+            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
             "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=100 monotonicNs=1250000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
             "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=100 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",
@@ -1648,6 +1648,29 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
 
 
+def _test_side_view_tracks_live_wisp() -> None:
+    """The smoke camera must follow BETA26 flight through wind-up and bolt expiry."""
+    source = Path(
+        "src/neoforge/java/dev/ehtid/thaumcraft/client/WispAttackSmokeProbe.java"
+    ).read_text(encoding="utf-8")
+    assert "private static boolean sideViewTracking;" in source
+    assert "sideViewTrackingTicksRemaining = 40;" in source
+    assert source.count("updateSideView(minecraft, wisp);") == 2, source
+    assert "sideViewTrackingTicksRemaining--;" in source
+    assert "sideViewPitch = Mth.clamp(beamPitch * 0.5F, -35.0F, 35.0F);" in source
+    assert "Math.abs(pitch - sideViewPitch) > 1.0F" in source
+    assert "beamPitch=" in source
+
+    # Representative vertical source/target separations must produce a bounded,
+    # non-horizontal camera elevation while retaining a nonzero projected bolt.
+    horizontal = math.hypot(0.0, 2.0)
+    beam_pitch = -math.degrees(math.atan2(4.0, horizontal))
+    side_pitch = max(-35.0, min(35.0, beam_pitch * 0.5))
+    assert -35.0 <= side_pitch < -20.0, side_pitch
+    steep_pitch = -math.degrees(math.atan2(20.0, 1.0))
+    assert max(-35.0, min(35.0, steep_pitch * 0.5)) == -35.0
+
+
 def _test_video_capture_uses_ffmpeg_progress_timestamp() -> None:
     fixture = "#!/usr/bin/env bash\nprintf 'guiScale:2\\n' > run/options.txt\nif grep -q ready; then\n  send_chat() {\n    true\n  }\n  # The initial world is already creative + peaceful, as established"
     with patch.object(Path, "read_text", return_value=fixture):
@@ -1745,6 +1768,7 @@ def main() -> int:
     _test_video_frame_extraction(generated)
     _test_wisp_render_profile(generated)
     _test_wisp_zap_fixture_elevation(generated)
+    _test_side_view_tracks_live_wisp()
 
     required = (
         "wisp_send_chat()",
@@ -2180,8 +2204,8 @@ def main() -> int:
         "TC_SMOKE_WISP_CLIENT_ATTACK=YES player=1 target=17 tick=22 distance=1.0440 gameTime=520",
         "TC_SMOKE_WISP_CAMERA_TRACK=YES id=17",
         "TC_SMOKE_WISP_CAMERA_TRACKING_STOPPED=YES id=17",
-        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
-        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
+        "TC_SMOKE_WISP_CAMERA_SIDE_VIEW=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK monotonicNs=1000000000",
+        "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
@@ -2236,7 +2260,7 @@ def main() -> int:
         "WISP_ATTACK_INPUT_FRAME_HIT_DISTANCE=2.9",
         "WISP_ATTACK_TARGET_CONFIRMED=YES",
         "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
-        "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
+        "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
@@ -2369,7 +2393,7 @@ def main() -> int:
                    for error in missing_capture_errors), missing_capture_errors
 
         missing_rendered_side_view = status.replace(
-            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 yaw=50.0 pitch=0.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000\n",
+            "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000\n",
             "",
             1,
         )
@@ -2494,7 +2518,7 @@ def main() -> int:
         )
         assert any("camera is not side-on" in error for error in misaligned_side_view_errors), misaligned_side_view_errors
         wrapped_side_view_errors = verify_wisp_zap_client.verify(
-            log.replace("beamYaw=0.0 yaw=50.0", "beamYaw=170.0 yaw=-140.0", 1), status, root
+            log.replace("beamYaw=0.0 beamPitch=-60.0 yaw=50.0", "beamYaw=170.0 beamPitch=-60.0 yaw=-140.0", 1), status, root
         )
         assert wrapped_side_view_errors == [], wrapped_side_view_errors
         first_person_errors = verify_wisp_zap_client.verify(
@@ -3053,6 +3077,10 @@ def main() -> int:
     assert "Math.atan2(-toWisp.x, toWisp.z)" in attack_probe
     assert "SIDE_VIEW_OFFSET_DEGREES = 50.0F" in attack_probe
     assert "sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);" in attack_probe
+    assert "sideViewTracking = true;" in attack_probe
+    assert "sideViewTrackingTicksRemaining = 40;" in attack_probe
+    assert "sideViewPitch = Mth.clamp(beamPitch * 0.5F, -35.0F, 35.0F);" in attack_probe
+    assert "updateSideView(minecraft, wisp);" in attack_probe
     assert "RenderLevelStageEvent.Stage.AFTER_ENTITIES" in attack_probe
     assert "MIN_SIDE_VIEW_CAMERA_DISTANCE = 3.0D" in attack_probe
     assert "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES" in attack_probe
