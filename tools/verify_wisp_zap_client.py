@@ -1295,7 +1295,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     support_platform_positions = [m.start() for m in re.finditer("WISP_CAMERA_SUPPORT_PLATFORM=YES", status_text)]
     sightline_confirmation_positions = [
         m.start() for m in re.finditer(
-            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=",
+            re.escape("WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line="),
             status_text,
         )
     ]
