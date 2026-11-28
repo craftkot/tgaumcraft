@@ -217,8 +217,8 @@ public final class WispAttackSmokeProbe {
         beamYawForSideView = beamYaw;
         beamPitchForSideView = beamPitch;
         sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);
-        // Keep the smoke capture horizontal so a steep bolt remains broadside and visibly projected.
-        sideViewPitch = 0.0F;
+        // Frame the beam midpoint vertically while the 50-degree yaw offset keeps it broadside.
+        sideViewPitch = Mth.clamp(beamPitch * 0.5F, -45.0F, 45.0F);
         minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
         minecraft.player.setYRot(sideViewYaw);
         minecraft.player.yRotO = sideViewYaw;
