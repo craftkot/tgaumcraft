@@ -426,10 +426,10 @@ PY
     # This prevents the pad and the later live-Wisp teleport using different
     # flight positions while chat commands round-trip.
     support_log_lines="$(wc -l < client-smoke/client.log)"
-    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian' 0.5 2
-    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"
-    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
-    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156' | tee -a client-smoke-status.txt
+    wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian' 0.5 2
+    wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 36 block(s)"
+    echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1' | tee -a client-smoke-status.txt
+    echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36' | tee -a client-smoke-status.txt
 
     # Teleport two blocks below the frozen Wisp. The player-relative setblock/check
     # remains authoritative; the same-ID hit and <=3.01 hitDistance prove actual reach.
