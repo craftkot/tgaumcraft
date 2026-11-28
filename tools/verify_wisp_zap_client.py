@@ -35,6 +35,23 @@ BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
 VIEWPORT_WIDTH = 1024
 VIEWPORT_HEIGHT = 768
 
+
+def expected_side_view_pitch(beam_pitch: float) -> float:
+    """Center the camera vertically between the player and the live Wisp."""
+    return max(-45.0, min(45.0, beam_pitch * 0.5))
+
+
+def side_view_beam_separation(beam_yaw: float, beam_pitch: float, camera_yaw: float, camera_pitch: float) -> float:
+    """Angle between the beam axis and camera view; reject near-axis captures."""
+    yaw_delta = math.radians((camera_yaw - beam_yaw + 180.0) % 360.0 - 180.0)
+    beam_pitch_rad = math.radians(beam_pitch)
+    camera_pitch_rad = math.radians(camera_pitch)
+    view_dot = (
+        math.cos(beam_pitch_rad) * math.cos(camera_pitch_rad) * math.cos(yaw_delta)
+        + math.sin(beam_pitch_rad) * math.sin(camera_pitch_rad)
+    )
+    return math.degrees(math.acos(max(-1.0, min(1.0, view_dot))))
+
 REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_CHUNK_LOADED=YES",
     "TC_SMOKE_WISP_STAGING_FROZEN=YES",
@@ -601,14 +618,17 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append("third-person side-view frame was not confirmed before zap payload receipt")
     beam_yaw, beam_pitch, rendered_yaw, rendered_pitch, camera_distance = map(float, side_view_rendered.groups()[1:6])
     yaw_delta = (rendered_yaw - beam_yaw + 180.0) % 360.0 - 180.0
-    expected_pitch = 0.0
+    expected_pitch = expected_side_view_pitch(beam_pitch)
+    separation = side_view_beam_separation(beam_yaw, beam_pitch, rendered_yaw, rendered_pitch)
     if abs(yaw_delta - 50.0) > 1.0:
         errors.append(f"rendered side-view yaw is not 50 degrees from the zap axis: {yaw_delta:.2f}")
     if abs(rendered_pitch - expected_pitch) > 1.0:
         errors.append(
-            f"rendered side-view pitch must remain horizontal for the broadside capture: "
+            f"rendered side-view pitch does not frame the beam midpoint: "
             f"actual={rendered_pitch:.2f} expected={expected_pitch:.2f}"
         )
+    if not 35.0 <= separation <= 55.0:
+        errors.append(f"rendered camera is too close to the beam axis: separation={separation:.2f} degrees")
     if camera_distance < 3.0:
         errors.append(f"third-person side-view camera was obstructed/too close: {camera_distance:.2f} blocks")
     if [int(frame[2]) for frame in observed] != [1, 2, 3]:
@@ -955,12 +975,13 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         yaw = float(side_view.group(4))
         pitch = float(side_view.group(5))
         yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
-        expected_pitch = 0.0
-        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch - expected_pitch) > 1.0:
+        expected_pitch = expected_side_view_pitch(beam_pitch)
+        separation = side_view_beam_separation(beam_yaw, beam_pitch, yaw, pitch)
+        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch - expected_pitch) > 1.0 or not 35.0 <= separation <= 55.0:
             errors.append(
-                f"camera must remain horizontal and side-on to the zap: beamYaw={beam_yaw:.2f} "
+                f"camera must frame the beam midpoint with a broadside view: beamYaw={beam_yaw:.2f} "
                 f"beamPitch={beam_pitch:.2f} yaw={yaw:.2f} pitch={pitch:.2f} "
-                f"expectedPitch={expected_pitch:.2f}"
+                f"expectedPitch={expected_pitch:.2f} separation={separation:.2f}"
             )
     if side_view_rendered:
         rendered_beam_yaw = float(side_view_rendered.group(2))
@@ -968,10 +989,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         rendered_yaw = float(side_view_rendered.group(4))
         rendered_pitch = float(side_view_rendered.group(5))
         rendered_distance = float(side_view_rendered.group(6))
-        expected_rendered_pitch = 0.0
+        expected_rendered_pitch = expected_side_view_pitch(rendered_beam_pitch)
         rendered_delta = (rendered_yaw - rendered_beam_yaw + 180.0) % 360.0 - 180.0
-        if abs(rendered_delta - 50.0) > 1.0 or abs(rendered_pitch - expected_rendered_pitch) > 1.0:
-            errors.append("render-stage camera did not preserve the broadside yaw and horizontal pitch")
+        rendered_separation = side_view_beam_separation(
+            rendered_beam_yaw, rendered_beam_pitch, rendered_yaw, rendered_pitch
+        )
+        if (abs(rendered_delta - 50.0) > 1.0
+                or abs(rendered_pitch - expected_rendered_pitch) > 1.0
+                or not 35.0 <= rendered_separation <= 55.0):
+            errors.append("render-stage camera did not preserve broadside yaw and beam-midpoint pitch")
         if rendered_distance < 3.0:
             errors.append(f"render-stage third-person camera distance is too short: {rendered_distance:.2f}")
     if wisp_camera and wisp_rendered:
