@@ -1655,6 +1655,10 @@ def _test_side_view_tracks_live_wisp() -> None:
     ).read_text(encoding="utf-8")
     assert "private static boolean sideViewTracking;" in source
     assert "sideViewTrackingTicksRemaining = 40;" in source
+    # Forty client ticks cover the BETA26 wind-up plus the three-tick bolt,
+    # then the smoke-only camera tracking must stop.
+    assert "if (sideViewTrackingTicksRemaining <= 0)" in source
+    assert "sideViewTracking = false;" in source
     assert source.count("updateSideView(minecraft, wisp);") == 2, source
     assert "sideViewTrackingTicksRemaining--;" in source
     assert "sideViewPitch = Mth.clamp(beamPitch * 0.5F, -35.0F, 35.0F);" in source
