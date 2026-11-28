@@ -1320,6 +1320,13 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             survival_status_positions,
         ), start=1):
             if not all(left < right for left, right in zip(positions, positions[1:])):
+                # Keep the generic sequence diagnostic, but identify the most
+                # safety-critical ordering failure: the player must be supported
+                # before the server-confirmed Survival transition.
+                if positions[3] >= positions[5]:
+                    errors.append(
+                        "live Wisp support floor must be built and confirmed before Survival"
+                    )
                 errors.append(f"Wisp staging/support/release/Survival order is invalid on attempt {attempt_index}")
                 break
 
