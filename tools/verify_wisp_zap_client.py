@@ -977,7 +977,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
         expected_pitch = expected_side_view_pitch(beam_pitch)
         separation = side_view_beam_separation(beam_yaw, beam_pitch, yaw, pitch)
-        if abs(yaw_delta - 50.0) > 1.0 or abs(pitch - expected_pitch) > 1.0 or not 35.0 <= separation <= 55.0:
+        if abs(yaw_delta - 70.0) > 1.0 or abs(pitch - expected_pitch) > 1.0 or not 35.0 <= separation <= 55.0:
             errors.append(
                 f"camera must frame the beam midpoint with a broadside view: beamYaw={beam_yaw:.2f} "
                 f"beamPitch={beam_pitch:.2f} yaw={yaw:.2f} pitch={pitch:.2f} "
@@ -994,7 +994,7 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         rendered_separation = side_view_beam_separation(
             rendered_beam_yaw, rendered_beam_pitch, rendered_yaw, rendered_pitch
         )
-        if (abs(rendered_delta - 50.0) > 1.0
+        if (abs(rendered_delta - 70.0) > 1.0
                 or abs(rendered_pitch - expected_rendered_pitch) > 1.0
                 or not 35.0 <= rendered_separation <= 55.0):
             errors.append("render-stage camera did not preserve broadside yaw and beam-midpoint pitch")
