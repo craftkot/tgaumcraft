@@ -413,7 +413,7 @@ PY
 
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
-    local player_x player_y player_z staging_log_lines support_log_lines live_support_log_lines
+    local player_x player_y player_z staging_log_lines support_log_lines sightline_log_lines live_support_log_lines
 
     # BETA26 Wisp flight is implemented in this entity's custom server tick;
     # vanilla NoAI does not stop it. Freeze this exact Wisp only in smoke mode.
@@ -430,6 +430,16 @@ PY
     wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 36 block(s)"
     echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1' | tee -a client-smoke-status.txt
     echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36' | tee -a client-smoke-status.txt
+
+    # The initial 9x9 stone staging floor is at Y=148. After the live-Wisp
+    # reposition it intersects the player's body and eye ray; the completed
+    # client frame then reports BLOCK at that floor instead of the Wisp entity.
+    # Remove this smoke-only floor while Creative. The live obsidian support pad
+    # above remains intact and catches the player after the teleport.
+    sightline_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone' 0.5 2
+    wisp_wait_for_fresh_log_marker "$sightline_log_lines" "Successfully filled 81 block(s)"
+    echo 'WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81' | tee -a client-smoke-status.txt
 
     # Teleport two blocks below the frozen Wisp. The player-relative setblock/check
     # remains authoritative; the same-ID hit and <=3.01 hitDistance prove actual reach.

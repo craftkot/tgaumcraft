@@ -547,23 +547,27 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     staging_tag_add = "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging"
     fill_command = "run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian"
+    sightline_clear_command = "/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone"
     teleport_command = "run tp @p ~1.0 ~-2 ~ facing entity @s eyes"
     setblock_command = "run setblock ~ ~-1 ~ minecraft:obsidian"
     support_check_command = "if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES"
     assert staging_tag_add in reposition_body
     assert "TC_SMOKE_WISP_STAGING_FROZEN=YES" in reposition_body
-    assert fill_command in reposition_body and teleport_command in reposition_body
+    assert fill_command in reposition_body and sightline_clear_command in reposition_body and teleport_command in reposition_body
     assert setblock_command in reposition_body and support_check_command in reposition_body
-    assert reposition_body.index(staging_tag_add) < reposition_body.index(fill_command) < reposition_body.index(teleport_command) < reposition_body.index(setblock_command) < reposition_body.index(support_check_command)
+    assert reposition_body.index(staging_tag_add) < reposition_body.index(fill_command) < reposition_body.index(sightline_clear_command) < reposition_body.index(teleport_command) < reposition_body.index(setblock_command) < reposition_body.index(support_check_command)
     assert reposition_body.count("run fill") == 1
     assert "WISP_CAMERA_SUPPORT_PLATFORM_READY" not in reposition_body
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36" in reposition_body
+    assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s)" not in reposition_body
+    assert "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81" in reposition_body
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in reposition_body
     assert "WISP_CAMERA_STAGING_FREEZE=YES" in reposition_body
     assert "0.1 1" not in reposition_body
-    assert reposition_body.count("0.5 2") == 5
+    assert reposition_body.count("0.5 2") == 6
     assert 'wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 36 block(s)"' in reposition_body
+    assert 'wisp_wait_for_fresh_log_marker "$sightline_log_lines" "Successfully filled 81 block(s)"' in reposition_body
 
     release_body = _bash_function_body(generated, "wisp_release_staging_wisp")
     release_tag = "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging"
@@ -592,6 +596,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "  case \"$1\" in\n"
             "    *\"add tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "    *\"run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian\"*) printf 'Successfully filled 36 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone\"*) printf 'Successfully filled 81 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "    *\"if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\"*) printf 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\\n' >> client-smoke/client.log ;;\n"
             "    *\"remove tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_RELEASED=YES id=17\\n' >> client-smoke/client.log ;;\n"
@@ -614,11 +619,12 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             timeout=10,
         )
         assert result.returncode == 0, result.stdout + result.stderr
-        assert "REPOSITION_LINE=4" in result.stdout, result.stdout
+        assert "REPOSITION_LINE=5" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
             "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian",
+            "/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
             "/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian",
             "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
@@ -627,16 +633,19 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
         assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=4" in status, status
+        assert "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81" in status, status
         assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in status, status
         assert status.count("WISP_CAMERA_STAGING_FREEZE=YES") == 1, status
         assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 1, status
         assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 1, status
+        assert status.count("WISP_CAMERA_SIGHTLINE_CLEAR=YES") == 1, status
         assert status.count("WISP_CAMERA_LIVE_SUPPORT=YES") == 1, status
         assert status.count("WISP_CAMERA_STAGING_RELEASE=YES") == 1, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_FROZEN=YES line=2" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 36 block(s) line=3" in status, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=5" in status, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_RELEASED=YES id=17 line=6" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=6" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_RELEASED=YES id=17 line=7" in status, status
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
 
     # A release before accepted server damage/target assignment must not remove the tag.
@@ -725,6 +734,41 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES" not in status, status
         assert "Teleported Dev to " not in client_log, client_log
 
+    # A partial clear of the original stone floor must stop before teleporting.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-partial-sightline-clear-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\\n"
+            "wisp_fast_command() {\\n"
+            "  case \\"$1\\" in\\n"
+            "    *\\"add tc_wisp_zap_smoke_staging\\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\\\n' >> client-smoke/client.log ;;\\n"
+            "    *\\"run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian\\"*) printf 'Successfully filled 36 block(s)\\\\n' >> client-smoke/client.log ;;\\n"
+            "    *\\"/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone\\"*) printf 'Successfully filled 80 block(s)\\\\n' >> client-smoke/client.log ;;\\n"
+            "  esac\\n"
+            "}\\n"
+            + fresh_marker_function
+            + reposition_function
+            + "\\nwisp_move_player_to_live_wisp 1\\n"
+        )
+        result = subprocess.run(
+            ["bash", "-c", harness],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        client_log = (client_dir / "client.log").read_text(encoding="utf-8")
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert "WISP_FRESH_MARKER_TIMEOUT=Successfully filled 81 block(s)" in status, status
+        assert "WISP_CAMERA_SIGHTLINE_CLEAR=YES" not in status, status
+        assert "Teleported Dev to " not in client_log, client_log
+
     # A successful fill is not enough: confirm obsidian below the player after
     # teleport. Do not bind this support proof to Wisp proximity: flight can move
     # the Wisp beyond a staging radius during chat round-trips. The later same-ID
@@ -741,6 +785,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "  case \"$1\" in\n"
             "    *\"add tc_wisp_zap_smoke_staging\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\n' >> client-smoke/client.log ;;\n"
             "    *\"run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian\"*) printf 'Successfully filled 36 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone\"*) printf 'Successfully filled 81 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
@@ -2257,8 +2302,11 @@ def main() -> int:
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_STAGING_FREEZE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_STAGING_RELEASE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ATTACK_TARGET_SET=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "TC_SMOKE_WISP_TARGET_SET=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
@@ -2362,6 +2410,8 @@ def main() -> int:
         "WISP_CAMERA_STAGING_FREEZE=YES",
         "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1",
         "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36",
+        "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=999",
+        "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81",
         "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
@@ -2586,6 +2636,21 @@ def main() -> int:
             "missing real-client status marker: WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian"
             in error for error in missing_live_support_errors
         ), missing_live_support_errors
+
+        sightline_marker = "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81\\n"
+        missing_sightline_status = status.replace(sightline_marker, "", 1)
+        missing_sightline_errors = verify_wisp_zap_client.verify(log, missing_sightline_status, root)
+        assert any(
+            "missing real-client status marker: WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81"
+            in error for error in missing_sightline_errors
+        ), missing_sightline_errors
+
+        late_sightline_status = status.replace(sightline_marker, "", 1) + sightline_marker
+        late_sightline_errors = verify_wisp_zap_client.verify(log, late_sightline_status, root)
+        assert any(
+            "the original stone staging floor must be server-cleared after support-pad construction and before live player reposition"
+            in error for error in late_sightline_errors
+        ), late_sightline_errors
 
         late_live_support_status = status.replace(
             "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian\n", "", 1

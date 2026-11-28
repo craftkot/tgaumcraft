@@ -63,6 +63,8 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_TELEPORT=YES",
     "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=1",
     "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=36",
+    "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=",
+    "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81",
     "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
     "WISP_CAMERA_STAGING_FREEZE=YES",
     "WISP_CAMERA_STAGING_RELEASE=YES",
@@ -1291,6 +1293,15 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     staging_freeze_positions = [m.start() for m in re.finditer("WISP_CAMERA_STAGING_FREEZE=YES", status_text)]
     support_prebuilt_positions = [m.start() for m in re.finditer("WISP_CAMERA_SUPPORT_PREBUILT=YES", status_text)]
     support_platform_positions = [m.start() for m in re.finditer("WISP_CAMERA_SUPPORT_PLATFORM=YES", status_text)]
+    sightline_confirmation_positions = [
+        m.start() for m in re.finditer(
+            "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 81 block(s) line=",
+            status_text,
+        )
+    ]
+    sightline_clear_positions = [
+        m.start() for m in re.finditer("WISP_CAMERA_SIGHTLINE_CLEAR=YES", status_text)
+    ]
     live_support_positions = [m.start() for m in re.finditer("WISP_CAMERA_LIVE_SUPPORT=YES", status_text)]
     staging_release_positions = [m.start() for m in re.finditer("WISP_CAMERA_STAGING_RELEASE=YES", status_text)]
     survival_confirmation_positions = [
@@ -1304,6 +1315,8 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         len(staging_freeze_positions),
         len(support_prebuilt_positions),
         len(support_platform_positions),
+        len(sightline_confirmation_positions),
+        len(sightline_clear_positions),
         len(live_support_positions),
         len(survival_confirmation_positions),
         len(survival_status_positions),
@@ -1316,13 +1329,23 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
             staging_freeze_positions[0],
             support_prebuilt_positions[0],
             support_platform_positions[0],
+            sightline_confirmation_positions[0],
+            sightline_clear_positions[0],
             live_support_positions[0],
             survival_confirmation_positions[0],
             survival_status_positions[0],
             staging_release_positions[0],
         )
         if not all(left < right for left, right in zip(positions, positions[1:])):
-            if positions[3] >= positions[4]:
+            if (
+                positions[2] >= positions[3]
+                or positions[3] >= positions[4]
+                or positions[4] >= positions[5]
+            ):
+                errors.append(
+                    "the original stone staging floor must be server-cleared after support-pad construction and before live player reposition"
+                )
+            if positions[5] >= positions[6]:
                 errors.append("live Wisp support floor must be built and confirmed before Survival")
             errors.append("Wisp must remain staged through the Survival attack and release only after the accepted hit")
 
