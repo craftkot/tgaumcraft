@@ -535,7 +535,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    # Four layers (Y-7..Y-4) put the pad's top face at Y-3, below the Y-2 teleport.\n    fill_command = "run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian"
+    # Four layers (Y-7..Y-4) put the pad's top face at Y-3, below the Y-2 teleport.
+    fill_command = "run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian"
     teleport_command = "run tp @p ~1.0 ~-2 ~ facing entity @s eyes"
     setblock_command = "run setblock ~ ~-1 ~ minecraft:obsidian"
     support_check_command = "if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES"
