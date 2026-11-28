@@ -445,12 +445,14 @@ PY
         fi
 
         # Anchor support to the player's current feet, not to the Wisp's
-        # earlier Y coordinate. This remains correct when the Wisp has moved.
+        # earlier Y coordinate. The Wisp can move beyond any coarse radius while
+        # chat commands round-trip, so this proof checks only the actual support
+        # block. The later same-ID EntityHitResult and <=3.01 hit distance prove reach.
         wisp_fast_command '/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian' 0.5 2
         live_support_log_lines="$(wc -l < client-smoke/client.log)"
-        wisp_fast_command '/execute at @p if block ~ ~-1 ~ minecraft:obsidian if entity @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1,distance=..6] run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
+        wisp_fast_command '/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES' 0.5 2
         wisp_wait_for_fresh_log_marker "$live_support_log_lines" 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES'
-        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below_near_live_wisp distance<=6 block=minecraft:obsidian' | tee -a client-smoke-status.txt
+        echo 'WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian' | tee -a client-smoke-status.txt
         echo "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION $WISP_ATTACK_REPOSITION_LINE" | tee -a client-smoke-status.txt
         echo 'WISP_CAMERA_REANCHORED=LIVE_WISP_MELEE_POSITION' | tee -a client-smoke-status.txt
         return 0
