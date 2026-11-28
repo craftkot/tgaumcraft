@@ -1680,7 +1680,7 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     # Four exact Wisp selectors are generated: the relative floor fill,
     # live-player teleport, named-source validation, and source-base clearance.
     # The support-block check is player-relative and must not select the moving Wisp.
-    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
+    assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 6
     assert "run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian" in generated
     assert generated.index("run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian") < generated.index("run tp @p ~1.0 ~-2 ~ facing entity @s eyes")
     assert "tag=tc_wisp_zap_smoke" not in generated
