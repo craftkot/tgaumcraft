@@ -1125,9 +1125,9 @@ PY
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
 
-  # The smoke probe switches to the fixed side view inside AttackEntityEvent,
+  # The smoke probe starts a live broadside camera track inside AttackEntityEvent,
   # after the real hit target has been selected and before the server zap arrives.
-  # The continuous video recorder supplies a same-camera pre-payload frame later.
+  # It follows the Wisp through wind-up; the recorder captures the matching view.
   # Do not re-aim or teleport the player after the real click.
 
   # Knockback resistance was confirmed while Creative, before the Survival attack.
