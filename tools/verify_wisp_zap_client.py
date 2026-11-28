@@ -30,8 +30,8 @@ BASELINE_SCREENSHOTS = SCREENSHOTS[1:3]
 BOLT_BASELINE_SCREENSHOT = "79-wisp-third-person-before-zap.png"
 AIM_ROI = (128, 128, 448, 320)
 # The smoke viewport is 1024x768 at the left of the 1280x800 X11 root.
-# FXBolt is compared with the latest same-camera frame immediately before payload.
-BOLT_ROI = (512, 480, 256, 280)  # width, height, left, top
+# The 70-degree broadside view keeps both Wisp and player endpoints inside one additive-delta ROI.
+BOLT_ROI = (768, 480, 128, 280)  # width, height, left, top
 VIEWPORT_WIDTH = 1024
 VIEWPORT_HEIGHT = 768
 
@@ -620,8 +620,8 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
     yaw_delta = (rendered_yaw - beam_yaw + 180.0) % 360.0 - 180.0
     expected_pitch = expected_side_view_pitch(beam_pitch)
     separation = side_view_beam_separation(beam_yaw, beam_pitch, rendered_yaw, rendered_pitch)
-    if abs(yaw_delta - 50.0) > 1.0:
-        errors.append(f"rendered side-view yaw is not 50 degrees from the zap axis: {yaw_delta:.2f}")
+    if abs(yaw_delta - 70.0) > 1.0:
+        errors.append(f"rendered side-view yaw is not 70 degrees from the zap axis: {yaw_delta:.2f}")
     if abs(rendered_pitch - expected_pitch) > 1.0:
         errors.append(
             f"rendered side-view pitch does not frame the beam midpoint: "

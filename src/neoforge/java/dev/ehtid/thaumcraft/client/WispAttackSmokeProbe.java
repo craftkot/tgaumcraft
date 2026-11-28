@@ -36,7 +36,7 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 public final class WispAttackSmokeProbe {
     private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
     private static final String SMOKE_TARGET_NAME = "tc_wisp_zap_smoke";
-    private static final float SIDE_VIEW_OFFSET_DEGREES = 50.0F;
+    private static final float SIDE_VIEW_OFFSET_DEGREES = 70.0F;
     private static final double MIN_SIDE_VIEW_CAMERA_DISTANCE = 3.0D;
     private static int trackedWispId = -1;
     private static boolean aimCameraAtWisp = true;
@@ -217,7 +217,7 @@ public final class WispAttackSmokeProbe {
         beamYawForSideView = beamYaw;
         beamPitchForSideView = beamPitch;
         sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);
-        // Frame the beam midpoint vertically while the 50-degree yaw offset keeps it broadside.
+        // Frame the beam midpoint vertically while the 70-degree yaw offset clears the player silhouette.
         sideViewPitch = Mth.clamp(beamPitch * 0.5F, -45.0F, 45.0F);
         minecraft.options.setCameraType(CameraType.THIRD_PERSON_BACK);
         minecraft.player.setYRot(sideViewYaw);
