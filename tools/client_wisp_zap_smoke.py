@@ -414,15 +414,15 @@ PY
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
     local player_x player_y player_z support_log_lines live_support_log_lines
-    # Prebuild a four-layer floor around the live Wisp. Its top block is Y-4
-    # (top face Y-3), while the player is teleported to Y-2. This tolerates the
-    # measured one-block vertical bob between fill and teleport plus additional
-    # downward movement; the player-relative check below remains authoritative.
+    # Prebuild a four-layer floor around the live Wisp.     # Its top block is Y-5 (top face Y-4), one block below the Y-2 teleport.
+    # This leaves a controlled landing gap after the measured vertical bob and
+    # gives the player a stable pad before Survival; the player-relative check
+    # below remains authoritative.
     if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
       support_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian' 0.5 2
+      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian' 0.5 2
       wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"
-      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
+      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
       echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156' | tee -a client-smoke-status.txt
       WISP_CAMERA_SUPPORT_PLATFORM_READY=YES
     fi

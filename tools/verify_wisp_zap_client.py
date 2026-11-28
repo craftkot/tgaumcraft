@@ -58,7 +58,7 @@ REQUIRED_STATUS = (
     "WISP_FIXTURE_PLATFORM_FILL=YES",
     "WISP_ZAP_ATTACK_INPUT=REAL_CLIENT_LEFT_CLICK",
     "WISP_FIXTURE_TELEPORT=YES",
-    "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8",
+    "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8",
     "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156",
     "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
     "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=",

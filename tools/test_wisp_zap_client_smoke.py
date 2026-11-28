@@ -535,8 +535,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert '"$((attack_log_lines + 1))" client-smoke/client.log' in attack_body
 
     reposition_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
-    # Four layers (Y-7..Y-4) put the pad's top face at Y-3, below the Y-2 teleport.
-    fill_command = "run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian"
+    # Four layers (Y-8..Y-5) put the pad's top face at Y-4, one block below the Y-2 teleport.
+    fill_command = "run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian"
     teleport_command = "run tp @p ~1.0 ~-2 ~ facing entity @s eyes"
     setblock_command = "run setblock ~ ~-1 ~ minecraft:obsidian"
     support_check_command = "if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES"
@@ -553,7 +553,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     assert 'if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then' in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM_READY=YES" in reposition_body
     assert "for support_attempt in" not in reposition_body
-    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8" in reposition_body
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in reposition_body
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in reposition_body
     assert "WISP_CAMERA_SUPPORT_PLATFORM_TIMEOUT=YES" not in reposition_body
@@ -584,7 +584,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "wisp_fast_command() {\n"
             "  printf '%s\\n' \"$1\" >> commands.log\n"
             "  case \"$1\" in\n"
-            "    *\"run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "    *\"if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\"*) printf 'TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
@@ -610,7 +610,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "REPOSITION_LINE_SECOND=5" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
-            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian",
+            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
             "/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian",
             "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
@@ -619,7 +619,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
         ], commands
         status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
-        assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8" in status, status
+        assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in status, status
         assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in status, status
         assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 1, status
@@ -640,7 +640,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
-            "    *\"run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1155 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1155 block(s)\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
             + fresh_marker_function
@@ -676,7 +676,7 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             "set -euo pipefail\n"
             "wisp_fast_command() {\n"
             "  case \"$1\" in\n"
-            "    *\"run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
+            "    *\"run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian\"*) printf 'Successfully filled 1156 block(s)\\n' >> client-smoke/client.log ;;\n"
             "    *\"run tp @p ~1.0 ~-2 ~ facing entity @s eyes\"*) printf 'Teleported Dev to 13.886421, 153.206460, 10.687089\\n' >> client-smoke/client.log ;;\n"
             "  esac\n"
             "}\n"
@@ -1642,8 +1642,8 @@ def _test_wisp_zap_fixture_elevation(generated: str) -> None:
     # live-player teleport, named-source validation, and source-base clearance.
     # The support-block check is player-relative and must not select the moving Wisp.
     assert generated.count("name=tc_wisp_zap_smoke,limit=1") == 4
-    assert "run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian" in generated
-    assert generated.index("run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian") < generated.index("run tp @p ~1.0 ~-2 ~ facing entity @s eyes")
+    assert "run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian" in generated
+    assert generated.index("run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian") < generated.index("run tp @p ~1.0 ~-2 ~ facing entity @s eyes")
     assert "tag=tc_wisp_zap_smoke" not in generated
     assert "if block ~ ~ ~ minecraft:air run say TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES" in generated
     assert "if block ~ ~-1 ~ minecraft:air" not in generated
@@ -2121,9 +2121,9 @@ def main() -> int:
     assert "wisp_verify_attack_input_aim_capture_with_retries" not in generated
     move_body = _bash_function_body(generated, "wisp_move_player_to_live_wisp")
     assert "run tp @p ~1.0 ~-2 ~ facing entity @s eyes" in move_body
-    assert "run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian" in move_body
+    assert "run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian" in move_body
     assert "run setblock ~ ~-1 ~ minecraft:obsidian" in move_body
-    assert move_body.index("run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian") < move_body.index("run tp @p ~1.0 ~-2 ~ facing entity @s eyes") < move_body.index("run setblock ~ ~-1 ~ minecraft:obsidian")
+    assert move_body.index("run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian") < move_body.index("run tp @p ~1.0 ~-2 ~ facing entity @s eyes") < move_body.index("run setblock ~ ~-1 ~ minecraft:obsidian")
     assert "run tp @p ~1.0 149 ~ facing entity @s eyes" not in move_body
     assert "run tp @p ~1.0 ~-1.0 ~ facing entity @s eyes" not in move_body
     assert "Teleported Dev to " in move_body
@@ -2168,7 +2168,7 @@ def main() -> int:
     assert "WISP_ZAP_AIM=PLAYER_FACING_ENTITY" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ZAP_AIM=PLAYER_CONTEXT_EYES" not in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_TELEMETRY=PASS" in verify_wisp_zap_client.REQUIRED_STATUS
-    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent" in verify_wisp_zap_client.REQUIRED_STATUS
@@ -2246,7 +2246,7 @@ def main() -> int:
         "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=10",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
-        "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8",
+        "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8",
         "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156",
         "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
