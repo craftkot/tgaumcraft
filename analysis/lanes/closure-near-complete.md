@@ -2042,3 +2042,13 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Validation before commit: structural replacements and fixture counts checked in the edit script. Python tests, generated Bash syntax, full NeoForge build, dedicated-server smoke and the new real Minecraft client are pending for the new exact SHA. Do not mark the pixel gate or M16/M08 complete until the new real-client artifact proves age-1/2/3 pixels, the unchanged BETA26 fade rule, and clean expiry.
 - Fixed audit remains 59/100 (M16 4/6, M08 5/9); no point awarded for changing only the smoke camera.
 - Next: run the exact-SHA offline geometry/contract suite and full Wisp real-client workflow. If horizontal framing restores pixels but fade still fails, inspect per-age capture timestamps and framebuffer samples; do not lower the 20% fade threshold.
+
+
+## 2026-11-28 — correct the remaining Wisp wrong-yaw test diagnostic
+
+- Exact-SHA push workflow [#46120577019](https://github.com/craftkot/tgaumcraft/actions/runs/46120577019) on 2e54bc10b2b591f7872c68348fcba4eb7d73089e passed the BETA26 geometry suite (37 assertions), atlas/UV suite (24 assertions), and synthetic FXBolt pixel/expiry prototypes. The offline Python contract then failed at the existing wrong-yaw negative test: the verifier now correctly emitted 'camera must remain horizontal and side-on to the zap', but one assertion still expected the old phrase 'camera is not side-on'. This is a stale test diagnostic, not a camera or Minecraft failure.
+- The failure occurred before Bash generation and before Minecraft launch. No new-SHA gameplay or framebuffer evidence is claimed. Exact-SHA geometry regression [#46120581477](https://github.com/craftkot/tgaumcraft/actions/runs/46120581477) completed SUCCESS.
+- Updated only tools/test_wisp_zap_client_smoke.py to expect the verifier's current fail-closed wrong-yaw diagnostic. No production code, verifier behavior, hit threshold, pixel threshold, fade threshold, payload or renderer changed.
+- At the last poll, Full Port CI push [#46120577005](https://github.com/craftkot/tgaumcraft/actions/runs/46120577005) and PR [#46120581520](https://github.com/craftkot/tgaumcraft/actions/runs/46120581520) were still in progress; their results do not validate this test-only correction.
+- The 62-open-PR inventory was unchanged; all 61 PRs other than this lane's own PR #4 have been checked for the four lane paths, with no overlap. PR #4 remains OPEN / DRAFT / UNMERGED.
+- Fixed audit remains 59/100 (M16 4/6, M08 5/9). Next: rerun the exact-SHA Wisp contract, generated Bash syntax, then the real Minecraft client. Do not treat the synthetic pixel prototypes as real-client evidence.

@@ -2641,7 +2641,7 @@ def main() -> int:
         misaligned_side_view_errors = verify_wisp_zap_client.verify(
             log.replace("beamYaw=0.0 beamPitch=-60.0 yaw=50.0", "beamYaw=45.0 beamPitch=-60.0 yaw=50.0", 1), status, root
         )
-        assert any("camera is not side-on" in error for error in misaligned_side_view_errors), misaligned_side_view_errors
+        assert any("camera must remain horizontal and side-on" in error for error in misaligned_side_view_errors), misaligned_side_view_errors
         wrapped_side_view_errors = verify_wisp_zap_client.verify(
             log.replace("beamYaw=0.0 beamPitch=-60.0 yaw=50.0", "beamYaw=170.0 beamPitch=-60.0 yaw=-140.0", 1), status, root
         )
