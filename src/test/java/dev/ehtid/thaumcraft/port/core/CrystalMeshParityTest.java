@@ -23,7 +23,16 @@ public final class CrystalMeshParityTest {
         }
 
         long[] sourceOffsets = {0L, 5L, 10L, 15L, 20L, 25L};
-        var faces = LegacyCrystalMeshSelection.Face.values();
+        eq(List.of(
+                LegacyCrystalMeshSelection.Face.UP,
+                LegacyCrystalMeshSelection.Face.DOWN,
+                LegacyCrystalMeshSelection.Face.EAST,
+                LegacyCrystalMeshSelection.Face.WEST,
+                LegacyCrystalMeshSelection.Face.NORTH,
+                LegacyCrystalMeshSelection.Face.SOUTH),
+                LegacyCrystalMeshSelection.sourceFaceOrder());
+        var faces = LegacyCrystalMeshSelection.sourceFaceOrder()
+                .toArray(LegacyCrystalMeshSelection.Face[]::new);
         eq(6, faces.length);
         for (int faceIndex = 0; faceIndex < faces.length; faceIndex++) {
             var face = faces[faceIndex];
@@ -60,7 +69,8 @@ public final class CrystalMeshParityTest {
             close(t.y()+delta.y(),sum.y());
             close(t.z()+delta.z(),sum.z());
         }
-        System.out.println("CrystalModel seeded selection parity OK ("+assertions+" assertions)");
+        outlineBounds();
+        System.out.println("CrystalModel seeded selection parity OK; BETA26 outline parity OK ("+assertions+" assertions)");
     }
     private static void eq(Object a,Object b) {
         assertions++;
@@ -74,5 +84,33 @@ public final class CrystalMeshParityTest {
     private static void close(double a,double b) {
         assertions++;
         if(Math.abs(a-b)>1e-7)throw new AssertionError(a+" != "+b);
+    }
+    private static void outlineBounds() {
+        var full = new LegacyCrystalOutlineBounds.Bounds(0,0,0,1,1,1);
+        eq(full, LegacyCrystalOutlineBounds.fromSupportFaces(false,false,false,false,false,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(0,.5,0,1,1,1),
+                LegacyCrystalOutlineBounds.fromSupportFaces(true,false,false,false,false,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(0,0,0,1,.5,1),
+                LegacyCrystalOutlineBounds.fromSupportFaces(false,true,false,false,false,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(.5,0,0,1,1,1),
+                LegacyCrystalOutlineBounds.fromSupportFaces(false,false,true,false,false,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(0,0,0,.5,1,1),
+                LegacyCrystalOutlineBounds.fromSupportFaces(false,false,false,true,false,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(0,0,.5,1,1,1),
+                LegacyCrystalOutlineBounds.fromSupportFaces(false,false,false,false,true,false));
+        eq(new LegacyCrystalOutlineBounds.Bounds(0,0,0,1,1,.5),
+                LegacyCrystalOutlineBounds.fromSupportFaces(false,false,false,false,false,true));
+
+        // Every pair of support faces must use the full-cube source outline.
+        for (int first=0; first<6; first++) {
+            for (int second=first+1; second<6; second++) {
+                boolean[] faces = new boolean[6];
+                faces[first] = true;
+                faces[second] = true;
+                eq(full, LegacyCrystalOutlineBounds.fromSupportFaces(
+                        faces[0],faces[1],faces[2],faces[3],faces[4],faces[5]));
+            }
+        }
+        eq(full, LegacyCrystalOutlineBounds.fromSupportFaces(true,true,true,true,true,true));
     }
 }

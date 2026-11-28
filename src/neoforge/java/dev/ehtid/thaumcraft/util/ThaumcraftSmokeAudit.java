@@ -1,12 +1,24 @@
 package dev.ehtid.thaumcraft.util;
 
-/** Opt-in diagnostics for the REAL CircleCI Minecraft client, never active in player runs.
- * Markers are emitted only after authoritative server-side transitions, so a
- * successful shell click/typed chat command cannot counterfeit gameplay. */
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/** Opt-in diagnostics for real Minecraft smoke runs; inactive in ordinary player runs. */
 public final class ThaumcraftSmokeAudit {
     private static final boolean ENABLED = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private static final ConcurrentHashMap<String, AtomicInteger> COUNTS = new ConcurrentHashMap<>();
+
     private ThaumcraftSmokeAudit() {}
+
     public static void mark(String marker) {
-        if (ENABLED) System.out.println("TC_SMOKE_" + marker + "=YES");
+        if (!ENABLED) return;
+        COUNTS.computeIfAbsent(marker, ignored -> new AtomicInteger()).incrementAndGet();
+        System.out.println("TC_SMOKE_" + marker + "=YES");
+    }
+
+    /** Count authoritative markers inside the current opt-in JVM smoke process. */
+    public static int count(String marker) {
+        AtomicInteger count = COUNTS.get(marker);
+        return count == null ? 0 : count.get();
     }
 }

@@ -2,7 +2,11 @@ package dev.ehtid.thaumcraft.port.core;
 
 import java.util.List;
 import java.util.Map;
+import dev.ehtid.thaumcraft.port.core.visual.LegacyPedestalRotationAngle;
 import java.util.Random;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public final class CoreParityTest {
     private static int assertions;
@@ -92,6 +96,7 @@ public final class CoreParityTest {
         testOriginalAlumentumRecipeAndProjectileConstants();
         testOriginalInfusionRecipeMatcher();
         testOriginalInfusionPedestalRules();
+        testLegacyPedestalRotationAngle();
         testOriginalInfusionMatrixLayout();
         testOriginalInfusionPillars();
         testOriginalInfusionMatrixIdle();
@@ -5194,6 +5199,27 @@ public final class CoreParityTest {
         isFalse(clear.recipeOutputPresent());
         clear.remainingEssentia().add(aspects.FIRE, 100);
         eq(0,clear.remainingEssentia().visSize());
+    }
+
+    private static void testLegacyPedestalRotationAngle() {
+        eq(0.0F, LegacyPedestalRotationAngle.degrees(0, 0.0F));
+        eq(1.5F, LegacyPedestalRotationAngle.degrees(1, 0.5F));
+        eq(359.75F, LegacyPedestalRotationAngle.degrees(359, 0.75F));
+        eq(0.25F, LegacyPedestalRotationAngle.degrees(360, 0.25F));
+        eq(1.5F, LegacyPedestalRotationAngle.degrees(721, 0.5F));
+
+        // BETA26 uses RenderViewEntity.ticksExisted. Guard the NeoForge adapter
+        // so a future cleanup cannot silently switch back to Level.gameTime.
+        try {
+            String renderer = Files.readString(Path.of(
+                    "src/neoforge/java/dev/ehtid/thaumcraft/client/PedestalItemRenderer.java"));
+            isTrue(renderer.contains("Minecraft.getInstance().getCameraEntity()"));
+            isTrue(renderer.contains(
+                    "LegacyPedestalRotationAngle.degrees(camera.tickCount, partialTick)"));
+            isFalse(renderer.contains("getGameTime()"));
+        } catch (IOException error) {
+            throw new AssertionError("Cannot verify BETA26 pedestal renderer source", error);
+        }
     }
 
     private static void eq(Object a, Object b) { assertions++; if (!java.util.Objects.equals(a,b)) throw new AssertionError("expected " + a + " got " + b); }

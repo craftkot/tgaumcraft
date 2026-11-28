@@ -1,0 +1,138 @@
+name: M16 real Minecraft jar SoundType and interaction audio smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/block/EssentiaJarBlock.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/item/JarBraceItem.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/registry/ThaumcraftSounds.java'
+      - 'src/main/resources/assets/thaumcraft/sounds.json'
+      - 'src/main/resources/assets/thaumcraft/sounds/jar*.ogg'
+      - 'src/main/resources/assets/thaumcraft/sounds/key.ogg'
+      - 'tools/verify_jar_sound.py'
+      - 'tools/verify_jar_soundtype_smoke.py'
+      - 'tools/verify_jar_brace_key_sound.py'
+      - 'tools/match_key_audio_pcm.py'
+      - 'tools/test_key_audio_match.py'
+      - 'tools/match_jar_audio_pcm.py'
+      - 'tools/test_jar_audio_match.py'
+      - 'tools/verify_jar_damage_overlay.py'
+      - 'tools/test_jar_damage_overlay.py'
+      - 'tools/client_jar_sound_smoke.py'
+      - 'tools/verify_jar_label_sound.py'
+      - 'tools/match_page_audio_pcm.py'
+      - 'tools/test_page_audio_match.py'
+      - 'tools/verify_jar_empty_sound.py'
+      - 'tools/match_bottle_fill_audio_pcm.py'
+      - 'tools/test_bottle_fill_audio.py'
+      - 'src/main/resources/assets/thaumcraft/sounds/page*.ogg'
+      - '.github/workflows/closure-jar-sound-client.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  jar-real-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify M43 smoke contract before installing system packages
+        run: python tools/verify_jar_soundtype_smoke.py
+      - name: Install real client and audio tools
+        timeout-minutes: 12
+        run: |
+          set -euo pipefail
+          apt_options=(
+            -o Acquire::ForceIPv4=true
+            -o Acquire::Retries=0
+            -o Acquire::http::Timeout=12
+            -o Acquire::https::Timeout=12
+            -o APT::Update::Error-Mode=any
+          )
+          mirrors=(
+            "https://mirrors.edge.kernel.org/ubuntu/"
+            "https://mirror.math.princeton.edu/pub/ubuntu/"
+            "https://ubuntu.osuosl.org/ubuntu/"
+            "https://archive.ubuntu.com/ubuntu/"
+          )
+          selected=""
+          for mirror in "${mirrors[@]}"; do
+            host="${mirror#https://}"
+            host="${host%%/*}"
+            if ! timeout 8s getent ahostsv4 "$host" >/dev/null; then
+              echo "APT_MIRROR_DNS_FAILED=$host"
+              continue
+            fi
+            if ! curl --fail --silent --show-error --location --connect-timeout 8 --max-time 15 "$mirror/dists/noble/InRelease" -o /tmp/ubuntu-InRelease; then
+              echo "APT_MIRROR_HTTP_FAILED=$host"
+              continue
+            fi
+            printf '%s\\n' "$mirror" | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+            if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+              sudo sed -i -E "s|^URIs:.*|URIs: $mirror|" /etc/apt/sources.list.d/ubuntu.sources
+            fi
+            if sudo timeout 90s apt-get "${apt_options[@]}" update -qq; then
+              selected="$mirror"
+              echo "APT_MIRROR_SELECTED=$selected"
+              break
+            fi
+            echo "APT_MIRROR_UPDATE_FAILED=$host"
+          done
+          if [ -z "$selected" ]; then
+            echo "APT_MIRROR_SELECTION_FAILED=YES"
+            exit 1
+          fi
+          sudo timeout 360s env DEBIAN_FRONTEND=noninteractive apt-get "${apt_options[@]}" install --no-install-recommends -y xvfb x11-utils xdotool openbox mesa-utils libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg pulseaudio pulseaudio-utils
+          for command in Xvfb xdpyinfo xdotool openbox glxinfo import ffmpeg pulseaudio pactl parec; do
+            command -v "$command" >/dev/null || { echo "CLIENT_TOOL_MISSING=$command"; exit 1; }
+          done
+      - name: Verify original BETA26 jar SoundType, label, emptying and brace-key sound contracts
+        run: |
+          python -m pip install numpy==2.2.6
+          python tools/verify_jar_sound.py
+          python tools/test_jar_audio_match.py
+          python tools/test_jar_damage_overlay.py
+          python tools/verify_jar_label_sound.py
+          python tools/test_page_audio_match.py
+          python tools/verify_jar_empty_sound.py
+          python tools/test_bottle_fill_audio.py
+          python tools/verify_jar_brace_key_sound.py
+          python tools/test_key_audio_match.py
+      - name: Generate and syntax-check actual Minecraft smoke
+        run: |
+          python3 tools/client_jar_sound_smoke.py > client-jar-generated.sh
+          bash -n client-jar-generated.sh
+      - name: Launch Minecraft and capture original jar SoundType and interaction audio
+        run: |
+          export XDG_RUNTIME_DIR=/tmp/thaumcraft-client-runtime
+          mkdir -p "$XDG_RUNTIME_DIR"
+          chmod 700 "$XDG_RUNTIME_DIR"
+          pulseaudio --start --exit-idle-time=-1
+          pactl load-module module-null-sink sink_name=tc_jar_sink rate=48000 channels=2
+          pactl set-default-sink tc_jar_sink
+          bash client-jar-generated.sh
+      - name: Upload actual client evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-jar-interaction-original-sound-client-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

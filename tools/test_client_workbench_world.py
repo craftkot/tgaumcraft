@@ -1,0 +1,546 @@
+#!/usr/bin/env python3
+"""Regression tests for the workbench-only world safety gate."""
+import importlib.util
+import math
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+path = Path(__file__).with_name("assert_client_workbench_world.py")
+spec = importlib.util.spec_from_file_location("assert_client_workbench_world", path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+
+
+def byte_tag(name: str, value: int) -> bytes:
+    encoded = name.encode("utf-8")
+    return b"\x01" + len(encoded).to_bytes(2, "big") + encoded + bytes([value])
+
+
+def int_tag(name: str, value: int) -> bytes:
+    encoded = name.encode("utf-8")
+    return b"\x03" + len(encoded).to_bytes(2, "big") + encoded + value.to_bytes(4, "big", signed=True)
+
+
+checks = 0
+
+
+def expect(condition: bool, message: str) -> None:
+    global checks
+    checks += 1
+    if not condition:
+        raise AssertionError(message)
+
+
+def expect_rejected(blob: bytes, message: str, *, require_peaceful: bool = False) -> None:
+    try:
+        module.assert_workbench_world(blob, require_peaceful=require_peaceful)
+    except AssertionError:
+        expect(True, message)
+    else:
+        expect(False, message)
+
+
+commands = byte_tag("allowCommands", 1)
+creative = int_tag("GameType", 1)
+normal = byte_tag("Difficulty", 2)
+peaceful = byte_tag("Difficulty", 0)
+
+expect(module.assert_workbench_world(commands + creative + normal) == 2,
+       "initial Creative world must pass before its first save even if difficulty is still Normal")
+expect(module.assert_workbench_world(commands + creative) is None,
+       "initial world gate must not require Difficulty to have been flushed")
+expect(module.assert_workbench_world(commands + creative + peaceful, require_peaceful=True) == 0,
+       "final gate must accept the persisted Peaceful byte")
+expect_rejected(commands + creative + normal,
+                "final gate accepted a world that remained Normal", require_peaceful=True)
+expect_rejected(commands + creative,
+                "final gate accepted a missing Difficulty byte", require_peaceful=True)
+expect_rejected(commands + creative + peaceful + normal,
+                "final gate accepted ambiguous Difficulty tags", require_peaceful=True)
+
+expect_rejected(byte_tag("allowCommands", 0) + creative,
+                "commands-off world passed")
+expect_rejected(commands + int_tag("GameType", 0),
+                "non-Creative world passed")
+expect_rejected(commands + commands + creative,
+                "ambiguous allowCommands tag passed")
+expect_rejected(commands + creative + byte_tag("Difficulty", 4),
+                "invalid difficulty diagnostic passed")
+expect_rejected(commands + b"\\x03\\x00\\x08GameType\\x00\\x00",
+                "truncated GameType passed")
+
+expect((chr(92) + "nexpect(") not in Path(__file__).read_text(encoding="utf-8"),
+       "test source contains a literal escaped newline between Python statements")
+generator_path = Path(__file__).with_name("client_workbench_gui_smoke.py")
+generator = generator_path.read_text(encoding="utf-8")
+try:
+    compile(generator, str(generator_path), "exec")
+except SyntaxError as exc:
+    expect(False, f"Workbench generator has invalid Python syntax: {exc}")
+else:
+    expect(True, "Workbench generator parses as Python before shell generation")
+expect('subprocess.run([sys.executable, "tools/test_client_workbench_gui_ocr.py"], check=True, stdout=sys.stderr)' in generator,
+       "OCR self-test must write diagnostics to stderr, not corrupt generated shell stdout")
+expect("send_chat '/save-all flush'" not in generator,
+       "GUI generator still sends the unavailable singleplayer save-all command")
+expect('workbench_gate = "python3 tools/assert_client_workbench_world.py run/saves --require-peaceful | tee -a client-smoke-status.txt"' in generator,
+       "Workbench smoke must verify Peaceful from authoritative world NBT before any scripted command")
+expect("assert_client_workbench_difficulty.py" not in generator,
+       "Workbench smoke must not poll client.log for chat feedback that Minecraft does not log")
+expect("WORKBENCH_DIFFICULTY_LOG_OFFSET" not in generator,
+       "Workbench smoke still captures an irrelevant client-log offset")
+expect("send_chat '/difficulty peaceful'" not in generator.split("body = r'''", 1)[1],
+       "Workbench smoke still sends a redundant no-op difficulty command")
+
+
+# The shared smoke's English chat sentence is localized in ru_ru. The isolated
+# workbench runner must replace it with the invariant PlayerList server log.
+shared_smoke = Path(__file__).with_name("client_smoke.sh").read_text(encoding="utf-8")
+
+title_click_anchor = "title_click_y=$((Y + HEIGHT * 33 / 100))"
+expect(shared_smoke.count(title_click_anchor) == 1,
+       "shared title-screen Singleplayer click anchor changed; review the isolated replacement")
+expect('title_click_y_anchor = "title_click_y=$((Y + HEIGHT * 33 / 100))"' in generator
+       and 'title_click_percent = {"2": 33, "3": 39}[scale]' in generator
+       and "source.count(title_click_y_anchor) != 1" in generator
+       and "source = source.replace(title_click_y_anchor, title_click_y_replacement, 1)" in generator,
+       "Workbench generator does not replace the title click with a GUI-scale-specific coordinate")
+for gui_scale, percent, expected_y in (("2", 33, 273), ("3", 39, 319)):
+    env = os.environ.copy()
+    env.update({
+        "TC_WORKBENCH_LANG": "en_us",
+        "TC_WORKBENCH_TESS_LANG": "eng",
+        "TC_WORKBENCH_GUI_SCALE": gui_scale,
+    })
+    generated = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("client_workbench_gui_smoke.py"))],
+        check=True, capture_output=True, text=True, env=env,
+    ).stdout
+    expect(f"title_click_y=$((Y + HEIGHT * {percent} / 100))" in generated,
+           f"GUI scale {gui_scale} generated the wrong title-screen click percentage")
+    actual_y = 20 + (768 * percent // 100)
+    expect(actual_y == expected_y,
+           f"GUI scale {gui_scale} click must land at root y={expected_y}, got {actual_y}")
+english_login_gate = "if grep -Fq 'Dev joined the game' client-smoke/client.log; then"
+expect(english_login_gate in shared_smoke,
+       "shared smoke login anchor changed; generator replacement must be reviewed")
+expect("login_gate = \"if grep -Fq 'Dev joined the game' client-smoke/client.log; then\"" in generator,
+       "workbench generator does not identify the localized shared login gate")
+expect("login_replacement = \"if grep -Fq 'logged in with entity id' client-smoke/client.log; then\"" in generator,
+       "workbench generator does not use invariant integrated-server login evidence")
+expect("source = source.replace(login_gate, login_replacement, 1)" in generator,
+       "workbench generator does not replace the English-only login gate")
+
+shared_send_chat = """  send_chat() {
+    xdotool key --clearmodifiers t
+    sleep 1
+    xdotool type --clearmodifiers --delay 24 "$1"
+    xdotool key --clearmodifiers Return
+    sleep 4
+  }"""
+expect(shared_smoke.count(shared_send_chat) == 1,
+       "shared send_chat helper changed; isolated generator replacement must be reviewed")
+expect("send_chat_anchor = " in generator
+       and "send_chat_replacement = " in generator
+       and "source.count(send_chat_anchor) != 1" in generator
+       and "source = source.replace(send_chat_anchor, send_chat_replacement, 1)" in generator,
+       "Workbench generator does not replace the shared chat helper with its focused copy")
+expect('xdotool windowactivate --sync "$WIN"' in generator
+       and 'xdotool windowfocus --sync "$WIN"' in generator
+       and "WORKBENCH_INPUT_TARGET=$WIN active=$active_window focus=$focused_window" in generator,
+       "Workbench chat helper does not log the target, active and focused X11 windows")
+expect("mapfile -t workbench_windows" in generator
+       and "WORKBENCH_POST_LOGIN_WINDOW=$WIN" in generator,
+       "Workbench smoke does not re-resolve and log the visible GLFW window after world login")
+expect("xdotool key --clearmodifiers F3" in generator
+       and "capture 05a-after-f3-input-probe" in generator,
+       "Workbench smoke lacks a client-side F3 keyboard/focus probe")
+replacement_body = generator.split('send_chat_replacement = """', 1)[1].split('"""', 1)[0]
+expect('xdotool key --clearmodifiers slash' in replacement_body
+       and 'local command_body="${raw_command#/}"' in replacement_body
+       and 'xdotool type --clearmodifiers --delay 24 "$command_body"' in replacement_body
+       and 'xdotool key --clearmodifiers t' not in replacement_body,
+       "Workbench command helper must open command chat with slash and strip exactly one leading slash")
+expect(replacement_body.count('xdotool type --clearmodifiers --delay 24 "$command_body"') == 2
+       and replacement_body.count('xdotool key --clearmodifiers Return') == 2
+       and 'xdotool keydown --clearmodifiers Return' not in replacement_body
+       and 'xdotool keyup --clearmodifiers Return' not in replacement_body,
+       "all Workbench commands must submit through one complete Return key event")
+probe_body = generator.split("send_chat_probe() {", 1)[1].split("\n  }", 1)[0]
+expect('local probe_prefix="${2:-05}"' in probe_body
+       and 'capture "${probe_prefix}b-chat-open-after-slash"' in probe_body
+       and 'capture "${probe_prefix}c-chat-text-before-enter"' in probe_body
+       and 'capture "${probe_prefix}d-chat-submit-result"' in probe_body,
+       "second command probe must preserve a distinct screenshot set instead of overwriting the initial probe")
+expect('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix' in probe_body,
+       "command probe must identify which input sequence its screenshots belong to")
+expect('capture "${probe_prefix}e-f3-after-submit"' in probe_body
+       and probe_body.index('xdotool key --clearmodifiers Return')
+           < probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+       and 'xdotool keydown --clearmodifiers Return' not in probe_body
+       and 'xdotool keyup --clearmodifiers Return' not in probe_body
+       and probe_body.index('capture "${probe_prefix}e-f3-after-submit"')
+           < probe_body.index('WORKBENCH_CHAT_PROBE_INPUT_SENT=YES prefix=$probe_prefix'),
+       "command probe must submit one complete Return event before preserving the F3 frame")
+expect('if [[ "$raw_command" == "/difficulty peaceful" ]]' not in replacement_body,
+       "Workbench helper must not special-case a no-op difficulty command")
+expect("chat_probe_anchor = (" in generator
+       and "  send_chat '/gamemode creative'\\n" in generator
+       and "  send_chat '/difficulty peaceful'\\n" in generator
+       and "  send_chat '/give @p thaumcraft:crucible'\\n" in generator
+       and "chat_probe_replacement = (" in generator
+       and "  send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05\\n" in generator
+       and "  send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp\\n" in generator
+       and "  send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06\\n" in generator
+       and "WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS" in generator
+       and "grep -Fq 'TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' run/logs/latest.log" in generator
+       and "source = source.replace(chat_probe_anchor, chat_probe_replacement, 1)" in generator,
+       "Workbench smoke must verify post-teleport command delivery before building the fixture")
+
+expect("WORKBENCH_POST_TP_COMMAND_CHANNEL=FAIL" in generator
+       and "run/logs/latest.log" in generator,
+       "post-teleport command gate must fail closed on missing authoritative integrated-server acknowledgement")
+expect(shared_smoke.count("  send_chat '/gamemode creative'\n") > 1
+       and shared_smoke.count("  send_chat '/gamemode creative'\n  send_chat '/difficulty peaceful'\n  send_chat '/give @p thaumcraft:crucible'\n") == 1,
+       "Shared creative command changed: verify unique Crucible bootstrap anchor")
+
+expect("WORKBENCH_WORLD_SAFE_STATE=PEACEFUL" in generator,
+       "Workbench smoke does not record the authoritative pre-command Peaceful world gate")
+
+# The current generator deliberately keeps the fixture inside the loaded spawn
+# chunks. The earlier remote /forceload probe was removed together with the
+# remote fixed-coordinate platform, so its old test oracle must not survive.
+fixture_replacement = generator.split('world_fixture_replacement = """', 1)[1].split('"""', 1)[0]
+fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\n"
+expect(shared_smoke.count(fixture_start) == 1
+       and 'world_fixture_start = "  # A fixed test platform high above all generated terrain/trees avoids\\n"' in generator,
+       "Workbench generator fixture anchor does not match the current shared smoke exactly")
+expect("world_fixture_start = " in generator and "world_fixture_end = " in generator
+       and "source = source[:world_fixture_start_index] + world_fixture_replacement + source[world_fixture_end_index:]" in generator,
+       "Workbench generator does not replace the remote fixed-coordinate fixture")
+expect("send_chat '/tp @p ~ ~ ~ 0 28'" not in fixture_replacement
+       and "send_chat '/execute at @p run fill ~-3 ~ ~1 ~3 ~5 ~7 minecraft:air'" in fixture_replacement
+       and "send_chat '/execute at @p run fill ~-3 ~-1 ~1 ~3 ~-1 ~7 minecraft:stone'" in fixture_replacement
+       and "send_chat '/execute at @p run setblock ~ ~ ~1 thaumcraft:arcane_workbench'" in fixture_replacement,
+       "Workbench fixture is not built relative to the logged-in player inside spawn chunks")
+expect("~ ~-1 ~4" not in generator
+       and all(f"send_chat '/item replace block 0 120 2 container.{slot} with " in generator
+               for slot in (1, 3, 4, 5, 7))
+       and "send_chat '/data get block 0 120 2 Items'" in generator,
+       "Workbench block and all five inventory slots must share the fixed target block")
+interaction_body = generator.split("body = r'''", 1)[1].split("'''", 1)[0]
+local_player_anchor = "send_chat '/tp @p 0.5 120 0.5 0 0'"
+local_floor = "send_chat '/fill -2 119 -1 2 119 4 minecraft:stone'"
+local_clear = "send_chat '/fill -2 120 -1 2 123 4 minecraft:air'"
+local_fixture = "send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'"
+local_fixture_ack = "send_chat '/execute if block 0 120 2 thaumcraft:arcane_workbench run say TC_WORKBENCH_FIXTURE_BLOCK_READY'"
+local_inventory = "send_chat '/item replace block 0 120 2 container.1 with minecraft:gold_ingot 1'"
+local_aim_rotation = "send_chat '/tp @p 0.5 120 0.5 0 29'"
+local_aim_ray = "send_chat '/execute as @p at @s anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench run say TC_WORKBENCH_SERVER_RAY_TARGET=PASS'"
+local_aim_ray_wait = "wait_for_workbench_server_marker 'TC_WORKBENCH_SERVER_RAY_TARGET=PASS'"
+model_capture = "capture 08b-source-arcane-workbench-item-model"
+expect(model_capture in generator and generator.index(model_capture) < generator.index(local_player_anchor),
+       "source Workbench model screenshots must be captured before the deterministic interaction fixture")
+expect(interaction_body.count(local_player_anchor) == 2
+       and local_floor in interaction_body and local_clear in interaction_body
+       and local_fixture in interaction_body and local_fixture_ack in interaction_body
+       and interaction_body.index(local_player_anchor) < interaction_body.index(local_floor)
+       < interaction_body.index(local_clear) < interaction_body.rindex(local_player_anchor)
+       < interaction_body.index(local_fixture) < interaction_body.index(local_fixture_ack)
+       < interaction_body.index("wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'")
+       < interaction_body.index(local_inventory)
+       < interaction_body.index("send_chat '/data get block 0 120 2 Items'")
+       < interaction_body.index(local_aim_rotation) < interaction_body.index(local_aim_ray)
+       < interaction_body.index(local_aim_ray_wait)
+       < interaction_body.index("capture 08c-workbench-before-open")
+       and "send_chat '/tp @p ~ ~ ~ 0 29'" not in generator
+       and "item replace block ~ ~ ~2" not in generator,
+       "Workbench smoke must use one deterministic loaded-chunk fixture and a ray that intersects its block")
+pitch = math.radians(29)
+ray_point = (0.5, 120.0 + 1.62 - 2.0 * math.sin(pitch), 0.5 + 2.0 * math.cos(pitch))
+expect(0.0 <= ray_point[0] < 1.0 and 120.0 <= ray_point[1] < 121.0 and 2.0 <= ray_point[2] < 3.0,
+       f"fixed yaw/pitch ray must intersect the workbench at (0,120,2), got {ray_point}")
+
+# Chat HUD feedback is not a stable client.log signal. The real-client
+# acceptance must instead use independent server/client lifecycle markers.
+expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
+       and "WORKBENCH_COMMAND_RESPONSE_GATE=$workbench_command_response" not in generator
+       and "WORKBENCH_SERVER_POSITION_GATE=$workbench_position_confirmed" not in generator
+       and "grep -Fq 'thaumcraft:arcane_workbench'" not in generator,
+       "Workbench smoke must not mistake vanilla chat HUD output for log evidence")
+for marker in (
+    "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES",
+    "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES",
+    "TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES",
+    "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES",
+):
+    expect(f"wait_for_workbench_marker '{marker}'" in generator
+           and f"wait_for_workbench_server_marker '{marker}'" not in generator,
+           f"integrated-server/client System.out marker {marker} must be read from client.log")
+expect("wait_for_workbench_server_marker 'TC_WORKBENCH_FIXTURE_BLOCK_READY'" in generator,
+       "vanilla /say fixture acknowledgement must remain on the Log4j latest.log stream")
+expect("export THAUMCRAFT_SMOKE=1" in shared_smoke
+       and 'gradle runClient --no-daemon --console=plain > client-smoke/client.log 2>&1 &' in shared_smoke,
+       "Workbench marker stream must match the opt-in runClient process stdout")
+workbench_block = (Path(__file__).resolve().parents[1]
+                   / "src/neoforge/java/dev/ehtid/thaumcraft/block/ArcaneWorkbenchBlock.java")
+block_source = workbench_block.read_text(encoding="utf-8")
+expect('if ("1".equals(System.getenv("THAUMCRAFT_SMOKE")))' in block_source
+       and "System.out.println(message);" in block_source,
+       "Workbench smoke markers must remain opt-in System.out output")
+expect(generator.index("send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'")
+       < generator.index("send_chat '/item replace block 0 120 2 container.1 with minecraft:gold_ingot 1'")
+       < generator.index("send_chat '/data get block 0 120 2 Items'")
+       < generator.index(local_aim_rotation) < generator.index(local_aim_ray)
+       < generator.index("capture 08c-workbench-before-open")
+       < generator.index("xdotool click 3")
+       < generator.index("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'"),
+       "Workbench fixture, marker-derived aim, screenshot, click and lifecycle gates must stay ordered")
+expected_workbench_pitch = round(math.degrees(math.atan2(1.62 - 0.50, 2.00)))
+expect(expected_workbench_pitch == 29
+       and "send_chat '/tp @p 0.5 120 0.5 0 29'" in generator
+       and "send_chat '/tp @p ~ ~ ~ 0 29'" not in generator
+       and "TC_WORKBENCH_SERVER_RAY_TARGET=PASS" in generator
+       and "anchored eyes positioned ^ ^ ^2 if block ~ ~ ~ thaumcraft:arcane_workbench" in generator
+       and "minecraft:marker" not in generator,
+       "Workbench smoke must aim at the measured block center and prove the server-side look ray before clicking")
+expect("send_chat '/execute positioned 12.5 151.5 3.5 if entity @p[distance=..0.5] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator
+       and "send_chat '/execute positioned 12.5 150 3.5 if entity @p[distance=..1] run say TC_WORKBENCH_POSITION_CONFIRMED'" not in generator,
+       "Workbench position gate still depends on obsolete fixed world coordinates")
+expect("gui_left=$(((WIDTH - 190 * scale) / 2))" in generator,
+       "workbench crop still adds Openbox's horizontal client-frame offset")
+expect("gui_top=$(((HEIGHT - 234 * scale) / 2))" in generator,
+       "workbench crop still adds Openbox's vertical client-frame offset")
+expect("gui_top=$((Y + (HEIGHT - 234 * scale) / 2))" not in generator,
+       "workbench crop still uses the decorated window Y coordinate")
+expect("title_x=$((16 * scale))" in generator
+       and "title_y=$((5 * scale))" in generator
+       and "title_width=$((120 * scale))" in generator
+       and "title_height=$((9 * scale))" in generator,
+       "workbench title crop no longer isolates the rendered title baseline")
+expect("panel_x=$((144 * scale))" in generator
+       and "panel_y=$((42 * scale))" in generator
+       and "panel_width=$((46 * scale))" in generator
+       and "panel_height=$((54 * scale))" in generator,
+       "workbench Vis panel OCR crop no longer matches the rendered panel")
+expect("client-smoke/screenshots/workbench-title-ocr.png" in generator
+       and "client-smoke/screenshots/workbench-vis-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-title-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-vis-ocr.png" in generator,
+       "workbench OCR inputs are not generated and checked before Tesseract")
+expect("-resize 800% -colorspace Gray -contrast-stretch 0x5% -threshold 55%" in generator,
+       "title pixel crop no longer uses the tested tight bitmap-font preprocessing")
+expect("-resize 600% -colorspace Gray -contrast-stretch 0x12%" in generator,
+       "panel pixel crop no longer preserves the full Vis panel")
+expect("available_height=$((24 * scale))" in generator
+       and "workbench-available-ocr.png" in generator
+       and "test -s client-smoke/screenshots/workbench-available-ocr.png" in generator,
+       "available-label OCR crop must isolate the BETA26 readout line")
+expect("-resize 1000% -colorspace Gray -contrast-stretch 0x12% -threshold 55%" in generator,
+       "available-label OCR crop must use the tested 10x bitmap preprocessing")
+expect("--psm 6" in generator and "--psm 8" in generator
+       and "--psm 7" in generator and "--psm 11" in generator
+       and "title_text_6" in generator and "title_text_8" in generator
+       and "available_text_7" in generator and "available_text_11" in generator
+       and "available_text_7_inverted" in generator
+       and "WORKBENCH_AVAILABLE_OCR_INVERTED_PSM7" in generator
+       and "available_text_8" in generator and "available-ocr-inverted.png" in generator
+       and "-negate" in generator,
+       "workbench OCR must include inverted glyph-only PSM7 and PSM8 fallbacks")
+expect("assert_client_workbench_gui_ocr.py" in generator,
+       "workbench OCR generator does not check the clipped localized available label")
+expect("assert_client_workbench_gui_render.py" in generator
+       and "title_ink=" in generator and "panel_ink=" in generator,
+       "workbench generator does not validate the actual render marker and screenshot pixels")
+ocr_helper = Path(__file__).with_name("assert_client_workbench_gui_ocr.py").read_text(encoding="utf-8")
+expect("contains_full_label(" in ocr_helper and "localized available label" in ocr_helper
+       and "contains_label_prefix(" not in ocr_helper
+       and "contains_prefix_near(" not in ocr_helper and "has_cost_pair(" not in ocr_helper,
+       "OCR helper must reject clipped prefixes and ignore unreliable title/cost OCR")
+expect("len(argv) != 7" in ocr_helper and "AVAILABLE_INVERTED_PSM7" in ocr_helper
+       and "AVAILABLE_INVERTED_PSM8" in ocr_helper and "inverted7" in ocr_helper
+       and "available8" in ocr_helper and "panel11" in ocr_helper
+       and "available_variants" in ocr_helper,
+       "OCR helper must evaluate inverted-crop PSM7/PSM8 and full-panel PSM11 results")
+screen = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
+screen_source = screen.read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source
+       and "smokeBase64(title.getString())" in screen_source
+       and "smokeBase64(availableText.getString())" in screen_source
+       and "smokeBase64(costText.getString())" in screen_source
+       and "cost != 20 || available < cost || crystalMask != 0b111111" in screen_source,
+       "actual ArcaneWorkbenchScreen render path does not wait for the synced Thaumometer preview before emitting evidence")
+expect(screen_source.index("drawAvailableLabel(")
+       < screen_source.index("emitSmokeAudit(availableText, costText, available, cost,")
+       and "AVAILABLE_TEXT_SCALE = 0.5F" in screen_source
+       and "available_rendered_width=" in screen_source,
+       "Workbench marker must follow the BETA26 half-scale available-label draw")
+render_helper = Path(__file__).with_name("assert_client_workbench_gui_render.py").read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in render_helper
+       and "title pixels present" in render_helper and "Vis panel pixels present" in render_helper
+       and "cost == 20" in render_helper and "crystal_mask" in render_helper
+       and "available label fits panel without clipping" in render_helper,
+       "semantic GUI oracle no longer requires title/cost/menu data and screenshot pixels")
+workflow = Path(__file__).parents[1] / ".github/workflows/closure-workbench-gui-client.yml"
+workflow_source = workflow.read_text(encoding="utf-8")
+expect("python3 tools/test_client_workbench_gui_render.py" in workflow_source
+       and "tools/assert_client_workbench_gui_render.py" in workflow_source
+       and "tools/test_client_workbench_gui_render.py" in workflow_source,
+       "dedicated Workbench workflow does not execute the render-marker regression")
+
+
+
+# The shared smoke's old fixed percentages were calibrated for GUI scale 2.
+# At scale 3, the same difficulty click landed on the Game Mode row; the real
+# client screenshot showed Creative + Normal and the strict NBT gate rejected
+# it. Exercise the actual shared coordinate helper for both layouts.
+generator_source = generator
+expect("world_command_anchor = " in generator_source
+       and "world_command_replacement = " in generator_source
+       and "source.count(world_command_anchor) != 1" in generator_source
+       and "source = source.replace(world_command_anchor, world_command_replacement, 1)" in generator_source
+       and "world_settings_anchor = " in generator_source
+       and "world_settings_replacement = " in generator_source
+       and "source.count(world_settings_anchor) != 1" in generator_source
+       and "source = source.replace(world_settings_anchor, world_settings_replacement, 1)" in generator_source,
+       "Workbench generator does not patch all three shared world-setting clicks through the scale-aware helper")
+expect("minecraft_gui_point" in generator_source
+       and "mode_gui_y=99" in generator_source and "difficulty_gui_y=127" in generator_source
+       and "commands_gui_y=155" in generator_source
+       and "mode_gui_y=81" in generator_source and "difficulty_gui_y=109" in generator_source
+       and "commands_gui_y=137" in generator_source
+       and "WORLD_SAFE_CREATE_COMMANDS_COORD=" in generator_source
+       and "WORLD_SAFE_CREATE_MODE_DIFFICULTY_COORDS=" in generator_source,
+       "Workbench generator lacks the measured scale-2/scale-3 coordinates for all world-setting rows")
+
+coordinate_helper = Path(__file__).with_name("minecraft_gui_coordinates.sh")
+for scale, gui_height, mode_y, expected_mode_y, difficulty_y, expected_difficulty_y, commands_y, expected_commands_y in (
+    (2, 384, 99, 219, 127, 275, 155, 331),
+    (3, 256, 81, 264, 109, 348, 137, 432),
+):
+    gui_width = 1024 // scale
+    center_x = (gui_width - 1) // 2
+    for label, logical_y, expected_y in (
+        ("mode", mode_y, expected_mode_y),
+        ("difficulty", difficulty_y, expected_difficulty_y),
+        ("commands", commands_y, expected_commands_y),
+    ):
+        command = (
+            f'source "{coordinate_helper}"; '
+            f'minecraft_gui_point 1 20 1024 768 {scale} {gui_width} {gui_height} '
+            f'{center_x} {logical_y}'
+        )
+        result = subprocess.run(["bash", "-c", command], check=True,
+                                capture_output=True, text=True)
+        expect(result.stdout.strip() == f"512 {expected_y}",
+               f"scale-{scale} {label} click mapped to {result.stdout.strip()}, expected 512 {expected_y}")
+
+# BETA26 BlockArcaneWorkbench.onBlockActivated opened its GUI regardless of
+# which hand was used or whether that hand held an item. Preserve both modern
+# interaction dispatch paths.
+workbench_block = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/block/ArcaneWorkbenchBlock.java"
+workbench_block_source = workbench_block.read_text(encoding="utf-8")
+expect("protected ItemInteractionResult useItemOn(" in workbench_block_source,
+       "Arcane Workbench does not implement the modern item-held interaction path")
+item_use_body = workbench_block_source.split(
+    "protected ItemInteractionResult useItemOn(", 1)[1].split("\n    @Override", 1)[0]
+expect('openWorkbench(level, pos, player, "item_on");' in item_use_body
+       and "ItemInteractionResult.sidedSuccess(level.isClientSide)" in item_use_body,
+       "item-held interaction does not open the same server menu as empty-hand activation")
+empty_hand_body = workbench_block_source.split(
+    "protected InteractionResult useWithoutItem(", 1)[1].split("\n    @Override", 1)[0]
+expect('openWorkbench(level, pos, player, "empty_hand");' in empty_hand_body,
+       "empty-hand interaction no longer shares the Workbench menu-opening path")
+
+# Vanilla chat feedback is a HUD event, not a dependable client.log response.
+# All four Java lifecycle markers use System.out in the integrated JVM, so they
+# belong to client.log. Only the vanilla /say fixture acknowledgement is a
+# Log4j server-log marker and belongs to run/logs/latest.log.
+expect("send_chat '/say TC_WORKBENCH_COMMAND_RESPONSE_GATE'" not in generator
+       and "workbench_command_log_offset" not in generator
+       and "WORKBENCH_COMMAND_RESPONSE_GATE" not in generator,
+       "Workbench smoke still treats vanilla /say chat text as a client.log acknowledgement")
+expect("workbench_block_log_offset" not in generator
+       and "WORKBENCH_SERVER_POSITION_GATE" not in generator,
+       "Workbench smoke still scrapes /data get block feedback from client.log")
+expect("wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES'" in generator
+       and "wait_for_workbench_marker 'TC_SMOKE_WORKBENCH_GUI_RENDERED=YES'" in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES'" not in generator
+       and "wait_for_workbench_server_marker 'TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=YES'" not in generator
+       and 'grep -Fq "$marker" run/logs/latest.log' in generator
+       and 'grep -Fq "$marker" client-smoke/client.log' in generator,
+       "Workbench smoke must route Java lifecycle markers to integrated client.log and the vanilla server-log acknowledgement to latest.log")
+type_index = replacement_body.index('xdotool type --clearmodifiers --delay 24 "$command_body"')
+return_index = replacement_body.index('xdotool key --clearmodifiers Return')
+chat_probe_replacement_body = generator.split("chat_probe_replacement = (", 1)[1].split("\\n)\\n", 1)[0]
+expect("sleep 1" in replacement_body[type_index:return_index]
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05" in chat_probe_replacement_body
+       and "send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp" in chat_probe_replacement_body
+       and "send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06" in chat_probe_replacement_body
+       and "WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS" in chat_probe_replacement_body
+       and "grep -Fq 'TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' run/logs/latest.log" in chat_probe_replacement_body
+       and "capture 06f-post-teleport-command-channel-ready" in chat_probe_replacement_body
+       and "send_chat_probe '/setblock ~ ~1 ~1 minecraft:air' 06" not in chat_probe_replacement_body
+       and "send_chat_probe '/give @p thaumcraft:crucible' 06g" not in chat_probe_replacement_body
+       and chat_probe_replacement_body.index("send_chat_probe '/setblock ~ ~1 ~1 minecraft:gold_block' 05")
+           < chat_probe_replacement_body.index("send_chat_probe '/tp @p ~ ~ ~ 0 28' 05tp")
+           < chat_probe_replacement_body.index("send_chat_probe '/say TC_WORKBENCH_POST_TP_COMMAND_CHANNEL_READY' 06")
+           < chat_probe_replacement_body.index("WORKBENCH_POST_TP_COMMAND_CHANNEL=PASS"),
+       "Workbench smoke must verify post-teleport command delivery with an authoritative server acknowledgement before building the fixture")
+before_open = generator.split("capture 08c-workbench-before-open", 1)[0][-300:]
+after_open = generator.split("capture 08c-workbench-before-open", 1)[1][:300]
+expect("xdotool key --clearmodifiers F3" in before_open
+       and "xdotool key --clearmodifiers F3" in after_open,
+       "Workbench smoke lacks an F3 target-block screenshot before and after interaction setup")
+
+interaction_fixture = generator.split("capture 08c-workbench-before-open", 1)[0]
+player_column_clear = "send_chat '/fill -2 120 -1 2 123 4 minecraft:air'"
+workbench_place = "send_chat '/setblock 0 120 2 thaumcraft:arcane_workbench'"
+expect(player_column_clear in interaction_fixture and workbench_place in interaction_fixture
+       and interaction_fixture.index(player_column_clear) < interaction_fixture.index(workbench_place),
+       "Workbench fixture must clear its deterministic eye-ray volume before placing the target")
+
+interaction_setup = generator.split("capture 08c1-workbench-empty-hand-before-open", 1)[1].split("capture 08d-workbench-gui-open", 1)[0]
+expect('workbench_geometry="$(xdotool getwindowgeometry --shell "$WIN")"' in interaction_setup
+       and "workbench_click_x=$((X + WIDTH / 2))" in interaction_setup
+       and "workbench_click_y=$((Y + HEIGHT / 2))" in interaction_setup
+       and "xdotool getdisplaygeometry" not in interaction_setup
+       and 'xdotool mousemove --sync "$workbench_click_x" "$workbench_click_y"' in interaction_setup
+       and 'pointer_location="$(xdotool getmouselocation --shell)"' in interaction_setup
+       and "WORKBENCH_INTERACTION_POINTER=PASS" in interaction_setup
+       and "WORKBENCH_INTERACTION_WINDOW=" in interaction_setup
+       and "pointer_x < X || pointer_x >= X + WIDTH" in interaction_setup
+       and interaction_setup.index("xdotool mousemove") < interaction_setup.index("xdotool click 3"),
+       "Workbench real-client click must use and verify the actual Minecraft window center, not the X-root center")
+
+expect("WORKBENCH_SERVER_MARKER_SEEN=$marker" in generator
+       and 'grep -Fq "$marker" run/logs/latest.log' in generator
+       and "TC_WORKBENCH_FIXTURE_BLOCK_READY" in generator
+       and generator.index("setblock 0 120 2 thaumcraft:arcane_workbench")
+           < generator.index("TC_WORKBENCH_FIXTURE_BLOCK_READY")
+           < generator.index("capture 08c-workbench-before-open"),
+       "Workbench smoke must prove the server-side target block exists before testing mouse interaction")
+
+expect((1 + 1024 // 2, 20 + 768 // 2) == (513, 404)
+       and (1280 // 2, 800 // 2) == (640, 400)
+       and 1 <= 640 < 1 + 1024 and 20 <= 400 < 20 + 768
+       and (640, 400) != (513, 404) and 640 - 513 == 127,
+       "the root center is inside the window but must not replace the distinct window-center input coordinate")
+
+expect("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES" in workbench_block_source
+       and "TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO" in workbench_block_source
+       and "TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT=" in workbench_block_source
+       and "menuId.isPresent()" in workbench_block_source,
+       "server block interaction does not report BlockEntity and openMenu result")
+screen_path = Path(__file__).parents[1] / "src/neoforge/java/dev/ehtid/thaumcraft/client/ArcaneWorkbenchScreen.java"
+screen_source = screen_path.read_text(encoding="utf-8")
+expect("TC_SMOKE_WORKBENCH_CLIENT_SCREEN_CONSTRUCTED=YES" in screen_source
+       and "TC_SMOKE_WORKBENCH_GUI_RENDERED=YES" in screen_source,
+       "client smoke does not distinguish screen construction from actual GUI rendering")
+
+print(f"Workbench world gate: OK ({checks} assertions)")
+

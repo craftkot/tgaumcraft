@@ -1,0 +1,94 @@
+name: M16 real Minecraft BETA26 Wisp zap client smoke
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - '.github/workflows/closure-wisp-zap-client.yml'
+      - 'tools/client_wisp_zap_smoke.py'
+      - 'tools/test_wisp_zap_client_smoke.py'
+      - 'tools/verify_wisp_zap_client.py'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispRendererRegistration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispRenderSmokeProbe.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
+      - 'src/main/resources/assets/thaumcraft/textures/misc/auranodes.png'
+      - 'tools/test_wisp_zap_geometry.sh'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/network/WispZapNetworking.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/network/WispZapPayload.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/resources/assets/thaumcraft/textures/misc/essentia.png'
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/closure-wisp-zap-client.yml'
+      - 'tools/client_wisp_zap_smoke.py'
+      - 'tools/test_wisp_zap_client_smoke.py'
+      - 'tools/verify_wisp_zap_client.py'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/entity/WispEntity.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispZapClientEffects.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispRendererRegistration.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/client/WispRenderSmokeProbe.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
+      - 'src/main/resources/assets/thaumcraft/textures/misc/auranodes.png'
+      - 'tools/test_wisp_zap_geometry.sh'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/network/WispZapNetworking.java'
+      - 'src/neoforge/java/dev/ehtid/thaumcraft/network/WispZapPayload.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/resources/assets/thaumcraft/textures/misc/essentia.png'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wisp-zap-real-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.2.1'
+      - name: Install virtual graphics and input tools
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            xvfb x11-utils xdotool openbox mesa-utils \
+            libgl1-mesa-dri libgl1 libxrender1 imagemagick ffmpeg
+      - name: Verify BETA26 geometry and offline client-smoke contract
+        run: |
+          bash tools/test_wisp_zap_geometry.sh
+          python tools/test_wisp_zap_client_smoke.py
+          test -s src/main/resources/assets/thaumcraft/textures/misc/essentia.png
+      - name: Generate and syntax-check isolated real-client script
+        run: |
+          python tools/client_wisp_zap_smoke.py > client-wisp-generated.sh
+          bash -n client-wisp-generated.sh
+      - name: Launch real Minecraft client and execute a Wisp zap
+        run: bash client-wisp-generated.sh
+      - name: Verify real two-entity payload, additive render and transient pixels
+        run: |
+          python tools/verify_wisp_zap_client.py \
+            client-smoke/client.log \
+            client-smoke-status.txt \
+            client-smoke/screenshots
+      - name: Upload actual Wisp zap screenshots and diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: m16-real-wisp-zap-client-evidence
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            client-smoke-status.txt
+            client-smoke/
+            run/logs/
+            run/crash-reports/

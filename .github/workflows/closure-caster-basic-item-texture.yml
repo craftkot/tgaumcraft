@@ -1,0 +1,36 @@
+name: M16 basic caster item atlas texture regression
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'src/main/resources/assets/thaumcraft/models/item/caster_basic.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/caster_gauntlet.json'
+      - 'src/main/resources/assets/thaumcraft/textures/entity/armor/caster_basic.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/caster_basic.png'
+      - 'tools/test_caster_basic_item_texture.py'
+      - '.github/workflows/closure-caster-basic-item-texture.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/resources/assets/thaumcraft/models/item/caster_basic.json'
+      - 'src/main/resources/assets/thaumcraft/models/item/caster_gauntlet.json'
+      - 'src/main/resources/assets/thaumcraft/textures/entity/armor/caster_basic.png'
+      - 'src/main/resources/assets/thaumcraft/textures/item/caster_basic.png'
+      - 'tools/test_caster_basic_item_texture.py'
+      - '.github/workflows/closure-caster-basic-item-texture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  item-atlas-texture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify byte-identical BETA26 texture and item-atlas model reference
+        run: python3 tools/test_caster_basic_item_texture.py

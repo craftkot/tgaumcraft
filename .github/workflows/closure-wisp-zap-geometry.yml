@@ -1,0 +1,37 @@
+name: M16 BETA26 Wisp zap geometry regression
+
+on:
+  push:
+    branches: [feature/closure-near-complete]
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java'
+      - 'tools/test_wisp_zap_geometry.sh'
+      - '.github/workflows/closure-wisp-zap-geometry.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometry.java'
+      - 'src/main/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlas.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispRenderAtlasTest.java'
+      - 'src/test/java/dev/ehtid/thaumcraft/port/core/visual/LegacyWispZapGeometryTest.java'
+      - 'tools/test_wisp_zap_geometry.sh'
+      - '.github/workflows/closure-wisp-zap-geometry.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wisp-zap-geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Verify the BETA26 FXBolt path and three-tick envelope
+        run: bash tools/test_wisp_zap_geometry.sh

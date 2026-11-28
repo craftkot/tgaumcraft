@@ -1,6 +1,10 @@
 package dev.ehtid.thaumcraft.client;
 
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import dev.ehtid.thaumcraft.port.core.LegacyScanRuneDuration;
+import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.ParticleRenderType;
@@ -8,30 +12,177 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 /**
  * BETA26 FXBlockRunes projection for Thaumometer scan feedback:
- * lifetime=3*15, gravity=.03, fullbright, random one of sixteen original rune sprites,
+ * lifetime=3*m (m=15 for blocks, floor(entity height*15) for entities),
+ * gravity=.03, fullbright, random one of sixteen original rune sprites,
  * quarter-turn rotation, 0.3 scale with gaussian variation and the exact fade curve.
  */
 public final class ScanRuneParticle extends TextureSheetParticle {
+    // FXBlockRunes.renderParticle runs after the active camera view matrix.
+    // Its Y and Z GL rotations are therefore camera-relative, not world-Y.
+    final float legacyCameraYaw;
+    final float localOffsetX;
+    final float localOffsetY;
+    static final float LOCAL_OFFSET_Z = -0.51F;
+    // Opt-in CI evidence from the ACTUAL client particle, never a mock render.
+    // This is silent in normal gameplay and does not change particle behavior.
+    private static final boolean SMOKE_PROBE = "1".equals(System.getenv("THAUMCRAFT_SMOKE"));
+    private final int smokeFace;
+    private final double smokeStartX;
+    private final double smokeStartZ;
+    private boolean smokeRendered;
+
     private ScanRuneParticle(ClientLevel level, double x, double y, double z,
-                             double red, double green, double blue, SpriteSet sprites) {
+                             double red, double durationUnits, double blue, SpriteSet sprites) {
         super(level, x, y, z, 0.0D, 0.0D, 0.0D);
-        this.setColor((float) red, (float) green, (float) blue);
+        // Minecraft's velocity constructor randomizes motion EVEN for zero
+        // arguments. Original FXBlockRunes explicitly resets motionX/Y/Z=0;
+        // without this the runes drift away from the scanned block in-game.
+        this.xd = this.yd = this.zd = 0.0D;
+        // Y-speed is a duration transport slot, never the rune's green pigment.
+        this.setColor((float) red, 0.0F, (float) blue);
         this.gravity = 0.03F;
         this.hasPhysics = false;
-        this.lifetime = 45;
+        this.lifetime = LegacyScanRuneDuration.lifetimeTicks(durationUnits);
         this.quadSize = 0.3F * (1.0F + (float) this.random.nextGaussian() * 0.1F);
-        this.roll = this.oRoll = this.random.nextInt(4) * Mth.HALF_PI;
+        int yawQuarter = this.random.nextInt(4);
+        this.smokeFace = yawQuarter;
+        this.legacyCameraYaw = yawQuarter * Mth.HALF_PI;
+        this.roll = this.oRoll = 0.0F;
         this.alpha = 0.0F;
         this.pickSprite(sprites);
 
-        // Original FXBlockRunes local offsets: ofx=[0,.2), ofy=[-.3,.3).
-        this.x += this.random.nextFloat() * 0.2F;
-        this.y += -0.3F + this.random.nextFloat() * 0.6F;
-        this.setPos(this.x, this.y, this.z);
+        // FXBlockRunes translates (ofx, ofy, -0.51) AFTER the camera view
+        // matrix has been applied. Keep that vector in camera-local space:
+        // its world offset changes with the active view and is applied in
+        // render(), not baked into the particle's world position at spawn.
+        this.localOffsetX = this.random.nextFloat() * 0.2F;
+        this.localOffsetY = -0.3F + this.random.nextFloat() * 0.6F;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
+        this.smokeStartX = this.x;
+        this.smokeStartZ = this.z;
+        if (SMOKE_PROBE) {
+            System.out.println("TC_SMOKE_SCAN_RUNE_CREATED=YES face=" + smokeFace
+                    + " lifetime=" + lifetime + " x=" + x() + " y=" + y() + " z=" + z()
+                    + " localX=" + localOffsetX + " localY=" + localOffsetY
+                    + " localZ=" + LOCAL_OFFSET_Z);
+        }
+    }
+
+    // Keep probe formatting independent from Minecraft API getters.
+    private double x() { return this.x; }
+    private double y() { return this.y; }
+    private double z() { return this.z; }
+
+    @Override
+    public void render(VertexConsumer buffer, Camera camera, float partialTick) {
+        // In BETA26, glTranslated(ofx, ofy, -0.51) executes after the camera
+        // view transform. Convert the original local displacement through
+        // the CURRENT camera orientation every frame. The previous port
+        // applied only the particle's random quarter-turn in world axes at
+        // construction, so changing sides left the glyphs on the wrong face.
+        Vector3f offset = new Vector3f(localOffsetX, localOffsetY, LOCAL_OFFSET_Z)
+                .rotateZ(Mth.HALF_PI)
+                .rotateY(legacyCameraYaw);
+        camera.rotation().transform(offset);
+
+        double dx = offset.x;
+        double dy = offset.y;
+        double dz = offset.z;
+        this.x += dx;
+        this.y += dy;
+        this.z += dz;
+        this.xo += dx;
+        this.yo += dy;
+        this.zo += dz;
+        try {
+            super.render(buffer, camera, partialTick);
+        } finally {
+            this.x -= dx;
+            this.y -= dy;
+            this.z -= dz;
+            this.xo -= dx;
+            this.yo -= dy;
+            this.zo -= dz;
+        }
+    }
+
+
+    @Override
+    protected void renderRotatedQuad(VertexConsumer buffer, Camera camera,
+                                     Quaternionf rotation, float partialTick) {
+        Vec3 cameraPosition = camera.getPosition();
+        float centerX = (float) (this.xo + (this.x - this.xo) * partialTick - cameraPosition.x);
+        float centerY = (float) (this.yo + (this.y - this.yo) * partialTick - cameraPosition.y);
+        float centerZ = (float) (this.zo + (this.z - this.zo) * partialTick - cameraPosition.z);
+
+        // BETA26 var20 is the FULL quad width (0.3 * particleScale).
+        // SingleQuadParticle's default vertices use +/- quadSize, so use
+        // +/- 0.5 here to retain the original full width.
+        float halfSize = this.quadSize * 0.5F;
+        float u0 = this.getU0();
+        float u1 = this.getU1();
+        float v0 = this.getV0();
+        float v1 = this.getV1();
+        int light = this.getLightColor(partialTick);
+
+        // Exact FXBlockRunes order and UV rotation from BETA26:
+        // left-top, right-top, right-bottom, left-bottom. The vanilla
+        // SingleQuadParticle order has the opposite winding.
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, -1.0F, 1.0F, halfSize, u1, v1, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, 1.0F, 1.0F, halfSize, u1, v0, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, 1.0F, -1.0F, halfSize, u0, v0, light);
+        emitVertex(buffer, rotation, centerX, centerY, centerZ, -1.0F, -1.0F, halfSize, u0, v1, light);
+
+        if (SMOKE_PROBE && !smokeRendered && this.alpha >= 0.25F) {
+            Vector3f offset = new Vector3f(localOffsetX, localOffsetY, LOCAL_OFFSET_Z)
+                    .rotateZ(Mth.HALF_PI)
+                    .rotateY(legacyCameraYaw);
+            camera.rotation().transform(offset);
+            Vector3f look = camera.getLookVector();
+            Vector3f normal = new Vector3f(0.0F, 0.0F, -1.0F).rotate(rotation);
+            float frontDot = -offset.dot(look);
+            float quadFacingDot = -normal.dot(look);
+            System.out.println("TC_SMOKE_SCAN_RUNE_RENDERED=YES face=" + smokeFace
+                    + " alpha=" + this.alpha + " size=" + this.quadSize
+                    + " cameraYaw=" + camera.getYRot()
+                    + " lookX=" + look.x + " lookY=" + look.y + " lookZ=" + look.z
+                    + " worldX=" + this.x + " worldY=" + this.y + " worldZ=" + this.z
+                    + " frontDot=" + frontDot + " quadFacingDot=" + quadFacingDot);
+            smokeRendered = true;
+        }
+    }
+
+    private void emitVertex(VertexConsumer buffer, Quaternionf rotation,
+                            float centerX, float centerY, float centerZ,
+                            float localX, float localY, float halfSize,
+                            float u, float v, int light) {
+        Vector3f vertex = new Vector3f(localX, localY, 0.0F)
+                .rotate(rotation)
+                .mul(halfSize)
+                .add(centerX, centerY, centerZ);
+        buffer.addVertex(vertex.x, vertex.y, vertex.z)
+                .setUv(u, v)
+                .setColor(this.rCol, this.gCol, this.bCol, this.alpha)
+                .setLight(light);
+    }
+
+    @Override
+    public SingleQuadParticle.FacingCameraMode getFacingCameraMode() {
+        // FXBlockRunes GL rotations execute after the camera view transform.
+        // Seed the quad with the active camera orientation, then apply the
+        // same local Y quarter-turn and Z tip in that camera-relative space.
+        return (rotation, camera, partialTick) -> rotation.set(camera.rotation())
+                .rotateY(this.legacyCameraYaw)
+                .rotateZ(Mth.HALF_PI);
     }
 
     @Override
@@ -48,6 +199,11 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         this.alpha = Math.max(0.0F, legacyAlpha * 0.5F);
 
         if (this.age++ >= this.lifetime) {
+            if (SMOKE_PROBE) {
+                System.out.println("TC_SMOKE_SCAN_RUNE_EXPIRED=YES face=" + smokeFace
+                        + " age=" + (this.age - 1) + " lifetime=" + lifetime
+                        + " drift=" + Math.hypot(this.x - smokeStartX, this.z - smokeStartZ));
+            }
             this.remove();
             return;
         }
@@ -76,8 +232,8 @@ public final class ScanRuneParticle extends TextureSheetParticle {
         @Override
         public @Nullable Particle createParticle(SimpleParticleType type, ClientLevel level,
                                                  double x, double y, double z,
-                                                 double red, double green, double blue) {
-            return new ScanRuneParticle(level, x, y, z, red, green, blue, sprites);
+                                                 double red, double durationUnits, double blue) {
+            return new ScanRuneParticle(level, x, y, z, red, durationUnits, blue, sprites);
         }
     }
 }

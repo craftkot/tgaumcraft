@@ -1,14 +1,19 @@
 package dev.ehtid.thaumcraft.block;
 
+import com.mojang.serialization.MapCodec;
+import dev.ehtid.thaumcraft.blockentity.NitorBlockEntity;
+import dev.ehtid.thaumcraft.port.core.LegacyNitorColors;
+import dev.ehtid.thaumcraft.registry.NitorBlockEntityRegistration;
+import java.util.Locale;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.particles.DustParticleOptions;
-import org.joml.Vector3f;
-import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -19,27 +24,79 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * BETA26 BlockNitor's floating, incorporeal, full-light source.
  * Original bounds are 0.33..0.66 on all axes and have NO collision.
  *
- * Original TileNitor used custom FXDispatcher flame+core particles. This
- * port initially uses vanilla luminous particles on the same approximate
- * center while the full original custom particle renderer is pending.
+ * BETA26 TileNitor does not use the dye/firework RGB for its flame. It reads
+ * BlockNitor.getMapColor(...).colorValue and passes that map color to
+ * FXDispatcher.drawNitorFlames. Keep the modern particle color tied to the
+ * same DyeColor map color used by the registered block.
  */
-public final class NitorBlock extends Block {
+public final class NitorBlock extends BaseEntityBlock {
+    public static final MapCodec<NitorBlock> CODEC = simpleCodec(NitorBlock::new);
     private static final VoxelShape OUTLINE =
             box(5.28, 5.28, 5.28, 10.56, 10.56, 10.56);
+    private static final boolean SMOKE_PROBE =
+            Boolean.getBoolean("thaumcraft.nitorSmoke");
 
     private final int flameRgb;
-    private final DustParticleOptions coloredGlow;
+    private final int particleRgb;
+    private boolean smokeColorReported;
+
+    public NitorBlock(BlockBehaviour.Properties props) {
+        this(props, LegacyNitorColors.variants().get(0).particleRgb());
+    }
 
     public NitorBlock(BlockBehaviour.Properties props, int flameRgb) {
         super(props);
         this.flameRgb = flameRgb & 0xFFFFFF;
-        this.coloredGlow = new DustParticleOptions(new Vector3f(
-                ((this.flameRgb >> 16) & 0xFF) / 255.0f,
-                ((this.flameRgb >> 8) & 0xFF) / 255.0f,
-                (this.flameRgb & 0xFF) / 255.0f), 0.85f);
+        this.particleRgb = mapColorForDyeRgb(this.flameRgb);
+    }
+
+    /**
+     * LegacyNitorColors carries the original dye RGB used to identify each
+     * variant. BETA26's BlockNitor.getMapColor returns MapColor.getBlockColor
+     * for that dye, so use modern DyeColor.getMapColor().col for the particle.
+     */
+    private static int mapColorForDyeRgb(int dyeRgb) {
+        for (LegacyNitorColors.Variant variant : LegacyNitorColors.variants()) {
+            if (variant.particleRgb() == dyeRgb) {
+                return DyeColor.valueOf(variant.modernDye().toUpperCase(Locale.ROOT))
+                        .getMapColor().col & 0xFFFFFF;
+            }
+        }
+        throw new IllegalArgumentException("Unknown BETA26 Nitor dye RGB: 0x"
+                + Integer.toHexString(dyeRgb));
     }
 
     public int flameRgb() { return flameRgb; }
+
+    public int particleRgb() { return particleRgb; }
+
+    /** Emit one opt-in proof that the particle provider uses BETA26 MapColor RGB. */
+    public void reportParticleColorIfNeeded() {
+        if (SMOKE_PROBE && !smokeColorReported) {
+            smokeColorReported = true;
+            System.out.println("TC_SMOKE_NITOR_PARTICLE_COLOR=YES dyeRgb="
+                    + flameRgb + " mapColor=" + particleRgb
+                    + " particleColor=" + particleRgb);
+        }
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
+    }
+
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new NitorBlockEntity(pos, state);
+    }
+
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(
+            Level level, BlockState state, BlockEntityType<T> type) {
+        return level.isClientSide
+                ? createTickerHelper(type, NitorBlockEntityRegistration.TYPE, NitorBlockEntity::clientTick)
+                : null;
+    }
 
     @Override
     public RenderShape getRenderShape(BlockState state) {
@@ -56,24 +113,5 @@ public final class NitorBlock extends Block {
     public VoxelShape getCollisionShape(BlockState state, BlockGetter world,
                                         BlockPos pos, CollisionContext context) {
         return Shapes.empty();
-    }
-
-    @Override
-    public void animateTick(BlockState state, Level level, BlockPos pos, RandomSource random) {
-        double x = pos.getX() + 0.5D + random.nextGaussian() * 0.025D;
-        double y = pos.getY() + 0.45D + random.nextGaussian() * 0.025D;
-        double z = pos.getZ() + 0.5D + random.nextGaussian() * 0.025D;
-        // Original uses dye-colored FXDispatcher particles around this
-        // centered flame. Dust + an occasional bright core is a safe
-        // vanilla particle fallback pending the full custom FX port.
-        level.addParticle(coloredGlow, x, y, z,
-                random.nextGaussian() * 0.0025D,
-                0.01D + random.nextDouble() * 0.035D,
-                random.nextGaussian() * 0.0025D);
-        if (random.nextInt(10) == 0) {
-            level.addParticle(ParticleTypes.END_ROD,
-                    pos.getX() + 0.5D, pos.getY() + 0.49D, pos.getZ() + 0.5D,
-                    0.0D, 0.0D, 0.0D);
-        }
     }
 }

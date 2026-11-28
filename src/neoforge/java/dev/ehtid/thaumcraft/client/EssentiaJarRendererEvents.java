@@ -1,0 +1,32 @@
+package dev.ehtid.thaumcraft.client;
+
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.registry.ThaumcraftBlockEntities;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+
+/** Isolated client-only registration for the shared normal/void jar block entity type. */
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+public final class EssentiaJarRendererEvents {
+    private EssentiaJarRendererEvents() {}
+
+    @SubscribeEvent
+    public static void registerLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        if (Boolean.getBoolean("thaumcraft.jarLiquidSmoke")) {
+            System.out.println("TC_SMOKE_JAR_METAL_PARTS_LAYER_REGISTERED=YES");
+        }
+        event.registerLayerDefinition(
+                EssentiaJarMetalPartsModel.LAYER_LOCATION, EssentiaJarMetalPartsModel::createLayer);
+    }
+
+    @SubscribeEvent
+    public static void registerRenderer(EntityRenderersEvent.RegisterRenderers event) {
+        if (Boolean.getBoolean("thaumcraft.jarLiquidSmoke")) {
+            System.out.println("TC_SMOKE_JAR_LIQUID_RENDERER_REGISTERED=YES");
+        }
+        event.registerBlockEntityRenderer(
+                ThaumcraftBlockEntities.JAR_NORMAL.get(), EssentiaJarLiquidRenderer::new);
+    }
+}

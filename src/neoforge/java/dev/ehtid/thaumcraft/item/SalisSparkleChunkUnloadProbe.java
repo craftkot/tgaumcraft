@@ -1,0 +1,526 @@
+package dev.ehtid.thaumcraft.item;
+
+import com.mojang.logging.LogUtils;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
+import dev.ehtid.thaumcraft.ThaumcraftPort;
+import dev.ehtid.thaumcraft.registry.SalisSparkleParticleRegistration;
+import dev.ehtid.thaumcraft.util.ThaumcraftSmokeAudit;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
+import java.util.concurrent.atomic.AtomicInteger;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+
+/** Opt-in real-client proof for Salis queue cancellation across native chunk unload/reload. */
+@EventBusSubscriber(modid = ThaumcraftPort.MOD_ID)
+public final class SalisSparkleChunkUnloadProbe {
+    private static final boolean ENABLED = Boolean.getBoolean("thaumcraft.salisChunkUnloadScenario");
+    private static final int CHUNK_X = 512;
+    private static final int CHUNK_Z = 512;
+    private static final int DELAY_TICKS = 1200;
+    private static final int UNLOAD_TIMEOUT_TICKS = 900;
+    private static final int PACKET_TIMEOUT_TICKS = 100;
+    private static final BlockPos ORIGIN = new BlockPos(CHUNK_X * 16 + 15, 100, CHUNK_Z * 16 + 8);
+    private static final String OUTBOUND_HANDLER_NAME = "thaumcraft_salis_chunk_unload_probe";
+    private static final AtomicInteger OUTBOUND_PROBE_PACKET_COUNT = new AtomicInteger();
+
+    private static MinecraftServer active;
+    private static ServerLevel targetLevel;
+    private static int phase;
+    private static long phaseStarted;
+    private static long scheduledAt;
+    private static long reloadedAt;
+    private static int sendsBefore;
+    private static int cancellationsBefore;
+    private static int enqueuedBefore;
+    private static boolean chunkUnloaded;
+    private static boolean fixtureTicketHeld;
+    private static boolean finished;
+    private static boolean actorDisconnectExpected;
+    private static boolean actorDisconnectEventSeen;
+    private static boolean actorDisconnectAccepted;
+    private static volatile Channel outboundProbeChannel;
+    private static int outboundPacketsBefore;
+    private static int positiveControlSendsBefore;
+    private static ServerPlayer probeActor;
+    private static Vec3 actorReturnPosition;
+    private static float actorReturnYaw;
+    private static float actorReturnPitch;
+
+    private SalisSparkleChunkUnloadProbe() {}
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        if (!ENABLED) return;
+        active = event.getServer();
+        targetLevel = null;
+        phase = 0;
+        phaseStarted = scheduledAt = reloadedAt = 0L;
+        sendsBefore = cancellationsBefore = enqueuedBefore = 0;
+        chunkUnloaded = false;
+        fixtureTicketHeld = false;
+        finished = false;
+        actorDisconnectExpected = false;
+        actorDisconnectEventSeen = false;
+        actorDisconnectAccepted = false;
+        OUTBOUND_PROBE_PACKET_COUNT.set(0);
+        outboundProbeChannel = null;
+        outboundPacketsBefore = 0;
+        positiveControlSendsBefore = 0;
+        probeActor = null;
+        actorReturnPosition = null;
+        actorReturnYaw = 0.0F;
+        actorReturnPitch = 0.0F;
+    }
+
+    @SubscribeEvent
+    public static void onServerStopped(ServerStoppedEvent event) {
+        if (active == event.getServer()) {
+            if (ENABLED && actorDisconnectExpected && !actorDisconnectAccepted) {
+                boolean cleaned = actorDisconnectEventSeen
+                        && probeActor != null
+                        && SalisSparkleTrailQueue.pendingCountForActor(probeActor) == 0
+                        && ThaumcraftSmokeAudit.count("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED") == 1;
+                if (cleaned) {
+                    actorDisconnectAccepted = true;
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED");
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
+                } else {
+                    ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_FAILED");
+                    LogUtils.getLogger().error("SALIS_NATIVE_ACTOR_DISCONNECT_FAILED during server stop");
+                }
+            }
+            removeOutboundParticleRecorder();
+            cleanupFixtureTicketOnStop();
+            active = null;
+            targetLevel = null;
+            probeActor = null;
+            actorReturnPosition = null;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onProbeActorLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (!ENABLED || !actorDisconnectExpected || event.getEntity() != probeActor) return;
+        actorDisconnectEventSeen = true;
+    }
+
+    @SubscribeEvent
+    public static void onChunkUnload(ChunkEvent.Unload event) {
+        if (!ENABLED || active == null || targetLevel == null) return;
+        if (event.getLevel() == targetLevel
+                && event.getChunk().getPos().equals(new ChunkPos(CHUNK_X, CHUNK_Z))) {
+            chunkUnloaded = true;
+        }
+    }
+
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        if (!ENABLED || active != event.getServer() || finished) return;
+        ServerLevel level = active.overworld();
+        long now = level.getGameTime();
+        try {
+            if (phase == 0) {
+                ServerPlayer actor = active.getPlayerList().getPlayers().stream()
+                        .filter(player -> player.level() == level)
+                        .findFirst()
+                        .orElse(null);
+                if (actor == null
+                        || ThaumcraftSmokeAudit.count("BOOKSHELF_SALIS_USED") == 0
+                        || SalisSparkleTrailQueue.pendingCountForServer(active) != 0) return;
+
+                probeActor = actor;
+                targetLevel = level;
+                require((ORIGIN.getX() >> 4) == CHUNK_X
+                                && ((ORIGIN.getX() + 1) >> 4) == CHUNK_X + 1
+                                && (ORIGIN.getZ() >> 4) == CHUNK_Z,
+                        "fixture origin is not on the eastern chunk boundary");
+                require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
+                        "fixture could not acquire its one remote chunk ticket");
+                fixtureTicketHeld = true;
+                require(level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket missing before initial load");
+                level.getChunk(CHUNK_X, CHUNK_Z);
+                require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
+                        "fixture chunk was not loaded before packet-recorder control");
+
+                installOutboundParticleRecorder(actor);
+                outboundPacketsBefore = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(outboundPacketsBefore == 0,
+                        "probe-origin Salis packet was emitted before the positive control");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ORIGIN_AT_CHUNK_EDGE");
+                moveActorToPacketOrigin(level, actor);
+
+                positiveControlSendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, actor,
+                        SalisSparkleParticleRegistration.TYPE, Vec3.atCenterOf(ORIGIN),
+                        new Vec3(2000.0D, 0.0025D, 0.0D), 0);
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "positive-control Salis send was not invoked");
+                phaseStarted = now;
+                phase = 4;
+                return;
+            }
+
+            if (phase == 4) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "outbound recorder did not observe its positive-control particle packet");
+                require(probeActor != null
+                                && probeActor.level() == level
+                                && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "positive-control actor session changed before packet capture");
+                int observedPackets = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(observedPackets <= outboundPacketsBefore + 1,
+                        "positive control emitted more than one matching outbound particle packet");
+                if (observedPackets != outboundPacketsBefore + 1) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "positive-control server send count changed before packet capture");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "positive-control particle unexpectedly remained queued");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_POSITIVE_CONTROL");
+                outboundPacketsBefore = observedPackets;
+
+                ServerPlayer actor = probeActor;
+                require(restoreActorFromPacketOrigin(),
+                        "positive-control actor could not return to its original position");
+                sendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
+                cancellationsBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED");
+                enqueuedBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED");
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, actor,
+                        SalisSparkleParticleRegistration.TYPE, Vec3.atCenterOf(ORIGIN),
+                        new Vec3(2000.0D, 0.0025D, 0.0D), DELAY_TICKS);
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED") == enqueuedBefore + 1,
+                        "long-delay Salis face particle was not admitted");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 1,
+                        "expected exactly one pending Salis effect for this server");
+
+                scheduledAt = now;
+                require(releaseFixtureTicket(),
+                        "fixture could not release its only remote chunk ticket");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket remained after first release");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKETS_RELEASED");
+                phaseStarted = now;
+                phase = 1;
+                return;
+            }
+
+            if (phase == 1) {
+                require(now - phaseStarted < UNLOAD_TIMEOUT_TICKS,
+                        "remote chunk did not unload after releasing the fixture ticket");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket reappeared while awaiting unload");
+                if (!chunkUnloaded
+                        || level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null
+                        || level.areEntitiesLoaded(ChunkPos.asLong(CHUNK_X, CHUNK_Z))) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED") == cancellationsBefore + 1,
+                        "native unload did not cancel exactly the pending Salis effect");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOADED");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_CANCELLED");
+                phase = 2;
+                return;
+            }
+
+            if (phase == 2) {
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket exists during unloaded interval");
+                require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) == null
+                                && !level.areEntitiesLoaded(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "remote chunk loaded before the Salis due tick");
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED") == sendsBefore,
+                        "a Salis particle send occurred after the origin chunk unloaded");
+                if (now - scheduledAt < DELAY_TICKS + 10L) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED") == cancellationsBefore + 1,
+                        "unload cancellation count changed while chunk stayed absent");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "cancelled Salis effect remained queued");
+                require(OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore,
+                        "cancelled Salis effect produced an outbound particle packet while its origin chunk was unloaded");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_UNLOAD");
+                require(level.setChunkForced(CHUNK_X, CHUNK_Z, true),
+                        "fixture could not reacquire remote chunk ticket");
+                fixtureTicketHeld = true;
+                require(level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket missing before reload");
+                level.getChunk(CHUNK_X, CHUNK_Z);
+                require(level.getChunkSource().getChunkNow(CHUNK_X, CHUNK_Z) != null,
+                        "remote chunk did not reload under fixture ticket");
+                reloadedAt = now;
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED");
+                phase = 3;
+                return;
+            }
+
+            if (phase == 3) {
+                if (now - reloadedAt < 10L) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED") == sendsBefore,
+                        "cancelled Salis effect replayed after reload");
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_UNLOADED_CANCELLED") == cancellationsBefore + 1,
+                        "expected exactly one native unload cancellation");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "Salis queue retained a stale effect after reload");
+                require(OUTBOUND_PROBE_PACKET_COUNT.get() == outboundPacketsBefore,
+                        "cancelled Salis effect emitted a real outbound particle packet after chunk reload");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_NO_OUTBOUND_PACKET_AFTER_RELOAD");
+
+                // A new post-reload trigger must be deliverable, independently of the cancelled old one.
+                require(probeActor != null && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "post-reload positive-control actor session changed");
+                moveActorToPacketOrigin(level, probeActor);
+                positiveControlSendsBefore = ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED");
+                SalisSparkleTrailQueue.emitFaceOrQueue(level, probeActor,
+                        SalisSparkleParticleRegistration.TYPE, Vec3.atCenterOf(ORIGIN),
+                        new Vec3(2000.0D, 0.0025D, 0.0D), 0);
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "fresh post-reload Salis send was not invoked exactly once");
+                phaseStarted = now;
+                phase = 5;
+                return;
+            }
+
+            if (phase == 5) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "fresh post-reload Salis packet was not observed");
+                require(probeActor != null
+                                && active.getPlayerList().getPlayer(probeActor.getUUID()) == probeActor,
+                        "post-reload actor session changed before packet capture");
+                int postReloadPackets = OUTBOUND_PROBE_PACKET_COUNT.get();
+                require(postReloadPackets <= outboundPacketsBefore + 1,
+                        "fresh post-reload trigger emitted multiple matching packets");
+                if (postReloadPackets != outboundPacketsBefore + 1) return;
+                require(ThaumcraftSmokeAudit.count("SALIS_PARTICLE_SEND_INVOKED")
+                                == positiveControlSendsBefore + 1,
+                        "fresh post-reload server send count changed unexpectedly");
+                require(SalisSparkleTrailQueue.pendingCountForServer(active) == 0,
+                        "fresh post-reload Salis effect remained queued");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_POST_RELOAD_FRESH_PACKET");
+                require(restoreActorFromPacketOrigin(),
+                        "post-reload actor could not return to original position");
+                Channel recorderChannel = outboundProbeChannel;
+                removeOutboundParticleRecorder();
+                require(recorderChannel != null
+                                && recorderChannel.pipeline().get(OUTBOUND_HANDLER_NAME) == null,
+                        "outbound particle recorder remained installed after native cleanup");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_REMOVED");
+                require(releaseFixtureTicket(),
+                        "fixture could not release its final remote chunk ticket after reload");
+                require(!level.getForcedChunks().contains(ChunkPos.asLong(CHUNK_X, CHUNK_Z)),
+                        "forced-chunk ticket remained after final cleanup");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_RELOADED_NO_REPLAY");
+
+                // The original BETA26 effect is client-local. Verify that a queued
+                // actor-bound effect is discarded immediately when that exact session logs out.
+                ServerPlayer actor = probeActor;
+                require(actor != null && level.hasChunkAt(BlockPos.containing(actor.position())),
+                        "actor's current chunk is unavailable for the logout cleanup control");
+                require(SalisSparkleTrailQueue.pendingCountForActor(actor) == 0,
+                        "actor already had a pending effect before logout control");
+                int disconnectEnqueuedBefore = ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED");
+                SalisSparkleTrailQueue.emitOrQueue(level, actor,
+                        SalisSparkleParticleRegistration.TYPE, actor.position(),
+                        new Vec3(0.0D, 0.0D, 0.0D), 4);
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_ENQUEUED") == disconnectEnqueuedBefore + 1
+                                && SalisSparkleTrailQueue.pendingCountForActor(actor) == 1,
+                        "logout control did not enqueue exactly one actor-bound effect");
+                actorDisconnectExpected = true;
+                phaseStarted = now;
+                phase = 6;
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_PENDING");
+                actor.connection.disconnect(Component.literal("Salis actor disconnect cleanup smoke"));
+                return;
+            }
+            if (phase == 6) {
+                require(now - phaseStarted < PACKET_TIMEOUT_TICKS,
+                        "probe actor did not log out after the queued-effect disconnect control");
+                if (!actorDisconnectEventSeen) return;
+                ServerPlayer actor = probeActor;
+                require(actor != null && active.getPlayerList().getPlayer(actor.getUUID()) == null,
+                        "logout event fired while probe actor remained in the player list");
+                require(ThaumcraftSmokeAudit.count("SALIS_DELAY_ACTOR_DISCONNECTED_CANCELLED") == 1,
+                        "logout event did not cancel exactly one actor-bound Salis effect");
+                require(SalisSparkleTrailQueue.pendingCountForActor(actor) == 0,
+                        "actor logout retained a pending Salis effect");
+                actorDisconnectAccepted = true;
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_DISCONNECT_CLEANED");
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_ACCEPTED");
+                finished = true;
+                probeActor = null;
+                LogUtils.getLogger().info("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_OK");
+                active.halt(false);
+                return;
+            }
+        } catch (RuntimeException | AssertionError ex) {
+            if (!restoreActorFromPacketOrigin()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_RESTORE_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_ACTOR_RESTORE_FAILED");
+            }
+            removeOutboundParticleRecorder();
+            cleanupFixtureTicketAfterFailure();
+            finished = true;
+            probeActor = null;
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_UNLOAD_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_UNLOAD_ASSERTIONS_FAILED", ex);
+            active.halt(false);
+        }
+    }
+
+    private static void installOutboundParticleRecorder(ServerPlayer actor) {
+        Connection connection = actor.connection.getConnection();
+        Channel channel = connection.channel();
+        require(channel != null && channel.isActive(),
+                "actor connection has no active Netty channel for outbound packet capture");
+        Runnable install = () -> {
+            var pipeline = channel.pipeline();
+            if (pipeline.get(OUTBOUND_HANDLER_NAME) != null) {
+                pipeline.remove(OUTBOUND_HANDLER_NAME);
+            }
+            pipeline.addBefore("packet_handler", OUTBOUND_HANDLER_NAME, new ChannelOutboundHandlerAdapter() {
+                @Override
+                public void write(ChannelHandlerContext context, Object message, ChannelPromise promise)
+                        throws Exception {
+                    if (message instanceof ClientboundLevelParticlesPacket packet
+                            && isProbeParticlePacket(packet)) {
+                        int count = OUTBOUND_PROBE_PACKET_COUNT.incrementAndGet();
+                        System.out.println("TC_SMOKE_SALIS_OUTBOUND_PACKET=YES count=" + count
+                                + " x=" + packet.getX()
+                                + " y=" + packet.getY()
+                                + " z=" + packet.getZ()
+                                + " particle=thaumcraft:salis_sparkle"
+                                + " particle_count=" + packet.getCount());
+                    }
+                    context.write(message, promise);
+                }
+            });
+        };
+        if (channel.eventLoop().inEventLoop()) {
+            install.run();
+        } else {
+            channel.eventLoop().submit(install).syncUninterruptibly();
+        }
+        outboundProbeChannel = channel;
+        require(channel.pipeline().get(OUTBOUND_HANDLER_NAME) != null,
+                "outbound Salis packet recorder was not installed");
+        ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_INSTALLED");
+    }
+
+    private static void moveActorToPacketOrigin(ServerLevel level, ServerPlayer actor) {
+        actorReturnPosition = actor.position();
+        actorReturnYaw = actor.getYRot();
+        actorReturnPitch = actor.getXRot();
+        actor.teleportTo(level,
+                ORIGIN.getX() + 0.5D, ORIGIN.getY() + 0.5D, ORIGIN.getZ() + 0.5D,
+                actorReturnYaw, actorReturnPitch);
+        require(actor.level() == level
+                        && actor.position().distanceToSqr(Vec3.atCenterOf(ORIGIN)) < 1024.0D,
+                "positive-control actor is outside vanilla 32-block particle delivery radius");
+        ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_MOVED_TO_PACKET_ORIGIN");
+    }
+
+    private static boolean restoreActorFromPacketOrigin() {
+        Vec3 returnPosition = actorReturnPosition;
+        if (returnPosition == null) return true;
+        ServerPlayer actor = probeActor;
+        if (active == null || targetLevel == null || actor == null
+                || active.getPlayerList().getPlayer(actor.getUUID()) != actor
+                || actor.level() != targetLevel) {
+            actorReturnPosition = null;
+            return false;
+        }
+        actor.teleportTo(targetLevel, returnPosition.x, returnPosition.y, returnPosition.z,
+                actorReturnYaw, actorReturnPitch);
+        boolean restored = actor.level() == targetLevel
+                && actor.position().distanceToSqr(returnPosition) < 1.0E-4D;
+        actorReturnPosition = null;
+        if (restored) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_ACTOR_RETURNED_FROM_PACKET_ORIGIN");
+        }
+        return restored;
+    }
+
+    private static boolean isProbeParticlePacket(ClientboundLevelParticlesPacket packet) {
+        return packet.getParticle() == SalisSparkleParticleRegistration.TYPE
+                && packet.getCount() == 0
+                && Double.compare(packet.getX(), ORIGIN.getX() + 0.5D) == 0
+                && Double.compare(packet.getY(), ORIGIN.getY() + 0.5D) == 0
+                && Double.compare(packet.getZ(), ORIGIN.getZ() + 0.5D) == 0;
+    }
+
+    private static void removeOutboundParticleRecorder() {
+        Channel channel = outboundProbeChannel;
+        outboundProbeChannel = null;
+        if (channel == null || !channel.isOpen()) return;
+        Runnable remove = () -> {
+            if (channel.pipeline().get(OUTBOUND_HANDLER_NAME) != null) {
+                channel.pipeline().remove(OUTBOUND_HANDLER_NAME);
+            }
+        };
+        try {
+            if (channel.eventLoop().inEventLoop()) {
+                remove.run();
+            } else {
+                channel.eventLoop().submit(remove).syncUninterruptibly();
+            }
+        } catch (RuntimeException failure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_OUTBOUND_PACKET_RECORDER_CLEANUP_FAILED", failure);
+        }
+    }
+
+    private static boolean releaseFixtureTicket() {
+        if (!fixtureTicketHeld) return true;
+        if (targetLevel == null || !targetLevel.setChunkForced(CHUNK_X, CHUNK_Z, false)) return false;
+        fixtureTicketHeld = false;
+        return true;
+    }
+
+    private static void cleanupFixtureTicketAfterFailure() {
+        if (!fixtureTicketHeld) return;
+        try {
+            if (!releaseFixtureTicket()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            }
+        } catch (RuntimeException cleanupFailure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED", cleanupFailure);
+        }
+    }
+
+    private static void cleanupFixtureTicketOnStop() {
+        if (!fixtureTicketHeld) return;
+        try {
+            if (!releaseFixtureTicket()) {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+                LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED during server stop");
+            } else {
+                ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANED_ON_STOP");
+            }
+        } catch (RuntimeException cleanupFailure) {
+            ThaumcraftSmokeAudit.mark("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED");
+            LogUtils.getLogger().error("SALIS_NATIVE_CHUNK_TICKET_CLEANUP_FAILED during server stop", cleanupFailure);
+        }
+    }
+
+    private static void require(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+}

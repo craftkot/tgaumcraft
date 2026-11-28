@@ -5,8 +5,11 @@ import dev.ehtid.thaumcraft.blockentity.ArcaneWorkbenchBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import dev.ehtid.thaumcraft.menu.ArcaneWorkbenchMenu;
 import net.minecraft.world.Containers;
@@ -40,15 +43,45 @@ public final class ArcaneWorkbenchBlock extends BaseEntityBlock {
         return new ArcaneWorkbenchBlockEntity(pos, state);
     }
 
+    private static void smokeMarker(String message) {
+        if ("1".equals(System.getenv("THAUMCRAFT_SMOKE"))) {
+            System.out.println(message);
+        }
+    }
+
+    private void openWorkbench(Level level, BlockPos pos, Player player, String interactionPath) {
+        if (level.isClientSide) return;
+        if (!(level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity bench)) {
+            smokeMarker("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=NO path=" + interactionPath + " pos=" + pos);
+            return;
+        }
+        smokeMarker("TC_SMOKE_WORKBENCH_SERVER_BLOCK_ENTITY=YES path=" + interactionPath + " pos=" + pos);
+        var menuId = player.openMenu(new SimpleMenuProvider(
+                (id, inventory, viewer) -> new ArcaneWorkbenchMenu(id, inventory, bench),
+                Component.translatable("container.thaumcraft.arcane_workbench")));
+        smokeMarker("TC_SMOKE_WORKBENCH_SERVER_OPEN_MENU_RESULT="
+                + (menuId.isPresent() ? "YES" : "NO")
+                + (menuId.isPresent() ? " container_id=" + menuId.getAsInt() : "")
+                + " path=" + interactionPath);
+    }
+
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos,
                                                Player player, BlockHitResult hit) {
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof ArcaneWorkbenchBlockEntity bench) {
-            player.openMenu(new SimpleMenuProvider(
-                    (id, inventory, viewer) -> new ArcaneWorkbenchMenu(id, inventory, bench),
-                    Component.translatable("container.thaumcraft.arcane_workbench")));
-        }
+        openWorkbench(level, pos, player, "empty_hand");
         return InteractionResult.sidedSuccess(level.isClientSide);
+    }
+
+    /**
+     * BETA26 onBlockActivated opened the GUI for either hand, even when the
+     * player held an item. Preserve that behavior on the 1.21.1 item-on-block path.
+     */
+    @Override
+    protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+                                              BlockPos pos, Player player, InteractionHand hand,
+                                              BlockHitResult hit) {
+        openWorkbench(level, pos, player, "item_on");
+        return ItemInteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override
