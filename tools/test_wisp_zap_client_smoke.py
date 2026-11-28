@@ -497,35 +497,43 @@ def _test_attack_input_frame_correlation(generated: str) -> None:
 
 
 def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
-    """The attack watcher must start after the server-confirmed Survival transition, not stale pre-Survival frames."""
+    """Stage once, enter Survival while frozen, then release only after accepted damage/target."""
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
-    survival_confirmation = 'wisp_wait_for_fresh_log_marker "$survival_log_lines" \'Set own game mode to Survival Mode\''
+    survival_confirmation = "wisp_wait_for_fresh_log_marker \"$survival_log_lines\" 'Set own game mode to Survival Mode'"
     survival_status = "echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES'"
     frame_snapshot = 'frame_log_lines="$(wc -l < client-smoke/client.log)"'
     wait_for_frame = 'wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"'
     input_cursor_read = 'attack_log_lines="$WISP_ATTACK_INPUT_LOG_LINES"'
-    assert survival_confirmation in attack_body
-    assert survival_status in attack_body
-    assert frame_snapshot in attack_body, "attack watcher must snapshot the log after Survival is server-confirmed"
-    assert attack_body.index(survival_confirmation) < attack_body.index(survival_status) < attack_body.index(frame_snapshot)
-    assert wait_for_frame in attack_body
-    assert input_cursor_read in attack_body
     reposition_cursor = 'reanchor_log_lines="$(wc -l < client-smoke/client.log)"'
     reposition_call = 'wisp_move_player_to_live_wisp "$reanchor_log_lines"'
-    retry_branch = attack_body.index('if [ "$attempt" -gt 1 ]; then')
-    retry_branch_end = attack_body.index("\n      fi\n", retry_branch)
     assert reposition_cursor in attack_body and reposition_call in attack_body
     assert attack_body.count(reposition_call) == 1
-    assert retry_branch_end < attack_body.index(reposition_cursor) < attack_body.index(reposition_call)
-    release_call = "wisp_release_staging_wisp"
-    assert release_call in attack_body
-    assert attack_body.index(reposition_call) < attack_body.index(release_call) < attack_body.index(survival_confirmation), (
-        "the Wisp must be released while the player is still Creative"
-    )
+    assert attack_body.index(reposition_cursor) < attack_body.index(reposition_call) < attack_body.index(survival_confirmation)
+    assert survival_confirmation in attack_body and survival_status in attack_body
+    assert attack_body.index(survival_confirmation) < attack_body.index(survival_status) < attack_body.index(frame_snapshot)
+    assert wait_for_frame in attack_body and input_cursor_read in attack_body
     assert attack_body.index(wait_for_frame) < attack_body.index(input_cursor_read)
-    assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
-    assert 'frame_log_lines="$WISP_RENDER_FIRST_FRAME_LINE_NUMBER"' not in attack_body
-
+    assert "for attempt in 1 2 3" in attack_body
+    assert 'if [ "$attempt" -gt 1 ]; then' not in attack_body
+    assert "wisp_command '/gamemode creative'" not in attack_body
+    assert "wisp_release_staging_wisp" not in attack_body, "staging must remain frozen until server damage and target are confirmed"
+    assert attack_body.index(reposition_call) < attack_body.index("for attempt in 1 2 3")
+    assert "attack_position_mode=LIVE_WISP" in attack_body
+    assert 'attack_camera_source="LIVE_ENTITY_FACING"' in attack_body
+    assert 'attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"' in attack_body
+    release_body = _bash_function_body(generated, "wisp_release_staging_wisp")
+    assert 'local wisp_id="$1" release_log_lines' in release_body
+    assert release_body.index("WISP_ATTACK_HURT_ACCEPTED=YES") < release_body.index("wisp_fast_command")
+    assert release_body.index("WISP_ATTACK_TARGET_SET=YES") < release_body.index("wisp_fast_command")
+    assert 'wisp_wait_for_fresh_log_marker "$release_log_lines" "TC_SMOKE_WISP_STAGING_RELEASED=YES id=$wisp_id"' in release_body
+    assert 'WISP_CAMERA_STAGING_RELEASE=YES id=$wisp_id reason=accepted_player_hit' in release_body
+    main_release = 'wisp_release_staging_wisp "$wisp_id"'
+    hurt_wait = "wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'"
+    target_wait = "wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'"
+    target_status = "echo 'WISP_ATTACK_TARGET_SET=YES'"
+    main = generated[generated.index(hurt_wait):]
+    assert hurt_wait in main and target_wait in main and target_status in main and main_release in main
+    assert main.index(hurt_wait) < main.index(target_wait) < main.index(target_status) < main.index(main_release)
     frame_body = _bash_function_body(generated, "wisp_wait_for_attack_frame")
     click_cursor_snapshot = 'click_log_lines="$(wc -l < client-smoke/client.log)"'
     input_cursor_capture = 'WISP_ATTACK_INPUT_LOG_LINES="$click_log_lines"'
@@ -560,8 +568,12 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
     release_body = _bash_function_body(generated, "wisp_release_staging_wisp")
     release_tag = "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging"
     assert release_tag in release_body
-    assert "TC_SMOKE_WISP_STAGING_RELEASED=YES" in release_body
-    assert release_body.index("wisp_fast_command") < release_body.index("wisp_wait_for_fresh_log_marker") < release_body.index("WISP_CAMERA_STAGING_RELEASE=YES")
+    assert "WISP_ATTACK_HURT_ACCEPTED=YES" in release_body
+    assert "WISP_ATTACK_TARGET_SET=YES" in release_body
+    assert 'wisp_wait_for_fresh_log_marker "$release_log_lines" "TC_SMOKE_WISP_STAGING_RELEASED=YES id=$wisp_id"' in release_body
+    assert 'WISP_CAMERA_STAGING_RELEASE=YES id=$wisp_id reason=accepted_player_hit' in release_body
+    assert release_body.index("WISP_ATTACK_TARGET_SET=YES") < release_body.index("wisp_fast_command")
+
     reposition_function = "  wisp_move_player_to_live_wisp() {\n" + reposition_body + "\n  }\n"
     release_function = "  wisp_release_staging_wisp() {\n" + release_body + "\n  }\n"
     fresh_marker_body = _bash_function_body(generated, "wisp_wait_for_fresh_log_marker")
@@ -590,11 +602,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
             + release_function
             + "\nwisp_move_player_to_live_wisp 1\n"
             + 'printf "REPOSITION_LINE=%s\\n" "$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
-            + "wisp_release_staging_wisp\n"
-            + 'second_after_lines="$(wc -l < client-smoke/client.log)"\n'
-            + 'wisp_move_player_to_live_wisp "$second_after_lines"\n'
-            + 'echo "REPOSITION_LINE_SECOND=$WISP_ATTACK_REPOSITION_LINE_NUMBER"\n'
-            + "wisp_release_staging_wisp\n"
+            + "printf 'WISP_ATTACK_HURT_ACCEPTED=YES\\nWISP_ATTACK_TARGET_SET=YES\\n' >> client-smoke-status.txt\n"
+            + "wisp_release_staging_wisp 17\n"
         )
         result = subprocess.run(
             ["bash", "-c", harness],
@@ -606,15 +615,8 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         )
         assert result.returncode == 0, result.stdout + result.stderr
         assert "REPOSITION_LINE=4" in result.stdout, result.stdout
-        assert "REPOSITION_LINE_SECOND=9" in result.stdout, result.stdout
         commands = commands_path.read_text(encoding="utf-8").splitlines()
         assert commands == [
-            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging",
-            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian",
-            "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
-            "/execute at @p run setblock ~ ~-1 ~ minecraft:obsidian",
-            "/execute at @p if block ~ ~-1 ~ minecraft:obsidian run say TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES",
-            "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging",
             "/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] add tc_wisp_zap_smoke_staging",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-8 ~-8 ~8 ~-5 ~8 minecraft:obsidian",
             "/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes",
@@ -626,16 +628,39 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         assert "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8" in status, status
         assert "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156" in status, status
         assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in status, status
-        assert status.count("WISP_CAMERA_STAGING_FREEZE=YES") == 2, status
-        assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 2, status
-        assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 2, status
-        assert status.count("WISP_CAMERA_LIVE_SUPPORT=YES") == 2, status
-        assert status.count("WISP_CAMERA_STAGING_RELEASE=YES") == 2, status
+        assert status.count("WISP_CAMERA_STAGING_FREEZE=YES") == 1, status
+        assert status.count("WISP_CAMERA_SUPPORT_PREBUILT=YES") == 1, status
+        assert status.count("WISP_CAMERA_SUPPORT_PLATFORM=YES") == 1, status
+        assert status.count("WISP_CAMERA_LIVE_SUPPORT=YES") == 1, status
+        assert status.count("WISP_CAMERA_STAGING_RELEASE=YES") == 1, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_FROZEN=YES line=2" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Successfully filled 1156 block(s) line=3" in status, status
         assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_LIVE_SUPPORT_BLOCK=YES line=5" in status, status
-        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_RELEASED=YES line=6" in status, status
+        assert "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=TC_SMOKE_WISP_STAGING_RELEASED=YES id=17 line=6" in status, status
         assert "WISP_CAMERA_REPOSITION=LIVE_WISP_MELEE_POSITION Teleported Dev to 13.886421, 153.206460, 10.687089" in status, status
+
+    # A release before accepted server damage/target assignment must not remove the tag.
+    with tempfile.TemporaryDirectory(prefix="tc-wisp-release-before-hit-") as directory:
+        root = Path(directory)
+        client_dir = root / "client-smoke"
+        client_dir.mkdir()
+        (client_dir / "client.log").write_text("BOOT=YES\n", encoding="utf-8")
+        (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
+        commands_path = root / "commands.log"
+        commands_path.write_text("", encoding="utf-8")
+        harness = (
+            "set -euo pipefail\n"
+            "wisp_fast_command() { printf '%s\\n' \"$1\" >> commands.log; }\n"
+            + fresh_marker_function
+            + release_function
+            + "\nwisp_release_staging_wisp 17\n"
+        )
+        result = subprocess.run(["bash", "-c", harness], cwd=root, text=True, capture_output=True, check=False, timeout=5)
+        assert result.returncode != 0, result.stdout + result.stderr
+        assert commands_path.read_text(encoding="utf-8") == "", commands_path.read_text(encoding="utf-8")
+        status = (root / "client-smoke-status.txt").read_text(encoding="utf-8")
+        assert "WISP_STAGING_RELEASE_BEFORE_ACCEPTED_HIT=YES" in status, status
+        assert "WISP_CAMERA_STAGING_RELEASE=YES" not in status, status
 
     # Without a server-confirmed staging freeze, do not build a floor or teleport.
     with tempfile.TemporaryDirectory(prefix="tc-wisp-live-reposition-no-freeze-") as directory:
@@ -2006,9 +2031,11 @@ def main() -> int:
     side_view_rendered_status_index = setup.index('echo "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=$side_view_rendered_id', side_view_rendered_wait_index)
     hurt_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'", side_view_rendered_status_index)
     target_index = setup.index("wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'", hurt_index)
+    target_status_index = setup.index("echo 'WISP_ATTACK_TARGET_SET=YES'", target_index)
+    staging_release_index = setup.index('wisp_release_staging_wisp "$wisp_id"', target_status_index)
     stabilize_index = setup.index("wisp_send_chat '/attribute @p minecraft:generic.knockback_resistance base set 1'", rendered_index)
     stabilize_marker_index = setup.index("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL", stabilize_index)
-    zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', target_index)
+    zap_capture_index = setup.index('wisp_capture_zap_frames "$zap_log_lines" "$wisp_id"', staging_release_index)
     attack_frame_extract_index = setup.index("wisp_extract_attack_input_frame", zap_capture_index)
     capture_aim_index = setup.index("wisp_verify_attack_input_aim_capture", attack_frame_extract_index)
     telemetry_index = setup.index('wisp_verify_aim_telemetry "$aim_log_lines"', capture_aim_index)
@@ -2016,8 +2043,8 @@ def main() -> int:
     perspective_restore_index = setup.index("xdotool key --clearmodifiers F5", aim_verify_index)
     perspective_restore_second_index = setup.index("xdotool key --clearmodifiers F5", perspective_restore_index + 1)
     restore_marker_index = setup.index("WISP_ZAP_CAMERA_PERSPECTIVE_RESTORED=FIRST_PERSON", perspective_restore_second_index)
-    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < stabilize_index < stabilize_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
-        "keep the player Creative through Wisp spawn, finish knockback setup, then let each bounded attempt reposition once before Survival"
+    assert night_index < teleport_index < loaded_index < fill_index < fill_wait_index < fixture_teleport_index < fixture_wait_index < support_index < creative_marker_index < baseline_a_index < baseline_b_index < pre_spawn_baseline_marker_index < spawn_snapshot_index < summon_index < rendered_index < stabilize_index < stabilize_marker_index < zap_cursor_index < attack_call_index < client_attack_index < camera_stopped_index < side_view_wait_index < side_view_status_index < side_view_rendered_wait_index < side_view_rendered_status_index < hurt_index < target_index < target_status_index < staging_release_index < zap_capture_index < attack_frame_extract_index < capture_aim_index < telemetry_index < aim_verify_index < perspective_restore_index < perspective_restore_second_index < restore_marker_index, (
+        "keep the player Creative through spawn, stage once, enter Survival while the Wisp stays frozen, then release only after accepted damage and target assignment"
     )
     main_before_attack = setup[rendered_index:attack_call_index]
     assert "wisp_command '/gamemode survival'" not in main_before_attack, "Survival must not begin before the live melee position is staged"
@@ -2043,28 +2070,19 @@ def main() -> int:
     assert 'exit 1' in attack_frame_body
     attack_body = _bash_function_body(generated, "wisp_attack_live_wisp")
     assert "for attempt in 1 2 3" in attack_body, "the attack retry budget must remain bounded"
-    assert 'if [ "$attempt" -gt 1 ]; then' in attack_body
-    retry_block_start = attack_body.index('if [ "$attempt" -gt 1 ]; then')
-    retry_block_end = attack_body.index("\n      fi", retry_block_start)
-    retry_branch = attack_body[retry_block_start:retry_block_end]
-    creative_command_index = retry_branch.index("wisp_command '/gamemode creative'")
-    creative_marker_index = retry_branch.index("TC_SMOKE_WISP_PLAYER_CREATIVE=YES")
-    retry_sleep_index = retry_branch.index("sleep 0.15")
-    assert creative_command_index < creative_marker_index < retry_sleep_index, (
-        "a rejected attempt must return to Creative and clear autonomous targeting before the shared reposition"
-    )
-    assert "wisp_move_player_to_live_wisp" not in retry_branch, (
-        "live-Wisp reposition is shared by the first attempt and retries, not nested inside the retry-only branch"
-    )
+    assert 'if [ "$attempt" -gt 1 ]; then' not in attack_body, "retries must reuse the already-frozen Wisp and support pad"
+    assert "wisp_command '/gamemode creative'" not in attack_body
+    reposition_call = 'wisp_move_player_to_live_wisp "$reanchor_log_lines"'
+    assert attack_body.count(reposition_call) == 1
+    assert attack_body.index(reposition_call) < attack_body.index("for attempt in 1 2 3")
+    assert "wisp_release_staging_wisp" not in attack_body
     survival_cursor_index = attack_body.index('survival_log_lines="$(wc -l < client-smoke/client.log)"')
     survival_command_index = attack_body.index("wisp_fast_command '/gamemode survival' 0.5 2")
     survival_marker_index = attack_body.index("wisp_wait_for_fresh_log_marker")
     survival_status_index = attack_body.index("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES")
     frame_cursor_index = attack_body.index('frame_log_lines="$(wc -l < client-smoke/client.log)"')
     attack_frame_index = attack_body.index("wisp_wait_for_attack_frame")
-    assert survival_cursor_index < survival_command_index < survival_marker_index < survival_status_index < frame_cursor_index < attack_frame_index, (
-        "the real attack cursor must begin after the fresh server-confirmed Survival transition"
-    )
+    assert survival_cursor_index < survival_command_index < survival_marker_index < survival_status_index < frame_cursor_index < attack_frame_index
     assert "wisp_command '/gamemode survival'" not in attack_body
     assert "wisp_send_chat '/execute if entity @p[gamemode=survival]" not in attack_body
     assert 'frame_log_lines="$WISP_ATTACK_REPOSITION_LINE_NUMBER"' not in attack_body
@@ -2228,6 +2246,8 @@ def main() -> int:
     assert "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_STAGING_FREEZE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_CAMERA_STAGING_RELEASE=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "WISP_ATTACK_TARGET_SET=YES" in verify_wisp_zap_client.REQUIRED_STATUS
+    assert "TC_SMOKE_WISP_TARGET_SET=YES" in verify_wisp_zap_client.REQUIRED_LOG_MARKERS
     assert "WISP_ATTACK_INPUT_FRAME_CORRELATION=PASS source=InputEvent+AttackEntityEvent" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_CAPTURE_TICK=" in verify_wisp_zap_client.REQUIRED_STATUS
     assert "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=" in verify_wisp_zap_client.REQUIRED_STATUS
@@ -2250,11 +2270,6 @@ def main() -> int:
     log = "\n".join((
         "TC_SMOKE_WISP_CHUNK_LOADED=YES",
         "tc_wisp_zap_smoke_staging",
-        "TC_SMOKE_WISP_STAGING_FROZEN=YES",
-        "TC_SMOKE_WISP_STAGING_RELEASED=YES",
-        "WISP_CAMERA_STAGING_FREEZE=YES",
-        "WISP_CAMERA_STAGING_RELEASE=YES",
-        "wisp_release_staging_wisp()",
         "TC_SMOKE_WISP_PLAYER_CREATIVE=YES",
         "WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=20 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
@@ -2262,7 +2277,6 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=20 gameTime=518 playerTick=505 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
         "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 gameTime=518",
         "TC_SMOKE_WISP_STAGING_FROZEN=YES id=17",
-        "TC_SMOKE_WISP_STAGING_RELEASED=YES id=17",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_RENDERED=YES id=17 aspect=aer tick=21",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 gameTime=519 playerTick=506 hitType=BLOCK targetId=-1 targetType=none blockPos=12,148,12",
@@ -2278,6 +2292,7 @@ def main() -> int:
         "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "TC_SMOKE_WISP_HURT=YES accepted=true source=17 attacker=1 amount=1.0 health=21.0",
         "TC_SMOKE_WISP_TARGET_SET=YES source=17 target=1 aspect=aer",
+        "TC_SMOKE_WISP_STAGING_RELEASED=YES id=17",
         "TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=23 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=23 gameTime=521 playerTick=508 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
@@ -2334,7 +2349,6 @@ def main() -> int:
         "WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-8..-5 block=minecraft:obsidian radius=8",
         "WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156",
         "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian",
-        "WISP_CAMERA_STAGING_RELEASE=YES",
         "WISP_SERVER_OR_CLIENT_MARKER_CONFIRMED=Set own game mode to Survival Mode line=950",
         "TC_SMOKE_WISP_PLAYER_SURVIVAL=YES",
         "WISP_ATTACK_CLICK_DISPATCHED=YES id=17",
@@ -2353,6 +2367,8 @@ def main() -> int:
         "WISP_CAMERA_SIDE_VIEW=YES id=17 monotonicNs=1000000000",
         "WISP_CAMERA_SIDE_VIEW_RENDERED=YES id=17 beamYaw=0.0 beamPitch=-60.0 yaw=50.0 pitch=-30.0 cameraType=THIRD_PERSON_BACK cameraDistance=4.0 monotonicNs=1100000000",
         "WISP_ATTACK_HURT_ACCEPTED=YES",
+        "WISP_ATTACK_TARGET_SET=YES",
+        "WISP_CAMERA_STAGING_RELEASE=YES id=17 reason=accepted_player_hit",
         "WISP_ZAP_PAYLOAD_RECEIVED=YES source=17 target=1 createdAt=520 monotonicNs=1200000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=1 wispTick=24 observedAtMonotonicNs=1400000000",
         "WISP_ZAP_FRAME_OBSERVED=YES source=17 createdAt=520 ageTick=2 wispTick=25 observedAtMonotonicNs=1500000000",

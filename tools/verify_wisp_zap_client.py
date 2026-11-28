@@ -49,6 +49,7 @@ REQUIRED_LOG_MARKERS = (
     "TC_SMOKE_WISP_SIDE_VIEW_RENDERED=YES",
     "TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES",
     "TC_SMOKE_WISP_HURT=YES accepted=true",
+    "TC_SMOKE_WISP_TARGET_SET=YES",
     "TC_SMOKE_WISP_SUPPORT_BLOCK=YES",
     "TC_SMOKE_WISP_NAMED_SOURCE=YES",
     "TC_SMOKE_WISP_SOURCE_BASE_CLEAR=YES",
@@ -98,6 +99,7 @@ REQUIRED_STATUS = (
     "WISP_ATTACK_CAMERA_FRAME_COMPLETE=YES",
     "WISP_ATTACK_CAMERA_FRAME_USED=YES",
     "WISP_ATTACK_HURT_ACCEPTED=YES",
+    "WISP_ATTACK_TARGET_SET=YES",
     "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
     "WISP_ZAP_TEST_TIME=MIDNIGHT",
     "WISP_CAMERA_SIDE_VIEW=YES id=",
@@ -1298,37 +1300,31 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         )
     ]
     survival_status_positions = [m.start() for m in re.finditer("TC_SMOKE_WISP_PLAYER_SURVIVAL=YES", status_text)]
-    attempt_counts = {
+    attempt_counts = (
         len(staging_freeze_positions),
         len(support_prebuilt_positions),
         len(support_platform_positions),
         len(live_support_positions),
-        len(staging_release_positions),
         len(survival_confirmation_positions),
         len(survival_status_positions),
-    }
-    if len(attempt_counts) != 1 or not staging_freeze_positions:
-        errors.append("each Wisp staging attempt must freeze, build/verify support, release, then enter Survival")
+        len(staging_release_positions),
+    )
+    if any(count != 1 for count in attempt_counts):
+        errors.append("Wisp smoke must stage once, enter Survival once, and release once after the accepted hit")
     else:
-        for attempt_index, positions in enumerate(zip(
-            staging_freeze_positions,
-            support_prebuilt_positions,
-            support_platform_positions,
-            live_support_positions,
-            staging_release_positions,
-            survival_confirmation_positions,
-            survival_status_positions,
-        ), start=1):
-            if not all(left < right for left, right in zip(positions, positions[1:])):
-                # Keep the generic sequence diagnostic, but identify the most
-                # safety-critical ordering failure: the player must be supported
-                # before the server-confirmed Survival transition.
-                if positions[3] >= positions[5]:
-                    errors.append(
-                        "live Wisp support floor must be built and confirmed before Survival"
-                    )
-                errors.append(f"Wisp staging/support/release/Survival order is invalid on attempt {attempt_index}")
-                break
+        positions = (
+            staging_freeze_positions[0],
+            support_prebuilt_positions[0],
+            support_platform_positions[0],
+            live_support_positions[0],
+            survival_confirmation_positions[0],
+            survival_status_positions[0],
+            staging_release_positions[0],
+        )
+        if not all(left < right for left, right in zip(positions, positions[1:])):
+            if positions[3] >= positions[4]:
+                errors.append("live Wisp support floor must be built and confirmed before Survival")
+            errors.append("Wisp must remain staged through the Survival attack and release only after the accepted hit")
 
     attack_click_position = status_text.find("WISP_ATTACK_CLICK_DISPATCHED=YES")
     attack_input_status_position = status_text.find("WISP_ATTACK_INPUT_FRAME=YES")
@@ -1348,6 +1344,9 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     )
     stabilized_position = status_text.find("WISP_CAMERA_KNOCKBACK_RESISTANCE=100_PERCENT_HORIZONTAL")
     attack_target_position = status_text.find("WISP_ATTACK_TARGET_CONFIRMED=YES")
+    attack_hurt_status_position = status_text.find("WISP_ATTACK_HURT_ACCEPTED=YES")
+    attack_target_set_status_position = status_text.find("WISP_ATTACK_TARGET_SET=YES")
+    staging_release_status_position = status_text.find("WISP_CAMERA_STAGING_RELEASE=YES")
     first_zap_capture_position = status_text.find("WISP_ZAP_FRAME_CAPTURE=YES")
     if knockback_set_position < 0 or attack_input_position < 0 or knockback_set_position >= attack_input_position:
         errors.append("player knockback resistance was not established before the real Survival attack")
@@ -1363,6 +1362,13 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         or stabilized_position > first_zap_capture_position
     ):
         errors.append("player stabilization was not confirmed before FXBolt frame capture")
+    if not (
+        0 <= attack_target_position
+        < attack_hurt_status_position
+        < attack_target_set_status_position
+        < staging_release_status_position
+    ):
+        errors.append("smoke staging must release only after client target confirmation, accepted server damage and server target assignment")
 
     telemetry = _first(
         r"(?m)^WISP_CAMERA_TELEMETRY=PASS id=(\d+) tick=(\d+) playerX=([0-9.+-]+) playerY=([0-9.+-]+) playerZ=([0-9.+-]+) wispX=([0-9.+-]+) wispY=([0-9.+-]+) wispZ=([0-9.+-]+) distance=([0-9.+-]+) aimDot=([0-9.+-]+)$",
@@ -1375,17 +1381,33 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
     staging_released_logs = list(re.finditer(
         r"(?m)^TC_SMOKE_WISP_STAGING_RELEASED=YES id=(\d+)$", log_text
     ))
-    if len(staging_frozen_logs) != len(staging_released_logs) or not staging_frozen_logs:
-        errors.append("Wisp staging freeze/release server markers are missing or unpaired")
+    if len(staging_frozen_logs) != 1 or len(staging_released_logs) != 1:
+        errors.append("Wisp staging must freeze and release exactly once per real-client attempt")
     else:
-        for freeze_marker, release_marker in zip(staging_frozen_logs, staging_released_logs):
-            if (
-                freeze_marker.group(1) != release_marker.group(1)
-                or freeze_marker.start() >= release_marker.start()
-                or (first_frame_id is not None and freeze_marker.group(1) != first_frame_id.group(1))
+        freeze_marker = staging_frozen_logs[0]
+        release_marker = staging_released_logs[0]
+        if (
+            freeze_marker.group(1) != release_marker.group(1)
+            or freeze_marker.start() >= release_marker.start()
+            or (first_frame_id is not None and freeze_marker.group(1) != first_frame_id.group(1))
+        ):
+            errors.append("Wisp staging freeze/release must bracket the same rendered Wisp entity")
+        if first_frame_id is not None:
+            source_id = first_frame_id.group(1)
+            hurt_log_position = log_text.find(
+                f"TC_SMOKE_WISP_HURT=YES accepted=true source={source_id} attacker="
+            )
+            target_set_log_position = log_text.find(
+                f"TC_SMOKE_WISP_TARGET_SET=YES source={source_id} target="
+            )
+            if not (
+                0 <= attack_input_position
+                < hurt_log_position
+                < target_set_log_position
+                < release_marker.start()
             ):
-                errors.append("Wisp staging freeze/release must bracket the same rendered Wisp entity")
-                break
+                errors.append("Wisp staging must release only after the same-ID accepted hit and target assignment")
+
     first_frame_tick = _first(r"(?m)^WISP_RENDER_FIRST_FRAME_TICK=(\d+)$", status_text)
     pre_attack_track_status = _first(
         r"(?m)^WISP_RENDER_PREATTACK_TRACKING=YES id=(\d+) tick=(\d+) line=(\d+)$",

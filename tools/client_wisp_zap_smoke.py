@@ -463,11 +463,16 @@ PY
   }
 
   wisp_release_staging_wisp() {
-    local release_log_lines
+    local wisp_id="$1" release_log_lines
+    if ! grep -Fq 'WISP_ATTACK_HURT_ACCEPTED=YES' client-smoke-status.txt \
+      || ! grep -Fq 'WISP_ATTACK_TARGET_SET=YES' client-smoke-status.txt; then
+      echo 'WISP_STAGING_RELEASE_BEFORE_ACCEPTED_HIT=YES' | tee -a client-smoke-status.txt
+      return 1
+    fi
     release_log_lines="$(wc -l < client-smoke/client.log)"
     wisp_fast_command '/tag @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] remove tc_wisp_zap_smoke_staging' 0.5 2
-    wisp_wait_for_fresh_log_marker "$release_log_lines" 'TC_SMOKE_WISP_STAGING_RELEASED=YES'
-    echo 'WISP_CAMERA_STAGING_RELEASE=YES' | tee -a client-smoke-status.txt
+    wisp_wait_for_fresh_log_marker "$release_log_lines" "TC_SMOKE_WISP_STAGING_RELEASED=YES id=$wisp_id"
+    echo "WISP_CAMERA_STAGING_RELEASE=YES id=$wisp_id reason=accepted_player_hit" | tee -a client-smoke-status.txt
   }
 
   wisp_wait_for_attack_frame() {
@@ -766,42 +771,30 @@ PY
       echo "WISP_ATTACK_WISP_ID_INVALID=$wisp_id" | tee -a client-smoke-status.txt
       exit 1
     fi
-    # Keep the player Creative through spawn/pre-aim and stage a live melee position
-    # before the first Survival attempt. This prevents an autonomous Wisp zap from
-    # being mistaken for the response to the player's real hit.
+
+    # Stage the live melee position once while Creative. Keep this exact Wisp
+    # frozen through Survival and release it only after the server accepts the
+    # player's hit and assigns the player as its target.
+    reanchor_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_move_player_to_live_wisp "$reanchor_log_lines"
+    echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
+    attack_camera_source="LIVE_ENTITY_FACING"
+    attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
+    attack_position_mode=LIVE_WISP
+
+    survival_log_lines="$(wc -l < client-smoke/client.log)"
+    wisp_fast_command '/gamemode survival' 0.5 2
+    wisp_wait_for_fresh_log_marker "$survival_log_lines" 'Set own game mode to Survival Mode'
+    echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' | tee -a client-smoke-status.txt
+
+    # Retries reuse the same frozen entity and support pad. Re-tagging or
+    # re-filling an already-built pad is neither necessary nor idempotent.
     for attempt in 1 2 3; do
-      if [ "$attempt" -gt 1 ]; then
-        # A rejected click must not leave a Survival target winding up a zap
-        # while the player is repositioned for the next attempt.
-        wisp_command '/gamemode creative'
-        wisp_send_chat '/execute if entity @p[gamemode=creative] run say TC_SMOKE_WISP_PLAYER_CREATIVE=YES' 'TC_SMOKE_WISP_PLAYER_CREATIVE=YES'
-        sleep 0.15
-      fi
-      # The first attempt must use the same live melee staging as retries.
-      # Otherwise the player remains on the low spawn platform and the
-      # three-tick FXBolt can be occluded at age 1 by the platform.
-      reanchor_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_move_player_to_live_wisp "$reanchor_log_lines"
-      echo 'WISP_ATTACK_PREPOSITIONED_WHILE_CREATIVE=YES' | tee -a client-smoke-status.txt
-      # Release the held Wisp while the player is still Creative, then switch to
-      # Survival and consume only fresh post-transition same-ID hit frames.
-      wisp_release_staging_wisp
-      attack_camera_source="LIVE_ENTITY_FACING"
-      attack_camera_detail="$WISP_ATTACK_REPOSITION_LINE"
-      attack_position_mode=LIVE_WISP
-      # Switch quickly after the live reposition, then start the frame cursor
-      # only after the server confirms Survival. Frames rendered before this
-      # transition are stale and must never trigger the real attack click.
-      survival_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_fast_command '/gamemode survival' 0.5 2
-      wisp_wait_for_fresh_log_marker "$survival_log_lines" 'Set own game mode to Survival Mode'
-      echo 'TC_SMOKE_WISP_PLAYER_SURVIVAL=YES' | tee -a client-smoke-status.txt
       frame_log_lines="$(wc -l < client-smoke/client.log)"
       if ! [[ "$frame_log_lines" =~ ^[0-9]+$ ]]; then
         echo "WISP_ATTACK_FRAME_CURSOR_INVALID=$frame_log_lines" | tee -a client-smoke-status.txt
         exit 1
       fi
-      # The watcher now consumes only a post-transition same-ID EntityHitResult.
       if ! wisp_wait_for_attack_frame "$frame_log_lines" "$wisp_id" LIVE_WISP "$attempt"; then
         echo "WISP_ATTACK_FRAME_RETRY=$attempt" | tee -a client-smoke-status.txt
         continue
@@ -1134,6 +1127,8 @@ PY
   wisp_wait_for_marker 'TC_SMOKE_WISP_HURT=YES accepted=true'
   echo 'WISP_ATTACK_HURT_ACCEPTED=YES' | tee -a client-smoke-status.txt
   wisp_wait_for_marker 'TC_SMOKE_WISP_TARGET_SET=YES'
+  echo 'WISP_ATTACK_TARGET_SET=YES' | tee -a client-smoke-status.txt
+  wisp_release_staging_wisp "$wisp_id"
 
   # The smoke probe starts a live broadside camera track inside AttackEntityEvent,
   # after the real hit target has been selected and before the server zap arrives.
