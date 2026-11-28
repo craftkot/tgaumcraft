@@ -2074,3 +2074,6 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Tests: not yet executed on this SHA; exact-SHA GitHub Wisp workflow must pass offline Python contract, generated `bash -n`, then real client. Full Port CI and Aura/Crystal GameTests must also be checked. No gameplay success or visual proof is claimed.
 - Fixed rubric remains **59/100** (M16 **4/6**, M08 **5/9**); no category closure or point awarded.
 - Next: inspect the new exact-SHA Wisp run. Require a same-ID real Survival EntityHitResult with `hitDistance <= 3.01`, accepted server damage/target, matching zap payload, actual FXBolt pixels at ages 1/2/3, and expiry. If the hit passes, continue with the pixel verifier; if it fails, use the new block/position telemetry rather than changing the renderer speculatively.
+
+
+- Test-source correction on `5d2fa1d`: review of the generated file caught over-escaped newline/quote sequences in the newly added partial-clear Bash harness before treating any test result as valid. Rewrote that negative case as a raw multiline Bash fixture and normalized the status-marker newline. The exact-SHA workflow for `5d2fa1d` is separate evidence and must be inspected; this correction is not a gameplay result.

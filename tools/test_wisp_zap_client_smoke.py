@@ -739,21 +739,19 @@ def _test_attack_cursor_starts_after_live_reposition(generated: str) -> None:
         root = Path(directory)
         client_dir = root / "client-smoke"
         client_dir.mkdir()
-        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\\n", encoding="utf-8")
+        (client_dir / "client.log").write_text("PREEXISTING_FRAME=YES\n", encoding="utf-8")
         (root / "client-smoke-status.txt").write_text("", encoding="utf-8")
-        harness = (
-            "set -euo pipefail\\n"
-            "wisp_fast_command() {\\n"
-            "  case \\"$1\\" in\\n"
-            "    *\\"add tc_wisp_zap_smoke_staging\\"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\\\\n' >> client-smoke/client.log ;;\\n"
-            "    *\\"run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian\\"*) printf 'Successfully filled 36 block(s)\\\\n' >> client-smoke/client.log ;;\\n"
-            "    *\\"/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone\\"*) printf 'Successfully filled 80 block(s)\\\\n' >> client-smoke/client.log ;;\\n"
-            "  esac\\n"
-            "}\\n"
-            + fresh_marker_function
-            + reposition_function
-            + "\\nwisp_move_player_to_live_wisp 1\\n"
-        )
+        harness = r'''set -euo pipefail
+wisp_fast_command() {
+  case "$1" in
+    *"add tc_wisp_zap_smoke_staging"*) printf 'TC_SMOKE_WISP_STAGING_FROZEN=YES id=17\n' >> client-smoke/client.log ;;
+    *"run fill ~-1 ~-8 ~-1 ~1 ~-5 ~1 minecraft:obsidian"*) printf 'Successfully filled 36 block(s)\n' >> client-smoke/client.log ;;
+    *"/fill 6 148 6 14 148 14 minecraft:air replace minecraft:stone"*) printf 'Successfully filled 80 block(s)\n' >> client-smoke/client.log ;;
+  esac
+}
+''' + fresh_marker_function + reposition_function + r'''
+wisp_move_player_to_live_wisp 1
+'''
         result = subprocess.run(
             ["bash", "-c", harness],
             cwd=root,
@@ -2637,7 +2635,7 @@ def main() -> int:
             in error for error in missing_live_support_errors
         ), missing_live_support_errors
 
-        sightline_marker = "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81\\n"
+        sightline_marker = "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81\n"
         missing_sightline_status = status.replace(sightline_marker, "", 1)
         missing_sightline_errors = verify_wisp_zap_client.verify(log, missing_sightline_status, root)
         assert any(
