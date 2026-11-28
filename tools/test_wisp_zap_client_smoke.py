@@ -3204,7 +3204,8 @@ def main() -> int:
     assert "sideViewYaw = Mth.wrapDegrees(beamYaw + SIDE_VIEW_OFFSET_DEGREES);" in attack_probe
     assert "sideViewTracking = true;" in attack_probe
     assert "sideViewTrackingTicksRemaining = 40;" in attack_probe
-    assert "sideViewPitch = Mth.clamp(beamPitch * 0.5F, -35.0F, 35.0F);" in attack_probe
+    assert "sideViewPitch = 0.0F;" in attack_probe
+    assert "sideViewPitch = Mth.clamp(" not in attack_probe
     assert "updateSideView(minecraft, wisp);" in attack_probe
     assert "RenderLevelStageEvent.Stage.AFTER_ENTITIES" in attack_probe
     assert "MIN_SIDE_VIEW_CAMERA_DISTANCE = 3.0D" in attack_probe

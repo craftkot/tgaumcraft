@@ -2052,3 +2052,12 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - At the last poll, Full Port CI push [#46120577005](https://github.com/craftkot/tgaumcraft/actions/runs/46120577005) and PR [#46120581520](https://github.com/craftkot/tgaumcraft/actions/runs/46120581520) were still in progress; their results do not validate this test-only correction.
 - The 62-open-PR inventory was unchanged; all 61 PRs other than this lane's own PR #4 have been checked for the four lane paths, with no overlap. PR #4 remains OPEN / DRAFT / UNMERGED.
 - Fixed audit remains 59/100 (M16 4/6, M08 5/9). Next: rerun the exact-SHA Wisp contract, generated Bash syntax, then the real Minecraft client. Do not treat the synthetic pixel prototypes as real-client evidence.
+
+
+## 2026-11-28 — remove the last stale Wisp pitch-source assertion
+
+- Exact-SHA PR Wisp run [#46120772906](https://github.com/craftkot/tgaumcraft/actions/runs/46120772906) on 1505de39d0f68f995b8dcf0d1b4bcc3f03b7281b passed the 37-assertion BETA26 geometry suite, 24 atlas/UV assertions and synthetic FXBolt age/expiry pixel prototypes. The offline Python contract then failed at the final static source audit in tools/test_wisp_zap_client_smoke.py:3207, which still asserted the removed beam-following sideViewPitch formula. Earlier function-level assertions had already been updated; this duplicate bottom-of-file assertion was missed.
+- The failure occurred before Bash generation and before Minecraft launch. No new-SHA gameplay or framebuffer result is claimed.
+- Updated only tools/test_wisp_zap_client_smoke.py to require sideViewPitch=0.0F and explicitly reject the old beamPitch-derived expression in the final source audit. No production code, verifier thresholds, fade rule, payload or renderer changed.
+- The 62-open-PR inventory remains unchanged; all 61 other PRs have no overlap with this lane's code/test/journal paths. PR #4 remains the owning OPEN / DRAFT / UNMERGED PR.
+- Fixed audit remains 59/100 (M16 4/6, M08 5/9). Next: rerun the exact-SHA offline contract; only after it passes, require generated Bash syntax and a real Minecraft-client run with pixel and fade acceptance.
