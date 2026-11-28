@@ -2294,8 +2294,27 @@ def main() -> int:
         "TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=26 gameTime=523 playerTick=510 hitType=ENTITY targetId=17 targetType=thaumcraft:wisp blockPos=none",
         "TC_SMOKE_WISP_ZAP_EXPIRED=YES source=17 target=1 createdAt=520 gameTime=524 ageTicks=4",
     ))
-    # These absolute line numbers correspond to the exact camera-track marker (7)
-    # and the selected completed render frame (10) in the synthetic log above.
+    # Derive line cursors from the synthetic log so adding diagnostic markers
+    # cannot silently make the otherwise-valid fixture stale.
+    log_lines = log.splitlines()
+    pre_attack_track_line = next(
+        (
+            index
+            for index, line in enumerate(log_lines, start=1)
+            if line.startswith("TC_SMOKE_WISP_CAMERA_TRACK_PRE_ATTACK=YES id=17 tick=20 ")
+        ),
+        None,
+    )
+    first_completed_frame_line = next(
+        (
+            index
+            for index, line in enumerate(log_lines, start=1)
+            if line.startswith("TC_SMOKE_WISP_FRAME_COMPLETE=YES id=17 tick=21 ")
+        ),
+        None,
+    )
+    assert pre_attack_track_line is not None, "synthetic pre-attack camera-track marker is missing"
+    assert first_completed_frame_line is not None, "synthetic first completed render frame is missing"
     status = "\n".join((
         "WISP_FIXTURE_PLATFORM_FILL=YES [Server thread] [Dev: Successfully filled 81 block(s)]",
         "WISP_FIXTURE_TELEPORT=YES [Server thread] Teleported Dev to 12.500000, 149.000000, 10.500000",
@@ -2304,11 +2323,11 @@ def main() -> int:
         "WISP_ZAP_TEST_TIME=MIDNIGHT",
         "WISP_ZAP_BASELINE_CAPTURE=BEFORE_WISP_SPAWN",
         "WISP_ZAP_VIDEO_STARTED=YES firstFrameMonotonicNs=800000000 progressFrameCount=9 progressOutTimeUs=150000 progressObservedMonotonicNs=950000000 frameRate=60",
-        "WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line=7",
+        f"WISP_RENDER_PREATTACK_TRACKING=YES id=17 tick=20 line={pre_attack_track_line}",
         "WISP_RENDER_FRAME_COMPLETE=YES id=17 tick=21",
         "WISP_RENDER_FIRST_FRAME_ID=17",
         "WISP_RENDER_FIRST_FRAME_TICK=21",
-        "WISP_RENDER_FIRST_FRAME_LINE_NUMBER=10",
+        f"WISP_RENDER_FIRST_FRAME_LINE_NUMBER={first_completed_frame_line}",
         "WISP_RENDER_FIRST_FRAME_CAMERA_SAMPLE=TC_SMOKE_WISP_CAMERA=YES id=17 aimTarget=render_safe_quarter tick=21 playerX=12.5 playerY=149.0 playerZ=10.5 playerYaw=0.0 playerPitch=47.59636 playerEyeX=12.5 playerEyeY=150.62 playerEyeZ=10.5 wispX=12.5 wispY=149.3 wispZ=11.5 wispEyeX=12.5 wispEyeY=150.065 wispEyeZ=11.5 wispHitboxCenterX=12.5 wispHitboxCenterY=149.75 wispHitboxCenterZ=11.5 aimDot=0.999 renderAimDot=0.978 eyeAimDot=0.978",
         "WISP_RENDER_FIRST_FRAME=YES id=17 tick=21",
         "WISP_CAMERA_STAGING_FREEZE=YES",

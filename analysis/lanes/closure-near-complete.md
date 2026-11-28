@@ -1977,3 +1977,17 @@ This refinement supersedes the earlier temporary 10% mean-threshold note; no pro
 - Fixed rubric remains **59/100** (M16 **4/6**, M08 **5/9**). No point is awarded for a verifier diagnostic or green compile/GameTests; no category is closed.
 - Next: run the exact-HEAD Wisp offline contract and `bash -n`; only then accept a new real-client attempt. Require same-ID post-Survival EntityHitResult, `hitDistance <= 3.01`, InputEvent+AttackEntityEvent, accepted server damage/target, matching payload, pixel-confirmed FXBolt ages 1/2/3 and a clean expiry frame.
 
+
+
+## 2026-11-28 — derive Wisp verifier fixture cursors from the log
+
+- Exact-HEAD Wisp push run [#46108551846](https://github.com/craftkot/tgaumcraft/actions/runs/46108551846) on `2fc82c6338940c0d30d5006114be1f631102c666` passed the 37-assertion BETA26 geometry suite, the 24-assertion atlas/UV suite, the selector-count check, and the new late-support-order negative regression. The offline contract then failed at the valid synthetic fixture's `errors == []` assertion, still before Bash generation or Minecraft launch.
+- The verifier reported three fixture inconsistencies: pre-attack tracker status hard-coded log line 7 although the marker is now line 13; first-frame cursor hard-coded line 10 although the completed tick-21 frame is line 18; the stale cursor therefore selected the camera sample before the matching renderer callback and produced `found=0`.
+- Updated only `tools/test_wisp_zap_client_smoke.py`: derive both cursor values from the actual synthetic log lines, assert that each unique marker exists, and interpolate the derived values into the status fixture. This keeps the verifier's exact-line checks strict while preventing harmless earlier diagnostic markers from invalidating the fixture. No verifier threshold or game behavior changed.
+- The prior commit [`2fc82c6`](https://github.com/craftkot/tgaumcraft/commit/2fc82c6338940c0d30d5006114be1f631102c666) added the specific late-live-support diagnostic; its negative regression passed on this run. The current Wisp failure is now isolated to stale synthetic line cursors, not staging-order acceptance.
+- On parent SHA `05a7d051`, Full Port CI [#46107732006](https://github.com/craftkot/tgaumcraft/actions/runs/46107732006) and Aura/Crystal GameTests [#46107732010](https://github.com/craftkot/tgaumcraft/actions/runs/46107732010) both completed **SUCCESS**. These results are not transferred to the new SHA and do not substitute for the Wisp client.
+- Exact-HEAD Wisp [#46108551846](https://github.com/craftkot/tgaumcraft/actions/runs/46108551846) **FAILURE** occurred in offline Python; generated `bash -n` and real Minecraft were skipped. No real Survival hit, damage, target, payload or framebuffer evidence is claimed.
+- Changed paths in this iteration: `tools/test_wisp_zap_client_smoke.py` and this lane journal. The same paths were included in the prior 61-open-PR overlap audit; no intervening PR-number changes were found. PR #4 remains OPEN / DRAFT / UNMERGED, and no merge or force-push was performed.
+- Fixed rubric remains **59/100** (M16 **4/6**, M08 **5/9**); no score is awarded for test-fixture maintenance.
+- Next: require the exact-HEAD offline Python contract and generated `bash -n` to pass before accepting any real-client run. Then inspect the post-Survival same-ID hit, accepted server damage/target, matching payload, FXBolt pixels at ages 1/2/3 and clean expiry.
+
