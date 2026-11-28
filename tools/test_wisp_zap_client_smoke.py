@@ -2635,7 +2635,7 @@ def main() -> int:
             in error for error in missing_live_support_errors
         ), missing_live_support_errors
 
-        sightline_marker = "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81\n"
+        sightline_marker = "WISP_CAMERA_SIGHTLINE_CLEAR=YES originalFloor=6,148,6..14,148,14 blocks=81"
         missing_sightline_status = status.replace(sightline_marker, "", 1)
         missing_sightline_errors = verify_wisp_zap_client.verify(log, missing_sightline_status, root)
         assert any(
@@ -2643,7 +2643,11 @@ def main() -> int:
             in error for error in missing_sightline_errors
         ), missing_sightline_errors
 
-        late_sightline_status = status.replace(sightline_marker, "", 1) + sightline_marker
+        live_support_marker = "WISP_CAMERA_LIVE_SUPPORT=YES checked=player_block_below block=minecraft:obsidian"
+        normal_sightline_order = sightline_marker + "\n" + live_support_marker
+        late_sightline_order = live_support_marker + "\n" + sightline_marker
+        late_sightline_status = status.replace(normal_sightline_order, late_sightline_order, 1)
+        assert late_sightline_status != status, "late sightline fixture mutation did not change status order"
         late_sightline_errors = verify_wisp_zap_client.verify(log, late_sightline_status, root)
         assert any(
             "the original stone staging floor must be server-cleared after support-pad construction and before live player reposition"
