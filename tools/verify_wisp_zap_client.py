@@ -599,12 +599,12 @@ def extract_video_frames(status_file: Path, video_file: Path, screenshot_dir: Pa
         errors.append("third-person side-view frame was not confirmed before zap payload receipt")
     beam_yaw, beam_pitch, rendered_yaw, rendered_pitch, camera_distance = map(float, side_view_rendered.groups()[1:6])
     yaw_delta = (rendered_yaw - beam_yaw + 180.0) % 360.0 - 180.0
-    expected_pitch = max(-35.0, min(35.0, beam_pitch * 0.5))
+    expected_pitch = 0.0
     if abs(yaw_delta - 50.0) > 1.0:
         errors.append(f"rendered side-view yaw is not 50 degrees from the zap axis: {yaw_delta:.2f}")
     if abs(rendered_pitch - expected_pitch) > 1.0:
         errors.append(
-            f"rendered side-view pitch does not match half the live beam elevation: "
+            f"rendered side-view pitch must remain horizontal for the broadside capture: "
             f"actual={rendered_pitch:.2f} expected={expected_pitch:.2f}"
         )
     if camera_distance < 3.0:
@@ -953,10 +953,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         yaw = float(side_view.group(4))
         pitch = float(side_view.group(5))
         yaw_delta = (yaw - beam_yaw + 180.0) % 360.0 - 180.0
-        expected_pitch = max(-35.0, min(35.0, beam_pitch * 0.5))
+        expected_pitch = 0.0
         if abs(yaw_delta - 50.0) > 1.0 or abs(pitch - expected_pitch) > 1.0:
             errors.append(
-                f"camera is not side-on to the zap: beamYaw={beam_yaw:.2f} "
+                f"camera must remain horizontal and side-on to the zap: beamYaw={beam_yaw:.2f} "
                 f"beamPitch={beam_pitch:.2f} yaw={yaw:.2f} pitch={pitch:.2f} "
                 f"expectedPitch={expected_pitch:.2f}"
             )
@@ -966,10 +966,10 @@ def verify(log_text: str, status_text: str, screenshot_dir: Path) -> list[str]:
         rendered_yaw = float(side_view_rendered.group(4))
         rendered_pitch = float(side_view_rendered.group(5))
         rendered_distance = float(side_view_rendered.group(6))
-        expected_rendered_pitch = max(-35.0, min(35.0, rendered_beam_pitch * 0.5))
+        expected_rendered_pitch = 0.0
         rendered_delta = (rendered_yaw - rendered_beam_yaw + 180.0) % 360.0 - 180.0
         if abs(rendered_delta - 50.0) > 1.0 or abs(rendered_pitch - expected_rendered_pitch) > 1.0:
-            errors.append("render-stage camera did not preserve the broadside yaw and live elevation pitch")
+            errors.append("render-stage camera did not preserve the broadside yaw and horizontal pitch")
         if rendered_distance < 3.0:
             errors.append(f"render-stage third-person camera distance is too short: {rendered_distance:.2f}")
     if wisp_camera and wisp_rendered:
