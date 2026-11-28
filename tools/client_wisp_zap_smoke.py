@@ -414,23 +414,23 @@ PY
   wisp_move_player_to_live_wisp() {
     local after_lines="$1" teleport_match relative_line
     local player_x player_y player_z support_log_lines live_support_log_lines
-    # Prebuild a broad temporary floor around the live Wisp. Its altitude may
-    # change while chat commands round-trip, so this floor is not the final
-    # support proof for the player's eventual position.
+    # Prebuild a four-layer floor around the live Wisp. Its top block is Y-4
+    # (top face Y-3), while the player is teleported to Y-2. This tolerates the
+    # measured one-block vertical bob between fill and teleport plus additional
+    # downward movement; the player-relative check below remains authoritative.
     if [[ "${WISP_CAMERA_SUPPORT_PLATFORM_READY:-NO}" != YES ]]; then
       support_log_lines="$(wc -l < client-smoke/client.log)"
-      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-3 ~-8 ~8 ~-3 ~8 minecraft:obsidian' 0.5 2
-      wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 289 block(s)"
-      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-3 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
-      echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=289' | tee -a client-smoke-status.txt
+      wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run fill ~-8 ~-7 ~-8 ~8 ~-4 ~8 minecraft:obsidian' 0.5 2
+      wisp_wait_for_fresh_log_marker "$support_log_lines" "Successfully filled 1156 block(s)"
+      echo 'WISP_CAMERA_SUPPORT_PREBUILT=YES relativeTo=LIVE_WISP_XZ_AND_Y relativeY=-7..-4 block=minecraft:obsidian radius=8' | tee -a client-smoke-status.txt
+      echo 'WISP_CAMERA_SUPPORT_PLATFORM=YES checked=live_wisp_fill blocks=1156' | tee -a client-smoke-status.txt
       WISP_CAMERA_SUPPORT_PLATFORM_READY=YES
     fi
 
-    # Teleport two blocks below the Wisp base. Immediately place one obsidian
-    # block under the player's actual post-teleport position: the Wisp can bob
-    # upward between the broad fill and this command, leaving the old floor
-    # below the player. The two-block base gap keeps the BETA26 bolt above the
-    # support surface; the later same-ID EntityHitResult proves actual melee reach.
+    # Teleport two blocks below the Wisp base. The four-layer floor keeps the
+    # player supported across the observed vertical bob while chat commands
+    # round-trip. A player-relative setblock/check remains the final guard before
+    # Survival; it does not infer proximity to the moving Wisp.
     wisp_fast_command '/execute as @e[type=thaumcraft:wisp,name=tc_wisp_zap_smoke,limit=1] at @s run tp @p ~1.0 ~-2 ~ facing entity @s eyes' 0.5 2
     for _ in $(seq 1 200); do
       teleport_match="$(tail -n +"$((after_lines + 1))" client-smoke/client.log | grep -n -F 'Teleported Dev to ' | head -1 || true)"
